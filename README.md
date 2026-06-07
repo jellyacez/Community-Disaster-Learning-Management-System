@@ -14,4 +14,7 @@ cd ../client/
 npm install
 npm install axios
 npm install react-router-dom
+npm install framer-motion
+npm install tailwindcss @tailwindcss/vite
+npm install lucide-react
 ```
