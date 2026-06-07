@@ -1,26 +1,15 @@
-//sample code
-import axios from 'axios';
-import { useEffect, useState } from 'react';
+import React from 'react';
+import { Routes, Route } from 'react-router-dom';
+import LandingPage from './LandingPage';
+import RegisterPage from './RegisterPage';
+import SignInPage from './SignInPage';
 
-function App() {
-  const [users, setUsers] = useState([]);
-
-  useEffect(() => {
-    axios.get('http://localhost:5000/api/users')
-      .then(response => setUsers(response.data))
-      .catch(error => console.error('Error fetching data:', error));
-  }, []);
-
+export default function App() {
   return (
-    <div>
-      <h1>Users List</h1>
-      <ul>
-        {users.map(user => (
-          <li key={user.id}>{user.name} ({user.email})</li>
-        ))}
-      </ul>
-    </div>
+    <Routes>
+      <Route path="/" element={<LandingPage />} />
+      <Route path="/register" element={<RegisterPage />} />
+      <Route path="/signin" element={<SignInPage />} />
+    </Routes>
   );
 }
-
-export default App;
