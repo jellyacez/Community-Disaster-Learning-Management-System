@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Shield, ArrowLeft, Eye, EyeOff } from "lucide-react";
+import { HugeiconsIcon } from '@hugeicons/react';
+import { Shield01Icon, ArrowLeft01Icon, EyeIcon, EyeOffIcon } from '@hugeicons/core-free-icons';
 import { authClient } from "./lib/auth-client";
 
 const BACOLOR_BARANGAYS = [
@@ -126,13 +127,13 @@ export default function RegisterPage() {
           to="/"
           className="inline-flex items-center gap-2 text-sm text-red-600 font-semibold hover:underline mb-6"
         >
-          <ArrowLeft className="w-4 h-4" />
+          <HugeiconsIcon icon={ArrowLeft01Icon} className="w-4 h-4" />
           Back to Landing Page
         </Link>
 
         <div className="flex items-center gap-3 mb-6">
           <div className="w-12 h-12 rounded-xl bg-red-600 flex items-center justify-center">
-            <Shield className="w-6 h-6 text-white" />
+            <HugeiconsIcon icon={Shield01Icon} className="w-6 h-6 text-white" />
           </div>
           <div>
             <h1 className="text-xl font-bold text-gray-900">Create Account</h1>
@@ -275,9 +276,9 @@ export default function RegisterPage() {
                 className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none"
               >
                 {showPassword ? (
-                  <EyeOff className="w-5 h-5" />
+                  <HugeiconsIcon icon={EyeOffIcon} className="w-5 h-5" />
                 ) : (
-                  <Eye className="w-5 h-5" />
+                  <HugeiconsIcon icon={EyeIcon} className="w-5 h-5" />
                 )}
               </button>
             </div>
@@ -310,9 +311,9 @@ export default function RegisterPage() {
                 className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none"
               >
                 {showConfirmPassword ? (
-                  <EyeOff className="w-5 h-5" />
+                  <HugeiconsIcon icon={EyeOffIcon} className="w-5 h-5" />
                 ) : (
-                  <Eye className="w-5 h-5" />
+                  <HugeiconsIcon icon={EyeIcon} className="w-5 h-5" />
                 )}
               </button>
             </div>
