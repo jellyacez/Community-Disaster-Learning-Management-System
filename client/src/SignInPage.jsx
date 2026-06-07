@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Shield, ArrowLeft } from 'lucide-react';
+import { Shield, ArrowLeft, Eye, EyeOff } from 'lucide-react';
+import { authClient } from './lib/auth-client';
 
 export default function SignInPage() {
   const navigate = useNavigate();
@@ -10,21 +11,63 @@ export default function SignInPage() {
     password: '',
   });
 
+  const [showPassword, setShowPassword] = useState(false);
+  const [errors, setErrors] = useState({});
+
   const handleChange = (e) => {
     setFormData((prev) => ({
       ...prev,
       [e.target.name]: e.target.value,
     }));
+    // Clear error when typing
+    if (errors[e.target.name] || errors.form) {
+      setErrors((prev) => ({ ...prev, [e.target.name]: null, form: null }));
+    }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setErrors({});
 
-    // placeholder only for frontend demo
-    console.log('Sign in data:', formData);
+    let newErrors = {};
 
-    // later replace with API call
-    navigate('/');
+    if (!formData.email) {
+      newErrors.email = "Email address is required.";
+    }
+    
+    if (!formData.password) {
+      newErrors.password = "Password is required.";
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
+
+    const { data, error } = await authClient.signIn.email({
+      email: formData.email,
+      password: formData.password,
+    });
+
+    if (error) {
+      console.error('Sign in failed:', error);
+      // Backend error (e.g., Invalid credentials) applies generally
+      setErrors({ form: error.message || "Invalid email or password. Please try again." });
+    } else {
+      console.log('Sign in successful:', data);
+      navigate('/');
+    }
+  };
+
+  const getInputClass = (fieldName) => {
+    const baseClass = "w-full px-4 py-3 rounded-xl border outline-none transition-colors";
+    // If there's a field-specific error OR a general form error, highlight the box
+    const hasError = errors[fieldName] || errors.form;
+    return `${baseClass} ${
+      hasError 
+        ? "border-red-500 focus:ring-2 focus:ring-red-500 bg-red-50 text-red-900" 
+        : "border-gray-200 focus:ring-2 focus:ring-red-500"
+    }`;
   };
 
   return (
@@ -49,6 +92,12 @@ export default function SignInPage() {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          {errors.form && (
+            <div className="text-red-600 text-sm font-semibold text-center mb-4">
+              {errors.form}
+            </div>
+          )}
+
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-1">
               Email Address
@@ -59,24 +108,33 @@ export default function SignInPage() {
               value={formData.email}
               onChange={handleChange}
               placeholder="Enter email"
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 outline-none focus:ring-2 focus:ring-red-500"
-              required
+              className={getInputClass("email")}
             />
+            {errors.email && <p className="text-red-500 text-xs mt-1 font-medium">{errors.email}</p>}
           </div>
 
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-1">
               Password
             </label>
-            <input
-              type="password"
-              name="password"
-              value={formData.password}
-              onChange={handleChange}
-              placeholder="Enter password"
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 outline-none focus:ring-2 focus:ring-red-500"
-              required
-            />
+            <div className="relative">
+              <input
+                type={showPassword ? "text" : "password"}
+                name="password"
+                value={formData.password}
+                onChange={handleChange}
+                placeholder="Enter password"
+                className={`${getInputClass("password")} pr-12`}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none"
+              >
+                {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+              </button>
+            </div>
+            {errors.password && <p className="text-red-500 text-xs mt-1 font-medium">{errors.password}</p>}
           </div>
 
           <button
