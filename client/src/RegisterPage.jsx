@@ -2,6 +2,14 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Shield, ArrowLeft } from 'lucide-react';
 
+const BACOLOR_BARANGAYS = [
+  'Balas', 'Cabalantian', 'Cabambangan', 'Cabetican', 'Calibutbut',
+  'Concepcion', 'Dolores', 'Duat', 'Macabacle', 'Magliman',
+  'Maliwalu', 'Mesalipit', 'Parulog', 'Potrero', 'San Antonio',
+  'San Isidro', 'San Vicente', 'Santa Barbara', 'Santa Ines',
+  'Talba', 'Tinajero'
+];
+
 export default function RegisterPage() {
   const navigate = useNavigate();
 
@@ -12,6 +20,8 @@ export default function RegisterPage() {
     password: '',
     confirmPassword: '',
   });
+
+  const [showBarangayList, setShowBarangayList] = useState(false);
 
   const handleChange = (e) => {
     setFormData((prev) => ({
@@ -82,7 +92,7 @@ export default function RegisterPage() {
             />
           </div>
 
-          <div>
+          <div className="relative">
             <label className="block text-sm font-semibold text-gray-700 mb-1">
               Barangay
             </label>
@@ -90,11 +100,41 @@ export default function RegisterPage() {
               type="text"
               name="barangay"
               value={formData.barangay}
-              onChange={handleChange}
-              placeholder="Enter barangay"
+              onChange={(e) => {
+                handleChange(e);
+                setShowBarangayList(true);
+              }}
+              onFocus={() => setShowBarangayList(true)}
+              onBlur={() => setTimeout(() => setShowBarangayList(false), 200)}
+              placeholder="Search or select barangay"
               className="w-full px-4 py-3 rounded-xl border border-gray-200 outline-none focus:ring-2 focus:ring-red-500"
               required
+              autoComplete="off"
             />
+            {showBarangayList && (
+              <ul className="absolute z-10 w-full bg-white border border-gray-200 rounded-xl mt-1 max-h-48 overflow-y-auto shadow-lg">
+                {BACOLOR_BARANGAYS.filter((b) =>
+                  b.toLowerCase().includes(formData.barangay.toLowerCase())
+                ).length > 0 ? (
+                  BACOLOR_BARANGAYS.filter((b) =>
+                    b.toLowerCase().includes(formData.barangay.toLowerCase())
+                  ).map((b) => (
+                    <li
+                      key={b}
+                      onClick={() => {
+                        setFormData((prev) => ({ ...prev, barangay: b }));
+                        setShowBarangayList(false);
+                      }}
+                      className="px-4 py-2 hover:bg-red-50 cursor-pointer text-gray-700 text-sm"
+                    >
+                      {b}
+                    </li>
+                  ))
+                ) : (
+                  <li className="px-4 py-2 text-gray-500 text-sm">No results found</li>
+                )}
+              </ul>
+            )}
           </div>
 
           <div>
