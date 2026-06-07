@@ -1,14 +1,14 @@
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { Shield, ArrowLeft, Eye, EyeOff } from 'lucide-react';
-import { authClient } from './lib/auth-client';
+import React, { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { Shield, ArrowLeft, Eye, EyeOff } from "lucide-react";
+import { authClient } from "./lib/auth-client";
 
 export default function SignInPage() {
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
-    email: '',
-    password: '',
+    email: "",
+    password: "",
   });
 
   const [showPassword, setShowPassword] = useState(false);
@@ -19,7 +19,6 @@ export default function SignInPage() {
       ...prev,
       [e.target.name]: e.target.value,
     }));
-    // Clear error when typing
     if (errors[e.target.name] || errors.form) {
       setErrors((prev) => ({ ...prev, [e.target.name]: null, form: null }));
     }
@@ -34,7 +33,7 @@ export default function SignInPage() {
     if (!formData.email) {
       newErrors.email = "Email address is required.";
     }
-    
+
     if (!formData.password) {
       newErrors.password = "Password is required.";
     }
@@ -50,22 +49,23 @@ export default function SignInPage() {
     });
 
     if (error) {
-      console.error('Sign in failed:', error);
-      // Backend error (e.g., Invalid credentials) applies generally
-      setErrors({ form: error.message || "Invalid email or password. Please try again." });
+      console.error("Sign in failed:", error);
+      setErrors({
+        form: error.message || "Invalid email or password. Please try again.",
+      });
     } else {
-      console.log('Sign in successful:', data);
-      navigate('/');
+      console.log("Sign in successful:", data);
+      navigate("/");
     }
   };
 
   const getInputClass = (fieldName) => {
-    const baseClass = "w-full px-4 py-3 rounded-xl border outline-none transition-colors";
-    // If there's a field-specific error OR a general form error, highlight the box
+    const baseClass =
+      "w-full px-4 py-3 rounded-xl border outline-none transition-colors";
     const hasError = errors[fieldName] || errors.form;
     return `${baseClass} ${
-      hasError 
-        ? "border-red-500 focus:ring-2 focus:ring-red-500 bg-red-50 text-red-900" 
+      hasError
+        ? "border-red-500 focus:ring-2 focus:ring-red-500 bg-red-50 text-red-900"
         : "border-gray-200 focus:ring-2 focus:ring-red-500"
     }`;
   };
@@ -87,7 +87,9 @@ export default function SignInPage() {
           </div>
           <div>
             <h1 className="text-xl font-bold text-gray-900">Sign In</h1>
-            <p className="text-sm text-gray-500">Access your DRRM training account</p>
+            <p className="text-sm text-gray-500">
+              Access your DRRM training account
+            </p>
           </div>
         </div>
 
@@ -110,7 +112,11 @@ export default function SignInPage() {
               placeholder="Enter email"
               className={getInputClass("email")}
             />
-            {errors.email && <p className="text-red-500 text-xs mt-1 font-medium">{errors.email}</p>}
+            {errors.email && (
+              <p className="text-red-500 text-xs mt-1 font-medium">
+                {errors.email}
+              </p>
+            )}
           </div>
 
           <div>
@@ -131,10 +137,18 @@ export default function SignInPage() {
                 onClick={() => setShowPassword(!showPassword)}
                 className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none"
               >
-                {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                {showPassword ? (
+                  <EyeOff className="w-5 h-5" />
+                ) : (
+                  <Eye className="w-5 h-5" />
+                )}
               </button>
             </div>
-            {errors.password && <p className="text-red-500 text-xs mt-1 font-medium">{errors.password}</p>}
+            {errors.password && (
+              <p className="text-red-500 text-xs mt-1 font-medium">
+                {errors.password}
+              </p>
+            )}
           </div>
 
           <button
@@ -146,8 +160,11 @@ export default function SignInPage() {
         </form>
 
         <p className="text-sm text-gray-500 text-center mt-6">
-          Don&apos;t have an account?{' '}
-          <Link to="/register" className="text-red-600 font-semibold hover:underline">
+          Don&apos;t have an account?{" "}
+          <Link
+            to="/register"
+            className="text-red-600 font-semibold hover:underline"
+          >
             Register
           </Link>
         </p>
