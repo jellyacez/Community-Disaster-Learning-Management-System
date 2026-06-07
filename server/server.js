@@ -8,10 +8,12 @@ const { auth } = require("./utils/auth");
 const app = express();
 
 // Configure CORS to allow credentials from Vite's default port
-app.use(cors({
+app.use(
+  cors({
     origin: ["http://localhost:5173", "http://localhost:5174"],
-    credentials: true
-}));
+    credentials: true,
+  }),
+);
 
 // Mount Better-Auth BEFORE express.json() so it can read the raw request body
 app.use("/api/auth", toNodeHandler(auth));
