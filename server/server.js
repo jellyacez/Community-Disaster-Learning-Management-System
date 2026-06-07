@@ -6,11 +6,17 @@ const { toNodeHandler } = require("better-auth/node");
 const { auth } = require("./utils/auth");
 
 const app = express();
-app.use(cors());
-app.use(express.json());
 
-// Better Auth Middleware for all /api/auth/* routes
-app.all("/api/auth/*", toNodeHandler(auth));
+// Configure CORS to allow credentials from Vite's default port
+app.use(cors({
+    origin: ["http://localhost:5173", "http://localhost:5174"],
+    credentials: true
+}));
+
+// Mount Better-Auth BEFORE express.json() so it can read the raw request body
+app.use("/api/auth", toNodeHandler(auth));
+
+app.use(express.json());
 
 // Sample API Route
 app.get("/api/users", async (req, res) => {
