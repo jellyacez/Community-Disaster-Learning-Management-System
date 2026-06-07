@@ -414,7 +414,7 @@ export default function LandingPage() {
                 className="relative"
               >
                 {i < steps.length - 1 && (
-                  <div className="hidden lg:block absolute top-12 left-full w-full h-px bg-gradient-to-r from-red-600/40 to-transparent z-10" />
+                  <div className="hidden lg:block absolute top-16 left-full w-6 h-px bg-red-500/40 z-10" />
                 )}
                 <div className="bg-white/5 border border-white/10 rounded-2xl p-6 text-center h-full">
                   <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-red-600/30 to-red-800/30 border border-red-500/20 flex items-center justify-center mx-auto mb-5">
