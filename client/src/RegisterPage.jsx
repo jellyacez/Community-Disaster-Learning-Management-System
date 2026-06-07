@@ -155,12 +155,14 @@ export default function RegisterPage() {
           )}
 
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1">
+            <label htmlFor="fullName" className="block text-sm font-semibold text-gray-700 mb-1">
               Full Name
             </label>
             <input
+              id="fullName"
               type="text"
               name="fullName"
+              autoComplete="name"
               value={formData.fullName}
               onChange={handleChange}
               placeholder="e.g. Juan Dela Cruz"
@@ -175,12 +177,14 @@ export default function RegisterPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1">
+            <label htmlFor="email" className="block text-sm font-semibold text-gray-700 mb-1">
               Email Address
             </label>
             <input
+              id="email"
               type="email"
               name="email"
+              autoComplete="email"
               value={formData.email}
               onChange={handleChange}
               placeholder="Example@email.com"
@@ -195,10 +199,11 @@ export default function RegisterPage() {
           </div>
 
           <div className="relative">
-            <label className="block text-sm font-semibold text-gray-700 mb-1">
+            <label htmlFor="barangay" className="block text-sm font-semibold text-gray-700 mb-1">
               Barangay
             </label>
             <input
+              id="barangay"
               type="text"
               name="barangay"
               value={formData.barangay}
@@ -249,13 +254,15 @@ export default function RegisterPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1">
+            <label htmlFor="password" className="block text-sm font-semibold text-gray-700 mb-1">
               Password
             </label>
             <div className="relative">
               <input
+                id="password"
                 type={showPassword ? "text" : "password"}
                 name="password"
+                autoComplete="new-password"
                 value={formData.password}
                 onChange={handleChange}
                 placeholder="Min. 8 characters"
@@ -282,13 +289,15 @@ export default function RegisterPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1">
+            <label htmlFor="confirmPassword" className="block text-sm font-semibold text-gray-700 mb-1">
               Confirm Password
             </label>
             <div className="relative">
               <input
+                id="confirmPassword"
                 type={showConfirmPassword ? "text" : "password"}
                 name="confirmPassword"
+                autoComplete="new-password"
                 value={formData.confirmPassword}
                 onChange={handleChange}
                 placeholder="Re-enter your password"

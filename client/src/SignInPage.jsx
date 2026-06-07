@@ -101,12 +101,14 @@ export default function SignInPage() {
           )}
 
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1">
+            <label htmlFor="email" className="block text-sm font-semibold text-gray-700 mb-1">
               Email Address
             </label>
             <input
+              id="email"
               type="email"
               name="email"
+              autoComplete="email"
               value={formData.email}
               onChange={handleChange}
               placeholder="Enter email"
@@ -120,13 +122,15 @@ export default function SignInPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1">
+            <label htmlFor="password" className="block text-sm font-semibold text-gray-700 mb-1">
               Password
             </label>
             <div className="relative">
               <input
+                id="password"
                 type={showPassword ? "text" : "password"}
                 name="password"
+                autoComplete="current-password"
                 value={formData.password}
                 onChange={handleChange}
                 placeholder="Enter password"
