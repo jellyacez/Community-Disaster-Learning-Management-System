@@ -5,6 +5,7 @@ cd server
 npm init -y
 npm install express pg cors dotenv bcryptjs
 npm install --save-dev nodemon
+npm install better-auth
 ```
 
 Dependencies for Client
@@ -17,4 +18,5 @@ npm install react-router-dom
 npm install framer-motion
 npm install tailwindcss @tailwindcss/vite
 npm install lucide-react
+npm install better-auth
 ```
