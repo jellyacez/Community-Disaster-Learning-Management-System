@@ -25,6 +25,7 @@ npm install
 - **bcryptjs**: Used for securely hashing passwords
 - **better-auth**: Comprehensive authentication library
 - **nodemon** (dev): Automatically restarts the server on file changes
+- **Helemt**:Zero-maintenance for HTTP security
 
 ### Environment Variables
 
