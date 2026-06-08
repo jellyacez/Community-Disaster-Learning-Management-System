@@ -1,5 +1,6 @@
 require("dotenv").config();
 const express = require("express");
+const helmet = require('helmet');
 const cors = require("cors");
 const pool = require("./config/db");
 const { toNodeHandler } = require("better-auth/node");
@@ -17,7 +18,7 @@ app.use(
 
 // Mount Better-Auth BEFORE express.json() so it can read the raw request body
 app.use("/api/auth", toNodeHandler(auth));
-
+app.use(helmet());
 app.use(express.json());
 
 // Sample API Route

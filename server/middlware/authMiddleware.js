@@ -11,14 +11,14 @@ let token;
             const decoded = jwt.verify(token,process.env.JWT_SECRET);
             req.user = decoded.user
     
-            next();
+            return next();
 
         }catch(err){
             res.status(401).json({error:"Token Expired or Invalid"});
         }
         
     }else{
-        res.status.json({error:"No token provided. Authorization Denied."})
+       return res.status(401).json({ error: "Access denied. No valid token signature found." });
     }
 }
 
