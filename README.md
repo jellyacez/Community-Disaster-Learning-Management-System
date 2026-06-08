@@ -42,7 +42,7 @@ BETTER_AUTH_URL=http://localhost:5000
 BETTER_AUTH_SECRET=your_super_secret_random_string_here
 ```
 
-Get `BETTER_AUTH_SECRET` at `https://better-auth.com/docs/installation#set-environment-variables`
+Get [BETTER_AUTH_SECRET](https://better-auth.com/docs/installation#set-environment-variables)
 
 ### Database Migration
 
