@@ -1,6 +1,7 @@
 # Community Disaster Learning Management System
 
 ## Prerequisites
+
 - Node.js installed
 - PostgreSQL installed and running
 
@@ -16,6 +17,7 @@ npm install
 ```
 
 ### Installed Server Packages
+
 - **express**: Backend web framework
 - **pg**: PostgreSQL client for Node.js
 - **cors**: Middleware to allow cross-origin requests
@@ -25,6 +27,7 @@ npm install
 - **nodemon** (dev): Automatically restarts the server on file changes
 
 ### Environment Variables
+
 Create a `.env` file in the `server` directory and add the following configuration:
 
 ```env
@@ -39,7 +42,10 @@ BETTER_AUTH_URL=http://localhost:5000
 BETTER_AUTH_SECRET=your_super_secret_random_string_here
 ```
 
+Get `BETTER_AUTH_SECRET` at `https://better-auth.com/docs/installation#set-environment-variables`
+
 ### Database Migration
+
 Because we are using `better-auth`, you need to generate the authentication tables in your PostgreSQL database. Run the following command inside the `server` directory:
 
 ```bash
@@ -47,6 +53,7 @@ npx @better-auth/cli migrate --config ./utils/auth.js
 ```
 
 ### Run the Server
+
 ```bash
 npm run dev
 ```
@@ -63,6 +70,7 @@ npm install
 ```
 
 ### Installed Client Packages
+
 - **react** & **react-dom**: UI Library
 - **vite**: Frontend build tool
 - **react-router-dom**: Handles page navigation and routing
@@ -73,6 +81,7 @@ npm install
 - **better-auth**: Frontend client for handling login, registration, and sessions
 
 ### Run the Client
+
 ```bash
 npm run dev
 ```
