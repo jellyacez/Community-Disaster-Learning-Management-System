@@ -28,6 +28,32 @@ A progressive, multi-level web application designed to train and certify residen
 
 ---
 
+## 📦 Detailed Dependencies
+
+### Server Dependencies
+- `express` (^5.2.1)
+- `pg` (^8.21.0)
+- `cors` (^2.8.6)
+- `dotenv` (^17.4.2)
+- `bcryptjs` (^3.0.3)
+- `better-auth` (^1.6.15)
+- `helmet` (^8.2.0)
+- `nodemon` (^3.1.14) - *dev*
+
+### Client Dependencies
+- `react` / `react-dom` (^19.2.6)
+- `react-router-dom` (^7.17.0)
+- `axios` (^1.17.0)
+- `better-auth` (^1.6.15)
+- `framer-motion` (^12.40.0)
+- `@hugeicons/react` (^1.1.6)
+- `@hugeicons/core-free-icons` (^4.2.0)
+- `tailwindcss` (^4.3.0) & `@tailwindcss/vite` - *dev*
+- `vite` (^8.0.12) - *dev*
+- `eslint` - *dev*
+
+---
+
 ## 🚀 Getting Started
 
 ### Prerequisites
