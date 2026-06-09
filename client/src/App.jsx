@@ -6,7 +6,7 @@ import SignInPage from "./SignInPage";
 import SystemAdminDashboard from "./pages/admin/systemAdminDashboard";
 import UserDashboard from "./UserDashboard";
 import ProtectedRoute from "./components/ProtectedRoute";
-import NotFoundPage from "./NotFoundPage";
+import NotFoundPage from "./components/NotFoundPage";
 
 export default function App() {
   return (
