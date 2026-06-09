@@ -29,9 +29,12 @@ export default function LandingPage() {
   useEffect(() => {
     if (session && !isPending) {
       const userRole = session.user?.role;
-      if (userRole === "system_admin") navigate("/admin/dashboard", { replace: true });
-      else if (userRole === "mdrrmo_admin") navigate("/mdrrmo/dashboard", { replace: true });
-      else if (userRole === "barangay_admin") navigate("/barangay/dashboard", { replace: true });
+      if (userRole === "system_admin")
+        navigate("/admin/dashboard", { replace: true });
+      else if (userRole === "mdrrmo_admin")
+        navigate("/mdrrmo/dashboard", { replace: true });
+      else if (userRole === "barangay_admin")
+        navigate("/barangay/dashboard", { replace: true });
       else navigate("/userDashboard", { replace: true });
     }
   }, [session, isPending, navigate]);
@@ -279,7 +282,7 @@ export default function LandingPage() {
             >
               <button
                 onClick={() => navigate("/register")}
-                className="flex items-center gap-2 px-8 py-4 bg-red-600 hover:bg-red-500 text-white font-bold rounded-xl shadow-lg transition-all"
+                className="cursor-pointer flex items-center gap-2 px-8 py-4 bg-red-600 hover:bg-red-500 text-white font-bold rounded-xl shadow-lg transition-all"
               >
                 Start Training Free
                 <HugeiconsIcon icon={ArrowRight01Icon} className="w-5 h-5" />
@@ -287,7 +290,7 @@ export default function LandingPage() {
 
               <button
                 onClick={() => navigate("/signin")}
-                className="flex items-center gap-2 px-8 py-4 text-white font-semibold rounded-xl border border-white/20 bg-white/10 hover:bg-white/20 transition-all backdrop-blur-sm"
+                className="cursor-pointer flex items-center gap-2 px-8 py-4 text-white font-semibold rounded-xl border border-white/20 bg-white/10 hover:bg-white/20 transition-all backdrop-blur-sm"
               >
                 Sign In to Account
               </button>
@@ -519,14 +522,14 @@ export default function LandingPage() {
             <div className="flex flex-wrap justify-center gap-4">
               <button
                 onClick={() => navigate("/register")}
-                className="flex items-center gap-2 px-10 py-4 bg-white text-red-700 font-extrabold rounded-xl shadow-xl hover:bg-red-50 transition-colors"
+                className="flex items-center gap-2 px-10 py-4 bg-white text-red-700 font-extrabold rounded-xl shadow-xl hover:bg-red-50 transition-colors cursor-pointer"
               >
                 Create Free Account
                 <HugeiconsIcon icon={ArrowRight01Icon} className="w-5 h-5" />
               </button>
               <button
                 onClick={() => navigate("/signin")}
-                className="px-10 py-4 text-white font-bold rounded-xl border-2 border-white/40 hover:bg-white/10 transition-colors"
+                className="px-10 py-4 text-white font-bold rounded-xl border-2 border-white/40 hover:bg-white/10 transition-colors cursor-pointer"
               >
                 Sign In
               </button>
