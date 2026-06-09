@@ -1,7 +1,12 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { Shield01Icon, ArrowLeft01Icon, EyeIcon, EyeOffIcon } from "@hugeicons/core-free-icons";
+import {
+  Shield01Icon,
+  ArrowLeft01Icon,
+  EyeIcon,
+  EyeOffIcon,
+} from "@hugeicons/core-free-icons";
 import { authClient } from "./lib/auth-client";
 
 export default function SignInPage() {
@@ -102,7 +107,10 @@ export default function SignInPage() {
           )}
 
           <div>
-            <label htmlFor="email" className="block text-sm font-semibold text-gray-700 mb-1">
+            <label
+              htmlFor="email"
+              className="block text-sm font-semibold text-gray-700 mb-1"
+            >
               Email Address
             </label>
             <input
@@ -123,7 +131,10 @@ export default function SignInPage() {
           </div>
 
           <div>
-            <label htmlFor="password" className="block text-sm font-semibold text-gray-700 mb-1">
+            <label
+              htmlFor="password"
+              className="block text-sm font-semibold text-gray-700 mb-1"
+            >
               Password
             </label>
             <div className="relative">
