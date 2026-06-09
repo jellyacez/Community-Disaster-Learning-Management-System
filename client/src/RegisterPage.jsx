@@ -1,6 +1,6 @@
-import { ArrowLeft01Icon, EyeIcon, EyeOffIcon, Shield01Icon } from '@hugeicons/core-free-icons';
+import { ArrowLeft01Icon, EyeIcon, EyeOffIcon, Shield01Icon, Alert01Icon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { authClient } from "./lib/auth-client";
 
@@ -30,6 +30,17 @@ const BACOLOR_BARANGAYS = [
 
 export default function RegisterPage() {
   const navigate = useNavigate();
+  const { data: session, isPending } = authClient.useSession();
+
+  useEffect(() => {
+    if (session && !isPending) {
+      const userRole = session.user?.role;
+      if (userRole === "system_admin") navigate("/admin/dashboard", { replace: true });
+      else if (userRole === "mdrrmo_admin") navigate("/mdrrmo/dashboard", { replace: true });
+      else if (userRole === "barangay_admin") navigate("/barangay/dashboard", { replace: true });
+      else navigate("/userDashboard", { replace: true });
+    }
+  }, [session, isPending, navigate]);
 
   const [formData, setFormData] = useState({
     fullName: "",
@@ -145,8 +156,9 @@ export default function RegisterPage() {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {errors.form && (
-            <div className="text-red-600 text-sm font-semibold text-center mb-4">
-              {errors.form}
+            <div className="flex items-center justify-center gap-2 bg-red-50 text-red-600 p-3 rounded-lg text-sm font-semibold mb-4 border border-red-100">
+              <HugeiconsIcon icon={Alert01Icon} className="w-5 h-5 flex-shrink-0" />
+              <span>{errors.form}</span>
             </div>
           )}
           {formSuccess && (

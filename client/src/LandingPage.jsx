@@ -1,6 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
+import { authClient } from "./lib/auth-client";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   Shield01Icon,
@@ -23,6 +24,17 @@ import {
 export default function LandingPage() {
   const [menuOpen, setMenuOpen] = useState(false);
   const navigate = useNavigate();
+  const { data: session, isPending } = authClient.useSession();
+
+  useEffect(() => {
+    if (session && !isPending) {
+      const userRole = session.user?.role;
+      if (userRole === "system_admin") navigate("/admin/dashboard", { replace: true });
+      else if (userRole === "mdrrmo_admin") navigate("/mdrrmo/dashboard", { replace: true });
+      else if (userRole === "barangay_admin") navigate("/barangay/dashboard", { replace: true });
+      else navigate("/userDashboard", { replace: true });
+    }
+  }, [session, isPending, navigate]);
 
   const hazards = [
     {

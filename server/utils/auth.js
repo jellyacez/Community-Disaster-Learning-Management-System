@@ -1,5 +1,6 @@
 const { betterAuth } = require("better-auth");
 const pool = require("../config/db");
+const { admin } = require("better-auth/plugins");
 
 const auth = betterAuth({
   database: pool,
@@ -21,6 +22,16 @@ const auth = betterAuth({
       },
     },
   },
+  plugins: [
+    admin({
+      defaultRole: "resident",
+      adminRole: "system_admin",
+      roles: {
+        barangay_admin: {},
+        MDRRMO_admin: {},
+      },
+    }),
+  ],
   trustedOrigins: ["http://localhost:5173", "http://localhost:5174"],
   autoSignIn: false,
 });

@@ -1,16 +1,31 @@
-import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   Shield01Icon,
   ArrowLeft01Icon,
   EyeIcon,
   EyeOffIcon,
+  Alert01Icon,
 } from "@hugeicons/core-free-icons";
 import { authClient } from "./lib/auth-client";
 
 export default function SignInPage() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const errorMessage = location.state?.error;
+
+  const { data: session, isPending } = authClient.useSession();
+
+  useEffect(() => {
+    if (session && !isPending) {
+      const userRole = session.user?.role;
+      if (userRole === "system_admin") navigate("/admin/dashboard", { replace: true });
+      else if (userRole === "mdrrmo_admin") navigate("/mdrrmo/dashboard", { replace: true });
+      else if (userRole === "barangay_admin") navigate("/barangay/dashboard", { replace: true });
+      else navigate("/userDashboard", { replace: true });
+    }
+  }, [session, isPending, navigate]);
 
   const [formData, setFormData] = useState({
     email: "",
@@ -61,7 +76,17 @@ export default function SignInPage() {
       });
     } else {
       console.log("Sign in successful:", data);
-      navigate("/");
+
+      const userRole = data?.user?.role;
+      if (userRole === "system_admin") {
+        navigate("/admin/dashboard");
+      } else if (userRole === "mdrrmo_admin") {
+        navigate("/mdrrmo/dashboard");
+      } else if (userRole === "barangay_admin") {
+        navigate("/barangay/dashboard");
+      } else {
+        navigate("/userDashboard");
+      }
     }
   };
 
@@ -100,9 +125,23 @@ export default function SignInPage() {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          {errorMessage && !errors.form && (
+            <div className="flex items-center justify-center gap-2 bg-red-50 text-red-600 p-3 rounded-lg text-sm font-semibold mb-4 border border-red-100">
+              <HugeiconsIcon
+                icon={Alert01Icon}
+                className="w-5 h-5 flex-shrink-0"
+              />
+              <span>{errorMessage}</span>
+            </div>
+          )}
+
           {errors.form && (
-            <div className="text-red-600 text-sm font-semibold text-center mb-4">
-              {errors.form}
+            <div className="flex items-center justify-center gap-2 bg-red-50 text-red-600 p-3 rounded-lg text-sm font-semibold mb-4 border border-red-100">
+              <HugeiconsIcon
+                icon={Alert01Icon}
+                className="w-5 h-5 flex-shrink-0"
+              />
+              <span>{errors.form}</span>
             </div>
           )}
 
@@ -183,7 +222,7 @@ export default function SignInPage() {
           Don&apos;t have an account?{" "}
           <Link
             to="/register"
-            className="text-red-6 00 font-semibold hover:underline"
+            className="text-red-600 font-semibold hover:underline"
           >
             Register
           </Link>

@@ -1,6 +1,6 @@
 require("dotenv").config();
 const express = require("express");
-const helmet = require('helmet');
+const helmet = require("helmet");
 const cors = require("cors");
 const pool = require("./config/db");
 const { toNodeHandler } = require("better-auth/node");
