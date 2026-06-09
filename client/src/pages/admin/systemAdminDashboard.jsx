@@ -17,7 +17,7 @@ export default function SystemAdminDashboard() {
         Welcome to the System Admin Dashboard! Here you can manage users, view
         system logs, and perform administrative tasks.
       </p>
-      <button 
+      <button
         onClick={handleLogout}
         className="mt-4 px-4 py-2 bg-red-600 text-white rounded font-semibold hover:bg-red-700"
       >

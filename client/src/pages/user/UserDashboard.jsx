@@ -1,5 +1,5 @@
 import React from "react";
-import { authClient } from "./lib/auth-client";
+import { authClient } from "../../lib/auth-client";
 import { useNavigate } from "react-router-dom";
 
 export default function UserDashboard() {

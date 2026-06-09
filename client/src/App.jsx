@@ -4,7 +4,7 @@ import LandingPage from "./LandingPage";
 import RegisterPage from "./RegisterPage";
 import SignInPage from "./SignInPage";
 import SystemAdminDashboard from "./pages/admin/systemAdminDashboard";
-import UserDashboard from "./UserDashboard";
+import UserDashboard from "./pages/user/UserDashboard";
 import ProtectedRoute from "./components/ProtectedRoute";
 import NotFoundPage from "./components/NotFoundPage";
 
