@@ -13,17 +13,13 @@ const auth = betterAuth({
       barangay: {
         type: "string",
         required: true,
-      }
-    },
-    account:{
-      additionalFields:{
-      role:{
+      },
+      role: {
         type: "string",
         required: false,
-        defaultValue:"resident"
-      }
-      }
-    }
+        defaultValue: "resident",
+      },
+    },
   },
   trustedOrigins: ["http://localhost:5173", "http://localhost:5174"],
   autoSignIn: false,
