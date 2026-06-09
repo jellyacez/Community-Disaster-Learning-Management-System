@@ -165,6 +165,10 @@ export default function SignInPage() {
                 {errors.password}
               </p>
             )}
+            {/* add link to forgot password page */}
+            <div className="text-blue-500 font-semibold hover:underline text-xs mt-2 cursor-pointer text-right pt-1.5">
+              Forgot Password?{" "}
+            </div>
           </div>
 
           <button
@@ -179,7 +183,7 @@ export default function SignInPage() {
           Don&apos;t have an account?{" "}
           <Link
             to="/register"
-            className="text-red-600 font-semibold hover:underline"
+            className="text-red-6 00 font-semibold hover:underline"
           >
             Register
           </Link>
