@@ -1,19 +1,19 @@
-import React, { useState } from 'react';
-import { authClient } from '../../lib/auth-client';
-import DashboardLayout from '../../user/DashboardLayout';
+import React, { useState } from "react";
+import { authClient } from "../../lib/auth-client";
+import DashboardLayout from "./components/DashboardLayout";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  CheckmarkCircle02Icon,
+  AlertCircleIcon,
+} from "@hugeicons/core-free-icons";
 
 function formatRole(role) {
   switch (role) {
-    case 'system_admin':
-      return 'System Administrator';
-    case 'mdrrmo_admin':
-      return 'MDRRMO Administrator';
-    case 'barangay_admin':
-      return 'Barangay Administrator';
-    case 'user':
-      return 'Resident / Learner';
-    default:
-      return role || 'Resident / Learner';
+    case 'system_admin': return 'System Administrator';
+    case 'mdrrmo_admin': return 'MDRRMO Administrator';
+    case 'barangay_admin': return 'Barangay Administrator';
+    case 'user': return 'Resident / Learner';
+    default: return role || 'Resident / Learner';
   }
 }
 
@@ -28,12 +28,7 @@ export default function UserProfile() {
     role: formatRole(session?.user?.role),
   };
 
-  const userInitials = currentUser.name
-    .split(' ')
-    .map((part) => part[0])
-    .join('')
-    .slice(0, 2)
-    .toUpperCase();
+  const userInitials = currentUser.name.split(' ').map(part => part[0]).join('').slice(0, 2).toUpperCase();
 
   const handleLogout = async () => {
     try {
@@ -58,7 +53,9 @@ export default function UserProfile() {
     >
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-extrabold text-gray-900">User Profile</h1>
+          <h1 className="text-3xl font-extrabold text-gray-900">
+            User Profile
+          </h1>
           <p className="mt-1 text-sm text-gray-500">
             View your account information and learning identity.
           </p>
@@ -70,7 +67,9 @@ export default function UserProfile() {
               <div className="flex h-24 w-24 items-center justify-center rounded-full bg-red-100 text-3xl font-extrabold text-red-700">
                 {userInitials}
               </div>
-              <h2 className="mt-4 text-xl font-bold text-gray-900">{currentUser.name}</h2>
+              <h2 className="mt-4 text-xl font-bold text-gray-900">
+                {currentUser.name}
+              </h2>
               <p className="text-sm text-gray-500">{currentUser.role}</p>
             </div>
           </div>
@@ -82,25 +81,33 @@ export default function UserProfile() {
                 <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">
                   Full Name
                 </p>
-                <p className="mt-1 text-base font-semibold text-gray-900">{currentUser.name}</p>
+                <p className="mt-1 text-base font-semibold text-gray-900">
+                  {currentUser.name}
+                </p>
               </div>
               <div>
                 <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">
                   Email
                 </p>
-                <p className="mt-1 text-base font-semibold text-gray-900">{currentUser.email}</p>
+                <p className="mt-1 text-base font-semibold text-gray-900">
+                  {currentUser.email}
+                </p>
               </div>
               <div>
                 <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">
                   Barangay
                 </p>
-                <p className="mt-1 text-base font-semibold text-gray-900">{currentUser.barangay}</p>
+                <p className="mt-1 text-base font-semibold text-gray-900">
+                  {currentUser.barangay}
+                </p>
               </div>
               <div>
                 <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">
                   Role
                 </p>
-                <p className="mt-1 text-base font-semibold text-gray-900">{currentUser.role}</p>
+                <p className="mt-1 text-base font-semibold text-gray-900">
+                  {currentUser.role}
+                </p>
               </div>
             </div>
           </div>

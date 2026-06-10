@@ -1,19 +1,19 @@
-import React, { useState } from 'react';
-import { authClient } from '../../lib/auth-client';
-import DashboardLayout from '../../user/DashboardLayout';
+import React, { useState } from "react";
+import { authClient } from "../../lib/auth-client";
+import DashboardLayout from "./components/DashboardLayout";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  CheckmarkCircle02Icon,
+  AlertCircleIcon,
+} from "@hugeicons/core-free-icons";
 
 function formatRole(role) {
   switch (role) {
-    case 'system_admin':
-      return 'System Administrator';
-    case 'mdrrmo_admin':
-      return 'MDRRMO Administrator';
-    case 'barangay_admin':
-      return 'Barangay Administrator';
-    case 'user':
-      return 'Resident / Learner';
-    default:
-      return role || 'Resident / Learner';
+    case 'system_admin': return 'System Administrator';
+    case 'mdrrmo_admin': return 'MDRRMO Administrator';
+    case 'barangay_admin': return 'Barangay Administrator';
+    case 'user': return 'Resident / Learner';
+    default: return role || 'Resident / Learner';
   }
 }
 
@@ -28,12 +28,7 @@ export default function UserSettings() {
     role: formatRole(session?.user?.role),
   };
 
-  const userInitials = currentUser.name
-    .split(' ')
-    .map((part) => part[0])
-    .join('')
-    .slice(0, 2)
-    .toUpperCase();
+  const userInitials = currentUser.name.split(' ').map(part => part[0]).join('').slice(0, 2).toUpperCase();
 
   const handleLogout = async () => {
     try {
@@ -66,7 +61,9 @@ export default function UserSettings() {
 
         <div className="grid gap-6 lg:grid-cols-2">
           <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-            <h2 className="text-xl font-bold text-gray-900">Profile Preferences</h2>
+            <h2 className="text-xl font-bold text-gray-900">
+              Profile Preferences
+            </h2>
             <div className="mt-5 space-y-4">
               <div>
                 <label className="mb-1 block text-sm font-semibold text-gray-700">

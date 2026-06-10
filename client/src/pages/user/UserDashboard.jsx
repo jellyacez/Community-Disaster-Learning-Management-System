@@ -1,22 +1,23 @@
-import React, { useState } from 'react';
-import { Bell } from 'lucide-react';
-import { authClient } from '../../lib/auth-client';
-import DashboardLayout from '../../user/DashboardLayout';
-import StatCard from '../../user/StatCard';
-import { announcements, modules } from './userData.js';
+import React, { useState } from "react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { Notification03Icon } from "@hugeicons/core-free-icons";
+import { authClient } from "../../lib/auth-client";
+import DashboardLayout from "./components/DashboardLayout.jsx";
+import StatCard from "./components/StatCard.jsx";
+import { announcements, modules } from "./userData.js";
 
 function formatRole(role) {
   switch (role) {
-    case 'system_admin':
-      return 'System Administrator';
-    case 'mdrrmo_admin':
-      return 'MDRRMO Administrator';
-    case 'barangay_admin':
-      return 'Barangay Administrator';
-    case 'user':
-      return 'Resident / Learner';
+    case "system_admin":
+      return "System Administrator";
+    case "mdrrmo_admin":
+      return "MDRRMO Administrator";
+    case "barangay_admin":
+      return "Barangay Administrator";
+    case "user":
+      return "Resident / Learner";
     default:
-      return role || 'Resident / Learner';
+      return role || "Resident / Learner";
   }
 }
 
@@ -29,16 +30,16 @@ export default function UserDashboard() {
       session?.user?.name ||
       session?.user?.fullName ||
       session?.user?.username ||
-      'User',
-    email: session?.user?.email || 'No email available',
-    barangay: session?.user?.barangay || 'No barangay set',
+      "User",
+    email: session?.user?.email || "No email available",
+    barangay: session?.user?.barangay || "No barangay set",
     role: formatRole(session?.user?.role),
   };
 
   const userInitials = currentUser.name
-    .split(' ')
+    .split(" ")
     .map((part) => part[0])
-    .join('')
+    .join("")
     .slice(0, 2)
     .toUpperCase();
 
@@ -47,16 +48,18 @@ export default function UserDashboard() {
   const handleLogout = async () => {
     try {
       await authClient.signOut();
-      window.location.href = '/signin';
+      window.location.href = "/signin";
     } catch (error) {
-      console.error('Logout failed:', error);
+      console.error("Logout failed:", error);
     }
   };
 
   if (isPending) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-100">
-        <p className="text-lg font-semibold text-gray-700">Loading dashboard...</p>
+        <p className="text-lg font-semibold text-gray-700">
+          Loading dashboard...
+        </p>
       </div>
     );
   }
@@ -71,13 +74,16 @@ export default function UserDashboard() {
     >
       <div className="space-y-8">
         <section className="rounded-3xl bg-gradient-to-r from-red-700 via-red-600 to-rose-600 p-8 text-white shadow-lg">
-          <p className="text-sm uppercase tracking-widest text-red-100">Welcome back</p>
+          <p className="text-sm uppercase tracking-widest text-red-100">
+            Welcome back
+          </p>
           <h1 className="mt-2 text-3xl md:text-4xl font-extrabold">
             Hello, {currentUser.name}
           </h1>
           <p className="mt-3 max-w-2xl text-red-100">
-            Continue your disaster preparedness training, stay updated with municipal announcements,
-            and track your learning progress in one place.
+            Continue your disaster preparedness training, stay updated with
+            municipal announcements, and track your learning progress in one
+            place.
           </p>
 
           <div className="mt-6 flex flex-wrap gap-3">
@@ -117,8 +123,12 @@ export default function UserDashboard() {
           <div className="lg:col-span-2 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
             <div className="mb-5 flex items-center justify-between">
               <div>
-                <h2 className="text-xl font-bold text-gray-900">Continue Your Modules</h2>
-                <p className="text-sm text-gray-500">Resume training where you left off.</p>
+                <h2 className="text-xl font-bold text-gray-900">
+                  Continue Your Modules
+                </h2>
+                <p className="text-sm text-gray-500">
+                  Resume training where you left off.
+                </p>
               </div>
             </div>
 
@@ -138,14 +148,22 @@ export default function UserDashboard() {
                           {module.level}
                         </span>
                       </div>
-                      <h3 className="text-lg font-bold text-gray-900">{module.title}</h3>
-                      <p className="mt-1 text-sm text-gray-500">{module.description}</p>
+                      <h3 className="text-lg font-bold text-gray-900">
+                        {module.title}
+                      </h3>
+                      <p className="mt-1 text-sm text-gray-500">
+                        {module.description}
+                      </p>
                     </div>
 
                     <div className="min-w-52">
                       <div className="mb-2 flex items-center justify-between text-sm">
-                        <span className="font-medium text-gray-500">Progress</span>
-                        <span className="font-bold text-gray-900">{module.progress}%</span>
+                        <span className="font-medium text-gray-500">
+                          Progress
+                        </span>
+                        <span className="font-bold text-gray-900">
+                          {module.progress}%
+                        </span>
                       </div>
                       <div className="h-3 w-full overflow-hidden rounded-full bg-gray-100">
                         <div
@@ -165,8 +183,13 @@ export default function UserDashboard() {
 
           <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
             <div className="mb-5 flex items-center gap-2">
-              <Bell className="w-5 h-5 text-red-600" />
-              <h2 className="text-xl font-bold text-gray-900">Latest Announcements</h2>
+              <HugeiconsIcon
+                icon={Notification03Icon}
+                className="w-5 h-5 text-red-600"
+              />
+              <h2 className="text-xl font-bold text-gray-900">
+                Latest Announcements
+              </h2>
             </div>
 
             <div className="space-y-4">
@@ -175,7 +198,9 @@ export default function UserDashboard() {
                   <p className="text-xs font-semibold uppercase tracking-wide text-red-600">
                     {item.date}
                   </p>
-                  <h3 className="mt-2 text-sm font-bold text-gray-900">{item.title}</h3>
+                  <h3 className="mt-2 text-sm font-bold text-gray-900">
+                    {item.title}
+                  </h3>
                   <p className="mt-1 text-sm text-gray-500">{item.content}</p>
                 </div>
               ))}

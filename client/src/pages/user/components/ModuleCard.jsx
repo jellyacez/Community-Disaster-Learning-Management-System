@@ -35,16 +35,16 @@ export default function ModuleCard({ module, enrolled = false }) {
 
       <div className="mt-6 flex flex-wrap gap-3">
         {enrolled ? (
-          <button className="rounded-xl bg-red-600 px-5 py-3 text-sm font-bold text-white hover:bg-red-700 transition">
+          <button className="rounded-xl bg-red-600 px-5 py-3 text-sm font-bold text-white hover:bg-red-700 transition cursor-pointer">
             Continue
           </button>
         ) : (
-          <button className="rounded-xl bg-gray-900 px-5 py-3 text-sm font-bold text-white hover:bg-black transition">
+          <button className="rounded-xl bg-gray-900 px-5 py-3 text-sm font-bold text-white hover:bg-black transition cursor-pointer">
             Enroll Now
           </button>
         )}
 
-        <button className="rounded-xl border border-gray-200 px-5 py-3 text-sm font-bold text-gray-700 hover:bg-gray-50 transition">
+        <button className="rounded-xl border border-gray-200 px-5 py-3 text-sm font-bold text-gray-700 hover:bg-gray-50 transition cursor-pointer">
           View Details
         </button>
       </div>

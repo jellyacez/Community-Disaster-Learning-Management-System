@@ -15,14 +15,22 @@ export default function SignInPage() {
   const location = useLocation();
   const errorMessage = location.state?.error;
 
+  useEffect(() => {
+    // Cleanup the flag when we arrive at signin
+    sessionStorage.removeItem("isLoggingOut");
+  }, []);
+
   const { data: session, isPending } = authClient.useSession();
 
   useEffect(() => {
     if (session && !isPending) {
       const userRole = session.user?.role;
-      if (userRole === "system_admin") navigate("/admin/dashboard", { replace: true });
-      else if (userRole === "mdrrmo_admin") navigate("/mdrrmo/dashboard", { replace: true });
-      else if (userRole === "barangay_admin") navigate("/barangay/dashboard", { replace: true });
+      if (userRole === "system_admin")
+        navigate("/admin/dashboard", { replace: true });
+      else if (userRole === "mdrrmo_admin")
+        navigate("/mdrrmo/dashboard", { replace: true });
+      else if (userRole === "barangay_admin")
+        navigate("/barangay/dashboard", { replace: true });
       else navigate("/userDashboard", { replace: true });
     }
   }, [session, isPending, navigate]);
@@ -76,17 +84,6 @@ export default function SignInPage() {
       });
     } else {
       console.log("Sign in successful:", data);
-
-      const userRole = data?.user?.role;
-      if (userRole === "system_admin") {
-        navigate("/admin/dashboard");
-      } else if (userRole === "mdrrmo_admin") {
-        navigate("/mdrrmo/dashboard");
-      } else if (userRole === "barangay_admin") {
-        navigate("/barangay/dashboard");
-      } else {
-        navigate("/userDashboard");
-      }
     }
   };
 

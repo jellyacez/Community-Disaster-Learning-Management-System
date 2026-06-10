@@ -17,11 +17,27 @@ export default function ProtectedRoute({ allowedRoles }) {
   }
 
   if (!session) {
-    return <Navigate to="/signin" state={{ error: "Please log in to access this page." }} replace />;
+    if (sessionStorage.getItem("isLoggingOut") === "true") {
+      return <Navigate to="/signin" replace />;
+    }
+    return (
+      <Navigate
+        to="/signin"
+        state={{ error: "Please log in to access this page." }}
+        replace
+      />
+    );
   }
 
   if (allowedRoles && allowedRoles.length > 0) {
-    const userRole = session.user.role;
+    const userRole = session.user?.role;
+    if (!userRole) {
+      return (
+        <div className="min-h-screen flex items-center justify-center bg-gray-50">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600"></div>
+        </div>
+      );
+    }
 
     if (!allowedRoles.includes(userRole)) {
       return (
