@@ -1,77 +1,16 @@
-import React, { useState } from "react";
+import React from "react";
+import { useOutletContext } from "react-router-dom";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Notification03Icon } from "@hugeicons/core-free-icons";
-import { authClient } from "../../lib/auth-client";
-import DashboardLayout from "./components/DashboardLayout.jsx";
 import StatCard from "./components/StatCard.jsx";
 import { announcements, modules } from "./userData.js";
 
-function formatRole(role) {
-  switch (role) {
-    case "system_admin":
-      return "System Administrator";
-    case "mdrrmo_admin":
-      return "MDRRMO Administrator";
-    case "barangay_admin":
-      return "Barangay Administrator";
-    case "user":
-      return "Resident / Learner";
-    default:
-      return role || "Resident / Learner";
-  }
-}
-
 export default function UserDashboard() {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const { data: session, isPending } = authClient.useSession();
-
-  const currentUser = {
-    name:
-      session?.user?.name ||
-      session?.user?.fullName ||
-      session?.user?.username ||
-      "User",
-    email: session?.user?.email || "No email available",
-    barangay: session?.user?.barangay || "No barangay set",
-    role: formatRole(session?.user?.role),
-  };
-
-  const userInitials = currentUser.name
-    .split(" ")
-    .map((part) => part[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
-
+  const { currentUser } = useOutletContext();
   const enrolledModules = modules.filter((module) => module.enrolled);
 
-  const handleLogout = async () => {
-    try {
-      await authClient.signOut();
-      window.location.href = "/signin";
-    } catch (error) {
-      console.error("Logout failed:", error);
-    }
-  };
-
-  if (isPending) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-100">
-        <p className="text-lg font-semibold text-gray-700">
-          Loading dashboard...
-        </p>
-      </div>
-    );
-  }
-
   return (
-    <DashboardLayout
-      currentUser={currentUser}
-      userInitials={userInitials}
-      onLogout={handleLogout}
-      sidebarOpen={sidebarOpen}
-      setSidebarOpen={setSidebarOpen}
-    >
+    <div className="animate-in fade-in duration-300">
       <div className="space-y-8">
         <section className="rounded-3xl bg-gradient-to-r from-red-700 via-red-600 to-rose-600 p-8 text-white shadow-lg">
           <p className="text-sm uppercase tracking-widest text-red-100">
@@ -87,10 +26,10 @@ export default function UserDashboard() {
           </p>
 
           <div className="mt-6 flex flex-wrap gap-3">
-            <button className="rounded-xl bg-white px-5 py-3 text-sm font-bold text-red-700 hover:bg-red-50 transition">
+            <button className="rounded-xl bg-white px-5 py-3 text-sm font-bold text-red-700 hover:bg-red-50 transition cursor-pointer">
               Browse Modules
             </button>
-            <button className="rounded-xl border border-white/30 px-5 py-3 text-sm font-bold text-white hover:bg-white/10 transition">
+            <button className="rounded-xl border border-white/30 px-5 py-3 text-sm font-bold text-white hover:bg-white/10 transition cursor-pointer">
               Continue Learning
             </button>
           </div>
@@ -136,7 +75,7 @@ export default function UserDashboard() {
               {enrolledModules.map((module) => (
                 <div
                   key={module.id}
-                  className="rounded-2xl border border-gray-200 p-5 hover:border-red-200 transition"
+                  className="rounded-2xl border border-gray-200 p-5 hover:border-red-200 transition cursor-pointer"
                 >
                   <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                     <div>
@@ -171,7 +110,7 @@ export default function UserDashboard() {
                           style={{ width: `${module.progress}%` }}
                         />
                       </div>
-                      <button className="mt-4 w-full rounded-xl bg-red-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-red-700 transition">
+                      <button className="mt-4 w-full rounded-xl bg-red-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-red-700 transition cursor-pointer">
                         Resume Module
                       </button>
                     </div>
@@ -194,7 +133,10 @@ export default function UserDashboard() {
 
             <div className="space-y-4">
               {announcements.slice(0, 3).map((item) => (
-                <div key={item.id} className="rounded-2xl bg-gray-50 p-4">
+                <div
+                  key={item.id}
+                  className="rounded-2xl bg-gray-50 p-4 hover:bg-gray-100 transition cursor-pointer border border-transparent hover:border-gray-200"
+                >
                   <p className="text-xs font-semibold uppercase tracking-wide text-red-600">
                     {item.date}
                   </p>
@@ -208,6 +150,6 @@ export default function UserDashboard() {
           </div>
         </section>
       </div>
-    </DashboardLayout>
+    </div>
   );
 }

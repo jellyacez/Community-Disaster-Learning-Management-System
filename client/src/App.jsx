@@ -16,6 +16,8 @@ import UserSettings from "./pages/user/UserSettings";
 import ProtectedRoute from "./components/ProtectedRoute";
 import NotFoundPage from "./components/NotFoundPage";
 
+import UserLayout from "./pages/user/components/UserLayout";
+
 export default function App() {
   return (
     <>
@@ -26,12 +28,14 @@ export default function App() {
         <Route path="/signin" element={<SignInPage />} />
 
         <Route element={<ProtectedRoute allowedRoles={["resident"]} />}>
-          <Route path="/userDashboard" element={<UserDashboard />} />
-          <Route path="/user/announcements" element={<UserAnnouncements />} />
-          <Route path="/user/modules" element={<UserModuleCatalog />} />
-          <Route path="/user/enrolled" element={<UserEnrolledModules />} />
-          <Route path="/user/profile" element={<UserProfile />} />
-          <Route path="/user/settings" element={<UserSettings />} />
+          <Route element={<UserLayout />}>
+            <Route path="/userDashboard" element={<UserDashboard />} />
+            <Route path="/user/announcements" element={<UserAnnouncements />} />
+            <Route path="/user/modules" element={<UserModuleCatalog />} />
+            <Route path="/user/enrolled" element={<UserEnrolledModules />} />
+            <Route path="/user/profile" element={<UserProfile />} />
+            <Route path="/user/settings" element={<UserSettings />} />
+          </Route>
         </Route>
 
         <Route element={<ProtectedRoute allowedRoles={["system_admin"]} />}>
