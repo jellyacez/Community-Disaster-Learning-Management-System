@@ -46,6 +46,7 @@ A progressive, multi-level web application designed to train and certify residen
 - `axios` (^1.17.0)
 - `better-auth` (^1.6.15)
 - `framer-motion` (^12.40.0)
+- `react-hot-toast` (^2.6.0)
 - `@hugeicons/react` (^1.1.6)
 - `@hugeicons/core-free-icons` (^4.2.0)
 - `tailwindcss` (^4.3.0) & `@tailwindcss/vite` - *dev*
