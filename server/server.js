@@ -20,7 +20,7 @@ app.use(helmet());
 app.use(express.json());
 
 const adminController = require("./controllers/adminController");
-const userController = require("./controllers/userController");
+const userController = require("./controllers/getUserController");
 
 // Mount the API Routes
 app.use("/api/admin", adminController);
