@@ -8,7 +8,6 @@ const { auth } = require("./utils/auth");
 
 const app = express();
 
-// Configure CORS to allow credentials from Vite's default port
 app.use(
   cors({
     origin: ["http://localhost:5173", "http://localhost:5174"],
@@ -16,21 +15,16 @@ app.use(
   }),
 );
 
-// Mount Better-Auth BEFORE express.json() so it can read the raw request body
 app.use("/api/auth", toNodeHandler(auth));
 app.use(helmet());
 app.use(express.json());
 
-// Sample API Route
-app.get("/api/users", async (req, res) => {
-  try {
-    const result = await pool.query("SELECT * FROM users");
-    res.json(result.rows);
-  } catch (err) {
-    console.error(err.message);
-    res.status(500).send("Server Error");
-  }
-});
+const adminController = require("./controllers/adminController");
+const userController = require("./controllers/userController");
+
+// Mount the API Routes
+app.use("/api/admin", adminController);
+app.use("/api/users", userController);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {

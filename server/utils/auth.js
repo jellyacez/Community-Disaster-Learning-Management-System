@@ -20,6 +20,11 @@ const auth = betterAuth({
         required: false,
         defaultValue: "resident",
       },
+      archived: {
+        type: "boolean",
+        required: false,
+        defaultValue: false,
+      },
     },
   },
   plugins: [
