@@ -25,15 +25,22 @@ export default function SystemAdminDashboard() {
   }, []);
 
   const handleLogout = async () => {
+    sessionStorage.setItem("isLoggingOut", "true");
     await authClient.signOut();
     navigate("/");
   };
 
   const handleEditRole = async (user) => {
-    const newRole = window.prompt("Enter new role (resident, barangay_admin, mdrrmo_admin, system_admin):", user.role);
+    const newRole = window.prompt(
+      "Enter new role (resident, barangay_admin, mdrrmo_admin, system_admin):",
+      user.role,
+    );
     if (!newRole || newRole === user.role) return;
 
-    const { error } = await authClient.admin.setRole({ userId: user.id, role: newRole });
+    const { error } = await authClient.admin.setRole({
+      userId: user.id,
+      role: newRole,
+    });
     if (error) {
       toast.error("Failed to update role: " + error.message);
     } else {
@@ -44,16 +51,24 @@ export default function SystemAdminDashboard() {
 
   const handleEditUser = async (user) => {
     const newName = window.prompt("Enter new name:", user.name) || user.name;
-    const newEmail = window.prompt("Enter new email:", user.email) || user.email;
+    const newEmail =
+      window.prompt("Enter new email:", user.email) || user.email;
 
     if (newName === user.name && newEmail === user.email) return;
 
     try {
-      const res = await fetch(`http://localhost:5000/api/admin/users/${user.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: newName, email: newEmail, archived: user.archived }),
-      });
+      const res = await fetch(
+        `http://localhost:5000/api/admin/users/${user.id}`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name: newName,
+            email: newEmail,
+            archived: user.archived,
+          }),
+        },
+      );
       if (!res.ok) throw new Error("Failed to update user");
       toast.success("User details updated!");
       fetchUsers();
@@ -63,17 +78,30 @@ export default function SystemAdminDashboard() {
   };
 
   const handleArchive = async (user) => {
-    const confirm = window.confirm(`Are you sure you want to ${user.archived ? "unarchive" : "archive"} this account?`);
+    const confirm = window.confirm(
+      `Are you sure you want to ${user.archived ? "unarchive" : "archive"} this account?`,
+    );
     if (!confirm) return;
 
     try {
-      const res = await fetch(`http://localhost:5000/api/admin/users/${user.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: user.name, email: user.email, archived: !user.archived }),
-      });
+      const res = await fetch(
+        `http://localhost:5000/api/admin/users/${user.id}`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name: user.name,
+            email: user.email,
+            archived: !user.archived,
+          }),
+        },
+      );
       if (!res.ok) throw new Error("Failed to archive user");
-      toast.success(user.archived ? "Account unarchived!" : "Account archived successfully!");
+      toast.success(
+        user.archived
+          ? "Account unarchived!"
+          : "Account archived successfully!",
+      );
       fetchUsers();
     } catch (err) {
       toast.error(err.message);
@@ -88,11 +116,14 @@ export default function SystemAdminDashboard() {
     }
 
     try {
-      const res = await fetch(`http://localhost:5000/api/admin/users/${user.id}/password`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ password: newPassword }),
-      });
+      const res = await fetch(
+        `http://localhost:5000/api/admin/users/${user.id}/password`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ password: newPassword }),
+        },
+      );
       if (!res.ok) throw new Error("Failed to reset password");
       toast.success("Password reset successfully!");
     } catch (err) {
@@ -104,8 +135,12 @@ export default function SystemAdminDashboard() {
     <div className="min-h-screen bg-gray-50 p-8">
       <div className="flex justify-between items-center mb-8 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
         <div>
-          <h1 className="text-3xl font-extrabold text-gray-900">System Admin Dashboard</h1>
-          <p className="text-gray-500 mt-1">Manage all registered users and system roles.</p>
+          <h1 className="text-3xl font-extrabold text-gray-900">
+            System Admin Dashboard
+          </h1>
+          <p className="text-gray-500 mt-1">
+            Manage all registered users and system roles.
+          </p>
         </div>
         <button
           onClick={handleLogout}
@@ -117,9 +152,11 @@ export default function SystemAdminDashboard() {
 
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
         <div className="p-6 border-b border-gray-100">
-          <h2 className="text-xl font-bold text-gray-900">User Management Directory</h2>
+          <h2 className="text-xl font-bold text-gray-900">
+            User Management Directory
+          </h2>
         </div>
-        
+
         {loading ? (
           <div className="p-8 text-center text-gray-500">Loading users...</div>
         ) : (
@@ -146,16 +183,38 @@ export default function SystemAdminDashboard() {
                     </td>
                     <td className="p-4">
                       {user.archived ? (
-                        <span className="bg-red-100 text-red-800 text-xs font-bold px-3 py-1 rounded-full">Archived</span>
+                        <span className="bg-red-100 text-red-800 text-xs font-bold px-3 py-1 rounded-full">
+                          Archived
+                        </span>
                       ) : (
-                        <span className="bg-green-100 text-green-800 text-xs font-bold px-3 py-1 rounded-full">Active</span>
+                        <span className="bg-green-100 text-green-800 text-xs font-bold px-3 py-1 rounded-full">
+                          Active
+                        </span>
                       )}
                     </td>
                     <td className="p-4 flex gap-2 justify-end">
-                      <button onClick={() => handleEditUser(user)} className="px-3 py-1.5 text-xs font-bold bg-gray-100 text-gray-700 hover:bg-gray-200 rounded-lg transition">Edit User</button>
-                      <button onClick={() => handleEditRole(user)} className="px-3 py-1.5 text-xs font-bold bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-lg transition">Edit Role</button>
-                      <button onClick={() => handleResetPassword(user)} className="px-3 py-1.5 text-xs font-bold bg-orange-50 text-orange-700 hover:bg-orange-100 rounded-lg transition">Reset Pass</button>
-                      <button onClick={() => handleArchive(user)} className={`px-3 py-1.5 text-xs font-bold rounded-lg transition ${user.archived ? 'bg-green-50 text-green-700 hover:bg-green-100' : 'bg-red-50 text-red-700 hover:bg-red-100'}`}>
+                      <button
+                        onClick={() => handleEditUser(user)}
+                        className="px-3 py-1.5 text-xs font-bold bg-gray-100 text-gray-700 hover:bg-gray-200 rounded-lg transition"
+                      >
+                        Edit User
+                      </button>
+                      <button
+                        onClick={() => handleEditRole(user)}
+                        className="px-3 py-1.5 text-xs font-bold bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-lg transition"
+                      >
+                        Edit Role
+                      </button>
+                      <button
+                        onClick={() => handleResetPassword(user)}
+                        className="px-3 py-1.5 text-xs font-bold bg-orange-50 text-orange-700 hover:bg-orange-100 rounded-lg transition"
+                      >
+                        Reset Pass
+                      </button>
+                      <button
+                        onClick={() => handleArchive(user)}
+                        className={`px-3 py-1.5 text-xs font-bold rounded-lg transition ${user.archived ? "bg-green-50 text-green-700 hover:bg-green-100" : "bg-red-50 text-red-700 hover:bg-red-100"}`}
+                      >
                         {user.archived ? "Unarchive" : "Archive"}
                       </button>
                     </td>

@@ -21,7 +21,37 @@ import UserLayout from "./pages/user/components/UserLayout";
 export default function App() {
   return (
     <>
-      <Toaster position="top-center" toastOptions={{ duration: 3000 }} />
+      <Toaster 
+        position="top-center" 
+        toastOptions={{ 
+          duration: 3000,
+          style: {
+            fontWeight: "bold",
+            padding: "16px",
+            borderRadius: "16px",
+          },
+          success: {
+            style: {
+              background: "#22c55e",
+              color: "#fff",
+            },
+            iconTheme: {
+              primary: "#fff",
+              secondary: "#22c55e",
+            },
+          },
+          error: {
+            style: {
+              background: "#ef4444",
+              color: "#fff",
+            },
+            iconTheme: {
+              primary: "#fff",
+              secondary: "#ef4444",
+            },
+          },
+        }} 
+      />
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/register" element={<RegisterPage />} />

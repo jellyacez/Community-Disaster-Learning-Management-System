@@ -84,19 +84,7 @@ export default function SignInPage() {
       });
     } else {
       console.log("Sign in successful:", data);
-      toast.success("Successfully logged in!", {
-        style: {
-          background: "#22c55e",
-          color: "#fff",
-          fontWeight: "bold",
-          padding: "16px",
-          borderRadius: "16px",
-        },
-        iconTheme: {
-          primary: "#fff",
-          secondary: "#22c55e",
-        },
-      });
+      toast.success("Successfully logged in!");
     }
   };
 

@@ -31,33 +31,9 @@ export default function UserSidebar({
     try {
       sessionStorage.setItem("isLoggingOut", "true");
       await authClient.signOut();
-      toast.success("Successfully logged out!", {
-        style: {
-          background: "#22c55e",
-          color: "#fff",
-          fontWeight: "bold",
-          padding: "16px",
-          borderRadius: "16px",
-        },
-        iconTheme: {
-          primary: "#fff",
-          secondary: "#22c55e",
-        },
-      });
+      toast.success("Successfully logged out!");
     } catch (error) {
-      toast.error("Logout failed", {
-        style: {
-          background: "#ef4444",
-          color: "#fff",
-          fontWeight: "bold",
-          padding: "16px",
-          borderRadius: "16px",
-        },
-        iconTheme: {
-          primary: "#fff",
-          secondary: "#ef4444",
-        },
-      });
+      toast.error("Logout failed");
     }
   };
 
