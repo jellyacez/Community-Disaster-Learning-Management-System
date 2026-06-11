@@ -1,5 +1,11 @@
-import { ArrowLeft01Icon, EyeIcon, EyeOffIcon, Shield01Icon, Alert01Icon } from '@hugeicons/core-free-icons';
-import { HugeiconsIcon } from '@hugeicons/react';
+import {
+  ArrowLeft01Icon,
+  EyeIcon,
+  EyeOffIcon,
+  Shield01Icon,
+  Alert01Icon,
+} from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { authClient } from "./lib/auth-client";
@@ -33,14 +39,26 @@ export default function RegisterPage() {
   const { data: session, isPending } = authClient.useSession();
 
   useEffect(() => {
+    sessionStorage.removeItem("isLoggingOut");
+  }, []);
+
+  const [justRegistered, setJustRegistered] = useState(false);
+
+  useEffect(() => {
     if (session && !isPending) {
       const userRole = session.user?.role;
-      if (userRole === "system_admin") navigate("/admin/dashboard", { replace: true });
-      else if (userRole === "mdrrmo_admin") navigate("/mdrrmo/dashboard", { replace: true });
-      else if (userRole === "barangay_admin") navigate("/barangay/dashboard", { replace: true });
-      else navigate("/userDashboard", { replace: true });
+      const navState = justRegistered
+        ? { state: { showWelcome: true }, replace: true }
+        : { replace: true };
+
+      if (userRole === "system_admin") navigate("/admin/dashboard", navState);
+      else if (userRole === "mdrrmo_admin")
+        navigate("/mdrrmo/dashboard", navState);
+      else if (userRole === "barangay_admin")
+        navigate("/barangay/dashboard", navState);
+      else navigate("/userDashboard", navState);
     }
-  }, [session, isPending, navigate]);
+  }, [session, isPending, navigate, justRegistered]);
 
   const [formData, setFormData] = useState({
     fullName: "",
@@ -116,8 +134,8 @@ export default function RegisterPage() {
       });
     } else {
       console.log("Registration successful:", data);
-      setFormSuccess("Account created successfully! Redirecting...");
-      setTimeout(() => navigate("/signin"), 1500);
+      setFormSuccess("Account created successfully! Logging you in...");
+      setJustRegistered(true);
     }
   };
 
@@ -157,7 +175,10 @@ export default function RegisterPage() {
         <form onSubmit={handleSubmit} className="space-y-4">
           {errors.form && (
             <div className="flex items-center justify-center gap-2 bg-red-50 text-red-600 p-3 rounded-lg text-sm font-semibold mb-4 border border-red-100">
-              <HugeiconsIcon icon={Alert01Icon} className="w-5 h-5 flex-shrink-0" />
+              <HugeiconsIcon
+                icon={Alert01Icon}
+                className="w-5 h-5 flex-shrink-0"
+              />
               <span>{errors.form}</span>
             </div>
           )}
@@ -168,7 +189,10 @@ export default function RegisterPage() {
           )}
 
           <div>
-            <label htmlFor="fullName" className="block text-sm font-semibold text-gray-700 mb-1">
+            <label
+              htmlFor="fullName"
+              className="block text-sm font-semibold text-gray-700 mb-1"
+            >
               Full Name
             </label>
             <input
@@ -190,7 +214,10 @@ export default function RegisterPage() {
           </div>
 
           <div>
-            <label htmlFor="email" className="block text-sm font-semibold text-gray-700 mb-1">
+            <label
+              htmlFor="email"
+              className="block text-sm font-semibold text-gray-700 mb-1"
+            >
               Email Address
             </label>
             <input
@@ -212,7 +239,10 @@ export default function RegisterPage() {
           </div>
 
           <div className="relative">
-            <label htmlFor="barangay" className="block text-sm font-semibold text-gray-700 mb-1">
+            <label
+              htmlFor="barangay"
+              className="block text-sm font-semibold text-gray-700 mb-1"
+            >
               Barangay
             </label>
             <input
@@ -267,7 +297,10 @@ export default function RegisterPage() {
           </div>
 
           <div>
-            <label htmlFor="password" className="block text-sm font-semibold text-gray-700 mb-1">
+            <label
+              htmlFor="password"
+              className="block text-sm font-semibold text-gray-700 mb-1"
+            >
               Password
             </label>
             <div className="relative">
@@ -302,7 +335,10 @@ export default function RegisterPage() {
           </div>
 
           <div>
-            <label htmlFor="confirmPassword" className="block text-sm font-semibold text-gray-700 mb-1">
+            <label
+              htmlFor="confirmPassword"
+              className="block text-sm font-semibold text-gray-700 mb-1"
+            >
               Confirm Password
             </label>
             <div className="relative">

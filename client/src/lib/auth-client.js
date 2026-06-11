@@ -5,6 +5,3 @@ export const authClient = createAuthClient({
   plugins: [adminClient()],
 });
 
-await authClient.revokeSession({
-  token: "session-token",
-});

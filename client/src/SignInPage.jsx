@@ -8,6 +8,7 @@ import {
   EyeOffIcon,
   Alert01Icon,
 } from "@hugeicons/core-free-icons";
+import toast from "react-hot-toast";
 import { authClient } from "./lib/auth-client";
 
 export default function SignInPage() {
@@ -16,7 +17,6 @@ export default function SignInPage() {
   const errorMessage = location.state?.error;
 
   useEffect(() => {
-    // Cleanup the flag when we arrive at signin
     sessionStorage.removeItem("isLoggingOut");
   }, []);
 
@@ -84,6 +84,19 @@ export default function SignInPage() {
       });
     } else {
       console.log("Sign in successful:", data);
+      toast.success("Successfully logged in!", {
+        style: {
+          background: "#22c55e",
+          color: "#fff",
+          fontWeight: "bold",
+          padding: "16px",
+          borderRadius: "16px",
+        },
+        iconTheme: {
+          primary: "#fff",
+          secondary: "#22c55e",
+        },
+      });
     }
   };
 

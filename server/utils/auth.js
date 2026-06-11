@@ -33,7 +33,7 @@ const auth = betterAuth({
     }),
   ],
   trustedOrigins: ["http://localhost:5173", "http://localhost:5174"],
-  autoSignIn: false,
+  autoSignIn: true,
 });
 
 module.exports = { auth };

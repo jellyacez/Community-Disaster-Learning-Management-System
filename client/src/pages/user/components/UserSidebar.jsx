@@ -32,33 +32,32 @@ export default function UserSidebar({
       sessionStorage.setItem("isLoggingOut", "true");
       await authClient.signOut();
       toast.success("Successfully logged out!", {
-        icon: (
-          <HugeiconsIcon
-            icon={CheckmarkCircle02Icon}
-            className="w-5 h-5 text-green-600"
-          />
-        ),
         style: {
-          borderRadius: "6px",
-          background: "#333",
+          background: "#22c55e",
           color: "#fff",
+          fontWeight: "bold",
+          padding: "16px",
+          borderRadius: "16px",
+        },
+        iconTheme: {
+          primary: "#fff",
+          secondary: "#22c55e",
         },
       });
     } catch (error) {
-      (toast.error("Logout failed"),
-        {
-          icon: (
-            <HugeiconsIcon
-              icon={AlertCircleIcon}
-              className="w-5 h-5 text-red-600"
-            />
-          ),
-          style: {
-            borderRadius: "6px",
-            background: "#333",
-            color: "#fff",
-          },
-        });
+      toast.error("Logout failed", {
+        style: {
+          background: "#ef4444",
+          color: "#fff",
+          fontWeight: "bold",
+          padding: "16px",
+          borderRadius: "16px",
+        },
+        iconTheme: {
+          primary: "#fff",
+          secondary: "#ef4444",
+        },
+      });
     }
   };
 
@@ -133,14 +132,15 @@ export default function UserSidebar({
       </div>
 
       <nav className="flex-1 overflow-y-auto px-4 py-5 relative flex flex-col gap-2">
-        {/* The sliding pill using pure CSS/Tailwind */}
         <div
           className="absolute left-4 right-4 h-[48px] rounded-xl bg-red-600 shadow-md transition-transform duration-300 ease-out z-0"
           style={{
             transform: `translateY(${
               navItems.findIndex((item) => location.pathname === item.path) * 56
             }px)`,
-            opacity: navItems.some((item) => location.pathname === item.path) ? 1 : 0
+            opacity: navItems.some((item) => location.pathname === item.path)
+              ? 1
+              : 0,
           }}
         />
 
