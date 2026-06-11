@@ -42,7 +42,6 @@ export default function App() {
           <Route path="/admin/dashboard" element={<SystemAdminDashboard />} />
         </Route>
 
-        {/* Catch-All Route for undefined URLs */}
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </>
