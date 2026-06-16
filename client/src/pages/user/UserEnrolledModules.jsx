@@ -1,9 +1,11 @@
 import React from "react";
 import { useOutletContext } from "react-router-dom";
-import ModuleCard from "../../components/ui/ModuleCard.jsx";
+import ModuleCard from "../../components/ui/modules/ModuleCard.jsx";
 import { modules } from "../../data/mockData.js";
+import useDocumentTitle from "../../hooks/useDocumentTitle";
 
 export default function UserEnrolledModules() {
+  useDocumentTitle("Enrolled Modules | Bacolor LMS");
   const { currentUser } = useOutletContext();
   const enrolledModules = modules.filter((module) => module.enrolled);
 

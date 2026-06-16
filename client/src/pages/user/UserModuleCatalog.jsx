@@ -2,12 +2,14 @@ import React from "react";
 import { useOutletContext } from "react-router-dom";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Search01Icon } from "@hugeicons/core-free-icons";
-import ModuleCard from "../../components/ui/ModuleCard.jsx";
+import ModuleCard from "../../components/ui/modules/ModuleCard.jsx";
 import { modules } from "../../data/mockData.js";
+import useDocumentTitle from "../../hooks/useDocumentTitle";
 
 export default function UserModuleCatalog() {
   const { currentUser } = useOutletContext();
 
+  useDocumentTitle("Module Catalog | Bacolor LMS");
   return (
     <div className="animate-in fade-in duration-300">
       <div className="space-y-6">

@@ -5,8 +5,11 @@ import {
   CheckmarkCircle02Icon,
   AlertCircleIcon,
 } from "@hugeicons/core-free-icons";
+import useDocumentTitle from "../../hooks/useDocumentTitle";
 
 export default function UserProfile() {
+  useDocumentTitle("User Profile | Bacolor LMS");
+
   const { currentUser, userInitials } = useOutletContext();
 
   return (

@@ -9,8 +9,8 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { authClient } from "../../lib/auth-client";
-import TermsModal from "../../components/ui/TermsModal";
-import PrivacyModal from "../../components/ui/PrivacyModal";
+import TermsModal from "../../components/ui/modals/TermsModal";
+import PrivacyModal from "../../components/ui/modals/PrivacyModal";
 import useDocumentTitle from "../../hooks/useDocumentTitle";
 
 const BACOLOR_BARANGAYS = [

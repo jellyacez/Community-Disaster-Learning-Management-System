@@ -9,8 +9,10 @@ import {
 } from "@hugeicons/core-free-icons";
 import { authClient } from "../../lib/auth-client";
 import toast from "react-hot-toast";
+import useDocumentTitle from "../../hooks/useDocumentTitle";
 
 export default function UserSettings() {
+  useDocumentTitle("Settings | Bacolor LMS");
   const { currentUser } = useOutletContext();
   const [sessions, setSessions] = useState([]);
   const [loading, setLoading] = useState(true);

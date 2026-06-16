@@ -2,8 +2,10 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { DiscoverCircleIcon, Home09Icon } from "@hugeicons/core-free-icons";
+import useDocumentTitle from "../../hooks/useDocumentTitle";
 
 export default function NotFoundPage() {
+  useDocumentTitle("404 Not Found | Bacolor LMS");
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-100 to-red-50 flex items-center justify-center px-4 py-10">
       <div className="w-full max-w-lg bg-white rounded-2xl shadow-xl border border-gray-100 p-10 text-center">

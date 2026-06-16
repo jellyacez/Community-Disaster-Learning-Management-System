@@ -1,5 +1,6 @@
-import React from "react";
+import React, { useState } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
+import LogoutModal from "../ui/modals/LogoutModal";
 import {
   Home01Icon,
   Megaphone01Icon,
@@ -27,13 +28,23 @@ export default function UserSidebar({
   const location = useLocation();
   const navigate = useNavigate();
 
-  const handleLogout = async () => {
+  const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
+
+  const confirmLogout = async () => {
     try {
       sessionStorage.setItem("isLoggingOut", "true");
-      await authClient.signOut();
+      await authClient.signOut({
+        fetchOptions: {
+          onSuccess: () => {
+            window.location.href = "/signin";
+          },
+        },
+      });
       toast.success("Successfully logged out!");
     } catch (error) {
       toast.error("Logout failed");
+    } finally {
+      setIsLogoutModalOpen(false);
     }
   };
 
@@ -71,6 +82,7 @@ export default function UserSidebar({
   ];
 
   return (
+    <>
     <aside
       className={`fixed left-0 top-0 z-50 flex h-screen w-72 flex-col border-r border-gray-200 bg-white transition-transform duration-300 lg:translate-x-0 ${
         sidebarOpen ? "translate-x-0" : "-translate-x-full"
@@ -151,7 +163,7 @@ export default function UserSidebar({
 
       <div className="border-t border-gray-200 p-4">
         <button
-          onClick={handleLogout}
+          onClick={() => setIsLogoutModalOpen(true)}
           className="flex w-full items-center gap-3 rounded-xl px-4 py-3 font-semibold text-red-600 hover:bg-red-50 cursor-pointer"
         >
           <HugeiconsIcon icon={Logout01Icon} className="w-5 h-5" />
@@ -159,5 +171,11 @@ export default function UserSidebar({
         </button>
       </div>
     </aside>
+    <LogoutModal
+      isOpen={isLogoutModalOpen}
+      onClose={() => setIsLogoutModalOpen(false)}
+      onConfirm={confirmLogout}
+    />
+    </>
   );
 }
