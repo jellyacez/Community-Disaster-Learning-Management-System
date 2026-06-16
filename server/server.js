@@ -21,10 +21,12 @@ app.use(express.json());
 
 const adminController = require("./controllers/adminController");
 const userController = require("./controllers/getUserController");
+const userDashboardController = require("./controllers/userDashboardController");
 
 // Mount the API Routes
 app.use("/api/admin", adminController);
 app.use("/api/users", userController);
+app.use("/api/user/dashboard", userDashboardController);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {

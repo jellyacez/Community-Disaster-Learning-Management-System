@@ -2,12 +2,12 @@
 -- PostgreSQL database dump
 --
 
-\restrict 3dh7rSoXLQZwMrtUqIz7kMGLXeTSERZHPfhuNPiNzrL6aDMoaats3s6iT15qAsH
+\restrict aVidaSPbHiFa3xwguHc7cNSMbUCkC8zbhZpb6NxGfe0rey6YsT6jeBLWe9PWeM6
 
 -- Dumped from database version 18.4
 -- Dumped by pg_dump version 18.4
 
--- Started on 2026-06-08 21:19:25
+-- Started on 2026-06-09 16:19:59
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -21,76 +21,56 @@ SET xmloption = content;
 SET client_min_messages = warning;
 SET row_security = off;
 
---
--- TOC entry 4 (class 2615 OID 2200)
--- Name: public; Type: SCHEMA; Schema: -; Owner: -
---
-
-CREATE SCHEMA public;
-
-
---
--- TOC entry 5046 (class 0 OID 0)
--- Dependencies: 4
--- Name: SCHEMA public; Type: COMMENT; Schema: -; Owner: -
---
-
-COMMENT ON SCHEMA public IS 'standard public schema';
-
-
 SET default_tablespace = '';
 
 SET default_table_access_method = heap;
 
 --
--- TOC entry 219 (class 1259 OID 16389)
--- Name: lmsusers; Type: TABLE; Schema: public; Owner: -
+-- TOC entry 221 (class 1259 OID 16520)
+-- Name: account; Type: TABLE; Schema: public; Owner: postgres
 --
 
-CREATE TABLE public.lmsusers (
-    user_id integer NOT NULL,
-    user_name character varying(100) NOT NULL,
-    user_email character varying(100) NOT NULL,
-    usercreationdate timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
-    user_password character varying(100) NOT NULL
+CREATE TABLE public.account (
+    id text NOT NULL,
+    "accountId" text NOT NULL,
+    "providerId" text NOT NULL,
+    "userId" text NOT NULL,
+    "accessToken" text,
+    "refreshToken" text,
+    "idToken" text,
+    "accessTokenExpiresAt" timestamp with time zone,
+    "refreshTokenExpiresAt" timestamp with time zone,
+    scope text,
+    password text,
+    "createdAt" timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    "updatedAt" timestamp with time zone NOT NULL
 );
 
 
---
--- TOC entry 220 (class 1259 OID 24580)
--- Name: lmsusers_user_id_seq; Type: SEQUENCE; Schema: public; Owner: -
---
-
-ALTER TABLE public.lmsusers ALTER COLUMN user_id ADD GENERATED ALWAYS AS IDENTITY (
-    SEQUENCE NAME public.lmsusers_user_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1
-);
-
+ALTER TABLE public.account OWNER TO postgres;
 
 --
--- TOC entry 222 (class 1259 OID 24582)
--- Name: tblactlog; Type: TABLE; Schema: public; Owner: -
+-- TOC entry 232 (class 1259 OID 16732)
+-- Name: activity_log; Type: TABLE; Schema: public; Owner: postgres
 --
 
-CREATE TABLE public.tblactlog (
+CREATE TABLE public.activity_log (
     act_id integer NOT NULL,
-    user_id integer NOT NULL,
+    user_id text NOT NULL,
     act_date date NOT NULL,
     act_log character varying(500) NOT NULL
 );
 
 
+ALTER TABLE public.activity_log OWNER TO postgres;
+
 --
--- TOC entry 221 (class 1259 OID 24581)
--- Name: tblactlog_act_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+-- TOC entry 231 (class 1259 OID 16731)
+-- Name: activity_log_act_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
 --
 
-ALTER TABLE public.tblactlog ALTER COLUMN act_id ADD GENERATED ALWAYS AS IDENTITY (
-    SEQUENCE NAME public.tblactlog_act_id_seq
+ALTER TABLE public.activity_log ALTER COLUMN act_id ADD GENERATED ALWAYS AS IDENTITY (
+    SEQUENCE NAME public.activity_log_act_id_seq
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -100,26 +80,28 @@ ALTER TABLE public.tblactlog ALTER COLUMN act_id ADD GENERATED ALWAYS AS IDENTIT
 
 
 --
--- TOC entry 224 (class 1259 OID 24594)
--- Name: tblcert; Type: TABLE; Schema: public; Owner: -
+-- TOC entry 227 (class 1259 OID 16681)
+-- Name: certificates; Type: TABLE; Schema: public; Owner: postgres
 --
 
-CREATE TABLE public.tblcert (
+CREATE TABLE public.certificates (
     cert_id integer NOT NULL,
-    user_id integer NOT NULL,
+    user_id text NOT NULL,
     modact_id integer NOT NULL,
     result_id integer NOT NULL,
     cert_rec character varying(100) NOT NULL
 );
 
 
+ALTER TABLE public.certificates OWNER TO postgres;
+
 --
--- TOC entry 223 (class 1259 OID 24593)
--- Name: tblcert_cert_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+-- TOC entry 226 (class 1259 OID 16680)
+-- Name: certificates_cert_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
 --
 
-ALTER TABLE public.tblcert ALTER COLUMN cert_id ADD GENERATED ALWAYS AS IDENTITY (
-    SEQUENCE NAME public.tblcert_cert_id_seq
+ALTER TABLE public.certificates ALTER COLUMN cert_id ADD GENERATED ALWAYS AS IDENTITY (
+    SEQUENCE NAME public.certificates_cert_id_seq
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -129,13 +111,13 @@ ALTER TABLE public.tblcert ALTER COLUMN cert_id ADD GENERATED ALWAYS AS IDENTITY
 
 
 --
--- TOC entry 226 (class 1259 OID 24605)
--- Name: tblmodact; Type: TABLE; Schema: public; Owner: -
+-- TOC entry 225 (class 1259 OID 16657)
+-- Name: module_activity; Type: TABLE; Schema: public; Owner: postgres
 --
 
-CREATE TABLE public.tblmodact (
+CREATE TABLE public.module_activity (
     modact_id integer NOT NULL,
-    user_id integer NOT NULL,
+    user_id text NOT NULL,
     mod_id integer NOT NULL,
     modstatus character varying(100) NOT NULL,
     modstart character varying(100) NOT NULL,
@@ -143,13 +125,15 @@ CREATE TABLE public.tblmodact (
 );
 
 
+ALTER TABLE public.module_activity OWNER TO postgres;
+
 --
--- TOC entry 225 (class 1259 OID 24604)
--- Name: tblmodact_modact_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+-- TOC entry 224 (class 1259 OID 16656)
+-- Name: module_activity_modact_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
 --
 
-ALTER TABLE public.tblmodact ALTER COLUMN modact_id ADD GENERATED ALWAYS AS IDENTITY (
-    SEQUENCE NAME public.tblmodact_modact_id_seq
+ALTER TABLE public.module_activity ALTER COLUMN modact_id ADD GENERATED ALWAYS AS IDENTITY (
+    SEQUENCE NAME public.module_activity_modact_id_seq
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -159,26 +143,56 @@ ALTER TABLE public.tblmodact ALTER COLUMN modact_id ADD GENERATED ALWAYS AS IDEN
 
 
 --
--- TOC entry 228 (class 1259 OID 24617)
--- Name: tblmoddata; Type: TABLE; Schema: public; Owner: -
+-- TOC entry 223 (class 1259 OID 16644)
+-- Name: module_data; Type: TABLE; Schema: public; Owner: postgres
 --
 
-CREATE TABLE public.tblmoddata (
+CREATE TABLE public.module_data (
     mod_id integer NOT NULL,
     modname character varying(500) NOT NULL,
     moddateadd date NOT NULL,
     moddateremove date NOT NULL,
-    modcat character varying(50) NOT NULL
+    modcat character varying(50) NOT NULL,
+    description character varying(500),
+    level character varying(50),
+    duration character varying(50)
 );
 
 
+ALTER TABLE public.module_data OWNER TO postgres;
+
+
+ALTER TABLE public.module_data_mod_id_seq OWNER TO postgres;
+
 --
--- TOC entry 227 (class 1259 OID 24616)
--- Name: tblmoddata_mod_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+-- TOC entry 999 (class 1259 OID 99999)
+-- Name: announcements; Type: TABLE; Schema: public; Owner: postgres
 --
 
-ALTER TABLE public.tblmoddata ALTER COLUMN mod_id ADD GENERATED ALWAYS AS IDENTITY (
-    SEQUENCE NAME public.tblmoddata_mod_id_seq
+CREATE TABLE public.announcements (
+    id integer NOT NULL GENERATED ALWAYS AS IDENTITY (
+        SEQUENCE NAME public.announcements_id_seq
+        START WITH 1
+        INCREMENT BY 1
+        NO MINVALUE
+        NO MAXVALUE
+        CACHE 1
+    ),
+    title character varying(255) NOT NULL,
+    content text NOT NULL,
+    date timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    author_id text NOT NULL
+);
+
+ALTER TABLE public.announcements OWNER TO postgres;
+
+--
+-- TOC entry 228 (class 1259 OID 16703)
+-- Name: module_data_mod_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+ALTER TABLE public.module_data ALTER COLUMN mod_id ADD GENERATED ALWAYS AS IDENTITY (
+    SEQUENCE NAME public.module_data_mod_id_seq
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -188,11 +202,11 @@ ALTER TABLE public.tblmoddata ALTER COLUMN mod_id ADD GENERATED ALWAYS AS IDENTI
 
 
 --
--- TOC entry 230 (class 1259 OID 24630)
--- Name: tblres; Type: TABLE; Schema: public; Owner: -
+-- TOC entry 229 (class 1259 OID 16704)
+-- Name: results; Type: TABLE; Schema: public; Owner: postgres
 --
 
-CREATE TABLE public.tblres (
+CREATE TABLE public.results (
     result_id integer NOT NULL,
     user_id integer NOT NULL,
     modact_id integer NOT NULL,
@@ -200,13 +214,15 @@ CREATE TABLE public.tblres (
 );
 
 
+ALTER TABLE public.results OWNER TO postgres;
+
 --
--- TOC entry 229 (class 1259 OID 24629)
--- Name: tblres_result_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+-- TOC entry 230 (class 1259 OID 16713)
+-- Name: results_result_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
 --
 
-ALTER TABLE public.tblres ALTER COLUMN result_id ADD GENERATED ALWAYS AS IDENTITY (
-    SEQUENCE NAME public.tblres_result_id_seq
+ALTER TABLE public.results ALTER COLUMN result_id ADD GENERATED ALWAYS AS IDENTITY (
+    SEQUENCE NAME public.results_result_id_seq
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -216,64 +232,256 @@ ALTER TABLE public.tblres ALTER COLUMN result_id ADD GENERATED ALWAYS AS IDENTIT
 
 
 --
--- TOC entry 4883 (class 2606 OID 16397)
--- Name: lmsusers lmsusers_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+-- TOC entry 220 (class 1259 OID 16499)
+-- Name: session; Type: TABLE; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.lmsusers
-    ADD CONSTRAINT lmsusers_pkey PRIMARY KEY (user_id);
+CREATE TABLE public.session (
+    id text NOT NULL,
+    "expiresAt" timestamp with time zone NOT NULL,
+    token text NOT NULL,
+    "createdAt" timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    "updatedAt" timestamp with time zone NOT NULL,
+    "ipAddress" text,
+    "userAgent" text,
+    "userId" text NOT NULL,
+    "impersonatedBy" text
+);
+
+
+ALTER TABLE public.session OWNER TO postgres;
+
+--
+-- TOC entry 219 (class 1259 OID 16481)
+-- Name: user; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public."user" (
+    id text NOT NULL,
+    name text NOT NULL,
+    email text NOT NULL,
+    "emailVerified" boolean NOT NULL,
+    image text,
+    "createdAt" timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    "updatedAt" timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    barangay text NOT NULL,
+    role text,
+    banned boolean,
+    "banReason" text,
+    "banExpires" timestamp with time zone
+);
+
+
+ALTER TABLE public."user" OWNER TO postgres;
+
+--
+-- TOC entry 222 (class 1259 OID 16539)
+-- Name: verification; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.verification (
+    id text NOT NULL,
+    identifier text NOT NULL,
+    value text NOT NULL,
+    "expiresAt" timestamp with time zone NOT NULL,
+    "createdAt" timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    "updatedAt" timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL
+);
+
+
+ALTER TABLE public.verification OWNER TO postgres;
+
+--
+-- TOC entry 4908 (class 2606 OID 16533)
+-- Name: account account_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.account
+    ADD CONSTRAINT account_pkey PRIMARY KEY (id);
 
 
 --
--- TOC entry 4885 (class 2606 OID 24592)
--- Name: tblactlog tblactlog_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+-- TOC entry 4922 (class 2606 OID 16742)
+-- Name: activity_log activity_log_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.tblactlog
-    ADD CONSTRAINT tblactlog_pkey PRIMARY KEY (act_id);
-
-
---
--- TOC entry 4887 (class 2606 OID 24603)
--- Name: tblcert tblcert_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.tblcert
-    ADD CONSTRAINT tblcert_pkey PRIMARY KEY (cert_id);
+ALTER TABLE ONLY public.activity_log
+    ADD CONSTRAINT activity_log_pkey PRIMARY KEY (act_id);
 
 
 --
--- TOC entry 4889 (class 2606 OID 24615)
--- Name: tblmodact tblmodact_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+-- TOC entry 4918 (class 2606 OID 16692)
+-- Name: certificates certificates_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.tblmodact
-    ADD CONSTRAINT tblmodact_pkey PRIMARY KEY (modact_id);
-
-
---
--- TOC entry 4891 (class 2606 OID 24628)
--- Name: tblmoddata tblmoddata_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.tblmoddata
-    ADD CONSTRAINT tblmoddata_pkey PRIMARY KEY (mod_id);
+ALTER TABLE ONLY public.certificates
+    ADD CONSTRAINT certificates_pkey PRIMARY KEY (cert_id);
 
 
 --
--- TOC entry 4893 (class 2606 OID 24638)
--- Name: tblres tblres_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+-- TOC entry 4916 (class 2606 OID 16669)
+-- Name: module_activity module_activity_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.tblres
-    ADD CONSTRAINT tblres_pkey PRIMARY KEY (result_id);
+ALTER TABLE ONLY public.module_activity
+    ADD CONSTRAINT module_activity_pkey PRIMARY KEY (modact_id);
 
 
--- Completed on 2026-06-08 21:19:25
+--
+-- TOC entry 4914 (class 2606 OID 16655)
+-- Name: module_data module_data_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.module_data
+    ADD CONSTRAINT module_data_pkey PRIMARY KEY (mod_id);
+
+
+--
+-- TOC entry 4920 (class 2606 OID 16712)
+-- Name: results results_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.results
+    ADD CONSTRAINT results_pkey PRIMARY KEY (result_id);
+
+
+--
+-- TOC entry 4903 (class 2606 OID 16512)
+-- Name: session session_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.session
+    ADD CONSTRAINT session_pkey PRIMARY KEY (id);
+
+
+--
+-- TOC entry 4905 (class 2606 OID 16514)
+-- Name: session session_token_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.session
+    ADD CONSTRAINT session_token_key UNIQUE (token);
+
+
+--
+-- TOC entry 4899 (class 2606 OID 16498)
+-- Name: user user_email_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public."user"
+    ADD CONSTRAINT user_email_key UNIQUE (email);
+
+
+--
+-- TOC entry 4901 (class 2606 OID 16496)
+-- Name: user user_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public."user"
+    ADD CONSTRAINT user_pkey PRIMARY KEY (id);
+
+
+--
+-- TOC entry 4912 (class 2606 OID 16553)
+-- Name: verification verification_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.verification
+    ADD CONSTRAINT verification_pkey PRIMARY KEY (id);
+
+
+--
+-- TOC entry 4909 (class 1259 OID 16555)
+-- Name: account_userId_idx; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX "account_userId_idx" ON public.account USING btree ("userId");
+
+
+--
+-- TOC entry 4906 (class 1259 OID 16554)
+-- Name: session_userId_idx; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX "session_userId_idx" ON public.session USING btree ("userId");
+
+
+--
+-- TOC entry 4910 (class 1259 OID 16556)
+-- Name: verification_identifier_idx; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX verification_identifier_idx ON public.verification USING btree (identifier);
+
+
+--
+-- TOC entry 4924 (class 2606 OID 16534)
+-- Name: account account_userId_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.account
+    ADD CONSTRAINT "account_userId_fkey" FOREIGN KEY ("userId") REFERENCES public."user"(id) ON DELETE CASCADE;
+
+
+--
+-- TOC entry 4927 (class 2606 OID 16698)
+-- Name: certificates fk_modact; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.certificates
+    ADD CONSTRAINT fk_modact FOREIGN KEY (modact_id) REFERENCES public.module_activity(modact_id) ON DELETE CASCADE;
+
+
+--
+-- TOC entry 4925 (class 2606 OID 16675)
+-- Name: module_activity fk_module; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.module_activity
+    ADD CONSTRAINT fk_module FOREIGN KEY (mod_id) REFERENCES public.module_data(mod_id) ON DELETE CASCADE;
+
+
+--
+-- TOC entry 4929 (class 2606 OID 16743)
+-- Name: activity_log fk_user; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.activity_log
+    ADD CONSTRAINT fk_user FOREIGN KEY (user_id) REFERENCES public."user"(id) ON DELETE CASCADE;
+
+
+--
+-- TOC entry 4928 (class 2606 OID 16693)
+-- Name: certificates fk_user; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.certificates
+    ADD CONSTRAINT fk_user FOREIGN KEY (user_id) REFERENCES public."user"(id) ON DELETE CASCADE;
+
+
+--
+-- TOC entry 4926 (class 2606 OID 16670)
+-- Name: module_activity fk_user; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.module_activity
+    ADD CONSTRAINT fk_user FOREIGN KEY (user_id) REFERENCES public."user"(id) ON DELETE CASCADE;
+
+
+--
+-- TOC entry 4923 (class 2606 OID 16515)
+-- Name: session session_userId_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.session
+    ADD CONSTRAINT "session_userId_fkey" FOREIGN KEY ("userId") REFERENCES public."user"(id) ON DELETE CASCADE;
+
+
+-- Completed on 2026-06-09 16:19:59
 
 --
 -- PostgreSQL database dump complete
 --
 
-\unrestrict 3dh7rSoXLQZwMrtUqIz7kMGLXeTSERZHPfhuNPiNzrL6aDMoaats3s6iT15qAsH
+\unrestrict aVidaSPbHiFa3xwguHc7cNSMbUCkC8zbhZpb6NxGfe0rey6YsT6jeBLWe9PWeM6
 
