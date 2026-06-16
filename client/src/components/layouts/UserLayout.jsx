@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Outlet } from "react-router-dom";
-import { authClient } from "../../../lib/auth-client";
+import { authClient } from "../../lib/auth-client";
 import DashboardLayout from "./DashboardLayout";
 
 function formatRole(role) {

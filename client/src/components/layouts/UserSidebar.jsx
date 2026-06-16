@@ -15,7 +15,7 @@ import {
   AlertCircleIcon,
 } from "@hugeicons/core-free-icons";
 import { useLocation, useNavigate } from "react-router-dom";
-import { authClient } from "../../../lib/auth-client";
+import { authClient } from "../../lib/auth-client";
 import toast from "react-hot-toast";
 
 export default function UserSidebar({

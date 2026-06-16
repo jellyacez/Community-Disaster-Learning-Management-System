@@ -7,8 +7,10 @@ import {
   CheckmarkBadge01Icon,
   Cancel01Icon,
 } from "@hugeicons/core-free-icons";
-import StatCard from "./components/StatCard.jsx";
-import { announcements, modules } from "./userData.js";
+import DashboardLayout from "../../components/layouts/DashboardLayout.jsx";
+import AnnouncementCard from "../../components/ui/AnnouncementCard.jsx";
+import StatCard from "../../components/ui/StatCard.jsx";
+import { announcements, modules } from "../../data/mockData.js";
 
 export default function UserDashboard() {
   const { currentUser } = useOutletContext();

@@ -1,6 +1,6 @@
 import React from "react";
 import { Navigate, Outlet, Link } from "react-router-dom";
-import { authClient } from "../lib/auth-client";
+import { authClient } from "../../lib/auth-client";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Alert01Icon } from "@hugeicons/core-free-icons";
 

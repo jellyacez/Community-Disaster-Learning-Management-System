@@ -2,9 +2,9 @@ import React from "react";
 import { Routes, Route } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 
-import LandingPage from "./LandingPage";
-import RegisterPage from "./RegisterPage";
-import SignInPage from "./SignInPage";
+import LandingPage from "./pages/public/LandingPage";
+import RegisterPage from "./pages/auth/RegisterPage";
+import SignInPage from "./pages/auth/SignInPage";
 
 import SystemAdminDashboard from "./pages/admin/systemAdminDashboard";
 import UserDashboard from "./pages/user/UserDashboard";
@@ -13,10 +13,10 @@ import UserModuleCatalog from "./pages/user/UserModuleCatalog";
 import UserEnrolledModules from "./pages/user/UserEnrolledModules";
 import UserProfile from "./pages/user/UserProfile";
 import UserSettings from "./pages/user/UserSettings";
-import ProtectedRoute from "./components/ProtectedRoute";
-import NotFoundPage from "./components/NotFoundPage";
+import ProtectedRoute from "./components/auth/ProtectedRoute";
+import NotFoundPage from "./pages/public/NotFoundPage";
 
-import UserLayout from "./pages/user/components/UserLayout";
+import UserLayout from "./components/layouts/UserLayout";
 
 export default function App() {
   return (

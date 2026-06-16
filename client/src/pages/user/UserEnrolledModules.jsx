@@ -1,7 +1,7 @@
 import React from "react";
 import { useOutletContext } from "react-router-dom";
-import ModuleCard from "./components/ModuleCard.jsx";
-import { modules } from "./userData.js";
+import ModuleCard from "../../components/ui/ModuleCard.jsx";
+import { modules } from "../../data/mockData.js";
 
 export default function UserEnrolledModules() {
   const { currentUser } = useOutletContext();

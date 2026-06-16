@@ -1,7 +1,7 @@
 import React from "react";
 import { useOutletContext } from "react-router-dom";
-import AnnouncementCard from './components/AnnouncementCard';
-import { announcements } from './userData.js';
+import AnnouncementCard from '../../components/ui/AnnouncementCard';
+import { announcements } from '../../data/mockData.js';
 
 export default function UserAnnouncements() {
   const { currentUser } = useOutletContext();
