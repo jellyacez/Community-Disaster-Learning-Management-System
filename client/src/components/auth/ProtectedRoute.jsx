@@ -23,7 +23,10 @@ export default function ProtectedRoute({ allowedRoles }) {
     return (
       <Navigate
         to="/signin"
-        state={{ error: "Please log in to access this page." }}
+        state={{
+          error:
+            "You must be signed in to access this page. Please log in to continue.",
+        }}
         replace
       />
     );
