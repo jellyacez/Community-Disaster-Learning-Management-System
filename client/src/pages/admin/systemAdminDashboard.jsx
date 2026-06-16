@@ -132,10 +132,10 @@ export default function SystemAdminDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-8">
-      <div className="flex justify-between items-center mb-8 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+    <div className="min-h-screen bg-gray-50 p-4 sm:p-8">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
         <div>
-          <h1 className="text-3xl font-extrabold text-gray-900">
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900">
             System Admin Dashboard
           </h1>
           <p className="text-gray-500 mt-1">
@@ -192,7 +192,7 @@ export default function SystemAdminDashboard() {
                         </span>
                       )}
                     </td>
-                    <td className="p-4 flex gap-2 justify-end">
+                    <td className="p-4 flex flex-wrap gap-2 justify-end min-w-[300px]">
                       <button
                         onClick={() => handleEditUser(user)}
                         className="px-3 py-1.5 text-xs font-bold bg-gray-100 text-gray-700 hover:bg-gray-200 rounded-lg transition"

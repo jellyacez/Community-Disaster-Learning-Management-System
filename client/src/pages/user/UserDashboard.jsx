@@ -7,7 +7,7 @@ import {
   CheckmarkBadge01Icon,
   Cancel01Icon,
   BookOpen01Icon,
-  AlertCircleIcon
+  AlertCircleIcon,
 } from "@hugeicons/core-free-icons";
 import DashboardLayout from "../../components/layouts/DashboardLayout.jsx";
 import AnnouncementCard from "../../components/ui/AnnouncementCard.jsx";
@@ -27,7 +27,7 @@ export default function UserDashboard() {
     totalModules: 0,
     announcements: [],
     enrolledModules: [],
-    completionRate: 0
+    completionRate: 0,
   });
 
   useEffect(() => {
@@ -40,9 +40,12 @@ export default function UserDashboard() {
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
-        const response = await fetch("http://localhost:5000/api/user/dashboard", {
-          credentials: "include"
-        });
+        const response = await fetch(
+          "http://localhost:5000/api/user/dashboard",
+          {
+            credentials: "include",
+          },
+        );
         if (!response.ok) throw new Error("Failed to fetch");
         const data = await response.json();
         setDashboardData(data);
@@ -58,12 +61,19 @@ export default function UserDashboard() {
 
   const containerVariants = {
     hidden: { opacity: 0 },
-    visible: { opacity: 1, transition: { staggerChildren: 0.2, delayChildren: 0.3 } },
+    visible: {
+      opacity: 1,
+      transition: { staggerChildren: 0.2, delayChildren: 0.3 },
+    },
   };
 
   const itemVariants = {
     hidden: { opacity: 0, y: 20 },
-    visible: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 300, damping: 24 } },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: { type: "spring", stiffness: 300, damping: 24 },
+    },
   };
 
   return (
@@ -91,7 +101,10 @@ export default function UserDashboard() {
               </button>
 
               <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-green-100 text-green-600">
-                <HugeiconsIcon icon={CheckmarkBadge01Icon} className="w-8 h-8" />
+                <HugeiconsIcon
+                  icon={CheckmarkBadge01Icon}
+                  className="w-8 h-8"
+                />
               </div>
 
               <h2 className="text-center text-2xl font-extrabold text-gray-900">
@@ -105,27 +118,47 @@ export default function UserDashboard() {
                 ! Here is how to get started:
               </p>
 
-              <motion.div variants={containerVariants} initial="hidden" animate="visible" className="mt-8 space-y-6">
-                <motion.div variants={itemVariants} className="flex items-start gap-4">
+              <motion.div
+                variants={containerVariants}
+                initial="hidden"
+                animate="visible"
+                className="mt-8 space-y-6"
+              >
+                <motion.div
+                  variants={itemVariants}
+                  className="flex items-start gap-4"
+                >
                   <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-red-100 text-red-600 shadow-sm">
                     <span className="text-sm font-bold">1</span>
                   </div>
                   <div>
-                    <h3 className="font-bold text-gray-900">Browse the Module Catalog</h3>
+                    <h3 className="font-bold text-gray-900">
+                      Browse the Module Catalog
+                    </h3>
                     <p className="mt-1 text-sm text-gray-500">
-                      Click on <span className="font-semibold">Module Catalog</span> in the left sidebar to explore all available DRRM training topics.
+                      Click on{" "}
+                      <span className="font-semibold">Module Catalog</span> in
+                      the left sidebar to explore all available DRRM training
+                      topics.
                     </p>
                   </div>
                 </motion.div>
 
-                <motion.div variants={itemVariants} className="flex items-start gap-4">
+                <motion.div
+                  variants={itemVariants}
+                  className="flex items-start gap-4"
+                >
                   <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-red-100 text-red-600 shadow-sm">
                     <span className="text-sm font-bold">2</span>
                   </div>
                   <div>
-                    <h3 className="font-bold text-gray-900">Enroll in a Module</h3>
+                    <h3 className="font-bold text-gray-900">
+                      Enroll in a Module
+                    </h3>
                     <p className="mt-1 text-sm text-gray-500">
-                      Find a topic that interests you and click <span className="font-semibold">Enroll</span> to add it to your personal learning queue.
+                      Find a topic that interests you and click{" "}
+                      <span className="font-semibold">Enroll</span> to add it to
+                      your personal learning queue.
                     </p>
                   </div>
                 </motion.div>
@@ -150,17 +183,29 @@ export default function UserDashboard() {
 
       <div className="space-y-8">
         <section className="rounded-3xl bg-gradient-to-r from-red-700 via-red-600 to-rose-600 p-8 text-white shadow-lg">
-          <p className="text-sm uppercase tracking-widest text-red-100">Welcome back</p>
-          <h1 className="mt-2 text-3xl md:text-4xl font-extrabold">Hello, {currentUser.name}</h1>
+          <p className="text-sm uppercase tracking-widest text-red-100">
+            Welcome back
+          </p>
+          <h1 className="mt-2 text-3xl md:text-4xl font-extrabold">
+            Hello, {currentUser.name}
+          </h1>
           <p className="mt-3 max-w-2xl text-red-100">
-            Continue your disaster preparedness training, stay updated with municipal announcements, and track your learning progress in one place.
+            Continue your disaster preparedness training, stay updated with
+            municipal announcements, and track your learning progress in one
+            place.
           </p>
 
           <div className="mt-6 flex flex-wrap gap-3">
-            <button onClick={() => navigate('/user/catalog')} className="rounded-xl bg-white px-5 py-3 text-sm font-bold text-red-700 hover:bg-red-50 transition cursor-pointer">
+            <button
+              onClick={() => navigate("/user/catalog")}
+              className="rounded-xl bg-white px-5 py-3 text-sm font-bold text-red-700 hover:bg-red-50 transition cursor-pointer"
+            >
               Browse Modules
             </button>
-            <button onClick={() => navigate('/user/modules')} className="rounded-xl border border-white/30 px-5 py-3 text-sm font-bold text-white hover:bg-white/10 transition cursor-pointer">
+            <button
+              onClick={() => navigate("/user/modules")}
+              className="rounded-xl border border-white/30 px-5 py-3 text-sm font-bold text-white hover:bg-white/10 transition cursor-pointer"
+            >
               Continue Learning
             </button>
           </div>
@@ -193,8 +238,12 @@ export default function UserDashboard() {
           <div className="lg:col-span-2 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm min-h-[400px]">
             <div className="mb-5 flex items-center justify-between">
               <div>
-                <h2 className="text-xl font-bold text-gray-900">Continue Your Modules</h2>
-                <p className="text-sm text-gray-500">Resume training where you left off.</p>
+                <h2 className="text-xl font-bold text-gray-900">
+                  Continue Your Modules
+                </h2>
+                <p className="text-sm text-gray-500">
+                  Resume training where you left off.
+                </p>
               </div>
             </div>
 
@@ -206,13 +255,22 @@ export default function UserDashboard() {
                 // Empty State
                 <div className="flex flex-col items-center justify-center py-12 text-center">
                   <div className="h-16 w-16 rounded-full bg-gray-50 flex items-center justify-center mb-4">
-                    <HugeiconsIcon icon={BookOpen01Icon} className="w-8 h-8 text-gray-400" />
+                    <HugeiconsIcon
+                      icon={BookOpen01Icon}
+                      className="w-8 h-8 text-gray-400"
+                    />
                   </div>
-                  <h3 className="text-lg font-bold text-gray-900 mb-2">No Modules Enrolled</h3>
+                  <h3 className="text-lg font-bold text-gray-900 mb-2">
+                    No Modules Enrolled
+                  </h3>
                   <p className="text-sm text-gray-500 max-w-sm mb-6">
-                    You haven't enrolled in any disaster preparedness modules yet. Head over to the catalog to get started!
+                    You haven't enrolled in any disaster preparedness modules
+                    yet. Head over to the catalog to get started!
                   </p>
-                  <button onClick={() => navigate('/user/catalog')} className="rounded-xl bg-red-600 px-6 py-3 text-sm font-bold text-white hover:bg-red-700 transition">
+                  <button
+                    onClick={() => navigate("/user/catalog")}
+                    className="rounded-xl bg-red-600 px-6 py-3 text-sm font-bold text-white hover:bg-red-700 transition"
+                  >
                     Explore Catalog
                   </button>
                 </div>
@@ -233,14 +291,22 @@ export default function UserDashboard() {
                             {module.level}
                           </span>
                         </div>
-                        <h3 className="text-lg font-bold text-gray-900">{module.title}</h3>
-                        <p className="mt-1 text-sm text-gray-500">{module.description}</p>
+                        <h3 className="text-lg font-bold text-gray-900">
+                          {module.title}
+                        </h3>
+                        <p className="mt-1 text-sm text-gray-500">
+                          {module.description}
+                        </p>
                       </div>
 
                       <div className="min-w-52 flex-shrink-0">
                         <div className="mb-2 flex items-center justify-between text-sm">
-                          <span className="font-medium text-gray-500">Progress</span>
-                          <span className="font-bold text-gray-900">{module.progress}%</span>
+                          <span className="font-medium text-gray-500">
+                            Progress
+                          </span>
+                          <span className="font-bold text-gray-900">
+                            {module.progress}%
+                          </span>
                         </div>
                         <div className="h-3 w-full overflow-hidden rounded-full bg-gray-100">
                           <div
@@ -248,7 +314,10 @@ export default function UserDashboard() {
                             style={{ width: `${module.progress}%` }}
                           />
                         </div>
-                        <button onClick={() => navigate('/user/modules')} className="mt-4 w-full rounded-xl bg-red-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-red-700 transition cursor-pointer">
+                        <button
+                          onClick={() => navigate("/user/modules")}
+                          className="mt-4 w-full rounded-xl bg-red-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-red-700 transition cursor-pointer"
+                        >
                           Resume Module
                         </button>
                       </div>
@@ -261,8 +330,13 @@ export default function UserDashboard() {
 
           <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm h-fit">
             <div className="mb-5 flex items-center gap-2">
-              <HugeiconsIcon icon={Notification03Icon} className="w-5 h-5 text-red-600" />
-              <h2 className="text-xl font-bold text-gray-900">Latest Announcements</h2>
+              <HugeiconsIcon
+                icon={Notification03Icon}
+                className="w-5 h-5 text-red-600"
+              />
+              <h2 className="text-xl font-bold text-gray-900">
+                Latest Announcements
+              </h2>
             </div>
 
             <div className="space-y-4">
@@ -271,29 +345,45 @@ export default function UserDashboard() {
                 [1, 2, 3].map((i) => <AnnouncementSkeleton key={i} />)
               ) : dashboardData.announcements.length === 0 ? (
                 <div className="text-center py-6">
-                  <HugeiconsIcon icon={AlertCircleIcon} className="w-8 h-8 text-gray-300 mx-auto mb-2" />
-                  <p className="text-sm text-gray-500">No new announcements at this time.</p>
+                  <HugeiconsIcon
+                    icon={AlertCircleIcon}
+                    className="w-8 h-8 text-gray-300 mx-auto mb-2"
+                  />
+                  <p className="text-sm text-gray-500">
+                    No new announcements at this time.
+                  </p>
                 </div>
               ) : (
                 dashboardData.announcements.map((item) => (
                   <div
                     key={item.id}
-                    onClick={() => navigate('/user/announcements')}
+                    onClick={() => navigate("/user/announcements")}
                     className="rounded-2xl bg-gray-50 p-4 hover:bg-gray-100 transition cursor-pointer border border-transparent hover:border-gray-200"
                   >
                     <div className="flex justify-between items-start mb-2">
-                      <p className="text-xs font-semibold uppercase tracking-wide text-red-600">{item.date}</p>
-                      <p className="text-[10px] text-gray-400 font-medium">{item.author}</p>
+                      <p className="text-xs font-semibold uppercase tracking-wide text-red-600">
+                        {item.date}
+                      </p>
+                      <p className="text-[10px] text-gray-400 font-medium">
+                        {item.author}
+                      </p>
                     </div>
-                    <h3 className="text-sm font-bold text-gray-900">{item.title}</h3>
-                    <p className="mt-1 text-sm text-gray-500 line-clamp-2">{item.content}</p>
+                    <h3 className="text-sm font-bold text-gray-900">
+                      {item.title}
+                    </h3>
+                    <p className="mt-1 text-sm text-gray-500 line-clamp-2">
+                      {item.content}
+                    </p>
                   </div>
                 ))
               )}
             </div>
-            
+
             {!loading && dashboardData.announcements.length > 0 && (
-              <button onClick={() => navigate('/user/announcements')} className="w-full mt-4 py-2 text-sm font-semibold text-gray-600 hover:text-gray-900 transition-colors">
+              <button
+                onClick={() => navigate("/user/announcements")}
+                className="w-full mt-4 py-2 text-sm font-semibold text-gray-600 hover:text-gray-900 transition-colors"
+              >
                 View All Announcements
               </button>
             )}

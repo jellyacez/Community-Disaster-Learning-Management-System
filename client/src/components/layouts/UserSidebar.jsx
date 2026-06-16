@@ -109,7 +109,7 @@ export default function UserSidebar({
 
       <nav className="flex-1 overflow-y-auto px-4 py-5 relative flex flex-col gap-2">
         <div
-          className="absolute left-4 right-4 h-[48px] rounded-xl bg-red-600 shadow-md transition-transform duration-300 ease-out z-0"
+          className="hidden lg:block absolute left-4 right-4 top-5 h-[48px] rounded-xl bg-red-600 shadow-md transition-transform duration-300 ease-out z-0"
           style={{
             transform: `translateY(${
               navItems.findIndex((item) => location.pathname === item.path) * 56
@@ -131,7 +131,7 @@ export default function UserSidebar({
                 setSidebarOpen(false);
               }}
               className={`relative flex w-full h-[48px] items-center justify-between rounded-xl px-4 text-left transition-colors z-10 cursor-pointer ${
-                active ? "text-white" : "text-gray-700 hover:bg-gray-100"
+                active ? "bg-red-600 lg:bg-transparent shadow-md lg:shadow-none text-white" : "text-gray-700 hover:bg-gray-100"
               }`}
             >
               <span className="relative z-10 flex items-center gap-3 font-semibold">
