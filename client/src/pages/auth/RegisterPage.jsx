@@ -9,6 +9,8 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { authClient } from "../../lib/auth-client";
+import TermsModal from "../../components/ui/TermsModal";
+import PrivacyModal from "../../components/ui/PrivacyModal";
 
 const BACOLOR_BARANGAYS = [
   "Balas",
@@ -71,6 +73,11 @@ export default function RegisterPage() {
   const [showBarangayList, setShowBarangayList] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  const [showTermsModal, setShowTermsModal] = useState(false);
+  const [showPrivacyModal, setShowPrivacyModal] = useState(false);
+
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
 
   const [errors, setErrors] = useState({});
   const [formSuccess, setFormSuccess] = useState("");
@@ -372,11 +379,50 @@ export default function RegisterPage() {
             )}
           </div>
 
+          <div className="space-y-3 mt-4 mb-2">
+            <div className="flex items-start gap-3">
+              <input
+                type="checkbox"
+                id="terms"
+                checked={acceptedTerms}
+                onChange={(e) => setAcceptedTerms(e.target.checked)}
+                className="mt-1 w-4 h-4 text-red-600 rounded border-gray-300 focus:ring-red-500 cursor-pointer"
+              />
+              <label
+                htmlFor="terms"
+                className="text-xs text-gray-600 cursor-pointer leading-relaxed"
+              >
+                By selecting "Create Account", I agree to the{" "}
+                <button
+                  type="button"
+                  onClick={(e) => { e.preventDefault(); setShowTermsModal(true); }}
+                  className="text-red-600 font-semibold hover:underline"
+                >
+                  Terms & Conditions
+                </button>{" "}
+                and{" "}
+                <button
+                  type="button"
+                  onClick={(e) => { e.preventDefault(); setShowPrivacyModal(true); }}
+                  className="text-red-600 font-semibold hover:underline"
+                >
+                  Privacy Policy
+                </button>
+                .
+              </label>
+            </div>
+          </div>
+
           <button
             type="submit"
-            className="w-full py-3 rounded-xl bg-red-600 text-white font-bold hover:bg-red-700 transition-colors"
+            disabled={!acceptedTerms}
+            className={`w-full py-3 rounded-xl font-bold transition-colors ${
+              !acceptedTerms
+                ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                : "bg-red-600 text-white hover:bg-red-700"
+            }`}
           >
-            Register
+            Create Account
           </button>
         </form>
 
@@ -390,6 +436,9 @@ export default function RegisterPage() {
           </Link>
         </p>
       </div>
+
+      <TermsModal isOpen={showTermsModal} onClose={() => setShowTermsModal(false)} />
+      <PrivacyModal isOpen={showPrivacyModal} onClose={() => setShowPrivacyModal(false)} />
     </div>
   );
 }

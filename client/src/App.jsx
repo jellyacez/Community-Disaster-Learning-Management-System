@@ -53,6 +53,7 @@ export default function App() {
         }} 
       />
       <Routes>
+        {/* PUBLIC ROUTES */}
         <Route path="/" element={<LandingPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/signin" element={<SignInPage />} />
