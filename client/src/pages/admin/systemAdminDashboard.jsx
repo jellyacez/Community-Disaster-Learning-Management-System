@@ -2,8 +2,11 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { authClient } from "../../lib/auth-client";
 import toast from "react-hot-toast";
+import useDocumentTitle from "../../hooks/useDocumentTitle";
 
 export default function SystemAdminDashboard() {
+  useDocumentTitle('Admin Dashboard | Bacolor LMS');
+  
   const navigate = useNavigate();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);

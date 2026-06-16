@@ -10,8 +10,11 @@ import {
 } from "@hugeicons/core-free-icons";
 import toast from "react-hot-toast";
 import { authClient } from "../../lib/auth-client";
+import useDocumentTitle from "../../hooks/useDocumentTitle";
 
 export default function SignInPage() {
+  useDocumentTitle('Sign In | Bacolor LMS');
+  
   const navigate = useNavigate();
   const location = useLocation();
   const errorMessage = location.state?.error;

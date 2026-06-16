@@ -14,9 +14,11 @@ import AnnouncementCard from "../../components/ui/AnnouncementCard.jsx";
 import StatCard from "../../components/ui/StatCard.jsx";
 import ModuleSkeleton from "../../components/ui/ModuleSkeleton.jsx";
 import AnnouncementSkeleton from "../../components/ui/AnnouncementSkeleton.jsx";
+import useDocumentTitle from "../../hooks/useDocumentTitle";
 import toast from "react-hot-toast";
 
 export default function UserDashboard() {
+  useDocumentTitle('Dashboard | Bacolor LMS');
   const { currentUser } = useOutletContext();
   const location = useLocation();
   const navigate = useNavigate();

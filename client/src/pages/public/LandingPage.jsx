@@ -20,8 +20,10 @@ import {
   Location01Icon,
   ArrowDown01Icon,
 } from "@hugeicons/core-free-icons";
+import useDocumentTitle from '../../hooks/useDocumentTitle';
 
 export default function LandingPage() {
+  useDocumentTitle('Home | Bacolor LMS');
   const [menuOpen, setMenuOpen] = useState(false);
   const navigate = useNavigate();
   const { data: session, isPending } = authClient.useSession();

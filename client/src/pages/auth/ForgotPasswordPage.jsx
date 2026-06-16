@@ -9,8 +9,11 @@ import {
   Alert01Icon,
 } from "@hugeicons/core-free-icons";
 import { authClient } from "../../lib/auth-client";
+import useDocumentTitle from "../../hooks/useDocumentTitle";
 
 export default function ForgotPasswordPage() {
+  useDocumentTitle('Forgot Password | Bacolor LMS');
+  
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState("idle");
   const [errorMsg, setErrorMsg] = useState("");

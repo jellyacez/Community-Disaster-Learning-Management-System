@@ -16,16 +16,6 @@ app.use(
   }),
 );
 
-app.use(helmet());
-app.use(express.json());
-
-const globalLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 100,
-  message: { error: "Too many requests from this IP, please try again later." },
-});
-app.use(globalLimiter);
-
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 20,
@@ -36,11 +26,22 @@ const authLimiter = rateLimit({
 
 app.use("/api/auth", authLimiter, toNodeHandler(auth));
 
+app.use(helmet());
+app.use(express.json());
+
+const globalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  message: { error: "Too many requests from this IP, please try again later." },
+});
+app.use(globalLimiter);
+
+// Import routes
 const adminController = require("./controllers/adminController");
 const userController = require("./controllers/getUserController");
 const userDashboardController = require("./controllers/userDashboardController");
 
-// Mount the API Routes
+// API Routes
 app.use("/api/admin", adminController);
 app.use("/api/users", userController);
 app.use("/api/user/dashboard", userDashboardController);

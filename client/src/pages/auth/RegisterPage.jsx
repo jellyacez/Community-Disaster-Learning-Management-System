@@ -11,6 +11,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { authClient } from "../../lib/auth-client";
 import TermsModal from "../../components/ui/TermsModal";
 import PrivacyModal from "../../components/ui/PrivacyModal";
+import useDocumentTitle from "../../hooks/useDocumentTitle";
 
 const BACOLOR_BARANGAYS = [
   "Balas",
@@ -37,6 +38,8 @@ const BACOLOR_BARANGAYS = [
 ];
 
 export default function RegisterPage() {
+  useDocumentTitle('Register | Bacolor LMS');
+  
   const navigate = useNavigate();
   const { data: session, isPending } = authClient.useSession();
 
