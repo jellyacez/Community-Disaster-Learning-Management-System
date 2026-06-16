@@ -2,6 +2,7 @@ require("dotenv").config();
 const express = require("express");
 const helmet = require("helmet");
 const cors = require("cors");
+const rateLimit = require("express-rate-limit");
 const pool = require("./config/db");
 const { toNodeHandler } = require("better-auth/node");
 const { auth } = require("./utils/auth");
@@ -15,9 +16,25 @@ app.use(
   }),
 );
 
-app.use("/api/auth", toNodeHandler(auth));
 app.use(helmet());
 app.use(express.json());
+
+const globalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  message: { error: "Too many requests from this IP, please try again later." },
+});
+app.use(globalLimiter);
+
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 20,
+  message: {
+    error: "Too many login attempts from this IP, please try again later.",
+  },
+});
+
+app.use("/api/auth", authLimiter, toNodeHandler(auth));
 
 const adminController = require("./controllers/adminController");
 const userController = require("./controllers/getUserController");

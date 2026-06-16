@@ -6,8 +6,9 @@ A progressive, multi-level web application designed to train and certify residen
 
 - **Progressive Learning**: Multi-level modules tailored to local hazards.
 - **Role-Based Access Control (RBAC)**: Secure, partitioned dashboards for Residents, Barangay Admins, MDRRMO Admins, and System Admins.
-- **Enterprise-Grade Security**: Powered by Better Auth with secure HTTP-only session cookies and backend middleware protection.
-- **Responsive UI**: Built with React, TailwindCSS, Framer Motion, and beautiful Hugeicons.
+- **Enterprise-Grade Security**: Powered by Better Auth with secure HTTP-only session cookies, backend middleware protection, and strict IP Rate Limiting.
+- **Responsive & Dynamic UI**: Built with React, TailwindCSS, Framer Motion, and beautiful Hugeicons. Features mobile-first design, interactive floating animations, and dynamic skeleton loaders.
+- **Account Management**: Full end-to-end authentication flows including secure registration, login, and forgot password recovery.
 
 ---
 
@@ -17,6 +18,7 @@ A progressive, multi-level web application designed to train and certify residen
 - **Node.js & Express**: API and server framework
 - **PostgreSQL & pg**: Relational database for structured data
 - **Better Auth**: Comprehensive session management and RBAC admin plugin
+- **Express Rate Limit**: DDoS, brute-force, and spam protection
 - **Helmet & CORS**: Essential HTTP security layers
 
 ### Frontend (Client)
@@ -37,6 +39,7 @@ A progressive, multi-level web application designed to train and certify residen
 - `dotenv` (^17.4.2)
 - `bcryptjs` (^3.0.3)
 - `better-auth` (^1.6.15)
+- `express-rate-limit` (^7.5.0)
 - `helmet` (^8.2.0)
 - `nodemon` (^3.1.14) - *dev*
 
@@ -85,8 +88,8 @@ BETTER_AUTH_SECRET=your_super_secret_random_string_here
 ```
 *(Tip: Generate a secure secret using `npx @better-auth/cli secret`)*
 
-**Database Migration:**
-Because we are using `better-auth`, you need to generate the authentication tables (including the user role columns):
+**Database Schema:**
+You must initialize the PostgreSQL database with the custom tables (e.g., `module_data`, `announcements`) defined in `server/schema.sql`. Note that Better-Auth uses standard plugins to auto-migrate its own tables, but the application data tables must be created manually using the provided schema.
 
 ```bash
 npx @better-auth/cli migrate --config ./utils/auth.js
@@ -118,5 +121,7 @@ The application will be live at `http://localhost:5173`.
 ## 🛡️ Security Architecture
 
 1. **Frontend Protection**: The `<ProtectedRoute />` component inspects the active session and intercepts unauthorized access attempts, hiding UI elements and safely redirecting users.
-2. **Backend Protection**: The `roleMiddleware.js` operates as an Express gatekeeper, validating the secure session token against the required role (e.g., `system_admin`) before any sensitive database query runs.
-3. **Admin Promotions**: System Admins are managed securely using the `@better-auth/admin` backend plugin.
+2. **Authentication Middleware**: The backend employs `betterAuthMiddleware.js` to ensure the requester is logged into a valid session.
+3. **Authorization Middleware**: The `adminMiddleware.js` operates as an Express gatekeeper, strictly validating that the secure session token belongs to a `system_admin` before any sensitive database queries are run.
+4. **Rate Limiting**: Defends the server from brute-force and DDoS attacks. Global limits apply broadly, with strict 20-request caps on authentication routes.
+5. **SQL Injection Prevention**: All custom database interactions are securely parameterized through `pg` bounds.

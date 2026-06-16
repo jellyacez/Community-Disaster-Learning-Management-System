@@ -203,9 +203,9 @@ export default function SignInPage() {
               </p>
             )}
             {/* add link to forgot password page */}
-            <div className="text-blue-500 font-semibold hover:underline text-xs mt-2 cursor-pointer text-right pt-1.5">
-              Forgot Password?{" "}
-            </div>
+            <Link to="/forgot-password" className="block text-red-600 font-semibold hover:underline text-sm mt-3 cursor-pointer text-right">
+              Forgot Password?
+            </Link>
           </div>
 
           <button

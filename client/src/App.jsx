@@ -5,6 +5,7 @@ import { Toaster } from "react-hot-toast";
 import LandingPage from "./pages/public/LandingPage";
 import RegisterPage from "./pages/auth/RegisterPage";
 import SignInPage from "./pages/auth/SignInPage";
+import ForgotPasswordPage from "./pages/auth/ForgotPasswordPage";
 
 import SystemAdminDashboard from "./pages/admin/systemAdminDashboard";
 import UserDashboard from "./pages/user/UserDashboard";
@@ -57,6 +58,7 @@ export default function App() {
         <Route path="/" element={<LandingPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/signin" element={<SignInPage />} />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
 
         <Route element={<ProtectedRoute allowedRoles={["resident"]} />}>
           <Route element={<UserLayout />}>
