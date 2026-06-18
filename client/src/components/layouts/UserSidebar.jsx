@@ -21,7 +21,6 @@ import toast from "react-hot-toast";
 
 export default function UserSidebar({
   currentUser,
-  onLogout,
   sidebarOpen,
   setSidebarOpen,
 }) {

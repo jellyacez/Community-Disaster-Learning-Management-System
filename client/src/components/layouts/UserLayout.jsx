@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Outlet, useNavigate } from "react-router-dom";
+import { Outlet } from "react-router-dom";
 import { authClient } from "../../lib/auth-client";
 import DashboardLayout from "./DashboardLayout";
 
@@ -21,17 +21,6 @@ function formatRole(role) {
 export default function UserLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { data: session } = authClient.useSession();
-  const navigate = useNavigate();
-
-  const handleLogout = async () => {
-    try {
-      sessionStorage.setItem("isLoggingOut", "true");
-      await authClient.signOut();
-      navigate('/signin');
-    } catch (error) {
-      console.error("Logout failed:", error);
-    }
-  };
 
   const currentUser = {
     name:

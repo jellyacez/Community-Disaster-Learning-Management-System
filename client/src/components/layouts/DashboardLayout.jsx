@@ -6,7 +6,6 @@ export default function DashboardLayout({
   children,
   currentUser,
   userInitials,
-  onLogout,
   sidebarOpen,
   setSidebarOpen,
 }) {
@@ -21,7 +20,6 @@ export default function DashboardLayout({
 
       <UserSidebar
         currentUser={currentUser}
-        onLogout={onLogout}
         sidebarOpen={sidebarOpen}
         setSidebarOpen={setSidebarOpen}
       />
