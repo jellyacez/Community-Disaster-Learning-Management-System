@@ -47,6 +47,7 @@ A progressive, multi-level web application designed to train and certify residen
 ### Client Dependencies
 - `react` / `react-dom` (^19.2.6)
 - `react-router-dom` (^7.17.0)
+- `@tanstack/react-query` (^5.101.0)
 - `axios` (^1.17.0)
 - `better-auth` (^1.6.15)
 - `framer-motion` (^12.40.0)
