@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useOutletContext, useLocation, useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
@@ -27,13 +28,27 @@ export default function UserDashboard() {
   const navigate = useNavigate();
 
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [dashboardData, setDashboardData] = useState({
+  const { data: dashboardData, isLoading: loading, error } = useQuery({
+    queryKey: ['userDashboard'],
+    queryFn: async () => {
+      const response = await fetch("http://localhost:5000/api/user/dashboard", {
+        credentials: "include",
+      });
+      if (!response.ok) throw new Error("Failed to fetch dashboard data");
+      return response.json();
+    },
+    onError: (err) => {
+      console.error(err);
+      toast.error("Failed to load dashboard data");
+    }
+  });
+
+  const displayData = dashboardData || {
     totalModules: 0,
     announcements: [],
     enrolledModules: [],
     completionRate: 0,
-  });
+  };
 
   useEffect(() => {
     if (location.state?.showWelcome) {
@@ -41,28 +56,6 @@ export default function UserDashboard() {
       navigate(location.pathname, { replace: true, state: {} });
     }
   }, [location, navigate]);
-
-  useEffect(() => {
-    const fetchDashboardData = async () => {
-      try {
-        const response = await fetch(
-          "http://localhost:5000/api/user/dashboard",
-          {
-            credentials: "include",
-          },
-        );
-        if (!response.ok) throw new Error("Failed to fetch");
-        const data = await response.json();
-        setDashboardData(data);
-      } catch (error) {
-        console.error(error);
-        toast.error("Failed to load dashboard data");
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchDashboardData();
-  }, []);
 
   return (
     <div className="animate-in fade-in duration-300 relative">
@@ -86,22 +79,22 @@ export default function UserDashboard() {
         <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <StatCard
             title="Available Modules"
-            value={loading ? "..." : dashboardData.totalModules}
+            value={loading ? "..." : displayData.totalModules}
             subtitle="Training modules ready for access"
           />
           <StatCard
             title="Enrolled Modules"
-            value={loading ? "..." : dashboardData.enrolledModules.length}
+            value={loading ? "..." : displayData.enrolledModules.length}
             subtitle="Modules currently in progress"
           />
           <StatCard
             title="Announcements"
-            value={loading ? "..." : dashboardData.announcements.length}
+            value={loading ? "..." : displayData.announcements.length}
             subtitle="Latest updates from the system"
           />
           <StatCard
             title="Completion Rate"
-            value={loading ? "..." : `${dashboardData.completionRate}%`}
+            value={loading ? "..." : `${displayData.completionRate}%`}
             subtitle="Overall learning progress estimate"
           />
         </section>
@@ -123,7 +116,7 @@ export default function UserDashboard() {
               {loading ? (
                 // Skeletons
                 [1, 2].map((i) => <ModuleSkeleton key={i} />)
-              ) : dashboardData.enrolledModules.length === 0 ? (
+              ) : displayData.enrolledModules.length === 0 ? (
                 // Empty State
                 <div className="flex flex-col items-center justify-center py-12 text-center">
                   <div className="h-16 w-16 rounded-full bg-gray-50 flex items-center justify-center mb-4">
@@ -147,11 +140,11 @@ export default function UserDashboard() {
                   </button>
                 </div>
               ) : (
-                dashboardData.enrolledModules.map((module) => (
+                displayData.enrolledModules.map((module) => (
                   <EnrolledModuleCard
                     key={module.id}
                     module={module}
-                    onResume={() => navigate("/user/modules")}
+                    onResume={() => navigate(`/user/modules/${module.id}`)}
                   />
                 ))
               )}
@@ -173,7 +166,7 @@ export default function UserDashboard() {
               {loading ? (
                 // Skeletons
                 [1, 2, 3].map((i) => <AnnouncementSkeleton key={i} />)
-              ) : dashboardData.announcements.length === 0 ? (
+              ) : displayData.announcements.length === 0 ? (
                 <div className="text-center py-6">
                   <HugeiconsIcon
                     icon={AlertCircleIcon}
@@ -184,7 +177,7 @@ export default function UserDashboard() {
                   </p>
                 </div>
               ) : (
-                dashboardData.announcements.map((item) => (
+                displayData.announcements.map((item) => (
                   <div
                     key={item.id}
                     onClick={() => navigate("/user/announcements")}
@@ -209,7 +202,7 @@ export default function UserDashboard() {
               )}
             </div>
 
-            {!loading && dashboardData.announcements.length > 0 && (
+            {!loading && displayData.announcements.length > 0 && (
               <button
                 onClick={() => navigate("/user/announcements")}
                 className="w-full mt-4 py-2 text-sm font-semibold text-gray-600 hover:text-gray-900 transition-colors"

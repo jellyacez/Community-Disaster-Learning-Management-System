@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const pool = require("../config/db");
-const bcrypt = require("bcryptjs");
+const { auth } = require("../utils/auth");
 const adminMiddleware = require("../middleware/adminMiddleware");
 
 // @route   GET /api/admin/users
@@ -36,13 +36,14 @@ router.put("/users/:id/password", adminMiddleware, async (req, res) => {
       .json({ error: "Password must be at least 8 characters" });
   }
   try {
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const result = await pool.query(
-      'UPDATE account SET password = $1 WHERE "userId" = $2 RETURNING *',
-      [hashedPassword, id],
-    );
-    if (result.rows.length === 0)
-      return res.status(404).json({ error: "Account not found" });
+    await auth.api.setUserPassword({
+      headers: req.headers,
+      body: {
+        userId: id,
+        password: password
+      }
+    });
+    
     res.json({ message: "Password updated successfully" });
   } catch (err) {
     console.error(err);

@@ -3,11 +3,11 @@ import { useOutletContext } from "react-router-dom";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Search01Icon } from "@hugeicons/core-free-icons";
 import ModuleCard from "../../components/ui/modules/ModuleCard.jsx";
-import { modules } from "../../data/mockData.js";
 import useDocumentTitle from "../../hooks/useDocumentTitle";
 
 export default function UserModuleCatalog() {
   const { currentUser } = useOutletContext();
+  const modules = []; // Static empty array until the catalog backend route is implemented.
 
   useDocumentTitle("Module Catalog | Bacolor LMS");
   return (

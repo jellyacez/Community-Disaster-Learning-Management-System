@@ -1,13 +1,14 @@
 import React from "react";
 import { useOutletContext } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import ModuleCard from "../../components/ui/modules/ModuleCard.jsx";
-import { modules } from "../../data/mockData.js";
 import useDocumentTitle from "../../hooks/useDocumentTitle";
 
 export default function UserEnrolledModules() {
   useDocumentTitle("Enrolled Modules | Bacolor LMS");
   const { currentUser } = useOutletContext();
-  const enrolledModules = modules.filter((module) => module.enrolled);
+  const { data: dashboardData } = useQuery({ queryKey: ['userDashboard'] });
+  const enrolledModules = dashboardData?.enrolledModules || [];
 
   return (
     <div className="animate-in fade-in duration-300">

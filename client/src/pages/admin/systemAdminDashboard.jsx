@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import { authClient } from "../../lib/auth-client";
 import toast from "react-hot-toast";
 import useDocumentTitle from "../../hooks/useDocumentTitle";
@@ -8,24 +9,19 @@ export default function SystemAdminDashboard() {
   useDocumentTitle('Admin Dashboard | Bacolor LMS');
   
   const navigate = useNavigate();
-  const [users, setUsers] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  const fetchUsers = async () => {
-    try {
-      const response = await fetch("http://localhost:5000/api/users");
-      const data = await response.json();
-      setUsers(data);
-    } catch (err) {
+  const { data: users = [], isLoading: loading, refetch: fetchUsers } = useQuery({
+    queryKey: ['adminUsers'],
+    queryFn: async () => {
+      const response = await fetch("http://localhost:5000/api/users", {
+        credentials: "include",
+      });
+      if (!response.ok) throw new Error("Failed to fetch users");
+      return response.json();
+    },
+    onError: (err) => {
       toast.error("Failed to fetch users");
-    } finally {
-      setLoading(false);
     }
-  };
-
-  useEffect(() => {
-    fetchUsers();
-  }, []);
+  });
 
   const handleLogout = async () => {
     sessionStorage.setItem("isLoggingOut", "true");

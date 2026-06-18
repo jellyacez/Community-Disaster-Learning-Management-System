@@ -6,7 +6,7 @@ export default function PrivacyModal({ isOpen, onClose }) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4">
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[85vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
         <div className="flex items-center justify-between p-6 border-b border-gray-100">
           <h2 className="text-2xl font-bold text-gray-900">Privacy Policy</h2>
@@ -40,7 +40,7 @@ export default function PrivacyModal({ isOpen, onClose }) {
 
           <h3 className="text-lg font-bold text-gray-900 mt-6 mb-2">3. Data Security</h3>
           <p className="mb-4">
-            We implement industry-standard encryption (e.g., bcrypt password hashing) and secure cookies to protect your data from unauthorized access. Your active devices can be managed and revoked directly from your account settings.
+            We implement industry-standard cryptographic hashing and secure cookies to protect your data from unauthorized access. Your active devices can be managed and revoked directly from your account settings.
           </p>
 
           <h3 className="text-lg font-bold text-gray-900 mt-6 mb-2">4. Sharing of Information</h3>

@@ -37,10 +37,11 @@ A progressive, multi-level web application designed to train and certify residen
 - `pg` (^8.21.0)
 - `cors` (^2.8.6)
 - `dotenv` (^17.4.2)
-- `bcryptjs` (^3.0.3)
 - `better-auth` (^1.6.15)
-- `express-rate-limit` (^7.5.0)
+- `express-rate-limit` (^8.5.2)
 - `helmet` (^8.2.0)
+- `hpp` (^0.2.3)
+- `sanitize-html` (^2.17.5)
 - `nodemon` (^3.1.14) - *dev*
 
 ### Client Dependencies
@@ -125,3 +126,7 @@ The application will be live at `http://localhost:5173`.
 3. **Authorization Middleware**: The `adminMiddleware.js` operates as an Express gatekeeper, strictly validating that the secure session token belongs to a `system_admin` before any sensitive database queries are run.
 4. **Rate Limiting**: Defends the server from brute-force and DDoS attacks. Global limits apply broadly, with strict 20-request caps on authentication routes.
 5. **SQL Injection Prevention**: All custom database interactions are securely parameterized through `pg` bounds.
+6. **Payload Limits**: Incoming JSON requests are strictly capped at 500kb to mathematically prevent memory exhaustion and buffer attacks.
+7. **HTTP Parameter Pollution (HPP)**: The server safely parses query strings to prevent duplication-based backend bypasses.
+8. **Targeted XSS Sanitization**: A custom `sanitize-html` utility scrubs incoming rich-text content for the LMS modules, explicitly permitting safe HTML formatting while completely eliminating XSS vectors like `<script>` or `<iframe>` injections.
+9. **Credential Security**: All password mutations, hashing algorithms, and session invalidations rely 100% on Better Auth's internal secure server API, ensuring zero manual database manipulation.

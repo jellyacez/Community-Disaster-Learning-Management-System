@@ -1,12 +1,14 @@
 import React from "react";
 import { useOutletContext } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import AnnouncementCard from "../../components/ui/announcements/AnnouncementCard";
-import { announcements } from "../../data/mockData.js";
 import useDocumentTitle from "../../hooks/useDocumentTitle";
 
 export default function UserAnnouncements() {
   useDocumentTitle("Announcements | Bacolor LMS");
   const { currentUser } = useOutletContext();
+  const { data: dashboardData } = useQuery({ queryKey: ['userDashboard'] });
+  const announcements = dashboardData?.announcements || [];
 
   return (
     <div className="animate-in fade-in duration-300">
