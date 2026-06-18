@@ -19,13 +19,16 @@ export default function SignInPage() {
   const location = useLocation();
   const errorMessage = location.state?.error;
 
-  useEffect(() => {
-    sessionStorage.removeItem("isLoggingOut");
-  }, []);
-
   const { data: session, isPending } = authClient.useSession();
 
   useEffect(() => {
+    if (sessionStorage.getItem("isLoggingOut") === "true") {
+      if (!session && !isPending) {
+        sessionStorage.removeItem("isLoggingOut");
+      }
+      return;
+    }
+
     if (session && !isPending) {
       const userRole = session.user?.role;
       if (userRole === "system_admin")
@@ -107,7 +110,7 @@ export default function SignInPage() {
       <div className="w-full max-w-md bg-white rounded-2xl shadow-xl border border-gray-100 p-8">
         <Link
           to="/"
-          className="inline-flex items-center gap-2 text-sm text-red-600 font-semibold hover:underline mb-6"
+          className="inline-flex items-center gap-2 text-sm text-red-600 font-semibold hover:underline mb-6 outline-none focus-visible:ring-2 focus-visible:ring-red-500 rounded-md px-1 -ml-1"
         >
           <HugeiconsIcon icon={ArrowLeft01Icon} className="w-4 h-4" />
           Back to Landing Page
