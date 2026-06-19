@@ -2,7 +2,7 @@ const { betterAuth } = require("better-auth");
 const pool = require("../config/db");
 const { admin } = require("better-auth/plugins");
 const { transporter } = require("./mailer");
-const { passwordChangeNotificationHook } = require("./authHooks");
+const { APIError } = require("better-auth/api");
 const {
   getResetPasswordEmail,
   getVerificationEmail,
@@ -15,7 +15,7 @@ const auth = betterAuth({
   secret: process.env.BETTER_AUTH_SECRET,
   emailAndPassword: {
     enabled: true,
-    requireEmailVerification: true,
+    requireEmailVerification: false, // Disabled for development
     revokeSessionsOnPasswordReset: true,
     sendResetPassword: async ({ user, url, token }, request) => {
       const mailOptions = getResetPasswordEmail(user, token);
@@ -23,7 +23,7 @@ const auth = betterAuth({
     },
   },
   emailVerification: {
-    sendOnSignUp: true,
+    sendOnSignUp: false, // Disabled for development
     autoSignInAfterVerification: true,
     sendVerificationEmail: async ({ user, url, token }, request) => {
       const mailOptions = getVerificationEmail(user, token);
@@ -46,6 +46,10 @@ const auth = betterAuth({
         required: false,
         defaultValue: false,
       },
+      lastPasswordChange: {
+        type: "date",
+        required: false,
+      },
     },
   },
   plugins: [
@@ -58,9 +62,6 @@ const auth = betterAuth({
       },
     }),
   ],
-  hooks: {
-    after: passwordChangeNotificationHook,
-  },
   trustedOrigins: ["http://localhost:5173", "http://localhost:5174"],
   autoSignIn: true,
 });

@@ -5,9 +5,13 @@ import PasswordInput from "../ui/inputs/PasswordInput";
 import ConfirmationModal from "../ui/modals/ConfirmationModal";
 
 export default function SecuritySettings() {
-  const [passwordData, setPasswordData] = useState({ currentPassword: "", newPassword: "" });
+  const [passwordData, setPasswordData] = useState({
+    currentPassword: "",
+    newPassword: "",
+  });
   const [passwordErrors, setPasswordErrors] = useState({});
   const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   const handlePasswordChange = (e) => {
@@ -20,13 +24,14 @@ export default function SecuritySettings() {
   const handleUpdatePassword = async (e) => {
     e.preventDefault();
     setPasswordErrors({});
-    
+
     let errors = {};
     if (!passwordData.currentPassword) errors.currentPassword = "Required";
-    
+
     const passwordRegex = /^(?=.*[A-Z])(?=.*[!@#$%^&*_=+-/.]).{8,}$/;
     if (!passwordRegex.test(passwordData.newPassword)) {
-      errors.newPassword = "Must be 8+ characters and include an uppercase letter and a symbol.";
+      errors.newPassword =
+        "Must be 8+ characters and include an uppercase letter and a symbol.";
     }
 
     if (Object.keys(errors).length > 0) {
@@ -34,6 +39,11 @@ export default function SecuritySettings() {
       return;
     }
 
+    setShowConfirmModal(true);
+  };
+
+  const executePasswordChange = async () => {
+    setShowConfirmModal(false);
     setIsUpdatingPassword(true);
     const { data, error } = await authClient.changePassword({
       newPassword: passwordData.newPassword,
@@ -43,8 +53,17 @@ export default function SecuritySettings() {
     setIsUpdatingPassword(false);
 
     if (error) {
-      toast.error(error.message || "Failed to update password. Check current password.");
-      setPasswordErrors({ currentPassword: "Check your current password" });
+      if (error.status === 403) {
+        toast.error(
+          error.message ||
+            "You cannot change your password again within 24 hours.",
+        );
+      } else {
+        toast.error(
+          error.message || "Failed to update password. Check current password.",
+        );
+        setPasswordErrors({ currentPassword: "Check your current password" });
+      }
     } else {
       setPasswordData({ currentPassword: "", newPassword: "" });
       setShowSuccessModal(true);
@@ -55,8 +74,10 @@ export default function SecuritySettings() {
     <>
       <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
         <h2 className="text-xl font-bold text-gray-900">Security</h2>
-        <p className="text-sm text-gray-500 mb-4">Change your password to keep your account secure.</p>
-        
+        <p className="text-sm text-gray-500 mb-4">
+          Change your password to keep your account secure.
+        </p>
+
         <form onSubmit={handleUpdatePassword} className="space-y-4">
           <PasswordInput
             id="currentPassword"
@@ -74,7 +95,7 @@ export default function SecuritySettings() {
             onChange={handlePasswordChange}
             error={passwordErrors.newPassword}
           />
-          
+
           <button
             type="submit"
             disabled={isUpdatingPassword}
@@ -88,6 +109,17 @@ export default function SecuritySettings() {
           </button>
         </form>
       </div>
+
+      <ConfirmationModal
+        isOpen={showConfirmModal}
+        onClose={() => setShowConfirmModal(false)}
+        onConfirm={executePasswordChange}
+        title="Change Password?"
+        description="Are you sure you want to change your password? For your security, you will be locked from changing it again via Settings for 24 hours."
+        type="warning"
+        confirmText="Update Password"
+        cancelText="Cancel"
+      />
 
       <ConfirmationModal
         isOpen={showSuccessModal}

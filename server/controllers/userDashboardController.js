@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const pool = require("../config/db");
-const betterAuthMiddleware = require("../middleware/betterAuthMiddleware");
+const { betterAuthMiddleware } = require("../middleware/betterAuthMiddleware");
 
 // @route   GET /api/dashboard
 // @desc    Get user dashboard data (total modules, announcements, enrolled modules, completion rate)

@@ -7,10 +7,12 @@ const pool = require("./config/db");
 const { toNodeHandler } = require("better-auth/node");
 const { auth } = require("./utils/auth");
 const { authRateLimiter, globalLimiter } = require("./middleware/rateLimiters");
+const { passwordChangeInterceptor, passwordResetInterceptor } = require("./middleware/betterAuthMiddleware");
 
 const app = express();
 
 app.set("trust proxy", 1);
+app.use(express.json({ limit: "500kb" }));
 
 app.use(
   cors({
@@ -19,10 +21,12 @@ app.use(
   }),
 );
 
+app.post("/api/auth/change-password", passwordChangeInterceptor);
+app.post("/api/auth/reset-password", passwordResetInterceptor);
+
 app.use("/api/auth", authRateLimiter, toNodeHandler(auth));
 
 app.use(helmet());
-app.use(express.json({ limit: "500kb" }));
 app.use(hpp());
 
 app.use(globalLimiter);

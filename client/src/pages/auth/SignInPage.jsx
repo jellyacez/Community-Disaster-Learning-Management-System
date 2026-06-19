@@ -7,6 +7,7 @@ import { authClient } from "../../lib/auth-client";
 import useDocumentTitle from "../../hooks/useDocumentTitle";
 import AuthLayout from "../../components/auth/AuthLayout";
 import PasswordInput from "../../components/ui/inputs/PasswordInput";
+import ConfirmationModal from "../../components/ui/modals/ConfirmationModal";
 
 export default function SignInPage() {
   useDocumentTitle("Sign In | Bacolor LMS");
@@ -16,8 +17,14 @@ export default function SignInPage() {
   const errorMessage = location.state?.error;
 
   const { data: session, isPending } = authClient.useSession();
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   useEffect(() => {
+    if (sessionStorage.getItem("showLogoutModal") === "true") {
+      setShowLogoutModal(true);
+      sessionStorage.removeItem("showLogoutModal");
+    }
+
     if (sessionStorage.getItem("isLoggingOut") === "true") {
       if (!session && !isPending) {
         sessionStorage.removeItem("isLoggingOut");
@@ -67,16 +74,22 @@ export default function SignInPage() {
 
     if (error) {
       console.error("Sign in failed:", error);
-      let errorMessage = error.message || "Invalid email or password. Please try again.";
+      let errorMessage =
+        error.message || "Invalid email or password. Please try again.";
 
-      if (error.status === 429 || errorMessage.toLowerCase().includes("too many")) {
-        errorMessage = "Too many login attempts. Please wait 15 minutes and try again.";
+      if (
+        error.status === 429 ||
+        errorMessage.toLowerCase().includes("too many")
+      ) {
+        errorMessage =
+          "Too many login attempts. Please wait 15 minutes and try again.";
         toast.error(errorMessage);
       } else if (
         errorMessage.toLowerCase().includes("not verified") ||
         errorMessage.toLowerCase().includes("verify your email")
       ) {
-        errorMessage = "Please verify your email address before signing in. Check your inbox!";
+        errorMessage =
+          "Please verify your email address before signing in. Check your inbox!";
       }
 
       setErrors({ form: errorMessage });
@@ -87,7 +100,8 @@ export default function SignInPage() {
   };
 
   const getInputClass = (fieldName) => {
-    const baseClass = "w-full px-4 py-3 rounded-xl border outline-none transition-colors";
+    const baseClass =
+      "w-full px-4 py-3 rounded-xl border outline-none transition-colors";
     const hasError = errors[fieldName] || errors.form;
     return `${baseClass} ${
       hasError
@@ -101,20 +115,29 @@ export default function SignInPage() {
       <form onSubmit={handleSubmit} className="space-y-4">
         {errorMessage && !errors.form && (
           <div className="flex items-center justify-center gap-2 bg-red-50 text-red-600 p-3 rounded-lg text-sm font-semibold mb-4 border border-red-100">
-            <HugeiconsIcon icon={Alert01Icon} className="w-5 h-5 flex-shrink-0" />
+            <HugeiconsIcon
+              icon={Alert01Icon}
+              className="w-5 h-5 flex-shrink-0"
+            />
             <span>{errorMessage}</span>
           </div>
         )}
 
         {errors.form && (
           <div className="flex items-center justify-center gap-2 bg-red-50 text-red-600 p-3 rounded-lg text-sm font-semibold mb-4 border border-red-100">
-            <HugeiconsIcon icon={Alert01Icon} className="w-5 h-5 flex-shrink-0" />
+            <HugeiconsIcon
+              icon={Alert01Icon}
+              className="w-5 h-5 flex-shrink-0"
+            />
             <span>{errors.form}</span>
           </div>
         )}
 
         <div>
-          <label htmlFor="email" className="block text-sm font-semibold text-gray-700 mb-1">
+          <label
+            htmlFor="email"
+            className="block text-sm font-semibold text-gray-700 mb-1"
+          >
             Email Address
           </label>
           <input
@@ -127,7 +150,11 @@ export default function SignInPage() {
             placeholder="Enter email"
             className={getInputClass("email")}
           />
-          {errors.email && <p className="text-red-500 text-xs mt-1 font-medium">{errors.email}</p>}
+          {errors.email && (
+            <p className="text-red-500 text-xs mt-1 font-medium">
+              {errors.email}
+            </p>
+          )}
         </div>
 
         <div>
@@ -157,10 +184,24 @@ export default function SignInPage() {
 
       <p className="text-sm text-gray-500 text-center mt-6">
         Don&apos;t have an account?{" "}
-        <Link to="/register" className="text-red-600 font-semibold hover:underline">
+        <Link
+          to="/register"
+          className="text-red-600 font-semibold hover:underline"
+        >
           Register
         </Link>
       </p>
+
+      <ConfirmationModal
+        isOpen={showLogoutModal}
+        onClose={() => setShowLogoutModal(false)}
+        onConfirm={() => setShowLogoutModal(false)}
+        title="You have been logged out."
+        description="You have been logged out from another device. If this wasn't you, we recommend changing your password immediately to secure your account."
+        type="success"
+        confirmText="Okay"
+        cancelText="Close"
+      />
     </AuthLayout>
   );
 }
