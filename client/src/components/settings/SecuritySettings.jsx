@@ -8,6 +8,7 @@ export default function SecuritySettings() {
   const [passwordData, setPasswordData] = useState({
     currentPassword: "",
     newPassword: "",
+    confirmPassword: "",
   });
   const [passwordErrors, setPasswordErrors] = useState({});
   const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
@@ -32,6 +33,10 @@ export default function SecuritySettings() {
     if (!passwordRegex.test(passwordData.newPassword)) {
       errors.newPassword =
         "Must be 8+ characters and include an uppercase letter and a symbol.";
+    }
+
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      errors.confirmPassword = "Passwords do not match";
     }
 
     if (Object.keys(errors).length > 0) {
@@ -65,7 +70,7 @@ export default function SecuritySettings() {
         setPasswordErrors({ currentPassword: "Check your current password" });
       }
     } else {
-      setPasswordData({ currentPassword: "", newPassword: "" });
+      setPasswordData({ currentPassword: "", newPassword: "", confirmPassword: "" });
       setShowSuccessModal(true);
     }
   };
@@ -94,6 +99,14 @@ export default function SecuritySettings() {
             value={passwordData.newPassword}
             onChange={handlePasswordChange}
             error={passwordErrors.newPassword}
+          />
+          <PasswordInput
+            id="confirmPassword"
+            name="confirmPassword"
+            label="Confirm New Password"
+            value={passwordData.confirmPassword}
+            onChange={handlePasswordChange}
+            error={passwordErrors.confirmPassword}
           />
 
           <button

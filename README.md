@@ -131,3 +131,5 @@ The application will be live at `http://localhost:5173`.
 7. **HTTP Parameter Pollution (HPP)**: The server safely parses query strings to prevent duplication-based backend bypasses.
 8. **Targeted XSS Sanitization**: A custom `sanitize-html` utility scrubs incoming rich-text content for the LMS modules, explicitly permitting safe HTML formatting while completely eliminating XSS vectors like `<script>` or `<iframe>` injections.
 9. **Credential Security**: All password mutations, hashing algorithms, and session invalidations rely 100% on Better Auth's internal secure server API, ensuring zero manual database manipulation.
+10. **Device Management**: Users can monitor all active sessions across different devices (e.g., Mobile, Windows, Mac) and can selectively or completely revoke active sessions from the Settings dashboard.
+11. **Security Cooldowns**: A strict 24-hour cooldown lock is enforced on manual password changes via the user dashboard to mitigate brute-force account takeovers. Legitimate owners can bypass this lock via the secure Email Recovery flow.

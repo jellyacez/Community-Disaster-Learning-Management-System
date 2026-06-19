@@ -339,7 +339,8 @@ CREATE TABLE public."user" (
     banned boolean,
     "banReason" text,
     "banExpires" timestamp with time zone,
-    archived boolean
+    archived boolean,
+    "lastPasswordChange" timestamp with time zone
 );
 
 
