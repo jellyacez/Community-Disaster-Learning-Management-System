@@ -38,8 +38,8 @@ const BACOLOR_BARANGAYS = [
 ];
 
 export default function RegisterPage() {
-  useDocumentTitle('Register | Bacolor LMS');
-  
+  useDocumentTitle("Register | Bacolor LMS");
+
   const navigate = useNavigate();
   const { data: session, isPending } = authClient.useSession();
 
@@ -144,8 +144,7 @@ export default function RegisterPage() {
       });
     } else {
       console.log("Registration successful:", data);
-      setFormSuccess("Account created successfully! Logging you in...");
-      setJustRegistered(true);
+      navigate("/verify-email-prompt", { state: { email: formData.email } });
     }
   };
 
@@ -190,11 +189,6 @@ export default function RegisterPage() {
                 className="w-5 h-5 flex-shrink-0"
               />
               <span>{errors.form}</span>
-            </div>
-          )}
-          {formSuccess && (
-            <div className="text-green-600 text-sm font-semibold text-center mb-4">
-              {formSuccess}
             </div>
           )}
 
@@ -398,7 +392,10 @@ export default function RegisterPage() {
                 By selecting "Create Account", I agree to the{" "}
                 <button
                   type="button"
-                  onClick={(e) => { e.preventDefault(); setShowTermsModal(true); }}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setShowTermsModal(true);
+                  }}
                   className="text-red-600 font-semibold hover:underline"
                 >
                   Terms & Conditions
@@ -406,7 +403,10 @@ export default function RegisterPage() {
                 and{" "}
                 <button
                   type="button"
-                  onClick={(e) => { e.preventDefault(); setShowPrivacyModal(true); }}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setShowPrivacyModal(true);
+                  }}
                   className="text-red-600 font-semibold hover:underline"
                 >
                   Privacy Policy
@@ -440,8 +440,14 @@ export default function RegisterPage() {
         </p>
       </div>
 
-      <TermsModal isOpen={showTermsModal} onClose={() => setShowTermsModal(false)} />
-      <PrivacyModal isOpen={showPrivacyModal} onClose={() => setShowPrivacyModal(false)} />
+      <TermsModal
+        isOpen={showTermsModal}
+        onClose={() => setShowTermsModal(false)}
+      />
+      <PrivacyModal
+        isOpen={showPrivacyModal}
+        onClose={() => setShowPrivacyModal(false)}
+      />
     </div>
   );
 }

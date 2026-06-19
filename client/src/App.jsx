@@ -6,6 +6,8 @@ import LandingPage from "./pages/public/LandingPage";
 import RegisterPage from "./pages/auth/RegisterPage";
 import SignInPage from "./pages/auth/SignInPage";
 import ForgotPasswordPage from "./pages/auth/ForgotPasswordPage";
+import VerifyEmailPromptPage from "./pages/auth/VerifyEmailPromptPage";
+import VerifyEmail from "./pages/auth/VerifyEmail";
 
 import SystemAdminDashboard from "./pages/admin/systemAdminDashboard";
 import UserDashboard from "./pages/user/UserDashboard";
@@ -59,6 +61,8 @@ export default function App() {
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/signin" element={<SignInPage />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="/verify-email-prompt" element={<VerifyEmailPromptPage />} />
+        <Route path="/verify-email" element={<VerifyEmail />} />
 
         <Route element={<ProtectedRoute allowedRoles={["resident"]} />}>
           <Route element={<UserLayout />}>
