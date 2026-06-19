@@ -96,6 +96,12 @@ export default function SignInPage() {
         errorMessage =
           "Too many login attempts. Please wait 15 minutes and try again.";
         toast.error(errorMessage);
+      } else if (
+        errorMessage.toLowerCase().includes("not verified") ||
+        errorMessage.toLowerCase().includes("verify your email")
+      ) {
+        errorMessage =
+          "Please verify your email address before signing in. Check your inbox!";
       }
 
       setErrors({
