@@ -84,6 +84,7 @@ export default function RegisterPage() {
 
   const [errors, setErrors] = useState({});
   const [formSuccess, setFormSuccess] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleChange = (e) => {
     setFormData((prev) => ({
@@ -130,12 +131,16 @@ export default function RegisterPage() {
       return;
     }
 
+    setIsSubmitting(true);
+
     const { data, error } = await authClient.signUp.email({
       email: formData.email,
       password: formData.password,
       name: formData.fullName,
       barangay: formData.barangay,
     });
+    
+    setIsSubmitting(false);
 
     if (error) {
       console.error("Registration failed:", error);
@@ -144,6 +149,8 @@ export default function RegisterPage() {
       });
     } else {
       console.log("Registration successful:", data);
+      
+      // Navigate to the beautiful check-email page
       navigate("/verify-email-prompt", { state: { email: formData.email } });
     }
   };
@@ -418,14 +425,24 @@ export default function RegisterPage() {
 
           <button
             type="submit"
-            disabled={!acceptedTerms}
+            disabled={!acceptedTerms || isSubmitting}
             className={`w-full py-3 rounded-xl font-bold transition-colors ${
-              !acceptedTerms
+              !acceptedTerms || isSubmitting
                 ? "bg-gray-300 text-gray-500 cursor-not-allowed"
                 : "bg-red-600 text-white hover:bg-red-700"
             }`}
           >
-            Create Account
+            {isSubmitting ? (
+              <span className="flex items-center justify-center gap-2">
+                <svg className="animate-spin h-5 w-5 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Creating Account...
+              </span>
+            ) : (
+              "Create Account"
+            )}
           </button>
         </form>
 
