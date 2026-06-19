@@ -13,8 +13,8 @@ import { authClient } from "../../lib/auth-client";
 import useDocumentTitle from "../../hooks/useDocumentTitle";
 
 export default function SignInPage() {
-  useDocumentTitle('Sign In | Bacolor LMS');
-  
+  useDocumentTitle("Sign In | Bacolor LMS");
+
   const navigate = useNavigate();
   const location = useLocation();
   const errorMessage = location.state?.error;
@@ -85,8 +85,21 @@ export default function SignInPage() {
 
     if (error) {
       console.error("Sign in failed:", error);
+      let errorMessage =
+        error.message || "Invalid email or password. Please try again.";
+
+      // Explicitly catch 429 Too Many Requests
+      if (
+        error.status === 429 ||
+        errorMessage.toLowerCase().includes("too many")
+      ) {
+        errorMessage =
+          "Too many login attempts. Please wait 15 minutes and try again.";
+        toast.error(errorMessage);
+      }
+
       setErrors({
-        form: error.message || "Invalid email or password. Please try again.",
+        form: errorMessage,
       });
     } else {
       console.log("Sign in successful:", data);
@@ -209,7 +222,10 @@ export default function SignInPage() {
               </p>
             )}
             {/* add link to forgot password page */}
-            <Link to="/forgot-password" className="block text-red-600 font-semibold hover:underline text-sm mt-3 cursor-pointer text-right">
+            <Link
+              to="/forgot-password"
+              className="block text-red-600 font-semibold hover:underline text-sm mt-3 cursor-pointer text-right"
+            >
               Forgot Password?
             </Link>
           </div>
