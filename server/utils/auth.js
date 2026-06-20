@@ -9,6 +9,8 @@ const {
   getPasswordChangedEmail,
 } = require("./emailTemplates");
 
+const passwordResetTokens = new Map();
+
 const auth = betterAuth({
   database: pool,
   baseURL: process.env.BETTER_AUTH_URL,
@@ -16,8 +18,16 @@ const auth = betterAuth({
   emailAndPassword: {
     enabled: true,
     requireEmailVerification: false, // Disabled for development
-    revokeSessionsOnPasswordReset: true,
     sendResetPassword: async ({ user, url, token }, request) => {
+      passwordResetTokens.set(token, user.email);
+      
+      // Prevent memory leaks: Auto-delete the token from RAM after 1 hour (when it expires)
+      setTimeout(() => {
+        if (passwordResetTokens.has(token)) {
+          passwordResetTokens.delete(token);
+        }
+      }, 60 * 60 * 1000); // 1 hour
+
       const mailOptions = getResetPasswordEmail(user, token);
       await transporter.sendMail(mailOptions);
     },
@@ -66,4 +76,4 @@ const auth = betterAuth({
   autoSignIn: true,
 });
 
-module.exports = { auth };
+module.exports = { auth, passwordResetTokens };

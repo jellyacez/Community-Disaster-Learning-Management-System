@@ -89,9 +89,27 @@ const getNewDeviceLoginEmail = (user, session) => {
   };
 };
 
+const getPasswordRecoveredEmail = (user) => ({
+  from: process.env.EMAIL_USER,
+  to: user.email,
+  subject: "Security Alert: Account Recovered",
+  html: `
+    <div style="font-family: Arial, sans-serif; padding: 20px;">
+      <h2>Account Recovered</h2>
+      <p>Hello ${user.name || "User"},</p>
+      <p>Your password was just successfully reset using the "Forgot Password" email link.</p>
+      <p>For your security, <strong>we have automatically signed out all other devices</strong> currently logged into your account. You will need to log back in using your new password.</p>
+      <p style="color: #dc2626; font-weight: bold; margin-top: 20px;">
+        If you did not request this recovery, please contact a DRRM Administrator immediately as your email inbox may be compromised.
+      </p>
+    </div>
+  `,
+});
+
 module.exports = {
   getResetPasswordEmail,
   getVerificationEmail,
   getPasswordChangedEmail,
   getNewDeviceLoginEmail,
+  getPasswordRecoveredEmail,
 };

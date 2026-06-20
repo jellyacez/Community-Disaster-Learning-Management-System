@@ -11,7 +11,7 @@ const {
   passwordChangeInterceptor,
   passwordResetInterceptor,
   loginAlertInterceptor,
-} = require("./middleware/betterAuthMiddleware");
+} = require("./middleware/securityInterceptors");
 
 const app = express();
 
