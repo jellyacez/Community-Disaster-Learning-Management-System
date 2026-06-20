@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { authClient } from "../../lib/auth-client";
 import toast from "react-hot-toast";
 import useDocumentTitle from "../../hooks/useDocumentTitle";
+import { SkeletonTableRow } from "../../components/ui/Skeleton.jsx";
 
 export default function SystemAdminDashboard() {
   useDocumentTitle('Admin Dashboard | Bacolor LMS');
@@ -156,11 +157,8 @@ export default function SystemAdminDashboard() {
           </h2>
         </div>
 
-        {loading ? (
-          <div className="p-8 text-center text-gray-500">Loading users...</div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-gray-50 text-gray-500 text-sm uppercase tracking-wider">
                   <th className="p-4 font-semibold">Name</th>
@@ -171,8 +169,11 @@ export default function SystemAdminDashboard() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {users.map((user) => (
-                  <tr key={user.id} className="hover:bg-gray-50 transition">
+                {loading ? (
+                  [1, 2, 3, 4, 5].map((i) => <SkeletonTableRow key={i} columns={5} />)
+                ) : (
+                  users.map((user) => (
+                    <tr key={user.id} className="hover:bg-gray-50 transition">
                     <td className="p-4 font-bold text-gray-900">{user.name}</td>
                     <td className="p-4 text-gray-600">{user.email}</td>
                     <td className="p-4">
@@ -218,11 +219,11 @@ export default function SystemAdminDashboard() {
                       </button>
                     </td>
                   </tr>
-                ))}
+                ))
+              )}
               </tbody>
             </table>
           </div>
-        )}
       </div>
     </div>
   );

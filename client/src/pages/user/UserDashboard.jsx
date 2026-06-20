@@ -20,6 +20,7 @@ import WelcomeBanner from "../../components/ui/dashboard/WelcomeBanner.jsx";
 import EnrolledModuleCard from "../../components/ui/modules/EnrolledModuleCard.jsx";
 import useDocumentTitle from "../../hooks/useDocumentTitle";
 import toast from "react-hot-toast";
+import { SkeletonText } from "../../components/ui/Skeleton.jsx";
 
 export default function UserDashboard() {
   useDocumentTitle("Dashboard | Bacolor LMS");
@@ -79,22 +80,22 @@ export default function UserDashboard() {
         <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <StatCard
             title="Available Modules"
-            value={loading ? "..." : displayData.totalModules}
+            value={loading ? <SkeletonText className="h-8 w-16" /> : displayData.totalModules}
             subtitle="Training modules ready for access"
           />
           <StatCard
             title="Enrolled Modules"
-            value={loading ? "..." : displayData.enrolledModules.length}
+            value={loading ? <SkeletonText className="h-8 w-16" /> : displayData.enrolledModules.length}
             subtitle="Modules currently in progress"
           />
           <StatCard
             title="Announcements"
-            value={loading ? "..." : displayData.announcements.length}
+            value={loading ? <SkeletonText className="h-8 w-16" /> : displayData.announcements.length}
             subtitle="Latest updates from the system"
           />
           <StatCard
             title="Completion Rate"
-            value={loading ? "..." : `${displayData.completionRate}%`}
+            value={loading ? <SkeletonText className="h-8 w-16" /> : `${displayData.completionRate}%`}
             subtitle="Overall learning progress estimate"
           />
         </section>
