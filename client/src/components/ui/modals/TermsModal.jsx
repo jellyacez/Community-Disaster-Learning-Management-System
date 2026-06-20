@@ -35,17 +35,22 @@ export default function TermsModal({ isOpen, onClose }) {
             <li>Any activity occurring under your account is your sole responsibility.</li>
           </ul>
 
-          <h3 className="text-lg font-bold text-gray-900 mt-6 mb-2">3. Use of the Platform</h3>
+          <h3 className="text-lg font-bold text-gray-900 mt-6 mb-2">3. Account Security and Device Monitoring</h3>
+          <p className="mb-4">
+            To protect your account from unauthorized access and potential hijacking, the system actively monitors and logs the IP addresses and device types (User-Agent) used to access your account. By using this platform, you explicitly consent to this security tracking. You may review and revoke active sessions at any time through your account settings.
+          </p>
+
+          <h3 className="text-lg font-bold text-gray-900 mt-6 mb-2">4. Use of the Platform</h3>
           <p className="mb-4">
             This system is designed for community disaster preparedness training. You agree not to use the platform for any illegal or unauthorized purpose.
           </p>
 
-          <h3 className="text-lg font-bold text-gray-900 mt-6 mb-2">4. Content and Modules</h3>
+          <h3 className="text-lg font-bold text-gray-900 mt-6 mb-2">5. Content and Modules</h3>
           <p className="mb-4">
             All training modules, text, graphics, and resources provided on this platform are for educational purposes. The platform makes no guarantees regarding the absolute accuracy of user-submitted or externally sourced disaster information.
           </p>
 
-          <h3 className="text-lg font-bold text-gray-900 mt-6 mb-2">5. Termination</h3>
+          <h3 className="text-lg font-bold text-gray-900 mt-6 mb-2">6. Termination</h3>
           <p className="mb-4">
             We reserve the right to suspend or terminate your account at any time if we suspect a violation of these terms or any fraudulent activity.
           </p>

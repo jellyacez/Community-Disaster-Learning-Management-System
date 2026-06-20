@@ -7,7 +7,11 @@ const pool = require("./config/db");
 const { toNodeHandler } = require("better-auth/node");
 const { auth } = require("./utils/auth");
 const { authRateLimiter, globalLimiter } = require("./middleware/rateLimiters");
-const { passwordChangeInterceptor, passwordResetInterceptor } = require("./middleware/betterAuthMiddleware");
+const {
+  passwordChangeInterceptor,
+  passwordResetInterceptor,
+  loginAlertInterceptor,
+} = require("./middleware/betterAuthMiddleware");
 
 const app = express();
 
@@ -23,6 +27,7 @@ app.use(
 
 app.post("/api/auth/change-password", passwordChangeInterceptor);
 app.post("/api/auth/reset-password", passwordResetInterceptor);
+app.post("/api/auth/sign-in/email", loginAlertInterceptor);
 
 app.use("/api/auth", authRateLimiter, toNodeHandler(auth));
 

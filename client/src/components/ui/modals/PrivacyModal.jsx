@@ -28,10 +28,15 @@ export default function PrivacyModal({ isOpen, onClose }) {
           <ul className="list-disc pl-5 space-y-1 mb-4">
             <li><strong>Account Data:</strong> Your full name, email address, and encrypted password.</li>
             <li><strong>Demographics:</strong> Your designated Barangay for localizing disaster preparedness modules.</li>
-            <li><strong>System Data:</strong> Your active sessions, IP address, and browser type for security monitoring.</li>
+            <li><strong>System Data:</strong> Your active sessions, IP address, and device/browser type. This is logged strictly for security monitoring and fraud prevention.</li>
           </ul>
 
-          <h3 className="text-lg font-bold text-gray-900 mt-6 mb-2">2. How We Use Your Information</h3>
+          <h3 className="text-lg font-bold text-gray-900 mt-6 mb-2">2. Compliance with RA 10173 (Data Privacy Act of 2012)</h3>
+          <p className="mb-4">
+            In compliance with the Philippine Data Privacy Act of 2012, we ensure that your personal information, including identifiable system data (such as IP addresses), is collected lawfully under the basis of legitimate security interests. We implement strict organizational and technical measures to protect this data.
+          </p>
+
+          <h3 className="text-lg font-bold text-gray-900 mt-6 mb-2">3. How We Use Your Information</h3>
           <ul className="list-disc pl-5 space-y-1 mb-4">
             <li>To authenticate your login and secure your account.</li>
             <li>To track your progress in the disaster training modules.</li>
@@ -48,9 +53,9 @@ export default function PrivacyModal({ isOpen, onClose }) {
             We do not sell, trade, or rent your personal identification information to others. Your progress and name may be visible to designated Barangay Admins or MDRRMO Admins strictly for the purpose of monitoring community readiness.
           </p>
 
-          <h3 className="text-lg font-bold text-gray-900 mt-6 mb-2">5. Your Rights</h3>
+          <h3 className="text-lg font-bold text-gray-900 mt-6 mb-2">6. Your Rights</h3>
           <p className="mb-4">
-            You have the right to request access to the data we hold about you, or request account archival/deletion by contacting your System Administrator.
+            You have the right to request access to the data we hold about you, or request account archival/deletion by contacting your System Administrator. You also have the right to revoke any recognized devices and sessions directly from your account settings.
           </p>
         </div>
         

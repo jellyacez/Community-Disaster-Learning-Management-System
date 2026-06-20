@@ -51,8 +51,47 @@ const getPasswordChangedEmail = (user) => ({
   `,
 });
 
+const getNewDeviceLoginEmail = (user, session) => {
+  const deviceName = session.userAgent.includes("Windows")
+    ? "Windows PC"
+    : session.userAgent.includes("Mac")
+      ? "Mac/Apple Device"
+      : session.userAgent.includes("iPhone")
+        ? "iPhone"
+        : session.userAgent.includes("Android")
+          ? "Android Device"
+          : "Unknown Device";
+
+  return {
+    from: `Community DRRM <${process.env.EMAIL_USER}>`,
+    to: user.email,
+    subject: "Security Alert: New Login to your Account",
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e5e7eb; border-radius: 8px;">
+        <h2 style="color: #ef4444; margin-top: 0;">New Login Detected</h2>
+        <p>Hello ${user.name},</p>
+        <p>We noticed a new login to your account from a device we haven't seen you use recently.</p>
+        
+        <div style="background-color: #f3f4f6; padding: 15px; border-radius: 6px; margin: 20px 0;">
+          <p style="margin: 5px 0;"><strong>Device/Browser:</strong> ${deviceName} (${session.userAgent.split(" ")[0]})</p>
+          <p style="margin: 5px 0;"><strong>IP Address:</strong> ${session.ipAddress || "Hidden"}</p>
+          <p style="margin: 5px 0;"><strong>Time:</strong> ${new Date(session.createdAt).toLocaleString()}</p>
+        </div>
+        <p>If this was you, you can safely ignore this email.</p>
+        <p><strong>If this wasn't you</strong>, please log in immediately and go to your Settings > Active Devices to sign out the unrecognized device, and then change your password.</p>
+        
+        <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 20px 0;" />
+        <p style="font-size: 12px; color: #6b7280; text-align: center;">
+          Community DRRM Security System<br/>Bacolor, Pampanga
+        </p>
+      </div>
+    `,
+  };
+};
+
 module.exports = {
   getResetPasswordEmail,
   getVerificationEmail,
   getPasswordChangedEmail,
+  getNewDeviceLoginEmail,
 };
