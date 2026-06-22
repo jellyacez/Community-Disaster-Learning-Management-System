@@ -2,12 +2,12 @@
 -- PostgreSQL database dump
 --
 
-\restrict r1ea1W0MNKsudEddv2HzOtiMTnQp5hUyCahjKPLe9p6wuT3WAIY4NbSchtGcgxd
+\restrict asItH3YRlPFulc1kjenzQyDE7XE5cx8lhlYNrr39EQg1Nic4GMFsbTncJ33Yyi5
 
 -- Dumped from database version 18.4
 -- Dumped by pg_dump version 18.4
 
--- Started on 2026-06-22 15:26:31
+-- Started on 2026-06-22 18:08:29
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -323,6 +323,22 @@ CREATE TABLE public.session (
 ALTER TABLE public.session OWNER TO postgres;
 
 --
+-- TOC entry 239 (class 1259 OID 16829)
+-- Name: twoFactor; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public."twoFactor" (
+    id text NOT NULL,
+    secret text NOT NULL,
+    "backupCodes" text NOT NULL,
+    "userId" text NOT NULL,
+    verified boolean
+);
+
+
+ALTER TABLE public."twoFactor" OWNER TO postgres;
+
+--
 -- TOC entry 219 (class 1259 OID 16481)
 -- Name: user; Type: TABLE; Schema: public; Owner: postgres
 --
@@ -341,7 +357,8 @@ CREATE TABLE public."user" (
     "banReason" text,
     "banExpires" timestamp with time zone,
     archived boolean,
-    "lastPasswordChange" timestamp without time zone
+    "lastPasswordChange" timestamp without time zone,
+    "twoFactorEnabled" boolean
 );
 
 
@@ -365,7 +382,7 @@ CREATE TABLE public.verification (
 ALTER TABLE public.verification OWNER TO postgres;
 
 --
--- TOC entry 4928 (class 2606 OID 16533)
+-- TOC entry 4932 (class 2606 OID 16533)
 -- Name: account account_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -374,7 +391,7 @@ ALTER TABLE ONLY public.account
 
 
 --
--- TOC entry 4940 (class 2606 OID 16742)
+-- TOC entry 4944 (class 2606 OID 16742)
 -- Name: activity_log activity_log_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -383,7 +400,7 @@ ALTER TABLE ONLY public.activity_log
 
 
 --
--- TOC entry 4942 (class 2606 OID 16762)
+-- TOC entry 4946 (class 2606 OID 16762)
 -- Name: announcements announcements_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -392,7 +409,7 @@ ALTER TABLE ONLY public.announcements
 
 
 --
--- TOC entry 4938 (class 2606 OID 16692)
+-- TOC entry 4942 (class 2606 OID 16692)
 -- Name: certificates certificates_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -401,7 +418,7 @@ ALTER TABLE ONLY public.certificates
 
 
 --
--- TOC entry 4946 (class 2606 OID 16798)
+-- TOC entry 4950 (class 2606 OID 16798)
 -- Name: choices choices_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -410,7 +427,7 @@ ALTER TABLE ONLY public.choices
 
 
 --
--- TOC entry 4936 (class 2606 OID 16669)
+-- TOC entry 4940 (class 2606 OID 16669)
 -- Name: module_activity module_activity_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -419,7 +436,7 @@ ALTER TABLE ONLY public.module_activity
 
 
 --
--- TOC entry 4934 (class 2606 OID 16655)
+-- TOC entry 4938 (class 2606 OID 16655)
 -- Name: module_data module_data_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -428,7 +445,7 @@ ALTER TABLE ONLY public.module_data
 
 
 --
--- TOC entry 4944 (class 2606 OID 16780)
+-- TOC entry 4948 (class 2606 OID 16780)
 -- Name: questions questions_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -437,7 +454,7 @@ ALTER TABLE ONLY public.questions
 
 
 --
--- TOC entry 4948 (class 2606 OID 16818)
+-- TOC entry 4952 (class 2606 OID 16818)
 -- Name: results results_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -446,7 +463,7 @@ ALTER TABLE ONLY public.results
 
 
 --
--- TOC entry 4923 (class 2606 OID 16512)
+-- TOC entry 4927 (class 2606 OID 16512)
 -- Name: session session_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -455,7 +472,7 @@ ALTER TABLE ONLY public.session
 
 
 --
--- TOC entry 4925 (class 2606 OID 16514)
+-- TOC entry 4929 (class 2606 OID 16514)
 -- Name: session session_token_key; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -464,7 +481,16 @@ ALTER TABLE ONLY public.session
 
 
 --
--- TOC entry 4919 (class 2606 OID 16498)
+-- TOC entry 4954 (class 2606 OID 16839)
+-- Name: twoFactor twoFactor_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public."twoFactor"
+    ADD CONSTRAINT "twoFactor_pkey" PRIMARY KEY (id);
+
+
+--
+-- TOC entry 4923 (class 2606 OID 16498)
 -- Name: user user_email_key; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -473,7 +499,7 @@ ALTER TABLE ONLY public."user"
 
 
 --
--- TOC entry 4921 (class 2606 OID 16496)
+-- TOC entry 4925 (class 2606 OID 16496)
 -- Name: user user_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -482,7 +508,7 @@ ALTER TABLE ONLY public."user"
 
 
 --
--- TOC entry 4932 (class 2606 OID 16553)
+-- TOC entry 4936 (class 2606 OID 16553)
 -- Name: verification verification_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -491,7 +517,7 @@ ALTER TABLE ONLY public.verification
 
 
 --
--- TOC entry 4929 (class 1259 OID 16555)
+-- TOC entry 4933 (class 1259 OID 16555)
 -- Name: account_userId_idx; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -499,7 +525,7 @@ CREATE INDEX "account_userId_idx" ON public.account USING btree ("userId");
 
 
 --
--- TOC entry 4926 (class 1259 OID 16554)
+-- TOC entry 4930 (class 1259 OID 16554)
 -- Name: session_userId_idx; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -507,7 +533,23 @@ CREATE INDEX "session_userId_idx" ON public.session USING btree ("userId");
 
 
 --
--- TOC entry 4930 (class 1259 OID 16556)
+-- TOC entry 4955 (class 1259 OID 16845)
+-- Name: twoFactor_secret_idx; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX "twoFactor_secret_idx" ON public."twoFactor" USING btree (secret);
+
+
+--
+-- TOC entry 4956 (class 1259 OID 16846)
+-- Name: twoFactor_userId_idx; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX "twoFactor_userId_idx" ON public."twoFactor" USING btree ("userId");
+
+
+--
+-- TOC entry 4934 (class 1259 OID 16556)
 -- Name: verification_identifier_idx; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -515,7 +557,7 @@ CREATE INDEX verification_identifier_idx ON public.verification USING btree (ide
 
 
 --
--- TOC entry 4950 (class 2606 OID 16534)
+-- TOC entry 4958 (class 2606 OID 16534)
 -- Name: account account_userId_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -524,7 +566,7 @@ ALTER TABLE ONLY public.account
 
 
 --
--- TOC entry 4956 (class 2606 OID 16763)
+-- TOC entry 4964 (class 2606 OID 16763)
 -- Name: announcements fk_author; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -533,7 +575,7 @@ ALTER TABLE ONLY public.announcements
 
 
 --
--- TOC entry 4953 (class 2606 OID 16698)
+-- TOC entry 4961 (class 2606 OID 16698)
 -- Name: certificates fk_modact; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -542,7 +584,7 @@ ALTER TABLE ONLY public.certificates
 
 
 --
--- TOC entry 4951 (class 2606 OID 16675)
+-- TOC entry 4959 (class 2606 OID 16675)
 -- Name: module_activity fk_module; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -551,7 +593,7 @@ ALTER TABLE ONLY public.module_activity
 
 
 --
--- TOC entry 4957 (class 2606 OID 16781)
+-- TOC entry 4965 (class 2606 OID 16781)
 -- Name: questions fk_module; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -560,7 +602,7 @@ ALTER TABLE ONLY public.questions
 
 
 --
--- TOC entry 4958 (class 2606 OID 16799)
+-- TOC entry 4966 (class 2606 OID 16799)
 -- Name: choices fk_question; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -569,7 +611,7 @@ ALTER TABLE ONLY public.choices
 
 
 --
--- TOC entry 4959 (class 2606 OID 16819)
+-- TOC entry 4967 (class 2606 OID 16819)
 -- Name: results fk_quiz_module; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -578,7 +620,7 @@ ALTER TABLE ONLY public.results
 
 
 --
--- TOC entry 4960 (class 2606 OID 16824)
+-- TOC entry 4968 (class 2606 OID 16824)
 -- Name: results fk_quiz_user; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -587,7 +629,7 @@ ALTER TABLE ONLY public.results
 
 
 --
--- TOC entry 4955 (class 2606 OID 16743)
+-- TOC entry 4963 (class 2606 OID 16743)
 -- Name: activity_log fk_user; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -596,7 +638,7 @@ ALTER TABLE ONLY public.activity_log
 
 
 --
--- TOC entry 4954 (class 2606 OID 16693)
+-- TOC entry 4962 (class 2606 OID 16693)
 -- Name: certificates fk_user; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -605,7 +647,7 @@ ALTER TABLE ONLY public.certificates
 
 
 --
--- TOC entry 4952 (class 2606 OID 16670)
+-- TOC entry 4960 (class 2606 OID 16670)
 -- Name: module_activity fk_user; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -614,7 +656,7 @@ ALTER TABLE ONLY public.module_activity
 
 
 --
--- TOC entry 4949 (class 2606 OID 16515)
+-- TOC entry 4957 (class 2606 OID 16515)
 -- Name: session session_userId_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -622,11 +664,20 @@ ALTER TABLE ONLY public.session
     ADD CONSTRAINT "session_userId_fkey" FOREIGN KEY ("userId") REFERENCES public."user"(id) ON DELETE CASCADE;
 
 
--- Completed on 2026-06-22 15:26:31
+--
+-- TOC entry 4969 (class 2606 OID 16840)
+-- Name: twoFactor twoFactor_userId_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public."twoFactor"
+    ADD CONSTRAINT "twoFactor_userId_fkey" FOREIGN KEY ("userId") REFERENCES public."user"(id) ON DELETE CASCADE;
+
+
+-- Completed on 2026-06-22 18:08:29
 
 --
 -- PostgreSQL database dump complete
 --
 
-\unrestrict r1ea1W0MNKsudEddv2HzOtiMTnQp5hUyCahjKPLe9p6wuT3WAIY4NbSchtGcgxd
+\unrestrict asItH3YRlPFulc1kjenzQyDE7XE5cx8lhlYNrr39EQg1Nic4GMFsbTncJ33Yyi5
 
