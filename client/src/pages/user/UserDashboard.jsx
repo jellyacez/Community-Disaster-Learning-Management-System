@@ -21,6 +21,7 @@ import EnrolledModuleCard from "../../components/ui/modules/EnrolledModuleCard.j
 import useDocumentTitle from "../../hooks/useDocumentTitle";
 import toast from "react-hot-toast";
 import { SkeletonText } from "../../components/ui/Skeleton.jsx";
+import OnboardingModal from "../../components/ui/modals/OnboardingModal.jsx";
 
 export default function UserDashboard() {
   useDocumentTitle("Dashboard | Bacolor LMS");
@@ -60,6 +61,8 @@ export default function UserDashboard() {
 
   return (
     <div className="animate-in fade-in duration-300 relative">
+      <OnboardingModal currentUser={currentUser} />
+      
       <WelcomeModal
         isOpen={showWelcomeModal}
         onClose={() => setShowWelcomeModal(false)}

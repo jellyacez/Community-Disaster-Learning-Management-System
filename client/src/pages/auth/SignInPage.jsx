@@ -8,6 +8,7 @@ import useDocumentTitle from "../../hooks/useDocumentTitle";
 import AuthLayout from "../../components/auth/AuthLayout";
 import PasswordInput from "../../components/ui/inputs/PasswordInput";
 import ConfirmationModal from "../../components/ui/modals/ConfirmationModal";
+import GoogleSignInButton from "../../components/auth/GoogleSignInButton";
 
 export default function SignInPage() {
   useDocumentTitle("Sign In | Bacolor LMS");
@@ -180,6 +181,8 @@ export default function SignInPage() {
         >
           Sign In
         </button>
+
+        <GoogleSignInButton />
       </form>
 
       <p className="text-sm text-gray-500 text-center mt-6">

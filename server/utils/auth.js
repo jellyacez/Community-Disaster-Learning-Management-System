@@ -53,6 +53,7 @@ const auth = betterAuth({
       barangay: {
         type: "string",
         required: true,
+        defaultValue: "Unassigned",
       },
       role: {
         type: "string",
