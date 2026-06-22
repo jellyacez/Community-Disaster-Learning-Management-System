@@ -96,6 +96,9 @@ SMTP_HOST=smtp.gmail.com
 SMTP_PORT=465
 SMTP_USER=your-email@gmail.com
 SMTP_PASS=your-app-password
+
+# Developer Options
+DISABLE_MFA=true
 ```
 *(Tip: Generate a secure secret using `npx @better-auth/cli secret`)*
 
@@ -118,6 +121,13 @@ Open a new terminal, navigate to the client directory, and install dependencies:
 ```bash
 cd client
 npm install
+```
+
+Create a `.env` file in the `client` directory (optional for dev):
+
+```env
+# Developer Options
+VITE_DISABLE_MFA=true
 ```
 
 **Run the Client:**
