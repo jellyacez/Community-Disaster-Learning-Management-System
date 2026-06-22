@@ -15,18 +15,26 @@ const auth = betterAuth({
   database: pool,
   baseURL: process.env.BETTER_AUTH_URL,
   secret: process.env.BETTER_AUTH_SECRET,
+  socialProviders: {
+    google: {
+      clientId: process.env.GOOGLE_CLIENT_ID,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+    },
+  },
   emailAndPassword: {
     enabled: true,
     requireEmailVerification: false, // Disabled for development
     sendResetPassword: async ({ user, url, token }, request) => {
       passwordResetTokens.set(token, user.email);
-      
-      // Prevent memory leaks: Auto-delete the token from RAM after 1 hour (when it expires)
-      setTimeout(() => {
-        if (passwordResetTokens.has(token)) {
-          passwordResetTokens.delete(token);
-        }
-      }, 60 * 60 * 1000); // 1 hour
+
+      setTimeout(
+        () => {
+          if (passwordResetTokens.has(token)) {
+            passwordResetTokens.delete(token);
+          }
+        },
+        60 * 60 * 1000,
+      );
 
       const mailOptions = getResetPasswordEmail(user, token);
       await transporter.sendMail(mailOptions);

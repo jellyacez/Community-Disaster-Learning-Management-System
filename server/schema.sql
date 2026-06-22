@@ -2,12 +2,12 @@
 -- PostgreSQL database dump
 --
 
-\restrict Tn33QttY4hod2Suo3fM7fIyyW4T8Ywufs1HW2ZCa11CUoQqFkIcNMb7nfzDFGlH
+\restrict r1ea1W0MNKsudEddv2HzOtiMTnQp5hUyCahjKPLe9p6wuT3WAIY4NbSchtGcgxd
 
 -- Dumped from database version 18.4
 -- Dumped by pg_dump version 18.4
 
--- Started on 2026-06-18 17:02:51
+-- Started on 2026-06-22 15:26:31
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -216,7 +216,8 @@ CREATE TABLE public.module_data (
     modcat character varying(50) NOT NULL,
     description character varying(500),
     level character varying(50),
-    duration character varying(50)
+    duration character varying(50),
+    video_url character varying(500)
 );
 
 
@@ -340,7 +341,7 @@ CREATE TABLE public."user" (
     "banReason" text,
     "banExpires" timestamp with time zone,
     archived boolean,
-    "lastPasswordChange" timestamp with time zone
+    "lastPasswordChange" timestamp without time zone
 );
 
 
@@ -621,11 +622,11 @@ ALTER TABLE ONLY public.session
     ADD CONSTRAINT "session_userId_fkey" FOREIGN KEY ("userId") REFERENCES public."user"(id) ON DELETE CASCADE;
 
 
--- Completed on 2026-06-18 17:02:51
+-- Completed on 2026-06-22 15:26:31
 
 --
 -- PostgreSQL database dump complete
 --
 
-\unrestrict Tn33QttY4hod2Suo3fM7fIyyW4T8Ywufs1HW2ZCa11CUoQqFkIcNMb7nfzDFGlH
+\unrestrict r1ea1W0MNKsudEddv2HzOtiMTnQp5hUyCahjKPLe9p6wuT3WAIY4NbSchtGcgxd
 
