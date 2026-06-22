@@ -16,6 +16,7 @@ A progressive, multi-level web application designed to train and certify residen
 ## 🛠️ Technology Stack
 
 ### Backend (Server)
+
 - **Node.js & Express**: API and server framework
 - **PostgreSQL & pg**: Relational database for structured data
 - **Better Auth**: Comprehensive session management and RBAC admin plugin
@@ -23,6 +24,7 @@ A progressive, multi-level web application designed to train and certify residen
 - **Helmet & CORS**: Essential HTTP security layers
 
 ### Frontend (Client)
+
 - **React + Vite**: Blazing fast modern UI framework
 - **React Router Dom**: Dynamic client-side routing with protected routes
 - **TailwindCSS**: Utility-first styling for a premium aesthetic
@@ -34,6 +36,7 @@ A progressive, multi-level web application designed to train and certify residen
 ## 📦 Detailed Dependencies
 
 ### Server Dependencies
+
 - `express` (^5.2.1)
 - `pg` (^8.21.0)
 - `cors` (^2.8.6)
@@ -44,9 +47,10 @@ A progressive, multi-level web application designed to train and certify residen
 - `hpp` (^0.2.3)
 - `sanitize-html` (^2.17.5)
 - `nodemailer` (^9.0.1)
-- `nodemon` (^3.1.14) - *dev*
+- `nodemon` (^3.1.14) - _dev_
 
 ### Client Dependencies
+
 - `react` / `react-dom` (^19.2.6)
 - `react-router-dom` (^7.17.0)
 - `@tanstack/react-query` (^5.101.0)
@@ -57,9 +61,9 @@ A progressive, multi-level web application designed to train and certify residen
 - `qrcode.react` (^4.2.0)
 - `@hugeicons/react` (^1.1.6)
 - `@hugeicons/core-free-icons` (^4.2.0)
-- `tailwindcss` (^4.3.0) & `@tailwindcss/vite` - *dev*
-- `vite` (^8.0.12) - *dev*
-- `eslint` - *dev*
+- `tailwindcss` (^4.3.0) & `@tailwindcss/vite` - _dev_
+- `vite` (^8.0.12) - _dev_
+- `eslint` - _dev_
 
 ---
 
@@ -91,7 +95,7 @@ DB_PASSWORD=your_postgres_password
 BETTER_AUTH_URL=http://localhost:5173
 BETTER_AUTH_SECRET=your_super_secret_random_string_here
 
-# SMTP Configuration for Email OTP
+# SMTP Configuration for Email OTP (strictly for testing, will change once deployed in aws)
 SMTP_HOST=smtp.gmail.com
 SMTP_PORT=465
 SMTP_USER=your-email@gmail.com
@@ -100,7 +104,8 @@ SMTP_PASS=your-app-password
 # Developer Options
 DISABLE_MFA=true
 ```
-*(Tip: Generate a secure secret using `npx @better-auth/cli secret`)*
+
+_(Tip: Generate a secure secret using `npx @better-auth/cli secret`)_
 
 **Database Schema:**
 You must initialize the PostgreSQL database with the custom tables (e.g., `module_data`, `announcements`) defined in `server/schema.sql`. Note that Better-Auth uses standard plugins to auto-migrate its own tables, but the application data tables must be created manually using the provided schema.
@@ -110,6 +115,7 @@ npx @better-auth/cli migrate --config ./utils/auth.js
 ```
 
 **Run the Server:**
+
 ```bash
 npm run dev
 ```
@@ -131,6 +137,7 @@ VITE_DISABLE_MFA=true
 ```
 
 **Run the Client:**
+
 ```bash
 npm run dev
 ```
