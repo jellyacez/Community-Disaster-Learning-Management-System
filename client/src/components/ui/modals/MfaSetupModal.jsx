@@ -6,6 +6,7 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import { Shield01Icon, Mail01Icon } from "@hugeicons/core-free-icons";
 import { authClient } from "../../../lib/auth-client";
 import toast from "react-hot-toast";
+import axios from "axios";
 
 export default function MfaSetupModal({
   isOpen,
@@ -27,6 +28,37 @@ export default function MfaSetupModal({
   const [otpSent, setOtpSent] = useState(false);
   const [countdown, setCountdown] = useState(0);
   const [hasAcknowledgedBackup, setHasAcknowledgedBackup] = useState(false);
+  const [isGoogleUser, setIsGoogleUser] = useState(false);
+  
+  const { data: session } = authClient.useSession();
+  const userEmail = session?.user?.email;
+
+  const maskEmail = (email) => {
+    if (!email) return "";
+    const [localPart, domain] = email.split("@");
+    if (!domain) return email;
+    if (localPart.length <= 2) return `${localPart[0]}***@${domain}`;
+    return `${localPart[0]}***${localPart[localPart.length - 1]}@${domain}`;
+  };
+
+  useEffect(() => {
+    if (isOpen) {
+      const checkProvider = async () => {
+        try {
+          const res = await axios.get("http://localhost:5000/api/users/me/provider", {
+            withCredentials: true,
+          });
+          const providers = res.data.providers || [];
+          if (providers.includes("google") && !providers.includes("credential")) {
+            setIsGoogleUser(true);
+          }
+        } catch (err) {
+          console.error("Failed to fetch auth provider", err);
+        }
+      };
+      checkProvider();
+    }
+  }, [isOpen]);
 
   useEffect(() => {
     if (countdown > 0) {
@@ -47,11 +79,6 @@ export default function MfaSetupModal({
 
   const handleSendOtp = async (e) => {
     e.preventDefault();
-    if (!password) {
-      toast.error("Current password is required");
-      return;
-    }
-    setErrors({});
     setIsSendingOtp(true);
     const { error } = await authClient.twoFactor.sendOtp();
     setIsSendingOtp(false);
@@ -113,16 +140,22 @@ export default function MfaSetupModal({
       </p>
       
       <button 
-        onClick={() => handleSelectMethod("totp")}
-        className="w-full flex items-start gap-4 p-4 rounded-2xl border border-gray-200 hover:border-red-300 hover:bg-red-50 transition-colors text-left"
+        onClick={() => !isGoogleUser && handleSelectMethod("totp")}
+        disabled={isGoogleUser}
+        className={`w-full flex items-start gap-4 p-4 rounded-2xl border transition-colors text-left ${
+          isGoogleUser 
+            ? "border-gray-200 bg-gray-50 opacity-60 cursor-not-allowed" 
+            : "border-gray-200 hover:border-red-300 hover:bg-red-50"
+        }`}
       >
-        <div className="bg-red-100 p-2.5 rounded-xl text-red-600 flex-shrink-0">
+        <div className={`p-2.5 rounded-xl flex-shrink-0 ${isGoogleUser ? "bg-gray-200 text-gray-500" : "bg-red-100 text-red-600"}`}>
           <HugeiconsIcon icon={Shield01Icon} className="w-6 h-6" />
         </div>
         <div>
           <h4 className="font-bold text-gray-900">Use an Authenticator App</h4>
           <p className="text-xs text-gray-500 mt-1 leading-relaxed">
             (Recommended for advanced users). Use apps like Google Authenticator or Authy to generate offline codes.
+            {isGoogleUser && <span className="block mt-1 text-red-600 font-semibold">Unavailable for Google OAuth accounts (requires an account password).</span>}
           </p>
         </div>
       </button>
@@ -176,16 +209,31 @@ export default function MfaSetupModal({
               >
                 &larr; Back to options
               </button>
-              <p className="text-sm text-gray-600">
-                To enable the Authenticator App, please verify your identity by entering your current password.
-              </p>
-              <PasswordInput
-                id="mfaEnablePassword"
-                name="mfaEnablePassword"
-                label="Current Password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
+              {!isGoogleUser ? (
+                <>
+                  <p className="text-sm text-gray-600">
+                    To enable the Authenticator App, please verify your identity by entering your current password.
+                  </p>
+                  <PasswordInput
+                    id="mfaEnablePassword"
+                    name="mfaEnablePassword"
+                    label="Current Password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required={false}
+                  />
+                </>
+              ) : (
+                <div className="bg-gray-50 p-5 rounded-2xl border border-gray-100 text-center">
+                  <h4 className="font-bold text-gray-900 mb-2">Verify Your Identity</h4>
+                  <p className="text-sm text-gray-600 leading-relaxed mb-1">
+                    Since you signed in with Google, we need to verify your identity before enabling Two-Factor Authentication.
+                  </p>
+                  <p className="text-sm text-gray-600 leading-relaxed">
+                    Click Continue Setup to generate your secure authenticator QR code.
+                  </p>
+                </div>
+              )}
               <button
                 type="submit"
                 disabled={isGenerating}
@@ -265,16 +313,31 @@ export default function MfaSetupModal({
                 
                 {!otpSent ? (
                   <>
-                    <p className="text-sm text-gray-600">
-                      To enable Email Authentication, please verify your current password. We will send a 6-digit code to your email.
-                    </p>
-                    <PasswordInput
-                      id="mfaEnablePassword"
-                      name="mfaEnablePassword"
-                      label="Current Password"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                    />
+                    {!isGoogleUser ? (
+                      <>
+                        <p className="text-sm text-gray-600">
+                          To enable Email Authentication, please verify your current password. We will send a 6-digit code to your email.
+                        </p>
+                        <PasswordInput
+                          id="mfaEnablePassword"
+                          name="mfaEnablePassword"
+                          label="Current Password"
+                          value={password}
+                          onChange={(e) => setPassword(e.target.value)}
+                          required={false}
+                        />
+                      </>
+                    ) : (
+                      <div className="bg-gray-50 p-5 rounded-2xl border border-gray-100 text-center">
+                        <h4 className="font-bold text-gray-900 mb-2">Verify Your Identity</h4>
+                        <p className="text-sm text-gray-600 leading-relaxed mb-2">
+                          Since you signed in with Google, we need to verify your identity before enabling Two-Factor Authentication. 
+                        </p>
+                        <p className="text-sm text-gray-600 leading-relaxed">
+                          Click below to send a secure 6-digit code to your registered email address <strong className="text-gray-900">({maskEmail(userEmail)})</strong>.
+                        </p>
+                      </div>
+                    )}
                     <button
                       type="submit"
                       disabled={isSendingOtp}
@@ -320,13 +383,16 @@ export default function MfaSetupModal({
                 <p className="text-sm text-gray-600">
                 Are you sure you want to disable Two-Factor Authentication? Your account will be significantly less secure against unauthorized access.
               </p>
-              <PasswordInput
-                id="mfaDisablePassword"
-                name="mfaDisablePassword"
-                label="Current Password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
+              {!isGoogleUser && (
+                <PasswordInput
+                  id="mfaDisablePassword"
+                  name="mfaDisablePassword"
+                  label="Current Password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required={false}
+                />
+              )}
               <button
                 type="submit"
                 disabled={isGenerating}

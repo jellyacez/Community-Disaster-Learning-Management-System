@@ -7,21 +7,25 @@ import { authClient } from "../../lib/auth-client";
 import PasswordInput from "../ui/inputs/PasswordInput";
 import GoogleSignInButton from "./GoogleSignInButton";
 
-export default function EmailSignInForm({ errorMessage, onRequireMfa, onSuccess }) {
+export default function EmailSignInForm({ errorMessage, clearGlobalError, onRequireMfa, onSuccess }) {
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [errors, setErrors] = useState({});
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleChange = (e) => {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
     if (errors[e.target.name] || errors.form) {
       setErrors((prev) => ({ ...prev, [e.target.name]: null, form: null }));
     }
+    if (clearGlobalError) clearGlobalError();
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (isLoading) return;
+    
+    if (clearGlobalError) clearGlobalError();
     setErrors({});
-
     let newErrors = {};
     if (!formData.email) newErrors.email = "Email address is required.";
     if (!formData.password) newErrors.password = "Password is required.";
@@ -31,10 +35,12 @@ export default function EmailSignInForm({ errorMessage, onRequireMfa, onSuccess 
       return;
     }
 
+    setIsLoading(true);
     const { data, error } = await authClient.signIn.email({
       email: formData.email,
       password: formData.password,
     });
+    setIsLoading(false);
 
     if (error) {
       console.error("Sign in failed:", error);
@@ -124,12 +130,13 @@ export default function EmailSignInForm({ errorMessage, onRequireMfa, onSuccess 
 
       <button
         type="submit"
-        className="w-full py-3 rounded-xl bg-red-600 text-white font-bold hover:bg-red-700 transition-colors"
+        disabled={isLoading}
+        className="w-full py-3 rounded-xl bg-red-600 text-white font-bold hover:bg-red-700 transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
       >
-        Sign In
+        {isLoading ? "Signing In..." : "Sign In"}
       </button>
 
-      <GoogleSignInButton />
+      <GoogleSignInButton clearGlobalError={clearGlobalError} />
     </form>
   );
 }

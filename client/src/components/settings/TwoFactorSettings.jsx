@@ -27,12 +27,8 @@ export default function TwoFactorSettings() {
 
   const handleEnableMFA = async (e) => {
     e.preventDefault();
-    if (!password) {
-      toast.error("Password is required");
-      return;
-    }
     setIsGenerating(true);
-    const { data, error } = await authClient.twoFactor.enable({ password });
+    const { data, error } = await authClient.twoFactor.enable({ password: password || "" });
     setIsGenerating(false);
 
     if (error) {
@@ -46,12 +42,8 @@ export default function TwoFactorSettings() {
 
   const handleDisableMFA = async (e) => {
     e.preventDefault();
-    if (!password) {
-      toast.error("Password is required");
-      return;
-    }
     setIsGenerating(true);
-    const { error } = await authClient.twoFactor.disable({ password });
+    const { error } = await authClient.twoFactor.disable({ password: password || "" });
     setIsGenerating(false);
     
     if (error) {

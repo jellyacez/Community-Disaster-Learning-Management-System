@@ -4,6 +4,20 @@ const pool = require("../config/db");
 const adminMiddleware = require("../middleware/adminMiddleware");
 const { betterAuthMiddleware } = require("../middleware/betterAuthMiddleware");
 
+// @route   GET /api/users/me/provider
+// @desc    Get current user's auth providers
+// @access  Private
+router.get("/me/provider", betterAuthMiddleware, async (req, res) => {
+  try {
+    const result = await pool.query('SELECT "providerId" FROM account WHERE "userId" = $1', [req.user.id]);
+    const providers = result.rows.map(r => r.providerId);
+    res.json({ providers });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send("Server Error");
+  }
+});
+
 // @route   POST /api/users/onboarding
 // @desc    Complete user profile after Google OAuth
 // @access  Private

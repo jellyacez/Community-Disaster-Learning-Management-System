@@ -1,5 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import toast from "react-hot-toast";
+import axios from "axios";
 import { authClient } from "../../lib/auth-client";
 import PasswordInput from "../ui/inputs/PasswordInput";
 import ConfirmationModal from "../ui/modals/ConfirmationModal";
@@ -16,6 +17,24 @@ export default function SecuritySettings() {
   const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [isGoogleUser, setIsGoogleUser] = useState(false);
+
+  useEffect(() => {
+    const checkProvider = async () => {
+      try {
+        const res = await axios.get("http://localhost:5000/api/users/me/provider", {
+          withCredentials: true,
+        });
+        const providers = res.data.providers || [];
+        if (providers.includes("google") && !providers.includes("credential")) {
+          setIsGoogleUser(true);
+        }
+      } catch (err) {
+        console.error("Failed to fetch auth provider", err);
+      }
+    };
+    checkProvider();
+  }, []);
 
   const handlePasswordChange = (e) => {
     setPasswordData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
@@ -92,46 +111,68 @@ export default function SecuritySettings() {
           </div>
         </div>
 
-        <form onSubmit={handleUpdatePassword} className="space-y-4">
-          <PasswordInput
-            id="currentPassword"
-            name="currentPassword"
-            label="Current Password"
-            value={passwordData.currentPassword}
-            onChange={handlePasswordChange}
-            error={passwordErrors.currentPassword}
-          />
-          <PasswordInput
-            id="newPassword"
-            name="newPassword"
-            label="New Password"
-            value={passwordData.newPassword}
-            onChange={handlePasswordChange}
-            error={passwordErrors.newPassword}
-          />
-          <PasswordInput
-            id="confirmPassword"
-            name="confirmPassword"
-            label="Confirm New Password"
-            value={passwordData.confirmPassword}
-            onChange={handlePasswordChange}
-            error={passwordErrors.confirmPassword}
-          />
-
-          <div className="pt-2">
-            <button
-              type="submit"
-              disabled={isUpdatingPassword}
-              className={`flex items-center justify-center w-full md:w-auto rounded-xl border px-6 py-3.5 text-sm font-bold transition-all ${
-                isUpdatingPassword
-                  ? "bg-gray-50 border-gray-100 text-gray-400 cursor-not-allowed"
-                  : "bg-white border-red-200 text-red-600 hover:bg-red-50 active:scale-95"
-              }`}
-            >
-              {isUpdatingPassword ? "Updating..." : "Update Password"}
-            </button>
+        {isGoogleUser && (
+          <div className="mb-6 flex items-center gap-3 p-4 bg-gray-50 rounded-2xl border border-gray-100">
+            <div className="w-5 h-5 flex items-center justify-center bg-red-600 rounded">
+              <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+            <label className="text-sm font-semibold text-gray-700 select-none">
+              Signed in with Google Account
+            </label>
           </div>
-        </form>
+        )}
+
+        {isGoogleUser ? (
+          <div className="p-6 bg-red-50 border border-red-100 rounded-2xl text-center">
+            <h3 className="text-red-800 font-bold mb-2">Google OAuth Account</h3>
+            <p className="text-sm text-red-600 leading-relaxed max-w-sm mx-auto">
+              Since you securely signed in using your Google account, you do not have (or need) a password on our platform. Your account is protected by Google's security!
+            </p>
+          </div>
+        ) : (
+          <form onSubmit={handleUpdatePassword} className="space-y-4">
+            <PasswordInput
+              id="currentPassword"
+              name="currentPassword"
+              label="Current Password"
+              value={passwordData.currentPassword}
+              onChange={handlePasswordChange}
+              error={passwordErrors.currentPassword}
+            />
+            <PasswordInput
+              id="newPassword"
+              name="newPassword"
+              label="New Password"
+              value={passwordData.newPassword}
+              onChange={handlePasswordChange}
+              error={passwordErrors.newPassword}
+            />
+            <PasswordInput
+              id="confirmPassword"
+              name="confirmPassword"
+              label="Confirm New Password"
+              value={passwordData.confirmPassword}
+              onChange={handlePasswordChange}
+              error={passwordErrors.confirmPassword}
+            />
+
+            <div className="pt-2">
+              <button
+                type="submit"
+                disabled={isUpdatingPassword}
+                className={`flex items-center justify-center w-full md:w-auto rounded-xl border px-6 py-3.5 text-sm font-bold transition-all ${
+                  isUpdatingPassword
+                    ? "bg-gray-50 border-gray-100 text-gray-400 cursor-not-allowed"
+                    : "bg-white border-red-200 text-red-600 hover:bg-red-50 active:scale-95"
+                }`}
+              >
+                {isUpdatingPassword ? "Updating..." : "Update Password"}
+              </button>
+            </div>
+          </form>
+        )}
       </div>
 
       <ConfirmationModal

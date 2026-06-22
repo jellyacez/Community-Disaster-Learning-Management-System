@@ -1,6 +1,6 @@
 // --- START: SignInPage.jsx ---
 import React, { useState, useEffect } from "react";
-import { Link, useNavigate, useLocation } from "react-router-dom";
+import { Link, useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import toast from "react-hot-toast";
 import { authClient } from "../../lib/auth-client";
 import useDocumentTitle from "../../hooks/useDocumentTitle";
@@ -15,7 +15,31 @@ export default function SignInPage() {
   const navigate = useNavigate();
   // Grab URL state to show redirect errors (e.g. session expired)
   const location = useLocation();
-  const errorMessage = location.state?.error;
+  const [searchParams, setSearchParams] = useSearchParams();
+  const urlError = searchParams.get("error");
+  
+  let errorMessage = location.state?.error;
+  if (!errorMessage && urlError) {
+    if (urlError === "access_denied") {
+      errorMessage = "Google sign-in was cancelled.";
+    } else {
+      errorMessage = "Authentication failed. Please try again.";
+    }
+  }
+
+  const clearGlobalError = () => {
+    let cleared = false;
+    if (urlError) {
+      searchParams.delete("error");
+      setSearchParams(searchParams, { replace: true });
+      cleared = true;
+    }
+    if (location.state?.error) {
+      navigate(location.pathname, { replace: true, state: {} });
+      cleared = true;
+    }
+    return cleared;
+  };
 
   // Mount active session; intercept if they are already logged in
   const { data: session, isPending } = authClient.useSession();
@@ -98,6 +122,7 @@ export default function SignInPage() {
     <AuthLayout title="Sign In" subtitle="Access your DRRM training account">
       <EmailSignInForm 
         errorMessage={errorMessage}
+        clearGlobalError={clearGlobalError}
         onRequireMfa={handleRequireMfa}
         onSuccess={handleSuccess}
       />

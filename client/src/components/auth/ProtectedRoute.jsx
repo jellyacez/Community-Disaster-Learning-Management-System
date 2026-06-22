@@ -1,11 +1,12 @@
 import React from "react";
-import { Navigate, Outlet, Link } from "react-router-dom";
+import { Navigate, Outlet, Link, useSearchParams } from "react-router-dom";
 import { authClient } from "../../lib/auth-client";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Alert01Icon } from "@hugeicons/core-free-icons";
 
 export default function ProtectedRoute({ allowedRoles = [] }) {
   const { data: session, isPending } = authClient.useSession();
+  const [searchParams] = useSearchParams();
 
   if (isPending) {
     return (
@@ -19,6 +20,13 @@ export default function ProtectedRoute({ allowedRoles = [] }) {
     if (sessionStorage.getItem("isLoggingOut") === "true") {
       return <Navigate to="/signin" replace />;
     }
+    
+    const errorParam = searchParams.get("error");
+    
+    if (errorParam) {
+      return <Navigate to={`/signin?error=${encodeURIComponent(errorParam)}`} replace />;
+    }
+
     return (
       <Navigate
         to="/signin"

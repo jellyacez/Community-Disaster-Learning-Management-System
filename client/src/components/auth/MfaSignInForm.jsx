@@ -18,6 +18,7 @@ export default function MfaSignInForm({
   const [countdown, setCountdown] = useState(0);
   const [trustDevice, setTrustDevice] = useState(false);
   const [errors, setErrors] = useState({});
+  const [isVerifying, setIsVerifying] = useState(false);
 
   useEffect(() => {
     if (countdown > 0) {
@@ -42,7 +43,9 @@ export default function MfaSignInForm({
 
   const handleVerifyTwoFactor = async (e) => {
     e.preventDefault();
+    if (isVerifying) return;
     setErrors({});
+    setIsVerifying(true);
     
     let result;
     if (twoFactorCurrentMethod === "totp") {
@@ -50,6 +53,8 @@ export default function MfaSignInForm({
     } else {
       result = await authClient.twoFactor.verifyOtp({ code: totpCode, trustDevice });
     }
+
+    setIsVerifying(false);
 
     if (result.error) {
       setErrors({ form: "Invalid code. Please try again." });
@@ -126,10 +131,10 @@ export default function MfaSignInForm({
 
           <button
             type="submit"
-            disabled={totpCode.length !== 6 || isSendingOtp}
+            disabled={totpCode.length !== 6 || isSendingOtp || isVerifying}
             className="w-full py-3 mt-4 rounded-xl bg-red-600 text-white font-bold hover:bg-red-700 transition-colors disabled:opacity-50"
           >
-            Verify Code
+            {isVerifying ? "Verifying..." : "Verify Code"}
           </button>
         </div>
       )}
