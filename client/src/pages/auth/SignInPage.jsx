@@ -35,6 +35,13 @@ export default function SignInPage() {
 
     if (session && !isPending) {
       const userRole = session.user?.role;
+      const isAdmin = ["system_admin", "mdrrmo_admin", "barangay_admin"].includes(userRole);
+
+      if (isAdmin && !session.user.twoFactorEnabled) {
+        navigate("/admin/mfa-setup", { replace: true });
+        return;
+      }
+
       if (userRole === "system_admin")
         navigate("/admin/dashboard", { replace: true });
       else if (userRole === "mdrrmo_admin")
@@ -47,6 +54,8 @@ export default function SignInPage() {
 
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [errors, setErrors] = useState({});
+  const [showTwoFactor, setShowTwoFactor] = useState(false);
+  const [totpCode, setTotpCode] = useState("");
 
   const handleChange = (e) => {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
@@ -95,8 +104,27 @@ export default function SignInPage() {
 
       setErrors({ form: errorMessage });
     } else {
+      if (data?.twoFactorRedirect) {
+        setShowTwoFactor(true);
+        return;
+      }
       console.log("Sign in successful:", data);
       toast.success("Successfully logged in!");
+    }
+  };
+
+  const handleVerifyTotp = async (e) => {
+    e.preventDefault();
+    setErrors({});
+    const { error } = await authClient.twoFactor.verifyTotp({
+      code: totpCode,
+    });
+
+    if (error) {
+      setErrors({ form: "Invalid Authenticator Code. Please try again." });
+    } else {
+      toast.success("Successfully logged in!");
+      window.location.reload();
     }
   };
 
@@ -110,6 +138,50 @@ export default function SignInPage() {
         : "border-gray-200 focus:ring-2 focus:ring-red-500"
     }`;
   };
+
+  if (showTwoFactor) {
+    return (
+      <AuthLayout title="Two-Factor Authentication" subtitle="Enter the code from your authenticator app">
+        <form onSubmit={handleVerifyTotp} className="space-y-4">
+          {errors.form && (
+            <div className="flex items-center justify-center gap-2 bg-red-50 text-red-600 p-3 rounded-lg text-sm font-semibold mb-4 border border-red-100">
+              <HugeiconsIcon icon={Alert01Icon} className="w-5 h-5 flex-shrink-0" />
+              <span>{errors.form}</span>
+            </div>
+          )}
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-1">
+              Authenticator Code
+            </label>
+            <input
+              type="text"
+              value={totpCode}
+              onChange={(e) => {
+                setTotpCode(e.target.value);
+                setErrors({});
+              }}
+              placeholder="000000"
+              className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-red-500 outline-none transition text-center tracking-[0.5em] text-lg font-bold"
+              maxLength={6}
+            />
+          </div>
+          <button
+            type="submit"
+            className="w-full py-3 rounded-xl bg-red-600 text-white font-bold hover:bg-red-700 transition-colors"
+          >
+            Verify Code
+          </button>
+          <button
+            type="button"
+            onClick={() => setShowTwoFactor(false)}
+            className="w-full py-3 rounded-xl bg-gray-100 text-gray-600 font-bold hover:bg-gray-200 transition-colors mt-2"
+          >
+            Cancel
+          </button>
+        </form>
+      </AuthLayout>
+    );
+  }
 
   return (
     <AuthLayout title="Sign In" subtitle="Access your DRRM training account">

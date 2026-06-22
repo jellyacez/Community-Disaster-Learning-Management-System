@@ -1,6 +1,6 @@
 const { betterAuth } = require("better-auth");
 const pool = require("../config/db");
-const { admin } = require("better-auth/plugins");
+const { admin, twoFactor } = require("better-auth/plugins");
 const { transporter } = require("./mailer");
 const { APIError } = require("better-auth/api");
 const {
@@ -71,6 +71,7 @@ const auth = betterAuth({
       },
     },
   },
+  appName: "Bacolor Disaster LMS Portal",
   plugins: [
     admin({
       defaultRole: "resident",
@@ -80,6 +81,7 @@ const auth = betterAuth({
         MDRRMO_admin: {},
       },
     }),
+    twoFactor(),
   ],
   trustedOrigins: ["http://localhost:5173", "http://localhost:5174"],
   autoSignIn: true,

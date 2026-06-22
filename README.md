@@ -7,6 +7,7 @@ A progressive, multi-level web application designed to train and certify residen
 - **Progressive Learning**: Multi-level modules tailored to local hazards.
 - **Role-Based Access Control (RBAC)**: Secure, partitioned dashboards for Residents, Barangay Admins, MDRRMO Admins, and System Admins.
 - **Enterprise-Grade Security**: Powered by Better Auth with secure HTTP-only session cookies, backend middleware protection, and strict IP Rate Limiting.
+- **Multi-Factor Authentication (MFA)**: Optional 2FA for residents, and strictly enforced mandatory MFA for all administrative roles.
 - **Responsive & Dynamic UI**: Built with React, TailwindCSS, Framer Motion, and beautiful Hugeicons. Features mobile-first design, interactive floating animations, and dynamic skeleton loaders.
 - **Account Management**: Full end-to-end authentication flows including secure registration, login, and forgot password recovery.
 
@@ -52,6 +53,7 @@ A progressive, multi-level web application designed to train and certify residen
 - `better-auth` (^1.6.15)
 - `framer-motion` (^12.40.0)
 - `react-hot-toast` (^2.6.0)
+- `qrcode.react` (^4.2.0)
 - `@hugeicons/react` (^1.1.6)
 - `@hugeicons/core-free-icons` (^4.2.0)
 - `tailwindcss` (^4.3.0) & `@tailwindcss/vite` - *dev*
@@ -133,3 +135,4 @@ The application will be live at `http://localhost:5173`.
 9. **Credential Security**: All password mutations, hashing algorithms, and session invalidations rely 100% on Better Auth's internal secure server API, ensuring zero manual database manipulation.
 10. **Device Management**: Users can monitor all active sessions across different devices (e.g., Mobile, Windows, Mac) and can selectively or completely revoke active sessions from the Settings dashboard.
 11. **Security Cooldowns**: A strict 24-hour cooldown lock is enforced on manual password changes via the user dashboard to mitigate brute-force account takeovers. Legitimate owners can bypass this lock via the secure Email Recovery flow.
+12. **Multi-Factor Authentication (MFA)**: Time-based One-Time Password (TOTP) enforcement utilizing Better Auth's twoFactor plugin. Highly privileged roles (system_admin, mdrrmo_admin, barangay_admin) are strictly gated by backend middleware, redirecting them to an un-bypassable MFA setup flow if their account lacks 2FA.

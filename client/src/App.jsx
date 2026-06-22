@@ -21,6 +21,7 @@ import ProtectedRoute from "./components/auth/ProtectedRoute";
 import NotFoundPage from "./pages/public/NotFoundPage";
 
 import UserLayout from "./components/layouts/UserLayout";
+import AdminMfaSetupPage from "./pages/auth/AdminMfaSetupPage";
 
 export default function App() {
   return (
@@ -61,6 +62,7 @@ export default function App() {
         <Route path="/" element={<LandingPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/signin" element={<SignInPage />} />
+        <Route path="/admin/mfa-setup" element={<AdminMfaSetupPage />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route path="/verify-email-prompt" element={<VerifyEmailPromptPage />} />

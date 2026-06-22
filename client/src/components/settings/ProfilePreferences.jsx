@@ -1,9 +1,16 @@
 import React from "react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { UserCircle02Icon } from "@hugeicons/core-free-icons";
 
 export default function ProfilePreferences({ currentUser }) {
   return (
-    <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-      <h2 className="text-xl font-bold text-gray-900">Profile Preferences</h2>
+    <div className="rounded-3xl border border-gray-100 bg-white p-6 md:p-8 shadow-sm">
+      <div className="flex items-center gap-3 mb-6">
+        <div className="bg-red-50 p-2.5 rounded-xl text-red-600">
+          <HugeiconsIcon icon={UserCircle02Icon} className="w-6 h-6" />
+        </div>
+        <h2 className="text-xl font-bold text-gray-900">Profile Preferences</h2>
+      </div>
       <div className="mt-5 space-y-4">
         <div>
           <label className="mb-1 block text-sm font-semibold text-gray-700">
@@ -33,9 +40,11 @@ export default function ProfilePreferences({ currentUser }) {
             Your email address cannot be changed for security reasons.
           </p>
         </div>
-        <button className="rounded-xl bg-red-600 px-5 py-3 text-sm font-bold text-white hover:bg-red-700 transition">
-          Save Changes
-        </button>
+        <div className="pt-2">
+          <button className="flex items-center justify-center rounded-xl bg-red-600 px-6 py-3.5 text-sm font-bold text-white hover:bg-red-700 transition-colors active:scale-95">
+            Save Changes
+          </button>
+        </div>
       </div>
     </div>
   );

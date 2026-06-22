@@ -3,6 +3,8 @@ import toast from "react-hot-toast";
 import { authClient } from "../../lib/auth-client";
 import PasswordInput from "../ui/inputs/PasswordInput";
 import ConfirmationModal from "../ui/modals/ConfirmationModal";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { LockKeyIcon } from "@hugeicons/core-free-icons";
 
 export default function SecuritySettings() {
   const [passwordData, setPasswordData] = useState({
@@ -77,11 +79,18 @@ export default function SecuritySettings() {
 
   return (
     <>
-      <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-        <h2 className="text-xl font-bold text-gray-900">Security</h2>
-        <p className="text-sm text-gray-500 mb-4">
-          Change your password to keep your account secure.
-        </p>
+      <div className="rounded-3xl border border-gray-100 bg-white p-6 md:p-8 shadow-sm">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="bg-red-50 p-2.5 rounded-xl text-red-600">
+            <HugeiconsIcon icon={LockKeyIcon} className="w-6 h-6" />
+          </div>
+          <div>
+            <h2 className="text-xl font-bold text-gray-900">Security</h2>
+            <p className="text-sm text-gray-500 mt-0.5">
+              Change your password to keep your account secure.
+            </p>
+          </div>
+        </div>
 
         <form onSubmit={handleUpdatePassword} className="space-y-4">
           <PasswordInput
@@ -109,17 +118,19 @@ export default function SecuritySettings() {
             error={passwordErrors.confirmPassword}
           />
 
-          <button
-            type="submit"
-            disabled={isUpdatingPassword}
-            className={`rounded-xl border px-5 py-3 text-sm font-bold transition-colors ${
-              isUpdatingPassword
-                ? "bg-gray-100 text-gray-400 border-gray-100 cursor-not-allowed"
-                : "border-gray-200 text-gray-700 hover:bg-gray-50"
-            }`}
-          >
-            {isUpdatingPassword ? "Updating..." : "Update Password"}
-          </button>
+          <div className="pt-2">
+            <button
+              type="submit"
+              disabled={isUpdatingPassword}
+              className={`flex items-center justify-center w-full md:w-auto rounded-xl border px-6 py-3.5 text-sm font-bold transition-all ${
+                isUpdatingPassword
+                  ? "bg-gray-50 border-gray-100 text-gray-400 cursor-not-allowed"
+                  : "bg-white border-red-200 text-red-600 hover:bg-red-50 active:scale-95"
+              }`}
+            >
+              {isUpdatingPassword ? "Updating..." : "Update Password"}
+            </button>
+          </div>
         </form>
       </div>
 
