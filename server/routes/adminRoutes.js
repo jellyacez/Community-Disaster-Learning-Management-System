@@ -12,7 +12,7 @@ router.put("/users/:id", adminMiddleware, async (req, res) => {
   const { name, email, archived } = req.body;
   try {
     const result = await pool.query(
-      'UPDATE "user" SET name = $1, email = $2, archived = $3 WHERE id = $4 RETURNING *',
+      'UPDATE "user" SET name = $1, email = $2, archived = $3 WHERE id = $4 RETURNING id, name, email, "emailVerified", image, role, "banned", "banReason", "banExpires", "createdAt", "updatedAt", "twoFactorEnabled", barangay',
       [name, email, archived, id],
     );
     if (result.rows.length === 0)

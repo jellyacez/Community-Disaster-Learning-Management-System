@@ -106,10 +106,29 @@ const getPasswordRecoveredEmail = (user) => ({
   `,
 });
 
+const getOTPEmail = (user, otp) => ({
+  from: process.env.EMAIL_USER,
+  to: user.email,
+  subject: "Your Two-Factor Authentication Code",
+  html: `
+    <div style="font-family: Arial, sans-serif; padding: 20px;">
+      <h2>Hello, ${user.name}!</h2>
+      <p>Here is your One-Time Password (OTP) for Two-Factor Authentication:</p>
+      <div style="margin: 20px 0;">
+        <span style="font-size: 32px; font-weight: bold; letter-spacing: 5px; color: #dc2626; background-color: #fee2e2; padding: 10px 20px; border-radius: 8px;">
+          ${otp}
+        </span>
+      </div>
+      <p>This code will expire shortly. Do not share this code with anyone.</p>
+    </div>
+  `,
+});
+
 module.exports = {
   getResetPasswordEmail,
   getVerificationEmail,
   getPasswordChangedEmail,
   getNewDeviceLoginEmail,
   getPasswordRecoveredEmail,
+  getOTPEmail,
 };

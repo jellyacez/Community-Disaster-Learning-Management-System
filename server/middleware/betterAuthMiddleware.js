@@ -8,7 +8,8 @@ const betterAuthMiddleware = async (req, res, next) => {
       return res.status(401).json({ error: "Unauthorized" });
     }
     const adminRoles = ["system_admin", "mdrrmo_admin", "barangay_admin"];
-    if (adminRoles.includes(session.user.role) && !session.user.twoFactorEnabled) {
+    const mfaBypass = process.env.DISABLE_MFA === "true";
+    if (adminRoles.includes(session.user.role) && !session.user.twoFactorEnabled && !mfaBypass) {
       return res.status(403).json({ error: "MFA_REQUIRED", message: "Multi-Factor Authentication is mandatory for this role." });
     }
 

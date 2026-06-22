@@ -7,11 +7,6 @@ const pool = require("./config/db");
 const { toNodeHandler } = require("better-auth/node");
 const { auth } = require("./utils/auth");
 const { authRateLimiter, globalLimiter } = require("./middleware/rateLimiters");
-const {
-  passwordChangeInterceptor,
-  passwordResetInterceptor,
-  loginAlertInterceptor,
-} = require("./middleware/securityInterceptors");
 
 const app = express();
 
@@ -25,9 +20,8 @@ app.use(
   }),
 );
 
-app.post("/api/auth/change-password", passwordChangeInterceptor);
-app.post("/api/auth/reset-password", passwordResetInterceptor);
-app.post("/api/auth/sign-in/email", loginAlertInterceptor);
+const customAuthRoutes = require("./routes/authRoutes");
+app.use("/api/auth", customAuthRoutes);
 
 app.use("/api/auth", authRateLimiter, toNodeHandler(auth));
 
@@ -37,14 +31,14 @@ app.use(hpp());
 app.use(globalLimiter);
 
 // Import routes
-const adminController = require("./controllers/adminController");
-const userController = require("./controllers/getUserController");
-const userDashboardController = require("./controllers/userDashboardController");
+const adminRoutes = require("./routes/adminRoutes");
+const userRoutes = require("./routes/userRoutes");
+const userDashboardRoutes = require("./routes/userDashboardRoutes");
 
 // API Routes
-app.use("/api/admin", adminController);
-app.use("/api/users", userController);
-app.use("/api/user/dashboard", userDashboardController);
+app.use("/api/admin", adminRoutes);
+app.use("/api/users", userRoutes);
+app.use("/api/user/dashboard", userDashboardRoutes);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {

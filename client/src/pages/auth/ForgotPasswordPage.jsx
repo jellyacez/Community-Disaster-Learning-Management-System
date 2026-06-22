@@ -1,3 +1,4 @@
+// --- START: ForgotPasswordPage.jsx ---
 import React, { useState } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Mail01Icon, CheckmarkBadge01Icon, Alert01Icon, Shield01Icon } from "@hugeicons/core-free-icons";
@@ -110,3 +111,4 @@ export default function ForgotPasswordPage() {
     </AuthLayout>
   );
 }
+// --- END: ForgotPasswordPage.jsx ---

@@ -1,3 +1,4 @@
+// --- START: UserDashboard.jsx ---
 import React, { useState, useEffect } from "react";
 import { useOutletContext, useLocation, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -30,6 +31,8 @@ export default function UserDashboard() {
   const navigate = useNavigate();
 
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
+  
+  // Fetch aggregate user statistics and active modules from the API
   const { data: dashboardData, isLoading: loading, error } = useQuery({
     queryKey: ['userDashboard'],
     queryFn: async () => {
@@ -53,6 +56,7 @@ export default function UserDashboard() {
   };
 
   useEffect(() => {
+    // Intercept redirect states to show the welcome modal on first login
     if (location.state?.showWelcome) {
       setShowWelcomeModal(true);
       navigate(location.pathname, { replace: true, state: {} });
@@ -220,3 +224,4 @@ export default function UserDashboard() {
     </div>
   );
 }
+// --- END: UserDashboard.jsx ---

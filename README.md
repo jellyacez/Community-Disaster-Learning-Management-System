@@ -43,6 +43,7 @@ A progressive, multi-level web application designed to train and certify residen
 - `helmet` (^8.2.0)
 - `hpp` (^0.2.3)
 - `sanitize-html` (^2.17.5)
+- `nodemailer` (^9.0.1)
 - `nodemon` (^3.1.14) - *dev*
 
 ### Client Dependencies
@@ -89,6 +90,12 @@ DB_USER=postgres
 DB_PASSWORD=your_postgres_password
 BETTER_AUTH_URL=http://localhost:5173
 BETTER_AUTH_SECRET=your_super_secret_random_string_here
+
+# SMTP Configuration for Email OTP
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=465
+SMTP_USER=your-email@gmail.com
+SMTP_PASS=your-app-password
 ```
 *(Tip: Generate a secure secret using `npx @better-auth/cli secret`)*
 
@@ -136,3 +143,4 @@ The application will be live at `http://localhost:5173`.
 10. **Device Management**: Users can monitor all active sessions across different devices (e.g., Mobile, Windows, Mac) and can selectively or completely revoke active sessions from the Settings dashboard.
 11. **Security Cooldowns**: A strict 24-hour cooldown lock is enforced on manual password changes via the user dashboard to mitigate brute-force account takeovers. Legitimate owners can bypass this lock via the secure Email Recovery flow.
 12. **Multi-Factor Authentication (MFA)**: Time-based One-Time Password (TOTP) enforcement utilizing Better Auth's twoFactor plugin. Highly privileged roles (system_admin, mdrrmo_admin, barangay_admin) are strictly gated by backend middleware, redirecting them to an un-bypassable MFA setup flow if their account lacks 2FA.
+13. **Data Privacy**: The platform includes standardized Privacy Policy and Terms & Conditions. API routes are strictly structured utilizing isolated `/routes` modules (e.g. `authRoutes.js`, `userRoutes.js`) to strictly scope SQL `SELECT` statements and prevent data over-fetching.

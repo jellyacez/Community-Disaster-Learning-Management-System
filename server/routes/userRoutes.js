@@ -30,7 +30,7 @@ router.post("/onboarding", betterAuthMiddleware, async (req, res) => {
 // @access  Private (admin only)
 router.get("/", adminMiddleware, async (req, res) => {
   try {
-    const result = await pool.query('SELECT * FROM "user"');
+    const result = await pool.query('SELECT id, name, email, "emailVerified", image, role, "banned", "banReason", "banExpires", "createdAt", "updatedAt", "twoFactorEnabled", barangay FROM "user"');
     res.json(result.rows);
   } catch (err) {
     console.error(err.message);

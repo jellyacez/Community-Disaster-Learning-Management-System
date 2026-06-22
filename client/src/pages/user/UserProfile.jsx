@@ -1,3 +1,4 @@
+// --- START: UserProfile.jsx ---
 import React from "react";
 import { useOutletContext } from "react-router-dom";
 import { HugeiconsIcon } from "@hugeicons/react";
@@ -79,3 +80,4 @@ export default function UserProfile() {
     </div>
   );
 }
+// --- END: UserProfile.jsx ---

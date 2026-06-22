@@ -78,7 +78,6 @@ export default function RegisterForm() {
       console.error("Registration failed:", error);
       setErrors({ form: error.message || "Registration failed. Please try again." });
     } else {
-      console.log("Registration successful:", data);
       navigate("/verify-email-prompt", { state: { email: formData.email } });
     }
   };

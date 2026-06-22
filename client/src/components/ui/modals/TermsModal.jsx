@@ -25,34 +25,27 @@ export default function TermsModal({ isOpen, onClose }) {
 
           <h3 className="text-lg font-bold text-gray-900 mt-6 mb-2">1. Acceptance of Terms</h3>
           <p className="mb-4">
-            By creating an account, you confirm that you have read, understood, and agree to these terms. If you do not agree, you must not use our services.
+            By creating an account and utilizing the Community Disaster Learning Management System, you agree to comply with and be bound by these Terms and Conditions. If you do not agree with any part of these terms, you may not use the service.
           </p>
 
-          <h3 className="text-lg font-bold text-gray-900 mt-6 mb-2">2. User Account Responsibilities</h3>
-          <ul className="list-disc pl-5 space-y-1 mb-4">
-            <li>You are responsible for maintaining the confidentiality of your account credentials.</li>
-            <li>You agree to provide accurate and up-to-date information during registration.</li>
-            <li>Any activity occurring under your account is your sole responsibility.</li>
-          </ul>
-
-          <h3 className="text-lg font-bold text-gray-900 mt-6 mb-2">3. Account Security and Device Monitoring</h3>
+          <h3 className="text-lg font-bold text-gray-900 mt-6 mb-2">2. User Accounts and Security</h3>
           <p className="mb-4">
-            To protect your account from unauthorized access and potential hijacking, the system actively monitors and logs the IP addresses and device types (User-Agent) used to access your account. By using this platform, you explicitly consent to this security tracking. You may review and revoke active sessions at any time through your account settings.
+            You are entirely responsible for maintaining the confidentiality of your account credentials. You agree to notify administrators immediately of any unauthorized use of your account. We highly recommend enabling Two-Factor Authentication (MFA) via your account settings to ensure maximum protection. By using this platform, you explicitly consent to active IP and device tracking for security monitoring.
           </p>
 
-          <h3 className="text-lg font-bold text-gray-900 mt-6 mb-2">4. Use of the Platform</h3>
+          <h3 className="text-lg font-bold text-gray-900 mt-6 mb-2">3. Appropriate Use</h3>
           <p className="mb-4">
-            This system is designed for community disaster preparedness training. You agree not to use the platform for any illegal or unauthorized purpose.
+            The platform is provided solely for educational and administrative purposes relating to Disaster Risk Reduction and Management. Any attempt to disrupt, hack, reverse-engineer, or maliciously overload the system is strictly prohibited and will result in immediate termination of access and potential legal action.
           </p>
 
-          <h3 className="text-lg font-bold text-gray-900 mt-6 mb-2">5. Content and Modules</h3>
+          <h3 className="text-lg font-bold text-gray-900 mt-6 mb-2">4. Intellectual Property</h3>
           <p className="mb-4">
-            All training modules, text, graphics, and resources provided on this platform are for educational purposes. The platform makes no guarantees regarding the absolute accuracy of user-submitted or externally sourced disaster information.
+            All training modules, text, graphics, and interface designs are the intellectual property of the Bacolor MDRRMO or its respective licensors. You may not distribute, modify, or transmit the contents of this site without prior written consent.
           </p>
 
-          <h3 className="text-lg font-bold text-gray-900 mt-6 mb-2">6. Termination</h3>
+          <h3 className="text-lg font-bold text-gray-900 mt-6 mb-2">5. Disclaimer of Warranties</h3>
           <p className="mb-4">
-            We reserve the right to suspend or terminate your account at any time if we suspect a violation of these terms or any fraudulent activity.
+            While we strive to provide accurate and life-saving information, the materials on this site are provided "as is" without any express or implied warranty of any kind. We are not liable for any damages or injuries resulting from the application or misapplication of the training material during an actual disaster.
           </p>
         </div>
         

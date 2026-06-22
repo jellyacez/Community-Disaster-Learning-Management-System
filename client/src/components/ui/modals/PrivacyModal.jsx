@@ -24,38 +24,29 @@ export default function PrivacyModal({ isOpen, onClose }) {
           </p>
 
           <h3 className="text-lg font-bold text-gray-900 mt-6 mb-2">1. Information We Collect</h3>
-          <p className="mb-2">We only collect the information necessary to provide our educational services effectively:</p>
+          <p className="mb-2">We strictly collect only the information necessary to provide you with Disaster Risk Reduction and Management (DRRM) training. This includes your name, email address, affiliated barangay, and system activity records.</p>
+          
+          <h3 className="text-lg font-bold text-gray-900 mt-6 mb-2">2. How We Use Your Information</h3>
           <ul className="list-disc pl-5 space-y-1 mb-4">
-            <li><strong>Account Data:</strong> Your full name, email address, and encrypted password.</li>
-            <li><strong>Demographics:</strong> Your designated Barangay for localizing disaster preparedness modules.</li>
-            <li><strong>System Data:</strong> Your active sessions, IP address, and device/browser type. This is logged strictly for security monitoring and fraud prevention.</li>
+            <li>Facilitate your access to personalized DRRM modules.</li>
+            <li>Generate official certification upon completion.</li>
+            <li>Secure your account through mechanisms like Two-Factor Authentication (Email/App).</li>
+            <li>Allow local government units (MDRRMO, Barangay Admins) to track community preparedness.</li>
           </ul>
 
-          <h3 className="text-lg font-bold text-gray-900 mt-6 mb-2">2. Compliance with RA 10173 (Data Privacy Act of 2012)</h3>
+          <h3 className="text-lg font-bold text-gray-900 mt-6 mb-2">3. Data Security & Protection</h3>
           <p className="mb-4">
-            In compliance with the Philippine Data Privacy Act of 2012, we ensure that your personal information, including identifiable system data (such as IP addresses), is collected lawfully under the basis of legitimate security interests. We implement strict organizational and technical measures to protect this data.
+            We implement enterprise-grade security measures. Your passwords are cryptographically hashed and never stored in plain text. We utilize HTTPS, secure HTTP-only session cookies, strict CORS policies, and rate-limiting to defend against unauthorized access and brute-force attacks. We do not sell or expose your personal data to third-party marketers.
           </p>
 
-          <h3 className="text-lg font-bold text-gray-900 mt-6 mb-2">3. How We Use Your Information</h3>
-          <ul className="list-disc pl-5 space-y-1 mb-4">
-            <li>To authenticate your login and secure your account.</li>
-            <li>To track your progress in the disaster training modules.</li>
-            <li>To communicate critical announcements or platform updates.</li>
-          </ul>
-
-          <h3 className="text-lg font-bold text-gray-900 mt-6 mb-2">3. Data Security</h3>
+          <h3 className="text-lg font-bold text-gray-900 mt-6 mb-2">4. Your Rights</h3>
           <p className="mb-4">
-            We implement industry-standard cryptographic hashing and secure cookies to protect your data from unauthorized access. Your active devices can be managed and revoked directly from your account settings.
+            You have the right to request access to your personal data, request corrections, or request deletion of your account. You can manage your active sessions and revoke device access directly from your Security Settings.
           </p>
 
-          <h3 className="text-lg font-bold text-gray-900 mt-6 mb-2">4. Sharing of Information</h3>
+          <h3 className="text-lg font-bold text-gray-900 mt-6 mb-2">5. Contact Us</h3>
           <p className="mb-4">
-            We do not sell, trade, or rent your personal identification information to others. Your progress and name may be visible to designated Barangay Admins or MDRRMO Admins strictly for the purpose of monitoring community readiness.
-          </p>
-
-          <h3 className="text-lg font-bold text-gray-900 mt-6 mb-2">6. Your Rights</h3>
-          <p className="mb-4">
-            You have the right to request access to the data we hold about you, or request account archival/deletion by contacting your System Administrator. You also have the right to revoke any recognized devices and sessions directly from your account settings.
+            For privacy-related inquiries, please contact the Bacolor MDRRMO administrative office.
           </p>
         </div>
         

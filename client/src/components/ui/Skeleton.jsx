@@ -1,18 +1,15 @@
 import React from "react";
 
-// Generic raw block
 export function SkeletonBlock({ className = "" }) {
   return (
     <div className={`animate-pulse bg-gray-200 rounded-md ${className}`}></div>
   );
 }
 
-// Inline text replacement
 export function SkeletonText({ className = "h-4 w-3/4" }) {
   return <SkeletonBlock className={`${className} rounded-full`} />;
 }
 
-// Full generic card structure (perfect for modules, stats, or announcements)
 export function SkeletonCard() {
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex flex-col gap-4 animate-pulse">
@@ -33,7 +30,6 @@ export function SkeletonCard() {
   );
 }
 
-// Table row for admin dashboards
 export function SkeletonTableRow({ columns = 5 }) {
   return (
     <tr className="animate-pulse border-b border-gray-100 last:border-0">

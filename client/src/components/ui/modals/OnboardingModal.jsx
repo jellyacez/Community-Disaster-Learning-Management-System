@@ -10,8 +10,7 @@ export default function OnboardingModal({ currentUser }) {
   const [onboardingBarangay, setOnboardingBarangay] = useState("");
   const [isSubmittingOnboarding, setIsSubmittingOnboarding] = useState(false);
 
-  // If user does not need onboarding, return null so it doesn't render
-  if (currentUser?.barangay !== "Unassigned") return null;
+  if (!currentUser || (currentUser.name && currentUser.barangay !== "Unassigned")) return null;
 
   const handleOnboardingSubmit = async (e) => {
     e.preventDefault();
@@ -36,7 +35,6 @@ export default function OnboardingModal({ currentUser }) {
       if (!res.ok) throw new Error("Failed to update profile");
       
       toast.success("Profile completed successfully!");
-      // Force reload to update currentUser context
       window.location.reload();
     } catch (err) {
       toast.error(err.message);

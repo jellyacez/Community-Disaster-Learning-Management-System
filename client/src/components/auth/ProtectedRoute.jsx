@@ -4,8 +4,7 @@ import { authClient } from "../../lib/auth-client";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Alert01Icon } from "@hugeicons/core-free-icons";
 
-// checks if user is authenticated and has the required role to access the route
-export default function ProtectedRoute({ allowedRoles }) {
+export default function ProtectedRoute({ allowedRoles = [] }) {
   const { data: session, isPending } = authClient.useSession();
 
   if (isPending) {
@@ -42,6 +41,13 @@ export default function ProtectedRoute({ allowedRoles }) {
       );
     }
 
+    // Enforce Mandatory MFA for Admins unless bypassed
+    const isAdmin = ["system_admin", "mdrrmo_admin", "barangay_admin"].includes(userRole);
+    const mfaBypass = import.meta.env.VITE_DISABLE_MFA === "true";
+    if (isAdmin && !session.user.twoFactorEnabled && !mfaBypass) {
+      return <Navigate to="/admin/mfa-setup" replace />;
+    }
+
     if (!allowedRoles.includes(userRole)) {
       return (
         <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
@@ -69,4 +75,3 @@ export default function ProtectedRoute({ allowedRoles }) {
 
   return <Outlet />;
 }
-// end of component

@@ -1,3 +1,4 @@
+// --- START: UserSettings.jsx ---
 import React from "react";
 import { useOutletContext } from "react-router-dom";
 import useDocumentTitle from "../../hooks/useDocumentTitle";
@@ -32,3 +33,4 @@ export default function UserSettings() {
     </div>
   );
 }
+// --- END: UserSettings.jsx ---

@@ -1,3 +1,4 @@
+// --- START: LandingPage.jsx ---
 import React, { useEffect } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
@@ -19,8 +20,23 @@ export default function LandingPage() {
   const { data: session, isPending } = authClient.useSession();
 
   useEffect(() => {
+    if (sessionStorage.getItem("isLoggingOut") === "true") {
+      if (!session && !isPending) {
+        sessionStorage.removeItem("isLoggingOut");
+      }
+      return;
+    }
+
     if (session && !isPending) {
       const userRole = session.user?.role;
+      const isAdmin = ["system_admin", "mdrrmo_admin", "barangay_admin"].includes(userRole);
+      const mfaBypass = import.meta.env.VITE_DISABLE_MFA === "true";
+
+      if (isAdmin && !session.user.twoFactorEnabled && !mfaBypass) {
+        navigate("/admin/mfa-setup", { replace: true });
+        return;
+      }
+
       if (userRole === "system_admin")
         navigate("/admin/dashboard", { replace: true });
       else if (userRole === "mdrrmo_admin")
@@ -99,3 +115,4 @@ export default function LandingPage() {
     </div>
   );
 }
+// --- END: LandingPage.jsx ---

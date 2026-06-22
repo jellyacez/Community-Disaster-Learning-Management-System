@@ -1,3 +1,4 @@
+// --- START: NotFoundPage.jsx ---
 import React from "react";
 import { Link } from "react-router-dom";
 import { HugeiconsIcon } from "@hugeicons/react";
@@ -32,3 +33,4 @@ export default function NotFoundPage() {
     </div>
   );
 }
+// --- END: NotFoundPage.jsx ---

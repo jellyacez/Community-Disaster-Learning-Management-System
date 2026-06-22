@@ -7,11 +7,15 @@ import useDocumentTitle from "../../hooks/useDocumentTitle";
 import { SkeletonTableRow } from "../../components/ui/Skeleton.jsx";
 
 export default function SystemAdminDashboard() {
-  useDocumentTitle('Admin Dashboard | Bacolor LMS');
-  
+  useDocumentTitle("Admin Dashboard | Bacolor LMS");
+
   const navigate = useNavigate();
-  const { data: users = [], isLoading: loading, refetch: fetchUsers } = useQuery({
-    queryKey: ['adminUsers'],
+  const {
+    data: users = [],
+    isLoading: loading,
+    refetch: fetchUsers,
+  } = useQuery({
+    queryKey: ["adminUsers"],
     queryFn: async () => {
       const response = await fetch("http://localhost:5000/api/users", {
         credentials: "include",
@@ -21,13 +25,13 @@ export default function SystemAdminDashboard() {
     },
     onError: (err) => {
       toast.error("Failed to fetch users");
-    }
+    },
   });
 
   const handleLogout = async () => {
     sessionStorage.setItem("isLoggingOut", "true");
     await authClient.signOut();
-    navigate("/");
+    navigate("/signin");
   };
 
   const handleEditRole = async (user) => {
@@ -159,71 +163,73 @@ export default function SystemAdminDashboard() {
 
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="bg-gray-50 text-gray-500 text-sm uppercase tracking-wider">
-                  <th className="p-4 font-semibold">Name</th>
-                  <th className="p-4 font-semibold">Email</th>
-                  <th className="p-4 font-semibold">Role</th>
-                  <th className="p-4 font-semibold">Status</th>
-                  <th className="p-4 font-semibold text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {loading ? (
-                  [1, 2, 3, 4, 5].map((i) => <SkeletonTableRow key={i} columns={5} />)
-                ) : (
-                  users.map((user) => (
+            <thead>
+              <tr className="bg-gray-50 text-gray-500 text-sm uppercase tracking-wider">
+                <th className="p-4 font-semibold">Name</th>
+                <th className="p-4 font-semibold">Email</th>
+                <th className="p-4 font-semibold">Role</th>
+                <th className="p-4 font-semibold">Status</th>
+                <th className="p-4 font-semibold text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              {loading
+                ? [1, 2, 3, 4, 5].map((i) => (
+                    <SkeletonTableRow key={i} columns={5} />
+                  ))
+                : users.map((user) => (
                     <tr key={user.id} className="hover:bg-gray-50 transition">
-                    <td className="p-4 font-bold text-gray-900">{user.name}</td>
-                    <td className="p-4 text-gray-600">{user.email}</td>
-                    <td className="p-4">
-                      <span className="bg-blue-100 text-blue-800 text-xs font-bold px-3 py-1 rounded-full">
-                        {user.role}
-                      </span>
-                    </td>
-                    <td className="p-4">
-                      {user.archived ? (
-                        <span className="bg-red-100 text-red-800 text-xs font-bold px-3 py-1 rounded-full">
-                          Archived
+                      <td className="p-4 font-bold text-gray-900">
+                        {user.name}
+                      </td>
+                      <td className="p-4 text-gray-600">{user.email}</td>
+                      <td className="p-4">
+                        <span className="bg-blue-100 text-blue-800 text-xs font-bold px-3 py-1 rounded-full">
+                          {user.role}
                         </span>
-                      ) : (
-                        <span className="bg-green-100 text-green-800 text-xs font-bold px-3 py-1 rounded-full">
-                          Active
-                        </span>
-                      )}
-                    </td>
-                    <td className="p-4 flex flex-wrap gap-2 justify-end min-w-[300px]">
-                      <button
-                        onClick={() => handleEditUser(user)}
-                        className="px-3 py-1.5 text-xs font-bold bg-gray-100 text-gray-700 hover:bg-gray-200 rounded-lg transition"
-                      >
-                        Edit User
-                      </button>
-                      <button
-                        onClick={() => handleEditRole(user)}
-                        className="px-3 py-1.5 text-xs font-bold bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-lg transition"
-                      >
-                        Edit Role
-                      </button>
-                      <button
-                        onClick={() => handleResetPassword(user)}
-                        className="px-3 py-1.5 text-xs font-bold bg-orange-50 text-orange-700 hover:bg-orange-100 rounded-lg transition"
-                      >
-                        Reset Pass
-                      </button>
-                      <button
-                        onClick={() => handleArchive(user)}
-                        className={`px-3 py-1.5 text-xs font-bold rounded-lg transition ${user.archived ? "bg-green-50 text-green-700 hover:bg-green-100" : "bg-red-50 text-red-700 hover:bg-red-100"}`}
-                      >
-                        {user.archived ? "Unarchive" : "Archive"}
-                      </button>
-                    </td>
-                  </tr>
-                ))
-              )}
-              </tbody>
-            </table>
-          </div>
+                      </td>
+                      <td className="p-4">
+                        {user.archived ? (
+                          <span className="bg-red-100 text-red-800 text-xs font-bold px-3 py-1 rounded-full">
+                            Archived
+                          </span>
+                        ) : (
+                          <span className="bg-green-100 text-green-800 text-xs font-bold px-3 py-1 rounded-full">
+                            Active
+                          </span>
+                        )}
+                      </td>
+                      <td className="p-4 flex flex-wrap gap-2 justify-end min-w-[300px]">
+                        <button
+                          onClick={() => handleEditUser(user)}
+                          className="px-3 py-1.5 text-xs font-bold bg-gray-100 text-gray-700 hover:bg-gray-200 rounded-lg transition"
+                        >
+                          Edit User
+                        </button>
+                        <button
+                          onClick={() => handleEditRole(user)}
+                          className="px-3 py-1.5 text-xs font-bold bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-lg transition"
+                        >
+                          Edit Role
+                        </button>
+                        <button
+                          onClick={() => handleResetPassword(user)}
+                          className="px-3 py-1.5 text-xs font-bold bg-orange-50 text-orange-700 hover:bg-orange-100 rounded-lg transition"
+                        >
+                          Reset Pass
+                        </button>
+                        <button
+                          onClick={() => handleArchive(user)}
+                          className={`px-3 py-1.5 text-xs font-bold rounded-lg transition ${user.archived ? "bg-green-50 text-green-700 hover:bg-green-100" : "bg-red-50 text-red-700 hover:bg-red-100"}`}
+                        >
+                          {user.archived ? "Unarchive" : "Archive"}
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );

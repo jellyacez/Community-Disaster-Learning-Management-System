@@ -7,6 +7,7 @@ const {
   getResetPasswordEmail,
   getVerificationEmail,
   getPasswordChangedEmail,
+  getOTPEmail,
 } = require("./emailTemplates");
 
 const passwordResetTokens = new Map();
@@ -81,7 +82,14 @@ const auth = betterAuth({
         MDRRMO_admin: {},
       },
     }),
-    twoFactor(),
+    twoFactor({
+      otpOptions: {
+        sendOTP: async ({ user, otp }, request) => {
+          const mailOptions = getOTPEmail(user, otp);
+          await transporter.sendMail(mailOptions);
+        },
+      },
+    }),
   ],
   trustedOrigins: ["http://localhost:5173", "http://localhost:5174"],
   autoSignIn: true,
