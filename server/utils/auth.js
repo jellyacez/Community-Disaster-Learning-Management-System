@@ -9,8 +9,12 @@ const {
   getPasswordChangedEmail,
   getOTPEmail,
 } = require("./emailTemplates");
+const {
+  passwordChangeCooldownHook,
+  passwordChangeNotificationHook,
+  loginNotificationHook,
+} = require("./authHooks");
 
-const passwordResetTokens = new Map();
 
 const auth = betterAuth({
   database: pool,
@@ -26,17 +30,6 @@ const auth = betterAuth({
     enabled: true,
     requireEmailVerification: false, // Disabled for development
     sendResetPassword: async ({ user, url, token }, request) => {
-      passwordResetTokens.set(token, user.email);
-
-      setTimeout(
-        () => {
-          if (passwordResetTokens.has(token)) {
-            passwordResetTokens.delete(token);
-          }
-        },
-        60 * 60 * 1000,
-      );
-
       const mailOptions = getResetPasswordEmail(user, token);
       await transporter.sendMail(mailOptions);
     },
@@ -73,6 +66,10 @@ const auth = betterAuth({
     },
   },
   appName: "Bacolor Disaster LMS Portal",
+  hooks: {
+    before: [passwordChangeCooldownHook],
+    after: [passwordChangeNotificationHook, loginNotificationHook],
+  },
   plugins: [
     admin({
       defaultRole: "resident",
@@ -95,4 +92,4 @@ const auth = betterAuth({
   autoSignIn: true,
 });
 
-module.exports = { auth, passwordResetTokens };
+module.exports = { auth };

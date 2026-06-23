@@ -28,9 +28,9 @@ app.use(hpp());
 app.use(globalLimiter);
 
 const customAuthRoutes = require("./routes/authRoutes");
-app.use("/api/auth", authRateLimiter, customAuthRoutes);
-
-app.use("/api/auth", authRateLimiter, toNodeHandler(auth));
+app.use("/api/auth", authRateLimiter);
+app.use("/api/auth", customAuthRoutes);
+app.use("/api/auth", toNodeHandler(auth));
 
 // Import routes
 const adminRoutes = require("./routes/adminRoutes");

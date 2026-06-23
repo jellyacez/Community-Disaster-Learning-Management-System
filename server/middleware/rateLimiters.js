@@ -10,10 +10,13 @@ const authLimiter = rateLimit({
 });
 
 const authRateLimiter = (req, res, next) => {
+  const path = req.path.toLowerCase();
   if (
-    req.path.includes("sign-in") ||
-    req.path.includes("sign-up") ||
-    req.path.includes("forget-password")
+    path.includes("sign-in") ||
+    path.includes("sign-up") ||
+    path.includes("forget-password") ||
+    path.includes("reset-password") ||
+    path.includes("change-password")
   ) {
     return authLimiter(req, res, next);
   }

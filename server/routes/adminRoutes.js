@@ -12,7 +12,7 @@ router.put("/users/:id", adminMiddleware, async (req, res) => {
   const { name, email, archived } = req.body;
   try {
     const result = await pool.query(
-      'UPDATE "user" SET name = $1, email = $2, archived = $3 WHERE id = $4 RETURNING id, name, email, "emailVerified", image, role, "banned", "banReason", "banExpires", "createdAt", "updatedAt", "twoFactorEnabled", barangay',
+      'UPDATE "user" SET name = $1, email = $2, archived = $3 WHERE id = $4 RETURNING id, name, email, "emailVerified", image, role, "banned", "banReason", "banExpires", "createdAt", "updatedAt", "twoFactorEnabled", barangay, archived',
       [name, email, archived, id],
     );
     if (result.rows.length === 0)
@@ -36,7 +36,7 @@ router.put("/users/:id/password", adminMiddleware, async (req, res) => {
       .json({ error: "Password must be at least 8 characters" });
   }
   try {
-    await auth.api.setUserPassword({
+    await auth.api.admin.setUserPassword({
       headers: req.headers,
       body: {
         userId: id,

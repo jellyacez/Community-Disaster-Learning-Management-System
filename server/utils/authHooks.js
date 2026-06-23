@@ -1,6 +1,6 @@
 const { createAuthMiddleware, APIError } = require("better-auth/api");
 const { transporter } = require("./mailer");
-const { getPasswordChangedEmail } = require("./emailTemplates");
+const { getPasswordChangedEmail, getPasswordRecoveredEmail } = require("./emailTemplates");
 const pool = require("../config/db");
 
 const passwordChangeCooldownHook = createAuthMiddleware(async (ctx) => {
@@ -75,14 +75,29 @@ const passwordChangeNotificationHook = createAuthMiddleware(async (ctx) => {
         console.error("Failed to update lastPasswordChange timestamp:", dbErr);
       }
       if (user.email) {
-        const mailOptions = getPasswordChangedEmail(user);
-        try {
-          await transporter.sendMail(mailOptions);
-          console.log("Password change notification email sent to", user.email);
-        } catch (err) {
-          console.error("Failed to send password change email:", err);
+        if (ctx.path.includes("reset-password")) {
+          const { handlePasswordResetRecovery } = require("../services/securityService");
+          handlePasswordResetRecovery(user.email);
+        } else {
+          const mailOptions = getPasswordChangedEmail(user);
+          try {
+            await transporter.sendMail(mailOptions);
+            console.log("Password change notification email sent to", user.email);
+          } catch (err) {
+            console.error("Failed to send password change email:", err);
+          }
         }
       }
+    }
+  }
+});
+
+const loginNotificationHook = createAuthMiddleware(async (ctx) => {
+  if (ctx.path && ctx.path.includes("sign-in/email") && ctx.response?.status === 200) {
+    let email = ctx.body?.email;
+    if (email) {
+      const { handleNewDeviceLoginCheck } = require("../services/securityService");
+      handleNewDeviceLoginCheck(email);
     }
   }
 });
@@ -90,4 +105,5 @@ const passwordChangeNotificationHook = createAuthMiddleware(async (ctx) => {
 module.exports = {
   passwordChangeCooldownHook,
   passwordChangeNotificationHook,
+  loginNotificationHook,
 };
