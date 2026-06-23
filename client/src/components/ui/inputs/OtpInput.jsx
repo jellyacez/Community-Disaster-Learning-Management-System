@@ -1,6 +1,6 @@
-import React, { useRef, useState, useEffect } from "react";
+import React, { useRef, useState, useEffect, memo } from "react";
 
-export default function OtpInput({ value, onChange, length = 6 }) {
+const OtpInput = memo(function OtpInput({ value, onChange, length = 6 }) {
   const [otp, setOtp] = useState(new Array(length).fill(""));
   const inputRefs = useRef([]);
 
@@ -66,7 +66,7 @@ export default function OtpInput({ value, onChange, length = 6 }) {
   return (
     <div className="flex items-center justify-center gap-1.5 md:gap-2">
       {otp.map((digit, index) => (
-        <React.Fragment key={index}>
+        <React.Fragment key={`otp-digit-${index}`}>
           <input
             ref={(ref) => (inputRefs.current[index] = ref)}
             type="text"
@@ -85,4 +85,6 @@ export default function OtpInput({ value, onChange, length = 6 }) {
       ))}
     </div>
   );
-}
+});
+
+export default OtpInput;

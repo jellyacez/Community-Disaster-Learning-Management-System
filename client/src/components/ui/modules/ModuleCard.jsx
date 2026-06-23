@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { memo } from 'react';
 
-export default function ModuleCard({ module, enrolled = false }) {
+const ModuleCard = memo(function ModuleCard({ module, enrolled = false }) {
   return (
     <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
       <div className="mb-3 flex flex-wrap gap-2">
@@ -50,4 +50,6 @@ export default function ModuleCard({ module, enrolled = false }) {
       </div>
     </div>
   );
-}
+});
+
+export default ModuleCard;

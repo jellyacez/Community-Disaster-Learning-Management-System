@@ -1,8 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, memo } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { EyeIcon, EyeOffIcon } from "@hugeicons/core-free-icons";
 
-export default function PasswordInput({
+const PasswordInput = memo(function PasswordInput({
   id,
   name,
   label,
@@ -58,4 +58,6 @@ export default function PasswordInput({
       )}
     </div>
   );
-}
+});
+
+export default PasswordInput;

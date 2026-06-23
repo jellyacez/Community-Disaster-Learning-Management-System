@@ -52,7 +52,7 @@ export default function LandingSteps() {
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {steps.map((s, i) => (
             <motion.div
-              key={i}
+              key={s.num}
               initial={{ opacity: 0, y: 28 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}

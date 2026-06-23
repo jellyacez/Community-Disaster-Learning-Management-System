@@ -1,6 +1,6 @@
-import React from "react";
+import React, { memo } from "react";
 
-export default function EnrolledModuleCard({ module, onResume }) {
+const EnrolledModuleCard = memo(function EnrolledModuleCard({ module, onResume }) {
   return (
     <div className="rounded-2xl border border-gray-200 p-5 hover:border-red-200 transition cursor-pointer">
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
@@ -46,4 +46,6 @@ export default function EnrolledModuleCard({ module, onResume }) {
       </div>
     </div>
   );
-}
+});
+
+export default EnrolledModuleCard;

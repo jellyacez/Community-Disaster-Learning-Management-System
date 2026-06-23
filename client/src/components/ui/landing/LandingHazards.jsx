@@ -61,7 +61,7 @@ export default function LandingHazards() {
         <div className="grid md:grid-cols-3 gap-6">
           {hazards.map((h, i) => (
             <motion.div
-              key={i}
+              key={h.title}
               initial={{ opacity: 0, y: 28 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}

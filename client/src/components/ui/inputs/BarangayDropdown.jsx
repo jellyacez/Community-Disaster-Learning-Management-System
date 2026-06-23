@@ -1,7 +1,7 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, memo } from "react";
 import { BACOLOR_BARANGAYS } from "../../../constants/locations";
 
-export default function BarangayDropdown({ value, onChange, error }) {
+const BarangayDropdown = memo(function BarangayDropdown({ value, onChange, error }) {
   const [showBarangayList, setShowBarangayList] = useState(false);
 
   const filteredBarangays = useMemo(() => {
@@ -64,4 +64,6 @@ export default function BarangayDropdown({ value, onChange, error }) {
       )}
     </div>
   );
-}
+});
+
+export default BarangayDropdown;

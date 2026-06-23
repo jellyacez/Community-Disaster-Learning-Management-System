@@ -120,8 +120,8 @@ export default function MfaTotpSetup({
             Store them somewhere extremely safe.
           </p>
           <div className="grid grid-cols-2 gap-2 text-sm text-red-900 font-mono mb-4">
-            {backupCodes.map((code, idx) => (
-              <div key={idx} className="bg-white/80 px-3 py-1.5 rounded text-center font-bold tracking-widest border border-red-100 shadow-sm">{code}</div>
+            {backupCodes.map((code) => (
+              <div key={code} className="bg-white/80 px-3 py-1.5 rounded text-center font-bold tracking-widest border border-red-100 shadow-sm">{code}</div>
             ))}
           </div>
           

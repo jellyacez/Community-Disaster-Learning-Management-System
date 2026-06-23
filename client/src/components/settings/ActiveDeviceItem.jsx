@@ -1,8 +1,8 @@
-import React from "react";
+import React, { memo } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { getDeviceDetails } from "../../utils/deviceUtils";
 
-export default function ActiveDeviceItem({ session, isCurrent, onSignOut, isOnlySession }) {
+const ActiveDeviceItem = memo(function ActiveDeviceItem({ session, isCurrent, onSignOut, isOnlySession }) {
   const device = getDeviceDetails(session.userAgent);
 
   const getBrowser = (ua) => {
@@ -58,4 +58,6 @@ export default function ActiveDeviceItem({ session, isCurrent, onSignOut, isOnly
       )}
     </div>
   );
-}
+});
+
+export default ActiveDeviceItem;

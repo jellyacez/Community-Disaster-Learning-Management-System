@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { memo } from 'react';
 
-export default function AnnouncementCard({ item }) {
+const AnnouncementCard = memo(function AnnouncementCard({ item }) {
   return (
     <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
       <div className="mb-2 flex items-center justify-between gap-4">
@@ -12,4 +12,6 @@ export default function AnnouncementCard({ item }) {
       <p className="text-gray-600">{item.content}</p>
     </div>
   );
-}
+});
+
+export default AnnouncementCard;

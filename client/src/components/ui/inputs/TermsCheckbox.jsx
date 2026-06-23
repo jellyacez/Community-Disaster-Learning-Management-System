@@ -1,6 +1,6 @@
-import React from "react";
+import React, { memo } from "react";
 
-export default function TermsCheckbox({
+const TermsCheckbox = memo(function TermsCheckbox({
   acceptedTerms,
   setAcceptedTerms,
   setShowTermsModal,
@@ -38,4 +38,6 @@ export default function TermsCheckbox({
       </div>
     </div>
   );
-}
+});
+
+export default TermsCheckbox;

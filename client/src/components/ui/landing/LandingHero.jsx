@@ -90,8 +90,8 @@ export default function LandingHero() {
               { val: "Multi-Level", sub: "Progressive Modules" },
               { val: "PWA", sub: "Works Offline" },
               { val: "QR-Verified", sub: "Digital Certificates" },
-            ].map((s, i) => (
-              <div key={i}>
+            ].map((s) => (
+              <div key={s.val}>
                 <p className="text-2xl font-extrabold text-white">{s.val}</p>
                 <p className="text-xs text-gray-400 mt-0.5">{s.sub}</p>
               </div>
