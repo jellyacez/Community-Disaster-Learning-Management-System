@@ -30,7 +30,7 @@ export default function UserNavbar({
             onClick={() => setSidebarOpen(true)}
             className="rounded-xl border border-gray-200 p-2 text-gray-600 hover:bg-gray-50 lg:hidden cursor-pointer"
           >
-            <HugeiconsIcon icon={Menu01Icon} className="w-5 h-5" />
+            <HugeiconsIcon aria-hidden="true" icon={Menu01Icon} className="w-5 h-5" />
           </button>
 
           <div>
@@ -46,7 +46,7 @@ export default function UserNavbar({
             onClick={() => navigate('/user/announcements')}
             className="relative rounded-xl border border-gray-200 p-2.5 text-gray-600 hover:bg-gray-50 cursor-pointer"
           >
-            <HugeiconsIcon icon={Notification03Icon} className="w-5 h-5" />
+            <HugeiconsIcon aria-hidden="true" icon={Notification03Icon} className="w-5 h-5" />
             <span className="absolute right-2 top-2 h-2.5 w-2.5 rounded-full bg-red-500" />
           </button>
 

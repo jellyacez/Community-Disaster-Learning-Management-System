@@ -25,7 +25,7 @@ export default function ForgotPasswordPage() {
 
     const { data, error } = await authClient.requestPasswordReset({
       email,
-      redirectTo: "http://localhost:5173/reset-password",
+      redirectTo: `${import.meta.env.VITE_FRONTEND_URL || "http://localhost:5173"}/reset-password`,
     });
 
     if (error) {
@@ -65,7 +65,7 @@ export default function ForgotPasswordPage() {
       <form onSubmit={handleSubmit} className="space-y-4">
         {status === "error" && (
           <div className="flex items-center gap-2 bg-red-50 text-red-600 p-3 rounded-lg text-sm font-semibold mb-4 border border-red-100">
-            <HugeiconsIcon icon={Alert01Icon} className="w-5 h-5 flex-shrink-0" />
+            <HugeiconsIcon aria-hidden="true" icon={Alert01Icon} className="w-5 h-5 flex-shrink-0" />
             <span>{errorMsg}</span>
           </div>
         )}
@@ -80,7 +80,7 @@ export default function ForgotPasswordPage() {
             Email Address
           </label>
           <div className="relative">
-            <HugeiconsIcon icon={Mail01Icon} className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <HugeiconsIcon aria-hidden="true" icon={Mail01Icon} className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
             <input
               id="email"
               type="email"

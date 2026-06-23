@@ -25,7 +25,7 @@ export default function OnboardingModal({ currentUser }) {
 
     setIsSubmittingOnboarding(true);
     try {
-      const res = await fetch("http://localhost:5000/api/users/onboarding", {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || "http://localhost:5000/api"}/users/onboarding`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name: onboardingName, barangay: onboardingBarangay }),
@@ -52,7 +52,7 @@ export default function OnboardingModal({ currentUser }) {
         <div className="absolute top-0 left-0 w-full h-2 bg-red-600"></div>
         
         <div className="h-16 w-16 bg-red-50 rounded-2xl flex items-center justify-center mb-6">
-          <HugeiconsIcon icon={CheckmarkBadge01Icon} className="w-8 h-8 text-red-600" />
+          <HugeiconsIcon aria-hidden="true" icon={CheckmarkBadge01Icon} className="w-8 h-8 text-red-600" />
         </div>
 
         <h2 className="text-2xl font-black text-gray-900 mb-2">Welcome to Bacolor DRRM!</h2>

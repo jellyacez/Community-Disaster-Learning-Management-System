@@ -20,7 +20,7 @@ export default function AuthLayout({
             onClick={onBackClick}
             className="inline-flex items-center gap-2 text-sm text-red-600 font-semibold hover:underline mb-6 outline-none focus-visible:ring-2 focus-visible:ring-red-500 rounded-md px-1 -ml-1 cursor-pointer"
           >
-            <HugeiconsIcon icon={ArrowLeft01Icon} className="w-4 h-4" />
+            <HugeiconsIcon aria-hidden="true" icon={ArrowLeft01Icon} className="w-4 h-4" />
             {backText}
           </button>
         ) : (
@@ -28,14 +28,14 @@ export default function AuthLayout({
             to={backLink}
             className="inline-flex items-center gap-2 text-sm text-red-600 font-semibold hover:underline mb-6 outline-none focus-visible:ring-2 focus-visible:ring-red-500 rounded-md px-1 -ml-1"
           >
-            <HugeiconsIcon icon={ArrowLeft01Icon} className="w-4 h-4" />
+            <HugeiconsIcon aria-hidden="true" icon={ArrowLeft01Icon} className="w-4 h-4" />
             {backText}
           </Link>
         )}
 
         <div className="flex items-center gap-3 mb-6">
           <div className="w-12 h-12 rounded-xl bg-red-600 flex items-center justify-center flex-shrink-0">
-            <HugeiconsIcon icon={icon} className="w-6 h-6 text-white" />
+            <HugeiconsIcon aria-hidden="true" icon={icon} className="w-6 h-6 text-white" />
           </div>
           <div>
             <h1 className="text-xl font-bold text-gray-900">{title}</h1>

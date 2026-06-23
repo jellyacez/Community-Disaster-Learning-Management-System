@@ -82,7 +82,7 @@ export default function ActiveDevices() {
       <div className="flex items-start justify-between mb-6">
         <div className="flex items-center gap-3">
           <div className="bg-red-50 p-2.5 rounded-xl text-red-600 flex-shrink-0">
-            <HugeiconsIcon icon={LaptopIcon} className="w-6 h-6" />
+            <HugeiconsIcon aria-hidden="true" icon={LaptopIcon} className="w-6 h-6" />
           </div>
           <div>
             <h2 className="text-xl font-bold text-gray-900 mb-1">

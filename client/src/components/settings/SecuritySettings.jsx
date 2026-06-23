@@ -22,7 +22,7 @@ export default function SecuritySettings() {
   useEffect(() => {
     const checkProvider = async () => {
       try {
-        const res = await axios.get("http://localhost:5000/api/users/me/provider", {
+        const res = await axios.get(`${import.meta.env.VITE_API_URL || "http://localhost:5000/api"}/users/me/provider`, {
           withCredentials: true,
         });
         const providers = res.data.providers || [];
@@ -101,7 +101,7 @@ export default function SecuritySettings() {
       <div className="rounded-3xl border border-gray-100 bg-white p-6 md:p-8 shadow-sm">
         <div className="flex items-center gap-3 mb-6">
           <div className="bg-red-50 p-2.5 rounded-xl text-red-600">
-            <HugeiconsIcon icon={LockKeyIcon} className="w-6 h-6" />
+            <HugeiconsIcon aria-hidden="true" icon={LockKeyIcon} className="w-6 h-6" />
           </div>
           <div>
             <h2 className="text-xl font-bold text-gray-900">Security</h2>

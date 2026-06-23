@@ -36,14 +36,14 @@ export default function UserDashboard() {
   const { data: dashboardData, isLoading: loading, error } = useQuery({
     queryKey: ['userDashboard'],
     queryFn: async () => {
-      const response = await fetch("http://localhost:5000/api/user/dashboard", {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || "http://localhost:5000/api"}/user/dashboard`, {
         credentials: "include",
       });
       if (!response.ok) throw new Error("Failed to fetch dashboard data");
       return response.json();
     },
     onError: (err) => {
-      console.error(err);
+      logger.error("Error fetching dashboard data:", err);
       toast.error("Failed to load dashboard data");
     }
   });

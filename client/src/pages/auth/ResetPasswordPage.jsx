@@ -63,7 +63,7 @@ export default function ResetPasswordPage() {
       <div className="min-h-screen bg-gradient-to-br from-gray-100 to-red-50 flex items-center justify-center px-4 py-10">
         <div className="w-full max-w-md bg-white rounded-2xl shadow-xl border border-gray-100 p-8 text-center">
           <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-red-100 text-red-600">
-            <HugeiconsIcon icon={Alert01Icon} className="w-8 h-8" />
+            <HugeiconsIcon aria-hidden="true" icon={Alert01Icon} className="w-8 h-8" />
           </div>
           <h2 className="text-2xl font-extrabold text-gray-900">Invalid Link</h2>
           <p className="mt-3 text-sm text-gray-500">
@@ -85,7 +85,7 @@ export default function ResetPasswordPage() {
       <form onSubmit={handleSubmit} className="space-y-4">
         {errorMsg && (
           <div className="flex items-center gap-2 bg-red-50 text-red-600 p-3 rounded-lg text-sm font-semibold mb-4 border border-red-100">
-            <HugeiconsIcon icon={Alert01Icon} className="w-5 h-5 flex-shrink-0" />
+            <HugeiconsIcon aria-hidden="true" icon={Alert01Icon} className="w-5 h-5 flex-shrink-0" />
             <span>{errorMsg}</span>
           </div>
         )}

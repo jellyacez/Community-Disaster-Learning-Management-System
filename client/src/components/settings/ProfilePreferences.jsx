@@ -7,7 +7,7 @@ export default function ProfilePreferences({ currentUser }) {
     <div className="rounded-3xl border border-gray-100 bg-white p-6 md:p-8 shadow-sm">
       <div className="flex items-center gap-3 mb-6">
         <div className="bg-red-50 p-2.5 rounded-xl text-red-600">
-          <HugeiconsIcon icon={UserCircle02Icon} className="w-6 h-6" />
+          <HugeiconsIcon aria-hidden="true" icon={UserCircle02Icon} className="w-6 h-6" />
         </div>
         <h2 className="text-xl font-bold text-gray-900">Profile Preferences</h2>
       </div>

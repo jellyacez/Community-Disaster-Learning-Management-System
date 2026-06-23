@@ -41,12 +41,12 @@ export default function ConfirmationModal({
           disabled={isLoading}
           className="absolute right-4 top-4 text-gray-400 hover:text-gray-600 transition-colors focus:outline-none"
         >
-          <HugeiconsIcon icon={Cancel01Icon} className="w-5 h-5" />
+          <HugeiconsIcon aria-hidden="true" icon={Cancel01Icon} className="w-5 h-5" />
         </button>
 
         <div className="flex flex-col items-center text-center">
           <div className={`mb-4 flex h-12 w-12 items-center justify-center rounded-full ${colors.bg}`}>
-            <HugeiconsIcon icon={getIcon()} className={`w-6 h-6 ${colors.text}`} />
+            <HugeiconsIcon aria-hidden="true" icon={getIcon()} className={`w-6 h-6 ${colors.text}`} />
           </div>
           
           <h3 className="mb-2 text-lg font-bold text-gray-900">{title}</h3>

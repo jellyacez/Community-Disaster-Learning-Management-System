@@ -61,7 +61,7 @@ export default function ProtectedRoute({ allowedRoles = [] }) {
         <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
           <div className="bg-white p-8 rounded-2xl shadow-xl max-w-sm w-full text-center border border-gray-100">
             <div className="w-16 h-16 bg-red-100 text-red-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <HugeiconsIcon icon={Alert01Icon} className="w-8 h-8" />
+              <HugeiconsIcon aria-hidden="true" icon={Alert01Icon} className="w-8 h-8" />
             </div>
             <h2 className="text-2xl font-bold text-gray-900 mb-2">
               Access Denied

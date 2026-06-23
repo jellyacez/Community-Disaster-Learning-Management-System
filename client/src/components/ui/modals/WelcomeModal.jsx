@@ -41,11 +41,11 @@ export default function WelcomeModal({ isOpen, onClose, userName, onGoToCatalog 
               onClick={onClose}
               className="absolute right-5 top-5 rounded-full p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition"
             >
-              <HugeiconsIcon icon={Cancel01Icon} className="w-6 h-6" />
+              <HugeiconsIcon aria-hidden="true" icon={Cancel01Icon} className="w-6 h-6" />
             </button>
 
             <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-green-100 text-green-600">
-              <HugeiconsIcon icon={CheckmarkBadge01Icon} className="w-8 h-8" />
+              <HugeiconsIcon aria-hidden="true" icon={CheckmarkBadge01Icon} className="w-8 h-8" />
             </div>
 
             <h2 className="text-center text-2xl font-extrabold text-gray-900">

@@ -24,7 +24,7 @@ export default function ActiveDeviceItem({ session, isCurrent, onSignOut, isOnly
     <div className="flex items-center justify-between py-4 border-b border-gray-100 last:border-0">
       <div className="flex items-start gap-4">
         <div className="pt-1 text-gray-500">
-          <HugeiconsIcon icon={device.icon} className="w-6 h-6" />
+          <HugeiconsIcon aria-hidden="true" icon={device.icon} className="w-6 h-6" />
         </div>
         <div>
           <p className="font-semibold text-gray-900 text-sm flex items-center gap-2">

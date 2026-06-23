@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Alert01Icon } from "@hugeicons/core-free-icons";
@@ -26,6 +26,12 @@ export default function RegisterForm() {
   
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const filteredBarangays = useMemo(() => {
+    return BACOLOR_BARANGAYS.filter((b) =>
+      b.toLowerCase().includes(formData.barangay.toLowerCase())
+    );
+  }, [formData.barangay]);
 
   const handleChange = (e) => {
     setFormData((prev) => ({
@@ -96,7 +102,7 @@ export default function RegisterForm() {
       <form onSubmit={handleSubmit} className="space-y-4">
         {errors.form && (
           <div className="flex items-center justify-center gap-2 bg-red-50 text-red-600 p-3 rounded-lg text-sm font-semibold mb-4 border border-red-100">
-            <HugeiconsIcon icon={Alert01Icon} className="w-5 h-5 flex-shrink-0" />
+            <HugeiconsIcon aria-hidden="true" icon={Alert01Icon} className="w-5 h-5 flex-shrink-0" />
             <span>{errors.form}</span>
           </div>
         )}
@@ -161,8 +167,8 @@ export default function RegisterForm() {
 
           {showBarangayList && (
             <ul className="absolute z-10 w-full bg-white border border-gray-200 rounded-xl mt-1 max-h-48 overflow-y-auto shadow-lg">
-              {BACOLOR_BARANGAYS.filter((b) => b.toLowerCase().includes(formData.barangay.toLowerCase())).length > 0 ? (
-                BACOLOR_BARANGAYS.filter((b) => b.toLowerCase().includes(formData.barangay.toLowerCase())).map((b) => (
+              {filteredBarangays.length > 0 ? (
+                filteredBarangays.map((b) => (
                   <li
                     key={b}
                     onClick={() => {

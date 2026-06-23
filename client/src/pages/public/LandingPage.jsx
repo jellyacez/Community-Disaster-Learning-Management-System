@@ -98,7 +98,7 @@ export default function LandingPage() {
                 className="flex items-center gap-2 px-10 py-4 bg-white text-red-700 font-extrabold rounded-xl shadow-xl hover:bg-red-50 transition-colors cursor-pointer"
               >
                 Create Free Account
-                <HugeiconsIcon icon={ArrowRight01Icon} className="w-5 h-5" />
+                <HugeiconsIcon aria-hidden="true" icon={ArrowRight01Icon} className="w-5 h-5" />
               </button>
               <button
                 onClick={() => navigate("/signin")}

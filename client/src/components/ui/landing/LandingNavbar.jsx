@@ -12,7 +12,7 @@ export default function LandingNavbar() {
       <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-red-600 to-red-800 flex items-center justify-center shadow-md">
-            <HugeiconsIcon icon={Shield01Icon} className="w-5 h-5 text-white" />
+            <HugeiconsIcon aria-hidden="true" icon={Shield01Icon} className="w-5 h-5 text-white" />
           </div>
           <div className="leading-tight">
             <p className="text-xs text-gray-400 font-medium">Bacolor, Pampanga</p>
@@ -52,9 +52,9 @@ export default function LandingNavbar() {
           onClick={() => setMenuOpen(!menuOpen)}
         >
           {menuOpen ? (
-            <HugeiconsIcon icon={Cancel01Icon} className="w-5 h-5" />
+            <HugeiconsIcon aria-hidden="true" icon={Cancel01Icon} className="w-5 h-5" />
           ) : (
-            <HugeiconsIcon icon={Menu01Icon} className="w-5 h-5" />
+            <HugeiconsIcon aria-hidden="true" icon={Menu01Icon} className="w-5 h-5" />
           )}
         </button>
       </div>

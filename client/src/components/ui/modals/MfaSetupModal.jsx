@@ -45,7 +45,7 @@ export default function MfaSetupModal({
     if (isOpen) {
       const checkProvider = async () => {
         try {
-          const res = await axios.get("http://localhost:5000/api/users/me/provider", {
+          const res = await axios.get(`${import.meta.env.VITE_API_URL || "http://localhost:5000/api"}/users/me/provider`, {
             withCredentials: true,
           });
           const providers = res.data.providers || [];
@@ -104,7 +104,7 @@ export default function MfaSetupModal({
       setIsSendingOtp(false);
     } else {
       try {
-        const res = await fetch("http://localhost:5000/api/auth/enable-email-mfa", {
+        const res = await fetch(`${import.meta.env.VITE_API_URL || "http://localhost:5000/api"}/auth/enable-email-mfa`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           credentials: "include"
@@ -149,7 +149,7 @@ export default function MfaSetupModal({
         }`}
       >
         <div className={`p-2.5 rounded-xl flex-shrink-0 ${isGoogleUser ? "bg-gray-200 text-gray-500" : "bg-red-100 text-red-600"}`}>
-          <HugeiconsIcon icon={Shield01Icon} className="w-6 h-6" />
+          <HugeiconsIcon aria-hidden="true" icon={Shield01Icon} className="w-6 h-6" />
         </div>
         <div>
           <h4 className="font-bold text-gray-900">Use an Authenticator App</h4>
@@ -165,7 +165,7 @@ export default function MfaSetupModal({
         className="w-full flex items-start gap-4 p-4 rounded-2xl border border-gray-200 hover:border-red-300 hover:bg-red-50 transition-colors text-left"
       >
         <div className="bg-red-100 p-2.5 rounded-xl text-red-600 flex-shrink-0">
-          <HugeiconsIcon icon={Mail01Icon} className="w-6 h-6" />
+          <HugeiconsIcon aria-hidden="true" icon={Mail01Icon} className="w-6 h-6" />
         </div>
         <div>
           <h4 className="font-bold text-gray-900">Use Email Authentication</h4>

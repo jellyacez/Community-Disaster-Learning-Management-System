@@ -66,7 +66,7 @@ export default function TwoFactorSettings() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <div className="bg-red-50 p-2.5 rounded-xl text-red-600">
-              <HugeiconsIcon icon={Shield01Icon} className="w-6 h-6" />
+              <HugeiconsIcon aria-hidden="true" icon={Shield01Icon} className="w-6 h-6" />
             </div>
             <div>
               <h2 className="text-xl font-bold text-gray-900">Two-Factor Auth</h2>

@@ -9,7 +9,7 @@ export default function LandingHazards() {
 
   const hazards = [
     {
-      icon: <HugeiconsIcon icon={TsunamiIcon} className="w-8 h-8" />,
+      icon: <HugeiconsIcon aria-hidden="true" icon={TsunamiIcon} className="w-8 h-8" />,
       title: "Flooding",
       description:
         "Learn flood preparedness protocols, evacuation routes, and emergency response procedures specific to Bacolor's flood-prone areas near Mt. Pinatubo.",
@@ -18,7 +18,7 @@ export default function LandingHazards() {
       border: "border-blue-200",
     },
     {
-      icon: <HugeiconsIcon icon={Alert01Icon} className="w-8 h-8" />,
+      icon: <HugeiconsIcon aria-hidden="true" icon={Alert01Icon} className="w-8 h-8" />,
       title: "Earthquake",
       description:
         'Understand seismic safety measures, drop-cover-hold procedures, and post-earthquake protocols — critical preparation for "The Big One" scenario.',
@@ -27,7 +27,7 @@ export default function LandingHazards() {
       border: "border-amber-200",
     },
     {
-      icon: <HugeiconsIcon icon={FlameIcon} className="w-8 h-8" />,
+      icon: <HugeiconsIcon aria-hidden="true" icon={FlameIcon} className="w-8 h-8" />,
       title: "Fire",
       description:
         "Master fire prevention techniques, safe evacuation procedures, and community fire response methods aligned with local DRRM standards.",
@@ -81,7 +81,7 @@ export default function LandingHazards() {
                   className={`mt-5 inline-flex items-center gap-1 text-xs font-bold ${h.accent} hover:underline`}
                 >
                   Browse Modules{" "}
-                  <HugeiconsIcon icon={ChevronRightIcon} className="w-3 h-3" />
+                  <HugeiconsIcon aria-hidden="true" icon={ChevronRightIcon} className="w-3 h-3" />
                 </button>
               </div>
             </motion.div>

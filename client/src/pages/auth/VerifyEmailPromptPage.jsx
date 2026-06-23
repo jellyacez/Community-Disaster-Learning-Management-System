@@ -19,7 +19,7 @@ export default function VerifyEmailPromptPage() {
     <div className="min-h-screen bg-gradient-to-br from-gray-100 to-red-50 flex items-center justify-center px-4 py-10">
       <div className="w-full max-w-md bg-white rounded-2xl shadow-xl border border-gray-100 p-8 text-center">
         <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-red-100 text-red-600">
-          <HugeiconsIcon icon={Mail01Icon} className="w-10 h-10" />
+          <HugeiconsIcon aria-hidden="true" icon={Mail01Icon} className="w-10 h-10" />
         </div>
 
         <h1 className="text-2xl font-extrabold text-gray-900 mb-2">
@@ -44,7 +44,7 @@ export default function VerifyEmailPromptPage() {
           to="/signin"
           className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gray-100 px-5 py-3 text-sm font-bold text-gray-700 hover:bg-gray-200 transition"
         >
-          <HugeiconsIcon icon={ArrowLeft01Icon} className="w-4 h-4" />
+          <HugeiconsIcon aria-hidden="true" icon={ArrowLeft01Icon} className="w-4 h-4" />
           Back to Sign In
         </Link>
       </div>

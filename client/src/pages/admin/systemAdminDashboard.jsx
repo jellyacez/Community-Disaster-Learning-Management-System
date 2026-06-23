@@ -17,7 +17,7 @@ export default function SystemAdminDashboard() {
   } = useQuery({
     queryKey: ["adminUsers"],
     queryFn: async () => {
-      const response = await fetch("http://localhost:5000/api/users", {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || "http://localhost:5000/api"}/users`, {
         credentials: "include",
       });
       if (!response.ok) throw new Error("Failed to fetch users");
@@ -62,7 +62,7 @@ export default function SystemAdminDashboard() {
 
     try {
       const res = await fetch(
-        `http://localhost:5000/api/admin/users/${user.id}`,
+        `${import.meta.env.VITE_API_URL || "http://localhost:5000/api"}/admin/users/${user.id}`,
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
@@ -89,7 +89,7 @@ export default function SystemAdminDashboard() {
 
     try {
       const res = await fetch(
-        `http://localhost:5000/api/admin/users/${user.id}`,
+        `${import.meta.env.VITE_API_URL || "http://localhost:5000/api"}/admin/users/${user.id}`,
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
@@ -121,7 +121,7 @@ export default function SystemAdminDashboard() {
 
     try {
       const res = await fetch(
-        `http://localhost:5000/api/admin/users/${user.id}/password`,
+        `${import.meta.env.VITE_API_URL || "http://localhost:5000/api"}/admin/users/${user.id}/password`,
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },

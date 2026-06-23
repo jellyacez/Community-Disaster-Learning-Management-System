@@ -47,9 +47,9 @@ export default function PasswordInput({
           className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none"
         >
           {showPassword ? (
-            <HugeiconsIcon icon={EyeOffIcon} className="w-5 h-5" />
+            <HugeiconsIcon aria-hidden="true" icon={EyeOffIcon} className="w-5 h-5" />
           ) : (
-            <HugeiconsIcon icon={EyeIcon} className="w-5 h-5" />
+            <HugeiconsIcon aria-hidden="true" icon={EyeIcon} className="w-5 h-5" />
           )}
         </button>
       </div>

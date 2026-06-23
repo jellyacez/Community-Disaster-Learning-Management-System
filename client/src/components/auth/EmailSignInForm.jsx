@@ -80,14 +80,14 @@ export default function EmailSignInForm({ errorMessage, clearGlobalError, onRequ
     <form onSubmit={handleSubmit} className="space-y-4">
       {errorMessage && !errors.form && (
         <div className="flex items-center justify-center gap-2 bg-red-50 text-red-600 p-3 rounded-lg text-sm font-semibold mb-4 border border-red-100">
-          <HugeiconsIcon icon={Alert01Icon} className="w-5 h-5 flex-shrink-0" />
+          <HugeiconsIcon aria-hidden="true" icon={Alert01Icon} className="w-5 h-5 flex-shrink-0" />
           <span>{errorMessage}</span>
         </div>
       )}
 
       {errors.form && (
         <div className="flex items-center justify-center gap-2 bg-red-50 text-red-600 p-3 rounded-lg text-sm font-semibold mb-4 border border-red-100">
-          <HugeiconsIcon icon={Alert01Icon} className="w-5 h-5 flex-shrink-0" />
+          <HugeiconsIcon aria-hidden="true" icon={Alert01Icon} className="w-5 h-5 flex-shrink-0" />
           <span>{errors.form}</span>
         </div>
       )}

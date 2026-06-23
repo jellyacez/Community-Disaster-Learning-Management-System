@@ -51,32 +51,32 @@ export default function UserSidebar({
     {
       path: "/userDashboard",
       label: "Homepage",
-      icon: <HugeiconsIcon icon={Home01Icon} className="w-5 h-5" />,
+      icon: <HugeiconsIcon aria-hidden="true" icon={Home01Icon} className="w-5 h-5" />,
     },
     {
       path: "/user/announcements",
       label: "Announcements",
-      icon: <HugeiconsIcon icon={Megaphone01Icon} className="w-5 h-5" />,
+      icon: <HugeiconsIcon aria-hidden="true" icon={Megaphone01Icon} className="w-5 h-5" />,
     },
     {
       path: "/user/modules",
       label: "Module Catalog",
-      icon: <HugeiconsIcon icon={BookOpen01Icon} className="w-5 h-5" />,
+      icon: <HugeiconsIcon aria-hidden="true" icon={BookOpen01Icon} className="w-5 h-5" />,
     },
     {
       path: "/user/enrolled",
       label: "Enrolled Modules",
-      icon: <HugeiconsIcon icon={Certificate01Icon} className="w-5 h-5" />,
+      icon: <HugeiconsIcon aria-hidden="true" icon={Certificate01Icon} className="w-5 h-5" />,
     },
     {
       path: "/user/profile",
       label: "User Profile",
-      icon: <HugeiconsIcon icon={UserIcon} className="w-5 h-5" />,
+      icon: <HugeiconsIcon aria-hidden="true" icon={UserIcon} className="w-5 h-5" />,
     },
     {
       path: "/user/settings",
       label: "Settings",
-      icon: <HugeiconsIcon icon={Settings01Icon} className="w-5 h-5" />,
+      icon: <HugeiconsIcon aria-hidden="true" icon={Settings01Icon} className="w-5 h-5" />,
     },
   ];
 
@@ -90,7 +90,7 @@ export default function UserSidebar({
       <div className="flex items-center justify-between border-b border-gray-200 px-6 py-5">
         <div className="flex items-center gap-3">
           <div className="rounded-xl bg-red-600 p-2.5 text-white">
-            <HugeiconsIcon icon={Shield01Icon} className="w-5 h-5" />
+            <HugeiconsIcon aria-hidden="true" icon={Shield01Icon} className="w-5 h-5" />
           </div>
           <div>
             <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">
@@ -106,7 +106,7 @@ export default function UserSidebar({
           onClick={() => setSidebarOpen(false)}
           className="rounded-lg p-2 text-gray-500 hover:bg-gray-100 lg:hidden cursor-pointer"
         >
-          <HugeiconsIcon icon={Cancel01Icon} className="w-5 h-5" />
+          <HugeiconsIcon aria-hidden="true" icon={Cancel01Icon} className="w-5 h-5" />
         </button>
       </div>
 
@@ -165,7 +165,7 @@ export default function UserSidebar({
           onClick={() => setIsLogoutModalOpen(true)}
           className="flex w-full items-center gap-3 rounded-xl px-4 py-3 font-semibold text-red-600 hover:bg-red-50 cursor-pointer"
         >
-          <HugeiconsIcon icon={Logout01Icon} className="w-5 h-5" />
+          <HugeiconsIcon aria-hidden="true" icon={Logout01Icon} className="w-5 h-5" />
           Logout
         </button>
       </div>

@@ -13,37 +13,37 @@ import {
 export default function LandingFeatures() {
   const features = [
     {
-      icon: <HugeiconsIcon icon={BookOpen01Icon} className="w-5 h-5" />,
+      icon: <HugeiconsIcon aria-hidden="true" icon={BookOpen01Icon} className="w-5 h-5" />,
       title: "Progressive Multi-Level Learning",
       description:
         "Advance through competency levels as you complete modules — starting from disaster basics and moving to advanced preparedness skills.",
     },
     {
-      icon: <HugeiconsIcon icon={Award01Icon} className="w-5 h-5" />,
+      icon: <HugeiconsIcon aria-hidden="true" icon={Award01Icon} className="w-5 h-5" />,
       title: "Verifiable Digital Certificates",
       description:
         "Earn QR-secured digital certificates upon completing training, recognized by barangay and municipal DRRM offices.",
     },
     {
-      icon: <HugeiconsIcon icon={Wifi01Icon} className="w-5 h-5" />,
+      icon: <HugeiconsIcon aria-hidden="true" icon={Wifi01Icon} className="w-5 h-5" />,
       title: "Offline Access via PWA",
       description:
         "Progressive Web App technology lets you continue your training even when internet connectivity is interrupted — built for barangay-level realities.",
     },
     {
-      icon: <HugeiconsIcon icon={Shield01Icon} className="w-5 h-5" />,
+      icon: <HugeiconsIcon aria-hidden="true" icon={Shield01Icon} className="w-5 h-5" />,
       title: "Secure Role-Based Access",
       description:
         "Encrypted records and role-specific dashboards ensure your training data stays protected and accessible only to authorized users.",
     },
     {
-      icon: <HugeiconsIcon icon={UserGroupIcon} className="w-5 h-5" />,
+      icon: <HugeiconsIcon aria-hidden="true" icon={UserGroupIcon} className="w-5 h-5" />,
       title: "Community-Wide Coverage",
       description:
         "Connects residents, barangay officials, and MDRRMO administrators in a unified platform for coordinated community preparedness.",
     },
     {
-      icon: <HugeiconsIcon icon={Building02Icon} className="w-5 h-5" />,
+      icon: <HugeiconsIcon aria-hidden="true" icon={Building02Icon} className="w-5 h-5" />,
       title: "Locally Adapted Content",
       description:
         "All training content is tailored to Bacolor's specific hazards, aligned with Philippine Red Cross and NDRRMC standards.",
