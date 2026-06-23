@@ -7,6 +7,11 @@ import RegisterPage from "./RegisterPage";
 import SignInPage from "./SignInPage";
 
 import SystemAdminDashboard from "./pages/admin/systemAdminDashboard";
+
+// 📁 Capitalized the local variables so React can render them normally as tags
+import MdrrmoDashboard from "./pages/admin/MDRRMO-admin.jsx"; 
+import BarangayAdminDashboard from "./pages/admin/barangay-admin.jsx"; 
+
 import UserDashboard from "./pages/user/UserDashboard";
 import UserAnnouncements from "./pages/user/UserAnnouncements";
 import UserModuleCatalog from "./pages/user/UserModuleCatalog";
@@ -52,11 +57,14 @@ export default function App() {
           },
         }} 
       />
+
       <Routes>
+        {/* Public routes */}
         <Route path="/" element={<LandingPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/signin" element={<SignInPage />} />
 
+        {/* Resident user routes */}
         <Route element={<ProtectedRoute allowedRoles={["resident"]} />}>
           <Route element={<UserLayout />}>
             <Route path="/userDashboard" element={<UserDashboard />} />
@@ -68,10 +76,22 @@ export default function App() {
           </Route>
         </Route>
 
+        {/* System Admin route */}
         <Route element={<ProtectedRoute allowedRoles={["system_admin"]} />}>
           <Route path="/admin/dashboard" element={<SystemAdminDashboard />} />
         </Route>
 
+        {/* MDRRMO Admin route */}
+        <Route element={<ProtectedRoute allowedRoles={["mdrrmo_admin"]} />}>
+          <Route path="/mdrrmo/dashboard" element={<MdrrmoDashboard />} />
+        </Route>
+
+        {/* Barangay Admin route */}
+        <Route element={<ProtectedRoute allowedRoles={["barangay_admin"]} />}>
+          <Route path="/barangay/dashboard" element={<BarangayAdminDashboard />} />
+        </Route>
+
+        {/* Fallback 404 Page */}
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </>

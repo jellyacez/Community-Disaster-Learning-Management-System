@@ -40,6 +40,12 @@ export default function ProtectedRoute({ allowedRoles }) {
     }
 
     if (!allowedRoles.includes(userRole)) {
+      // 💡 Match fallback redirect exactly to your route layouts
+      let homeRedirect = "/";
+      if (userRole === "mdrrmo_admin") homeRedirect = "/mdrrmo/dashboard";
+      else if (userRole === "system_admin") homeRedirect = "/admin/dashboard";
+      else if (userRole === "resident") homeRedirect = "/userDashboard";
+
       return (
         <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
           <div className="bg-white p-8 rounded-2xl shadow-xl max-w-sm w-full text-center border border-gray-100">
@@ -53,10 +59,10 @@ export default function ProtectedRoute({ allowedRoles }) {
               You do not have the required permissions to view this page.
             </p>
             <Link
-              to="/"
+              to={homeRedirect}
               className="block w-full py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl transition-colors"
             >
-              Return Home
+              Return to Portal
             </Link>
           </div>
         </div>
@@ -66,4 +72,3 @@ export default function ProtectedRoute({ allowedRoles }) {
 
   return <Outlet />;
 }
-// end of component
