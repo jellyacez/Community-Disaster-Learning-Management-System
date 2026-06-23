@@ -1,10 +1,11 @@
-import React, { useState, useMemo } from "react";
+import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Alert01Icon } from "@hugeicons/core-free-icons";
 import { authClient } from "../../lib/auth-client";
-import { BACOLOR_BARANGAYS } from "../../constants/locations";
 import PasswordInput from "../ui/inputs/PasswordInput";
+import BarangayDropdown from "../ui/inputs/BarangayDropdown";
+import TermsCheckbox from "../ui/inputs/TermsCheckbox";
 import TermsModal from "../ui/modals/TermsModal";
 import PrivacyModal from "../ui/modals/PrivacyModal";
 
@@ -19,19 +20,12 @@ export default function RegisterForm() {
     confirmPassword: "",
   });
 
-  const [showBarangayList, setShowBarangayList] = useState(false);
   const [showTermsModal, setShowTermsModal] = useState(false);
   const [showPrivacyModal, setShowPrivacyModal] = useState(false);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const filteredBarangays = useMemo(() => {
-    return BACOLOR_BARANGAYS.filter((b) =>
-      b.toLowerCase().includes(formData.barangay.toLowerCase())
-    );
-  }, [formData.barangay]);
 
   const handleChange = (e) => {
     setFormData((prev) => ({
@@ -143,50 +137,11 @@ export default function RegisterForm() {
           {errors.email && <p className="text-red-500 text-xs mt-1 font-medium">{errors.email}</p>}
         </div>
 
-        <div className="relative">
-          <label htmlFor="barangay" className="block text-sm font-semibold text-gray-700 mb-1">
-            Barangay
-          </label>
-          <input
-            id="barangay"
-            type="text"
-            name="barangay"
-            value={formData.barangay}
-            onChange={(e) => {
-              handleChange(e);
-              setShowBarangayList(true);
-            }}
-            onFocus={() => setShowBarangayList(true)}
-            onBlur={() => setTimeout(() => setShowBarangayList(false), 200)}
-            placeholder="Search or select barangay"
-            className={getInputClass("barangay")}
-            required
-            autoComplete="off"
-          />
-          {errors.barangay && <p className="text-red-500 text-xs mt-1 font-medium">{errors.barangay}</p>}
-
-          {showBarangayList && (
-            <ul className="absolute z-10 w-full bg-white border border-gray-200 rounded-xl mt-1 max-h-48 overflow-y-auto shadow-lg">
-              {filteredBarangays.length > 0 ? (
-                filteredBarangays.map((b) => (
-                  <li
-                    key={b}
-                    onClick={() => {
-                      setFormData((prev) => ({ ...prev, barangay: b }));
-                      setErrors((prev) => ({ ...prev, barangay: null }));
-                      setShowBarangayList(false);
-                    }}
-                    className="px-4 py-2 hover:bg-red-50 cursor-pointer text-gray-700 text-sm"
-                  >
-                    {b}
-                  </li>
-                ))
-              ) : (
-                <li className="px-4 py-2 text-gray-500 text-sm">No results found</li>
-              )}
-            </ul>
-          )}
-        </div>
+        <BarangayDropdown 
+          value={formData.barangay} 
+          onChange={handleChange} 
+          error={errors.barangay} 
+        />
 
         <PasswordInput
           id="password"
@@ -210,36 +165,12 @@ export default function RegisterForm() {
           autoComplete="new-password"
         />
 
-        <div className="space-y-3 mt-4 mb-2">
-          <div className="flex items-start gap-3">
-            <input
-              type="checkbox"
-              id="terms"
-              checked={acceptedTerms}
-              onChange={(e) => setAcceptedTerms(e.target.checked)}
-              className="mt-1 w-4 h-4 text-red-600 rounded border-gray-300 focus:ring-red-500 cursor-pointer"
-            />
-            <label htmlFor="terms" className="text-xs text-gray-600 cursor-pointer leading-relaxed">
-              By selecting "Create Account", I agree to the{" "}
-              <button
-                type="button"
-                onClick={(e) => { e.preventDefault(); setShowTermsModal(true); }}
-                className="text-red-600 font-semibold hover:underline"
-              >
-                Terms & Conditions
-              </button>{" "}
-              and{" "}
-              <button
-                type="button"
-                onClick={(e) => { e.preventDefault(); setShowPrivacyModal(true); }}
-                className="text-red-600 font-semibold hover:underline"
-              >
-                Privacy Policy
-              </button>
-              .
-            </label>
-          </div>
-        </div>
+        <TermsCheckbox 
+          acceptedTerms={acceptedTerms}
+          setAcceptedTerms={setAcceptedTerms}
+          setShowTermsModal={setShowTermsModal}
+          setShowPrivacyModal={setShowPrivacyModal}
+        />
 
         <button
           type="submit"
