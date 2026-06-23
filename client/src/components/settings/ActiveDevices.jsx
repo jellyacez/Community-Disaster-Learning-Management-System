@@ -18,8 +18,6 @@ export default function ActiveDevices() {
   useEffect(() => {
     const fetchSessions = async () => {
       const { data } = await authClient.listSessions();
-      console.log("LIST SESSIONS RETURNED:", data);
-      console.log("CURRENT SESSION FROM HOOK:", activeSession);
       if (data) setSessions(data);
       setLoading(false);
     };

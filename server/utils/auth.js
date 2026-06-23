@@ -67,16 +67,6 @@ const auth = betterAuth({
     },
   },
   appName: "Bacolor Disaster LMS Portal",
-  databaseHooks: {
-    user: {
-      update: {
-        before: async (user, ctx) => {
-          console.log("=> DB HOOK UPDATE USER:", user);
-          return { data: user, cancel: false };
-        }
-      }
-    }
-  },
   plugins: [
     securityHooksPlugin(),
     admin({
