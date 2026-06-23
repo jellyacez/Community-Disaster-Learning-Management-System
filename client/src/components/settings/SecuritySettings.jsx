@@ -19,6 +19,25 @@ export default function SecuritySettings() {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [isGoogleUser, setIsGoogleUser] = useState(false);
 
+  const { data: session } = authClient.useSession();
+  
+  let isCooldownActive = false;
+  let availableDateText = "";
+
+  if (session?.user?.lastPasswordChange) {
+    const changeDate = new Date(session.user.lastPasswordChange);
+    const availableDate = new Date(changeDate.getTime() + 24 * 60 * 60 * 1000);
+    if (availableDate > new Date()) {
+      isCooldownActive = true;
+      const isTomorrow = availableDate.getDate() !== new Date().getDate();
+      const timeString = availableDate.toLocaleTimeString("en-US", {
+        hour: "numeric",
+        minute: "2-digit",
+      });
+      availableDateText = `Available ${isTomorrow ? "tomorrow" : "today"} at ${timeString}`;
+    }
+  }
+
   useEffect(() => {
     const checkProvider = async () => {
       try {
@@ -174,15 +193,21 @@ export default function SecuritySettings() {
             <div className="pt-2">
               <button
                 type="submit"
-                disabled={isUpdatingPassword}
+                disabled={isUpdatingPassword || isCooldownActive}
                 className={`flex items-center justify-center w-full md:w-auto rounded-xl border px-6 py-3.5 text-sm font-bold transition-all ${
-                  isUpdatingPassword
+                  isUpdatingPassword || isCooldownActive
                     ? "bg-gray-50 border-gray-100 text-gray-400 cursor-not-allowed"
                     : "bg-white border-red-200 text-red-600 hover:bg-red-50 active:scale-95"
                 }`}
               >
+                {isCooldownActive && <HugeiconsIcon icon={LockKeyIcon} className="w-4 h-4 mr-2" />}
                 {isUpdatingPassword ? "Updating..." : "Update Password"}
               </button>
+              {isCooldownActive && (
+                <p className="mt-3 text-sm font-medium text-gray-500">
+                  {availableDateText}
+                </p>
+              )}
             </div>
           </form>
         )}

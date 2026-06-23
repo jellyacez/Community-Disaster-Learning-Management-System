@@ -96,10 +96,8 @@ export default function SignInPage() {
     setShowTwoFactor(true);
   };
 
-  // Trigger final success and reload the UI state
   const handleSuccess = () => {
     toast.success("Successfully logged in!");
-    window.location.reload();
   };
 
   if (showTwoFactor) {

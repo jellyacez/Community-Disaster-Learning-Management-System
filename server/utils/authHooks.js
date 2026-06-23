@@ -1,109 +1,129 @@
-const { createAuthMiddleware, APIError } = require("better-auth/api");
-const { transporter } = require("./mailer");
-const { getPasswordChangedEmail, getPasswordRecoveredEmail } = require("./emailTemplates");
+const { APIError } = require("better-auth/api");
 const pool = require("../config/db");
+const securityService = require("../services/securityService");
 
-const passwordChangeCooldownHook = createAuthMiddleware(async (ctx) => {
-  console.log("BEFORE HOOK TRIGGERED. Path:", ctx.path);
-  if (ctx.path && ctx.path.includes("change-password")) {
-    const userId = ctx.context?.session?.userId || ctx.context?.user?.id;
-    console.log("Change password intercepted for user:", userId);
-    if (userId) {
-      try {
-        const res = await pool.query(
-          `SELECT "lastPasswordChange" FROM "user" WHERE id = $1`,
-          [userId],
-        );
-        if (res.rows.length > 0) {
-          const lastChange = res.rows[0].lastPasswordChange;
-          if (lastChange) {
-            const hoursSinceChange =
-              (Date.now() - new Date(lastChange).getTime()) / (1000 * 60 * 60);
-            if (hoursSinceChange < 24) {
-              const remaining = Math.ceil(24 - hoursSinceChange);
-              throw new APIError("FORBIDDEN", {
-                message: `You cannot change your password within 24 hours of a previous change. Please try again in ${remaining} hours, or use Forgot Password to reset it securely.`,
-              });
+const securityHooksPlugin = () => {
+  return {
+    id: "security-hooks",
+    hooks: {
+      before: [
+        {
+          matcher(context) {
+            return context.path?.includes("change-password") || false;
+          },
+          handler: async (ctx) => {
+            let userId = ctx.context?.session?.userId || ctx.context?.user?.id;
+            
+            if (!userId) {
+              const { auth } = require("./auth");
+              const sessionContext = await auth.api.getSession({ headers: ctx.headers });
+              userId = sessionContext?.user?.id;
             }
+
+            if (userId) {
+              try {
+                const res = await pool.query(
+                  `SELECT "lastPasswordChange" FROM "user" WHERE id = $1`,
+                  [userId]
+                );
+                if (res.rows.length > 0) {
+                  const lastChange = res.rows[0].lastPasswordChange;
+                  if (lastChange) {
+                    const hoursSinceChange = (Date.now() - new Date(lastChange).getTime()) / (1000 * 60 * 60);
+                    if (hoursSinceChange < 24) {
+                      const remainingHours = 24 - hoursSinceChange;
+                      let timeText = "";
+                      if (remainingHours < 1) {
+                        const remainingMins = Math.ceil(remainingHours * 60);
+                        timeText = `${remainingMins} minute${remainingMins !== 1 ? 's' : ''}`;
+                      } else {
+                        const remaining = Math.ceil(remainingHours);
+                        timeText = `${remaining} hour${remaining !== 1 ? 's' : ''}`;
+                      }
+
+                      throw new APIError("FORBIDDEN", {
+                        message: `You cannot change your password within 24 hours of a previous change. Please try again in ${timeText}, or use Forgot Password to reset it securely.`,
+                      });
+                    }
+                  }
+                }
+              } catch (err) {
+                if (err instanceof APIError) throw err;
+                console.error("Error checking cooldown:", err);
+              }
+            }
+            return {};
           }
         }
-      } catch (err) {
-        if (err instanceof APIError) throw err;
-        console.error("Error checking cooldown:", err);
-      }
-    }
-  }
-});
+      ],
+      after: [
+        {
+          matcher(context) {
+            return context.path?.includes("change-password") || context.path?.includes("reset-password") || false;
+          },
+          handler: async (ctx) => {
+            if (ctx.context?.returned instanceof APIError) return {};
 
-const passwordChangeNotificationHook = createAuthMiddleware(async (ctx) => {
-  console.log(
-    "AFTER HOOK TRIGGERED. Path:",
-    ctx.path,
-    "Status:",
-    ctx.response?.status,
-  );
+            let user = ctx.context?.session?.user || ctx.context?.user;
+            let userId = user?.id;
 
-  if (
-    ctx.path &&
-    (ctx.path.includes("change-password") ||
-      ctx.path.includes("reset-password"))
-  ) {
-    console.log("Password change/reset success detected!");
-    let user = ctx.context?.session?.user || ctx.context?.user;
-    let userId = user?.id;
-    if (!user && ctx.body?.email) {
-      try {
-        const res = await pool.query(`SELECT * FROM "user" WHERE email = $1`, [
-          ctx.body.email,
-        ]);
-        if (res.rows.length > 0) {
-          user = res.rows[0];
-          userId = user.id;
-        }
-      } catch (e) {
-        console.error("Error fetching user for reset-password hook:", e);
-      }
-    }
+            if (!user) {
+              try {
+                let responseData = null;
+                if (ctx.response && typeof ctx.response.clone === "function") {
+                  const clone = ctx.response.clone();
+                  responseData = await clone.json();
+                } else if (ctx.context?.newSession?.user) {
+                  user = ctx.context.newSession.user;
+                } else if (ctx.responseBody) {
+                  responseData = typeof ctx.responseBody === "string" ? JSON.parse(ctx.responseBody) : ctx.responseBody;
+                }
+                
+                if (responseData?.user) user = responseData.user;
+                if (user) userId = user.id;
+              } catch (e) {
+                console.error("Non-critical error extracting user:", e.message);
+              }
+            }
 
-    if (userId) {
-      try {
-        await pool.query(
-          `UPDATE "user" SET "lastPasswordChange" = NOW() WHERE id = $1`,
-          [userId],
-        );
-      } catch (dbErr) {
-        console.error("Failed to update lastPasswordChange timestamp:", dbErr);
-      }
-      if (user.email) {
-        if (ctx.path.includes("reset-password")) {
-          const { handlePasswordResetRecovery } = require("../services/securityService");
-          handlePasswordResetRecovery(user.email);
-        } else {
-          const mailOptions = getPasswordChangedEmail(user);
-          try {
-            await transporter.sendMail(mailOptions);
-            console.log("Password change notification email sent to", user.email);
-          } catch (err) {
-            console.error("Failed to send password change email:", err);
+            if (!user && ctx.body?.email) {
+              try {
+                const res = await pool.query(`SELECT * FROM "user" WHERE email = $1`, [ctx.body.email]);
+                if (res.rows.length > 0) {
+                  user = res.rows[0];
+                  userId = user.id;
+                }
+              } catch (e) {
+                console.error("Error fetching user fallback:", e);
+              }
+            }
+
+            if (userId && user.email) {
+              if (ctx.path?.includes("reset-password")) {
+                securityService.handlePasswordResetRecovery(user.email);
+              } else {
+                securityService.handlePasswordChangeAlert(user);
+              }
+            }
+            return {};
+          }
+        },
+        {
+          matcher(context) {
+            return context.path?.includes("sign-in/email") || false;
+          },
+          handler: async (ctx) => {
+            if (ctx.context?.returned instanceof APIError) return {};
+              let email = ctx.body?.email;
+              if (email) {
+                securityService.handleNewDeviceLoginCheck(email);
+              }
+            return {};
           }
         }
-      }
+      ]
     }
-  }
-});
-
-const loginNotificationHook = createAuthMiddleware(async (ctx) => {
-  if (ctx.path && ctx.path.includes("sign-in/email") && ctx.response?.status === 200) {
-    let email = ctx.body?.email;
-    if (email) {
-      const { handleNewDeviceLoginCheck } = require("../services/securityService");
-      handleNewDeviceLoginCheck(email);
-    }
-  }
-});
-
-module.exports = {
-  passwordChangeCooldownHook,
-  passwordChangeNotificationHook,
-  loginNotificationHook,
+  };
 };
+
+module.exports = { securityHooksPlugin };

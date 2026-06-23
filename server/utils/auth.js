@@ -9,11 +9,7 @@ const {
   getPasswordChangedEmail,
   getOTPEmail,
 } = require("./emailTemplates");
-const {
-  passwordChangeCooldownHook,
-  passwordChangeNotificationHook,
-  loginNotificationHook,
-} = require("./authHooks");
+const { securityHooksPlugin } = require("./authHooks");
 
 
 const auth = betterAuth({
@@ -63,14 +59,26 @@ const auth = betterAuth({
         type: "date",
         required: false,
       },
+      twoFactorEnabled: {
+        type: "boolean",
+        required: false,
+        defaultValue: false,
+      },
     },
   },
   appName: "Bacolor Disaster LMS Portal",
-  hooks: {
-    before: [passwordChangeCooldownHook],
-    after: [passwordChangeNotificationHook, loginNotificationHook],
+  databaseHooks: {
+    user: {
+      update: {
+        before: async (user, ctx) => {
+          console.log("=> DB HOOK UPDATE USER:", user);
+          return { data: user, cancel: false };
+        }
+      }
+    }
   },
   plugins: [
+    securityHooksPlugin(),
     admin({
       defaultRole: "resident",
       adminRole: "system_admin",

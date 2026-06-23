@@ -18,11 +18,13 @@ export default function ActiveDevices() {
   useEffect(() => {
     const fetchSessions = async () => {
       const { data } = await authClient.listSessions();
+      console.log("LIST SESSIONS RETURNED:", data);
+      console.log("CURRENT SESSION FROM HOOK:", activeSession);
       if (data) setSessions(data);
       setLoading(false);
     };
     fetchSessions();
-  }, []);
+  }, [activeSession]);
 
   const handleConfirmRevoke = React.useCallback(async () => {
     setIsRevoking(true);
@@ -113,9 +115,13 @@ export default function ActiveDevices() {
         <div className="flex flex-col">
           {sessions.map((session) => (
               <ActiveDeviceItem
-                key={session.id}
+                key={session.id || session.token}
                 session={session}
-                isCurrent={activeSession?.session?.id === session.id}
+                isCurrent={
+                  activeSession?.session?.id === session.id || 
+                  (activeSession?.session?.token && activeSession?.session?.token === session.token) ||
+                  (activeSession?.session?.userAgent === session.userAgent && activeSession?.session?.ipAddress === session.ipAddress)
+                }
                 onSignOut={initiateRevoke}
                 isOnlySession={sessions.length === 1}
               />

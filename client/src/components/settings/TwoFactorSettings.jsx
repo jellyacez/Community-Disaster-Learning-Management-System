@@ -8,6 +8,7 @@ import MfaSetupModal from "../ui/modals/MfaSetupModal";
 
 export default function TwoFactorSettings() {
   const { data: session } = authClient.useSession();
+  console.log("SESSION USER:", session?.user);
   const isCurrentlyEnabled = session?.user?.twoFactorEnabled;
 
   const [isModalOpen, setIsModalOpen] = useState(false);

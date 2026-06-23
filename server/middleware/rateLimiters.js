@@ -15,6 +15,7 @@ const authRateLimiter = (req, res, next) => {
     path.includes("sign-in") ||
     path.includes("sign-up") ||
     path.includes("forget-password") ||
+    path.includes("request-password-reset") ||
     path.includes("reset-password") ||
     path.includes("change-password")
   ) {
