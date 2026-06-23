@@ -20,13 +20,13 @@ app.use(
   }),
 );
 
+app.use(helmet());
+app.use(hpp());
+
 const customAuthRoutes = require("./routes/authRoutes");
 app.use("/api/auth", customAuthRoutes);
 
 app.use("/api/auth", authRateLimiter, toNodeHandler(auth));
-
-app.use(helmet());
-app.use(hpp());
 
 app.use(globalLimiter);
 
