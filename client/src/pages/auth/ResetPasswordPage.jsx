@@ -53,7 +53,7 @@ export default function ResetPasswordPage() {
       setErrorMsg(error.message || "Failed to reset password. The link might be expired.");
       setStatus("error");
     } else {
-      toast.success("Password reset successfully!");
+      toast.success("Password reset successful. Please log in with your new credentials.", { duration: 5000 });
       navigate("/signin", { replace: true });
     }
   };
