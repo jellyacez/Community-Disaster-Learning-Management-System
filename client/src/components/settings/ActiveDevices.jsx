@@ -24,7 +24,7 @@ export default function ActiveDevices() {
     fetchSessions();
   }, []);
 
-  const handleConfirmRevoke = async () => {
+  const handleConfirmRevoke = React.useCallback(async () => {
     setIsRevoking(true);
 
     if (revokeTarget === "ALL") {
@@ -56,12 +56,16 @@ export default function ActiveDevices() {
         toast.success("Device signed out successfully!");
       }
     }
-  };
+  }, [revokeTarget, sessions, activeSession]);
 
-  const initiateRevoke = (target) => {
+  const initiateRevoke = React.useCallback((target) => {
     setRevokeTarget(target);
     setIsModalOpen(true);
-  };
+  }, []);
+
+  const handleCloseModal = React.useCallback(() => {
+    setIsModalOpen(false);
+  }, []);
 
   const getDeviceDetails = (ua) => {
     if (!ua) return { name: "Unknown Device", icon: LaptopIcon };
@@ -121,7 +125,7 @@ export default function ActiveDevices() {
 
       <ConfirmationModal
         isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        onClose={handleCloseModal}
         onConfirm={handleConfirmRevoke}
         title={
           revokeTarget === "ALL" ? "Sign Out All Devices?" : "Sign Out Device?"

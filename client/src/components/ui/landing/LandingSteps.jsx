@@ -50,29 +50,29 @@ export default function LandingSteps() {
         </motion.div>
 
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {steps.map((s, i) => (
+          {steps.map((step, index) => (
             <motion.div
-              key={s.num}
+              key={step.num}
               initial={{ opacity: 0, y: 28 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ delay: i * 0.14 }}
+              transition={{ delay: index * 0.14 }}
               className="relative"
             >
-              {i < steps.length - 1 && (
+              {index < steps.length - 1 && (
                 <div className="hidden lg:block absolute top-16 left-full w-6 h-px bg-red-500/40 z-10" />
               )}
               <div className="bg-white/5 border border-white/10 rounded-2xl p-6 text-center h-full">
                 <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-red-600/30 to-red-800/30 border border-red-500/20 flex items-center justify-center mx-auto mb-5">
                   <span className="text-3xl font-black text-red-400">
-                    {s.num}
+                    {step.num}
                   </span>
                 </div>
                 <h3 className="font-bold text-white text-sm mb-2">
-                  {s.title}
+                  {step.title}
                 </h3>
                 <p className="text-gray-400 text-xs leading-relaxed">
-                  {s.desc}
+                  {step.desc}
                 </p>
               </div>
             </motion.div>

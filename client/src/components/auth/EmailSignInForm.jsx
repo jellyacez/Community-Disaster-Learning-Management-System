@@ -12,13 +12,17 @@ export default function EmailSignInForm({ errorMessage, clearGlobalError, onRequ
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleChange = (e) => {
-    setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
-    if (errors[e.target.name] || errors.form) {
-      setErrors((prev) => ({ ...prev, [e.target.name]: null, form: null }));
-    }
+  const handleChange = React.useCallback((e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+    setErrors((prev) => {
+      if (prev[name] || prev.form) {
+        return { ...prev, [name]: null, form: null };
+      }
+      return prev;
+    });
     if (clearGlobalError) clearGlobalError();
-  };
+  }, [clearGlobalError]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();

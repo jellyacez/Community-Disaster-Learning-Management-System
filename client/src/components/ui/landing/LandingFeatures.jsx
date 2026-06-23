@@ -71,23 +71,23 @@ export default function LandingFeatures() {
         </motion.div>
 
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
-          {features.map((f) => (
+          {features.map((feature, index) => (
             <motion.div
-              key={f.title}
+              key={feature.title}
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ delay: i * 0.07 }}
+              transition={{ delay: index * 0.07 }}
               className="p-6 rounded-2xl bg-gray-50 border border-gray-100 hover:border-red-100 hover:bg-red-50/20 transition-all group cursor-default"
             >
               <div className="w-11 h-11 rounded-xl bg-red-100 text-red-600 flex items-center justify-center mb-4 group-hover:bg-red-600 group-hover:text-white transition-colors">
-                {f.icon}
+                {feature.icon}
               </div>
               <h3 className="font-bold text-gray-900 text-sm mb-2">
-                {f.title}
+                {feature.title}
               </h3>
               <p className="text-xs text-gray-500 leading-relaxed">
-                {f.description}
+                {feature.description}
               </p>
             </motion.div>
           ))}

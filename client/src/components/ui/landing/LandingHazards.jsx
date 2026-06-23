@@ -59,26 +59,26 @@ export default function LandingHazards() {
         </motion.div>
 
         <div className="grid md:grid-cols-3 gap-6">
-          {hazards.map((h, i) => (
+          {hazards.map((hazard, index) => (
             <motion.div
-              key={h.title}
+              key={hazard.title}
               initial={{ opacity: 0, y: 28 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ delay: i * 0.12 }}
-              className={`rounded-2xl overflow-hidden border ${h.border} bg-white shadow-sm hover:shadow-md transition-shadow`}
+              transition={{ delay: index * 0.12 }}
+              className={`rounded-2xl overflow-hidden border ${hazard.border} bg-white shadow-sm hover:shadow-md transition-shadow`}
             >
-              <div className={`bg-gradient-to-r ${h.gradient} p-6 flex items-center gap-4`}>
-                <span className="text-white">{h.icon}</span>
-                <h3 className="text-xl font-bold text-white">{h.title}</h3>
+              <div className={`bg-gradient-to-r ${hazard.gradient} p-6 flex items-center gap-4`}>
+                <span className="text-white">{hazard.icon}</span>
+                <h3 className="text-xl font-bold text-white">{hazard.title}</h3>
               </div>
               <div className="p-6">
                 <p className="text-gray-600 text-sm leading-relaxed">
-                  {h.description}
+                  {hazard.description}
                 </p>
                 <button
                   onClick={() => navigate("/signin")}
-                  className={`mt-5 inline-flex items-center gap-1 text-xs font-bold ${h.accent} hover:underline`}
+                  className={`mt-5 inline-flex items-center gap-1 text-xs font-bold ${hazard.accent} hover:underline`}
                 >
                   Browse Modules{" "}
                   <HugeiconsIcon aria-hidden="true" icon={ChevronRightIcon} className="w-3 h-3" />

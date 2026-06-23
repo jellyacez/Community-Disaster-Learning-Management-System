@@ -27,15 +27,24 @@ export default function RegisterForm() {
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleChange = (e) => {
-    setFormData((prev) => ({
-      ...prev,
-      [e.target.name]: e.target.value,
-    }));
-    if (errors[e.target.name]) {
-      setErrors((prev) => ({ ...prev, [e.target.name]: null }));
+  const handleChange = React.useCallback((e) => {
+    const { name, value } = e.target;
+    if (name === "barangay") {
+       setFormData((prev) => ({ ...prev, [name]: value }));
+    } else {
+       setFormData((prev) => ({ ...prev, [name]: value }));
     }
-  };
+    setErrors((prev) => {
+      if (prev[name]) {
+        return { ...prev, [name]: null };
+      }
+      return prev;
+    });
+  }, []);
+
+  const handleSetShowTermsModal = React.useCallback((val) => setShowTermsModal(val), []);
+  const handleSetShowPrivacyModal = React.useCallback((val) => setShowPrivacyModal(val), []);
+  const handleSetAcceptedTerms = React.useCallback((val) => setAcceptedTerms(val), []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -167,9 +176,9 @@ export default function RegisterForm() {
 
         <TermsCheckbox 
           acceptedTerms={acceptedTerms}
-          setAcceptedTerms={setAcceptedTerms}
-          setShowTermsModal={setShowTermsModal}
-          setShowPrivacyModal={setShowPrivacyModal}
+          setAcceptedTerms={handleSetAcceptedTerms}
+          setShowTermsModal={handleSetShowTermsModal}
+          setShowPrivacyModal={handleSetShowPrivacyModal}
         />
 
         <button
@@ -202,8 +211,8 @@ export default function RegisterForm() {
         </Link>
       </p>
 
-      <TermsModal isOpen={showTermsModal} onClose={() => setShowTermsModal(false)} />
-      <PrivacyModal isOpen={showPrivacyModal} onClose={() => setShowPrivacyModal(false)} />
+      <TermsModal isOpen={showTermsModal} onClose={() => handleSetShowTermsModal(false)} />
+      <PrivacyModal isOpen={showPrivacyModal} onClose={() => handleSetShowPrivacyModal(false)} />
     </>
   );
 }

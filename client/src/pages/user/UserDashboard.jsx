@@ -43,7 +43,7 @@ export default function UserDashboard() {
       return response.json();
     },
     onError: (err) => {
-      logger.error("Error fetching dashboard data:", err);
+      console.error("Error fetching dashboard data:", err);
       toast.error("Failed to load dashboard data");
     }
   });
@@ -62,6 +62,10 @@ export default function UserDashboard() {
       navigate(location.pathname, { replace: true, state: {} });
     }
   }, [location, navigate]);
+
+  const handleResume = React.useCallback((moduleId) => {
+    navigate(`/user/modules/${moduleId}`);
+  }, [navigate]);
 
   return (
     <div className="animate-in fade-in duration-300 relative">
@@ -152,7 +156,7 @@ export default function UserDashboard() {
                   <EnrolledModuleCard
                     key={module.id}
                     module={module}
-                    onResume={() => navigate(`/user/modules/${module.id}`)}
+                    onResume={handleResume}
                   />
                 ))
               )}

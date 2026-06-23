@@ -36,12 +36,17 @@ export default function SecuritySettings() {
     checkProvider();
   }, []);
 
-  const handlePasswordChange = (e) => {
-    setPasswordData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
-    if (passwordErrors[e.target.name]) {
-      setPasswordErrors((prev) => ({ ...prev, [e.target.name]: null }));
-    }
-  };
+  const handlePasswordChange = React.useCallback((e) => {
+    const { name, value } = e.target;
+    setPasswordData((prev) => ({ ...prev, [name]: value }));
+    setPasswordErrors((prev) => {
+      if (prev[name]) return { ...prev, [name]: null };
+      return prev;
+    });
+  }, []);
+
+  const handleCloseConfirmModal = React.useCallback(() => setShowConfirmModal(false), []);
+  const handleCloseSuccessModal = React.useCallback(() => setShowSuccessModal(false), []);
 
   const handleUpdatePassword = async (e) => {
     e.preventDefault();
@@ -185,7 +190,7 @@ export default function SecuritySettings() {
 
       <ConfirmationModal
         isOpen={showConfirmModal}
-        onClose={() => setShowConfirmModal(false)}
+        onClose={handleCloseConfirmModal}
         onConfirm={executePasswordChange}
         title="Change Password?"
         description="Are you sure you want to change your password? For your security, you will be locked from changing it again via Settings for 24 hours."
@@ -196,8 +201,8 @@ export default function SecuritySettings() {
 
       <ConfirmationModal
         isOpen={showSuccessModal}
-        onClose={() => setShowSuccessModal(false)}
-        onConfirm={() => setShowSuccessModal(false)}
+        onClose={handleCloseSuccessModal}
+        onConfirm={handleCloseSuccessModal}
         title="Password Changed Successfully!"
         description="Your password has been securely updated. A confirmation email has also been sent to your registered email address."
         type="success"

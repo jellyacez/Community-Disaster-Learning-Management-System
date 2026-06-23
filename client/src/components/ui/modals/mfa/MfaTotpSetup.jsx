@@ -20,6 +20,8 @@ export default function MfaTotpSetup({
   const [totpCode, setTotpCode] = useState("");
   const [isVerifying, setIsVerifying] = useState(false);
 
+  const handlePasswordChange = React.useCallback((e) => setPassword(e.target.value), [setPassword]);
+
   const handleVerifyAndComplete = async () => {
     if (totpCode.length !== 6) {
       toast.error("Please enter the 6-digit code from your app.");
@@ -68,7 +70,7 @@ export default function MfaTotpSetup({
               name="mfaEnablePassword"
               label="Current Password"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={handlePasswordChange}
               required={false}
             />
           </>

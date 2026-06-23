@@ -37,7 +37,7 @@ const EnrolledModuleCard = memo(function EnrolledModuleCard({ module, onResume }
             />
           </div>
           <button
-            onClick={onResume}
+            onClick={() => onResume(module.id)}
             className="mt-4 w-full rounded-xl bg-red-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-red-700 transition cursor-pointer"
           >
             Resume Module
