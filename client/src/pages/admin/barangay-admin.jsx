@@ -20,6 +20,8 @@ export default function Dashboard() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedResident, setSelectedResident] = useState(null);
 
+
+
   const [editingModuleId, setEditingModuleId] = useState(null);
   const [moduleForm, setModuleForm] = useState({ 
     title: "", 

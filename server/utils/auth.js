@@ -15,11 +15,6 @@ const auth = betterAuth({
         type: "string",
         required: true,
       },
-      role: {
-        type: "string",
-        required: false,
-        defaultValue: "resident",
-      },
       archived: {
         type: "boolean",
         required: false,
@@ -31,14 +26,16 @@ const auth = betterAuth({
     admin({
       defaultRole: "resident",
       adminRole: "system_admin",
-      roles: {
-        barangay_admin: {},
-        MDRRMO_admin: {},
-      },
     }),
   ],
   trustedOrigins: ["http://localhost:5173", "http://localhost:5174"],
   autoSignIn: true,
+  onAPIError: {
+    throw: false,
+    onError: (error, ctx) => {
+      console.log("BETTER AUTH API ERROR:", error, ctx.path);
+    }
+  }
 });
 
 module.exports = { auth };

@@ -28,7 +28,7 @@ export default function LandingPage() {
 
   useEffect(() => {
     if (session && !isPending) {
-      const userRole = session.user?.role;
+      const userRole = session.user?.role?.toLowerCase();
       if (userRole === "system_admin")
         navigate("/admin/dashboard", { replace: true });
       else if (userRole === "mdrrmo_admin")

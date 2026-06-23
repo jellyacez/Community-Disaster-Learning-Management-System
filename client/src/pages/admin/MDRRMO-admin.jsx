@@ -14,6 +14,10 @@ export default function Dashboard() {
   const { data: session } = authClient.useSession();
   const [activeTab, setActiveTab] = useState("overview");
 
+  const [modules, setModules] = useState(initialModules);
+  const [users, setUsers] = useState(initialUsers);
+  const [residents, setResidents] = useState(initialResidents);
+
   // Core information for the module being created or edited
   const [editingModuleId, setEditingModuleId] = useState(null);
   const [moduleForm, setModuleForm] = useState({ 
