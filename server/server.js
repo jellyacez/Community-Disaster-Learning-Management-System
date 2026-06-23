@@ -10,25 +10,27 @@ const { authRateLimiter, globalLimiter } = require("./middleware/rateLimiters");
 
 const app = express();
 
-app.set("trust proxy", 1);
+if (process.env.NODE_ENV === "production") {
+  app.set("trust proxy", 1);
+}
+
 app.use(express.json({ limit: "500kb" }));
 
 app.use(
   cors({
-    origin: ["http://localhost:5173", "http://localhost:5174"],
+    origin: [process.env.FRONTEND_URL || "http://localhost:5173", "http://localhost:5174"],
     credentials: true,
   }),
 );
 
 app.use(helmet());
 app.use(hpp());
+app.use(globalLimiter);
 
 const customAuthRoutes = require("./routes/authRoutes");
-app.use("/api/auth", customAuthRoutes);
+app.use("/api/auth", authRateLimiter, customAuthRoutes);
 
 app.use("/api/auth", authRateLimiter, toNodeHandler(auth));
-
-app.use(globalLimiter);
 
 // Import routes
 const adminRoutes = require("./routes/adminRoutes");

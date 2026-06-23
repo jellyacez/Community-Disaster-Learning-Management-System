@@ -13,7 +13,7 @@ router.post("/change-password", passwordChangeInterceptor);
 router.post("/reset-password", passwordResetInterceptor);
 router.post("/sign-in/email", loginAlertInterceptor);
 
-router.post("/enable-email-mfa", authRateLimiter, async (req, res) => {
+router.post("/enable-email-mfa", async (req, res) => {
   try {
     const session = await auth.api.getSession({ headers: req.headers });
     if (!session) return res.status(401).json({ error: "Unauthorized" });
