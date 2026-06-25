@@ -71,14 +71,21 @@ CREATE TABLE public."user" (
 CREATE TABLE public.module_data (
     mod_id integer GENERATED ALWAYS AS IDENTITY,
     modname character varying(500) NOT NULL,
-    moddateadd date NOT NULL,
-    moddateremove date NOT NULL,
     modcat character varying(50) NOT NULL,
     description character varying(500),
     level character varying(50),
     duration character varying(50),
     video_url character varying(500),
     image_url character varying(500) DEFAULT NULL,
+
+-- UPDATED: Automatically handles creation times down to the second
+moddateadd timestamp
+with
+    time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+
+-- UPDATED: Optional expiration date (removed NOT NULL requirement)
+moddateremove timestamp with time zone DEFAULT NULL, 
+    
     CONSTRAINT module_data_pkey PRIMARY KEY (mod_id)
 );
 

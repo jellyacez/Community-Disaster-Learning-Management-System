@@ -9,7 +9,7 @@ const requiredRole = (allowedRoles) => {
         return res.status(401).json({ error: "Unauthorized. Please Log In" });
       }
       const userRole = session.user.role;
-
+      const userId = session.user.id;
       if (!allowedRoles.includes(userRole)) {
         return res.status(403).json({
           error:
