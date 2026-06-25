@@ -32,6 +32,10 @@ export default function UserLayout() {
     barangay: session?.user?.barangay || "No barangay set",
     role: formatRole(session?.user?.role),
     image: session?.user?.image,
+<<<<<<< HEAD
+=======
+    
+>>>>>>> f9e779e (Cleaned Schema and made it so images appear on user profile.)
   };
 
   const userInitials = currentUser.name
