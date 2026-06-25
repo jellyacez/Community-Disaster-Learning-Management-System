@@ -31,6 +31,7 @@ export default function UserLayout() {
     email: session?.user?.email || "No email available",
     barangay: session?.user?.barangay || "No barangay set",
     role: formatRole(session?.user?.role),
+    image: session?.user?.image,
   };
 
   const userInitials = currentUser.name

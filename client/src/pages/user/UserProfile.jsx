@@ -29,7 +29,15 @@ export default function UserProfile() {
           <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
             <div className="flex flex-col items-center text-center">
               <div className="flex h-24 w-24 items-center justify-center rounded-full bg-red-100 text-3xl font-extrabold text-red-700">
-                {userInitials}
+              {currentUser?.image ?(
+                <img
+                src={currentUser.image}
+                alt="User profile"
+                 className="h-full w-full rounded-full object-cover"
+                />
+              ):(
+                userInitials
+              )}
               </div>
               <h2 className="mt-4 text-xl font-bold text-gray-900">
                 {currentUser.name}

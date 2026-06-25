@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 // --- START: RegisterPage.jsx ---
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
@@ -44,3 +45,5 @@ export default function RegisterPage() {
   );
 }
 // --- END: RegisterPage.jsx ---
+=======
+>>>>>>> d7df68f (Seperated terms of condition as a component)
