@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { authClient } from "../../../lib/auth-client";
 import axios from "axios";
-import MfaInitialChoice from "./mfa/MfaInitialChoice";
-import MfaTotpSetup from "./mfa/MfaTotpSetup";
-import MfaEmailSetup from "./mfa/MfaEmailSetup";
-import MfaDisableForm from "./mfa/MfaDisableForm";
+import MfaInitialChoice from "./MfaInitialChoice";
+import MfaTotpSetup from "./MfaTotpSetup";
+import MfaEmailSetup from "./MfaEmailSetup";
+import MfaDisableForm from "./MfaDisableForm";
 
 export default function MfaSetupModal({
   isOpen,

@@ -4,7 +4,7 @@ import { authClient } from "../../lib/auth-client";
 import axios from "axios";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Shield01Icon } from "@hugeicons/core-free-icons";
-import MfaSetupModal from "../ui/modals/MfaSetupModal";
+import MfaSetupModal from "../ui/modals/mfa/MfaSetupModal";
 
 export default function TwoFactorSettings() {
   const { data: session } = authClient.useSession();
