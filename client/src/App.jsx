@@ -11,7 +11,7 @@ const VerifyEmailPromptPage = lazy(() => import("./pages/auth/VerifyEmailPromptP
 const VerifyEmail = lazy(() => import("./pages/auth/VerifyEmail"));
 const AdminMfaSetupPage = lazy(() => import("./pages/auth/AdminMfaSetupPage"));
 
-const SystemAdminDashboard = lazy(() => import("./pages/admin/systemAdminDashboard"));
+const SystemAdminDashboard = lazy(() => import("./pages/admin/SystemAdminDashboard"));
 const UserDashboard = lazy(() => import("./pages/user/UserDashboard"));
 const UserAnnouncements = lazy(() => import("./pages/user/UserAnnouncements"));
 const UserModuleCatalog = lazy(() => import("./pages/user/UserModuleCatalog"));

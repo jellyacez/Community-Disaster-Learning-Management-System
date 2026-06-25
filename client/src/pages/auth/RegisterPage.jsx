@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { authClient } from "../../lib/auth-client";
 import useDocumentTitle from "../../hooks/useDocumentTitle";
-import AuthLayout from "../../components/auth/AuthLayout";
+import AuthLayout from "../../components/layouts/AuthLayout";
 import RegisterForm from "../../components/auth/RegisterForm";
 
 export default function RegisterPage() {

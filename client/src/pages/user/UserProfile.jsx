@@ -28,21 +28,29 @@ export default function UserProfile() {
         <div className="grid gap-6 lg:grid-cols-3">
           <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
             <div className="flex flex-col items-center text-center">
-              <div className="flex h-24 w-24 items-center justify-center rounded-full bg-red-100 text-3xl font-extrabold text-red-700">
-              {currentUser?.image ?(
-                <img
-                src={currentUser.image}
-                alt="User profile"
-                 className="h-full w-full rounded-full object-cover"
-                />
-              ):(
-                userInitials
-              )}
+              <div className="group relative flex h-24 w-24 items-center justify-center overflow-hidden rounded-full bg-red-100 text-3xl font-extrabold text-red-700">
+                {currentUser?.image ?(
+                  <img
+                  src={currentUser.image}
+                  alt="User profile"
+                   className="h-full w-full object-cover"
+                  />
+                ):(
+                  userInitials
+                )}
+                <label className="absolute inset-0 flex cursor-pointer items-center justify-center bg-black/50 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+                  <span className="text-xs font-semibold text-white">Change</span>
+                  <input type="file" className="hidden" accept="image/*" />
+                </label>
               </div>
               <h2 className="mt-4 text-xl font-bold text-gray-900">
                 {currentUser.name}
               </h2>
               <p className="text-sm text-gray-500">{currentUser.role}</p>
+              <label className="mt-4 cursor-pointer rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 shadow-sm transition-colors hover:bg-gray-50 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2">
+                Change Picture
+                <input type="file" className="hidden" accept="image/*" />
+              </label>
             </div>
           </div>
 

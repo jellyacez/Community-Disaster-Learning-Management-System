@@ -4,7 +4,7 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import { Mail01Icon, CheckmarkBadge01Icon, Alert01Icon, Shield01Icon } from "@hugeicons/core-free-icons";
 import { authClient } from "../../lib/auth-client";
 import useDocumentTitle from "../../hooks/useDocumentTitle";
-import AuthLayout from "../../components/auth/AuthLayout";
+import AuthLayout from "../../components/layouts/AuthLayout";
 
 export default function ForgotPasswordPage() {
   useDocumentTitle("Forgot Password | Bacolor LMS");

@@ -6,7 +6,7 @@ import { Alert01Icon, Shield01Icon } from "@hugeicons/core-free-icons";
 import { authClient } from "../../lib/auth-client";
 import useDocumentTitle from "../../hooks/useDocumentTitle";
 import toast from "react-hot-toast";
-import AuthLayout from "../../components/auth/AuthLayout";
+import AuthLayout from "../../components/layouts/AuthLayout";
 import PasswordInput from "../../components/ui/inputs/PasswordInput";
 
 export default function ResetPasswordPage() {

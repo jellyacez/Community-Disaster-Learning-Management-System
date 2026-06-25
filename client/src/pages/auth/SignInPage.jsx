@@ -4,7 +4,7 @@ import { Link, useNavigate, useLocation, useSearchParams } from "react-router-do
 import toast from "react-hot-toast";
 import { authClient } from "../../lib/auth-client";
 import useDocumentTitle from "../../hooks/useDocumentTitle";
-import AuthLayout from "../../components/auth/AuthLayout";
+import AuthLayout from "../../components/layouts/AuthLayout";
 import ConfirmationModal from "../../components/ui/modals/ConfirmationModal";
 import EmailSignInForm from "../../components/auth/EmailSignInForm";
 import MfaSignInForm from "../../components/auth/MfaSignInForm";

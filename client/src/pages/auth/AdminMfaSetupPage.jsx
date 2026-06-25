@@ -2,7 +2,7 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import useDocumentTitle from "../../hooks/useDocumentTitle";
-import AuthLayout from "../../components/auth/AuthLayout";
+import AuthLayout from "../../components/layouts/AuthLayout";
 import TwoFactorSettings from "../../components/settings/TwoFactorSettings";
 import { authClient } from "../../lib/auth-client";
 
