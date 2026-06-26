@@ -36,11 +36,13 @@ app.use("/api/auth", toNodeHandler(auth));
 const adminRoutes = require("./routes/adminRoutes");
 const userRoutes = require("./routes/userRoutes");
 const userDashboardRoutes = require("./routes/userDashboardRoutes");
+const moduleRoutes = require("./routes/moduleRoutes");
 
 // API Routes
 app.use("/api/admin", adminRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/user/dashboard", userDashboardRoutes);
+app.use("/api/modules", moduleRoutes);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {

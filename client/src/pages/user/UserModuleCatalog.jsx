@@ -6,13 +6,16 @@ import { Search01Icon } from "@hugeicons/core-free-icons";
 import ModuleCard from "../../components/ui/modules/ModuleCard.jsx";
 import useDocumentTitle from "../../hooks/useDocumentTitle";
 import { useQuery } from "@tanstack/react-query";
+import continuousLearningImg from "../../assets/continuous-learning.svg";
 
 export default function UserModuleCatalog() {
   const { currentUser } = useOutletContext();
   const { data: modules = [], isLoading } = useQuery({
     queryKey: ["availableModules"],
     queryFn: async () => {
-      const res = await fetch("/api/modules/available");
+      const res = await fetch(`${import.meta.env.VITE_API_URL || "http://localhost:5000/api"}/modules/available`, {
+        credentials: "include",
+      });
       if (!res.ok) throw new Error("Failed to fetch");
       return res.json();
     },
@@ -46,8 +49,11 @@ export default function UserModuleCatalog() {
         </div>
 
         {isLoading ? (
-          <div className="text-center py-10 text-gray-500">
-            Loading Modules...
+          <div className="flex flex-col items-center justify-center py-20">
+            <div className="w-10 h-10 border-4 border-red-200 border-t-red-600 rounded-full animate-spin"></div>
+            <p className="mt-4 text-sm font-medium text-gray-500">
+              Loading Modules...
+            </p>
           </div>
         ) : modules.length > 0 ? (
           <div className="grid gap-5 lg:grid-cols-2">
@@ -60,8 +66,19 @@ export default function UserModuleCatalog() {
             ))}
           </div>
         ) : (
-          <div className="text-center py-10 text-gray-500">
-            No new modules available at the moment.
+          <div className="flex flex-col items-center justify-center py-16 text-center">
+            <img
+              src={continuousLearningImg}
+              alt="No modules mascot"
+              className="w-48 h-48 mb-6 opacity-80"
+            />
+            <h3 className="text-lg font-semibold text-gray-700">
+              All caught up!
+            </h3>
+            <p className="text-sm text-gray-500 max-w-xs mt-2">
+              You've explored all available modules. Check back later for new
+              disaster readiness training!
+            </p>
           </div>
         )}
       </div>
