@@ -74,13 +74,15 @@ export default function SignInPage() {
       }
 
       // Route authenticated users to their respective dashboards
-      if (userRole === "system_admin")
-        navigate("/admin/dashboard", { replace: true });
-      else if (userRole === "mdrrmo_admin")
-        navigate("/mdrrmo/dashboard", { replace: true });
-      else if (userRole === "barangay_admin")
-        navigate("/barangay/dashboard", { replace: true });
-      else navigate("/userDashboard", { replace: true });
+      const roleRoutes = {
+        system_admin: "/admin/dashboard",
+        mdrrmo_admin: "/admin/mdrrmo/dashboard",
+        barangay_admin: "/admin/barangay/dashboard",
+        resident: "/userDashboard"
+      };
+      
+      const targetRoute = roleRoutes[userRole] || "/userDashboard";
+      navigate(targetRoute, { replace: true });
     }
   }, [session, isPending, navigate]);
 

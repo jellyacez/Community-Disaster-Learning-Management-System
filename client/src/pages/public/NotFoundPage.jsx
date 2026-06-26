@@ -3,10 +3,21 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { DiscoverCircleIcon, Home09Icon } from "@hugeicons/core-free-icons";
+import { authClient } from "../../lib/auth-client";
 import useDocumentTitle from "../../hooks/useDocumentTitle";
 
 export default function NotFoundPage() {
   useDocumentTitle("404 Not Found | Bacolor LMS");
+  
+  const { data: session } = authClient.useSession();
+  const role = session?.user?.role;
+  
+  let homePath = "/";
+  if (role === "system_admin") homePath = "/admin/dashboard";
+  else if (role === "mdrrmo_admin") homePath = "/admin/mdrrmo/dashboard";
+  else if (role === "barangay_admin") homePath = "/admin/barangay/dashboard";
+  else if (role === "resident" || role === "user") homePath = "/userDashboard";
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-100 to-red-50 flex items-center justify-center px-4 py-10">
       <div className="w-full max-w-lg bg-white rounded-2xl shadow-xl border border-gray-100 p-10 text-center">
@@ -23,7 +34,7 @@ export default function NotFoundPage() {
         </p>
 
         <Link
-          to="/"
+          to={homePath}
           className="inline-flex items-center justify-center gap-2 w-full py-4 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl transition-colors shadow-lg shadow-red-200"
         >
           <HugeiconsIcon aria-hidden="true" icon={Home09Icon} className="w-5 h-5" />

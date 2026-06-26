@@ -20,8 +20,12 @@ const UserProfile = lazy(() => import("./pages/user/UserProfile"));
 const UserSettings = lazy(() => import("./pages/user/UserSettings"));
 const NotFoundPage = lazy(() => import("./pages/public/NotFoundPage"));
 
+const BarangayAdminDashboard = lazy(() => import("./pages/admin/barangay/BarangayAdminDashboard"));
+const MdrrmoAdminDashboard = lazy(() => import("./pages/admin/mdrrmo/MdrrmoAdminDashboard"));
+
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 import UserLayout from "./components/layouts/UserLayout";
+import AdminLayout from "./components/layouts/AdminLayout";
 
 export default function App() {
   return (
@@ -84,8 +88,18 @@ export default function App() {
             </Route>
           </Route>
 
-          <Route element={<ProtectedRoute allowedRoles={["system_admin"]} />}>
-            <Route path="/admin/dashboard" element={<SystemAdminDashboard />} />
+          <Route element={<AdminLayout />}>
+            <Route element={<ProtectedRoute allowedRoles={["system_admin"]} />}>
+              <Route path="/admin/dashboard" element={<SystemAdminDashboard />} />
+            </Route>
+
+            <Route element={<ProtectedRoute allowedRoles={["mdrrmo_admin"]} />}>
+              <Route path="/admin/mdrrmo/dashboard" element={<MdrrmoAdminDashboard />} />
+            </Route>
+
+            <Route element={<ProtectedRoute allowedRoles={["barangay_admin"]} />}>
+              <Route path="/admin/barangay/dashboard" element={<BarangayAdminDashboard />} />
+            </Route>
           </Route>
 
           <Route path="*" element={<NotFoundPage />} />
