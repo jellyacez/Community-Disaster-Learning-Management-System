@@ -5,7 +5,7 @@ A progressive, multi-level web application designed to train and certify residen
 ## 🌟 Key Features
 
 - **Progressive Learning**: Multi-level modules tailored to local hazards.
-- **Role-Based Access Control (RBAC)**: Secure, partitioned dashboards for Residents, Barangay Admins, MDRRMO Admins, and System Admins.
+- **Role-Based Access Control (RBAC)**: Secure, partitioned dashboards for Residents, Barangay Admins, MDRRMO Admins, and System Admins utilizing a dynamically rendered `AdminLayout` for least-privilege UI generation.
 - **Enterprise-Grade Security**: Powered by Better Auth with secure HTTP-only session cookies, backend middleware protection, and strict IP Rate Limiting.
 - **Multi-Factor Authentication (MFA)**: Optional 2FA for residents, and strictly enforced mandatory MFA for all administrative roles.
 - **Responsive & Dynamic UI**: Built with React, TailwindCSS, Framer Motion, and beautiful Hugeicons. Features mobile-first design, interactive floating animations, and dynamic skeleton loaders.
@@ -148,7 +148,7 @@ The application will be live at `http://localhost:5173`.
 
 ## 🛡️ Security Architecture
 
-1. **Frontend Protection**: The `<ProtectedRoute />` component inspects the active session and intercepts unauthorized access attempts, hiding UI elements and safely redirecting users.
+1. **Frontend Protection**: The `<ProtectedRoute />` component explicitly checks active sessions and role scopes to prevent cross-role contamination. Unauthorized attempts trigger a full-screen "Access Denied" overlay (preventing layout exposure) and securely redirect users back to their authorized dynamic dashboards.
 2. **Authentication Middleware**: The backend employs `betterAuthMiddleware.js` to ensure the requester is logged into a valid session.
 3. **Authorization Middleware**: The `adminMiddleware.js` operates as an Express gatekeeper, strictly validating that the secure session token belongs to a `system_admin` before any sensitive database queries are run.
 4. **Rate Limiting**: Defends the server from brute-force and DDoS attacks. Global limits apply broadly, with strict 20-request caps on authentication routes.
