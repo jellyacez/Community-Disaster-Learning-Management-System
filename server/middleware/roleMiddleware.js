@@ -1,5 +1,7 @@
 const { auth } = require("../utils/auth");
 
+// @desc    Dynamic middleware to restrict routes based on an array of allowed roles
+// @access  Private
 const requiredRole = (allowedRoles) => {
   return async (req, res, next) => {
     try {

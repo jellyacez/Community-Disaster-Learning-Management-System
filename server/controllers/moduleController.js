@@ -1,7 +1,6 @@
 const pool = require("../config/db");
 
-// @route   POST /api/modules
-// @desc    Create a new module
+// @desc    Creates a new module in the database
 // @access  Private (admin only)
 exports.createModule = async (req, res) => {
   const {
@@ -14,7 +13,6 @@ exports.createModule = async (req, res) => {
     image_url,
   } = req.body;
 
-  // Validation Check
   if (!moduleName || !moduleCategory || !duration) {
     return res.status(400).json({
       success: false,
@@ -52,20 +50,100 @@ exports.createModule = async (req, res) => {
     });
   }
 };
+// --- End of createModule ---
 
-// @route   GET /api/modules/available
-// @desc    Get available modules for residents
+// @desc    Fetches all modules that the current user is not enrolled in
 // @access  Private
 exports.getAvailableModules = async (req, res) => {
   try {
-    const result = await pool.query(`
-      SELECT mod_id as id, modname as title, modcat as category, level, duration, description
-      FROM module_data
-      ORDER BY mod_id DESC
-    `);
+    const user_id = req.user?.id;
+    if (!user_id) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    const result = await pool.query(
+      `
+      SELECT 
+        md.mod_id as id, 
+        md.modname as title, 
+        md.modcat as category, 
+        md.level, 
+        md.duration, 
+        md.description
+      FROM module_data md
+      LEFT JOIN module_activity ma ON md.mod_id = ma.mod_id AND ma.user_id = $1
+      WHERE ma.modact_id IS NULL
+      ORDER BY md.mod_id DESC
+    `,
+      [user_id],
+    );
     res.json(result.rows);
   } catch (error) {
     console.error("Error fetching available modules:", error);
     res.status(500).json({ error: "Server Error" });
   }
 };
+// --- End of getAvailableModules ---
+
+// @desc    Enrolls the current authenticated user into a specific module
+// @access  Private
+exports.enrollInModule = async (req, res) => {
+  const { id: mod_id } = req.params;
+  const user_id = req.user?.id;
+
+  if (!user_id) {
+    return res
+      .status(401)
+      .json({ success: false, message: "Unauthorized. Please log in." });
+  }
+
+  if (!mod_id || isNaN(mod_id)) {
+    return res
+      .status(400)
+      .json({ success: false, message: "Invalid module ID." });
+  }
+
+  try {
+    const moduleCheck = await pool.query(
+      "SELECT mod_id FROM module_data WHERE mod_id = $1",
+      [mod_id],
+    );
+    if (moduleCheck.rowCount === 0) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Module not found." });
+    }
+
+    const enrollmentCheck = await pool.query(
+      "SELECT 1 FROM module_activity WHERE user_id = $1 AND mod_id = $2 LIMIT 1",
+      [user_id, mod_id],
+    );
+
+    if (enrollmentCheck.rowCount > 0) {
+      return res
+        .status(400)
+        .json({
+          success: false,
+          message: "You are already enrolled in this module.",
+        });
+    }
+
+    await pool.query(
+      `INSERT INTO module_activity (user_id, mod_id, modstatus, progress) 
+       VALUES ($1, $2, 'In Progress', 0)`,
+      [user_id, mod_id],
+    );
+
+    return res.status(201).json({
+      success: true,
+      message: "Successfully enrolled in the module.",
+    });
+  } catch (error) {
+    console.error("Error enrolling in module:", error);
+    return res.status(500).json({
+      success: false,
+      message: "An internal server error occurred while enrolling.",
+    });
+  }
+};
+// --- End of enrollInModule ---

@@ -13,7 +13,6 @@ export default function SignInPage() {
   useDocumentTitle("Sign In | Bacolor LMS");
 
   const navigate = useNavigate();
-  // Grab URL state to show redirect errors (e.g. session expired)
   const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
   const urlError = searchParams.get("error");
@@ -41,7 +40,6 @@ export default function SignInPage() {
     return cleared;
   };
 
-  // Mount active session; intercept if they are already logged in
   const { data: session, isPending } = authClient.useSession();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [showTwoFactor, setShowTwoFactor] = useState(false);
@@ -49,7 +47,6 @@ export default function SignInPage() {
   const [twoFactorCurrentMethod, setTwoFactorCurrentMethod] = useState("");
 
   useEffect(() => {
-    // Clear out residual logout state before mounting
     if (sessionStorage.getItem("showLogoutModal") === "true") {
       setShowLogoutModal(true);
       sessionStorage.removeItem("showLogoutModal");
@@ -67,13 +64,11 @@ export default function SignInPage() {
       const isAdmin = ["system_admin", "mdrrmo_admin", "barangay_admin"].includes(userRole);
       const mfaBypass = import.meta.env.VITE_DISABLE_MFA === "true";
 
-      // Boot admins to MFA setup if they haven't configured it yet (unless bypassed)
       if (isAdmin && !session.user.twoFactorEnabled && !mfaBypass) {
         navigate("/admin/mfa-setup", { replace: true });
         return;
       }
 
-      // Route authenticated users to their respective dashboards
       const roleRoutes = {
         system_admin: "/admin/dashboard",
         mdrrmo_admin: "/admin/mdrrmo/dashboard",
@@ -86,7 +81,6 @@ export default function SignInPage() {
     }
   }, [session, isPending, navigate]);
 
-  // Flip the UI to the 2FA flow if the backend requires it
   const handleRequireMfa = (data) => {
     const methods = data.twoFactorMethods || [];
     setTwoFactorMethods(methods);

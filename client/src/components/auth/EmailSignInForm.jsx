@@ -62,7 +62,6 @@ export default function EmailSignInForm({ errorMessage, clearGlobalError, onRequ
 
       setErrors({ form: errorMsg });
 
-      // Artificial cooldown to prevent manual UI spamming
       setTimeout(() => {
         isSubmittingRef.current = false;
         setIsLoading(false);

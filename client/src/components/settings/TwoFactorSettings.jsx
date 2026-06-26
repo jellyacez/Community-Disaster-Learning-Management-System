@@ -5,8 +5,10 @@ import axios from "axios";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Shield01Icon } from "@hugeicons/core-free-icons";
 import MfaSetupModal from "../ui/modals/mfa/MfaSetupModal";
+import { useQueryClient } from "@tanstack/react-query";
 
 export default function TwoFactorSettings() {
+  const queryClient = useQueryClient();
   const { data: session } = authClient.useSession();
   const isCurrentlyEnabled = session?.user?.twoFactorEnabled;
 
@@ -70,14 +72,14 @@ export default function TwoFactorSettings() {
     } else {
       toast.success("MFA Disabled.");
       setIsModalOpen(false);
-      window.location.reload();
+      queryClient.invalidateQueries({ queryKey: ["session"] });
     }
   };
 
   const handleDone = () => {
     setIsModalOpen(false);
     setTimeout(() => {
-      window.location.reload();
+      queryClient.invalidateQueries({ queryKey: ["session"] });
     }, 1500);
   };
 

@@ -1,5 +1,7 @@
 const { auth } = require("../utils/auth");
 
+// @desc    Verifies session and ensures the user has the system_admin role
+// @access  Private (admin only)
 const adminMiddleware = async (req, res, next) => {
   try {
     const session = await auth.api.getSession({ headers: req.headers });

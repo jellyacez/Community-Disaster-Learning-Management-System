@@ -1,8 +1,7 @@
 const pool = require("../config/db");
 const { auth } = require("../utils/auth");
 
-// @route   PUT /api/admin/users/:id
-// @desc    Update user details (name, email, archived status)
+// @desc    Updates user demographic details and archived status
 // @access  Private (admin only)
 exports.updateUser = async (req, res) => {
   const { id } = req.params;
@@ -20,9 +19,9 @@ exports.updateUser = async (req, res) => {
     res.status(500).json({ error: "Server Error" });
   }
 };
+// --- End of updateUser ---
 
-// @route   PUT /api/admin/users/:id/password
-// @desc    Reset user password
+// @desc    Resets a user's password using the better-auth admin API
 // @access  Private (admin only)
 exports.resetUserPassword = async (req, res) => {
   const { id } = req.params;
@@ -47,3 +46,4 @@ exports.resetUserPassword = async (req, res) => {
     res.status(500).json({ error: "Server Error" });
   }
 };
+// --- End of resetUserPassword ---

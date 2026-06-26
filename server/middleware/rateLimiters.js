@@ -1,5 +1,7 @@
 const rateLimit = require("express-rate-limit");
 
+// @desc    Limits failed login/auth attempts to prevent brute force
+// @access  Public (Auth routes)
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 10,
@@ -24,6 +26,8 @@ const authRateLimiter = (req, res, next) => {
   next();
 };
 
+// @desc    Global rate limiter for general API routes to prevent spam
+// @access  Public
 const globalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 1000,

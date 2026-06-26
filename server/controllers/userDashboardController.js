@@ -1,7 +1,6 @@
 const pool = require("../config/db");
 
-// @route   GET /api/dashboard
-// @desc    Get user dashboard data (total modules, announcements, enrolled modules, completion rate)
+// @desc    Fetches aggregated dashboard metrics, active announcements, and current enrollments for the user
 // @access  Private (authenticated users)
 exports.getDashboardData = async (req, res) => {
   try {

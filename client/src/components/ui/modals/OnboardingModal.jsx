@@ -4,8 +4,10 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import { CheckmarkBadge01Icon } from "@hugeicons/core-free-icons";
 import toast from "react-hot-toast";
 import { BACOLOR_BARANGAYS } from "../../../constants/locations";
+import { useQueryClient } from "@tanstack/react-query";
 
 export default function OnboardingModal({ currentUser }) {
+  const queryClient = useQueryClient();
   const [onboardingName, setOnboardingName] = useState(currentUser?.name || "");
   const [onboardingBarangay, setOnboardingBarangay] = useState("");
   const [isSubmittingOnboarding, setIsSubmittingOnboarding] = useState(false);
@@ -35,7 +37,8 @@ export default function OnboardingModal({ currentUser }) {
       if (!res.ok) throw new Error("Failed to update profile");
       
       toast.success("Profile completed successfully!");
-      window.location.reload();
+      queryClient.invalidateQueries({ queryKey: ["userDashboard"] });
+      queryClient.invalidateQueries({ queryKey: ["session"] });
     } catch (err) {
       toast.error(err.message);
       setIsSubmittingOnboarding(false);

@@ -89,11 +89,9 @@ export default function RegisterForm() {
       console.error("Registration failed:", error);
       setErrors({ form: error.message || "Registration failed. Please try again." });
       
-      // Artificial cooldown to prevent manual UI spamming
-      setTimeout(() => {
-        isSubmittingRef.current = false;
-        setIsSubmitting(false);
-      }, 1500);
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+      isSubmittingRef.current = false;
+      setIsSubmitting(false);
     } else {
       isSubmittingRef.current = false;
       setIsSubmitting(false);

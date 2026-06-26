@@ -32,7 +32,7 @@ export default function UserDashboard() {
 
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
   
-  // Fetch aggregate user statistics and active modules from the API
+  // Data fetching
   const { data: dashboardData, isLoading: loading, error } = useQuery({
     queryKey: ['userDashboard'],
     queryFn: async () => {
@@ -56,8 +56,8 @@ export default function UserDashboard() {
   };
 
   useEffect(() => {
-    // Intercept redirect states to show the welcome modal on first login
-    if (location.state?.showWelcome) {
+    // Navigation side effects
+    if (location.state?.fromLogin) {
       setShowWelcomeModal(true);
       navigate(location.pathname, { replace: true, state: {} });
     }

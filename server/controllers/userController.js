@@ -1,7 +1,6 @@
 const pool = require("../config/db");
 
-// @route   GET /api/users/me/provider
-// @desc    Get current user's auth providers
+// @desc    Retrieves a list of authentication providers linked to the current user
 // @access  Private
 exports.getProviders = async (req, res) => {
   try {
@@ -13,9 +12,9 @@ exports.getProviders = async (req, res) => {
     res.status(500).send("Server Error");
   }
 };
+// --- End of getProviders ---
 
-// @route   POST /api/users/onboarding
-// @desc    Complete user profile after Google OAuth
+// @desc    Completes a new user's profile by saving required demographic information
 // @access  Private
 exports.onboarding = async (req, res) => {
   const { name, barangay } = req.body;
@@ -34,9 +33,9 @@ exports.onboarding = async (req, res) => {
     res.status(500).json({ error: "Server Error" });
   }
 };
+// --- End of onboarding ---
 
-// @route   GET /api/users
-// @desc    Get all users (for admin dashboard)
+// @desc    Retrieves all registered users and their details for the admin dashboard
 // @access  Private (admin only)
 exports.getAllUsers = async (req, res) => {
   try {
@@ -47,3 +46,4 @@ exports.getAllUsers = async (req, res) => {
     res.status(500).send("Server Error");
   }
 };
+// --- End of getAllUsers ---

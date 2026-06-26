@@ -5,23 +5,26 @@ import useDocumentTitle from "../../hooks/useDocumentTitle";
 import AuthLayout from "../../components/layouts/AuthLayout";
 import TwoFactorSettings from "../../components/settings/TwoFactorSettings";
 import { authClient } from "../../lib/auth-client";
+import { useQueryClient } from "@tanstack/react-query";
 
 export default function AdminMfaSetupPage() {
   useDocumentTitle("Admin MFA Setup | Bacolor LMS");
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { data: session } = authClient.useSession();
   const isMfaEnabled = session?.user?.twoFactorEnabled;
 
   const handleContinue = () => {
-    // Verify MFA status post-setup; if enabled, route to role-specific dashboard
     if (session?.user?.twoFactorEnabled) {
-      if (session.user.role === "system_admin") navigate("/admin/dashboard");
-      else if (session.user.role === "mdrrmo_admin") navigate("/mdrrmo/dashboard");
-      else if (session.user.role === "barangay_admin") navigate("/barangay/dashboard");
-      else navigate("/userDashboard");
+      if (session.user.role === "system_admin") {
+        navigate("/admin/system", { replace: true });
+      } else if (session.user.role === "mdrrmo_admin") {
+        navigate("/admin/mdrrmo", { replace: true });
+      } else if (session.user.role === "barangay_admin") {
+        navigate("/admin/barangay", { replace: true });
+      }
     } else {
-      // Otherwise, refresh session state
-      window.location.reload();
+      queryClient.invalidateQueries({ queryKey: ["session"] });
     }
   };
 

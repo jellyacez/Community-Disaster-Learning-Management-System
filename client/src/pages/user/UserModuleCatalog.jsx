@@ -1,15 +1,15 @@
-// --- START: UserModuleCatalog.jsx ---
 import React from "react";
 import { useOutletContext } from "react-router-dom";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Search01Icon } from "@hugeicons/core-free-icons";
 import ModuleCard from "../../components/ui/modules/ModuleCard.jsx";
 import useDocumentTitle from "../../hooks/useDocumentTitle";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import continuousLearningImg from "../../assets/continuous-learning.svg";
 
 export default function UserModuleCatalog() {
   const { currentUser } = useOutletContext();
+  const queryClient = useQueryClient();
   const { data: modules = [], isLoading } = useQuery({
     queryKey: ["availableModules"],
     queryFn: async () => {
@@ -20,6 +20,11 @@ export default function UserModuleCatalog() {
       return res.json();
     },
   });
+
+  const handleEnrollSuccess = () => {
+    queryClient.invalidateQueries({ queryKey: ["availableModules"] });
+    queryClient.invalidateQueries({ queryKey: ["userDashboard"] });
+  };
 
   useDocumentTitle("Module Catalog | Bacolor LMS");
   return (
@@ -61,7 +66,8 @@ export default function UserModuleCatalog() {
               <ModuleCard
                 key={module.id}
                 module={module}
-                enrolled={false}
+                enrolled={module.is_enrolled}
+                onEnrollSuccess={handleEnrollSuccess}
               ></ModuleCard>
             ))}
           </div>

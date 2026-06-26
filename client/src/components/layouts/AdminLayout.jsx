@@ -20,7 +20,6 @@ export default function AdminLayout() {
 
   const userRole = session?.user?.role || "resident";
 
-  // Dynamic Navigation Links based on role
   const getNavLinks = (role) => {
     const links = [];
 

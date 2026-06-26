@@ -49,12 +49,12 @@ export default function ProtectedRoute({ allowedRoles = [] }) {
       );
     }
 
-    // Enforce Mandatory MFA for Admins unless bypassed
-    const isAdmin = ["system_admin", "mdrrmo_admin", "barangay_admin"].includes(userRole);
+    const adminRoles = ["system_admin", "mdrrmo_admin", "barangay_admin"];
     const mfaBypass = import.meta.env.VITE_DISABLE_MFA === "true";
-    if (isAdmin && !session.user.twoFactorEnabled && !mfaBypass) {
-      // Specifically catching MFA requirement and bouncing them seamlessly to setup
-      return <Navigate to="/admin/mfa-setup" replace />;
+    if (adminRoles.includes(userRole) && !session.user.twoFactorEnabled && !mfaBypass) {
+      if (location.pathname !== "/admin/mfa-setup") {
+        return <Navigate to="/admin/mfa-setup" replace />;
+      }
     }
 
     if (!allowedRoles.includes(userRole)) {

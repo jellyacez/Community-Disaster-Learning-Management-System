@@ -1,6 +1,7 @@
 const { auth } = require("../utils/auth");
 
-// Middleware to protect routes and attach user info to req.user
+// @desc    Protects routes, verifies sessions, and enforces MFA for admin roles
+// @access  Private
 const betterAuthMiddleware = async (req, res, next) => {
   try {
     const session = await auth.api.getSession({ headers: req.headers });

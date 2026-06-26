@@ -8,9 +8,18 @@ import useDocumentTitle from "../../hooks/useDocumentTitle";
 export default function UserEnrolledModules() {
   useDocumentTitle("Enrolled Modules | Bacolor LMS");
   const { currentUser } = useOutletContext();
-  const { data: dashboardData } = useQuery({ queryKey: ['userDashboard'] });
+  const { data: dashboardData, isLoading } = useQuery({
+    queryKey: ['userDashboard'],
+    queryFn: async () => {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || "http://localhost:5000/api"}/user/dashboard`, {
+        credentials: "include",
+      });
+      if (!response.ok) throw new Error("Failed to fetch dashboard data");
+      return response.json();
+    }
+  });
+  
   const enrolledModules = dashboardData?.enrolledModules || [];
-
   return (
     <div className="animate-in fade-in duration-300">
       <div className="space-y-6">
