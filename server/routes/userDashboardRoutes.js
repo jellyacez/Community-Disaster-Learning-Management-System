@@ -45,7 +45,7 @@ router.get("/", betterAuthMiddleware, async (req, res) => {
         md.duration, 
         md.description,
         ma.modstatus as status,
-        COALESCE(ma.modstart, '0') as progress
+        COALESCE(ma.progress, 0) as progress 
       FROM module_activity ma
       JOIN module_data md ON ma.mod_id = md.mod_id
       WHERE ma.user_id = $1
@@ -53,10 +53,7 @@ router.get("/", betterAuthMiddleware, async (req, res) => {
       [req.user.id],
     );
 
-    const enrolledModules = enrolledModulesQuery.rows.map((m) => ({
-      ...m,
-      progress: parseInt(m.progress, 10) || 0,
-    }));
+    const enrolledModules = enrolledModulesQuery.rows;
 
     let completionRate = 0;
     if (enrolledModules.length > 0) {
