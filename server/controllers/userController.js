@@ -1,6 +1,8 @@
 const pool = require("../config/db");
 
+// @route   GET /api/users/me/provider
 // @desc    Get current user's auth providers
+// @access  Private
 exports.getProviders = async (req, res) => {
   try {
     const result = await pool.query('SELECT "providerId" FROM account WHERE "userId" = $1', [req.user.id]);
@@ -12,7 +14,9 @@ exports.getProviders = async (req, res) => {
   }
 };
 
+// @route   POST /api/users/onboarding
 // @desc    Complete user profile after Google OAuth
+// @access  Private
 exports.onboarding = async (req, res) => {
   const { name, barangay } = req.body;
   if (!name || !barangay)
@@ -31,7 +35,9 @@ exports.onboarding = async (req, res) => {
   }
 };
 
+// @route   GET /api/users
 // @desc    Get all users (for admin dashboard)
+// @access  Private (admin only)
 exports.getAllUsers = async (req, res) => {
   try {
     const result = await pool.query('SELECT id, name, email, "emailVerified", image, role, "banned", "banReason", "banExpires", "createdAt", "updatedAt", "twoFactorEnabled", barangay FROM "user"');

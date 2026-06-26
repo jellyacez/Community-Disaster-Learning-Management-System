@@ -1,7 +1,9 @@
 const pool = require("../config/db");
 const { auth } = require("../utils/auth");
 
+// @route   PUT /api/admin/users/:id
 // @desc    Update user details (name, email, archived status)
+// @access  Private (admin only)
 exports.updateUser = async (req, res) => {
   const { id } = req.params;
   const { name, email, archived } = req.body;
@@ -19,7 +21,9 @@ exports.updateUser = async (req, res) => {
   }
 };
 
-// @desc    Reset user password (admin only)
+// @route   PUT /api/admin/users/:id/password
+// @desc    Reset user password
+// @access  Private (admin only)
 exports.resetUserPassword = async (req, res) => {
   const { id } = req.params;
   const { password } = req.body;
