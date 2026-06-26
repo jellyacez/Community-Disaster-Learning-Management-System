@@ -46,9 +46,6 @@ export default function EmailSignInForm({ errorMessage, clearGlobalError, onRequ
       email: formData.email,
       password: formData.password,
     });
-    isSubmittingRef.current = false;
-    setIsLoading(false);
-
     if (error) {
       console.error("Sign in failed:", error);
       let errorMsg = error.message || "Invalid email or password. Please try again.";
@@ -64,7 +61,16 @@ export default function EmailSignInForm({ errorMessage, clearGlobalError, onRequ
       }
 
       setErrors({ form: errorMsg });
+
+      // Artificial cooldown to prevent manual UI spamming
+      setTimeout(() => {
+        isSubmittingRef.current = false;
+        setIsLoading(false);
+      }, 1500);
     } else {
+      isSubmittingRef.current = false;
+      setIsLoading(false);
+      
       if (data?.twoFactorRedirect) {
         onRequireMfa(data);
         return;

@@ -85,13 +85,18 @@ export default function RegisterForm() {
       barangay: formData.barangay,
     });
     
-    isSubmittingRef.current = false;
-    setIsSubmitting(false);
-
     if (error) {
       console.error("Registration failed:", error);
       setErrors({ form: error.message || "Registration failed. Please try again." });
+      
+      // Artificial cooldown to prevent manual UI spamming
+      setTimeout(() => {
+        isSubmittingRef.current = false;
+        setIsSubmitting(false);
+      }, 1500);
     } else {
+      isSubmittingRef.current = false;
+      setIsSubmitting(false);
       navigate("/verify-email-prompt", { state: { email: formData.email } });
     }
   };
