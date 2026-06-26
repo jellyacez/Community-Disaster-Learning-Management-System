@@ -1,8 +1,38 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { UserCircle02Icon } from "@hugeicons/core-free-icons";
+import { authClient } from "../../lib/auth-client";
+import toast from "react-hot-toast";
 
 export default function ProfilePreferences({ currentUser }) {
+  const [name, setName] = useState("");
+  const [isUpdating, setIsUpdating] = useState(false);
+
+  useEffect(() => {
+    if (currentUser?.name) {
+      setName(currentUser.name);
+    }
+  }, [currentUser]);
+
+  const handleUpdateProfile = async () => {
+    if (!name.trim()) {
+      return toast.error("Display name cannot be empty.");
+    }
+    if (name === currentUser?.name) {
+      return toast.error("No changes made to display name.");
+    }
+
+    setIsUpdating(true);
+    const { error } = await authClient.updateUser({ name });
+    setIsUpdating(false);
+
+    if (error) {
+      toast.error(error.message || "Failed to update profile.");
+    } else {
+      toast.success("Profile updated successfully!");
+    }
+  };
+
   return (
     <div className="rounded-3xl border border-gray-100 bg-white p-6 md:p-8 shadow-sm">
       <div className="flex items-center gap-3 mb-6">
@@ -18,7 +48,8 @@ export default function ProfilePreferences({ currentUser }) {
           </label>
           <input
             type="text"
-            defaultValue={currentUser?.name}
+            value={name}
+            onChange={(e) => setName(e.target.value)}
             className="w-full rounded-xl border border-gray-200 px-4 py-3 outline-none focus:border-red-400"
           />
         </div>
@@ -31,7 +62,7 @@ export default function ProfilePreferences({ currentUser }) {
           </label>
           <input
             type="email"
-            value={currentUser?.email}
+            value={currentUser?.email || ""}
             disabled
             readOnly
             className="w-full rounded-xl border border-gray-200 px-4 py-3 bg-gray-50 text-gray-500 cursor-not-allowed outline-none"
@@ -41,8 +72,14 @@ export default function ProfilePreferences({ currentUser }) {
           </p>
         </div>
         <div className="pt-2">
-          <button className="flex items-center justify-center rounded-xl bg-red-600 px-6 py-3.5 text-sm font-bold text-white hover:bg-red-700 transition-colors active:scale-95">
-            Save Changes
+          <button 
+            onClick={handleUpdateProfile}
+            disabled={isUpdating}
+            className={`flex items-center justify-center rounded-xl px-6 py-3.5 text-sm font-bold text-white transition-colors active:scale-95 ${
+              isUpdating ? "bg-red-400 cursor-not-allowed" : "bg-red-600 hover:bg-red-700"
+            }`}
+          >
+            {isUpdating ? "Saving..." : "Save Changes"}
           </button>
         </div>
       </div>

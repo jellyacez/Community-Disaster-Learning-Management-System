@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { authClient } from "../../../lib/auth-client";
+import { authClient } from "../../../../lib/auth-client";
 import axios from "axios";
 import MfaInitialChoice from "./MfaInitialChoice";
 import MfaTotpSetup from "./MfaTotpSetup";

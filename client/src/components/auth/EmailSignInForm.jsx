@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { Link } from "react-router-dom";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Alert01Icon } from "@hugeicons/core-free-icons";
@@ -11,6 +11,7 @@ export default function EmailSignInForm({ errorMessage, clearGlobalError, onRequ
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
+  const isSubmittingRef = useRef(false);
 
   const handleChange = React.useCallback((e) => {
     const { name, value } = e.target;
@@ -26,7 +27,7 @@ export default function EmailSignInForm({ errorMessage, clearGlobalError, onRequ
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (isLoading) return;
+    if (isSubmittingRef.current) return;
     
     if (clearGlobalError) clearGlobalError();
     setErrors({});
@@ -39,11 +40,13 @@ export default function EmailSignInForm({ errorMessage, clearGlobalError, onRequ
       return;
     }
 
+    isSubmittingRef.current = true;
     setIsLoading(true);
     const { data, error } = await authClient.signIn.email({
       email: formData.email,
       password: formData.password,
     });
+    isSubmittingRef.current = false;
     setIsLoading(false);
 
     if (error) {

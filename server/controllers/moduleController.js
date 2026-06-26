@@ -24,7 +24,6 @@ exports.createModule = async (req, res) => {
   }
 
   try {
-    // Column order matches VALUES sequence perfectly.
     const moduleCreation = await pool.query(
       `INSERT INTO public.module_data (modname, modcat, description, level, duration, video_url, image_url) 
              VALUES ($1, $2, $3, $4, $5, $6, $7) 

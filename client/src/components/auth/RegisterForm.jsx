@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Alert01Icon } from "@hugeicons/core-free-icons";
@@ -26,6 +26,7 @@ export default function RegisterForm() {
   
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const isSubmittingRef = useRef(false);
 
   const handleChange = React.useCallback((e) => {
     const { name, value } = e.target;
@@ -48,6 +49,8 @@ export default function RegisterForm() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (isSubmittingRef.current) return;
+    
     setErrors({});
 
     let newErrors = {};
@@ -72,6 +75,7 @@ export default function RegisterForm() {
       return;
     }
 
+    isSubmittingRef.current = true;
     setIsSubmitting(true);
 
     const { data, error } = await authClient.signUp.email({
@@ -81,6 +85,7 @@ export default function RegisterForm() {
       barangay: formData.barangay,
     });
     
+    isSubmittingRef.current = false;
     setIsSubmitting(false);
 
     if (error) {

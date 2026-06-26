@@ -41,6 +41,8 @@ export default function ActiveDevices() {
     if (isCurrentSession) {
       sessionStorage.setItem("isLoggingOut", "true");
       sessionStorage.setItem("showLogoutModal", "true");
+      await authClient.signOut();
+      return;
     }
 
     const { error } = await authClient.revokeSession({ token: revokeTarget });
@@ -50,11 +52,8 @@ export default function ActiveDevices() {
     if (error) {
       toast.error("Failed to revoke session");
     } else {
-      if (isCurrentSession) {
-      } else {
-        setSessions((prev) => prev.filter((s) => s.token !== revokeTarget));
-        toast.success("Device signed out successfully!");
-      }
+      setSessions((prev) => prev.filter((s) => s.token !== revokeTarget));
+      toast.success("Device signed out successfully!");
     }
   }, [revokeTarget, sessions, activeSession]);
 
