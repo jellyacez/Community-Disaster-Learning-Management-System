@@ -5,10 +5,18 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import { Search01Icon } from "@hugeicons/core-free-icons";
 import ModuleCard from "../../components/ui/modules/ModuleCard.jsx";
 import useDocumentTitle from "../../hooks/useDocumentTitle";
+import { useQuery } from "@tanstack/react-query";
 
 export default function UserModuleCatalog() {
   const { currentUser } = useOutletContext();
-  const modules = [];
+  const { data: modules = [], isLoading } = useQuery({
+    queryKey: ["availableModules"],
+    queryFn: async () => {
+      const res = await fetch("/api/modules/available");
+      if (!res.ok) throw new Error("Failed to fetch");
+      return res.json();
+    },
+  });
 
   useDocumentTitle("Module Catalog | Bacolor LMS");
   return (
@@ -37,15 +45,25 @@ export default function UserModuleCatalog() {
           </div>
         </div>
 
-        <div className="grid gap-5 lg:grid-cols-2">
-          {modules.map((module) => (
-            <ModuleCard
-              key={module.id}
-              module={module}
-              enrolled={module.enrolled}
-            />
-          ))}
-        </div>
+        {isLoading ? (
+          <div className="text-center py-10 text-gray-500">
+            Loading Modules...
+          </div>
+        ) : modules.length > 0 ? (
+          <div className="grid gap-5 lg:grid-cols-2">
+            {modules.map((module) => (
+              <ModuleCard
+                key={module.id}
+                module={module}
+                enrolled={false}
+              ></ModuleCard>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-10 text-gray-500">
+            No new modules available at the moment.
+          </div>
+        )}
       </div>
     </div>
   );
