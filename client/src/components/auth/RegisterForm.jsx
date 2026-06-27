@@ -1,7 +1,7 @@
 import React, { useState, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { Alert01Icon } from "@hugeicons/core-free-icons";
+import { Alert01Icon, CheckmarkCircle02Icon } from "@hugeicons/core-free-icons";
 import { authClient } from "../../lib/auth-client";
 import PasswordInput from "../ui/inputs/PasswordInput";
 import BarangayDropdown from "../ui/inputs/BarangayDropdown";
@@ -160,16 +160,32 @@ export default function RegisterForm() {
           error={errors.barangay} 
         />
 
-        <PasswordInput
-          id="password"
-          name="password"
-          label="Password"
-          value={formData.password}
-          onChange={handleChange}
-          error={errors.password}
-          placeholder="Min. 8 characters"
-          autoComplete="new-password"
-        />
+        <div>
+          <PasswordInput
+            id="password"
+            name="password"
+            label="Password"
+            value={formData.password}
+            onChange={handleChange}
+            error={errors.password}
+            placeholder="Min. 8 characters"
+            autoComplete="new-password"
+          />
+          <div className="mt-2 space-y-1.5 px-1">
+            <div className={`text-xs flex items-center gap-1.5 transition-colors duration-300 font-medium ${formData.password.length >= 8 ? 'text-green-600' : 'text-gray-500'}`}>
+              <HugeiconsIcon icon={formData.password.length >= 8 ? CheckmarkCircle02Icon : Alert01Icon} className="w-4 h-4" /> 
+              At least 8 characters
+            </div>
+            <div className={`text-xs flex items-center gap-1.5 transition-colors duration-300 font-medium ${/[A-Z]/.test(formData.password) ? 'text-green-600' : 'text-gray-500'}`}>
+              <HugeiconsIcon icon={/[A-Z]/.test(formData.password) ? CheckmarkCircle02Icon : Alert01Icon} className="w-4 h-4" /> 
+              At least 1 uppercase letter
+            </div>
+            <div className={`text-xs flex items-center gap-1.5 transition-colors duration-300 font-medium ${/[!@#$%^&*_=+\-/.]/.test(formData.password) ? 'text-green-600' : 'text-gray-500'}`}>
+              <HugeiconsIcon icon={/[!@#$%^&*_=+\-/.]/.test(formData.password) ? CheckmarkCircle02Icon : Alert01Icon} className="w-4 h-4" /> 
+              At least 1 special symbol
+            </div>
+          </div>
+        </div>
 
         <PasswordInput
           id="confirmPassword"
