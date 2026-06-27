@@ -16,6 +16,7 @@ const UserDashboard = lazy(() => import("./pages/user/UserDashboard"));
 const UserAnnouncements = lazy(() => import("./pages/user/UserAnnouncements"));
 const UserModuleCatalog = lazy(() => import("./pages/user/UserModuleCatalog"));
 const UserEnrolledModules = lazy(() => import("./pages/user/UserEnrolledModules"));
+const ModuleViewer = lazy(() => import("./pages/user/ModuleViewer"));
 const UserProfile = lazy(() => import("./pages/user/UserProfile"));
 const UserSettings = lazy(() => import("./pages/user/UserSettings"));
 const NotFoundPage = lazy(() => import("./pages/public/NotFoundPage"));
@@ -78,6 +79,7 @@ export default function App() {
           <Route path="/verify-email" element={<VerifyEmail />} />
 
           <Route element={<ProtectedRoute allowedRoles={["resident"]} />}>
+            <Route path="/user/modules/:moduleId" element={<ModuleViewer />} />
             <Route element={<UserLayout />}>
               <Route path="/userDashboard" element={<UserDashboard />} />
               <Route path="/user/announcements" element={<UserAnnouncements />} />
