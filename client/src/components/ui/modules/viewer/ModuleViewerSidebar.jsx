@@ -78,7 +78,6 @@ export default function ModuleViewerSidebar({
         })}
       </div>
       
-      {/* Desktop Back Button */}
       <div className="hidden md:block p-4 border-t border-gray-100 bg-gray-50">
          <button onClick={() => navigate("/userDashboard")} className="w-full py-2.5 px-4 text-sm font-semibold text-gray-600 hover:text-gray-900 hover:bg-gray-200 rounded-xl transition flex justify-center items-center gap-2">
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">

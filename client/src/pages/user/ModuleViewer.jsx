@@ -1,81 +1,64 @@
-import React, { useState, useMemo } from "react";
+import React from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import useDocumentTitle from "../../hooks/useDocumentTitle";
-import toast from "react-hot-toast";
 
+import { useModuleViewer } from "../../hooks/useModuleViewer";
 import { MenuIcon } from "../../components/ui/modules/viewer/ModuleIcons";
 import ModuleViewerSidebar from "../../components/ui/modules/viewer/ModuleViewerSidebar";
 import ModuleViewerContent from "../../components/ui/modules/viewer/ModuleViewerContent";
-
-// MOCK DATA (Fallback until backend endpoint is fully ready)
-const MOCK_MODULE = {
-  id: "m1",
-  title: "Flood Preparedness & Survival",
-  category: "Flood",
-};
-
-const MOCK_STEPS = [
-  { id: "s1", step_order: 1, type: "video", title: "Introduction to Flood Risks", content: "Understanding the geographical risks of Bacolor during monsoon season. In this video, we cover the basics of flood formation and historical data." },
-  { id: "s2", step_order: 2, type: "text", title: "Emergency Kit Essentials", content: "What to pack in your 72-hour survival bag. Ensure you have water, non-perishable food, batteries, and first-aid supplies." },
-  { id: "s3", step_order: 3, type: "quiz", title: "Knowledge Check: Evacuation Routes", content: "Please complete the interactive map quiz to verify you know your designated evacuation center." },
-  { id: "s4", step_order: 4, type: "video", title: "Post-Flood Sanitation", content: "How to safely clean up after the water recedes. Avoid contaminated water and use protective gear." },
-  { id: "s5", step_order: 5, type: "text", title: "Final Assessment", content: "Complete this final assessment to earn your Flood Preparedness Badge." },
-];
+import Spinner from "../../components/ui/Spinner";
 
 export default function ModuleViewer() {
   const { moduleId } = useParams();
   const navigate = useNavigate();
-  useDocumentTitle(`${MOCK_MODULE.title} | Bacolor LMS`);
 
-  // State Management
-  const [currentProgressOrder, setCurrentProgressOrder] = useState(0);
-  const [activeStepId, setActiveStepId] = useState(MOCK_STEPS[0].id);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const {
+    moduleData,
+    steps,
+    currentProgressOrder,
+    activeStepId,
+    activeStep,
+    progressPercentage,
+    isSidebarOpen,
+    setIsSidebarOpen,
+    isLoading,
+    error,
+    isDataMissing,
+    isCompleting,
+    handleStepClick,
+    handleCompleteAndContinue,
+    handlePrevious
+  } = useModuleViewer(moduleId);
 
-  const activeStep = useMemo(() => MOCK_STEPS.find(s => s.id === activeStepId), [activeStepId]);
-  const progressPercentage = Math.round((currentProgressOrder / MOCK_STEPS.length) * 100);
+  useDocumentTitle(moduleData?.title ? `${moduleData.title} | Bacolor LMS` : 'Module Viewer');
 
-  const handleStepClick = (step) => {
-    const isCompleted = step.step_order <= currentProgressOrder;
-    const isNextAvailable = step.step_order === currentProgressOrder + 1;
+  if (isLoading) {
+    return (
+      <div className="h-screen w-full flex flex-col items-center justify-center bg-gray-50">
+        <Spinner className="w-12 h-12 text-red-600 mb-4" />
+        <p className="text-gray-500 font-bold animate-pulse">Loading course material...</p>
+      </div>
+    );
+  }
 
-    if (isCompleted || isNextAvailable) {
-      setActiveStepId(step.id);
-      setIsSidebarOpen(false);
-    } else {
-      toast.error("Please complete previous steps first to unlock this lesson.", { id: "lock-toast" });
-    }
-  };
-
-  const handleCompleteAndContinue = () => {
-    if (!activeStep) return;
-    
-    if (activeStep.step_order > currentProgressOrder) {
-      setCurrentProgressOrder(activeStep.step_order);
-      toast.success("Step completed!");
-    }
-
-    const nextStep = MOCK_STEPS.find(s => s.step_order === activeStep.step_order + 1);
-    if (nextStep) {
-      setActiveStepId(nextStep.id);
-    } else {
-      toast.success("Congratulations! You have completed the entire module!", { duration: 5000 });
-      navigate("/userDashboard");
-    }
-  };
-
-  const handlePrevious = () => {
-    if (!activeStep) return;
-    const prevStep = MOCK_STEPS.find(s => s.step_order === activeStep.step_order - 1);
-    if (prevStep) {
-      setActiveStepId(prevStep.id);
-    }
-  };
+  if (error || isDataMissing) {
+    return (
+      <div className="h-screen w-full flex items-center justify-center bg-gray-50">
+         <div className="text-center p-8 bg-white rounded-2xl shadow-sm border border-red-100 max-w-md">
+            <div className="w-16 h-16 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+            </div>
+            <h2 className="text-xl font-bold text-gray-900 mb-2">Access Denied</h2>
+            <p className="text-gray-500 mb-6 text-sm">{error?.response?.data?.message || "Failed to fetch module data."}</p>
+            <button onClick={() => navigate("/userDashboard")} className="px-6 py-2.5 bg-gray-900 text-white rounded-xl font-bold hover:bg-black transition">Return to Dashboard</button>
+         </div>
+      </div>
+    );
+  }
 
   return (
     <div className="h-screen overflow-hidden bg-gray-50 flex flex-col md:flex-row">
       
-      {/* Mobile Top Bar */}
       <div className="md:hidden flex items-center justify-between bg-white border-b border-gray-200 p-4 sticky top-0 z-20 shadow-sm">
         <button onClick={() => navigate("/userDashboard")} className="text-gray-500 hover:text-gray-900 transition flex items-center gap-2 text-sm font-semibold">
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
@@ -88,7 +71,6 @@ export default function ModuleViewer() {
         </button>
       </div>
 
-      {/* Overlay for mobile sidebar */}
       {isSidebarOpen && (
         <div 
           className="fixed inset-0 bg-black/50 z-30 md:hidden animate-in fade-in"
@@ -97,8 +79,8 @@ export default function ModuleViewer() {
       )}
 
       <ModuleViewerSidebar 
-        module={MOCK_MODULE}
-        steps={MOCK_STEPS}
+        module={moduleData}
+        steps={steps}
         currentProgressOrder={currentProgressOrder}
         activeStepId={activeStepId}
         isSidebarOpen={isSidebarOpen}
@@ -110,9 +92,10 @@ export default function ModuleViewer() {
 
       <ModuleViewerContent 
         activeStep={activeStep}
-        totalSteps={MOCK_STEPS.length}
+        totalSteps={steps.length}
         handlePrevious={handlePrevious}
         handleCompleteAndContinue={handleCompleteAndContinue}
+        isCompleting={isCompleting}
       />
 
     </div>

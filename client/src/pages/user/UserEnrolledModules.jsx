@@ -4,6 +4,7 @@ import { useOutletContext, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import educationImg from "../../assets/education.svg";
 import ModuleCard from "../../components/ui/modules/ModuleCard.jsx";
+import ModuleSkeleton from "../../components/ui/modules/ModuleSkeleton.jsx";
 import useDocumentTitle from "../../hooks/useDocumentTitle";
 
 export default function UserEnrolledModules() {
@@ -33,7 +34,13 @@ export default function UserEnrolledModules() {
           </p>
         </div>
 
-        {enrolledModules.length === 0 && !isLoading ? (
+        {isLoading ? (
+          <div className="grid gap-5 lg:grid-cols-2">
+            {[1, 2].map((i) => (
+              <ModuleSkeleton key={i} />
+            ))}
+          </div>
+        ) : enrolledModules.length === 0 ? (
           <div className="flex flex-col items-center justify-center mt-12 mb-12 p-8 text-center bg-white rounded-3xl border border-gray-100 shadow-sm">
             <img 
               src={educationImg} 

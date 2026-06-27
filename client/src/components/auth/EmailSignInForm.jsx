@@ -5,6 +5,7 @@ import { Alert01Icon } from "@hugeicons/core-free-icons";
 import toast from "react-hot-toast";
 import { authClient } from "../../lib/auth-client";
 import PasswordInput from "../ui/inputs/PasswordInput";
+import Spinner from "../ui/Spinner";
 import GoogleSignInButton from "./GoogleSignInButton";
 
 export default function EmailSignInForm({ errorMessage, clearGlobalError, onRequireMfa, onSuccess }) {
@@ -143,9 +144,9 @@ export default function EmailSignInForm({ errorMessage, clearGlobalError, onRequ
       <button
         type="submit"
         disabled={isLoading}
-        className="w-full py-3 rounded-xl bg-red-600 text-white font-bold hover:bg-red-700 transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
+        className="w-full py-3 rounded-xl bg-red-600 text-white font-bold hover:bg-red-700 transition-colors disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
       >
-        {isLoading ? "Signing In..." : "Sign In"}
+        {isLoading ? <><Spinner /> Signing In...</> : "Sign In"}
       </button>
 
       <GoogleSignInButton clearGlobalError={clearGlobalError} />

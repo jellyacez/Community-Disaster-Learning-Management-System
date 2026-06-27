@@ -147,3 +147,65 @@ exports.enrollInModule = async (req, res) => {
   }
 };
 // --- End of enrollInModule ---
+
+// @desc    Get module data and steps for the Module Viewer
+// @access  Private
+exports.getModuleViewerData = async (req, res) => {
+  const { id: mod_id } = req.params;
+  const user_id = req.user?.id;
+
+  if (!user_id) return res.status(401).json({ success: false, message: "Unauthorized" });
+
+  try {
+    // Check enrollment status
+    const enrollmentCheck = await pool.query(
+      "SELECT 1 FROM module_activity WHERE user_id = $1 AND mod_id = $2 LIMIT 1",
+      [user_id, mod_id]
+    );
+
+    if (enrollmentCheck.rowCount === 0) {
+      return res.status(403).json({ success: false, message: "You are not enrolled in this module." });
+    }
+
+    // Get module data
+    const moduleResult = await pool.query(
+      "SELECT mod_id as id, modname as title, modcat as category FROM module_data WHERE mod_id = $1",
+      [mod_id]
+    );
+
+    if (moduleResult.rowCount === 0) {
+      return res.status(404).json({ success: false, message: "Module not found." });
+    }
+
+    // Get module steps
+    const stepsResult = await pool.query(
+      `SELECT step_id as id, step_order, step_type as type, step_title as title, step_content as content, media_url
+       FROM module_steps WHERE mod_id = $1 ORDER BY step_order ASC`,
+      [mod_id]
+    );
+
+    // Calculate current progress
+    const progressResult = await pool.query(
+      `SELECT COALESCE(MAX(ms.step_order), 0) as current_progress_order
+       FROM user_step_progress usp
+       JOIN module_steps ms ON usp.step_id = ms.step_id
+       WHERE usp.user_id = $1 AND ms.mod_id = $2`,
+      [user_id, mod_id]
+    );
+
+    const currentProgressOrder = parseInt(progressResult.rows[0].current_progress_order, 10);
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        module: moduleResult.rows[0],
+        steps: stepsResult.rows,
+        currentProgressOrder
+      }
+    });
+  } catch (error) {
+    console.error("Error fetching module viewer data:", error);
+    return res.status(500).json({ success: false, message: "Internal server error" });
+  }
+};
+

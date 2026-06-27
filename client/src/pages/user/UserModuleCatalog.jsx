@@ -3,6 +3,7 @@ import { useOutletContext } from "react-router-dom";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Search01Icon } from "@hugeicons/core-free-icons";
 import ModuleCard from "../../components/ui/modules/ModuleCard.jsx";
+import ModuleSkeleton from "../../components/ui/modules/ModuleSkeleton.jsx";
 import useDocumentTitle from "../../hooks/useDocumentTitle";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import continuousLearningImg from "../../assets/continuous-learning.svg";
@@ -68,11 +69,10 @@ export default function UserModuleCatalog() {
         </div>
 
         {isLoading ? (
-          <div className="flex flex-col items-center justify-center py-20">
-            <div className="w-10 h-10 border-4 border-red-200 border-t-red-600 rounded-full animate-spin"></div>
-            <p className="mt-4 text-sm font-medium text-gray-500">
-              Loading Modules...
-            </p>
+          <div className="grid gap-5 lg:grid-cols-2">
+            {[1, 2, 3, 4].map((i) => (
+              <ModuleSkeleton key={i} />
+            ))}
           </div>
         ) : filteredModules.length > 0 ? (
           <div className="grid gap-5 lg:grid-cols-2">

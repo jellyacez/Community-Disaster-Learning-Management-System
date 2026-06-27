@@ -10,6 +10,7 @@ router.post("/:moduleId", betterAuthMiddleware, async (req, res) => {
     const {moduleId} =  req.params;
     const { stepOrder, stepTitle, stepContent, mediaUrl, stepType } = req.body;
 
+    try {
         const stepCreation = await pool.query(
             `INSERT INTO public.module_steps (mod_id, step_order, step_title, step_content, media_url, step_type) 
              VALUES ($1, $2, $3, $4, $5, $6) 
@@ -45,7 +46,5 @@ router.post("/:moduleId", betterAuthMiddleware, async (req, res) => {
             message: "An internal server error occurred."
         });
     }
-
-
 });
 // --- End of POST /:moduleId ---
