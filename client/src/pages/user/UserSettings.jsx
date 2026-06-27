@@ -6,6 +6,9 @@ import ProfilePreferences from "../../components/settings/ProfilePreferences";
 import SecuritySettings from "../../components/settings/SecuritySettings";
 import ActiveDevices from "../../components/settings/ActiveDevices";
 import TwoFactorSettings from "../../components/settings/TwoFactorSettings";
+import NotificationPreferences from "../../components/settings/NotificationPreferences";
+import LocalizationSettings from "../../components/settings/LocalizationSettings";
+import DangerZone from "../../components/settings/DangerZone";
 
 export default function UserSettings() {
   useDocumentTitle("Settings | Bacolor LMS");
@@ -23,12 +26,18 @@ export default function UserSettings() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start w-full max-w-full overflow-hidden px-1">
         <div className="lg:col-span-7 space-y-6 flex flex-col w-full">
           <ProfilePreferences currentUser={currentUser} />
+          <LocalizationSettings />
           <ActiveDevices />
         </div>
         <div className="lg:col-span-5 space-y-6 flex flex-col w-full">
           <SecuritySettings />
+          <NotificationPreferences />
           <TwoFactorSettings />
         </div>
+      </div>
+
+      <div className="px-1">
+        <DangerZone />
       </div>
     </div>
   );
