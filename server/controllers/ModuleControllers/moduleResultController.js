@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
-const pool = require("../config/db");
-const { betterAuthMiddleware } = require("../middleware/betterAuthMiddleware");
+const pool = require("../../config/db");
+const { betterAuthMiddleware } = require("../../middleware/betterAuthMiddleware");
 
 
 router.post("/:moduleId/results", betterAuthMiddleware, async (req, res) => {

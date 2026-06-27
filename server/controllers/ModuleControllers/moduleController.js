@@ -1,4 +1,4 @@
-const pool = require("../config/db");
+const pool = require("../../config/db");
 
 // @desc    Creates a new module in the database
 // @access  Private (admin only)
