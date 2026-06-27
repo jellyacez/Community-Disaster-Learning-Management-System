@@ -60,6 +60,7 @@ const ModuleCard = memo(function ModuleCard({
     <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm hover:shadow-md transition-shadow duration-300 flex flex-col sm:flex-row gap-5 group">
       <div className="hidden sm:block w-32 h-full shrink-0 overflow-hidden rounded-xl bg-gray-100 relative min-h-[140px]">
         <img
+          loading="lazy"
           src={
             module.image_url ||
             "https://images.unsplash.com/photo-1596489370806-53c847d0de05?q=80&w=600&auto=format&fit=crop"

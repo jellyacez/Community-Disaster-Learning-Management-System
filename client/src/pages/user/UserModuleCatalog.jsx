@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useMemo } from "react";
 import { useOutletContext } from "react-router-dom";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Search01Icon } from "@hugeicons/core-free-icons";
@@ -26,6 +26,18 @@ export default function UserModuleCatalog() {
     queryClient.invalidateQueries({ queryKey: ["userDashboard"] });
   };
 
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const filteredModules = useMemo(() => {
+    if (!searchQuery) return modules;
+    const lowerQuery = searchQuery.toLowerCase();
+    return modules.filter(
+      (mod) =>
+        mod.title?.toLowerCase().includes(lowerQuery) ||
+        mod.category?.toLowerCase().includes(lowerQuery)
+    );
+  }, [modules, searchQuery]);
+
   useDocumentTitle("Module Catalog | Bacolor LMS");
   return (
     <div className="animate-in fade-in duration-300">
@@ -47,8 +59,10 @@ export default function UserModuleCatalog() {
             />
             <input
               type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search modules..."
-              className="w-full rounded-xl border border-gray-200 bg-white py-3 pl-10 pr-4 text-sm outline-none focus:border-red-400"
+              className="w-full rounded-xl border border-gray-200 bg-white py-3 pl-10 pr-4 text-sm outline-none focus:border-red-400 transition-colors"
             />
           </div>
         </div>
@@ -60,9 +74,9 @@ export default function UserModuleCatalog() {
               Loading Modules...
             </p>
           </div>
-        ) : modules.length > 0 ? (
+        ) : filteredModules.length > 0 ? (
           <div className="grid gap-5 lg:grid-cols-2">
-            {modules.map((module) => (
+            {filteredModules.map((module) => (
               <ModuleCard
                 key={module.id}
                 module={module}

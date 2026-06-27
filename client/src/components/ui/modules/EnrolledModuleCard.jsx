@@ -16,6 +16,7 @@ const EnrolledModuleCard = memo(function EnrolledModuleCard({ module, onResume }
       {/* Thumbnail */}
       <div className="hidden sm:block w-28 h-full shrink-0 overflow-hidden rounded-xl bg-gray-100 relative min-h-[130px]">
         <img 
+          loading="lazy"
           src={module.image_url || "https://images.unsplash.com/photo-1596489370806-53c847d0de05?q=80&w=600&auto=format&fit=crop"} 
           alt={module.title} 
           className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 absolute inset-0"
