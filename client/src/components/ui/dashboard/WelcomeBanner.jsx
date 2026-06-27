@@ -2,8 +2,19 @@ import React from "react";
 
 export default function WelcomeBanner({ userName, onBrowse, onContinue }) {
   return (
-    <section className="rounded-3xl bg-gradient-to-r from-red-700 via-red-600 to-rose-600 p-8 text-white shadow-lg">
-      <p className="text-sm uppercase tracking-widest text-red-100">
+    <section className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-red-700 via-red-600 to-rose-600 p-8 text-white shadow-lg">
+      
+      {/* Background Graphic (Shield) */}
+      <svg 
+        className="absolute -right-12 -bottom-16 w-80 h-80 text-white opacity-[0.07] rotate-[15deg] pointer-events-none" 
+        fill="currentColor" 
+        viewBox="0 0 24 24" 
+      >
+        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+      </svg>
+
+      <div className="relative z-10">
+        <p className="text-sm uppercase tracking-widest text-red-100">
         Welcome back
       </p>
       <h1 className="mt-2 text-3xl md:text-4xl font-extrabold">
@@ -28,6 +39,7 @@ export default function WelcomeBanner({ userName, onBrowse, onContinue }) {
         >
           Continue Learning
         </button>
+        </div>
       </div>
     </section>
   );

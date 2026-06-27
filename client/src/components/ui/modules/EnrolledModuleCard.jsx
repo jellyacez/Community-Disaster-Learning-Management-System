@@ -1,22 +1,43 @@
 import React, { memo } from "react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { Activity01Icon, Alert01Icon, Book01Icon } from "@hugeicons/core-free-icons";
+
+// Helper for category icons
+const getCategoryIcon = (category) => {
+  const cat = (category || "").toLowerCase();
+  if (cat.includes("flood") || cat.includes("water")) return Activity01Icon;
+  if (cat.includes("earthquake") || cat.includes("seismic")) return Alert01Icon;
+  return Book01Icon; // default icon
+};
 
 const EnrolledModuleCard = memo(function EnrolledModuleCard({ module, onResume }) {
   return (
-    <div className="rounded-2xl border border-gray-200 p-5 hover:border-red-200 transition cursor-pointer">
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <div>
-          <div className="mb-2 flex flex-wrap gap-2">
-            <span className="rounded-full bg-red-50 px-3 py-1 text-xs font-bold text-red-700">
+    <div className="rounded-2xl border border-gray-200 p-4 hover:border-red-200 hover:shadow-md transition-all duration-300 cursor-pointer bg-white group flex flex-col sm:flex-row gap-5">
+      {/* Thumbnail */}
+      <div className="hidden sm:block w-28 h-full shrink-0 overflow-hidden rounded-xl bg-gray-100 relative min-h-[130px]">
+        <img 
+          src={module.image_url || "https://images.unsplash.com/photo-1596489370806-53c847d0de05?q=80&w=600&auto=format&fit=crop"} 
+          alt={module.title} 
+          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 absolute inset-0"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+      </div>
+
+      <div className="flex-1 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div className="flex-1">
+          <div className="mb-2 flex flex-wrap gap-2 items-center">
+            <span className="flex items-center gap-1.5 rounded-full bg-red-50 px-2.5 py-1 text-xs font-bold text-red-700 border border-red-100">
+              <HugeiconsIcon icon={getCategoryIcon(module.category)} className="w-3.5 h-3.5" />
               {module.category}
             </span>
-            <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-bold text-gray-700">
+            <span className="rounded-full bg-gray-100 px-2.5 py-1 text-xs font-bold text-gray-700 border border-gray-200">
               {module.level}
             </span>
           </div>
-          <h3 className="text-lg font-bold text-gray-900">
+          <h3 className="text-lg font-bold text-gray-900 group-hover:text-red-700 transition-colors">
             {module.title}
           </h3>
-          <p className="mt-1 text-sm text-gray-500">
+          <p className="mt-1 text-sm text-gray-500 line-clamp-2">
             {module.description}
           </p>
         </div>

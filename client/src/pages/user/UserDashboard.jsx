@@ -31,21 +31,28 @@ export default function UserDashboard() {
   const navigate = useNavigate();
 
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
-  
+
   // Data fetching
-  const { data: dashboardData, isLoading: loading, error } = useQuery({
-    queryKey: ['userDashboard'],
+  const {
+    data: dashboardData,
+    isLoading: loading,
+    error,
+  } = useQuery({
+    queryKey: ["userDashboard"],
     queryFn: async () => {
-      const response = await fetch(`${import.meta.env.VITE_API_URL || "http://localhost:5000/api"}/user/dashboard`, {
-        credentials: "include",
-      });
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL || "http://localhost:5000/api"}/user/dashboard`,
+        {
+          credentials: "include",
+        },
+      );
       if (!response.ok) throw new Error("Failed to fetch dashboard data");
       return response.json();
     },
     onError: (err) => {
       console.error("Error fetching dashboard data:", err);
       toast.error("Failed to load dashboard data");
-    }
+    },
   });
 
   const displayData = dashboardData || {
@@ -63,14 +70,17 @@ export default function UserDashboard() {
     }
   }, [location, navigate]);
 
-  const handleResume = React.useCallback((moduleId) => {
-    navigate(`/user/modules/${moduleId}`);
-  }, [navigate]);
+  const handleResume = React.useCallback(
+    (moduleId) => {
+      navigate(`/user/modules/${moduleId}`);
+    },
+    [navigate],
+  );
 
   return (
     <div className="animate-in fade-in duration-300 relative">
       <OnboardingModal currentUser={currentUser} />
-      
+
       <WelcomeModal
         isOpen={showWelcomeModal}
         onClose={() => setShowWelcomeModal(false)}
@@ -84,31 +94,66 @@ export default function UserDashboard() {
       <div className="space-y-8">
         <WelcomeBanner
           userName={currentUser.name}
-          onBrowse={() => navigate("/user/catalog")}
-          onContinue={() => navigate("/user/modules")}
+          onBrowse={() => navigate("/user/modules")}
+          onContinue={() => navigate("/user/enrolled")}
         />
 
         <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <StatCard
             title="Available Modules"
-            value={loading ? <SkeletonText className="h-8 w-16" /> : displayData.totalModules}
+            value={
+              loading ? (
+                <SkeletonText className="h-8 w-16" />
+              ) : (
+                displayData.totalModules
+              )
+            }
             subtitle="Training modules ready for access"
           />
           <StatCard
             title="Enrolled Modules"
-            value={loading ? <SkeletonText className="h-8 w-16" /> : displayData.enrolledModules.length}
+            value={
+              loading ? (
+                <SkeletonText className="h-8 w-16" />
+              ) : (
+                displayData.enrolledModules.length
+              )
+            }
             subtitle="Modules currently in progress"
           />
           <StatCard
             title="Announcements"
-            value={loading ? <SkeletonText className="h-8 w-16" /> : displayData.announcements.length}
+            value={
+              loading ? (
+                <SkeletonText className="h-8 w-16" />
+              ) : (
+                displayData.announcements.length
+              )
+            }
             subtitle="Latest updates from the system"
           />
-          <StatCard
-            title="Completion Rate"
-            value={loading ? <SkeletonText className="h-8 w-16" /> : `${displayData.completionRate}%`}
-            subtitle="Overall learning progress estimate"
-          />
+          <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm flex items-center justify-between hover:shadow-md transition-shadow">
+            <div>
+              <p className="text-sm font-medium text-gray-500">Completion Rate</p>
+              <h3 className="mt-2 text-3xl font-extrabold text-gray-900">{loading ? '...' : `${displayData.completionRate}%`}</h3>
+              <p className="mt-1 text-xs text-gray-400">Overall learning progress estimate</p>
+            </div>
+            <div className="relative w-16 h-16 flex items-center justify-center shrink-0">
+                <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
+                  <circle className="text-gray-100" strokeWidth="4" stroke="currentColor" fill="transparent" r="16" cx="18" cy="18" />
+                  <circle 
+                    className="text-red-500 transition-all duration-1000 ease-out" 
+                    strokeWidth="4" 
+                    strokeDasharray={100.53} 
+                    strokeDashoffset={loading ? 100.53 : 100.53 - ((displayData.completionRate||0)/100)*100.53} 
+                    strokeLinecap="round" 
+                    stroke="currentColor" 
+                    fill="transparent" 
+                    r="16" cx="18" cy="18" 
+                  />
+                </svg>
+            </div>
+          </div>
         </section>
 
         <section className="grid gap-6 lg:grid-cols-3">
