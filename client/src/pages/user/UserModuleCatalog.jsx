@@ -5,6 +5,7 @@ import { Search01Icon } from "@hugeicons/core-free-icons";
 import ModuleCard from "../../components/ui/modules/ModuleCard.jsx";
 import ModuleSkeleton from "../../components/ui/modules/ModuleSkeleton.jsx";
 import useDocumentTitle from "../../hooks/useDocumentTitle";
+import SearchBar from "../../components/ui/inputs/SearchBar.jsx";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import continuousLearningImg from "../../assets/continuous-learning.svg";
 
@@ -53,19 +54,11 @@ export default function UserModuleCatalog() {
             </p>
           </div>
 
-          <div className="relative w-full md:max-w-sm">
-            <HugeiconsIcon
-              icon={Search01Icon}
-              className="absolute left-3 top-1/2 w-4 h-4 -translate-y-1/2 text-gray-400"
-            />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search modules..."
-              className="w-full rounded-xl border border-gray-200 bg-white py-3 pl-10 pr-4 text-sm outline-none focus:border-red-400 transition-colors"
-            />
-          </div>
+          <SearchBar
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search modules..."
+          />
         </div>
 
         {isLoading ? (

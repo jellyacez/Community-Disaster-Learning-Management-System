@@ -45,6 +45,7 @@ exports.getDashboardData = async (req, res) => {
       FROM module_activity ma
       JOIN module_data md ON ma.mod_id = md.mod_id
       WHERE ma.user_id = $1
+      ORDER BY ma.progress DESC, ma.started_at DESC
     `,
       [req.user.id],
     );
