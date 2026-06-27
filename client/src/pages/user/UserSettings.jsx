@@ -25,13 +25,13 @@ export default function UserSettings() {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch w-full max-w-full overflow-hidden px-1">
-        <div className="lg:col-span-7 space-y-6 flex flex-col w-full">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch w-full max-w-full overflow-hidden px-1">
+        <div className="flex flex-col space-y-6 w-full">
           <ProfilePreferences currentUser={currentUser} />
           <LocalizationSettings />
           <DangerZone />
         </div>
-        <div className="lg:col-span-5 flex flex-col space-y-6 w-full">
+        <div className="flex flex-col space-y-6 w-full">
           <SecuritySettings />
           <NotificationPreferences />
           <TwoFactorSettings />
@@ -42,10 +42,10 @@ export default function UserSettings() {
       </div>
 
       <div className="px-1 mt-6 grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
-        <div className="flex flex-col">
+        <div className="flex flex-col w-full">
           <ActiveDevices />
         </div>
-        <div className="flex flex-col">
+        <div className="flex flex-col w-full">
           <LoginHistory />
         </div>
       </div>
