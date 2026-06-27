@@ -9,6 +9,8 @@ import TwoFactorSettings from "../../components/settings/TwoFactorSettings";
 import NotificationPreferences from "../../components/settings/NotificationPreferences";
 import LocalizationSettings from "../../components/settings/LocalizationSettings";
 import DangerZone from "../../components/settings/DangerZone";
+import HelpSupport from "../../components/settings/HelpSupport";
+import LoginHistory from "../../components/settings/LoginHistory";
 
 export default function UserSettings() {
   useDocumentTitle("Settings | Bacolor LMS");
@@ -23,21 +25,29 @@ export default function UserSettings() {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start w-full max-w-full overflow-hidden px-1">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch w-full max-w-full overflow-hidden px-1">
         <div className="lg:col-span-7 space-y-6 flex flex-col w-full">
           <ProfilePreferences currentUser={currentUser} />
           <LocalizationSettings />
-          <ActiveDevices />
+          <DangerZone />
         </div>
-        <div className="lg:col-span-5 space-y-6 flex flex-col w-full">
+        <div className="lg:col-span-5 flex flex-col space-y-6 w-full">
           <SecuritySettings />
           <NotificationPreferences />
           <TwoFactorSettings />
+          <div className="flex-1 flex flex-col">
+            <HelpSupport />
+          </div>
         </div>
       </div>
 
-      <div className="px-1">
-        <DangerZone />
+      <div className="px-1 mt-6 grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
+        <div className="flex flex-col">
+          <ActiveDevices />
+        </div>
+        <div className="flex flex-col">
+          <LoginHistory />
+        </div>
       </div>
     </div>
   );

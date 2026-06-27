@@ -81,8 +81,8 @@ export default function ActiveDevices() {
   };
 
   return (
-    <div className="rounded-3xl border border-gray-100 bg-white p-6 md:p-8 shadow-sm h-fit">
-      <div className="flex items-start justify-between mb-6">
+    <div className="rounded-3xl border border-gray-100 bg-white p-6 md:p-8 shadow-sm h-full flex flex-col">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div className="flex items-center gap-3">
           <div className="bg-red-50 p-2.5 rounded-xl text-red-600 flex-shrink-0">
             <HugeiconsIcon aria-hidden="true" icon={LaptopIcon} className="w-6 h-6" />
