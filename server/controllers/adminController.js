@@ -24,6 +24,32 @@ router.put("/users/:id", adminMiddleware, async (req, res) => {
   }
 });
 
+// @route   PUT /api/admin/users/:id/role
+// @desc    Update user role (admin only)
+// @access  Private (admin only)
+router.put("/users/:id/role", adminMiddleware, async (req, res) => {
+  const { id } = req.params;
+  const { role } = req.body;
+  const validRoles = ["resident", "barangay_admin", "mdrrmo_admin", "system_admin"];
+  
+  if (!validRoles.includes(role)) {
+    return res.status(400).json({ error: "Invalid role specified" });
+  }
+
+  try {
+    const result = await pool.query(
+      'UPDATE "user" SET role = $1 WHERE id = $2 RETURNING *',
+      [role, id]
+    );
+    if (result.rows.length === 0)
+      return res.status(404).json({ error: "User not found" });
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Server Error" });
+  }
+});
+
 // @route   PUT /api/admin/users/:id/password
 // @desc    Reset user password (admin only)
 // @access  Private (admin only)

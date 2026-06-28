@@ -10,7 +10,7 @@ export default function SystemAdminDashboard() {
 
   const fetchUsers = async () => {
     try {
-      const response = await fetch("http://localhost:5000/api/users");
+      const response = await fetch("http://localhost:5000/api/users", { credentials: 'include' });
       const data = await response.json();
       setUsers(data);
     } catch (err) {
@@ -31,21 +31,32 @@ export default function SystemAdminDashboard() {
   };
 
   const handleEditRole = async (user) => {
-    const newRole = window.prompt(
+    let newRole = window.prompt(
       "Enter new role (resident, barangay_admin, mdrrmo_admin, system_admin):",
       user.role,
     );
-    if (!newRole || newRole === user.role) return;
+    if (!newRole) return;
+    newRole = newRole.trim();
+    if (newRole === user.role) return;
 
-    const { error } = await authClient.admin.setRole({
-      userId: user.id,
-      role: newRole,
-    });
-    if (error) {
-      toast.error("Failed to update role: " + error.message);
-    } else {
-      toast.success("Role updated successfully!");
-      fetchUsers();
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || "http://localhost:5000/api"}/admin/users/${user.id}/role`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ role: newRole })
+      });
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        toast.error("Failed to update role: " + (data.error || response.statusText));
+      } else {
+        toast.success("Role updated successfully!");
+        fetchUsers();
+      }
+    } catch (err) {
+      toast.error("Network error: " + err.message);
     }
   };
 
@@ -62,6 +73,7 @@ export default function SystemAdminDashboard() {
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
+          credentials: 'include',
           body: JSON.stringify({
             name: newName,
             email: newEmail,
@@ -89,6 +101,7 @@ export default function SystemAdminDashboard() {
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
+          credentials: 'include',
           body: JSON.stringify({
             name: user.name,
             email: user.email,
@@ -121,6 +134,7 @@ export default function SystemAdminDashboard() {
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
+          credentials: 'include',
           body: JSON.stringify({ password: newPassword }),
         },
       );

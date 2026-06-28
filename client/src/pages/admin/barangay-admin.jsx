@@ -20,7 +20,7 @@ export default function BarangayAdminDashboard() {
 
   // Read-only baseline modules state reference
   const [modules] = useState(initialModules);
-  const [residents, setResidents] = useState(initialResidents);
+  const [residents] = useState(initialResidents);
 
   const handleLogout = async () => {
     sessionStorage.setItem("isLoggingOut", "true");

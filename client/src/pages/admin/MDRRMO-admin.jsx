@@ -15,11 +15,11 @@ import { initialModules, initialUsers, initialResidents } from "./mockData";
 
 export default function Dashboard() {
   const { data: session } = authClient.useSession();
-  
-  const [activeTab, setActiveTab] = useState("overview"); 
-  const [selectedBarangay, setSelectedBarangay] = useState("All");
-  const [searchQuery, setSearchQuery] = useState("");
-  const [selectedResident, setSelectedResident] = useState(null);
+  const [activeTab, setActiveTab] = useState("overview");
+
+  const [modules, setModules] = useState(initialModules);
+  const [users, setUsers] = useState(initialUsers);
+  const [residents, setResidents] = useState(initialResidents);
 
   const [editingModuleId, setEditingModuleId] = useState(null);
   const [moduleForm, setModuleForm] = useState({ 

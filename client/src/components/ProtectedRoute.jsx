@@ -30,7 +30,7 @@ export default function ProtectedRoute({ allowedRoles }) {
   }
 
   if (allowedRoles && allowedRoles.length > 0) {
-    const userRole = session.user?.role;
+    const userRole = session.user?.role?.toLowerCase();
     if (!userRole) {
       return (
         <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -44,6 +44,7 @@ export default function ProtectedRoute({ allowedRoles }) {
       let homeRedirect = "/";
       if (userRole === "mdrrmo_admin") homeRedirect = "/mdrrmo/dashboard";
       else if (userRole === "system_admin") homeRedirect = "/admin/dashboard";
+      else if (userRole === "barangay_admin") homeRedirect = "/barangay/dashboard";
       else if (userRole === "resident") homeRedirect = "/userDashboard";
 
       return (
