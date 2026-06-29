@@ -1,4 +1,3 @@
-const { success } = require("better-auth");
 const pool = require("../config/db");
 
 const verifyPreviousCompletedLevels = async (req,res,next) =>{
@@ -45,7 +44,7 @@ const verifyPreviousCompletedLevels = async (req,res,next) =>{
 
            const previousLevelId = previousLevel.rows[0].level_id;
 
-            // 3. Check if the user has completed all the steps in that previous level
+           
             const statsQuery = await pool.query(`
             SELECT 
             COUNT(s.step_id) AS total_steps,

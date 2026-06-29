@@ -12,7 +12,7 @@ router.post("/:moduleId/steps/:stepId/complete", betterAuthMiddleware, async (re
     try {
         await client.query("BEGIN");
 
-        // 1. Record the individual step completion progress
+       
         await client.query(
             `INSERT INTO public.user_step_progress (user_id, step_id)
              VALUES ($1, $2)
@@ -20,8 +20,7 @@ router.post("/:moduleId/steps/:stepId/complete", betterAuthMiddleware, async (re
             [userId, stepId]
         );
 
-        // 2. Re-calculate completion statistics mid-transaction 
-        // FIX: Added INNER JOIN to public.levels to bridge the module_data and module_steps relationship
+        
         const statsQuery = await client.query(`
             SELECT 
                 COUNT(s.step_id) AS total_steps,
@@ -40,7 +39,6 @@ router.post("/:moduleId/steps/:stepId/complete", betterAuthMiddleware, async (re
         let moduleStatus = "In Progress";
         let isFullyCompleted = false;
 
-        // 3. Conditional evaluation
         if (total > 0 && completed === total) {
             moduleStatus = "Completed";
             isFullyCompleted = true;

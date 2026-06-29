@@ -10,15 +10,25 @@
 -- Started on 2026-06-26 19:32:02
 
 SET statement_timeout = 0;
+
 SET lock_timeout = 0;
+
 SET idle_in_transaction_session_timeout = 0;
+
 SET transaction_timeout = 0;
+
 SET client_encoding = 'UTF8';
+
 SET standard_conforming_strings = on;
-SELECT pg_catalog.set_config('search_path', '', false);
+
+SELECT pg_catalog.set_config ('search_path', '', false);
+
 SET check_function_bodies = false;
+
 SET xmloption = content;
+
 SET client_min_messages = warning;
+
 SET row_security = off;
 
 SET default_tablespace = '';
@@ -38,14 +48,21 @@ CREATE TABLE public.account (
     "accessToken" text,
     "refreshToken" text,
     "idToken" text,
-    "accessTokenExpiresAt" timestamp with time zone,
-    "refreshTokenExpiresAt" timestamp with time zone,
-    scope text,
-    password text,
-    "createdAt" timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    "updatedAt" timestamp with time zone NOT NULL
+    "accessTokenExpiresAt" timestamp
+    with
+        time zone,
+        "refreshTokenExpiresAt" timestamp
+    with
+        time zone,
+        scope text,
+        password text,
+        "createdAt" timestamp
+    with
+        time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+        "updatedAt" timestamp
+    with
+        time zone NOT NULL
 );
-
 
 ALTER TABLE public.account OWNER TO postgres;
 
@@ -61,7 +78,6 @@ CREATE TABLE public.activity_log (
     act_log character varying(500) NOT NULL
 );
 
-
 ALTER TABLE public.activity_log OWNER TO postgres;
 
 --
@@ -69,15 +85,13 @@ ALTER TABLE public.activity_log OWNER TO postgres;
 -- Name: activity_log_act_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
 --
 
-ALTER TABLE public.activity_log ALTER COLUMN act_id ADD GENERATED ALWAYS AS IDENTITY (
-    SEQUENCE NAME public.activity_log_act_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1
+ALTER TABLE public.activity_log
+ALTER COLUMN act_id
+ADD GENERATED ALWAYS AS IDENTITY (
+    SEQUENCE NAME public.activity_log_act_id_seq START
+    WITH
+        1 INCREMENT BY 1 NO MINVALUE NO MAXVALUE CACHE 1
 );
-
 
 --
 -- TOC entry 232 (class 1259 OID 16750)
@@ -88,10 +102,11 @@ CREATE TABLE public.announcements (
     id integer NOT NULL,
     title character varying(255) NOT NULL,
     content text NOT NULL,
-    date timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    author_id text NOT NULL
+    date timestamp
+    with
+        time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+        author_id text NOT NULL
 );
-
 
 ALTER TABLE public.announcements OWNER TO postgres;
 
@@ -100,15 +115,13 @@ ALTER TABLE public.announcements OWNER TO postgres;
 -- Name: announcements_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
 --
 
-ALTER TABLE public.announcements ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
-    SEQUENCE NAME public.announcements_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1
+ALTER TABLE public.announcements
+ALTER COLUMN id
+ADD GENERATED ALWAYS AS IDENTITY (
+    SEQUENCE NAME public.announcements_id_seq START
+    WITH
+        1 INCREMENT BY 1 NO MINVALUE NO MAXVALUE CACHE 1
 );
-
 
 --
 -- TOC entry 227 (class 1259 OID 16681)
@@ -123,7 +136,6 @@ CREATE TABLE public.certificates (
     cert_rec character varying(100) NOT NULL
 );
 
-
 ALTER TABLE public.certificates OWNER TO postgres;
 
 --
@@ -131,15 +143,13 @@ ALTER TABLE public.certificates OWNER TO postgres;
 -- Name: certificates_cert_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
 --
 
-ALTER TABLE public.certificates ALTER COLUMN cert_id ADD GENERATED ALWAYS AS IDENTITY (
-    SEQUENCE NAME public.certificates_cert_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1
+ALTER TABLE public.certificates
+ALTER COLUMN cert_id
+ADD GENERATED ALWAYS AS IDENTITY (
+    SEQUENCE NAME public.certificates_cert_id_seq START
+    WITH
+        1 INCREMENT BY 1 NO MINVALUE NO MAXVALUE CACHE 1
 );
-
 
 --
 -- TOC entry 236 (class 1259 OID 16787)
@@ -153,7 +163,6 @@ CREATE TABLE public.choices (
     is_correct boolean DEFAULT false NOT NULL
 );
 
-
 ALTER TABLE public.choices OWNER TO postgres;
 
 --
@@ -161,15 +170,13 @@ ALTER TABLE public.choices OWNER TO postgres;
 -- Name: choices_choice_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
 --
 
-ALTER TABLE public.choices ALTER COLUMN choice_id ADD GENERATED ALWAYS AS IDENTITY (
-    SEQUENCE NAME public.choices_choice_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1
+ALTER TABLE public.choices
+ALTER COLUMN choice_id
+ADD GENERATED ALWAYS AS IDENTITY (
+    SEQUENCE NAME public.choices_choice_id_seq START
+    WITH
+        1 INCREMENT BY 1 NO MINVALUE NO MAXVALUE CACHE 1
 );
-
 
 --
 -- TOC entry 225 (class 1259 OID 16657)
@@ -182,10 +189,13 @@ CREATE TABLE public.module_activity (
     mod_id integer NOT NULL,
     modstatus character varying(100) NOT NULL,
     progress integer DEFAULT 0 CONSTRAINT module_activity_modstart_not_null NOT NULL,
-    started_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
-    completed_at timestamp with time zone
+    started_at timestamp
+    with
+        time zone DEFAULT CURRENT_TIMESTAMP,
+        completed_at timestamp
+    with
+        time zone
 );
-
 
 ALTER TABLE public.module_activity OWNER TO postgres;
 
@@ -194,15 +204,13 @@ ALTER TABLE public.module_activity OWNER TO postgres;
 -- Name: module_activity_modact_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
 --
 
-ALTER TABLE public.module_activity ALTER COLUMN modact_id ADD GENERATED ALWAYS AS IDENTITY (
-    SEQUENCE NAME public.module_activity_modact_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1
+ALTER TABLE public.module_activity
+ALTER COLUMN modact_id
+ADD GENERATED ALWAYS AS IDENTITY (
+    SEQUENCE NAME public.module_activity_modact_id_seq START
+    WITH
+        1 INCREMENT BY 1 NO MINVALUE NO MAXVALUE CACHE 1
 );
-
 
 --
 -- TOC entry 223 (class 1259 OID 16644)
@@ -222,7 +230,6 @@ CREATE TABLE public.module_data (
     image_url character varying(500) DEFAULT NULL::character varying
 );
 
-
 ALTER TABLE public.module_data OWNER TO postgres;
 
 --
@@ -230,15 +237,13 @@ ALTER TABLE public.module_data OWNER TO postgres;
 -- Name: module_data_mod_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
 --
 
-ALTER TABLE public.module_data ALTER COLUMN mod_id ADD GENERATED ALWAYS AS IDENTITY (
-    SEQUENCE NAME public.module_data_mod_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1
+ALTER TABLE public.module_data
+ALTER COLUMN mod_id
+ADD GENERATED ALWAYS AS IDENTITY (
+    SEQUENCE NAME public.module_data_mod_id_seq START
+    WITH
+        1 INCREMENT BY 1 NO MINVALUE NO MAXVALUE CACHE 1
 );
-
 
 --
 -- TOC entry 241 (class 1259 OID 16864)
@@ -255,7 +260,6 @@ CREATE TABLE public.module_steps (
     step_type character varying(50) NOT NULL
 );
 
-
 ALTER TABLE public.module_steps OWNER TO postgres;
 
 --
@@ -263,15 +267,13 @@ ALTER TABLE public.module_steps OWNER TO postgres;
 -- Name: module_steps_step_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
 --
 
-ALTER TABLE public.module_steps ALTER COLUMN step_id ADD GENERATED ALWAYS AS IDENTITY (
-    SEQUENCE NAME public.module_steps_step_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1
+ALTER TABLE public.module_steps
+ALTER COLUMN step_id
+ADD GENERATED ALWAYS AS IDENTITY (
+    SEQUENCE NAME public.module_steps_step_id_seq START
+    WITH
+        1 INCREMENT BY 1 NO MINVALUE NO MAXVALUE CACHE 1
 );
-
 
 --
 -- TOC entry 234 (class 1259 OID 16769)
@@ -288,7 +290,6 @@ CREATE TABLE public.questions (
     step_id integer
 );
 
-
 ALTER TABLE public.questions OWNER TO postgres;
 
 --
@@ -296,15 +297,13 @@ ALTER TABLE public.questions OWNER TO postgres;
 -- Name: questions_question_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
 --
 
-ALTER TABLE public.questions ALTER COLUMN question_id ADD GENERATED ALWAYS AS IDENTITY (
-    SEQUENCE NAME public.questions_question_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1
+ALTER TABLE public.questions
+ALTER COLUMN question_id
+ADD GENERATED ALWAYS AS IDENTITY (
+    SEQUENCE NAME public.questions_question_id_seq START
+    WITH
+        1 INCREMENT BY 1 NO MINVALUE NO MAXVALUE CACHE 1
 );
-
 
 --
 -- TOC entry 238 (class 1259 OID 16805)
@@ -318,9 +317,10 @@ CREATE TABLE public.results (
     score integer NOT NULL,
     total_points integer NOT NULL,
     passed boolean NOT NULL,
-    date_taken timestamp with time zone DEFAULT CURRENT_TIMESTAMP
+    date_taken timestamp
+    with
+        time zone DEFAULT CURRENT_TIMESTAMP
 );
-
 
 ALTER TABLE public.results OWNER TO postgres;
 
@@ -329,15 +329,13 @@ ALTER TABLE public.results OWNER TO postgres;
 -- Name: results_result_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
 --
 
-ALTER TABLE public.results ALTER COLUMN result_id ADD GENERATED ALWAYS AS IDENTITY (
-    SEQUENCE NAME public.results_result_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1
+ALTER TABLE public.results
+ALTER COLUMN result_id
+ADD GENERATED ALWAYS AS IDENTITY (
+    SEQUENCE NAME public.results_result_id_seq START
+    WITH
+        1 INCREMENT BY 1 NO MINVALUE NO MAXVALUE CACHE 1
 );
-
 
 --
 -- TOC entry 220 (class 1259 OID 16499)
@@ -346,16 +344,21 @@ ALTER TABLE public.results ALTER COLUMN result_id ADD GENERATED ALWAYS AS IDENTI
 
 CREATE TABLE public.session (
     id text NOT NULL,
-    "expiresAt" timestamp with time zone NOT NULL,
-    token text NOT NULL,
-    "createdAt" timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    "updatedAt" timestamp with time zone NOT NULL,
-    "ipAddress" text,
-    "userAgent" text,
-    "userId" text NOT NULL,
-    "impersonatedBy" text
+    "expiresAt" timestamp
+    with
+        time zone NOT NULL,
+        token text NOT NULL,
+        "createdAt" timestamp
+    with
+        time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+        "updatedAt" timestamp
+    with
+        time zone NOT NULL,
+        "ipAddress" text,
+        "userAgent" text,
+        "userId" text NOT NULL,
+        "impersonatedBy" text
 );
-
 
 ALTER TABLE public.session OWNER TO postgres;
 
@@ -371,7 +374,6 @@ CREATE TABLE public."twoFactor" (
     "userId" text NOT NULL,
     verified boolean
 );
-
 
 ALTER TABLE public."twoFactor" OWNER TO postgres;
 
@@ -398,7 +400,6 @@ CREATE TABLE public."user" (
     "twoFactorEnabled" boolean
 );
 
-
 ALTER TABLE public."user" OWNER TO postgres;
 
 --
@@ -410,9 +411,10 @@ CREATE TABLE public.user_step_progress (
     progress_id integer NOT NULL,
     user_id text NOT NULL,
     step_id integer NOT NULL,
-    completed_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP
+    completed_at timestamp
+    with
+        time zone DEFAULT CURRENT_TIMESTAMP
 );
-
 
 ALTER TABLE public.user_step_progress OWNER TO postgres;
 
@@ -421,15 +423,13 @@ ALTER TABLE public.user_step_progress OWNER TO postgres;
 -- Name: user_step_progress_progress_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
 --
 
-ALTER TABLE public.user_step_progress ALTER COLUMN progress_id ADD GENERATED ALWAYS AS IDENTITY (
-    SEQUENCE NAME public.user_step_progress_progress_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1
+ALTER TABLE public.user_step_progress
+ALTER COLUMN progress_id
+ADD GENERATED ALWAYS AS IDENTITY (
+    SEQUENCE NAME public.user_step_progress_progress_id_seq START
+    WITH
+        1 INCREMENT BY 1 NO MINVALUE NO MAXVALUE CACHE 1
 );
-
 
 --
 -- TOC entry 222 (class 1259 OID 16539)
@@ -440,11 +440,16 @@ CREATE TABLE public.verification (
     id text NOT NULL,
     identifier text NOT NULL,
     value text NOT NULL,
-    "expiresAt" timestamp with time zone NOT NULL,
-    "createdAt" timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    "updatedAt" timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL
+    "expiresAt" timestamp
+    with
+        time zone NOT NULL,
+        "createdAt" timestamp
+    with
+        time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+        "updatedAt" timestamp
+    with
+        time zone DEFAULT CURRENT_TIMESTAMP NOT NULL
 );
-
 
 ALTER TABLE public.verification OWNER TO postgres;
 
@@ -454,8 +459,7 @@ ALTER TABLE public.verification OWNER TO postgres;
 --
 
 ALTER TABLE ONLY public.account
-    ADD CONSTRAINT account_pkey PRIMARY KEY (id);
-
+ADD CONSTRAINT account_pkey PRIMARY KEY (id);
 
 --
 -- TOC entry 4960 (class 2606 OID 16742)
@@ -463,8 +467,7 @@ ALTER TABLE ONLY public.account
 --
 
 ALTER TABLE ONLY public.activity_log
-    ADD CONSTRAINT activity_log_pkey PRIMARY KEY (act_id);
-
+ADD CONSTRAINT activity_log_pkey PRIMARY KEY (act_id);
 
 --
 -- TOC entry 4962 (class 2606 OID 16762)
@@ -472,8 +475,7 @@ ALTER TABLE ONLY public.activity_log
 --
 
 ALTER TABLE ONLY public.announcements
-    ADD CONSTRAINT announcements_pkey PRIMARY KEY (id);
-
+ADD CONSTRAINT announcements_pkey PRIMARY KEY (id);
 
 --
 -- TOC entry 4958 (class 2606 OID 16692)
@@ -481,8 +483,7 @@ ALTER TABLE ONLY public.announcements
 --
 
 ALTER TABLE ONLY public.certificates
-    ADD CONSTRAINT certificates_pkey PRIMARY KEY (cert_id);
-
+ADD CONSTRAINT certificates_pkey PRIMARY KEY (cert_id);
 
 --
 -- TOC entry 4966 (class 2606 OID 16798)
@@ -490,8 +491,7 @@ ALTER TABLE ONLY public.certificates
 --
 
 ALTER TABLE ONLY public.choices
-    ADD CONSTRAINT choices_pkey PRIMARY KEY (choice_id);
-
+ADD CONSTRAINT choices_pkey PRIMARY KEY (choice_id);
 
 --
 -- TOC entry 4956 (class 2606 OID 16669)
@@ -499,8 +499,7 @@ ALTER TABLE ONLY public.choices
 --
 
 ALTER TABLE ONLY public.module_activity
-    ADD CONSTRAINT module_activity_pkey PRIMARY KEY (modact_id);
-
+ADD CONSTRAINT module_activity_pkey PRIMARY KEY (modact_id);
 
 --
 -- TOC entry 4954 (class 2606 OID 16655)
@@ -508,8 +507,7 @@ ALTER TABLE ONLY public.module_activity
 --
 
 ALTER TABLE ONLY public.module_data
-    ADD CONSTRAINT module_data_pkey PRIMARY KEY (mod_id);
-
+ADD CONSTRAINT module_data_pkey PRIMARY KEY (mod_id);
 
 --
 -- TOC entry 4974 (class 2606 OID 16876)
@@ -517,8 +515,7 @@ ALTER TABLE ONLY public.module_data
 --
 
 ALTER TABLE ONLY public.module_steps
-    ADD CONSTRAINT module_steps_mod_id_step_order_key UNIQUE (mod_id, step_order);
-
+ADD CONSTRAINT module_steps_mod_id_step_order_key UNIQUE (mod_id, step_order);
 
 --
 -- TOC entry 4976 (class 2606 OID 16874)
@@ -526,8 +523,7 @@ ALTER TABLE ONLY public.module_steps
 --
 
 ALTER TABLE ONLY public.module_steps
-    ADD CONSTRAINT module_steps_pkey PRIMARY KEY (step_id);
-
+ADD CONSTRAINT module_steps_pkey PRIMARY KEY (step_id);
 
 --
 -- TOC entry 4964 (class 2606 OID 16780)
@@ -535,8 +531,7 @@ ALTER TABLE ONLY public.module_steps
 --
 
 ALTER TABLE ONLY public.questions
-    ADD CONSTRAINT questions_pkey PRIMARY KEY (question_id);
-
+ADD CONSTRAINT questions_pkey PRIMARY KEY (question_id);
 
 --
 -- TOC entry 4968 (class 2606 OID 16818)
@@ -544,8 +539,7 @@ ALTER TABLE ONLY public.questions
 --
 
 ALTER TABLE ONLY public.results
-    ADD CONSTRAINT results_pkey PRIMARY KEY (result_id);
-
+ADD CONSTRAINT results_pkey PRIMARY KEY (result_id);
 
 --
 -- TOC entry 4943 (class 2606 OID 16512)
@@ -553,8 +547,7 @@ ALTER TABLE ONLY public.results
 --
 
 ALTER TABLE ONLY public.session
-    ADD CONSTRAINT session_pkey PRIMARY KEY (id);
-
+ADD CONSTRAINT session_pkey PRIMARY KEY (id);
 
 --
 -- TOC entry 4945 (class 2606 OID 16514)
@@ -562,8 +555,7 @@ ALTER TABLE ONLY public.session
 --
 
 ALTER TABLE ONLY public.session
-    ADD CONSTRAINT session_token_key UNIQUE (token);
-
+ADD CONSTRAINT session_token_key UNIQUE (token);
 
 --
 -- TOC entry 4970 (class 2606 OID 16839)
@@ -573,15 +565,13 @@ ALTER TABLE ONLY public.session
 ALTER TABLE ONLY public."twoFactor"
     ADD CONSTRAINT "twoFactor_pkey" PRIMARY KEY (id);
 
-
 --
 -- TOC entry 4978 (class 2606 OID 16895)
 -- Name: user_step_progress unique_user_step; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
 ALTER TABLE ONLY public.user_step_progress
-    ADD CONSTRAINT unique_user_step UNIQUE (user_id, step_id);
-
+ADD CONSTRAINT unique_user_step UNIQUE (user_id, step_id);
 
 --
 -- TOC entry 4939 (class 2606 OID 16498)
@@ -591,7 +581,6 @@ ALTER TABLE ONLY public.user_step_progress
 ALTER TABLE ONLY public."user"
     ADD CONSTRAINT user_email_key UNIQUE (email);
 
-
 --
 -- TOC entry 4941 (class 2606 OID 16496)
 -- Name: user user_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
@@ -600,15 +589,13 @@ ALTER TABLE ONLY public."user"
 ALTER TABLE ONLY public."user"
     ADD CONSTRAINT user_pkey PRIMARY KEY (id);
 
-
 --
 -- TOC entry 4980 (class 2606 OID 16893)
 -- Name: user_step_progress user_step_progress_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
 ALTER TABLE ONLY public.user_step_progress
-    ADD CONSTRAINT user_step_progress_pkey PRIMARY KEY (progress_id);
-
+ADD CONSTRAINT user_step_progress_pkey PRIMARY KEY (progress_id);
 
 --
 -- TOC entry 4952 (class 2606 OID 16553)
@@ -616,8 +603,7 @@ ALTER TABLE ONLY public.user_step_progress
 --
 
 ALTER TABLE ONLY public.verification
-    ADD CONSTRAINT verification_pkey PRIMARY KEY (id);
-
+ADD CONSTRAINT verification_pkey PRIMARY KEY (id);
 
 --
 -- TOC entry 4949 (class 1259 OID 16555)
@@ -626,14 +612,12 @@ ALTER TABLE ONLY public.verification
 
 CREATE INDEX "account_userId_idx" ON public.account USING btree ("userId");
 
-
 --
 -- TOC entry 4946 (class 1259 OID 16554)
 -- Name: session_userId_idx; Type: INDEX; Schema: public; Owner: postgres
 --
 
 CREATE INDEX "session_userId_idx" ON public.session USING btree ("userId");
-
 
 --
 -- TOC entry 4971 (class 1259 OID 16845)
@@ -642,7 +626,6 @@ CREATE INDEX "session_userId_idx" ON public.session USING btree ("userId");
 
 CREATE INDEX "twoFactor_secret_idx" ON public."twoFactor" USING btree (secret);
 
-
 --
 -- TOC entry 4972 (class 1259 OID 16846)
 -- Name: twoFactor_userId_idx; Type: INDEX; Schema: public; Owner: postgres
@@ -650,14 +633,12 @@ CREATE INDEX "twoFactor_secret_idx" ON public."twoFactor" USING btree (secret);
 
 CREATE INDEX "twoFactor_userId_idx" ON public."twoFactor" USING btree ("userId");
 
-
 --
 -- TOC entry 4950 (class 1259 OID 16556)
 -- Name: verification_identifier_idx; Type: INDEX; Schema: public; Owner: postgres
 --
 
 CREATE INDEX verification_identifier_idx ON public.verification USING btree (identifier);
-
 
 --
 -- TOC entry 4982 (class 2606 OID 16534)
@@ -667,7 +648,6 @@ CREATE INDEX verification_identifier_idx ON public.verification USING btree (ide
 ALTER TABLE ONLY public.account
     ADD CONSTRAINT "account_userId_fkey" FOREIGN KEY ("userId") REFERENCES public."user"(id) ON DELETE CASCADE;
 
-
 --
 -- TOC entry 4988 (class 2606 OID 16763)
 -- Name: announcements fk_author; Type: FK CONSTRAINT; Schema: public; Owner: postgres
@@ -676,15 +656,13 @@ ALTER TABLE ONLY public.account
 ALTER TABLE ONLY public.announcements
     ADD CONSTRAINT fk_author FOREIGN KEY (author_id) REFERENCES public."user"(id) ON DELETE CASCADE;
 
-
 --
 -- TOC entry 4985 (class 2606 OID 16698)
 -- Name: certificates fk_modact; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
 ALTER TABLE ONLY public.certificates
-    ADD CONSTRAINT fk_modact FOREIGN KEY (modact_id) REFERENCES public.module_activity(modact_id) ON DELETE CASCADE;
-
+ADD CONSTRAINT fk_modact FOREIGN KEY (modact_id) REFERENCES public.module_activity (modact_id) ON DELETE CASCADE;
 
 --
 -- TOC entry 4983 (class 2606 OID 16675)
@@ -692,8 +670,7 @@ ALTER TABLE ONLY public.certificates
 --
 
 ALTER TABLE ONLY public.module_activity
-    ADD CONSTRAINT fk_module FOREIGN KEY (mod_id) REFERENCES public.module_data(mod_id) ON DELETE CASCADE;
-
+ADD CONSTRAINT fk_module FOREIGN KEY (mod_id) REFERENCES public.module_data (mod_id) ON DELETE CASCADE;
 
 --
 -- TOC entry 4989 (class 2606 OID 16781)
@@ -701,8 +678,7 @@ ALTER TABLE ONLY public.module_activity
 --
 
 ALTER TABLE ONLY public.questions
-    ADD CONSTRAINT fk_module FOREIGN KEY (mod_id) REFERENCES public.module_data(mod_id) ON DELETE CASCADE;
-
+ADD CONSTRAINT fk_module FOREIGN KEY (mod_id) REFERENCES public.module_data (mod_id) ON DELETE CASCADE;
 
 --
 -- TOC entry 4995 (class 2606 OID 16877)
@@ -710,8 +686,7 @@ ALTER TABLE ONLY public.questions
 --
 
 ALTER TABLE ONLY public.module_steps
-    ADD CONSTRAINT fk_module_steps FOREIGN KEY (mod_id) REFERENCES public.module_data(mod_id) ON DELETE CASCADE;
-
+ADD CONSTRAINT fk_module_steps FOREIGN KEY (mod_id) REFERENCES public.module_data (mod_id) ON DELETE CASCADE;
 
 --
 -- TOC entry 4991 (class 2606 OID 16799)
@@ -719,8 +694,7 @@ ALTER TABLE ONLY public.module_steps
 --
 
 ALTER TABLE ONLY public.choices
-    ADD CONSTRAINT fk_question FOREIGN KEY (question_id) REFERENCES public.questions(question_id) ON DELETE CASCADE;
-
+ADD CONSTRAINT fk_question FOREIGN KEY (question_id) REFERENCES public.questions (question_id) ON DELETE CASCADE;
 
 --
 -- TOC entry 4992 (class 2606 OID 16819)
@@ -728,8 +702,7 @@ ALTER TABLE ONLY public.choices
 --
 
 ALTER TABLE ONLY public.results
-    ADD CONSTRAINT fk_quiz_module FOREIGN KEY (mod_id) REFERENCES public.module_data(mod_id) ON DELETE CASCADE;
-
+ADD CONSTRAINT fk_quiz_module FOREIGN KEY (mod_id) REFERENCES public.module_data (mod_id) ON DELETE CASCADE;
 
 --
 -- TOC entry 4993 (class 2606 OID 16824)
@@ -739,15 +712,13 @@ ALTER TABLE ONLY public.results
 ALTER TABLE ONLY public.results
     ADD CONSTRAINT fk_quiz_user FOREIGN KEY (user_id) REFERENCES public."user"(id) ON DELETE CASCADE;
 
-
 --
 -- TOC entry 4996 (class 2606 OID 16901)
 -- Name: user_step_progress fk_step; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
 ALTER TABLE ONLY public.user_step_progress
-    ADD CONSTRAINT fk_step FOREIGN KEY (step_id) REFERENCES public.module_steps(step_id) ON DELETE CASCADE;
-
+ADD CONSTRAINT fk_step FOREIGN KEY (step_id) REFERENCES public.module_steps (step_id) ON DELETE CASCADE;
 
 --
 -- TOC entry 4990 (class 2606 OID 16906)
@@ -755,8 +726,7 @@ ALTER TABLE ONLY public.user_step_progress
 --
 
 ALTER TABLE ONLY public.questions
-    ADD CONSTRAINT fk_step_question FOREIGN KEY (step_id) REFERENCES public.module_steps(step_id) ON DELETE CASCADE;
-
+ADD CONSTRAINT fk_step_question FOREIGN KEY (step_id) REFERENCES public.module_steps (step_id) ON DELETE CASCADE;
 
 --
 -- TOC entry 4987 (class 2606 OID 16743)
@@ -766,7 +736,6 @@ ALTER TABLE ONLY public.questions
 ALTER TABLE ONLY public.activity_log
     ADD CONSTRAINT fk_user FOREIGN KEY (user_id) REFERENCES public."user"(id) ON DELETE CASCADE;
 
-
 --
 -- TOC entry 4986 (class 2606 OID 16693)
 -- Name: certificates fk_user; Type: FK CONSTRAINT; Schema: public; Owner: postgres
@@ -774,7 +743,6 @@ ALTER TABLE ONLY public.activity_log
 
 ALTER TABLE ONLY public.certificates
     ADD CONSTRAINT fk_user FOREIGN KEY (user_id) REFERENCES public."user"(id) ON DELETE CASCADE;
-
 
 --
 -- TOC entry 4984 (class 2606 OID 16670)
@@ -784,7 +752,6 @@ ALTER TABLE ONLY public.certificates
 ALTER TABLE ONLY public.module_activity
     ADD CONSTRAINT fk_user FOREIGN KEY (user_id) REFERENCES public."user"(id) ON DELETE CASCADE;
 
-
 --
 -- TOC entry 4997 (class 2606 OID 16896)
 -- Name: user_step_progress fk_user; Type: FK CONSTRAINT; Schema: public; Owner: postgres
@@ -792,7 +759,6 @@ ALTER TABLE ONLY public.module_activity
 
 ALTER TABLE ONLY public.user_step_progress
     ADD CONSTRAINT fk_user FOREIGN KEY (user_id) REFERENCES public."user"(id) ON DELETE CASCADE;
-
 
 --
 -- TOC entry 4981 (class 2606 OID 16515)
@@ -802,7 +768,6 @@ ALTER TABLE ONLY public.user_step_progress
 ALTER TABLE ONLY public.session
     ADD CONSTRAINT "session_userId_fkey" FOREIGN KEY ("userId") REFERENCES public."user"(id) ON DELETE CASCADE;
 
-
 --
 -- TOC entry 4994 (class 2606 OID 16840)
 -- Name: twoFactor twoFactor_userId_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
@@ -811,7 +776,6 @@ ALTER TABLE ONLY public.session
 ALTER TABLE ONLY public."twoFactor"
     ADD CONSTRAINT "twoFactor_userId_fkey" FOREIGN KEY ("userId") REFERENCES public."user"(id) ON DELETE CASCADE;
 
-
 -- Completed on 2026-06-26 19:32:02
 
 --
@@ -819,4 +783,3 @@ ALTER TABLE ONLY public."twoFactor"
 --
 
 \unrestrict XuJPCYk03q4krleGQhqhacW3yflBN9amWaareXzRh8tHBpilEj4C68Ezb8h0k7N
-
