@@ -5,17 +5,16 @@ const { betterAuthMiddleware } = require("../../middleware/betterAuthMiddleware"
 
 // @desc    Creates a new step for a specific module
 // @access  Private
-router.post("/:moduleId", betterAuthMiddleware, async (req, res) => {
+router.post("/:levelsId", betterAuthMiddleware, async (req, res) => {
 
-    const {moduleId} =  req.params;
+    const {levelsId} =  req.params;
     const { stepOrder, stepTitle, stepContent, mediaUrl, stepType } = req.body;
-
-    try {
+try{
         const stepCreation = await pool.query(
             `INSERT INTO public.module_steps (mod_id, step_order, step_title, step_content, media_url, step_type) 
              VALUES ($1, $2, $3, $4, $5, $6) 
              RETURNING *`, 
-            [moduleId, stepOrder, stepTitle, stepContent, mediaUrl, stepType]
+            [levelsId, stepOrder, stepTitle, stepContent, mediaUrl, stepType]
         );
         
         return res.status(201).json({
@@ -30,7 +29,7 @@ router.post("/:moduleId", betterAuthMiddleware, async (req, res) => {
         if (error.code === '23503') {
             return res.status(400).json({
                 success: false,
-                message: `Foreign Key Violation: Module ID ${moduleId} does not exist.`
+                message: `Foreign Key Violation: Level ID ${levelsId} does not exist.`
             });
         }
         
@@ -46,5 +45,7 @@ router.post("/:moduleId", betterAuthMiddleware, async (req, res) => {
             message: "An internal server error occurred."
         });
     }
+
+
 });
 // --- End of POST /:moduleId ---
