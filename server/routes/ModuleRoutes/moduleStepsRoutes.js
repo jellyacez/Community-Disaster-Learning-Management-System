@@ -1,19 +1,19 @@
 const express = require("express");
 const router = express.Router();
-const { betterAuthMiddleware } = require("../middleware/betterAuthMiddleware");
-const { stepCreation } = require("../controllers/ModuleControllers/moduleStepsController");
+const { betterAuthMiddleware } = require("../../middleware/betterAuthMiddleware");
+const { stepCreation } = require("../../controllers/ModuleControllers/moduleStepsController");
 
-router.post("/:levelsId", betterAuthMiddleware, async (req, res) => {
+router.post("/:levelId", betterAuthMiddleware, async (req, res) => {
 
     const {levelsId} =  req.params;
     const { stepOrder, stepTitle, stepContent, mediaUrl, stepType } = req.body;
 
 try{
-       stepCreation(levelsId, stepOrder, stepTitle, stepContent, mediaUrl, stepType)
+       const result = await stepCreation(levelsId, stepOrder, stepTitle, stepContent, mediaUrl, stepType)
         return res.status(201).json({
             success: true,
             message: "Module step added successfully.",
-            data: stepCreation
+            data: result
         });
             
     } catch (error) {
@@ -22,7 +22,7 @@ try{
         if (error.code === '23503') {
             return res.status(400).json({
                 success: false,
-                message: `Foreign Key Violation: Level ID ${levelsId} does not exist.`
+                message: `Foreign Key Violation: Level ID ${levelId} does not exist.`
             });
         }
         

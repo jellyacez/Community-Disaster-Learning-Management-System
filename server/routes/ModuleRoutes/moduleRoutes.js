@@ -1,9 +1,9 @@
 const express = require("express");
 const router = express.Router();
-const moduleController = require("../controllers/ModuleControllers/moduleController");
-const moduleProgressController = require("../controllers/ModuleControllers/moduleProgressController");
-const adminMiddleware = require("../middleware/adminMiddleware");
-const { betterAuthMiddleware } = require("../middleware/betterAuthMiddleware");
+const moduleController = require("../../controllers/ModuleControllers/moduleController");
+const moduleProgressController = require("../../controllers/ModuleControllers/moduleProgressController");
+const adminMiddleware = require("../../middleware/adminMiddleware");
+const { betterAuthMiddleware } = require("../../middleware/betterAuthMiddleware");
 
 // @route   POST /api/modules
 // @desc    Create a new training module

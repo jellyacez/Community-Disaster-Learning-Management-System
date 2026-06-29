@@ -1,27 +1,16 @@
-const express = require("express");
-const router = express.Router();
 const pool = require("../config/db");
-const { betterAuthMiddleware } = require("../middleware/betterAuthMiddleware");
 
-router.post("/:moduleId/steps/:stepId/complete", betterAuthMiddleware, async (req, res) => {
-    const { moduleId, stepId } = req.params;
-    const userId = req.user?.id;
+const completeQuery =  async (client, userId,stepId,moduleId) =>{
 
-    const client = await pool.connect();
-
-    try {
-        await client.query("BEGIN");
-
-       
-        await client.query(
-            `INSERT INTO public.user_step_progress (user_id, step_id)
-             VALUES ($1, $2)
-             ON CONFLICT (user_id, step_id) DO NOTHING`,
-            [userId, stepId]
+    await client.query(
+        `INSERT INTO public.user_step_progress (user_id, step_id)
+         VALUES ($1, $2)
+         ON CONFLICT (user_id, step_id) DO NOTHING`,
+        [userId, stepId]
         );
 
-        
-        const statsQuery = await client.query(`
+
+         const statsQuery = await client.query(`
             SELECT 
                 COUNT(s.step_id) AS total_steps,
                 COUNT(p.step_id) AS completed_steps
@@ -47,33 +36,17 @@ router.post("/:moduleId/steps/:stepId/complete", betterAuthMiddleware, async (re
                 `UPDATE public.module_activity 
                  SET modstatus = $1, modend = $2
                  WHERE user_id = $3 AND mod_id = $4`,
-                [moduleStatus, new Date().toISOString(), userId, moduleId]
+                [moduleStatus, new Date(), userId, moduleId]
             );
         }
+        return{
+            total,
+            completed,
+            moduleStatus,
+            isFullyCompleted
+        }
+        
+}
 
-        await client.query("COMMIT");
+module.exports = { completeQuery }
 
-        return res.status(200).json({
-            success: true,
-            message: isFullyCompleted ? "Module fully completed!" : "Step progress recorded.",
-            data: {
-                totalSteps: total,
-                completedSteps: completed,
-                percentage: total > 0 ? Math.round((completed / total) * 100) : 0,
-                status: moduleStatus
-            }
-        });
-
-    } catch (error) {
-        await client.query("ROLLBACK");
-        console.error("Error processing step completion transaction:", error);
-        return res.status(500).json({
-            success: false,
-            message: "An internal server error occurred while processing progress."
-        });
-    } finally {
-        client.release();
-    }
-});
-
-module.exports = router;

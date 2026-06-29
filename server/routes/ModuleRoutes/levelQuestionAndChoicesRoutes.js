@@ -2,7 +2,7 @@
 const express = require("express");
 const router = express.Router();
 const { betterAuthMiddleware } = require("../../middleware/betterAuthMiddleware");
-const { questionCreation,choicesCreation } = require("../controllers/ModuleControllers/moduleQuestionAndChoices");
+const { questionCreation,choicesCreation } = require("../../controllers/ModuleControllers/moduleQuestionAndChoices");
 
 router.post("/:moduleId/questions", betterAuthMiddleware, async (req, res) => {
    
@@ -11,12 +11,12 @@ router.post("/:moduleId/questions", betterAuthMiddleware, async (req, res) => {
     
     try {
         
-        questionCreation(levelId, questionText, points, imageURL)
+        const result = await questionCreation(levelId, questionText, points, imageURL)
         
         return res.status(201).json({
             success: true,
             message: "Question Added Successfully!",
-            data: questionCreation
+            data: result
         });
 
     } catch (error) {
@@ -25,7 +25,7 @@ router.post("/:moduleId/questions", betterAuthMiddleware, async (req, res) => {
         if (error.code === '23503') {
             return res.status(400).json({
                 success: false,
-                message: `Foreign Key Violation: Module ID ${moduleId} does not exist.`
+                message: `Foreign Key Violation: level ID ${levelId} does not exist.`
             });
         }
         

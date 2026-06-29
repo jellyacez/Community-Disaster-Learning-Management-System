@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
-const { betterAuthMiddleware } = require("../middleware/betterAuthMiddleware");
-const { levelResult } = require("../controllers/ModuleControllers/moduleResultController");
+const { betterAuthMiddleware } = require("../../middleware/betterAuthMiddleware");
+const { levelResult } = require("../../controllers/ModuleControllers/moduleResultController");
 
 
 router.post("/:levelId/results", betterAuthMiddleware, async (req, res) => {
@@ -14,12 +14,12 @@ router.post("/:levelId/results", betterAuthMiddleware, async (req, res) => {
 
     try {
         
-        levelResult(levelId ,userId ,score, totalPoints, passed);
+        const result = await levelResult(levelId ,userId ,score, totalPoints, passed);
 
         return res.status(201).json({
             success: true,
             message: "Result created",
-            data: levelResult
+            data: result
         });
     } catch (error) {
        
