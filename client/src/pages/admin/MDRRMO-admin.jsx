@@ -17,6 +17,11 @@ export default function Dashboard() {
   const { data: session } = authClient.useSession();
   const [activeTab, setActiveTab] = useState("overview");
 
+  // Core filter parameters mapped out at the top of the component scope
+  const [selectedBarangay, setSelectedBarangay] = useState("All");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedResident, setSelectedResident] = useState(null);
+
   const [modules, setModules] = useState(initialModules);
   const [users, setUsers] = useState(initialUsers);
   const [residents, setResidents] = useState(initialResidents);
@@ -38,13 +43,22 @@ export default function Dashboard() {
     questionText: "", options: ["", "", "", ""], correctAnswerIndex: 0
   });
 
-  const [userForm, setUserForm] = useState({ name: "", email: "", role: "Responder" });
+  // Structural state to accommodate picture file attachments inside situational scenarios
+  const [situationalImage, setSituationalImage] = useState(null);
 
-  const [modules, setModules] = useState(initialModules);
-  const [users, setUsers] = useState(initialUsers);
-  const [residents, setResidents] = useState(initialResidents);
+  // Structural state to accommodate supplementary docx, sound, or video media files inside instructional materials
+  const [writtenMaterialFile, setWrittenMaterialFile] = useState(null);
+
+  const [userForm, setUserForm] = useState({ name: "", email: "", role: "MDRRMO Officer" });
 
   const [draggedItemIndex, setDraggedItemIndex] = useState(null);
+
+  // Core audit trail log ledger as mapped out in Capstone DFD Level-1
+  const [systemLogs, setSystemLogs] = useState([
+    { id: 1, timestamp: "2026-06-30 04:12", source: "MDRRMO Core", log: "Token-based user authorization encryption protocols validated." },
+    { id: 2, timestamp: "2026-06-30 02:45", source: "BDRRMC Node", log: "Verifiable digital certificate issued successfully via automated post-assessment query." },
+    { id: 3, timestamp: "2026-06-29 19:10", source: "AWS RDS Security", log: "Asynchronous data sync pipeline completed across all participating sectors." }
+  ]);
 
   const handleDragStart = (e, index) => {
     setDraggedItemIndex(index);
@@ -91,7 +105,6 @@ export default function Dashboard() {
     if (!currentFlowStep.title.trim()) return alert("Please enter a step name.");
     
     if (currentFlowStep.type === "text" && !currentFlowStep.textContent.trim()) return alert("Please fill in the documentation text block.");
-    if (currentFlowStep.type === "video" && !currentFlowStep.videoUrl.trim()) return alert("Please specify the educational video link.");
     if (currentFlowStep.type === "assessment") {
       if (currentFlowStep.assessmentType === "quiz" && currentFlowStep.quizQuestions.length === 0) {
         return alert("Please add at least one multiple choice question.");
@@ -101,7 +114,21 @@ export default function Dashboard() {
       }
     }
 
-    setStagedFlows([...stagedFlows, currentFlowStep]);
+    const stepWithMeta = { ...currentFlowStep };
+    
+    // Attach document/audio/video file metadata to instructional materials
+    if (currentFlowStep.type === "text" && writtenMaterialFile) {
+      stepWithMeta.attachedFileName = writtenMaterialFile.name;
+    }
+    
+    // Attach image metadata to situational assessments
+    if (currentFlowStep.type === "assessment" && currentFlowStep.assessmentType === "situational" && situationalImage) {
+      stepWithMeta.attachedImageName = situationalImage.name;
+    }
+
+    setStagedFlows([...stagedFlows, stepWithMeta]);
+    setWrittenMaterialFile(null);
+    setSituationalImage(null);
     setCurrentFlowStep({ type: "text", title: "", textContent: "", videoUrl: "", assessmentType: "quiz", quizQuestions: [], situationalScenario: "", situationalGuide: "" });
   };
 
@@ -145,14 +172,26 @@ export default function Dashboard() {
     e.preventDefault();
     if (!userForm.name || !userForm.email) return alert("Please fill out all fields.");
     setUsers([...users, { id: Date.now(), ...userForm }]);
-    setUserForm({ name: "", email: "", role: "Responder" });
-    setActiveTab("overview");
+    setUserForm({ name: "", email: "", role: "MDRRMO Officer" });
+    alert("New account parameters registered successfully.");
+  };
+
+  const handleAccountAction = (userId, action) => {
+    alert(`Account ID reference node ${userId} successfully updated: ${action.toUpperCase()}`);
   };
 
   const handleLogout = async () => {
     sessionStorage.setItem("isLoggingOut", "true");
     await authClient.signOut();
     window.location.href = "/signin";
+  };
+
+  // Maps and lists the structural layout order array via native dialog triggers
+  const triggerFlowSequencePreview = () => {
+    const sequenceLayoutSummary = stagedFlows
+      .map((item, idx) => `${idx + 1}. [${item.type.toUpperCase()}] ${item.title}`)
+      .join("\n");
+    alert(`Current Staged Curriculum Layout:\n\n${sequenceLayoutSummary}`);
   };
 
   const filteredResidents = residents.filter(r => {
@@ -176,9 +215,9 @@ export default function Dashboard() {
           <div className="sidebar-divider">
             <div className="flex items-center gap-3">
               <span className="w-3 h-3 rounded-full bg-red-600" />
-              <h2 className="text-xl font-black font-mono tracking-wider text-gray-900">MDRRMO <span className="text-red-600">HUB</span></h2>
+              <h2 className="text-xl font-black font-mono tracking-wider text-gray-900">MDRRM <span className="text-red-600">HUB</span></h2>
             </div>
-            <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mt-1">Admin Control Dashboard</p>
+            <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mt-1">Municipal Administration</p>
           </div>
 
           <nav className="space-y-1.5">
@@ -199,7 +238,7 @@ export default function Dashboard() {
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 002 2h2a2 2 0 002-2z" />
               </svg>
-              Barangay Analytics
+              Audited Sector Data
             </button>
 
             <button 
@@ -222,7 +261,7 @@ export default function Dashboard() {
               className={`admin-nav-item ${activeTab === "users" ? "active" : ""}`}
             >
               <HugeiconsIcon icon={UserAddIcon} className="w-4 h-4" />
-              Add Personnel
+              Personnel Directory
             </button>
           </nav>
         </div>
@@ -234,7 +273,7 @@ export default function Dashboard() {
               {session?.user?.name?.[0] || "M"}
             </div>
             <div className="truncate text-xs">
-              <p className="font-bold truncate">{session?.user?.name || "MDRRMO Admin"}</p>
+              <p className="font-bold truncate">{session?.user?.name || "MDRRM Admin"}</p>
               <p className="text-gray-400 truncate">{session?.user?.email || "admin.bacolor@mdrrmo.gov.ph"}</p>
             </div>
           </div>
@@ -261,28 +300,28 @@ export default function Dashboard() {
           {activeTab === "overview" && (
             <div className="space-y-6 animate-in fade-in duration-150">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="admin-card-panel">
-                  <p className="text-[10px] text-gray-400 uppercase font-bold">Total Active Modules</p>
-                  <p className="text-3xl font-black mt-1 font-mono">{modules.length}</p>
+                <div className="admin-card-panel w-full" style={{ padding: "2.5rem 1.5rem" }}>
+                  <p className="text-[10px] text-gray-400 uppercase font-bold tracking-wider">Total Active Modules</p>
+                  <p className="text-4xl font-black mt-1 font-mono text-gray-800">{modules.length}</p>
                 </div>
-                <div className="admin-card-panel">
-                  <p className="text-[10px] text-gray-400 uppercase font-bold">Registered Responders</p>
-                  <p className="text-3xl font-black mt-1 font-mono">{users.length}</p>
+                <div className="admin-card-panel w-full" style={{ padding: "2.5rem 1.5rem" }}>
+                  <p className="text-[10px] text-gray-400 uppercase font-bold tracking-wider">Registered Responders</p>
+                  <p className="text-4xl font-black mt-1 font-mono text-gray-800">{users.length}</p>
                 </div>
-                <div className="admin-card-panel flex items-center justify-between" style={{ borderLeft: "4px solid #10b981", backgroundColor: "#f0fdf4" }}>
+                <div className="admin-card-panel w-full flex items-center justify-between" style={{ borderLeft: "4px solid #10b981", backgroundColor: "#f0fdf4", padding: "2.5rem 1.5rem" }}>
                   <div>
-                    <p className="text-[10px] text-emerald-700 uppercase font-bold">System Status</p>
-                    <p className="text-md font-black text-emerald-800 font-mono">NORMAL / READY</p>
+                    <p className="text-[10px] text-emerald-700 uppercase font-bold tracking-wider">System Status</p>
+                    <p className="text-xl font-black text-emerald-800 font-mono">NORMAL / READY</p>
                   </div>
-                  <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-600">
-                    <HugeiconsIcon icon={Alert01Icon} className="w-5 h-5" />
+                  <div className="w-12 h-12 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-600">
+                    <HugeiconsIcon icon={Alert01Icon} className="w-6 h-6" />
                   </div>
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div className="admin-card-panel">
-                  <h3 className="text-xs font-bold uppercase tracking-wide mb-3 text-gray-400 border-b border-gray-100 pb-1.5">Active Modules</h3>
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+                <div className="admin-card-panel lg:col-span-2 w-full">
+                  <h3 className="text-xs font-bold uppercase tracking-wide mb-3 text-gray-400 border-b border-gray-100 pb-1.5 font-mono">Active Master Modules</h3>
                   <table className="admin-table">
                     <thead>
                       <tr>
@@ -311,36 +350,28 @@ export default function Dashboard() {
                   </table>
                 </div>
 
-                <div className="admin-card-panel">
-                  <h3 className="text-xs font-bold uppercase tracking-wide mb-3 text-gray-400 border-b border-gray-100 pb-1.5">Registered Personnel</h3>
-                  <table className="admin-table">
-                    <thead>
-                      <tr>
-                        <th>Name & Email</th>
-                        <th className="text-right">User Role</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {users.map((u) => (
-                        <tr key={u.id}>
-                          <td>
-                            <p className="font-semibold">{u.name}</p>
-                            <p className="text-[10px] text-gray-400 font-mono">{u.email}</p>
-                          </td>
-                          <td className="text-right font-mono text-xs uppercase font-bold text-gray-600">{u.role}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                <div className="admin-card-panel w-full space-y-3">
+                  <h3 className="text-xs font-bold uppercase tracking-wide text-gray-400 border-b border-gray-100 pb-1.5 font-mono">Security Web Audit Logs</h3>
+                  <div className="space-y-2 max-h-[300px] overflow-y-auto pr-1">
+                    {systemLogs.map((log) => (
+                      <div key={log.id} className="p-2.5 bg-gray-50 border border-gray-200/80 rounded-xl text-xs flex flex-col gap-0.5">
+                        <div className="flex justify-between font-mono text-[9px] text-gray-400">
+                          <span className="font-bold">{log.source}</span>
+                          <span>{log.timestamp}</span>
+                        </div>
+                        <span className="text-gray-700 font-medium leading-tight">{log.log}</span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>
           )}
 
-          {/* TAB 2: BARANGAY ANALYTICS */}
+          {/* TAB 2: AUDITED SECTOR DATA */}
           {activeTab === "barangay" && (
             <div className="space-y-6 animate-in fade-in duration-150">
-              <div className="admin-card-panel flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="admin-card-panel w-full flex flex-col sm:flex-row items-center justify-between gap-4">
                 <div className="flex items-center gap-2 text-xs">
                   <label className="font-bold text-gray-500 uppercase font-mono">Location Filter:</label>
                   <select 
@@ -364,19 +395,10 @@ export default function Dashboard() {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div className="admin-card-panel">
-                  <p className="text-[10px] text-gray-400 uppercase font-bold">Monitored Residents</p>
-                  <p className="text-2xl font-black mt-1 font-mono">{totalResidentsCount}</p>
-                </div>
-                <div className="admin-card-panel">
-                  <p className="text-[10px] text-emerald-600 uppercase font-bold">Certified Ready</p>
-                  <p className="text-2xl font-black text-emerald-600 mt-1 font-mono">{readyCount}</p>
-                </div>
-                <div className="admin-card-panel">
-                  <p className="text-[10px] text-amber-500 uppercase font-bold">Average Quiz Accuracy</p>
-                  <p className="text-2xl font-black text-amber-500 mt-1 font-mono">{averageScore}%</p>
-                </div>
-                <div className="admin-card-panel">
+                <div className="admin-card-panel w-full"><p className="text-[10px] text-gray-400 uppercase font-bold">Monitored Residents</p><p className="text-2xl font-black mt-1 font-mono">{totalResidentsCount}</p></div>
+                <div className="admin-card-panel w-full"><p className="text-[10px] text-emerald-600 uppercase font-bold">Certified Ready</p><p className="text-2xl font-black text-emerald-600 mt-1 font-mono">{readyCount}</p></div>
+                <div className="admin-card-panel w-full"><p className="text-[10px] text-amber-500 uppercase font-bold">Average Quiz Accuracy</p><p className="text-2xl font-black text-amber-500 mt-1 font-mono">{averageScore}%</p></div>
+                <div className="admin-card-panel w-full">
                   <p className="text-[10px] text-blue-600 uppercase font-bold">Coverage Rate</p>
                   <p className="text-2xl font-black text-blue-600 mt-1 font-mono">
                     {totalResidentsCount > 0 ? Math.round((filteredResidents.filter(r => r.modulesCompleted > 0).length / totalResidentsCount) * 100) : 0}%
@@ -385,8 +407,8 @@ export default function Dashboard() {
               </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-                <div className="admin-card-panel lg:col-span-2">
-                  <h3 className="text-xs font-bold uppercase tracking-wide mb-3 text-gray-400 border-b border-gray-100 pb-1.5">Residential Records</h3>
+                <div className="admin-card-panel lg:col-span-2 w-full">
+                  <h3 className="text-xs font-bold uppercase tracking-wide mb-3 text-gray-400 border-b border-gray-100 pb-1.5 font-mono">District Accreditation Directory</h3>
                   <div className="overflow-x-auto">
                     <table className="admin-table">
                       <thead>
@@ -409,8 +431,11 @@ export default function Dashboard() {
                                 {r.status}
                               </span>
                             </td>
-                            <td className="text-right">
-                              <button type="button" onClick={() => setSelectedResident(r)} className="px-2 py-0.5 text-[11px] font-medium border border-gray-200 bg-white hover:bg-red-600 hover:text-white rounded transition-colors">View Profile</button>
+                            <td className="text-right flex justify-end gap-1.5">
+                              <button type="button" onClick={() => setSelectedResident(r)} className="px-2 py-0.5 text-[11px] font-medium border border-gray-200 bg-white hover:bg-gray-50 rounded">Inspect</button>
+                              {r.status === "Ready" && (
+                                <button type="button" onClick={() => handleAccountAction(r.id, "revoked credential tier")} className="px-2 py-1 text-[11px] font-medium border border-red-200 text-red-600 bg-red-50 hover:bg-red-600 hover:text-white rounded transition-colors">Revoke</button>
+                              )}
                             </td>
                           </tr>
                         ))}
@@ -419,7 +444,7 @@ export default function Dashboard() {
                   </div>
                 </div>
 
-                <div className="admin-card-panel">
+                <div className="admin-card-panel w-full">
                   <h3 className="text-xs font-bold uppercase tracking-wide mb-3 text-gray-400 border-b border-gray-100 pb-1.5">Participant Breakdown</h3>
                   {selectedResident ? (
                     <div className="space-y-4 text-xs animate-in fade-in duration-150">
@@ -453,7 +478,7 @@ export default function Dashboard() {
           {activeTab === "modules" && (
             <div className="max-w-2xl mx-auto space-y-6 animate-in fade-in duration-150 pb-12">
               <form onSubmit={handleModuleSubmit} className="space-y-6">
-                <div className="admin-card-panel space-y-4">
+                <div className="admin-card-panel w-full space-y-4">
                   <h2 className="text-sm font-bold text-gray-800 uppercase tracking-wider border-b pb-1.5">{editingModuleId ? "Modify Training Module" : "Setup New Training Module"}</h2>
                   <div>
                     <label className="block text-[11px] font-bold text-gray-500 uppercase mb-1">Module Topic Title</label>
@@ -482,8 +507,19 @@ export default function Dashboard() {
                   </div>
                 </div>
 
-                <div className="admin-card-panel space-y-3">
-                  <h3 className="text-xs font-bold uppercase text-gray-400 border-b pb-1">Module Steps Order Sequence</h3>
+                <div className="admin-card-panel w-full space-y-3">
+                  <div className="flex items-center justify-between border-b pb-1">
+                    <h3 className="text-xs font-bold uppercase text-gray-400 font-mono">Module Steps Order Sequence</h3>
+                    {stagedFlows.length >= 2 && (
+                      <button 
+                        type="button" 
+                        onClick={triggerFlowSequencePreview} 
+                        className="px-2.5 py-0.5 text-[10px] font-bold text-red-600 bg-red-50 border border-red-200 hover:bg-red-600 hover:text-white rounded-md transition-all"
+                      >
+                        Preview Flow Blueprint
+                      </button>
+                    )}
+                  </div>
                   {stagedFlows.map((flow, index) => (
                     <div key={index} draggable onDragStart={(e) => handleDragStart(e, index)} onDragOver={(e) => handleDragOver(e, index)} onDragEnd={handleDragEnd} className="flex items-center justify-between p-2.5 bg-gray-50 border rounded-xl text-xs">
                       <div className="flex items-center gap-2">
@@ -501,23 +537,41 @@ export default function Dashboard() {
                 </div>
 
                 <div className="admin-card-panel space-y-4">
-                  <h3 className="text-xs font-bold uppercase text-gray-400 border-b pb-1">Step Content Configuration Builder</h3>
+                  <h3 className="text-xs font-bold uppercase text-gray-400 border-b pb-1.5 font-mono">Step Content Configuration Builder</h3>
                   <div className="grid grid-cols-2 gap-3">
                     <input type="text" placeholder="Step Title Name..." value={currentFlowStep.title} onChange={(e) => setCurrentFlowStep({ ...currentFlowStep, title: e.target.value })} className="p-2 border border-gray-200 rounded-xl text-xs focus:outline-none" />
                     <select value={currentFlowStep.type} onChange={(e) => setCurrentFlowStep({ ...currentFlowStep, type: e.target.value })} className="p-2 border border-gray-200 rounded-xl text-xs">
-                      <option value="text">Written Material</option>
-                      <option value="video">Video Training Link</option>
+                      <option value="text">Instructional Materials</option>
                       <option value="assessment">Assessment Verification</option>
                     </select>
                   </div>
 
                   <div className="p-3 bg-gray-50 border border-gray-200 border-dashed rounded-xl space-y-3">
+                    {/* INSTRUCTIONAL MATERIALS FORM INJECTOR AREA (With merged DOCX / Audio / Video multi-file attachment capacity) */}
                     {currentFlowStep.type === "text" && (
-                      <textarea rows="3" placeholder="Type instructions here..." value={currentFlowStep.textContent} onChange={(e) => setCurrentFlowStep({ ...currentFlowStep, textContent: e.target.value })} className="w-full p-2 bg-white border rounded-xl text-xs focus:outline-none" />
+                      <div className="space-y-2">
+                        <textarea rows="3" placeholder="Type instructions here..." value={currentFlowStep.textContent} onChange={(e) => setCurrentFlowStep({ ...currentFlowStep, textContent: e.target.value })} className="w-full p-2 bg-white border rounded-xl text-xs focus:outline-none" />
+                        
+                        <div className="flex flex-col gap-1 bg-white p-2 border border-slate-200 rounded-xl">
+                          <span className="text-[10px] uppercase font-bold text-gray-400 font-mono">Upload Reference File (DOCX / Audio / Video Material)</span>
+                          <input 
+                            type="file" 
+                            accept=".docx, audio/*, video/*" 
+                            onChange={(e) => {
+                              const targetFile = e.target.files[0];
+                              if (targetFile) {
+                                setWrittenMaterialFile(targetFile);
+                                alert(`Instructional attachment staged: ${targetFile.name}`);
+                              }
+                            }}
+                            className="text-[11px] text-gray-500 mt-1 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-[11px] file:font-semibold file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200" 
+                          />
+                          {writtenMaterialFile && <p className="text-[10px] text-emerald-600 font-mono font-medium mt-0.5">Staged Attachment: {writtenMaterialFile.name}</p>}
+                        </div>
+                      </div>
                     )}
-                    {currentFlowStep.type === "video" && (
-                      <input type="url" placeholder="Paste embed video asset link..." value={currentFlowStep.videoUrl} onChange={(e) => setCurrentFlowStep({ ...currentFlowStep, videoUrl: e.target.value })} className="w-full p-2 bg-white border rounded-xl text-xs focus:outline-none" />
-                    )}
+
+                    {/* EVALUATION ASSESSMENT ENGINE LINK */}
                     {currentFlowStep.type === "assessment" && (
                       <div className="space-y-3 text-xs">
                         <div className="flex items-center justify-between">
@@ -527,33 +581,66 @@ export default function Dashboard() {
                             <option value="situational">Situational Scenario Case</option>
                           </select>
                         </div>
+                        
+                        {/* MULTIPLE CHOICE QUIZ FORM AREA */}
                         {currentFlowStep.assessmentType === "quiz" && (
                           <div className="space-y-2 border-t pt-2">
-                            <input type="text" placeholder="Write quiz question text block..." value={currentQuizQuestion.questionText} onChange={(e) => setCurrentQuizQuestion({ ...currentQuizQuestion, questionText: e.target.value })} className="w-full p-2 bg-white border rounded-xl text-xs" />
-                            <div className="grid grid-cols-2 gap-2">
+                            <input type="text" placeholder="Write quiz question text block..." value={currentQuizQuestion.questionText} onChange={(e) => setCurrentQuizQuestion({ ...currentQuizQuestion, questionText: e.target.value })} className="w-full p-2 bg-white border rounded-xl text-xs focus:outline-none" />
+                            <div className="grid grid-cols-1 gap-2">
                               {currentQuizQuestion.options.map((opt, oIdx) => (
-                                <input key={oIdx} type="text" placeholder={`Choice Answer Option ${oIdx + 1}`} value={opt} onChange={(e) => {
-                                  const updated = [...currentQuizQuestion.options];
-                                  updated[oIdx] = e.target.value;
-                                  setCurrentQuizQuestion({ ...currentQuizQuestion, options: updated });
-                                }} className="p-1.5 bg-white border rounded-xl text-xs" />
+                                <input 
+                                  key={oIdx} 
+                                  type="text" 
+                                  placeholder={`Choice Answer Option ${oIdx + 1}`} 
+                                  value={opt} 
+                                  onChange={(e) => {
+                                    const updated = [...currentQuizQuestion.options];
+                                    updated[oIdx] = e.target.value;
+                                    setCurrentQuizQuestion({ ...currentQuizQuestion, options: updated });
+                                  }} 
+                                  className="p-2 bg-white border rounded-xl text-xs focus:outline-none" 
+                                  style={{
+                                    border: currentQuizQuestion.correctAnswerIndex === oIdx ? "2px solid #10b981" : "1px solid #e2e8f0",
+                                    backgroundColor: currentQuizQuestion.correctAnswerIndex === oIdx ? "#f0fdf4" : "#ffffff"
+                                  }}
+                                />
                               ))}
                             </div>
                             <div className="flex items-center justify-between gap-4 pt-1">
-                              <select value={currentQuizQuestion.correctAnswerIndex} onChange={(e) => setCurrentQuizQuestion({ ...currentQuizQuestion, correctAnswerIndex: parseInt(e.target.value) })} className="p-1 border rounded bg-white text-[11px]">
+                              <select value={currentQuizQuestion.correctAnswerIndex} onChange={(e) => setCurrentQuizQuestion({ ...currentQuizQuestion, correctAnswerIndex: parseInt(e.target.value) })} className="p-1 border rounded bg-white text-[11px] focus:outline-none">
                                 <option value={0}>Option 1 is correct</option>
                                 <option value={1}>Option 2 is correct</option>
                                 <option value={2}>Option 3 is correct</option>
                                 <option value={3}>Option 4 is correct</option>
                               </select>
-                              <button type="button" onClick={addQuizQuestionToStep} className="px-3 py-1 bg-white border rounded text-[11px] font-bold text-gray-700">+ Save Question</button>
+                              <button type="button" onClick={addQuizQuestionToStep} className="px-3 py-1 bg-white border rounded text-[11px] font-bold text-gray-700 hover:bg-gray-50">+ Save Question</button>
                             </div>
                           </div>
                         )}
+                        
+                        {/* SITUATIONAL SCENARIO FORM AREA */}
                         {currentFlowStep.assessmentType === "situational" && (
                           <div className="space-y-2 border-t pt-2">
-                            <textarea rows="2" placeholder="Describe crisis scenario circumstances..." value={currentFlowStep.situationalScenario} onChange={(e) => setCurrentFlowStep({ ...currentFlowStep, situationalScenario: e.target.value })} className="w-full p-2 bg-white border rounded-xl text-xs" />
-                            <textarea rows="1" placeholder="Officer check rubric grading guides..." value={currentFlowStep.situationalGuide} onChange={(e) => setCurrentFlowStep({ ...currentFlowStep, situationalGuide: e.target.value })} className="w-full p-2 bg-white border rounded-xl text-xs" />
+                            <textarea rows="2" placeholder="Describe crisis scenario circumstances..." value={currentFlowStep.situationalScenario} onChange={(e) => setCurrentFlowStep({ ...currentFlowStep, situationalScenario: e.target.value })} className="w-full p-2 bg-white border rounded-xl text-xs focus:outline-none" />
+                            
+                            <div className="flex flex-col gap-1 bg-white p-2 border border-slate-200 rounded-xl">
+                              <span className="text-[10px] uppercase font-bold text-gray-400 font-mono">Upload Attachment Reference Picture</span>
+                              <input 
+                                type="file" 
+                                accept="image/*" 
+                                onChange={(e) => {
+                                  const targetFile = e.target.files[0];
+                                  if(targetFile) {
+                                    setSituationalImage(targetFile);
+                                    alert(`Asset assigned successfully: ${targetFile.name}`);
+                                  }
+                                }}
+                                className="text-[11px] text-gray-500 mt-1 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-[11px] file:font-semibold file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200" 
+                              />
+                              {situationalImage && <p className="text-[10px] text-emerald-600 font-mono font-medium mt-0.5">Staged Image: {situationalImage.name}</p>}
+                            </div>
+
+                            <textarea rows="1" placeholder="Officer check rubric grading guides..." value={currentFlowStep.situationalGuide} onChange={(e) => setCurrentFlowStep({ ...currentFlowStep, situationalGuide: e.target.value })} className="w-full p-2 bg-white border rounded-xl text-xs focus:outline-none" />
                           </div>
                         )}
                       </div>
@@ -566,29 +653,60 @@ export default function Dashboard() {
             </div>
           )}
 
-          {/* TAB 4: ADD PERSONNEL */}
+          {/* TAB 4: ADD AND MANAGE PERSONNEL */}
           {activeTab === "users" && (
-            <div className="max-w-md mx-auto admin-card-panel space-y-4 animate-in fade-in duration-150">
-              <h2 className="text-sm font-bold text-gray-800 uppercase tracking-wider border-b pb-1.5">Register District Personnel</h2>
-              <form onSubmit={handleUserSubmit} className="space-y-4">
-                <div>
-                  <label className="block text-[11px] font-bold text-gray-500 uppercase mb-1">Personnel Full Name</label>
-                  <input type="text" placeholder="e.g., Juan Dela Cruz" value={userForm.name} onChange={(e) => setUserForm({ ...userForm, name: e.target.value })} className="w-full p-2.5 border border-gray-200 rounded-xl text-xs focus:outline-none" />
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start animate-in fade-in duration-150">
+              <div className="admin-card-panel lg:col-span-2 w-full space-y-3">
+                <h3 className="text-xs font-bold uppercase tracking-wide text-gray-400 border-b pb-1.5 font-mono">Governance Personnel Node Tiers</h3>
+                <div className="overflow-x-auto">
+                  <table className="admin-table">
+                    <thead>
+                      <tr>
+                        <th>Identity Profile</th>
+                        <th>Account Tier Role</th>
+                        <th className="text-right">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {users.filter(u => u.role !== "Field Responder").map((u) => (
+                        <tr key={u.id}>
+                          <td>
+                            <p className="font-semibold">{u.name}</p>
+                            <p className="text-[10px] text-gray-400 font-mono">{u.email}</p>
+                          </td>
+                          <td><span className="counter" style={{ padding: "2px 6px", fontSize: "10px" }}>{u.role}</span></td>
+                          <td className="text-right space-x-1.5">
+                            <button type="button" onClick={() => handleAccountAction(u.id, "archived system account record")} className="px-2 py-0.5 text-[10px] border border-slate-200 hover:bg-slate-50 font-semibold rounded">Archive</button>
+                            <button type="button" onClick={() => handleAccountAction(u.id, "banned and terminated authorization credentials")} className="px-2 py-0.5 text-[10px] border border-red-200 text-red-600 hover:bg-red-600 hover:text-white font-semibold rounded">Ban</button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
-                <div>
-                  <label className="block text-[11px] font-bold text-gray-500 uppercase mb-1">Official Email Address</label>
-                  <input type="email" placeholder="username@mdrrmo.gov.ph" value={userForm.email} onChange={(e) => setUserForm({ ...userForm, email: e.target.value })} className="w-full p-2.5 border border-gray-200 rounded-xl text-xs focus:outline-none" />
-                </div>
-                <div>
-                  <label className="block text-[11px] font-bold text-gray-500 uppercase mb-1">System Scope Role Tiers</label>
-                  <select value={userForm.role} onChange={(e) => setUserForm({ ...userForm, role: e.target.value })} className="w-full p-2.5 border border-gray-200 text-gray-700 rounded-xl text-xs focus:outline-none">
-                    <option value="Field Responder">Field Responder</option>
-                    <option value="MDRRMO Officer">MDRRMO Communications Officer</option>
-                    <option value="System Admin">System Administrator</option>
-                  </select>
-                </div>
-                <button type="submit" className="w-full py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl text-xs uppercase tracking-wider shadow-sm">Save Registry Parameters</button>
-              </form>
+              </div>
+
+              <div className="admin-card-panel w-full space-y-4">
+                <h2 className="text-xs font-bold text-gray-400 uppercase tracking-wider border-b pb-1.5 font-mono">Register District Personnel</h2>
+                <form onSubmit={handleUserSubmit} className="space-y-4">
+                  <div>
+                    <label className="block text-[11px] font-bold text-gray-500 uppercase mb-1">Personnel Full Name</label>
+                    <input type="text" placeholder="e.g., Juan Dela Cruz" value={userForm.name} onChange={(e) => setUserForm({ ...userForm, name: e.target.value })} className="w-full p-2.5 border border-gray-200 rounded-xl text-xs focus:outline-none" />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-bold text-gray-500 uppercase mb-1">Official Email Address</label>
+                    <input type="email" placeholder="username@mdrrmo.gov.ph" value={userForm.email} onChange={(e) => setUserForm({ ...userForm, email: e.target.value })} className="w-full p-2.5 border border-gray-200 rounded-xl text-xs focus:outline-none" />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-bold text-gray-500 uppercase mb-1">System Account Role Scope</label>
+                    <select value={userForm.role} onChange={(e) => setUserForm({ ...userForm, role: e.target.value })} className="w-full p-2.5 border border-gray-200 text-gray-700 rounded-xl text-xs focus:outline-none">
+                      <option value="MDRRMO Officer">MDRRMO Communications Officer</option>
+                      <option value="System Admin">System Administrator</option>
+                    </select>
+                  </div>
+                  <button type="submit" className="w-full py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl text-xs uppercase tracking-wider shadow-sm">Create Account Parameters</button>
+                </form>
+              </div>
             </div>
           )}
 
