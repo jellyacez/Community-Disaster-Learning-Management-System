@@ -72,7 +72,7 @@ export default function Overview() {
             <p className="text-4xl font-black mt-2 font-mono text-gray-800">{users.length}</p>
           )}
         </div>
-        <div className="bg-white p-6 rounded-2xl shadow-sm w-full flex items-center justify-between" style={{ borderLeft: "4px solid #10b981", backgroundColor: "#f0fdf4" }}>
+        <div className="p-6 rounded-2xl shadow-sm w-full flex items-center justify-between border-l-4 border-emerald-500 bg-emerald-50">
           <div>
             <p className="text-xs text-emerald-700 uppercase font-bold tracking-wider">System Status</p>
             <p className="text-xl font-black text-emerald-800 font-mono mt-1">NORMAL / READY</p>

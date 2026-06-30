@@ -45,11 +45,11 @@ export default function AssessmentEditor({
                   updated[oIdx] = e.target.value;
                   setCurrentQuizQuestion({ ...currentQuizQuestion, options: updated });
                 }} 
-                className="p-2.5 bg-white rounded-xl text-sm focus:outline-none shadow-sm transition-colors" 
-                style={{
-                  border: currentQuizQuestion.correctAnswerIndex === oIdx ? "2px solid #10b981" : "1px solid #e2e8f0",
-                  backgroundColor: currentQuizQuestion.correctAnswerIndex === oIdx ? "#f0fdf4" : "#ffffff"
-                }}
+                className={`p-2.5 rounded-xl text-sm focus:outline-none shadow-sm transition-colors ${
+                  currentQuizQuestion.correctAnswerIndex === oIdx 
+                    ? "border-2 border-emerald-500 bg-emerald-50" 
+                    : "border border-slate-200 bg-white"
+                }`}
               />
             ))}
           </div>

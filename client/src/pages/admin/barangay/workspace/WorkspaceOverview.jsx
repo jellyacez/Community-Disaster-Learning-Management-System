@@ -53,11 +53,11 @@ export default function WorkspaceOverview() {
           <p className="text-xs text-gray-400 uppercase font-bold tracking-wider">Total Monitored Locals</p>
           <p className="text-4xl font-black mt-2 font-mono text-gray-800">{totalResidentsCount}</p>
         </div>
-        <div className="bg-white p-6 rounded-2xl shadow-sm w-full" style={{ borderLeft: "4px solid #10b981" }}>
+        <div className="bg-white p-6 rounded-2xl shadow-sm w-full border-l-4 border-emerald-500">
           <p className="text-xs text-emerald-600 uppercase font-bold tracking-wider">Certified Safe Records</p>
           <p className="text-4xl font-black text-emerald-600 mt-2 font-mono">{certifiedCount}</p>
         </div>
-        <div className="bg-white p-6 rounded-2xl shadow-sm w-full" style={{ borderLeft: "4px solid #3b82f6" }}>
+        <div className="bg-white p-6 rounded-2xl shadow-sm w-full border-l-4 border-blue-500">
           <p className="text-xs text-blue-600 uppercase font-bold tracking-wider">Active Training Track</p>
           <p className="text-4xl font-black text-blue-600 mt-2 font-mono">{inProgressCount}</p>
         </div>
