@@ -59,15 +59,8 @@ export default function MfaEmailSetup({
       toast.error("Invalid code.");
       setIsSendingOtp(false);
     } else {
-      try {
-        await apiClient.post('/auth/enable-email-mfa');
-        setIsSendingOtp(false);
-        toast.success("Email Authentication Enabled Successfully!");
-        onDone();
-      } catch (err) {
-        setIsSendingOtp(false);
-        toast.error("Verified, but failed to connect to server.");
-      }
+      toast.success("Email Authentication Enabled Successfully!");
+      onDone();
     }
   };
 

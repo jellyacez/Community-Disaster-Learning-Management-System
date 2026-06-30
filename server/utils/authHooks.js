@@ -120,6 +120,40 @@ const securityHooksPlugin = () => {
               }
             return {};
           }
+        },
+        {
+          matcher(context) {
+            return context.path?.includes("two-factor/verify-totp") || context.path?.includes("two-factor/verify-otp") || false;
+          },
+          handler: async (ctx) => {
+            if (ctx.context?.returned instanceof APIError) return {};
+            const userId = ctx.context?.session?.user?.id || ctx.context?.user?.id || ctx.context?.newSession?.user?.id;
+            if (userId) {
+              try {
+                await pool.query(`UPDATE "user" SET "twoFactorEnabled" = true WHERE id = $1`, [userId]);
+              } catch (e) {
+                console.error("Error setting twoFactorEnabled to true:", e);
+              }
+            }
+            return {};
+          }
+        },
+        {
+          matcher(context) {
+            return context.path?.includes("two-factor/disable") || false;
+          },
+          handler: async (ctx) => {
+            if (ctx.context?.returned instanceof APIError) return {};
+            const userId = ctx.context?.session?.user?.id || ctx.context?.user?.id || ctx.context?.newSession?.user?.id;
+            if (userId) {
+              try {
+                await pool.query(`UPDATE "user" SET "twoFactorEnabled" = false WHERE id = $1`, [userId]);
+              } catch (e) {
+                console.error("Error setting twoFactorEnabled to false:", e);
+              }
+            }
+            return {};
+          }
         }
       ]
     }
