@@ -1,4 +1,4 @@
-const pool = require("../config/db");
+const pool = require("../../config/db");
 
 // @desc    Fetches aggregated dashboard metrics, active announcements, and current enrollments for the user
 // @access  Private (authenticated users)

@@ -1,4 +1,4 @@
-const pool = require("../config/db");
+const pool = require("../../config/db");
 
 // @desc    Retrieves a list of authentication providers linked to the current user
 // @access  Private

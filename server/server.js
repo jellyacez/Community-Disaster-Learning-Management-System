@@ -27,16 +27,16 @@ app.use(helmet());
 app.use(hpp());
 app.use(globalLimiter);
 
-const customAuthRoutes = require("./routes/authRoutes");
+const customAuthRoutes = require("./routes/auth/authRoutes");
 app.use("/api/auth", authRateLimiter);
 app.use("/api/auth", customAuthRoutes);
 app.use("/api/auth", toNodeHandler(auth));
 
 // Import routes
-const adminRoutes = require("./routes/adminRoutes");
-const userRoutes = require("./routes/userRoutes");
-const userDashboardRoutes = require("./routes/userDashboardRoutes");
-const moduleRoutes = require("./routes/moduleRoutes");
+const adminRoutes = require("./routes/admin/adminRoutes");
+const userRoutes = require("./routes/users/userRoutes");
+const userDashboardRoutes = require("./routes/users/userDashboardRoutes");
+const moduleRoutes = require("./routes/modules/moduleRoutes");
 
 const apiSecurityMiddleware = require("./middleware/apiSecurityMiddleware");
 

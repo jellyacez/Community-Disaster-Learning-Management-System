@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
-const adminController = require("../controllers/adminController");
-const adminMiddleware = require("../middleware/adminMiddleware");
+const adminController = require("../../controllers/admin/adminController");
+const adminMiddleware = require("../../middleware/adminMiddleware");
 
 // @route   PUT /api/admin/users/:id
 // @desc    Update a user

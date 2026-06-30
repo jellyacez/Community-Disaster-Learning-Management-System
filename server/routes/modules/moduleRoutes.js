@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
-const moduleController = require("../../controllers/ModuleControllers/moduleController");
-const moduleProgressController = require("../../controllers/ModuleControllers/moduleProgressController");
+const moduleController = require("../../controllers/modules/moduleController");
+const moduleProgressController = require("../../controllers/modules/moduleProgressController");
 const adminMiddleware = require("../../middleware/adminMiddleware");
 const { betterAuthMiddleware } = require("../../middleware/betterAuthMiddleware");
 

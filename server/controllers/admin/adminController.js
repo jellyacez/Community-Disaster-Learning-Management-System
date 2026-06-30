@@ -1,5 +1,5 @@
-const pool = require("../config/db");
-const { auth } = require("../utils/auth");
+const pool = require("../../config/db");
+const { auth } = require("../../utils/auth");
 
 // @desc    Updates user demographic details and archived status
 // @access  Private (admin only)

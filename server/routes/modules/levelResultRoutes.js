@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const { betterAuthMiddleware } = require("../../middleware/betterAuthMiddleware");
-const { levelResult } = require("../../controllers/ModuleControllers/moduleResultController");
+const { levelResult } = require("../../controllers/modules/moduleResultController");
 
 
 router.post("/:levelId/results", betterAuthMiddleware, async (req, res) => {

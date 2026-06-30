@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
-const userDashboardController = require("../controllers/userDashboardController");
-const { betterAuthMiddleware } = require("../middleware/betterAuthMiddleware");
+const userDashboardController = require("../../controllers/users/userDashboardController");
+const { betterAuthMiddleware } = require("../../middleware/betterAuthMiddleware");
 
 // @route   GET /api/dashboard
 // @desc    Get user dashboard data

@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const { betterAuthMiddleware } = require("../../middleware/betterAuthMiddleware");
-const { levelCreation } = require("../../controllers/ModuleControllers/levelcontroller");
+const { levelCreation } = require("../../controllers/modules/levelcontroller");
 router.post("/:moduleId",betterAuthMiddleware, async (req,res)=>{
     const {moduleId} = req.params;
     const {levelOrder, levelTitle, levelDescription} = req.body

@@ -2,7 +2,7 @@
 const express = require("express");
 const router = express.Router();
 const { betterAuthMiddleware } = require("../../middleware/betterAuthMiddleware");
-const { questionCreation,choicesCreation } = require("../../controllers/ModuleControllers/moduleQuestionAndChoices");
+const { questionCreation,choicesCreation } = require("../../controllers/modules/moduleQuestionAndChoices");
 
 router.post("/:moduleId/questions", betterAuthMiddleware, async (req, res) => {
    
