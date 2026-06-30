@@ -3,6 +3,7 @@ import PasswordInput from "../../inputs/PasswordInput";
 import OtpInput from "../../inputs/OtpInput";
 import { authClient } from "../../../../lib/auth-client";
 import toast from "react-hot-toast";
+import apiClient from "../../../../lib/apiClient";
 
 export default function MfaEmailSetup({
   isGoogleUser,
@@ -59,18 +60,10 @@ export default function MfaEmailSetup({
       setIsSendingOtp(false);
     } else {
       try {
-        const res = await fetch(`${import.meta.env.VITE_API_URL || "http://localhost:5000/api"}/auth/enable-email-mfa`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include"
-        });
+        await apiClient.post('/auth/enable-email-mfa');
         setIsSendingOtp(false);
-        if (!res.ok) {
-          toast.error("Verified, but failed to update account settings.");
-        } else {
-          toast.success("Email Authentication Enabled Successfully!");
-          onDone();
-        }
+        toast.success("Email Authentication Enabled Successfully!");
+        onDone();
       } catch (err) {
         setIsSendingOtp(false);
         toast.error("Verified, but failed to connect to server.");

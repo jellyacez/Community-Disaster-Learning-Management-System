@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Link, useLocation, Outlet, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import { authClient } from "../../lib/auth-client";
+import LogoutModal from "../ui/modals/LogoutModal";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { 
   DashboardSquare01Icon, 
@@ -9,8 +10,36 @@ import {
   Logout01Icon, 
   Menu01Icon, 
   Cancel01Icon,
-  UserGroupIcon
+  UserGroupIcon,
+  FolderAddIcon,
+  UserAddIcon,
+  Note01Icon,
+  Task01Icon,
+  ArrowRight01Icon,
+  Database01Icon
 } from "@hugeicons/core-free-icons";
+
+const ROLE_BASED_LINKS = {
+  system_admin: [
+    { name: "Dashboard", path: "/admin/dashboard", icon: DashboardSquare01Icon },
+    { name: "System Settings", path: "/admin/settings", icon: Settings01Icon },
+  ],
+  mdrrmo_admin: [
+    { name: "Dashboard", path: "/admin/mdrrmo/dashboard", icon: DashboardSquare01Icon },
+    { name: "Audited Sector Data", path: "/admin/mdrrmo/barangay-management", icon: Database01Icon },
+    { name: "Training Modules", path: "/admin/mdrrmo/modules", icon: FolderAddIcon },
+    { name: "Personnel Directory", path: "/admin/mdrrmo/users", icon: UserAddIcon },
+    { name: "Disaster Reports", path: "/admin/mdrrmo/reports", icon: UserGroupIcon },
+  ],
+  barangay_admin: [
+    { name: "Dashboard", path: "/admin/barangay/dashboard", icon: DashboardSquare01Icon },
+    { name: "Full Registry Log", path: "/admin/barangay/registry", icon: Database01Icon },
+    { name: "Category Content", path: "/admin/barangay/categories", icon: Settings01Icon },
+    { name: "Audit Web Trail", path: "/admin/barangay/logs", icon: Note01Icon },
+    { name: "Program Syllabus", path: "/admin/barangay/syllabus", icon: Task01Icon },
+    { name: "Resident Management", path: "/admin/barangay/residents", icon: UserGroupIcon },
+  ]
+};
 
 export default function AdminLayout() {
   const { data: session } = authClient.useSession();
@@ -20,39 +49,30 @@ export default function AdminLayout() {
 
   const userRole = session?.user?.role || "resident";
 
-  const getNavLinks = (role) => {
-    const links = [];
+  const navLinks = ROLE_BASED_LINKS[userRole] || [];
 
-    if (role === "system_admin") {
-      links.push({ name: "Dashboard", path: "/admin/dashboard", icon: DashboardSquare01Icon });
-      links.push({ name: "System Settings", path: "/admin/settings", icon: Settings01Icon });
-    } else if (role === "mdrrmo_admin") {
-      links.push({ name: "MDRRMO Dashboard", path: "/admin/mdrrmo/dashboard", icon: DashboardSquare01Icon });
-      links.push({ name: "Disaster Reports", path: "/admin/mdrrmo/reports", icon: UserGroupIcon });
-    } else if (role === "barangay_admin") {
-      links.push({ name: "Barangay Dashboard", path: "/admin/barangay/dashboard", icon: DashboardSquare01Icon });
-      links.push({ name: "Resident Management", path: "/admin/barangay/residents", icon: UserGroupIcon });
-    }
+  const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
 
-    return links;
-  };
-
-  const navLinks = getNavLinks(userRole);
-
-  const handleSignOut = async () => {
-    sessionStorage.setItem("isLoggingOut", "true");
-    await authClient.signOut({
-      fetchOptions: {
-        onSuccess: () => {
-          toast.success("Successfully logged out!");
-          navigate("/signin", { replace: true });
+  const confirmLogout = async () => {
+    try {
+      sessionStorage.setItem("isLoggingOut", "true");
+      await authClient.signOut({
+        fetchOptions: {
+          onSuccess: () => {
+            navigate("/signin");
+          },
         },
-      },
-    });
+      });
+      toast.success("Successfully logged out!");
+    } catch (error) {
+      toast.error("Logout failed");
+    } finally {
+      setIsLogoutModalOpen(false);
+    }
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
+    <div className="flex h-screen bg-gray-50 overflow-hidden">
       {/* Mobile Sidebar Overlay */}
       {sidebarOpen && (
         <div 
@@ -85,34 +105,58 @@ export default function AdminLayout() {
           <p className="text-xs text-gray-500 uppercase tracking-wider font-medium">{userRole.replace('_', ' ')}</p>
         </div>
 
-        <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-1">
+        {/* Sliding Pill Navigation */}
+        <nav className="flex-1 overflow-y-auto px-4 py-5 relative flex flex-col gap-2">
+          <div
+            className="hidden lg:block absolute left-4 right-4 top-5 h-[48px] rounded-xl bg-red-600 shadow-md transition-transform duration-300 ease-out z-0"
+            style={{
+              transform: `translateY(${
+                navLinks.findIndex((link) => location.pathname === link.path || location.pathname.startsWith(`${link.path}/`)) * 56
+              }px)`,
+              opacity: navLinks.some((link) => location.pathname === link.path || location.pathname.startsWith(`${link.path}/`))
+                ? 1
+                : 0,
+            }}
+          />
+
           {navLinks.map((link) => {
             const isActive = location.pathname === link.path || location.pathname.startsWith(`${link.path}/`);
+
             return (
-              <Link
+              <button
                 key={link.path}
-                to={link.path}
-                className={`flex items-center px-3 py-2.5 rounded-xl transition-colors ${
+                onClick={() => {
+                  navigate(link.path);
+                  setSidebarOpen(false);
+                }}
+                className={`group relative flex w-full h-[48px] items-center justify-between rounded-xl px-4 text-left transition-colors z-10 cursor-pointer ${
                   isActive 
-                    ? "bg-red-50 text-red-700 font-medium" 
-                    : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                    ? "bg-red-600 lg:bg-transparent shadow-md lg:shadow-none text-white" 
+                    : "text-gray-700 hover:bg-gray-100"
                 }`}
-                onClick={() => setSidebarOpen(false)}
               >
-                <HugeiconsIcon icon={link.icon} className={`w-5 h-5 mr-3 ${isActive ? "text-red-600" : "text-gray-400"}`} />
-                {link.name}
-              </Link>
+                <span className="relative z-10 flex items-center gap-3 font-semibold">
+                  <HugeiconsIcon icon={link.icon} className={`w-5 h-5 ${isActive ? "text-white" : "text-gray-400 group-hover:text-gray-600"}`} />
+                  {link.name}
+                </span>
+                <HugeiconsIcon
+                  icon={ArrowRight01Icon}
+                  className={`relative z-10 w-4 h-4 ${
+                    isActive ? "text-white" : "text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity"
+                  }`}
+                />
+              </button>
             );
           })}
         </nav>
 
-        <div className="p-4 border-t border-gray-200">
+        <div className="border-t border-gray-200 p-4">
           <button
-            onClick={handleSignOut}
-            className="flex items-center w-full px-3 py-2.5 text-gray-600 hover:bg-red-50 hover:text-red-700 rounded-xl transition-colors"
+            onClick={() => setIsLogoutModalOpen(true)}
+            className="flex w-full items-center gap-3 rounded-xl px-4 py-3 font-semibold text-red-600 hover:bg-red-50 cursor-pointer"
           >
-            <HugeiconsIcon icon={Logout01Icon} className="w-5 h-5 mr-3 text-gray-400" />
-            Sign Out
+            <HugeiconsIcon aria-hidden="true" icon={Logout01Icon} className="w-5 h-5" />
+            Logout
           </button>
         </div>
       </aside>
@@ -135,6 +179,12 @@ export default function AdminLayout() {
           <Outlet />
         </div>
       </main>
+
+      <LogoutModal
+        isOpen={isLogoutModalOpen}
+        onClose={() => setIsLogoutModalOpen(false)}
+        onConfirm={confirmLogout}
+      />
     </div>
   );
 }

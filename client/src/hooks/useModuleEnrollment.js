@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef } from "react";
-import axios from "axios";
+import apiClient from "../lib/apiClient";
 import toast from "react-hot-toast";
 
 export function useModuleEnrollment({ moduleId, moduleTitle, initialEnrolled = false, onEnrollSuccess }) {
@@ -13,11 +13,7 @@ export function useModuleEnrollment({ moduleId, moduleTitle, initialEnrolled = f
     setIsEnrolling(true);
 
     try {
-      const response = await axios.post(
-        `${import.meta.env.VITE_API_URL || "http://localhost:5000/api"}/modules/${moduleId}/enroll`,
-        {},
-        { withCredentials: true }
-      );
+      const response = await apiClient.post(`/modules/${moduleId}/enroll`);
 
       if (response.data.success) {
         toast.success(`Enrollment Success! You are now enrolled in ${moduleTitle}.`);

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import toast from "react-hot-toast";
 import { authClient } from "../../lib/auth-client";
-import axios from "axios";
+import apiClient from "../../lib/apiClient";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Shield01Icon } from "@hugeicons/core-free-icons";
 import MfaSetupModal from "../ui/modals/mfa/MfaSetupModal";
@@ -24,9 +24,7 @@ export default function TwoFactorSettings() {
   useEffect(() => {
     const checkProvider = async () => {
       try {
-        const res = await axios.get(`${import.meta.env.VITE_API_URL || "http://localhost:5000/api"}/users/me/provider`, {
-          withCredentials: true,
-        });
+        const res = await apiClient.get('/users/me/provider');
         const providers = res.data.providers || [];
         if (providers.includes("google") && !providers.includes("credential")) {
           setIsGoogleUser(true);

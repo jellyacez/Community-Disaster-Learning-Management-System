@@ -5,6 +5,7 @@ import { CheckmarkBadge01Icon } from "@hugeicons/core-free-icons";
 import toast from "react-hot-toast";
 import { BACOLOR_BARANGAYS } from "../../../constants/locations";
 import { useQueryClient } from "@tanstack/react-query";
+import apiClient from "../../../lib/apiClient";
 
 export default function OnboardingModal({ currentUser }) {
   const queryClient = useQueryClient();
@@ -27,20 +28,13 @@ export default function OnboardingModal({ currentUser }) {
 
     setIsSubmittingOnboarding(true);
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL || "http://localhost:5000/api"}/users/onboarding`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: onboardingName, barangay: onboardingBarangay }),
-        credentials: "include",
-      });
+      await apiClient.post('/users/onboarding', { name: onboardingName, barangay: onboardingBarangay });
 
-      if (!res.ok) throw new Error("Failed to update profile");
-      
       toast.success("Profile completed successfully!");
       queryClient.invalidateQueries({ queryKey: ["userDashboard"] });
       queryClient.invalidateQueries({ queryKey: ["session"] });
     } catch (err) {
-      toast.error(err.message);
+      toast.error(err.response?.data?.message || err.message || "Failed to update profile");
       setIsSubmittingOnboarding(false);
     }
   };

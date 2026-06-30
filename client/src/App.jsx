@@ -1,5 +1,5 @@
 import React, { lazy, Suspense } from "react";
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 
 const LandingPage = lazy(() => import("./pages/public/LandingPage"));
@@ -21,8 +21,22 @@ const UserProfile = lazy(() => import("./pages/user/UserProfile"));
 const UserSettings = lazy(() => import("./pages/user/UserSettings"));
 const NotFoundPage = lazy(() => import("./pages/public/NotFoundPage"));
 
+// Admin Layouts
 const BarangayAdminDashboard = lazy(() => import("./pages/admin/barangay/BarangayAdminDashboard"));
 const MdrrmoAdminDashboard = lazy(() => import("./pages/admin/mdrrmo/MdrrmoAdminDashboard"));
+
+// MDRRMO Components
+const MdrrmoOverview = lazy(() => import("./pages/admin/mdrrmo/overview/Overview"));
+const MdrrmoBarangayManagement = lazy(() => import("./pages/admin/mdrrmo/barangay-management/BarangayManagement"));
+const MdrrmoModuleManagement = lazy(() => import("./pages/admin/mdrrmo/module-management/ModuleManagement"));
+const MdrrmoUserManagement = lazy(() => import("./pages/admin/mdrrmo/user-management/UserManagement"));
+
+// Barangay Components
+const BarangayWorkspaceOverview = lazy(() => import("./pages/admin/barangay/workspace/WorkspaceOverview"));
+const BarangayResidentRegistry = lazy(() => import("./pages/admin/barangay/registry/ResidentRegistry"));
+const BarangayCategoryConfig = lazy(() => import("./pages/admin/barangay/categories/CategoryConfig"));
+const BarangaySystemLogs = lazy(() => import("./pages/admin/barangay/logs/SystemLogs"));
+const BarangayActiveSyllabus = lazy(() => import("./pages/admin/barangay/syllabus/ActiveSyllabus"));
 
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 import UserLayout from "./components/layouts/UserLayout";
@@ -96,11 +110,26 @@ export default function App() {
             </Route>
 
             <Route element={<ProtectedRoute allowedRoles={["mdrrmo_admin"]} />}>
-              <Route path="/admin/mdrrmo/dashboard" element={<MdrrmoAdminDashboard />} />
+              <Route path="/admin/mdrrmo" element={<MdrrmoAdminDashboard />}>
+                <Route index element={<Navigate to="dashboard" replace />} />
+                <Route path="dashboard" element={<MdrrmoOverview />} />
+                <Route path="barangay-management" element={<MdrrmoBarangayManagement />} />
+                <Route path="modules" element={<MdrrmoModuleManagement />} />
+                <Route path="users" element={<MdrrmoUserManagement />} />
+                <Route path="overview" element={<Navigate to="dashboard" replace />} />
+              </Route>
             </Route>
 
             <Route element={<ProtectedRoute allowedRoles={["barangay_admin"]} />}>
-              <Route path="/admin/barangay/dashboard" element={<BarangayAdminDashboard />} />
+              <Route path="/admin/barangay" element={<BarangayAdminDashboard />}>
+                <Route index element={<Navigate to="dashboard" replace />} />
+                <Route path="dashboard" element={<BarangayWorkspaceOverview />} />
+                <Route path="registry" element={<BarangayResidentRegistry />} />
+                <Route path="categories" element={<BarangayCategoryConfig />} />
+                <Route path="logs" element={<BarangaySystemLogs />} />
+                <Route path="syllabus" element={<BarangayActiveSyllabus />} />
+                <Route path="workspace" element={<Navigate to="dashboard" replace />} />
+              </Route>
             </Route>
           </Route>
 

@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
+import apiClient from "../lib/apiClient";
 import toast from "react-hot-toast";
 
 export function useModuleViewer(moduleId) {
@@ -15,10 +15,7 @@ export function useModuleViewer(moduleId) {
   const { data, isLoading, error } = useQuery({
     queryKey: ['moduleViewer', moduleId],
     queryFn: async () => {
-      const response = await axios.get(
-        `${import.meta.env.VITE_API_URL || "http://localhost:5000/api"}/modules/${moduleId}/viewer`,
-        { withCredentials: true }
-      );
+      const response = await apiClient.get(`/modules/${moduleId}/viewer`);
       return response.data.data;
     },
     retry: false
@@ -43,11 +40,7 @@ export function useModuleViewer(moduleId) {
   // Step completion mutation
   const completeStepMutation = useMutation({
     mutationFn: async (stepId) => {
-      const response = await axios.post(
-        `${import.meta.env.VITE_API_URL || "http://localhost:5000/api"}/modules/${moduleId}/steps/${stepId}/complete`,
-        {},
-        { withCredentials: true }
-      );
+      const response = await apiClient.post(`/modules/${moduleId}/steps/${stepId}/complete`);
       return response.data;
     },
     onSuccess: () => {

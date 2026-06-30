@@ -2,6 +2,7 @@
 import React, { useMemo } from "react";
 import { useOutletContext } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
+import apiClient from "../../lib/apiClient";
 import useDocumentTitle from "../../hooks/useDocumentTitle";
 import ProfileAvatar from "../../components/ui/profile/ProfileAvatar";
 import AccountDetails from "../../components/ui/profile/AccountDetails";
@@ -18,11 +19,8 @@ export default function UserProfile() {
   const { data: dashboardData } = useQuery({
     queryKey: ['userDashboard'],
     queryFn: async () => {
-      const response = await fetch(`${import.meta.env.VITE_API_URL || "http://localhost:5000/api"}/user/dashboard`, {
-        credentials: "include",
-      });
-      if (!response.ok) throw new Error("Failed to fetch dashboard data");
-      return response.json();
+      const response = await apiClient.get('/user/dashboard');
+      return response.data;
     }
   });
 

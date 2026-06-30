@@ -45,7 +45,8 @@ export default function MfaTotpSetup({
     try {
       const url = new URL(uri);
       return url.searchParams.get("secret") || "";
-    } catch {
+    } catch (err) {
+      console.error("Failed to parse TOTP URI:", err);
       return "";
     }
   };

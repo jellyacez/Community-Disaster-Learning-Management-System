@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import { useOutletContext, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
+import apiClient from "../../lib/apiClient";
 import educationImg from "../../assets/education.svg";
 import ModuleCard from "../../components/ui/modules/ModuleCard.jsx";
 import ModuleSkeleton from "../../components/ui/modules/ModuleSkeleton.jsx";
@@ -16,11 +17,8 @@ export default function UserEnrolledModules() {
   const { data: dashboardData, isLoading } = useQuery({
     queryKey: ['userDashboard'],
     queryFn: async () => {
-      const response = await fetch(`${import.meta.env.VITE_API_URL || "http://localhost:5000/api"}/user/dashboard`, {
-        credentials: "include",
-      });
-      if (!response.ok) throw new Error("Failed to fetch dashboard data");
-      return response.json();
+      const response = await apiClient.get('/user/dashboard');
+      return response.data;
     }
   });
   

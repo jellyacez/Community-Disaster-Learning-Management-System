@@ -7,6 +7,7 @@ import ModuleSkeleton from "../../components/ui/modules/ModuleSkeleton.jsx";
 import useDocumentTitle from "../../hooks/useDocumentTitle";
 import SearchBar from "../../components/ui/inputs/SearchBar.jsx";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import apiClient from "../../lib/apiClient";
 import continuousLearningImg from "../../assets/continuous-learning.svg";
 
 export default function UserModuleCatalog() {
@@ -15,11 +16,8 @@ export default function UserModuleCatalog() {
   const { data: modules = [], isLoading } = useQuery({
     queryKey: ["availableModules"],
     queryFn: async () => {
-      const res = await fetch(`${import.meta.env.VITE_API_URL || "http://localhost:5000/api"}/modules/available`, {
-        credentials: "include",
-      });
-      if (!res.ok) throw new Error("Failed to fetch");
-      return res.json();
+      const res = await apiClient.get('/modules/available');
+      return res.data;
     },
   });
 

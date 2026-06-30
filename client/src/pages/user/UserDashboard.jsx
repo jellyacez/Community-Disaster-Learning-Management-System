@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { useOutletContext, useLocation, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
+import apiClient from "../../lib/apiClient";
 import { authClient } from "../../lib/auth-client";
 import { motion, AnimatePresence } from "framer-motion";
 import { HugeiconsIcon } from "@hugeicons/react";
@@ -41,14 +42,8 @@ export default function UserDashboard() {
   } = useQuery({
     queryKey: ["userDashboard"],
     queryFn: async () => {
-      const response = await fetch(
-        `${import.meta.env.VITE_API_URL || "http://localhost:5000/api"}/user/dashboard`,
-        {
-          credentials: "include",
-        },
-      );
-      if (!response.ok) throw new Error("Failed to fetch dashboard data");
-      return response.json();
+      const response = await apiClient.get('/user/dashboard');
+      return response.data;
     },
     onError: (err) => {
       console.error("Error fetching dashboard data:", err);
