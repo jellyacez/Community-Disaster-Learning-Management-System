@@ -1,11 +1,12 @@
 import React, { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
-import { authClient } from "../../../lib/auth-client";
-import LogoutModal from "../../ui/modals/LogoutModal";
+import { authClient } from "../../lib/auth-client";
+import LogoutModal from "../ui/modals/LogoutModal";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Cancel01Icon, Logout01Icon, ArrowRight01Icon } from "@hugeicons/core-free-icons";
-import { ROLE_BASED_LINKS } from "../../../constants/adminNavLinks";
+import { ROLE_BASED_LINKS } from "../../constants/adminNavLinks";
+import useDocumentTitle from "../../hooks/useDocumentTitle";
 
 export default function AdminSidebar({ sidebarOpen, setSidebarOpen }) {
   const { data: session } = authClient.useSession();
@@ -14,6 +15,12 @@ export default function AdminSidebar({ sidebarOpen, setSidebarOpen }) {
 
   const userRole = session?.user?.role || "resident";
   const navLinks = ROLE_BASED_LINKS[userRole] || [];
+
+  const activeLink = navLinks.flatMap(group => group.items).find(
+    link => location.pathname === link.path || location.pathname.startsWith(`${link.path}/`)
+  );
+
+  useDocumentTitle(activeLink ? `${activeLink.name} | DRRM Bacolor` : "Admin Portal | DRRM Bacolor");
 
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
 
@@ -48,7 +55,7 @@ export default function AdminSidebar({ sidebarOpen, setSidebarOpen }) {
 
       {/* Sidebar */}
       <aside 
-        className={`fixed inset-y-0 left-0 w-64 bg-white border-r border-gray-200 z-50 transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:flex-shrink-0 ${
+        className={`fixed inset-y-0 left-0 w-72 bg-white border-r border-gray-200 z-50 transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:flex-shrink-0 ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         } flex flex-col`}
       >
