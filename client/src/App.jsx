@@ -30,6 +30,7 @@ const MdrrmoOverview = lazy(() => import("./pages/admin/mdrrmo/overview/Overview
 const MdrrmoBarangayManagement = lazy(() => import("./pages/admin/mdrrmo/barangay-management/BarangayManagement"));
 const MdrrmoModuleManagement = lazy(() => import("./pages/admin/mdrrmo/module-management/ModuleManagement"));
 const MdrrmoUserManagement = lazy(() => import("./pages/admin/mdrrmo/user-management/UserManagement"));
+const LiveAlerts = lazy(() => import("./pages/admin/mdrrmo/LiveAlerts"));
 
 // Barangay Components
 const BarangayWorkspaceOverview = lazy(() => import("./pages/admin/barangay/workspace/WorkspaceOverview"));
@@ -116,6 +117,7 @@ export default function App() {
                 <Route path="barangay-management" element={<MdrrmoBarangayManagement />} />
                 <Route path="modules" element={<MdrrmoModuleManagement />} />
                 <Route path="users" element={<MdrrmoUserManagement />} />
+                <Route path="alerts" element={<LiveAlerts />} />
                 <Route path="overview" element={<Navigate to="dashboard" replace />} />
               </Route>
             </Route>
