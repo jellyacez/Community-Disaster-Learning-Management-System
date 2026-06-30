@@ -24,15 +24,14 @@ export default function UserProfile() {
     }
   });
 
-  const enrolledModules = dashboardData?.enrolledModules || [];
-
   // Derived state memoization to prevent expensive calculations on re-renders
   const { totalCompleted, totalHours, activeModules } = useMemo(() => {
     let completed = 0;
     let hours = 0;
     let active = 0;
 
-    enrolledModules.forEach(mod => {
+    const modules = dashboardData?.enrolledModules || [];
+    modules.forEach(mod => {
       if (mod.progress === 100) {
         completed += 1;
         hours += mod.duration || 0; 
@@ -42,7 +41,7 @@ export default function UserProfile() {
     });
 
     return { totalCompleted: completed, totalHours: hours, activeModules: active };
-  }, [enrolledModules]);
+  }, [dashboardData?.enrolledModules]);
 
 
   return (
