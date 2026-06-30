@@ -24,24 +24,31 @@ export default function UserProfile() {
     }
   });
 
+  const enrolledModules = useMemo(() => dashboardData?.enrolledModules || [], [dashboardData?.enrolledModules]);
+
   // Derived state memoization to prevent expensive calculations on re-renders
   const { totalCompleted, totalHours, activeModules } = useMemo(() => {
     let completed = 0;
     let hours = 0;
     let active = 0;
 
-    const modules = dashboardData?.enrolledModules || [];
-    modules.forEach(mod => {
+    enrolledModules.forEach(mod => {
       if (mod.progress === 100) {
         completed += 1;
-        hours += mod.duration || 0; 
+        
+        let time = parseFloat(mod.duration) || 0;
+        if (typeof mod.duration === 'string' && mod.duration.toLowerCase().includes('min')) {
+          time = time / 60;
+        }
+        hours += time;
+
       } else {
         active += 1; 
       }
     });
 
-    return { totalCompleted: completed, totalHours: hours, activeModules: active };
-  }, [dashboardData?.enrolledModules]);
+    return { totalCompleted: completed, totalHours: Math.round(hours * 10) / 10, activeModules: active };
+  }, [enrolledModules]);
 
 
   return (
