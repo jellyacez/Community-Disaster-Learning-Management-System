@@ -86,7 +86,9 @@ const auth = betterAuth({
       },
     }),
   ],
-  trustedOrigins: ["http://localhost:5173", "http://localhost:5174"],
+  trustedOrigins: process.env.NODE_ENV === "production" && process.env.FRONTEND_URL 
+    ? [process.env.FRONTEND_URL] 
+    : ["http://localhost:5173", "http://localhost:5174"],
   autoSignIn: true,
 });
 

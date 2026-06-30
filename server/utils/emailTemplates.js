@@ -1,3 +1,5 @@
+const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5173";
+
 const getResetPasswordEmail = (user, token) => ({
   from: process.env.EMAIL_USER,
   to: user.email,
@@ -6,7 +8,7 @@ const getResetPasswordEmail = (user, token) => ({
     <div style="font-family: Arial, sans-serif; padding: 20px;">
       <h2>Hello, ${user.name}!</h2>
       <p>You recently requested to reset your password for your DRRM Bacolor account. Click the button below to reset it.</p>
-      <a href="http://localhost:5173/reset-password?token=${token}" style="background-color: #dc2626; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block; margin-top: 10px;">
+      <a href="${FRONTEND_URL}/reset-password?token=${token}" style="background-color: #dc2626; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block; margin-top: 10px;">
         Reset Password
       </a>
       <p style="margin-top: 20px; color: #666; font-size: 12px;">
@@ -24,7 +26,7 @@ const getVerificationEmail = (user, token) => ({
     <div style="font-family: Arial, sans-serif; padding: 20px;">
       <h2>Welcome to DRRM Bacolor, ${user.name}!</h2>
       <p>Please click the button below to verify your email address and activate your account.</p>
-      <a href="http://localhost:5173/verify-email?token=${token}" style="background-color: #dc2626; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block; margin-top: 10px;">
+      <a href="${FRONTEND_URL}/verify-email?token=${token}" style="background-color: #dc2626; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block; margin-top: 10px;">
         Verify Email
       </a>
       <p style="margin-top: 20px; color: #666; font-size: 12px;">
