@@ -122,8 +122,8 @@ export default function RegisterForm() {
         </Link>
       </p>
 
-      <TermsModal isOpen={showTermsModal} onClose={() => handleSetShowTermsModal(false)} />
-      <PrivacyModal isOpen={showPrivacyModal} onClose={() => handleSetShowPrivacyModal(false)} />
+      <TermsModal isOpen={showTermsModal} onClose={() => actions.setShowTermsModal(false)} />
+      <PrivacyModal isOpen={showPrivacyModal} onClose={() => actions.setShowPrivacyModal(false)} />
     </>
   );
 }

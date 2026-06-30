@@ -94,7 +94,7 @@ export default function UserDashboard() {
         userName={currentUser.name}
         onGoToCatalog={() => {
           setShowWelcomeModal(false);
-          navigate("/user/catalog");
+          navigate("/user/modules");
         }}
       />
 
