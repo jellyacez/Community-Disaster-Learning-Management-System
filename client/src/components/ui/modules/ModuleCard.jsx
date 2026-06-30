@@ -1,7 +1,7 @@
 import React, { memo } from "react";
 import { useNavigate } from "react-router-dom";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { Activity01Icon, Alert01Icon, Book01Icon } from "@hugeicons/core-free-icons";
+import { Activity01Icon, Alert01Icon, Book01Icon, CheckmarkCircle02Icon } from "@hugeicons/core-free-icons";
 import { useModuleEnrollment } from "../../../hooks/useModuleEnrollment";
 import Spinner from "../../ui/Spinner";
 
@@ -18,6 +18,7 @@ const ModuleCard = memo(function ModuleCard({
   onEnrollSuccess,
 }) {
   const navigate = useNavigate();
+  const isCompleted = enrolled && (module.progress === 100 || module.status === "Completed");
   
   // Extract complex logic into custom hook
   const { localEnrolled, isEnrolling, handleEnroll } = useModuleEnrollment({
@@ -54,6 +55,12 @@ const ModuleCard = memo(function ModuleCard({
           <span className="rounded-full bg-amber-50 px-2.5 py-1 text-xs font-bold text-amber-700 border border-amber-100">
             {module.duration}
           </span>
+          {isCompleted && (
+            <span className="flex items-center gap-1 rounded-full bg-green-50 px-2.5 py-1 text-xs font-bold text-green-700 border border-green-100">
+              <HugeiconsIcon icon={CheckmarkCircle02Icon} className="w-3.5 h-3.5" />
+              Completed
+            </span>
+          )}
         </div>
 
         <h2 className="text-xl font-bold text-gray-900 group-hover:text-red-700 transition-colors">
@@ -68,11 +75,11 @@ const ModuleCard = memo(function ModuleCard({
           <div className="mt-4">
             <div className="mb-2 flex justify-between text-sm">
               <span className="font-medium text-gray-500">Progress</span>
-              <span className="font-bold text-gray-900">{module.progress || 0}%</span>
+              <span className={`font-bold ${isCompleted ? "text-green-600" : "text-gray-900"}`}>{module.progress || 0}%</span>
             </div>
             <div className="h-3 overflow-hidden rounded-full bg-gray-100">
               <div
-                className="h-full rounded-full bg-red-600 transition-all duration-500 ease-out"
+                className={`h-full rounded-full transition-all duration-500 ease-out ${isCompleted ? "bg-green-500" : "bg-red-600"}`}
                 style={{ width: `${module.progress || 0}%` }}
               />
             </div>
@@ -84,9 +91,11 @@ const ModuleCard = memo(function ModuleCard({
           {localEnrolled ? (
             <button 
               onClick={() => navigate(`/user/modules/${module.id}`)}
-              className="rounded-xl bg-red-600 px-5 py-3 text-sm font-bold text-white hover:bg-red-700 transition cursor-pointer"
+              className={`rounded-xl px-5 py-3 text-sm font-bold text-white transition cursor-pointer ${
+                isCompleted ? "bg-green-600 hover:bg-green-700" : "bg-red-600 hover:bg-red-700"
+              }`}
             >
-              Continue
+              {isCompleted ? "Review Module" : "Continue"}
             </button>
           ) : (
             <button
