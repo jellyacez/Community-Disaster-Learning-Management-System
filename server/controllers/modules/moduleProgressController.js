@@ -21,7 +21,10 @@ exports.completeModuleStep = async (req, res) => {
 
     // Get step details
     const stepResult = await pool.query(
-      "SELECT step_order FROM module_steps WHERE step_id = $1 AND mod_id = $2",
+      `SELECT ms.step_order 
+       FROM module_steps ms
+       JOIN levels l ON ms.level_id = l.level_id
+       WHERE ms.step_id = $1 AND l.mod_id = $2`,
       [stepId, mod_id]
     );
 
@@ -36,7 +39,8 @@ exports.completeModuleStep = async (req, res) => {
       `SELECT COALESCE(MAX(ms.step_order), 0) as current_progress_order
        FROM user_step_progress usp
        JOIN module_steps ms ON usp.step_id = ms.step_id
-       WHERE usp.user_id = $1 AND ms.mod_id = $2`,
+       JOIN levels l ON ms.level_id = l.level_id
+       WHERE usp.user_id = $1 AND l.mod_id = $2`,
       [user_id, mod_id]
     );
     const currentProgressOrder = parseInt(progressResult.rows[0].current_progress_order, 10);
@@ -63,11 +67,18 @@ exports.completeModuleStep = async (req, res) => {
         [user_id, stepId]
       );
 
-      const totalStepsResult = await client.query("SELECT COUNT(*) as total FROM module_steps WHERE mod_id = $1", [mod_id]);
+      const totalStepsResult = await client.query(
+        "SELECT COUNT(*) as total FROM module_steps ms JOIN levels l ON ms.level_id = l.level_id WHERE l.mod_id = $1",
+        [mod_id]
+      );
       const totalSteps = parseInt(totalStepsResult.rows[0].total, 10);
 
       const completedStepsResult = await client.query(
-        `SELECT COUNT(*) as completed FROM user_step_progress usp JOIN module_steps ms ON usp.step_id = ms.step_id WHERE usp.user_id = $1 AND ms.mod_id = $2`,
+        `SELECT COUNT(*) as completed 
+         FROM user_step_progress usp 
+         JOIN module_steps ms ON usp.step_id = ms.step_id 
+         JOIN levels l ON ms.level_id = l.level_id
+         WHERE usp.user_id = $1 AND l.mod_id = $2`,
         [user_id, mod_id]
       );
       const completedSteps = parseInt(completedStepsResult.rows[0].completed, 10);
@@ -122,7 +133,8 @@ exports.getModuleProgress = async (req, res) => {
                     ELSE ROUND((COUNT(p.step_id)::numeric / COUNT(s.step_id)::numeric) * 100)
                 END AS completion_percentage
             FROM public.module_data m
-            LEFT JOIN public.module_steps s ON m.mod_id = s.mod_id
+            LEFT JOIN public.levels l ON m.mod_id = l.mod_id
+            LEFT JOIN public.module_steps s ON l.level_id = s.level_id
             LEFT JOIN public.user_step_progress p ON s.step_id = p.step_id AND p.user_id = $1
             WHERE m.mod_id = $2
             GROUP BY m.mod_id

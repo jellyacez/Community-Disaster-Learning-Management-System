@@ -179,8 +179,11 @@ exports.getModuleViewerData = async (req, res) => {
 
     // Get module steps
     const stepsResult = await pool.query(
-      `SELECT step_id as id, step_order, step_type as type, step_title as title, step_content as content, media_url
-       FROM module_steps WHERE mod_id = $1 ORDER BY step_order ASC`,
+      `SELECT ms.step_id as id, ms.step_order, ms.step_type as type, ms.step_title as title, ms.step_content as content, ms.media_url
+       FROM module_steps ms
+       JOIN levels l ON ms.level_id = l.level_id
+       WHERE l.mod_id = $1
+       ORDER BY l.level_order ASC, ms.step_order ASC`,
       [mod_id]
     );
 
@@ -189,7 +192,8 @@ exports.getModuleViewerData = async (req, res) => {
       `SELECT COALESCE(MAX(ms.step_order), 0) as current_progress_order
        FROM user_step_progress usp
        JOIN module_steps ms ON usp.step_id = ms.step_id
-       WHERE usp.user_id = $1 AND ms.mod_id = $2`,
+       JOIN levels l ON ms.level_id = l.level_id
+       WHERE usp.user_id = $1 AND l.mod_id = $2`,
       [user_id, mod_id]
     );
 
