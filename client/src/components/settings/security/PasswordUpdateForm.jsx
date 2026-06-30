@@ -78,37 +78,39 @@ export default function PasswordUpdateForm({ isCooldownActive, availableDateText
 
   return (
     <>
-      <form onSubmit={handleUpdatePassword} className="space-y-4" noValidate>
-        <PasswordInput
-          id="currentPassword"
-          name="currentPassword"
-          label="Current Password"
-          value={passwordData.currentPassword}
-          onChange={handlePasswordChange}
-          error={passwordErrors.currentPassword}
-        />
-        <PasswordInput
-          id="newPassword"
-          name="newPassword"
-          label="New Password"
-          value={passwordData.newPassword}
-          onChange={handlePasswordChange}
-          error={passwordErrors.newPassword}
-        />
-        <PasswordInput
-          id="confirmPassword"
-          name="confirmPassword"
-          label="Confirm New Password"
-          value={passwordData.confirmPassword}
-          onChange={handlePasswordChange}
-          error={passwordErrors.confirmPassword}
-        />
+      <form onSubmit={handleUpdatePassword} className="space-y-5" noValidate>
+        <div className="space-y-3">
+          <PasswordInput
+            id="currentPassword"
+            name="currentPassword"
+            label="Current Password"
+            value={passwordData.currentPassword}
+            onChange={handlePasswordChange}
+            error={passwordErrors.currentPassword}
+          />
+          <PasswordInput
+            id="newPassword"
+            name="newPassword"
+            label="New Password"
+            value={passwordData.newPassword}
+            onChange={handlePasswordChange}
+            error={passwordErrors.newPassword}
+          />
+          <PasswordInput
+            id="confirmPassword"
+            name="confirmPassword"
+            label="Confirm New Password"
+            value={passwordData.confirmPassword}
+            onChange={handlePasswordChange}
+            error={passwordErrors.confirmPassword}
+          />
+        </div>
 
-        <div className="pt-2">
+        <div className="flex flex-col items-end pt-2">
           <button
             type="submit"
             disabled={isUpdatingPassword || isCooldownActive}
-            className={`flex items-center justify-center w-full md:w-auto rounded-xl border px-6 py-3.5 text-sm font-bold transition-all ${
+            className={`flex items-center justify-center w-full md:w-auto rounded-xl border px-6 py-2.5 text-sm font-bold transition-all ${
               isUpdatingPassword || isCooldownActive
                 ? "bg-gray-50 border-gray-100 text-gray-400 cursor-not-allowed"
                 : "bg-white border-red-200 text-red-600 hover:bg-red-50 active:scale-95"

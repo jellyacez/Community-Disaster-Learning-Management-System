@@ -37,49 +37,44 @@ export default function LoginHistory() {
   ];
 
   return (
-    <section className="rounded-3xl border border-gray-100 bg-white p-6 md:p-8 shadow-sm h-full flex flex-col">
-      <div className="flex items-center gap-4 mb-6">
-        <div className="bg-red-50 p-2.5 rounded-xl text-red-600">
-          <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
+    <div className="p-6 md:p-8 w-full flex flex-col space-y-2">
+      <div className="flex flex-col md:flex-row gap-8 md:gap-16 p-4 -mx-4 rounded-2xl hover:bg-gray-50/80 transition-colors group">
+        <div className="md:w-1/3 flex-shrink-0">
+          <h4 className="text-base font-bold text-gray-900 flex items-center gap-2">
+            <HugeiconsIcon icon={Clock01Icon} className="w-5 h-5 text-red-500" />
+            Login History
+          </h4>
+          <p className="text-sm text-gray-500 mt-1">Review recent account activity and login attempts.</p>
         </div>
-        <div>
-          <h2 className="text-xl font-bold text-gray-900">Login History</h2>
-          <p className="text-sm text-gray-500 mt-0.5">
-            Recent account activity and login attempts.
-          </p>
-        </div>
-      </div>
-
-      <div className="space-y-4 flex-1">
-        {historyData.map((record) => (
-          <div key={record.id} className="flex items-start gap-4 p-4 rounded-2xl bg-gray-50/50 border border-gray-100">
-            <div className="mt-1 text-gray-400">
-              <HugeiconsIcon icon={record.type === 'laptop' ? LaptopIcon : SmartPhone01Icon} className="w-5 h-5" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center justify-between gap-2">
-                <h3 className="text-sm font-bold text-gray-900 truncate">
-                  {record.device} &bull; {record.location}
-                </h3>
-                <span className="text-xs text-gray-500 whitespace-nowrap">
-                  {record.time}
-                </span>
+        <div className="md:w-2/3 max-w-md">
+          <div className="flex flex-col space-y-4">
+            {historyData.map((record) => (
+              <div key={record.id} className="flex items-start gap-4 p-4 rounded-2xl border border-gray-100 bg-gray-50/50">
+                <div className="mt-1 text-gray-400">
+                  <HugeiconsIcon icon={record.type === 'laptop' ? LaptopIcon : SmartPhone01Icon} className="w-5 h-5" />
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-bold text-gray-900">{record.device} &bull; {record.location}</p>
+                    <span className="text-xs font-medium text-gray-400 whitespace-nowrap ml-2">{record.time}</span>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">{record.browser} &bull; IP: {record.ip}</p>
+                </div>
               </div>
-              <p className="text-xs text-gray-500 mt-1">
-                {record.browser} &bull; IP: {record.ip}
-              </p>
-            </div>
+            ))}
           </div>
-        ))}
+      </div>
       </div>
       
-      <div className="mt-6 pt-6 border-t border-gray-100 text-center">
-        <button className="text-sm font-bold text-red-600 hover:text-red-700 transition">
-          View Full History
-        </button>
+      {/* Footer / View Full History */}
+      <div className="flex flex-col md:flex-row gap-8 md:gap-16 mt-2">
+        <div className="md:w-1/3 flex-shrink-0"></div>
+        <div className="md:w-2/3 max-w-md flex justify-end pt-4 border-t border-gray-100">
+          <button className="text-sm font-bold text-red-600 hover:text-red-700 transition">
+            View Full History
+          </button>
+        </div>
       </div>
-    </section>
+    </div>
   );
 }

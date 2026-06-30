@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { HugeiconsIcon } from "@hugeicons/react";
+import { Megaphone01Icon, Alert02Icon, Notification03Icon } from "@hugeicons/core-free-icons";
 
 function ToggleSwitch({ enabled, onChange, disabled = false }) {
   return (
@@ -17,42 +19,50 @@ export default function NotificationPreferences() {
   const [reminders, setReminders] = useState(true);
 
   return (
-    <section className="rounded-3xl border border-gray-100 bg-white p-6 md:p-8 shadow-sm">
-      <div className="flex items-center gap-3 mb-6">
-        <div className="p-2.5 bg-red-50 text-red-600 rounded-xl">
-           <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg>
+    <div className="p-6 md:p-8 w-full flex flex-col space-y-2">
+      
+      {/* System Announcements Row */}
+      <div className="flex flex-col md:flex-row gap-8 md:gap-16 p-4 -mx-4 rounded-2xl hover:bg-gray-50/80 transition-colors group">
+        <div className="md:w-1/3 flex-shrink-0">
+          <h4 className="text-base font-bold text-gray-900 flex items-center gap-2">
+            <HugeiconsIcon icon={Megaphone01Icon} className="w-5 h-5 text-red-500" />
+            System Announcements
+          </h4>
+          <p className="text-sm text-gray-500 mt-1">Notify me about new Bacolor municipality announcements.</p>
         </div>
-        <div>
-          <h2 className="text-xl font-bold text-gray-900">Notification Preferences</h2>
-          <p className="text-sm text-gray-500">Manage how we contact you.</p>
+        <div className="md:w-2/3 max-w-md flex items-center justify-end">
+          <ToggleSwitch enabled={announcements} onChange={setAnnouncements} />
         </div>
       </div>
 
-      <div className="space-y-6">
-        <div className="flex items-center justify-between gap-4">
-          <div>
-            <h3 className="text-sm font-semibold text-gray-900">System Announcements</h3>
-            <p className="text-xs text-gray-500 mt-1">Notify me about new Bacolor municipality announcements.</p>
-          </div>
-          <ToggleSwitch enabled={announcements} onChange={setAnnouncements} />
+      {/* Disaster Alerts Row */}
+      <div className="flex flex-col md:flex-row gap-8 md:gap-16 p-4 -mx-4 rounded-2xl hover:bg-gray-50/80 transition-colors group">
+        <div className="md:w-1/3 flex-shrink-0">
+          <h4 className="text-base font-bold text-gray-900 flex items-center gap-2">
+            <HugeiconsIcon icon={Alert02Icon} className="w-5 h-5 text-red-500" />
+            Disaster Alerts
+          </h4>
+          <p className="text-sm text-gray-500 mt-1">Receive active disaster warnings <span className="text-red-500">(Locked for safety)</span>.</p>
         </div>
-        <hr className="border-gray-100" />
-        <div className="flex items-center justify-between gap-4">
-          <div>
-            <h3 className="text-sm font-semibold text-gray-900">Module Reminders</h3>
-            <p className="text-xs text-gray-500 mt-1">Email me if I haven't finished an active module in 7 days.</p>
-          </div>
-          <ToggleSwitch enabled={reminders} onChange={setReminders} />
-        </div>
-        <hr className="border-gray-100" />
-        <div className="flex items-center justify-between gap-4">
-          <div>
-            <h3 className="text-sm font-semibold text-gray-900">Emergency Alerts</h3>
-            <p className="text-xs text-gray-500 mt-1">Receive active disaster warnings (Locked for safety).</p>
-          </div>
-          <ToggleSwitch enabled={true} onChange={() => {}} disabled={true} />
+        <div className="md:w-2/3 max-w-md flex items-center justify-end">
+          <ToggleSwitch enabled={true} disabled={true} />
         </div>
       </div>
-    </section>
+
+      {/* Module Reminders Row */}
+      <div className="flex flex-col md:flex-row gap-8 md:gap-16 p-4 -mx-4 rounded-2xl hover:bg-gray-50/80 transition-colors group">
+        <div className="md:w-1/3 flex-shrink-0">
+          <h4 className="text-base font-bold text-gray-900 flex items-center gap-2">
+            <HugeiconsIcon icon={Notification03Icon} className="w-5 h-5 text-red-500" />
+            Module Reminders
+          </h4>
+          <p className="text-sm text-gray-500 mt-1">Get reminders for incomplete learning modules.</p>
+        </div>
+        <div className="md:w-2/3 max-w-md flex items-center justify-end">
+          <ToggleSwitch enabled={reminders} onChange={setReminders} />
+        </div>
+      </div>
+
+    </div>
   );
 }

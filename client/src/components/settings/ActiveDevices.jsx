@@ -4,7 +4,7 @@ import toast from "react-hot-toast";
 import ConfirmationModal from "../ui/modals/ConfirmationModal";
 import ActiveDeviceItem from "./ActiveDeviceItem";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { LaptopIcon, SmartPhone01Icon } from "@hugeicons/core-free-icons";
+import { LaptopIcon, SmartPhone01Icon, LaptopProgrammingIcon } from "@hugeicons/core-free-icons";
 
 export default function ActiveDevices() {
   const { data: activeSession } = authClient.useSession();
@@ -81,50 +81,48 @@ export default function ActiveDevices() {
   };
 
   return (
-    <div className="rounded-3xl border border-gray-100 bg-white p-6 md:p-8 shadow-sm h-full flex flex-col">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-        <div className="flex items-center gap-3">
-          <div className="bg-red-50 p-2.5 rounded-xl text-red-600 flex-shrink-0">
-            <HugeiconsIcon aria-hidden="true" icon={LaptopIcon} className="w-6 h-6" />
-          </div>
-          <div>
-            <h2 className="text-xl font-bold text-gray-900 mb-1">
-              Active Devices
-            </h2>
-            <p className="text-sm text-gray-500">
-              These are the devices currently logged into your account.
-            </p>
-          </div>
+    <div className="p-6 md:p-8 w-full flex flex-col space-y-2">
+      <div className="flex flex-col md:flex-row gap-8 md:gap-16 p-4 -mx-4 rounded-2xl hover:bg-gray-50/80 transition-colors group">
+        <div className="md:w-1/3 flex-shrink-0">
+          <h4 className="text-base font-bold text-gray-900 flex items-center gap-2">
+            <HugeiconsIcon icon={LaptopProgrammingIcon} className="w-5 h-5 text-red-500" />
+            Active Devices
+          </h4>
+          <p className="text-sm text-gray-500 mt-1">Review and manage the devices currently logged into your account.</p>
         </div>
-        {sessions.length > 1 && (
-          <button
-            onClick={() => initiateRevoke("ALL")}
-            className="rounded-xl border border-red-200 bg-red-50 px-4 py-2 text-sm font-bold text-red-600 hover:bg-red-100 transition whitespace-nowrap"
-          >
-            Sign Out All
-          </button>
-        )}
-      </div>
+        <div className="md:w-2/3 max-w-md">
+          {loading ? (
+            <p className="text-sm text-gray-500">Loading devices...</p>
+          ) : (
+            <div className="flex flex-col space-y-3">
+              {sessions.map((session) => (
+                  <ActiveDeviceItem
+                    key={session.id || session.token}
+                    session={session}
+                    isCurrent={
+                      activeSession?.session?.id === session.id || 
+                      (activeSession?.session?.token && activeSession?.session?.token === session.token) ||
+                      (activeSession?.session?.userAgent === session.userAgent && activeSession?.session?.ipAddress === session.ipAddress)
+                    }
+                    onSignOut={initiateRevoke}
+                    isOnlySession={sessions.length === 1}
+                  />
+              ))}
+            </div>
+          )}
 
-      {loading ? (
-        <p className="text-sm text-gray-500">Loading devices...</p>
-      ) : (
-        <div className="flex flex-col">
-          {sessions.map((session) => (
-              <ActiveDeviceItem
-                key={session.id || session.token}
-                session={session}
-                isCurrent={
-                  activeSession?.session?.id === session.id || 
-                  (activeSession?.session?.token && activeSession?.session?.token === session.token) ||
-                  (activeSession?.session?.userAgent === session.userAgent && activeSession?.session?.ipAddress === session.ipAddress)
-                }
-                onSignOut={initiateRevoke}
-                isOnlySession={sessions.length === 1}
-              />
-          ))}
+          {sessions.length > 1 && (
+            <div className="mt-6 flex justify-end">
+              <button
+                onClick={() => initiateRevoke("ALL")}
+                className="rounded-xl border border-red-200 bg-red-50 px-6 py-2.5 text-sm font-bold text-red-600 hover:bg-red-100 transition whitespace-nowrap"
+              >
+                Sign Out All Other Devices
+              </button>
+            </div>
+          )}
         </div>
-      )}
+      </div>
 
       <ConfirmationModal
         isOpen={isModalOpen}

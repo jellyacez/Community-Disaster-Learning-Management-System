@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { UserCircle02Icon } from "@hugeicons/core-free-icons";
+import { UserCircle02Icon, Mail01Icon } from "@hugeicons/core-free-icons";
 import { authClient } from "../../lib/auth-client";
 import toast from "react-hot-toast";
 
@@ -34,18 +34,17 @@ export default function ProfilePreferences({ currentUser }) {
   };
 
   return (
-    <div className="rounded-3xl border border-gray-100 bg-white p-6 md:p-8 shadow-sm">
-      <div className="flex items-center gap-3 mb-6">
-        <div className="bg-red-50 p-2.5 rounded-xl text-red-600">
-          <HugeiconsIcon aria-hidden="true" icon={UserCircle02Icon} className="w-6 h-6" />
-        </div>
-        <h2 className="text-xl font-bold text-gray-900">Profile Preferences</h2>
-      </div>
-      <div className="mt-5 space-y-4">
-        <div>
-          <label className="mb-1 block text-sm font-semibold text-gray-700">
+    <div className="p-6 md:p-8 w-full flex flex-col space-y-2">
+      {/* Display Name Row */}
+      <div className="flex flex-col md:flex-row gap-8 md:gap-16 p-4 -mx-4 rounded-2xl hover:bg-gray-50/80 transition-colors group">
+        <div className="md:w-1/3 flex-shrink-0">
+          <h4 className="text-base font-bold text-gray-900 flex items-center gap-2">
+            <HugeiconsIcon icon={UserCircle02Icon} className="w-5 h-5 text-red-500" />
             Display Name
-          </label>
+          </h4>
+          <p className="text-sm text-gray-500 mt-1">This is how you will appear to other users on the platform.</p>
+        </div>
+        <div className="md:w-2/3 max-w-md">
           <input
             type="text"
             value={name}
@@ -53,13 +52,21 @@ export default function ProfilePreferences({ currentUser }) {
             className="w-full rounded-xl border border-gray-200 px-4 py-3 outline-none focus:border-red-400"
           />
         </div>
-        <div>
-          <label className="mb-1 block text-sm font-semibold text-gray-700 flex items-center gap-2">
-            Email Address{" "}
-            <span className="px-2 py-0.5 rounded-full bg-gray-100 text-gray-500 text-xs font-bold">
+      </div>
+
+      {/* Email Row */}
+      <div className="flex flex-col md:flex-row gap-8 md:gap-16 p-4 -mx-4 rounded-2xl hover:bg-gray-50/80 transition-colors group">
+        <div className="md:w-1/3 flex-shrink-0">
+          <h4 className="text-base font-bold text-gray-900 flex items-center gap-2">
+            <HugeiconsIcon icon={Mail01Icon} className="w-5 h-5 text-red-500" />
+            Email Address
+            <span className="px-2 py-0.5 rounded-full bg-gray-100 text-gray-500 text-[10px] font-bold uppercase tracking-wider ml-1">
               Uneditable
             </span>
-          </label>
+          </h4>
+          <p className="text-sm text-gray-500 mt-1">Your email cannot be changed for security reasons.</p>
+        </div>
+        <div className="md:w-2/3 max-w-md">
           <input
             type="email"
             value={currentUser?.email || ""}
@@ -67,15 +74,17 @@ export default function ProfilePreferences({ currentUser }) {
             readOnly
             className="w-full rounded-xl border border-gray-200 px-4 py-3 bg-gray-50 text-gray-500 cursor-not-allowed outline-none"
           />
-          <p className="text-xs text-gray-400 mt-1">
-            Your email address cannot be changed for security reasons.
-          </p>
         </div>
-        <div className="pt-2">
+      </div>
+
+      {/* Save Button Row */}
+      <div className="flex flex-col md:flex-row gap-8 md:gap-16">
+        <div className="md:w-1/3 flex-shrink-0"></div>
+        <div className="md:w-2/3 max-w-md flex justify-end">
           <button 
             onClick={handleUpdateProfile}
             disabled={isUpdating}
-            className={`flex items-center justify-center rounded-xl px-6 py-3.5 text-sm font-bold text-white transition-colors active:scale-95 ${
+            className={`flex items-center justify-center rounded-xl px-6 py-2.5 text-sm font-bold text-white transition-colors active:scale-95 ${
               isUpdating ? "bg-red-400 cursor-not-allowed" : "bg-red-600 hover:bg-red-700"
             }`}
           >

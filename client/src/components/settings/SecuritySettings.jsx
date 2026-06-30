@@ -45,27 +45,26 @@ export default function SecuritySettings() {
   }, []);
 
   return (
-    <div className="rounded-3xl border border-gray-100 bg-white p-6 md:p-8 shadow-sm">
-      <div className="flex items-center gap-3 mb-6">
-        <div className="bg-red-50 p-2.5 rounded-xl text-red-600">
-          <HugeiconsIcon aria-hidden="true" icon={LockKeyIcon} className="w-6 h-6" />
+    <div className="p-6 md:p-8 w-full flex flex-col space-y-2">
+      <div className="flex flex-col md:flex-row gap-8 md:gap-16 p-4 -mx-4 rounded-2xl hover:bg-gray-50/80 transition-colors group">
+        <div className="md:w-1/3 flex-shrink-0">
+          <h4 className="text-base font-bold text-gray-900 flex items-center gap-2">
+            <HugeiconsIcon icon={LockKeyIcon} className="w-5 h-5 text-red-500" />
+            Change Password
+          </h4>
+          <p className="text-sm text-gray-500 mt-1">Update your password regularly to keep your account secure.</p>
         </div>
-        <div>
-          <h2 className="text-xl font-bold text-gray-900">Security</h2>
-          <p className="text-sm text-gray-500 mt-0.5">
-            Change your password to keep your account secure.
-          </p>
+        <div className="md:w-2/3 max-w-md">
+          {isGoogleUser ? (
+            <GoogleOAuthBanner />
+          ) : (
+            <PasswordUpdateForm 
+              isCooldownActive={isCooldownActive} 
+              availableDateText={availableDateText} 
+            />
+          )}
         </div>
       </div>
-
-      {isGoogleUser ? (
-        <GoogleOAuthBanner />
-      ) : (
-        <PasswordUpdateForm 
-          isCooldownActive={isCooldownActive} 
-          availableDateText={availableDateText} 
-        />
-      )}
     </div>
   );
 }
