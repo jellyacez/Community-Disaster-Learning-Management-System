@@ -1,12 +1,13 @@
-
 const pool = require("../../config/db");
+const { cleanRichText } = require("../../utils/sanitizeHtml");
 
 const levelCreation = async (moduleId,levelOrder,levelTitle,levelDescription)=> {
+    const safeDescription = cleanRichText(levelDescription);
     const result = pool.query(`
         INSERT INTO public.levels (module_id, level_order, level_title, level_description)
-        VALUES ($1, $2, 3$, 4$) 
+        VALUES ($1, $2, $3, $4) 
         RETURNING *
-        `,[moduleId,levelOrder,levelTitle,levelDescription]);
+        `,[moduleId,levelOrder,levelTitle,safeDescription]);
         return result;
             
 }

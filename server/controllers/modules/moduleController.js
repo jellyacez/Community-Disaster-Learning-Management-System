@@ -1,4 +1,5 @@
 const pool = require("../../config/db");
+const { cleanRichText } = require("../../utils/sanitizeHtml");
 
 // @desc    Creates a new module in the database
 // @access  Private (admin only)
@@ -21,6 +22,8 @@ exports.createModule = async (req, res) => {
     });
   }
 
+  const safeDescription = cleanRichText(description);
+
   try {
     const moduleCreation = await pool.query(
       `INSERT INTO public.module_data (modname, modcat, description, level, duration, video_url, image_url) 
@@ -29,7 +32,7 @@ exports.createModule = async (req, res) => {
       [
         moduleName,
         moduleCategory,
-        description,
+        safeDescription,
         level,
         duration,
         video_url,
