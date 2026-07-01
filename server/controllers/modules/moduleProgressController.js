@@ -6,8 +6,6 @@ exports.completeModuleStep = async (req, res) => {
   const { id: mod_id, stepId } = req.params;
   const user_id = req.user?.id;
 
-  if (!user_id) return res.status(401).json({ success: false, message: "Unauthorized" });
-
   try {
     // Verify user enrollment
     const enrollmentCheck = await pool.query(
@@ -119,8 +117,6 @@ exports.completeModuleStep = async (req, res) => {
 exports.getModuleProgress = async (req, res) => {
     const { id: moduleId } = req.params;
     const userId = req.user?.id;
-
-    if (!userId) return res.status(401).json({ success: false, message: "Unauthorized" });
 
     try {
         const progressQuery = await pool.query(`

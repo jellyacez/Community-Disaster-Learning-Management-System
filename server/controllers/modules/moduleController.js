@@ -60,9 +60,6 @@ exports.createModule = async (req, res) => {
 exports.getAvailableModules = async (req, res) => {
   try {
     const user_id = req.user?.id;
-    if (!user_id) {
-      return res.status(401).json({ error: "Unauthorized" });
-    }
 
     const result = await pool.query(
       `
@@ -93,12 +90,6 @@ exports.getAvailableModules = async (req, res) => {
 exports.enrollInModule = async (req, res) => {
   const { id: mod_id } = req.params;
   const user_id = req.user?.id;
-
-  if (!user_id) {
-    return res
-      .status(401)
-      .json({ success: false, message: "Unauthorized. Please log in." });
-  }
 
   if (!mod_id || isNaN(mod_id)) {
     return res
@@ -156,8 +147,6 @@ exports.enrollInModule = async (req, res) => {
 exports.getModuleViewerData = async (req, res) => {
   const { id: mod_id } = req.params;
   const user_id = req.user?.id;
-
-  if (!user_id) return res.status(401).json({ success: false, message: "Unauthorized" });
 
   try {
     // Check enrollment status
