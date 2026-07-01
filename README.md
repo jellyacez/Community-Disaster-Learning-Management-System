@@ -9,6 +9,8 @@ A progressive, multi-level web application designed to train and certify residen
 - **Enterprise-Grade Security**: Powered by Better Auth with secure HTTP-only session cookies, backend middleware protection, and strict IP Rate Limiting.
 - **Multi-Factor Authentication (MFA)**: Optional 2FA for residents, and strictly enforced mandatory MFA for all administrative roles.
 - **Responsive & Dynamic UI**: Built with React, TailwindCSS, Framer Motion, and beautiful Hugeicons. Features mobile-first design, interactive floating animations, and dynamic skeleton loaders.
+- **Performance Optimized**: Built using advanced React performance patterns including `React.memo`, stable `useCallback` event handlers, and `React.lazy` code splitting to ensure blistering fast loads even with complex administrative tables.
+- **Advanced Admin Dashboards**: Live data visualization using `recharts`, real-time server health monitoring, and interactive quick action panels connected directly to the live PostgreSQL database.
 - **Account Management**: Full end-to-end authentication flows including secure registration, login, and forgot password recovery.
 
 ---
@@ -59,6 +61,7 @@ A progressive, multi-level web application designed to train and certify residen
 - `framer-motion` (^12.40.0)
 - `react-hot-toast` (^2.6.0)
 - `qrcode.react` (^4.2.0)
+- `recharts` (^2.12.0)
 - `@hugeicons/react` (^1.1.6)
 - `@hugeicons/core-free-icons` (^4.2.0)
 - `tailwindcss` (^4.3.0) & `@tailwindcss/vite` - _dev_
@@ -161,3 +164,4 @@ The application will be live at `http://localhost:5173`.
 11. **Security Cooldowns**: A strict 24-hour cooldown lock is enforced on manual password changes via the user dashboard to mitigate brute-force account takeovers. Legitimate owners can bypass this lock via the secure Email Recovery flow.
 12. **Multi-Factor Authentication (MFA)**: Time-based One-Time Password (TOTP) enforcement utilizing Better Auth's twoFactor plugin. Highly privileged roles (system_admin, mdrrmo_admin, barangay_admin) are strictly gated by backend middleware, redirecting them to an un-bypassable MFA setup flow if their account lacks 2FA.
 13. **Data Privacy**: The platform includes standardized Privacy Policy and Terms & Conditions. API routes are strictly structured utilizing isolated `/routes` modules (e.g. `authRoutes.js`, `userRoutes.js`) to strictly scope SQL `SELECT` statements and prevent data over-fetching.
+14. **Optimized Frontend Architecture**: Large administrative components (like User Management) are strictly decoupled into independent Container Components and Presentation Components. This limits re-renders, prevents UI layout shifting during data fetches, and cleanly separates React Query data mutations from pure visual rendering.

@@ -61,6 +61,11 @@ exports.getSystemStats = async (req, res) => {
       SELECT
         (SELECT COUNT(*) FROM "user") AS total_users,
         (SELECT COUNT(*) FROM "user" WHERE archived = false AND (banned IS NULL OR banned = false)) AS active_users,
+        (SELECT COUNT(*) FROM "user" WHERE last_active >= NOW() - INTERVAL '5 minutes') AS online_users,
+        (SELECT COUNT(*) FROM "user" WHERE role = 'resident') AS resident_users,
+        (SELECT COUNT(*) FROM "user" WHERE role = 'barangay_admin') AS barangay_admin_users,
+        (SELECT COUNT(*) FROM "user" WHERE role = 'mdrrmo_admin') AS mdrrmo_admin_users,
+        (SELECT COUNT(*) FROM "user" WHERE role = 'system_admin') AS system_admin_users,
         (SELECT COUNT(*) FROM "user" WHERE banned = true) AS banned_users,
         (SELECT COUNT(*) FROM "user" WHERE archived = true) AS archived_users,
         (SELECT COUNT(*) FROM module_data) AS total_modules,
@@ -200,6 +205,24 @@ exports.archiveUser = async (req, res) => {
   }
 };
 // --- End of archiveUser ---
+
+// @desc    Bulk archive or unarchive users
+// @access  Private (system_admin only)
+exports.bulkArchiveUsers = async (req, res) => {
+  const { userIds, archived } = req.body;
+  if (!Array.isArray(userIds) || userIds.length === 0) {
+    return res.status(400).json({ success: false, error: 'No users selected' });
+  }
+  const isArchived = archived === true || archived === "true";
+  try {
+    await pool.query(`UPDATE "user" SET archived = $1 WHERE id = ANY($2)`, [isArchived, userIds]);
+    res.json({ success: true, message: `${userIds.length} users ${isArchived ? 'archived' : 'restored'}` });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, error: 'Failed to bulk update users' });
+  }
+};
+// --- End of bulkArchiveUsers ---
 
 // @desc    Get system settings (including maintenance mode)
 // @access  Private (system_admin only)

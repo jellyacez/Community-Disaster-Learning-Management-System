@@ -40,7 +40,7 @@ exports.onboarding = async (req, res) => {
 exports.getAllUsers = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 15;
+    const limit = parseInt(req.query.limit) || 10;
     const offset = (page - 1) * limit;
     const search = req.query.search || "";
     const role = req.query.role || "";
@@ -52,7 +52,7 @@ exports.getAllUsers = async (req, res) => {
 
     if (search) {
       conditions.push(`(name ILIKE $${idx} OR email ILIKE $${idx})`);
-      values.push(`%${search}%`);
+      values.push(`%\${search}%`);
       idx++;
     }
     if (role) {

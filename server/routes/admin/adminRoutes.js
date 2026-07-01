@@ -45,6 +45,11 @@ router.patch("/users/:id/unban", adminMiddleware, adminController.unbanUser);
 // @access  Private (system_admin only)
 router.patch("/users/:id/archive", adminMiddleware, adminController.archiveUser);
 
+// @route   PATCH /api/admin/users/bulk-archive
+// @desc    Bulk archive users
+// @access  Private (system_admin only)
+router.patch("/users/bulk-archive", adminMiddleware, adminController.bulkArchiveUsers);
+
 // @route   GET /api/admin/settings
 // @desc    Get system settings
 // @access  Private (system_admin only)

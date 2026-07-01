@@ -15,14 +15,22 @@ const ROLE_LABELS = {
   resident: "Resident",
 };
 
-function UserTableRow({ user, onManageClick }) {
+function UserTableRow({ user, onManageClick, isSelected, onToggleSelect }) {
   // Extracting into a separate handler prevents an inline arrow function in the JSX
   const handleManage = () => {
     onManageClick(user);
   };
 
   return (
-    <tr className="hover:bg-gray-50/60 transition-colors">
+    <tr className={`transition-colors ${isSelected ? "bg-red-50/50" : "hover:bg-gray-50/60"}`}>
+      <td className="px-4 py-3 w-10">
+        <input 
+          type="checkbox" 
+          checked={isSelected} 
+          onChange={() => onToggleSelect(user.id)}
+          className="w-4 h-4 text-red-600 rounded border-gray-300 focus:ring-red-500 cursor-pointer"
+        />
+      </td>
       <td className="px-4 py-3">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-xs font-bold text-gray-600 uppercase flex-shrink-0">

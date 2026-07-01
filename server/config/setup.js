@@ -5,7 +5,7 @@ const pool = require("./db");
 async function setupDatabase() {
   console.log("Starting database setup...");
   try {
-    const schemaPath = path.join(__dirname, "..", "schema.sql");
+    const schemaPath = path.join(__dirname, "..", "migrations", "schema.sql");
     const schema = fs.readFileSync(schemaPath, "utf8");
 
     await pool.query(schema);
