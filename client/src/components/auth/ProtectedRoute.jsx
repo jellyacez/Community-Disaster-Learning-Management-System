@@ -1,5 +1,5 @@
 import React from "react";
-import { Navigate, Outlet, Link, useSearchParams } from "react-router-dom";
+import { Navigate, Outlet, Link, useSearchParams, useLocation } from "react-router-dom";
 import { authClient } from "../../lib/auth-client";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Alert01Icon } from "@hugeicons/core-free-icons";
@@ -7,6 +7,7 @@ import { Alert01Icon } from "@hugeicons/core-free-icons";
 export default function ProtectedRoute({ allowedRoles = [] }) {
   const { data: session, isPending } = authClient.useSession();
   const [searchParams] = useSearchParams();
+  const location = useLocation();
 
   if (isPending) {
     return (

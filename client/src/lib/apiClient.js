@@ -8,6 +8,7 @@ const apiClient = axios.create({
   withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
+    'x-lms-client': 'true',
   },
 });
 

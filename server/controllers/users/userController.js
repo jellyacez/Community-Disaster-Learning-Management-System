@@ -40,15 +40,44 @@ exports.onboarding = async (req, res) => {
 exports.getAllUsers = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 10;
+    const limit = parseInt(req.query.limit) || 15;
     const offset = (page - 1) * limit;
+    const search = req.query.search || "";
+    const role = req.query.role || "";
+    const status = req.query.status || "";
 
-    const countResult = await pool.query('SELECT COUNT(*) FROM "user"');
+    const conditions = [];
+    const values = [];
+    let idx = 1;
+
+    if (search) {
+      conditions.push(`(name ILIKE $${idx} OR email ILIKE $${idx})`);
+      values.push(`%${search}%`);
+      idx++;
+    }
+    if (role) {
+      conditions.push(`role = $${idx}`);
+      values.push(role);
+      idx++;
+    }
+    if (status === "active") {
+      conditions.push(`(archived = false OR archived IS NULL) AND (banned = false OR banned IS NULL)`);
+    } else if (status === "banned") {
+      conditions.push(`banned = true`);
+    } else if (status === "archived") {
+      conditions.push(`archived = true`);
+    }
+
+    const where = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
+
+    const countResult = await pool.query(`SELECT COUNT(*) FROM "user" ${where}`, values);
     const total = parseInt(countResult.rows[0].count);
 
     const result = await pool.query(
-      'SELECT id, name, email, "emailVerified", image, role, "banned", "banReason", "banExpires", "createdAt", "updatedAt", "twoFactorEnabled", barangay FROM "user" ORDER BY "createdAt" DESC LIMIT $1 OFFSET $2',
-      [limit, offset]
+      `SELECT id, name, email, "emailVerified", image, role, "banned", "banReason", "banExpires", "createdAt", "updatedAt", "twoFactorEnabled", barangay, archived
+       FROM "user" ${where}
+       ORDER BY "createdAt" DESC LIMIT $${idx} OFFSET $${idx + 1}`,
+      [...values, limit, offset]
     );
 
     res.json({
@@ -57,8 +86,8 @@ exports.getAllUsers = async (req, res) => {
         total,
         page,
         limit,
-        totalPages: Math.ceil(total / limit)
-      }
+        totalPages: Math.ceil(total / limit),
+      },
     });
   } catch (err) {
     console.error(err.message);

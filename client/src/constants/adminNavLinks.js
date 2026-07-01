@@ -6,7 +6,7 @@ import {
   Note01Icon,
   Task01Icon,
   Database01Icon,
-  Notification01Icon
+  Notification01Icon,
 } from "@hugeicons/core-free-icons";
 
 export const ROLE_BASED_LINKS = {
@@ -14,8 +14,10 @@ export const ROLE_BASED_LINKS = {
     {
       category: "System Administration",
       items: [
-        { name: "Dashboard", path: "/admin/dashboard", icon: DashboardSquare01Icon },
-        { name: "System Settings", path: "/admin/settings", icon: Settings01Icon },
+        { name: "Dashboard", path: "/admin/system/dashboard", icon: DashboardSquare01Icon },
+        { name: "User Management", path: "/admin/system/users", icon: UserGroupIcon },
+        { name: "Activity Log", path: "/admin/system/logs", icon: Note01Icon },
+        { name: "System Settings", path: "/admin/system/settings", icon: Settings01Icon },
       ]
     }
   ],
