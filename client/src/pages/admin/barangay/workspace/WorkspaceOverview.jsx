@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 
-import ResidentInspectorPanel from "../../shared/ResidentInspectorPanel";
+import WorkspaceOverviewSkeleton from "./WorkspaceOverviewSkeleton";
 
 const fetchResidents = async () => {
   const res = await fetch("/api/admin/residents");
@@ -27,12 +27,7 @@ export default function WorkspaceOverview() {
   };
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center p-12">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-600"></div>
-        <span className="ml-3 text-gray-500 font-medium">Loading Workspace Data...</span>
-      </div>
-    );
+    return <WorkspaceOverviewSkeleton />;
   }
 
   if (isError) {

@@ -1,6 +1,8 @@
 import React, { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 
+import ResidentRegistrySkeleton from "./ResidentRegistrySkeleton";
+
 const fetchResidents = async () => {
   const res = await fetch("/api/admin/residents");
   if (!res.ok) throw new Error("Failed to fetch residents");
@@ -30,12 +32,7 @@ export default function ResidentRegistry() {
   };
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center p-12">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-600"></div>
-        <span className="ml-3 text-gray-500 font-medium">Loading Registry Data...</span>
-      </div>
-    );
+    return <ResidentRegistrySkeleton />;
   }
 
   if (isError) {
