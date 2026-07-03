@@ -4,16 +4,16 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import { Alert01Icon } from "@hugeicons/core-free-icons";
 import PasswordInput from "../ui/inputs/PasswordInput";
 import BarangayDropdown from "../ui/inputs/BarangayDropdown";
-import TermsCheckbox from "../ui/inputs/TermsCheckbox";
 import TermsModal from "../ui/modals/TermsModal";
 import PrivacyModal from "../ui/modals/PrivacyModal";
+import ExplicitConsentModal from "../ui/modals/ExplicitConsentModal";
 import Spinner from "../ui/Spinner";
 import { useRegisterForm } from "./hooks/useRegisterForm";
 import PasswordRequirements from "./PasswordRequirements";
 
 export default function RegisterForm() {
   const { state, actions } = useRegisterForm();
-  const { formData, errors, isSubmitting, showTermsModal, showPrivacyModal, acceptedTerms } = state;
+  const { formData, errors, isSubmitting, showTermsModal, showPrivacyModal, showConsentModal } = state;
 
   return (
     <>
@@ -92,22 +92,35 @@ export default function RegisterForm() {
           autoComplete="new-password"
         />
 
-        <TermsCheckbox
-          acceptedTerms={acceptedTerms}
-          setAcceptedTerms={actions.setAcceptedTerms}
-          setShowTermsModal={actions.setShowTermsModal}
-          setShowPrivacyModal={actions.setShowPrivacyModal}
-        />
+        <div className="text-xs text-gray-500 text-center mt-2 leading-relaxed">
+          By clicking Create Account, you will be prompted to explicitly consent to our{" "}
+          <button
+            type="button"
+            onClick={(e) => { e.preventDefault(); actions.setShowPrivacyModal(true); }}
+            className="text-red-600 font-semibold hover:underline"
+          >
+            Privacy Policy
+          </button>
+          . You also acknowledge our{" "}
+          <button
+            type="button"
+            onClick={(e) => { e.preventDefault(); actions.setShowTermsModal(true); }}
+            className="text-red-600 font-semibold hover:underline"
+          >
+            Terms & Conditions
+          </button>
+          .
+        </div>
 
         <button
           type="submit"
-          disabled={isSubmitting || !acceptedTerms}
-          className="w-full flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 text-white py-3 rounded-xl font-bold transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-md shadow-red-600/20"
+          disabled={isSubmitting}
+          className="w-full flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 text-white py-3 rounded-xl font-bold transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-md shadow-red-600/20 mt-2"
         >
           {isSubmitting ? (
             <span className="flex items-center justify-center gap-2">
               <Spinner className="h-5 w-5 text-gray-500" />
-              Creating Account...
+              Validating...
             </span>
           ) : (
             "Create Account"
@@ -124,6 +137,13 @@ export default function RegisterForm() {
 
       <TermsModal isOpen={showTermsModal} onClose={() => actions.setShowTermsModal(false)} />
       <PrivacyModal isOpen={showPrivacyModal} onClose={() => actions.setShowPrivacyModal(false)} />
+      
+      <ExplicitConsentModal 
+        isOpen={showConsentModal} 
+        onCancel={() => actions.setShowConsentModal(false)}
+        onConfirm={actions.confirmRegistration}
+        isSubmitting={isSubmitting}
+      />
     </>
   );
 }

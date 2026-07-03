@@ -15,7 +15,7 @@ export const useRegisterForm = () => {
 
   const [showTermsModal, setShowTermsModal] = useState(false);
   const [showPrivacyModal, setShowPrivacyModal] = useState(false);
-  const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [showConsentModal, setShowConsentModal] = useState(false);
   
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -32,7 +32,7 @@ export const useRegisterForm = () => {
     });
   }, []);
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
     if (isSubmittingRef.current) return;
     
@@ -44,7 +44,7 @@ export const useRegisterForm = () => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(formData.email)) newErrors.email = "Please enter a valid email address.";
 
-    const passwordRegex = /^(?=.*[A-Z])(?=.*[!@#$%^&*_=+-/.]).{8,}$/;
+    const passwordRegex = /^(?=.*[A-Z])(?=.*[!@#$%^&*_=+\-/.]).{8,}$/;
     if (!passwordRegex.test(formData.password)) {
       newErrors.password = "Must be 8+ characters and include an uppercase letter and a symbol.";
     }
@@ -60,11 +60,11 @@ export const useRegisterForm = () => {
       return;
     }
 
-    if (!acceptedTerms) {
-      setErrors({ form: "You must accept the terms and conditions." });
-      return;
-    }
+    // Instead of calling the API, we intercept and show the Explicit Consent Modal
+    setShowConsentModal(true);
+  };
 
+  const confirmRegistration = async () => {
     isSubmittingRef.current = true;
     setIsSubmitting(true);
 
@@ -82,9 +82,11 @@ export const useRegisterForm = () => {
       await new Promise((resolve) => setTimeout(resolve, 1500));
       isSubmittingRef.current = false;
       setIsSubmitting(false);
+      setShowConsentModal(false);
     } else {
       isSubmittingRef.current = false;
       setIsSubmitting(false);
+      setShowConsentModal(false);
       navigate("/verify-email-prompt", { state: { email: formData.email } });
     }
   };
@@ -105,15 +107,16 @@ export const useRegisterForm = () => {
       isSubmitting,
       showTermsModal,
       showPrivacyModal,
-      acceptedTerms
+      showConsentModal
     },
     actions: {
       handleChange,
       handleSubmit,
+      confirmRegistration,
       getInputClass,
       setShowTermsModal,
       setShowPrivacyModal,
-      setAcceptedTerms
+      setShowConsentModal
     }
   };
 };

@@ -18,32 +18,32 @@ export default function TermsModal({ isOpen, onClose }) {
           </button>
         </div>
         
-        <div className="p-6 overflow-y-auto prose prose-red max-w-none text-gray-600 text-sm">
-          <p className="font-semibold text-gray-900 mb-4">
+        <div className="p-6 overflow-y-auto prose prose-red max-w-none text-gray-700 text-sm">
+          <p className="font-semibold text-gray-900 mb-6 text-base">
             Welcome to the Community Disaster Learning Management System. By accessing or using our platform, you agree to be bound by these Terms and Conditions.
           </p>
 
-          <h3 className="text-lg font-bold text-gray-900 mt-6 mb-2">1. Acceptance of Terms</h3>
+          <h3 className="text-lg font-bold text-gray-900 mt-6 mb-2 border-b pb-2">1. Acceptance of Terms</h3>
           <p className="mb-4">
             By creating an account and utilizing the Community Disaster Learning Management System, you agree to comply with and be bound by these Terms and Conditions. If you do not agree with any part of these terms, you may not use the service.
           </p>
 
-          <h3 className="text-lg font-bold text-gray-900 mt-6 mb-2">2. User Accounts and Security</h3>
+          <h3 className="text-lg font-bold text-gray-900 mt-6 mb-2 border-b pb-2">2. User Accounts, Security, & Privacy</h3>
           <p className="mb-4">
-            You are entirely responsible for maintaining the confidentiality of your account credentials. You agree to notify administrators immediately of any unauthorized use of your account. We highly recommend enabling Two-Factor Authentication (MFA) via your account settings to ensure maximum protection. By using this platform, you explicitly consent to active IP and device tracking for security monitoring.
+            You are entirely responsible for maintaining the confidentiality of your account credentials. You agree to notify administrators immediately of any unauthorized use of your account. In accordance with The Data Privacy Act of 2012 (Republic Act No. 10173), by using this platform, you explicitly consent to active IP and device tracking for security monitoring to protect your account from malicious access.
           </p>
 
-          <h3 className="text-lg font-bold text-gray-900 mt-6 mb-2">3. Appropriate Use</h3>
+          <h3 className="text-lg font-bold text-gray-900 mt-6 mb-2 border-b pb-2">3. Appropriate Use</h3>
           <p className="mb-4">
             The platform is provided solely for educational and administrative purposes relating to Disaster Risk Reduction and Management. Any attempt to disrupt, hack, reverse-engineer, or maliciously overload the system is strictly prohibited and will result in immediate termination of access and potential legal action.
           </p>
 
-          <h3 className="text-lg font-bold text-gray-900 mt-6 mb-2">4. Intellectual Property</h3>
+          <h3 className="text-lg font-bold text-gray-900 mt-6 mb-2 border-b pb-2">4. Intellectual Property</h3>
           <p className="mb-4">
             All training modules, text, graphics, and interface designs are the intellectual property of the Bacolor MDRRMO or its respective licensors. You may not distribute, modify, or transmit the contents of this site without prior written consent.
           </p>
 
-          <h3 className="text-lg font-bold text-gray-900 mt-6 mb-2">5. Disclaimer of Warranties</h3>
+          <h3 className="text-lg font-bold text-gray-900 mt-6 mb-2 border-b pb-2">5. Disclaimer of Warranties</h3>
           <p className="mb-4">
             While we strive to provide accurate and life-saving information, the materials on this site are provided "as is" without any express or implied warranty of any kind. We are not liable for any damages or injuries resulting from the application or misapplication of the training material during an actual disaster.
           </p>

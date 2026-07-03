@@ -3,6 +3,7 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 
 const LandingPage = lazy(() => import("./pages/public/LandingPage"));
+const PrivacyPolicyPage = lazy(() => import("./pages/public/PrivacyPolicyPage"));
 const RegisterPage = lazy(() => import("./pages/auth/RegisterPage"));
 const SignInPage = lazy(() => import("./pages/auth/SignInPage"));
 const ForgotPasswordPage = lazy(
@@ -130,6 +131,7 @@ export default function App() {
         <Routes>
           {/* PUBLIC ROUTES */}
           <Route path="/" element={<LandingPage />} />
+          <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/signin" element={<SignInPage />} />
           <Route

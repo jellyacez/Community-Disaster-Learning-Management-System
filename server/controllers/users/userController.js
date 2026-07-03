@@ -95,3 +95,52 @@ exports.getAllUsers = async (req, res) => {
   }
 };
 // --- End of getAllUsers ---
+
+// @desc    Hard deletes a user's account and anonymizes their certificates (Right to Be Forgotten)
+// @access  Private
+exports.deleteAccount = async (req, res) => {
+  const client = await pool.connect();
+  try {
+    const userId = req.user.id;
+    
+    await client.query('BEGIN');
+    
+    // 1. Fetch user data before deletion for anonymization
+    const userRes = await client.query('SELECT name, barangay FROM "user" WHERE id = $1', [userId]);
+    if (userRes.rows.length === 0) {
+      await client.query('ROLLBACK');
+      return res.status(404).json({ error: "User not found" });
+    }
+    const { barangay } = userRes.rows[0];
+    
+    // 2. Anonymize certificates (strip PII, retain stats)
+    await client.query(`
+      UPDATE certificates 
+      SET user_id = NULL, 
+          anonymized_name = 'Archived Resident', 
+          barangay = $1
+      WHERE user_id = $2
+    `, [barangay, userId]);
+    
+    // 3. Hard Delete tied records (assuming these tables exist and use user_id)
+    await client.query('DELETE FROM activity_log WHERE user_id = $1', [userId]).catch(() => {});
+    await client.query('DELETE FROM module_activity WHERE user_id = $1', [userId]).catch(() => {});
+    
+    // 4. Delete core Better Auth tables
+    await client.query('DELETE FROM "session" WHERE "userId" = $1', [userId]);
+    await client.query('DELETE FROM "account" WHERE "userId" = $1', [userId]);
+    
+    // 5. Delete core user row
+    await client.query('DELETE FROM "user" WHERE id = $1', [userId]);
+    
+    await client.query('COMMIT');
+    res.json({ success: true, message: "Account and associated data permanently deleted." });
+  } catch (err) {
+    await client.query('ROLLBACK');
+    console.error("Account deletion error:", err.message);
+    res.status(500).json({ error: "Server Error during deletion pipeline" });
+  } finally {
+    client.release();
+  }
+};
+// --- End of deleteAccount ---

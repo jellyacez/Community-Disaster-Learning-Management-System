@@ -19,4 +19,9 @@ router.post("/onboarding", betterAuthMiddleware, userController.onboarding);
 // @access  Private (admin only)
 router.get("/", adminMiddleware, userController.getAllUsers);
 
+// @route   DELETE /api/users/me
+// @desc    Hard delete the current user's account (Right to Be Forgotten)
+// @access  Private
+router.delete("/me", betterAuthMiddleware, userController.deleteAccount);
+
 module.exports = router;
