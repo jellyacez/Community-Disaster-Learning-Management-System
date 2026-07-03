@@ -3,17 +3,17 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import { Notification01Icon } from "@hugeicons/core-free-icons";
 
 export default function LiveAlerts() {
-  useDocumentTitle("Live Alerts | DRRM Bacolor");
+  useDocumentTitle("System Announcements | DRRM Bacolor");
 
   return (
     <div className="animate-in fade-in duration-300">
       <div className="space-y-6">
         <div>
           <h1 className="text-3xl font-extrabold text-gray-900">
-            Live Alerts & Announcements
+            System Announcements
           </h1>
           <p className="mt-1 text-sm text-gray-500">
-            Broadcast emergency alerts and announcements to the municipality.
+            Broadcast educational updates, new module availability, and system notices.
           </p>
         </div>
 
@@ -23,8 +23,8 @@ export default function LiveAlerts() {
           </div>
           <h2 className="text-2xl font-black text-gray-900">Module Under Construction</h2>
           <p className="mt-2 text-gray-500 max-w-md text-center">
-            The Live Alerts broadcasting system is currently being developed. 
-            Check back later to send push notifications to residents.
+            The announcement broadcasting system is currently being developed. 
+            Check back later to send system-wide educational notices to residents.
           </p>
         </div>
       </div>

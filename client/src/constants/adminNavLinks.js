@@ -40,7 +40,7 @@ export const ROLE_BASED_LINKS = {
       items: [
         { name: "Personnel Directory", path: "/admin/mdrrmo/users", icon: UserGroupIcon },
         { name: "Disaster Reports", path: "/admin/mdrrmo/reports", icon: Note01Icon },
-        { name: "Live Alerts", path: "/admin/mdrrmo/alerts", icon: Notification01Icon },
+        { name: "System Announcements", path: "/admin/mdrrmo/alerts", icon: Notification01Icon },
       ]
     }
   ],
