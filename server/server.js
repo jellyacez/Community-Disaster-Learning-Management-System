@@ -22,11 +22,15 @@ app.use(
         defaultSrc: ["'self'"],
         scriptSrc: ["'self'"],
         styleSrc: ["'self'", "'unsafe-inline'"],
+        imgSrc: ["'self'", "data:", "https:"],
+        mediaSrc: ["'self'", "https:"], // Allow HTML5 <video> from AWS S3
+        frameSrc: ["'self'"], // Removed youtube and vimeo
         frameAncestors: ["'none'"],
         objectSrc: ["'none'"],
         upgradeInsecureRequests: [],
       },
     },
+    crossOriginResourcePolicy: { policy: "cross-origin" },
   }),
 );
 

@@ -947,5 +947,11 @@ ALTER TABLE ONLY public.user_step_progress
 -- PostgreSQL database dump complete
 --
 
+-- Custom Indexes for Query Optimization
+CREATE INDEX idx_user_role ON public."user" USING btree (role);
+CREATE INDEX idx_user_archived ON public."user" USING btree (archived);
+CREATE INDEX idx_user_banned ON public."user" USING btree (banned);
+CREATE INDEX idx_module_activity_status ON public.module_activity USING btree (modstatus);
+
 \unrestrict dsdNrUd5FpnmCoHd5PurpQctIoAncIug7HaMPMWgBqvXAO8xlgL17hm9KroRtIF
 

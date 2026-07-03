@@ -98,10 +98,14 @@ exports.getActivityLog = async (req, res) => {
       ? [limit, offset, `%${search}%`]
       : [limit, offset];
 
+    const whereClauseCount = search
+      ? `WHERE u.name ILIKE $1 OR al.act_log ILIKE $1`
+      : '';
+
     const countResult = await pool.query(
       `SELECT COUNT(*) FROM activity_log al
        LEFT JOIN "user" u ON al.user_id = u.id
-       ${whereClause}`,
+       ${whereClauseCount}`,
       search ? [`%${search}%`] : []
     );
     const total = parseInt(countResult.rows[0].count);

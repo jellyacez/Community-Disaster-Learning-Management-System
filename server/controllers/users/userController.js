@@ -52,7 +52,7 @@ exports.getAllUsers = async (req, res) => {
 
     if (search) {
       conditions.push(`(name ILIKE $${idx} OR email ILIKE $${idx})`);
-      values.push(`%\${search}%`);
+      values.push(`%${search}%`);
       idx++;
     }
     if (role) {

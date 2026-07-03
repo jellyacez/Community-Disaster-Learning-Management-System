@@ -21,6 +21,14 @@ const auth = betterAuth({
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
     },
   },
+  session: {
+    expiresIn: 60 * 60 * 24 * 7, // Absolute expiration set to 7 days
+    updateAge: 60 * 60 * 24, // Roll the session forward if active within 24 hours
+    cookieCache: {
+      enabled: true,
+      maxAge: 5 * 60 // Cache for 5 minutes to reduce DB reads
+    }
+  },
   emailAndPassword: {
     enabled: true,
     revokeSessionsOnPasswordReset: true,

@@ -39,10 +39,16 @@ const cleanRichText = (htmlContent) => {
       "iframe",
       "img",
       "span",
+      "video",
+      "source",
+      "track"
     ],
     allowedAttributes: {
       a: ["href", "name", "target", "rel"],
       img: ["src", "alt", "title", "width", "height"],
+      video: ["src", "controls", "width", "height", "autoplay", "muted", "loop", "poster"],
+      source: ["src", "type"],
+      track: ["kind", "src", "srclang", "label", "default"],
       iframe: [
         "src",
         "width",
@@ -54,7 +60,7 @@ const cleanRichText = (htmlContent) => {
       "*": ["class"],
       "p": ["style"],
     },
-    allowedIframeHostnames: ["www.youtube.com", "player.vimeo.com"],
+    allowedIframeHostnames: [],
     allowedSchemes: ["http", "https", "mailto"],
   });
 };
