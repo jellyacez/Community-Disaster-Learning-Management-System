@@ -8,6 +8,7 @@ const PasswordInput = memo(function PasswordInput({
   label,
   value,
   onChange,
+  onBlur,
   error,
   placeholder = "Enter password",
   required = true,
@@ -37,6 +38,7 @@ const PasswordInput = memo(function PasswordInput({
           autoComplete={autoComplete}
           value={value}
           onChange={onChange}
+          onBlur={onBlur}
           placeholder={placeholder}
           className={`${inputClass} pr-12`}
           required={required}

@@ -1,7 +1,7 @@
 import React, { useState, useMemo, memo } from "react";
 import { BACOLOR_BARANGAYS } from "../../../constants/locations";
 
-const BarangayDropdown = memo(function BarangayDropdown({ value, onChange, error }) {
+const BarangayDropdown = memo(function BarangayDropdown({ value, onChange, onBlur, error }) {
   const [showBarangayList, setShowBarangayList] = useState(false);
 
   const filteredBarangays = useMemo(() => {
@@ -34,7 +34,10 @@ const BarangayDropdown = memo(function BarangayDropdown({ value, onChange, error
           setShowBarangayList(true);
         }}
         onFocus={() => setShowBarangayList(true)}
-        onBlur={() => setTimeout(() => setShowBarangayList(false), 200)}
+        onBlur={(e) => {
+          if (onBlur) onBlur(e);
+          setTimeout(() => setShowBarangayList(false), 200);
+        }}
         placeholder="Search or select barangay"
         className={getInputClass()}
         required

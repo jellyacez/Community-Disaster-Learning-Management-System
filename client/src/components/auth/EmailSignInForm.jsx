@@ -14,17 +14,48 @@ export default function EmailSignInForm({ errorMessage, clearGlobalError, onRequ
   const [isLoading, setIsLoading] = useState(false);
   const isSubmittingRef = useRef(false);
 
+  const validateField = (name, value) => {
+    let error = null;
+    switch (name) {
+      case "email":
+        if (!value) error = "Email address is required.";
+        break;
+      case "password":
+        if (!value) error = "Password is required.";
+        break;
+      default:
+        break;
+    }
+    return error;
+  };
+
   const handleChange = React.useCallback((e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-    setErrors((prev) => {
-      if (prev[name] || prev.form) {
-        return { ...prev, [name]: null, form: null };
-      }
-      return prev;
+    setFormData((prev) => {
+      const newData = { ...prev, [name]: value };
+      
+      setErrors((prevErrors) => {
+        let updatedErrors = { ...prevErrors };
+        if (prevErrors.form) updatedErrors.form = null;
+        
+        if (prevErrors[name]) {
+          const newError = validateField(name, value);
+          updatedErrors[name] = newError;
+        }
+        return updatedErrors;
+      });
+
+      return newData;
     });
+    
     if (clearGlobalError) clearGlobalError();
   }, [clearGlobalError]);
+
+  const handleBlur = React.useCallback((e) => {
+    const { name, value } = e.target;
+    const error = validateField(name, value);
+    setErrors((prev) => ({ ...prev, [name]: error }));
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -32,9 +63,12 @@ export default function EmailSignInForm({ errorMessage, clearGlobalError, onRequ
     
     if (clearGlobalError) clearGlobalError();
     setErrors({});
+    
     let newErrors = {};
-    if (!formData.email) newErrors.email = "Email address is required.";
-    if (!formData.password) newErrors.password = "Password is required.";
+    Object.keys(formData).forEach((key) => {
+      const error = validateField(key, formData[key]);
+      if (error) newErrors[key] = error;
+    });
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -90,7 +124,7 @@ export default function EmailSignInForm({ errorMessage, clearGlobalError, onRequ
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} noValidate className="space-y-4">
       {errorMessage && !errors.form && (
         <div className="flex items-center justify-center gap-2 bg-red-50 text-red-600 p-3 rounded-lg text-sm font-semibold mb-4 border border-red-100">
           <HugeiconsIcon aria-hidden="true" icon={Alert01Icon} className="w-5 h-5 flex-shrink-0" />
@@ -116,6 +150,7 @@ export default function EmailSignInForm({ errorMessage, clearGlobalError, onRequ
           autoComplete="email"
           value={formData.email}
           onChange={handleChange}
+          onBlur={handleBlur}
           placeholder="Enter email"
           className={getInputClass("email")}
         />
@@ -131,6 +166,7 @@ export default function EmailSignInForm({ errorMessage, clearGlobalError, onRequ
           label="Password"
           value={formData.password}
           onChange={handleChange}
+          onBlur={handleBlur}
           error={errors.password}
         />
         <Link

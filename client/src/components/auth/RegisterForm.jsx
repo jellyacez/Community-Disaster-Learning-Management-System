@@ -17,7 +17,7 @@ export default function RegisterForm() {
 
   return (
     <>
-      <form onSubmit={actions.handleSubmit} className="space-y-4">
+      <form onSubmit={actions.handleSubmit} noValidate className="space-y-4">
         {errors.form && (
           <div className="flex items-center justify-center gap-2 bg-red-50 text-red-600 p-3 rounded-lg text-sm font-semibold mb-4 border border-red-100">
             <HugeiconsIcon aria-hidden="true" icon={Alert01Icon} className="w-5 h-5 flex-shrink-0" />
@@ -36,6 +36,7 @@ export default function RegisterForm() {
             autoComplete="name"
             value={formData.fullName}
             onChange={actions.handleChange}
+            onBlur={actions.handleBlur}
             placeholder="e.g. Juan Dela Cruz"
             className={actions.getInputClass("fullName")}
             required
@@ -54,6 +55,7 @@ export default function RegisterForm() {
             autoComplete="email"
             value={formData.email}
             onChange={actions.handleChange}
+            onBlur={actions.handleBlur}
             placeholder="Example@email.com"
             className={actions.getInputClass("email")}
             required
@@ -64,6 +66,7 @@ export default function RegisterForm() {
         <BarangayDropdown 
           value={formData.barangay} 
           onChange={actions.handleChange} 
+          onBlur={actions.handleBlur}
           error={errors.barangay} 
         />
 
@@ -74,6 +77,7 @@ export default function RegisterForm() {
             label="Password"
             value={formData.password}
             onChange={actions.handleChange}
+            onBlur={actions.handleBlur}
             error={errors.password}
             placeholder="Min. 8 characters"
             autoComplete="new-password"
@@ -87,6 +91,7 @@ export default function RegisterForm() {
           label="Confirm Password"
           value={formData.confirmPassword}
           onChange={actions.handleChange}
+          onBlur={actions.handleBlur}
           error={errors.confirmPassword}
           placeholder="Re-enter your password"
           autoComplete="new-password"

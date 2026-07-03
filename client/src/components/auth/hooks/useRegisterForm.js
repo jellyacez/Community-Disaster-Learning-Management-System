@@ -21,16 +21,59 @@ export const useRegisterForm = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const isSubmittingRef = useRef(false);
 
+  const validateField = (name, value, currentFormData = formData) => {
+    let error = null;
+    switch (name) {
+      case "fullName":
+        if (!value.trim()) error = "Full name is required.";
+        break;
+      case "email":
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(value)) error = "Please enter a valid email address.";
+        break;
+      case "password":
+        const passwordRegex = /^(?=.*[A-Z])(?=.*[!@#$%^&*_=+\-/.]).{8,}$/;
+        if (!passwordRegex.test(value)) {
+          error = "Must be 8+ characters and include an uppercase letter and a symbol.";
+        }
+        break;
+      case "confirmPassword":
+        if (value !== currentFormData.password) {
+          error = "Passwords do not match.";
+        }
+        break;
+      case "barangay":
+        if (!value) error = "Please select a barangay.";
+        break;
+      default:
+        break;
+    }
+    return error;
+  };
+
   const handleChange = useCallback((e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-    setErrors((prev) => {
-      if (prev[name]) {
-        return { ...prev, [name]: null };
-      }
-      return prev;
+    setFormData((prev) => {
+      const newData = { ...prev, [name]: value };
+      
+      // If there's already an error, run live validation so it clears immediately when fixed
+      setErrors((prevErrors) => {
+        if (prevErrors[name]) {
+          const newError = validateField(name, value, newData);
+          return { ...prevErrors, [name]: newError };
+        }
+        return prevErrors;
+      });
+      
+      return newData;
     });
   }, []);
+
+  const handleBlur = useCallback((e) => {
+    const { name, value } = e.target;
+    const error = validateField(name, value);
+    setErrors((prev) => ({ ...prev, [name]: error }));
+  }, [formData]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -40,20 +83,10 @@ export const useRegisterForm = () => {
 
     let newErrors = {};
 
-    if (!formData.fullName.trim()) newErrors.fullName = "Full name is required.";
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(formData.email)) newErrors.email = "Please enter a valid email address.";
-
-    const passwordRegex = /^(?=.*[A-Z])(?=.*[!@#$%^&*_=+\-/.]).{8,}$/;
-    if (!passwordRegex.test(formData.password)) {
-      newErrors.password = "Must be 8+ characters and include an uppercase letter and a symbol.";
-    }
-
-    if (formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = "Passwords do not match.";
-    }
-
-    if (!formData.barangay) newErrors.barangay = "Please select a barangay.";
+    Object.keys(formData).forEach((key) => {
+      const error = validateField(key, formData[key]);
+      if (error) newErrors[key] = error;
+    });
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -111,6 +144,7 @@ export const useRegisterForm = () => {
     },
     actions: {
       handleChange,
+      handleBlur,
       handleSubmit,
       confirmRegistration,
       getInputClass,
