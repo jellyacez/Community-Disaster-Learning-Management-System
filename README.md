@@ -96,7 +96,7 @@ DB_DATABASE=your_database_name
 DB_USER=postgres
 DB_PASSWORD=your_postgres_password
 BETTER_AUTH_URL=http://localhost:5173
-BETTER_AUTH_SECRET=your_super_secret_random_string_here
+BETTER_AUTH_SECRETS=1:your_super_secret_random_string_here
 
 # SMTP Configuration for Email OTP (strictly for testing, will change once deployed in aws)
 SMTP_HOST=smtp.gmail.com
@@ -165,3 +165,4 @@ The application will be live at `http://localhost:5173`.
 12. **Multi-Factor Authentication (MFA)**: Time-based One-Time Password (TOTP) enforcement utilizing Better Auth's twoFactor plugin. Highly privileged roles (system_admin, mdrrmo_admin, barangay_admin) are strictly gated by backend middleware, redirecting them to an un-bypassable MFA setup flow if their account lacks 2FA.
 13. **Data Privacy**: The platform includes standardized Privacy Policy and Terms & Conditions. API routes are strictly structured utilizing isolated `/routes` modules (e.g. `authRoutes.js`, `userRoutes.js`) to strictly scope SQL `SELECT` statements and prevent data over-fetching.
 14. **Optimized Frontend Architecture**: Large administrative components (like User Management) are strictly decoupled into independent Container Components and Presentation Components. This limits re-renders, prevents UI layout shifting during data fetches, and cleanly separates React Query data mutations from pure visual rendering.
+15. **Zero-Downtime Secret Rotation**: The backend features automated utility scripts (`npm run rotate-better-auth` and `npm run rotate-secrets`) to securely cycle Better Auth cryptographic keys using envelope encryption (versioned secrets) and rotate dotenvx file encryption keys without invalidating active user sessions.

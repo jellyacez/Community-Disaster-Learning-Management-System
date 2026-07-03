@@ -4,24 +4,42 @@ const pool = require("../../config/db");
 // @access  Private (system_admin only)
 exports.getSystemStats = async (req, res) => {
   try {
-    const stats = await pool.query(`
-      SELECT
-        (SELECT COUNT(*) FROM "user") AS total_users,
-        (SELECT COUNT(*) FROM "user" WHERE archived = false AND (banned IS NULL OR banned = false)) AS active_users,
-        (SELECT COUNT(*) FROM "user" WHERE last_active >= NOW() - INTERVAL '5 minutes') AS online_users,
-        (SELECT COUNT(*) FROM "user" WHERE role = 'resident') AS resident_users,
-        (SELECT COUNT(*) FROM "user" WHERE role = 'barangay_admin') AS barangay_admin_users,
-        (SELECT COUNT(*) FROM "user" WHERE role = 'mdrrmo_admin') AS mdrrmo_admin_users,
-        (SELECT COUNT(*) FROM "user" WHERE role = 'system_admin') AS system_admin_users,
-        (SELECT COUNT(*) FROM "user" WHERE banned = true) AS banned_users,
-        (SELECT COUNT(*) FROM "user" WHERE archived = true) AS archived_users,
-        (SELECT COUNT(*) FROM module_data) AS total_modules,
-        (SELECT COUNT(*) FROM module_activity) AS total_enrollments,
-        (SELECT COUNT(*) FROM module_activity WHERE modstatus = 'Completed') AS total_completions,
-        (SELECT COUNT(*) FROM certificates) AS total_certificates,
-        (SELECT COUNT(*) FROM activity_log) AS total_log_entries
-    `);
-    res.json({ success: true, data: stats.rows[0] });
+    const [userStats, otherStats] = await Promise.all([
+      pool.query(`
+        SELECT
+          COUNT(*) AS total_users,
+          COUNT(*) FILTER (WHERE archived = false AND (banned IS NULL OR banned = false)) AS active_users,
+          COUNT(*) FILTER (WHERE last_active >= NOW() - INTERVAL '5 minutes') AS online_users,
+          COUNT(*) FILTER (WHERE role = 'resident') AS resident_users,
+          COUNT(*) FILTER (WHERE role = 'barangay_admin') AS barangay_admin_users,
+          COUNT(*) FILTER (WHERE role = 'mdrrmo_admin') AS mdrrmo_admin_users,
+          COUNT(*) FILTER (WHERE role = 'system_admin') AS system_admin_users,
+          COUNT(*) FILTER (WHERE banned = true) AS banned_users,
+          COUNT(*) FILTER (WHERE archived = true) AS archived_users
+        FROM "user"
+      `),
+      pool.query(`
+        SELECT
+          (SELECT COUNT(*) FROM module_data) AS total_modules,
+          (SELECT COUNT(*) FROM module_activity) AS total_enrollments,
+          (SELECT COUNT(*) FROM module_activity WHERE modstatus = 'Completed') AS total_completions,
+          (SELECT COUNT(*) FROM certificates) AS total_certificates,
+          (SELECT COUNT(*) FROM activity_log) AS total_log_entries
+      `)
+    ]);
+
+    const data = {
+      ...userStats.rows[0],
+      ...otherStats.rows[0]
+    };
+
+    // Postgres COUNT returns strings, parse them to match previous behavior exactly if needed
+    // (though JS clients generally handle strings, it's safer to ensure they're numbers)
+    for (let key in data) {
+      data[key] = parseInt(data[key], 10) || 0;
+    }
+
+    res.json({ success: true, data });
   } catch (err) {
     console.error(err);
     res.status(500).json({ success: false, error: 'Server Error' });

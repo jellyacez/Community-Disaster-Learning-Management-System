@@ -11,10 +11,22 @@ const {
 } = require("./emailTemplates");
 const { securityHooksPlugin } = require("./authHooks");
 
+const parseSecrets = () => {
+  if (process.env.BETTER_AUTH_SECRETS) {
+    return process.env.BETTER_AUTH_SECRETS.split(',').map(part => {
+      const [version, value] = part.split(':');
+      return { version: parseInt(version, 10), value };
+    });
+  }
+  return undefined;
+};
+
 const auth = betterAuth({
   database: pool,
   baseURL: process.env.BETTER_AUTH_URL,
-  secret: process.env.BETTER_AUTH_SECRET,
+  ...(process.env.BETTER_AUTH_SECRETS 
+    ? { secrets: parseSecrets() } 
+    : { secret: process.env.BETTER_AUTH_SECRET }),
   socialProviders: {
     google: {
       clientId: process.env.GOOGLE_CLIENT_ID,
