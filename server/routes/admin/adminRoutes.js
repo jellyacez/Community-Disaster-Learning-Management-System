@@ -50,10 +50,20 @@ router.patch("/users/:id/archive", adminMiddleware, adminController.archiveUser)
 // @access  Private (system_admin only)
 router.patch("/users/bulk-archive", adminMiddleware, adminController.bulkArchiveUsers);
 
+// @route   GET /api/admin/analytics/traffic
+// @desc    Get 24h traffic analytics
+// @access  Private (system_admin only)
+router.get("/analytics/traffic", adminMiddleware, adminController.getTrafficAnalytics);
+
 // @route   GET /api/admin/settings
 // @desc    Get system settings
 // @access  Private (system_admin only)
 router.get("/settings", adminMiddleware, adminController.getSystemSettings);
+
+// @route   PATCH /api/admin/settings/branding
+// @desc    Update system branding (name and logo)
+// @access  Private (system_admin only)
+router.patch("/settings/branding", adminMiddleware, adminController.updateSystemBranding);
 
 // @route   PATCH /api/admin/settings/maintenance
 // @desc    Toggle maintenance mode

@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { authClient } from "../../lib/auth-client";
+import apiClient from "../../lib/apiClient";
 import useDocumentTitle from "../../hooks/useDocumentTitle";
 import AuthLayout from "../../components/layouts/AuthLayout";
 import RegisterForm from "../../components/auth/RegisterForm";
@@ -27,10 +28,17 @@ export default function RegisterPage() {
 
       if (userRole === "system_admin") navigate("/admin/dashboard", navState);
       else if (userRole === "mdrrmo_admin")
-        navigate("/mdrrmo/dashboard", navState);
+        navigate("/admin/mdrrmo/dashboard", navState);
       else if (userRole === "barangay_admin")
-        navigate("/barangay/dashboard", navState);
-      else navigate("/userDashboard", navState);
+        navigate("/admin/barangay/dashboard", navState);
+      else {
+        // Check system status for residents
+        apiClient.get("/user/dashboard").then(() => {
+          navigate("/userDashboard", navState);
+        }).catch(() => {
+          // Global interceptor handles 503
+        });
+      }
     }
   }, [session, isPending, navigate, justRegistered]);
 

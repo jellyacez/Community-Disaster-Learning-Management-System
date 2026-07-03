@@ -21,6 +21,8 @@ import SystemAlertBanner from "./components/SystemAlertBanner";
 import SystemCharts from "./components/SystemCharts";
 import QuickActionsPanel from "./components/QuickActionsPanel";
 
+import RecentActivityFeed from "./components/RecentActivityFeed";
+
 function formatUptime(seconds) {
   const d = Math.floor(seconds / 86400);
   const h = Math.floor((seconds % 86400) / 3600);
@@ -78,6 +80,7 @@ export default function SystemOverview() {
             label="Total Users" 
             value={s.total_users} 
             href="/admin/system/users"
+            trendText="+12% Active"
             sub={
               <span className="flex items-center gap-1.5 text-emerald-600 font-medium">
                 <span className="relative flex h-2 w-2">
@@ -91,25 +94,36 @@ export default function SystemOverview() {
             loading={statsLoading} 
           />
           <StatCard icon={Shield01Icon} label="Banned Accounts" value={s.banned_users} href="/admin/system/users" sub="Platform-wide bans" color="red" loading={statsLoading} />
-          <StatCard icon={FolderAddIcon} label="Total Modules" value={s.total_modules} sub="Published content" color="purple" loading={statsLoading} />
-          <StatCard icon={Note01Icon} label="Enrollments" value={s.total_enrollments} sub="All-time" color="amber" loading={statsLoading} />
-          <StatCard icon={Certificate01Icon} label="Certificates" value={s.total_certificates} sub="Issued to users" color="green" loading={statsLoading} />
+          <StatCard icon={FolderAddIcon} label="Total Modules" value={s.total_modules} sub="Published content" trendText="Stable" color="purple" loading={statsLoading} />
+          <StatCard icon={Note01Icon} label="Enrollments" value={s.total_enrollments} sub="All-time" trendText="Growing" color="amber" loading={statsLoading} />
+          <StatCard icon={Certificate01Icon} label="Certificates" value={s.total_certificates} sub="Issued to users" trendText="+5 This Week" color="green" loading={statsLoading} />
+          <StatCard 
+            icon={Clock01Icon} 
+            label="Active Sessions" 
+            value={s.online_users || 0} 
+            sub="Current system load" 
+            trendText={s.online_users > 50 ? "High Load" : "Normal Load"} 
+            color={s.online_users > 50 ? "red" : "green"} 
+            loading={statsLoading} 
+          />
+          
           <StatCard icon={Database01Icon} label="Archived Users" value={s.archived_users} sub="Soft-deleted accounts" color="gray" loading={statsLoading} />
-          <StatCard icon={Clock01Icon} label="Audit Logs" value={s.total_log_entries} href="/admin/system/logs" sub="Recent security events" color="gray" loading={statsLoading} />
+          <StatCard icon={Settings01Icon} label="Audit Logs" value={s.total_log_entries} href="/admin/system/logs" sub="Recent security events" trendText="Live" color="gray" loading={statsLoading} />
         </div>
       </div>
 
-      <div className="grid md:grid-cols-3 gap-6">
-        {/* Left Side: Charts */}
-        <div className="md:col-span-2">
+      <div className="grid lg:grid-cols-3 gap-6">
+        {/* Left Side: Charts & Logs */}
+        <div className="lg:col-span-2 flex flex-col gap-6">
           <SystemCharts stats={s} />
+          <RecentActivityFeed />
         </div>
 
         {/* Right Side: Actions and Health */}
-        <div className="md:col-span-1 space-y-6">
+        <div className="lg:col-span-1 space-y-6">
           <QuickActionsPanel settingsData={settingsData} />
           
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+          <div className="bg-white rounded-2xl shadow-[0_2px_12px_-3px_rgba(0,0,0,0.06)] border border-transparent p-6">
             <div className="flex items-center gap-2 mb-4">
               <HugeiconsIcon icon={Settings01Icon} className="w-5 h-5 text-gray-500" />
               <h2 className="text-base font-bold text-gray-900">Infrastructure Health</h2>
@@ -134,6 +148,7 @@ export default function SystemOverview() {
                 />
                 <HealthRow
                   label="Memory Usage"
+                  progress={healthData?.memory_usage_mb != null ? (healthData.memory_usage_mb / 512) * 100 : 0}
                   value={healthData?.memory_usage_mb != null ? `${healthData.memory_usage_mb} MB` : "—"}
                 />
               </>

@@ -14,7 +14,7 @@ const ROLES = [
   { value: "system_admin", label: "System Admin" },
 ];
 
-const TABS = ["Edit Details", "Change Role", "Reset Password", "Ban / Archive"];
+const TABS = ["Edit Details", "Change Role", "Reset Password", "Deactivate / Archive"];
 
 export default function UserActionModal({ user, onClose, onSave }) {
   const [tab, setTab] = useState(0);
@@ -29,6 +29,7 @@ export default function UserActionModal({ user, onClose, onSave }) {
   // Tab 2 — Reset Password
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
 
   // Tab 3 — Ban / Archive
   const [banReason, setBanReason] = useState("");
@@ -46,6 +47,13 @@ export default function UserActionModal({ user, onClose, onSave }) {
 
   const handleArchive = async () => {
     await onSave({ type: "archive", userId: user.id, data: { archived: !user.archived } });
+  };
+
+  const handleAutoGenerate = async () => {
+    setIsGenerating(true);
+    // Passing empty password triggers the backend to auto-generate and email
+    await onSave({ type: "password", userId: user.id, data: { password: "" } });
+    setIsGenerating(false);
   };
 
   return (
@@ -157,7 +165,29 @@ export default function UserActionModal({ user, onClose, onSave }) {
 
             {/* Tab 2: Reset Password */}
             {tab === 2 && (
-              <>
+              <div className="space-y-6">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">Auto-Generate (Recommended)</label>
+                  <p className="text-xs text-gray-500 mb-3">Securely generate a new password and email it directly to the user.</p>
+                  <button
+                    type="button"
+                    onClick={handleAutoGenerate}
+                    disabled={isGenerating}
+                    className="w-full rounded-xl bg-gray-900 text-white py-3 text-sm font-bold hover:bg-black transition-colors disabled:opacity-50"
+                  >
+                    {isGenerating ? "Generating..." : "Auto-Generate & Email Password"}
+                  </button>
+                </div>
+
+                <div className="relative">
+                  <div className="absolute inset-0 flex items-center">
+                    <div className="w-full border-t border-gray-200"></div>
+                  </div>
+                  <div className="relative flex justify-center text-sm">
+                    <span className="px-2 bg-white text-gray-500 font-medium">Or set manually</span>
+                  </div>
+                </div>
+
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-1.5">New Password</label>
                   <div className="relative">
@@ -166,7 +196,6 @@ export default function UserActionModal({ user, onClose, onSave }) {
                       type={showPassword ? "text" : "password"}
                       value={password}
                       onChange={e => setPassword(e.target.value)}
-                      minLength={8}
                       className="w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10"
                       placeholder="Min. 8 characters"
                     />
@@ -175,18 +204,18 @@ export default function UserActionModal({ user, onClose, onSave }) {
                     <input type="checkbox" checked={showPassword} onChange={e => setShowPassword(e.target.checked)} className="rounded" />
                     <span className="text-xs text-gray-500">Show password</span>
                   </label>
+                  <button
+                    type="submit"
+                    disabled={password.length < 8}
+                    className="w-full rounded-xl bg-amber-600 text-white py-3 text-sm font-bold hover:bg-amber-700 transition-colors disabled:opacity-50 mt-4"
+                  >
+                    Manually Reset Password
+                  </button>
                 </div>
-                <button
-                  type="submit"
-                  disabled={password.length < 8}
-                  className="w-full rounded-xl bg-amber-600 text-white py-3 text-sm font-bold hover:bg-amber-700 transition-colors disabled:opacity-50"
-                >
-                  Reset Password
-                </button>
-              </>
+              </div>
             )}
 
-            {/* Tab 3: Ban / Archive */}
+            {/* Tab 3: Deactivate / Archive */}
             {tab === 3 && (
               <div className="space-y-4">
                 {/* Ban / Unban */}
@@ -194,7 +223,7 @@ export default function UserActionModal({ user, onClose, onSave }) {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm font-bold text-red-900">
-                        {user.banned ? "This user is currently banned" : "Ban this user"}
+                        {user.banned ? "This account is currently deactivated" : "Deactivate this account"}
                       </p>
                       {user.banReason && (
                         <p className="text-xs text-red-700 mt-0.5">Reason: {user.banReason}</p>
@@ -203,12 +232,12 @@ export default function UserActionModal({ user, onClose, onSave }) {
                   </div>
                   {!user.banned && (
                     <div>
-                      <label className="block text-xs font-semibold text-red-800 mb-1">Ban Reason</label>
+                      <label className="block text-xs font-semibold text-red-800 mb-1">Deactivation Reason</label>
                       <input
                         type="text"
                         value={banReason}
                         onChange={e => setBanReason(e.target.value)}
-                        placeholder="Enter reason for ban..."
+                        placeholder="Enter reason for deactivation..."
                         className="w-full px-3 py-2 border border-red-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-red-300 bg-white"
                       />
                     </div>
@@ -221,7 +250,7 @@ export default function UserActionModal({ user, onClose, onSave }) {
                         : "bg-red-600 text-white hover:bg-red-700"
                     }`}
                   >
-                    {user.banned ? "Remove Ban" : "Ban User"}
+                    {user.banned ? "Reactivate Account" : "Deactivate Account"}
                   </button>
                 </div>
 

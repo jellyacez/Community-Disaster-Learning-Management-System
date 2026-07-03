@@ -27,7 +27,13 @@ apiClient.interceptors.request.use(
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
-    // You can handle 401 Unauthorized globally here if desired
+    // Handle 503 Maintenance Mode
+    if (error.response && error.response.status === 503 && error.response.data?.error === 'MAINTENANCE_MODE') {
+      // Prevent redirect loop
+      if (window.location.pathname !== '/maintenance') {
+        window.location.href = '/maintenance';
+      }
+    }
     return Promise.reject(error);
   }
 );

@@ -3,6 +3,7 @@ import React, { useEffect } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { authClient } from "../../lib/auth-client";
+import apiClient from "../../lib/apiClient";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { ArrowRight01Icon } from "@hugeicons/core-free-icons";
 
@@ -40,10 +41,17 @@ export default function LandingPage() {
       if (userRole === "system_admin")
         navigate("/admin/dashboard", { replace: true });
       else if (userRole === "mdrrmo_admin")
-        navigate("/mdrrmo/dashboard", { replace: true });
+        navigate("/admin/mdrrmo/dashboard", { replace: true });
       else if (userRole === "barangay_admin")
-        navigate("/barangay/dashboard", { replace: true });
-      else navigate("/userDashboard", { replace: true });
+        navigate("/admin/barangay/dashboard", { replace: true });
+      else {
+        // Check system status for residents
+        apiClient.get("/user/dashboard").then(() => {
+          navigate("/userDashboard", { replace: true });
+        }).catch(() => {
+          // Global interceptor handles 503
+        });
+      }
     }
   }, [session, isPending, navigate]);
 

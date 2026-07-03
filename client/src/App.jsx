@@ -43,6 +43,7 @@ const ModuleViewer = lazy(() => import("./pages/user/ModuleViewer"));
 const UserProfile = lazy(() => import("./pages/user/UserProfile"));
 const UserSettings = lazy(() => import("./pages/user/UserSettings"));
 const NotFoundPage = lazy(() => import("./pages/public/NotFoundPage"));
+const MaintenancePage = lazy(() => import("./pages/public/MaintenancePage"));
 
 const BarangayAdminDashboard = lazy(
   () => import("./pages/admin/barangay/BarangayAdminDashboard"),
@@ -146,11 +147,9 @@ export default function App() {
           </Route>
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/reset-password" element={<ResetPasswordPage />} />
-          <Route
-            path="/verify-email-prompt"
-            element={<VerifyEmailPromptPage />}
-          />
+          <Route path="/verify-email-prompt" element={<VerifyEmailPromptPage />} />
           <Route path="/verify-email" element={<VerifyEmail />} />
+          <Route path="/maintenance" element={<MaintenancePage />} />
 
           <Route element={<ProtectedRoute allowedRoles={["resident"]} />}>
             <Route path="/user/modules/:moduleId" element={<ModuleViewer />} />

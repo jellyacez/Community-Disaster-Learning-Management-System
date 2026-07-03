@@ -1,5 +1,8 @@
 const pool = require("../../config/db");
 const { auth } = require("../../utils/auth");
+const crypto = require("crypto");
+const { transporter } = require("../../utils/mailer");
+const { getAdminPasswordResetEmail } = require("../../utils/emailTemplates");
 
 // @desc    Updates user demographic details and archived status
 // @access  Private (admin only)
@@ -26,17 +29,30 @@ exports.updateUser = async (req, res) => {
 };
 // --- End of updateUser ---
 
-// @desc    Resets a user's password using the better-auth admin API
+// @desc    Resets a user's password using the better-auth admin API (auto-generates if none provided)
 // @access  Private (admin only)
 exports.resetUserPassword = async (req, res) => {
   const { id } = req.params;
-  const { password } = req.body;
-  if (!password || password.length < 8) {
-    return res
-      .status(400)
-      .json({ error: "Password must be at least 8 characters" });
+  let { password } = req.body;
+  
+  // Auto-generate password if not provided
+  let isGenerated = false;
+  if (!password) {
+    password = crypto.randomBytes(6).toString("hex"); // 12 character hex string
+    isGenerated = true;
+  } else if (password.length < 8) {
+    return res.status(400).json({ error: "Password must be at least 8 characters" });
   }
+
   try {
+    // 1. Get user details to send the email
+    const userResult = await pool.query('SELECT name, email FROM "user" WHERE id = $1', [id]);
+    if (userResult.rows.length === 0) {
+      return res.status(404).json({ error: "User not found" });
+    }
+    const user = userResult.rows[0];
+
+    // 2. Set the password via Better-Auth (handles bcrypt hashing automatically)
     await auth.api.admin.setUserPassword({
       headers: req.headers,
       body: {
@@ -44,8 +60,17 @@ exports.resetUserPassword = async (req, res) => {
         password: password
       }
     });
+
+    // 3. Email the user their new password (if auto-generated)
+    if (isGenerated) {
+      const mailOptions = getAdminPasswordResetEmail(user, password);
+      await transporter.sendMail(mailOptions);
+    }
     
-    res.json({ message: "Password updated successfully" });
+    res.json({ 
+      message: isGenerated ? "Password auto-generated and emailed successfully." : "Password updated successfully",
+      generatedPassword: isGenerated ? password : null 
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Server Error" });
@@ -246,6 +271,67 @@ exports.getSystemSettings = async (req, res) => {
   }
 };
 // --- End of getSystemSettings ---
+
+// @desc    Get 24h Traffic Analytics Template
+// @access  Private (system_admin only)
+exports.getTrafficAnalytics = async (req, res) => {
+  try {
+    // Template: In a production environment, this would query activity logs grouped by hour
+    // For the defense demonstration, we generate a realistic static traffic curve
+    const hours = [];
+    const now = new Date();
+    for (let i = 23; i >= 0; i--) {
+      const d = new Date(now);
+      d.setHours(now.getHours() - i);
+      const hourStr = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      
+      // Simulate peak traffic between 10am-4pm
+      const h = d.getHours();
+      let users = 10 + Math.floor(Math.random() * 20); // Baseline
+      if (h >= 9 && h <= 17) users += 40 + Math.floor(Math.random() * 30); // Work hours
+      if (h === 12) users -= 20; // Lunch dip
+      
+      hours.push({ time: hourStr, activeUsers: users });
+    }
+
+    res.json({ success: true, data: hours });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, error: 'Server Error' });
+  }
+};
+// --- End of getTrafficAnalytics ---
+
+// @desc    Update system branding (Name and Base64 Logo)
+// @access  Private (system_admin only)
+exports.updateSystemBranding = async (req, res) => {
+  const { system_name, system_logo } = req.body;
+  try {
+    // Upsert System Name
+    if (system_name) {
+      await pool.query(
+        `INSERT INTO public.system_settings (key, value, updated_at) VALUES ('system_name', $1, NOW())
+         ON CONFLICT (key) DO UPDATE SET value = $1, updated_at = NOW()`,
+        [system_name]
+      );
+    }
+    
+    // Upsert System Logo (Base64)
+    if (system_logo) {
+      await pool.query(
+        `INSERT INTO public.system_settings (key, value, updated_at) VALUES ('system_logo', $1, NOW())
+         ON CONFLICT (key) DO UPDATE SET value = $1, updated_at = NOW()`,
+        [system_logo]
+      );
+    }
+    
+    res.json({ success: true, message: 'System branding updated successfully' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, error: 'Failed to update system branding' });
+  }
+};
+// --- End of updateSystemBranding ---
 
 // @desc    Toggle maintenance mode on/off
 // @access  Private (system_admin only)

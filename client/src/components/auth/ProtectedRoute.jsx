@@ -1,6 +1,7 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Navigate, Outlet, Link, useSearchParams, useLocation } from "react-router-dom";
 import { authClient } from "../../lib/auth-client";
+import apiClient from "../../lib/apiClient";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Alert01Icon } from "@hugeicons/core-free-icons";
 
@@ -8,8 +9,22 @@ export default function ProtectedRoute({ allowedRoles = [] }) {
   const { data: session, isPending } = authClient.useSession();
   const [searchParams] = useSearchParams();
   const location = useLocation();
+  const [isMaintenanceChecked, setIsMaintenanceChecked] = useState(false);
 
-  if (isPending) {
+  useEffect(() => {
+    if (session && !isPending && session.user?.role === "resident") {
+      apiClient.get("/user/dashboard")
+        .then(() => setIsMaintenanceChecked(true))
+        .catch(() => {
+          // Block render on 503
+        });
+    } else if (session && !isPending) {
+      // Bypass check for admin roles
+      setIsMaintenanceChecked(true);
+    }
+  }, [session, isPending]);
+
+  if (isPending || (session && session.user?.role === "resident" && !isMaintenanceChecked)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600"></div>

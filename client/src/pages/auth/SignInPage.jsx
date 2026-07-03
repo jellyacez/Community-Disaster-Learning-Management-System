@@ -3,6 +3,7 @@ import React, { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import toast from "react-hot-toast";
 import { authClient } from "../../lib/auth-client";
+import apiClient from "../../lib/apiClient";
 import useDocumentTitle from "../../hooks/useDocumentTitle";
 import AuthLayout from "../../components/layouts/AuthLayout";
 import ConfirmationModal from "../../components/ui/modals/ConfirmationModal";
@@ -77,7 +78,17 @@ export default function SignInPage() {
       };
       
       const targetRoute = roleRoutes[userRole] || "/userDashboard";
-      navigate(targetRoute, { replace: true });
+      
+      if (userRole === "resident") {
+        // Verify system status before routing resident
+        apiClient.get("/user/dashboard").then(() => {
+          navigate(targetRoute, { replace: true });
+        }).catch(() => {
+          // Let global interceptor handle 503
+        });
+      } else {
+        navigate(targetRoute, { replace: true });
+      }
     }
   }, [session, isPending, navigate]);
 
