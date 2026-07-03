@@ -1,15 +1,16 @@
 const express = require("express");
 const router = express.Router();
 const { betterAuthMiddleware } = require("../../middleware/betterAuthMiddleware");
+const adminMiddleware = require("../../middleware/adminMiddleware");
 const { stepCreation } = require("../../controllers/modules/moduleStepsController");
 
-router.post("/:levelId", betterAuthMiddleware, async (req, res) => {
+router.post("/:levelId", betterAuthMiddleware, adminMiddleware, async (req, res) => {
 
-    const {levelsId} =  req.params;
+    const { levelId } = req.params;  // Fixed: was 'levelsId' (typo — caused undefined to be passed to stepCreation)
     const { stepOrder, stepTitle, stepContent, mediaUrl, stepType } = req.body;
 
 try{
-       const result = await stepCreation(levelsId, stepOrder, stepTitle, stepContent, mediaUrl, stepType)
+       const result = await stepCreation(levelId, stepOrder, stepTitle, stepContent, mediaUrl, stepType)
         return res.status(201).json({
             success: true,
             message: "Module step added successfully.",
@@ -43,4 +44,4 @@ try{
 });
 
 module.exports = router
-// --- End of POST /:moduleId ---
+// --- End of POST /:levelId ---

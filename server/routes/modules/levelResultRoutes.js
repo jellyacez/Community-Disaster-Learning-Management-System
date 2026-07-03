@@ -3,7 +3,10 @@ const router = express.Router();
 const { betterAuthMiddleware } = require("../../middleware/betterAuthMiddleware");
 const { levelResult } = require("../../controllers/modules/moduleResultController");
 
-
+// NOTE: This route is intentionally accessible to all authenticated users (residents submit their own quiz results).
+// The userId is sourced from the server-side session (req.user.id), NOT from the request body,
+// preventing users from submitting results on behalf of other users.
+// SEC-007: Score validation (server-side recalculation) is a separate planned fix.
 router.post("/:levelId/results", betterAuthMiddleware, async (req, res) => {
     const { levelId } = req.params;
 

@@ -1,13 +1,15 @@
 const { auth } = require("../utils/auth");
 const pool = require("../config/db");
 
-// @desc    Verifies session and ensures the user has the system_admin role
-// @access  Private (admin only)
+// @desc    Verifies session and ensures the user has an admin-level role
+// @access  Private (system_admin, MDRRMO_admin, barangay_admin)
+const ADMIN_ROLES = ["system_admin", "MDRRMO_admin", "barangay_admin"];
+
 const adminMiddleware = async (req, res, next) => {
   try {
     const session = await auth.api.getSession({ headers: req.headers });
-    if (!session || session.user.role !== "system_admin") {
-      return res.status(403).json({ error: "Forbidden: System Admins Only" });
+    if (!session || !ADMIN_ROLES.includes(session.user.role)) {
+      return res.status(403).json({ error: "Forbidden: Admins Only" });
     }
     const mfaBypass = process.env.DISABLE_MFA === "true";
     if (!session.user.twoFactorEnabled && !mfaBypass) {

@@ -1,12 +1,12 @@
-
 const express = require("express");
 const router = express.Router();
 const { betterAuthMiddleware } = require("../../middleware/betterAuthMiddleware");
-const { questionCreation,choicesCreation } = require("../../controllers/modules/moduleQuestionAndChoices");
+const adminMiddleware = require("../../middleware/adminMiddleware");
+const { questionCreation, choicesCreation } = require("../../controllers/modules/moduleQuestionAndChoices");
 
-router.post("/:moduleId/questions", betterAuthMiddleware, async (req, res) => {
+router.post("/:levelId/questions", betterAuthMiddleware, adminMiddleware, async (req, res) => {
    
-    const { levelId } = req.params;
+    const { levelId } = req.params;  // Fixed: route param is :levelId but was being read from wrong key
     const { questionText, points, imageURL } = req.body;
     
     try {
@@ -37,18 +37,18 @@ router.post("/:moduleId/questions", betterAuthMiddleware, async (req, res) => {
 });
 
 
-router.post("/:questionId/choices", betterAuthMiddleware, async (req, res) => {
+router.post("/:questionId/choices", betterAuthMiddleware, adminMiddleware, async (req, res) => {
  
     const { questionId } = req.params;
     const { choiceText, isCorrect } = req.body;
 
     try {
-       choicesCreation(questionId, choiceText, isCorrect)
+       const result = await choicesCreation(questionId, choiceText, isCorrect)
         
         return res.status(201).json({
             success: true,
             message: "Choices added successfully!",
-            data: choicesCreation.rows[0]
+            data: result
         });
 
     } catch (error) {
