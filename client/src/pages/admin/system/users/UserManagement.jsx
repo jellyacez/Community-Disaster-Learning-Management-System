@@ -10,7 +10,7 @@ import {
   UserGroupIcon,
   Settings01Icon,
 } from "@hugeicons/core-free-icons";
-import UserActionModal from "./UserActionModal";
+import UserActionModal from "./components/UserActionModal/UserActionModal";
 import UserTableRow from "./components/UserTableRow";
 import UserTableSkeleton from "./components/UserTableSkeleton";
 import UserFilters from "./components/UserFilters";

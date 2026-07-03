@@ -6,6 +6,7 @@ import {
   Notification01Icon,
   Settings01Icon,
 } from "@hugeicons/core-free-icons";
+import PasswordRequirements from "../../../../components/auth/PasswordRequirements";
 
 const ROLES = [
   { value: "resident", label: "Resident" },
@@ -96,7 +97,7 @@ export default function UserActionModal({ user, onClose, onSave }) {
         </div>
 
         {/* Body */}
-        <div className="p-6 overflow-y-auto flex-1">
+        <div className="p-6 overflow-y-auto h-[400px] custom-scrollbar">
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Tab 0: Edit Details */}
             {tab === 0 && (
@@ -127,9 +128,11 @@ export default function UserActionModal({ user, onClose, onSave }) {
                     />
                   </div>
                 </div>
-                <button type="submit" className="w-full rounded-xl bg-gray-900 text-white py-3 text-sm font-bold hover:bg-black transition-colors">
-                  Save Changes
-                </button>
+                <div className="pt-2">
+                  <button type="submit" className="w-full rounded-xl bg-gray-900 text-white py-3 text-sm font-bold hover:bg-black transition-colors">
+                    Save Changes
+                  </button>
+                </div>
               </>
             )}
 
@@ -157,15 +160,17 @@ export default function UserActionModal({ user, onClose, onSave }) {
                     Assigning <strong>system_admin</strong> grants full platform control. Assign with caution.
                   </p>
                 </div>
-                <button type="submit" className="w-full rounded-xl bg-gray-900 text-white py-3 text-sm font-bold hover:bg-black transition-colors">
-                  Update Role
-                </button>
+                <div className="pt-2">
+                  <button type="submit" className="w-full rounded-xl bg-gray-900 text-white py-3 text-sm font-bold hover:bg-black transition-colors">
+                    Update Role
+                  </button>
+                </div>
               </>
             )}
 
             {/* Tab 2: Reset Password */}
             {tab === 2 && (
-              <div className="space-y-6">
+              <div className="space-y-6 pb-2">
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-1.5">Auto-Generate (Recommended)</label>
                   <p className="text-xs text-gray-500 mb-3">Securely generate a new password and email it directly to the user.</p>
@@ -200,13 +205,14 @@ export default function UserActionModal({ user, onClose, onSave }) {
                       placeholder="Min. 8 characters"
                     />
                   </div>
+                  <PasswordRequirements password={password} />
                   <label className="flex items-center gap-2 mt-2 cursor-pointer">
                     <input type="checkbox" checked={showPassword} onChange={e => setShowPassword(e.target.checked)} className="rounded" />
                     <span className="text-xs text-gray-500">Show password</span>
                   </label>
                   <button
                     type="submit"
-                    disabled={password.length < 8}
+                    disabled={!/^(?=.*[A-Z])(?=.*[!@#$%^&*_=+\-/.]).{8,}$/.test(password)}
                     className="w-full rounded-xl bg-amber-600 text-white py-3 text-sm font-bold hover:bg-amber-700 transition-colors disabled:opacity-50 mt-4"
                   >
                     Manually Reset Password
@@ -217,7 +223,7 @@ export default function UserActionModal({ user, onClose, onSave }) {
 
             {/* Tab 3: Deactivate / Archive */}
             {tab === 3 && (
-              <div className="space-y-4">
+              <div className="space-y-4 pb-2">
                 {/* Ban / Unban */}
                 <div className="p-5 rounded-2xl border border-red-100 bg-red-50 space-y-3">
                   <div className="flex items-center justify-between">
@@ -256,15 +262,15 @@ export default function UserActionModal({ user, onClose, onSave }) {
 
                 {/* Archive / Restore */}
                 <div className={`p-5 rounded-2xl border space-y-3 ${user.archived ? "border-emerald-100 bg-emerald-50" : "border-gray-100 bg-gray-50"}`}>
-                  <div>
-                    <p className="text-sm font-bold text-gray-900">
-                      {user.archived ? "Restore this account" : "Archive this account"}
-                    </p>
-                    <p className="text-xs text-gray-500 mt-0.5">
-                      {user.archived
-                        ? "Restoring gives the user full access again."
-                        : "Archiving disables access without deleting the account."}
-                    </p>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className={`text-sm font-bold ${user.archived ? "text-emerald-900" : "text-gray-900"}`}>
+                        {user.archived ? "Account is archived" : "Archive this account"}
+                      </p>
+                      <p className={`text-xs mt-0.5 ${user.archived ? "text-emerald-700" : "text-gray-500"}`}>
+                        {user.archived ? "Restore to allow login." : "Soft-delete to block access."}
+                      </p>
+                    </div>
                   </div>
                   <button
                     type="button"
@@ -272,7 +278,7 @@ export default function UserActionModal({ user, onClose, onSave }) {
                     className={`w-full rounded-xl py-2.5 text-sm font-bold transition-colors ${
                       user.archived
                         ? "bg-emerald-600 text-white hover:bg-emerald-700"
-                        : "bg-gray-900 text-white hover:bg-black"
+                        : "bg-gray-200 text-gray-700 hover:bg-gray-300"
                     }`}
                   >
                     {user.archived ? "Restore Account" : "Archive Account"}
