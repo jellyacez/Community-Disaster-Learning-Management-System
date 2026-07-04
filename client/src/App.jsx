@@ -83,6 +83,9 @@ const BarangayActiveSyllabus = lazy(
   () => import("./pages/admin/barangay/syllabus/ActiveSyllabus"),
 );
 
+const CertificatePDF = lazy(
+  () => import("./pages/user/certTemplate"),
+);
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 import UserLayout from "./components/layouts/UserLayout";
 import AdminLayout from "./components/layouts/AdminLayout";
@@ -165,6 +168,8 @@ export default function App() {
               <Route path="/user/enrolled" element={<UserEnrolledModules />} />
               <Route path="/user/profile" element={<UserProfile />} />
               <Route path="/user/settings" element={<UserSettings />} />
+
+              <Route path="/user/certTemplate" element={<CertificatePDF />} />
             </Route>
           </Route>
 

@@ -1,6 +1,6 @@
 // --- START: UserDashboard.jsx ---
 import React, { useState, useEffect } from "react";
-import { useOutletContext, useLocation, useNavigate } from "react-router-dom";
+import { useOutletContext, useLocation, useNavigate, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import apiClient from "../../lib/apiClient";
 import { authClient } from "../../lib/auth-client";
@@ -104,7 +104,29 @@ export default function UserDashboard() {
           onBrowse={() => navigate("/user/modules")}
           onContinue={() => navigate("/user/enrolled")}
         />
-
+        {/* --- NEW CERTIFICATE BANNER (UNLOCKED FOR TESTING) --- */}
+        <div className="bg-green-50 border border-green-200 rounded-xl p-6 flex flex-col sm:flex-row items-center justify-between shadow-sm gap-4">
+          <div className="flex items-center gap-4">
+            <div className="p-3 bg-green-100 text-green-700 rounded-full">
+              <HugeiconsIcon icon={CheckmarkBadge01Icon} className="w-8 h-8" />
+            </div>
+            <div>
+              <h3 className="text-lg font-bold text-green-800">
+                [TEST MODE] Certificate Route
+              </h3>
+              <p className="text-green-600 text-sm mt-1">
+                The logic gate is disabled. Click the button to test the PDF rendering.
+              </p>
+            </div>
+          </div>
+          <Link
+            to="/user/certTemplate"
+            className="px-6 py-3 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition-colors shadow-md text-center whitespace-nowrap"
+          >
+            Test PDF View
+          </Link>
+        </div>
+        {/* ------------------------------ */}
         <DashboardStats displayData={displayData} loading={loading} />
 
         <section className="grid gap-6 lg:grid-cols-3">
