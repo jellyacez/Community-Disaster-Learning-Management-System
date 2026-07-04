@@ -24,4 +24,9 @@ router.get("/", adminMiddleware, userController.getAllUsers);
 // @access  Private
 router.delete("/me", betterAuthMiddleware, userController.deleteAccount);
 
+// @route   GET /api/users/certificate-data
+// @desc    Get current user's certificate control number
+// @access  Private
+router.get("/certificate-data", betterAuthMiddleware, userController.getCertificateData);
+
 module.exports = router;

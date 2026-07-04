@@ -144,3 +144,34 @@ exports.deleteAccount = async (req, res) => {
   }
 };
 // --- End of deleteAccount ---
+
+// @desc    Retrieves the certificate control number for the current user
+// @access  Private
+exports.getCertificateData = async (req, res) => {
+  try {
+    // req.user.id is securely provided by betterAuthMiddleware
+    const userId = req.user.id; 
+
+    const query = `
+      SELECT "certControl_no" 
+      FROM "user" 
+      WHERE id = $1
+    `;
+    
+    const { rows } = await pool.query(query, [userId]);
+
+    if (rows.length === 0) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    // Send the 4-digit string back to the React frontend
+    res.json({
+      certControl_no: rows[0].certControl_no
+    });
+
+  } catch (err) {
+    console.error("Error fetching certificate data:", err.message);
+    res.status(500).json({ error: "Server Error" });
+  }
+};
+// --- End of getCertificateData ---

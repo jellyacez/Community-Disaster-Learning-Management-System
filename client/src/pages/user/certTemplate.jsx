@@ -1,16 +1,18 @@
 import React from "react";
 import { useOutletContext } from "react-router-dom"; 
-// 1. Import React Query and your API client
 import { useQuery } from "@tanstack/react-query";
 import apiClient from "../../lib/apiClient";
-import { PDFViewer, Document, Page, Text, View, StyleSheet } from "@react-pdf/renderer";
+import { PDFViewer, Document, Page, Text, View, StyleSheet, Image } from "@react-pdf/renderer";
 
 const styles = StyleSheet.create({
-  // ... Keep all your existing styles exactly the same ...
   page: { flexDirection: "column", backgroundColor: "#fcfbf8", padding: 30 },
   outerBorder: { border: "4pt solid #1e3a8a", padding: 6, flexGrow: 1 },
   innerBorder: { border: "2pt solid #b89f5d", flexGrow: 1, padding: 40, alignItems: "center", position: "relative" },
+  
+  // Top corner elements
+  qrCode: { position: "absolute", top: 20, left: 30, width: 55, height: 55 },
   certNumber: { position: "absolute", top: 20, right: 30, fontSize: 8, color: "#888" },
+  
   headerText: { fontSize: 10, textTransform: "uppercase", color: "#555", marginBottom: 4, letterSpacing: 1 },
   headerSub: { fontSize: 10, color: "#777", marginBottom: 20, textAlign: "center" },
   title: { fontSize: 38, fontWeight: "bold", color: "#1e3a8a", marginBottom: 5, letterSpacing: 2 },
@@ -33,24 +35,24 @@ const styles = StyleSheet.create({
 export default function CertificateTemplate() {
   const { currentUser } = useOutletContext();
   const residentName = currentUser?.name || "Resident"; 
-  
-  // 2. Fetch the certificate control number from the database
-  const { data: certData, isLoading, isError } = useQuery({
+
+  const { data: certData, isLoading } = useQuery({
     queryKey: ["certificateData"],
     queryFn: async () => {
-      // We will create this backend route in Step 2
-      const response = await apiClient.get('/user/certificate-data');
+      const response = await apiClient.get('/users/certificate-data');
       return response.data;
     }
   });
 
-  // 3. Show a loading state while fetching from PostgreSQL
 
 
-  // 4. Combine the static string with the database 4-digit number
-  // Using a fallback "0000" just in case the db field is null
+  // Construct the ID
   const dbControlNumber = certData?.certControl_no || "0000";
   const certId = `DRRM-BAC-2026-${dbControlNumber}`;
+
+  // Use a reliable QR Code API instead of fighting Vite packages
+  const verificationUrl = `https://bacolor-lms.edu.ph/verify?id=${certId}`;
+  const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(verificationUrl)}`;
 
   const dateIssued = new Date().toLocaleDateString('en-US', {
     year: 'numeric', month: 'long', day: 'numeric'
@@ -69,16 +71,15 @@ export default function CertificateTemplate() {
       </div>
       
       <div className="w-full mt-4 border-2 border-gray-200 rounded-xl overflow-hidden shadow-inner">
-        <PDFViewer 
-          style={{ width: "100%", height: "800px", border: "none", display: "block" }} 
-          showToolbar={false}
-        >
+        <PDFViewer style={{ width: "100%", height: "800px", border: "none", display: "block" }} showToolbar={false}>
           <Document>
              <Page size="A4" orientation="landscape" style={styles.page}>
               <View style={styles.outerBorder}>
                 <View style={styles.innerBorder}>
                   
-                  {/* 5. The combined Control Number renders here */}
+                  {/* Fetches the QR image instantly from the web */}
+                  <Image style={styles.qrCode} src={qrImageUrl} />
+
                   <Text style={styles.certNumber}>Control No. {certId}</Text>
                   
                   <Text style={styles.headerText}>Republic of the Philippines</Text>
