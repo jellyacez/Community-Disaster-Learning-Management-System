@@ -6,7 +6,7 @@ const { stepCreation } = require("../../controllers/modules/moduleStepsControlle
 
 router.post("/:levelId", betterAuthMiddleware, adminMiddleware, async (req, res) => {
 
-    const { levelId } = req.params;  // Fixed: was 'levelsId' (typo — caused undefined to be passed to stepCreation)
+    const { levelId } = req.params;
     const { stepOrder, stepTitle, stepContent, mediaUrl, stepType } = req.body;
 
 try{

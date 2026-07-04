@@ -1,5 +1,3 @@
-const pool = require("../config/db");
-
 const completeQuery =  async (client, userId,stepId,moduleId) =>{
 
     await client.query(
@@ -34,9 +32,9 @@ const completeQuery =  async (client, userId,stepId,moduleId) =>{
 
             await client.query(
                 `UPDATE public.module_activity 
-                 SET modstatus = $1, modend = $2
+                 SET modstatus = $1, completed_at = $2
                  WHERE user_id = $3 AND mod_id = $4`,
-                [moduleStatus, new Date(), userId, moduleId]
+                [moduleStatus, new Date().toISOString(), userId, moduleId]
             );
         }
         return{

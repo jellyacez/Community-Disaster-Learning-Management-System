@@ -185,11 +185,16 @@ exports.getModuleViewerData = async (req, res) => {
        FROM user_step_progress usp
        JOIN module_steps ms ON usp.step_id = ms.step_id
        JOIN levels l ON ms.level_id = l.level_id
-       WHERE usp.user_id = $1 AND l.mod_id = $2`,
+       WHERE usp.user_id = $1 AND l.mod_id = $2
+       GROUP BY l.level_order, ms.step_order
+       ORDER BY l.level_order DESC, ms.step_order DESC
+       LIMIT 1`,
       [user_id, mod_id]
     );
 
-    const currentProgressOrder = parseInt(progressResult.rows[0].current_progress_order, 10);
+    const currentProgressOrder = progressResult.rows.length > 0 
+      ? parseInt(progressResult.rows[0].current_progress_order, 10) 
+      : 0;
 
     return res.status(200).json({
       success: true,

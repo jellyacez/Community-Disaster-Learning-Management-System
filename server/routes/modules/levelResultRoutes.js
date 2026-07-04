@@ -7,8 +7,8 @@ const { levelResult } = require("../../controllers/modules/moduleResultControlle
 // The userId is sourced from the server-side session (req.user.id), NOT from the request body,
 // preventing users from submitting results on behalf of other users.
 // SEC-007: Score validation (server-side recalculation) is a separate planned fix.
-router.post("/:levelId/results", betterAuthMiddleware, async (req, res) => {
-    const { levelId } = req.params;
+router.post("/:moduleId/results", betterAuthMiddleware, async (req, res) => {
+    const { moduleId } = req.params;
 
    
     const userId = req.user?.id; 
@@ -17,7 +17,7 @@ router.post("/:levelId/results", betterAuthMiddleware, async (req, res) => {
 
     try {
         
-        const result = await levelResult(levelId ,userId ,score, totalPoints, passed);
+        const result = await levelResult(moduleId ,userId ,score, totalPoints, passed);
 
         return res.status(201).json({
             success: true,
@@ -41,3 +41,4 @@ router.post("/:levelId/results", betterAuthMiddleware, async (req, res) => {
         });
     }
 });
+module.exports = router;

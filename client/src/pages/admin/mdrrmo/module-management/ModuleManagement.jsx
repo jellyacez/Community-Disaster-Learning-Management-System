@@ -3,11 +3,12 @@ import { useQuery } from "@tanstack/react-query";
 import ModuleHeaderForm from "./ModuleHeaderForm";
 import SequenceCanvas from "./SequenceCanvas";
 import StepBuilder from "./StepBuilder";
+import apiClient  from "../../../../lib/apiClient";
 
 const fetchModules = async () => {
-  const res = await fetch("/api/admin/modules");
-  if (!res.ok) throw new Error("Failed to fetch modules");
-  return res.json();
+  
+  const res = await apiClient.get("/modules/available"); 
+  return res.data;
 };
 
 export default function ModuleManagement() {
@@ -67,11 +68,60 @@ export default function ModuleManagement() {
     e.preventDefault();
     if (!moduleForm.title || !moduleForm.description) return alert("Please enter title and description.");
     if (stagedFlows.length === 0) return alert("Please add at least one step.");
-    // Trigger react-query mutation to POST /api/admin/modules
-    alert("Module successfully staged for backend publishing (Mock Submit).");
-    setEditingModuleId(null);
-    setModuleForm({ title: "", description: "", riskLevel: "Low", status: "Public" });
-    setStagedFlows([]);
+    
+    try {
+      
+      const moduleResponse = await apiClient.post("modules", {
+        moduleName: moduleForm.title,
+        moduleCategory: moduleForm.status,
+        description: moduleForm.description,
+        level: moduleForm.riskLevel,
+        duration: "Varies",
+        image_url: "",
+        video_url: ""
+      });
+
+      
+      const moduleResult = moduleResponse.data;
+      const targetModuleId = moduleResult.data.mod_id;
+
+     
+      const levelResponse = await apiClient.post(`modules/${targetModuleId}`, {
+        levelOrder: 1,
+        levelTitle: `Core Curriculum for ${moduleForm.title}`,
+        levelDescription: "Auto-generated structural configuration container."
+      });
+
+      const levelResult = levelResponse.data;
+      const targetLevelId = levelResult.data.level_id;
+
+      // STEPS
+      for (let i = 0; i < stagedFlows.length; i++) {
+        const activeFlow = stagedFlows[i];
+
+        const stepPayload = {
+          stepOrder: i + 1,
+          stepTitle: activeFlow.title,
+          stepContent: activeFlow.type === "text" ? activeFlow.textContent : activeFlow.situationalScenario,
+          mediaUrl: activeFlow.type === "text" ? (activeFlow.attachedFileName || "") : (activeFlow.attachedImageName || ""),
+          stepType: activeFlow.type
+        };
+
+       
+        const stepResponse = await apiClient.post(`modules/steps/${targetLevelId}`, stepPayload);
+
+        // Optional individual inner logic checks can be safely evaluated using standard Axios errors or status checks
+      }
+
+      alert("Syllabus configuration structure successfully published to production database!");
+      setEditingModuleId(null);
+      setModuleForm({ title: "", description: "", riskLevel: "Low", status: "Public" });
+      setStagedFlows([]);
+    } catch (error) {
+      console.error("Critical error executing data synchronization processing:", error);
+     
+      alert(`Publishing aborted: ${error.response?.data?.message || error.message}`);
+    }
   };
 
   const triggerFlowSequencePreview = () => {

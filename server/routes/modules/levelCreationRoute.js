@@ -3,7 +3,7 @@ const router = express.Router();
 const {
   betterAuthMiddleware,
 } = require("../../middleware/betterAuthMiddleware");
-const { adminMiddleware } = require("../../middleware/adminMiddleware");
+const adminMiddleware = require("../../middleware/adminMiddleware");
 const { levelCreation } = require("../../controllers/modules/levelcontroller");
 router.post(
   "/:moduleId",
@@ -21,12 +21,12 @@ router.post(
         levelDescription,
       );
 
-      return res.status(200).json({
+        return res.status(200).json({
         success: true,
-        result,
+        data:result,
       });
     } catch (error) {
-      console.log(error);
+      console.error(error);
 
       return res.status(500).json({
         success: false,
@@ -35,3 +35,4 @@ router.post(
     }
   },
 );
+module.exports = router;

@@ -3,7 +3,7 @@ const pool = require("../config/db");
 
 // @desc    Verifies session and ensures the user has an admin-level role
 // @access  Private (system_admin, MDRRMO_admin, barangay_admin)
-const ADMIN_ROLES = ["system_admin", "MDRRMO_admin", "barangay_admin"];
+const ADMIN_ROLES = ["system_admin", "mdrrmo_admin", "barangay_admin"];
 
 const adminMiddleware = async (req, res, next) => {
   try {

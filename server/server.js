@@ -61,6 +61,11 @@ const userRoutes = require("./routes/users/userRoutes");
 const userDashboardRoutes = require("./routes/users/userDashboardRoutes");
 const moduleRoutes = require("./routes/modules/moduleRoutes");
 
+const levelCreationRoute = require("./routes/modules/levelCreationRoute");
+const levelQuestionAndChoicesRoutes = require("./routes/modules/levelQuestionAndChoicesRoutes");
+const levelResultRoutes = require("./routes/modules/levelResultRoutes");
+const moduleCompleteRoutes = require("./routes/modules/moduleCompleteRoutes");
+const moduleStepsRoutes = require("./routes/modules/moduleStepsRoutes");
 const apiSecurityMiddleware = require("./middleware/apiSecurityMiddleware");
 
 // API Routes (Business logic protected by security middleware)
@@ -68,6 +73,12 @@ app.use("/api/admin", apiSecurityMiddleware, adminRoutes);
 app.use("/api/users", apiSecurityMiddleware, userRoutes);
 app.use("/api/user/dashboard", apiSecurityMiddleware, userDashboardRoutes);
 app.use("/api/modules", apiSecurityMiddleware, moduleRoutes);
+
+app.use("/api/modules", apiSecurityMiddleware, levelCreationRoute);
+app.use("/api/modules", apiSecurityMiddleware, levelQuestionAndChoicesRoutes);
+app.use("/api/modules", apiSecurityMiddleware, levelResultRoutes);
+app.use("/api/modules", apiSecurityMiddleware, moduleCompleteRoutes);
+app.use("/api/modules", apiSecurityMiddleware, moduleStepsRoutes);
 
 // 404 Catch-All Route
 app.use((req, res, next) => {

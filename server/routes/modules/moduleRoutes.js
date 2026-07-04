@@ -1,14 +1,20 @@
 const express = require("express");
 const router = express.Router();
+// modules
 const moduleController = require("../../controllers/modules/moduleController");
 const moduleProgressController = require("../../controllers/modules/moduleProgressController");
+
+//middlewares
 const adminMiddleware = require("../../middleware/adminMiddleware");
 const { betterAuthMiddleware } = require("../../middleware/betterAuthMiddleware");
 
 // @route   POST /api/modules
 // @desc    Create a new training module
 // @access  Private (admin only)
-router.post("/", adminMiddleware, moduleController.createModule);
+router.post("/", betterAuthMiddleware, adminMiddleware, moduleController.createModule);
+
+
+
 
 // @route   GET /api/modules/available
 // @desc    Get all available modules for residents
@@ -34,5 +40,7 @@ router.get("/:id/progress", betterAuthMiddleware, moduleProgressController.getMo
 // @desc    Mark a step as complete
 // @access  Private
 router.post("/:id/steps/:stepId/complete", betterAuthMiddleware, moduleProgressController.completeModuleStep);
+
+
 
 module.exports = router;

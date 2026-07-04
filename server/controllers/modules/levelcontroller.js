@@ -8,7 +8,12 @@ const levelCreation = async (moduleId,levelOrder,levelTitle,levelDescription)=> 
         VALUES ($1, $2, $3, $4) 
         RETURNING *
         `,[moduleId,levelOrder,levelTitle,safeDescription]);
-        return result;
+
+        if (!result.rows || result.rows.length === 0) {
+        throw new Error("Database failed to return the created level row.");
+    }
+        
+        return result.row[0];
             
 }
 

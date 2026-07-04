@@ -4,14 +4,14 @@ const { betterAuthMiddleware } = require("../../middleware/betterAuthMiddleware"
 const adminMiddleware = require("../../middleware/adminMiddleware");
 const { questionCreation, choicesCreation } = require("../../controllers/modules/moduleQuestionAndChoices");
 
-router.post("/:levelId/questions", betterAuthMiddleware, adminMiddleware, async (req, res) => {
+router.post("/:moduleId/questions", betterAuthMiddleware, adminMiddleware, async (req, res) => {
    
-    const { levelId } = req.params;  // Fixed: route param is :levelId but was being read from wrong key
+    const { moduleId } = req.params;  
     const { questionText, points, imageURL } = req.body;
     
     try {
         
-        const result = await questionCreation(levelId, questionText, points, imageURL)
+        const result = await questionCreation(moduleId, questionText, points, imageURL)
         
         return res.status(201).json({
             success: true,

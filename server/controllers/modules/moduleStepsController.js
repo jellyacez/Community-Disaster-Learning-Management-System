@@ -1,5 +1,5 @@
-const pool = require("../config/db");
-const { cleanRichText } = require("../utils/sanitizeHtml");
+const pool = require("../../config/db");
+const { cleanRichText } = require("../../utils/sanitizeHtml");
 
  const stepCreation = async (levelsId, stepOrder, stepTitle, stepContent, mediaUrl, stepType) => {
     const safeContent = cleanRichText(stepContent);
