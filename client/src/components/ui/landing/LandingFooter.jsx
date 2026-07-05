@@ -1,4 +1,5 @@
 import React from "react";
+import { Link } from "react-router-dom";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Shield01Icon } from "@hugeicons/core-free-icons";
 
@@ -53,6 +54,14 @@ export default function LandingFooter() {
                 >
                   How It Works
                 </a>
+              </li>
+              <li className="pt-2 mt-2 border-t border-gray-800">
+                <Link
+                  to="/privacy-policy"
+                  className="hover:text-red-400 transition-colors"
+                >
+                  Privacy Policy
+                </Link>
               </li>
             </ul>
           </div>

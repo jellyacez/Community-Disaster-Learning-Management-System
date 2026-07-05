@@ -89,10 +89,12 @@ const CertificatePDF = lazy(
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 import UserLayout from "./components/layouts/UserLayout";
 import AdminLayout from "./components/layouts/AdminLayout";
+import ScrollToTop from "./components/ScrollToTop";
 
 export default function App() {
   return (
     <>
+      <ScrollToTop />
       <Toaster
         position="top-center"
         toastOptions={{
