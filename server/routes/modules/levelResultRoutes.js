@@ -13,11 +13,11 @@ router.post("/:moduleId/results", betterAuthMiddleware, async (req, res) => {
    
     const userId = req.user?.id; 
 
-    const { score, totalPoints, passed } = req.body;
+    const { answers } = req.body;
 
     try {
         
-        const result = await levelResult(moduleId ,userId ,score, totalPoints, passed);
+        const result = await levelResult(moduleId, userId, answers);
 
         return res.status(201).json({
             success: true,

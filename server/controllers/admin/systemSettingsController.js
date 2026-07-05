@@ -9,8 +9,6 @@ exports.getSystemSettings = async (req, res) => {
     result.rows.forEach(row => { settings[row.key] = row.value; });
     // Also return runtime info
     settings.node_env = process.env.NODE_ENV || 'development';
-    settings.node_version = process.version;
-    settings.platform = process.platform;
     res.json({ success: true, data: settings });
   } catch (err) {
     console.error(err);

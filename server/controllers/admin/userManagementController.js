@@ -54,8 +54,13 @@ exports.resetUserPassword = async (req, res) => {
       pass += all[crypto.randomInt(all.length)];
     }
     
-    // Shuffle the characters to prevent predictable patterns
-    password = pass.split('').sort(() => 0.5 - Math.random()).join('');
+    // Shuffle the characters cryptographically securely (Fisher-Yates)
+    const arr = pass.split('');
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = crypto.randomInt(i + 1);
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    password = arr.join('');
     isGenerated = true;
   } 
   
@@ -95,7 +100,6 @@ exports.resetUserPassword = async (req, res) => {
     });
   } catch (err) {
     console.error(err);
-    require('fs').writeFileSync('debug_error.log', err.stack || err.message || JSON.stringify(err));
     res.status(500).json({ error: "Server Error", details: err.message });
   }
 };
