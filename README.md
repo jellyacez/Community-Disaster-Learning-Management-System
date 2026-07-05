@@ -51,6 +51,7 @@ A progressive, multi-level web application designed to train and certify residen
 - `sanitize-html` (2.17.5)
 - `nodemailer` (9.0.1)
 - `@react-pdf/renderer` (4.5.1)
+- `node-cron` (3.0.3)
 - `nodemon` (3.1.14) - _dev_
 
 ### Client Dependencies
@@ -173,3 +174,4 @@ The application will be live at `http://localhost:5173`.
 16. **Strict Startup Validation**: The server enforces a strict boot sequence that automatically crashes if critical environment variables (like Database credentials or Auth secrets) are missing, preventing the application from booting into an insecure default state.
 17. **Strict CORS Policy**: Production environments strictly enforce CORS to exclusively match the explicitly defined frontend origin, neutralizing cross-origin attacks from compromised local environments.
 18. **Payload Validation & S3 Readiness**: High-risk endpoints (like system branding) employ hybrid validation—strictly limiting raw Base64 payloads to 2MB and checking MIME types to prevent Denial of Service, while securely accepting AWS S3 HTTPS URLs for cloud storage.
+19. **R.A. 10173 (Data Privacy Act) Compliance**: Automated 90-day retention policies for logs, robust "Right to Be Forgotten" hard-deletion pipelines for analytics data (`user_step_progress`, `results`), and strict PII redaction in system logs.

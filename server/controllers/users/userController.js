@@ -105,7 +105,7 @@ exports.deleteAccount = async (req, res) => {
     
     await client.query('BEGIN');
     
-    // 1. Fetch user data before deletion for anonymization
+    // 1. fetch user data for anonymization
     const userRes = await client.query('SELECT name, barangay FROM "user" WHERE id = $1', [userId]);
     if (userRes.rows.length === 0) {
       await client.query('ROLLBACK');
@@ -113,7 +113,7 @@ exports.deleteAccount = async (req, res) => {
     }
     const { barangay } = userRes.rows[0];
     
-    // 2. Anonymize certificates (strip PII, retain stats)
+    // 2. anonymize certificates
     await client.query(`
       UPDATE certificates 
       SET user_id = NULL, 
@@ -125,6 +125,8 @@ exports.deleteAccount = async (req, res) => {
     // 3. Hard Delete tied records (assuming these tables exist and use user_id)
     await client.query('DELETE FROM activity_log WHERE user_id = $1', [userId]).catch(() => {});
     await client.query('DELETE FROM module_activity WHERE user_id = $1', [userId]).catch(() => {});
+    await client.query('DELETE FROM user_step_progress WHERE user_id = $1', [userId]).catch(() => {});
+    await client.query('DELETE FROM results WHERE user_id = $1', [userId]).catch(() => {});
     
     // 4. Delete core Better Auth tables
     await client.query('DELETE FROM "session" WHERE "userId" = $1', [userId]);

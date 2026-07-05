@@ -6,6 +6,16 @@ const {
   getPasswordRecoveredEmail,
 } = require("../utils/emailTemplates");
 
+const redactEmail = (email) => {
+  if (!email || typeof email !== "string") return "[REDACTED]";
+  const parts = email.split("@");
+  if (parts.length !== 2) return "[REDACTED]";
+  const local = parts[0];
+  const domain = parts[1];
+  if (local.length <= 2) return `*@${domain}`;
+  return `${local.charAt(0)}***${local.charAt(local.length - 1)}@${domain}`;
+};
+
 const handlePasswordChangeAlert = async (user) => {
   try {
     await pool.query(
@@ -14,7 +24,7 @@ const handlePasswordChangeAlert = async (user) => {
     );
 
     await transporter.sendMail(getPasswordChangedEmail(user));
-    console.log("Password change email sent to", user.email);
+    console.log("Password change email sent to user ID:", user.id);
   } catch (err) {
     console.error("Password change service error:", err);
   }
@@ -41,7 +51,7 @@ const handlePasswordResetRecovery = async (userEmail) => {
 
       await transporter.sendMail(getPasswordRecoveredEmail(user));
     } else {
-      console.log("User not found in user table for email:", userEmail);
+      console.log("User not found in user table for email:", redactEmail(userEmail));
     }
   } catch (err) {
     console.error("Password reset recovery error:", err);

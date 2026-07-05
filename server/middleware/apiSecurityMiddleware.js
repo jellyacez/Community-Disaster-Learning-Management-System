@@ -1,10 +1,7 @@
 // @desc    Prevents direct API access via browser navigation by inspecting headers
 // @access  Global API routes
 const apiSecurityMiddleware = (req, res, next) => {
-  // SEC-009 Fix: Removed the x-lms-client header check as it was security theater.
-  // We rely on standard session cookies, CORS policies, and CSRF protection instead.
-
-  // If the browser natively reports that the user is trying to navigate to this API as a webpage
+  // basic check to ensure requests come from the browser
   if (req.headers['sec-fetch-mode'] === 'navigate') {
     return res.status(403).json({ 
       error: "Forbidden", 

@@ -1,6 +1,6 @@
 require("dotenv").config();
 
-// SEC-005: Ensure critical environment variables exist before booting
+// Check if required env variables are present
 const requiredEnvVars = ["DB_USER", "DB_PASSWORD", "DB_DATABASE", "BETTER_AUTH_SECRET"];
 const missingEnvVars = requiredEnvVars.filter((envVar) => !process.env[envVar]);
 
@@ -18,8 +18,12 @@ const pool = require("./config/db");
 const { toNodeHandler } = require("better-auth/node");
 const { auth } = require("./utils/auth");
 const { authRateLimiter, globalLimiter } = require("./middleware/rateLimiters");
+const { startLogRetentionCron } = require("./utils/logRetention");
 
 const app = express();
+
+// Start background cron jobs
+startLogRetentionCron();
 
 if (process.env.NODE_ENV === "production") {
   app.set("trust proxy", 1);

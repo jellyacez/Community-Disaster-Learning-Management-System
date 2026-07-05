@@ -6,7 +6,8 @@ const { levelResult } = require("../../controllers/modules/moduleResultControlle
 // NOTE: This route is intentionally accessible to all authenticated users (residents submit their own quiz results).
 // The userId is sourced from the server-side session (req.user.id), NOT from the request body,
 // preventing users from submitting results on behalf of other users.
-// SEC-007: Score validation (server-side recalculation) is a separate planned fix.
+// TODO: calculate score on server side
+// so users can't cheat by sending fake scores
 router.post("/:moduleId/results", betterAuthMiddleware, async (req, res) => {
     const { moduleId } = req.params;
 

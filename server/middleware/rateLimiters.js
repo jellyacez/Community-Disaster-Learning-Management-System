@@ -10,8 +10,7 @@ const dbConfig = {
   port: pool.options.port,
   database: pool.options.database,
 };
-// @desc    Limits failed login/auth attempts to prevent brute force
-// @access  Public (Auth routes)
+
 const authLimiter = rateLimit({
   store: new PostgresStore(dbConfig, "auth_"),
   windowMs: 15 * 60 * 1000,
@@ -37,8 +36,6 @@ const authRateLimiter = (req, res, next) => {
   next();
 };
 
-// @desc    Global rate limiter for general API routes to prevent spam
-// @access  Public
 const globalLimiter = rateLimit({
   store: new PostgresStore(dbConfig, "global_"),
   windowMs: 15 * 60 * 1000,
