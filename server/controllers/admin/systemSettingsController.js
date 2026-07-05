@@ -30,13 +30,35 @@ exports.updateSystemBranding = async (req, res) => {
       );
     }
     
-    // Upsert System Logo (Base64)
+    // Upsert System Logo (Hybrid Validation for AWS S3 and Base64)
     if (system_logo) {
-      await pool.query(
-        `INSERT INTO public.system_settings (key, value, updated_at) VALUES ('system_logo', $1, NOW())
-         ON CONFLICT (key) DO UPDATE SET value = $1, updated_at = NOW()`,
-        [system_logo]
-      );
+      // 1. Check if it's a valid URL (e.g., AWS S3)
+      const isUrl = /^(https?:\/\/)/.test(system_logo);
+      let isValidLogo = isUrl;
+
+      // 2. If not a URL, validate as Base64 image
+      if (!isUrl) {
+        const base64Match = system_logo.match(/^data:image\/(png|jpeg|webp|svg\+xml);base64,(.+)$/);
+        if (!base64Match) {
+          return res.status(400).json({ success: false, error: 'Invalid logo format. Must be a valid HTTPS URL or a Base64 image (PNG, JPG, WEBP, SVG).' });
+        }
+        
+        // Size Validation: Calculate byte size (max 2MB)
+        const base64Data = base64Match[2];
+        const sizeInBytes = (base64Data.length * 3) / 4 - (base64Data.endsWith("==") ? 2 : (base64Data.endsWith("=") ? 1 : 0));
+        if (sizeInBytes > 2 * 1024 * 1024) {
+          return res.status(400).json({ success: false, error: 'Logo image is too large. Maximum size is 2MB.' });
+        }
+        isValidLogo = true;
+      }
+
+      if (isValidLogo) {
+        await pool.query(
+          `INSERT INTO public.system_settings (key, value, updated_at) VALUES ('system_logo', $1, NOW())
+           ON CONFLICT (key) DO UPDATE SET value = $1, updated_at = NOW()`,
+          [system_logo]
+        );
+      }
     }
     
     res.json({ success: true, message: 'System branding updated successfully' });

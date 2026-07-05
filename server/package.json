@@ -15,19 +15,20 @@
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
-    "@react-pdf/renderer": "^4.5.1",
-    "better-auth": "^1.6.15",
-    "cors": "^2.8.6",
-    "dotenv": "^17.4.2",
-    "express": "^5.2.1",
-    "express-rate-limit": "^8.5.2",
-    "helmet": "^8.2.0",
-    "hpp": "^0.2.3",
-    "nodemailer": "^9.0.1",
-    "pg": "^8.21.0",
-    "sanitize-html": "^2.17.5"
+    "@acpr/rate-limit-postgresql": "1.4.1",
+    "@react-pdf/renderer": "4.5.1",
+    "better-auth": "1.6.15",
+    "cors": "2.8.6",
+    "dotenv": "17.4.2",
+    "express": "5.2.1",
+    "express-rate-limit": "8.5.2",
+    "helmet": "8.2.0",
+    "hpp": "0.2.3",
+    "nodemailer": "9.0.1",
+    "pg": "8.21.0",
+    "sanitize-html": "2.17.5"
   },
   "devDependencies": {
-    "nodemon": "^3.1.14"
+    "nodemon": "3.1.14"
   }
 }

@@ -1,8 +1,19 @@
 const rateLimit = require("express-rate-limit");
+const { PostgresStore } = require("@acpr/rate-limit-postgresql");
 
+const pool = require("../config/db");
+
+const dbConfig = {
+  user: pool.options.user,
+  password: pool.options.password,
+  host: pool.options.host,
+  port: pool.options.port,
+  database: pool.options.database,
+};
 // @desc    Limits failed login/auth attempts to prevent brute force
 // @access  Public (Auth routes)
 const authLimiter = rateLimit({
+  store: new PostgresStore(dbConfig, "auth_"),
   windowMs: 15 * 60 * 1000,
   max: 10,
   skipSuccessfulRequests: true,
@@ -29,6 +40,7 @@ const authRateLimiter = (req, res, next) => {
 // @desc    Global rate limiter for general API routes to prevent spam
 // @access  Public
 const globalLimiter = rateLimit({
+  store: new PostgresStore(dbConfig, "global_"),
   windowMs: 15 * 60 * 1000,
   max: 1000,
   message: { error: "Too many requests from this IP, please try again later." },

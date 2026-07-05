@@ -39,34 +39,38 @@ A progressive, multi-level web application designed to train and certify residen
 
 ### Server Dependencies
 
-- `express` (^5.2.1)
-- `pg` (^8.21.0)
-- `cors` (^2.8.6)
-- `dotenv` (^17.4.2)
-- `better-auth` (^1.6.15)
-- `express-rate-limit` (^8.5.2)
-- `helmet` (^8.2.0)
-- `hpp` (^0.2.3)
-- `sanitize-html` (^2.17.5)
-- `nodemailer` (^9.0.1)
-- `nodemon` (^3.1.14) - _dev_
+- `express` (5.2.1)
+- `pg` (8.21.0)
+- `cors` (2.8.6)
+- `dotenv` (17.4.2)
+- `better-auth` (1.6.15)
+- `express-rate-limit` (8.5.2)
+- `@acpr/rate-limit-postgresql` (1.4.1)
+- `helmet` (8.2.0)
+- `hpp` (0.2.3)
+- `sanitize-html` (2.17.5)
+- `nodemailer` (9.0.1)
+- `@react-pdf/renderer` (4.5.1)
+- `nodemon` (3.1.14) - _dev_
 
 ### Client Dependencies
 
-- `react` / `react-dom` (^19.2.6)
-- `react-router-dom` (^7.17.0)
-- `@tanstack/react-query` (^5.101.0)
-- `axios` (^1.17.0)
-- `better-auth` (^1.6.15)
-- `framer-motion` (^12.40.0)
-- `react-hot-toast` (^2.6.0)
-- `qrcode.react` (^4.2.0)
-- `recharts` (^2.12.0)
-- `@hugeicons/react` (^1.1.6)
-- `@hugeicons/core-free-icons` (^4.2.0)
-- `tailwindcss` (^4.3.0) & `@tailwindcss/vite` - _dev_
-- `vite` (^8.0.12) - _dev_
-- `eslint` - _dev_
+- `react` / `react-dom` (19.2.6)
+- `react-router-dom` (7.17.0)
+- `@tanstack/react-query` (5.101.0)
+- `axios` (1.17.0)
+- `better-auth` (1.6.15)
+- `framer-motion` (12.40.0)
+- `react-hot-toast` (2.6.0)
+- `qrcode.react` (4.2.0)
+- `recharts` (3.9.1)
+- `dompurify` (3.4.11)
+- `@react-pdf/renderer` (4.5.1)
+- `@hugeicons/react` (1.1.6)
+- `@hugeicons/core-free-icons` (4.2.0)
+- `tailwindcss` (4.3.0) & `@tailwindcss/vite` - _dev_
+- `vite` (8.0.12) - _dev_
+- `eslint` (10.3.0) - _dev_
 
 ---
 
@@ -83,7 +87,7 @@ Navigate into the server directory and install dependencies:
 
 ```bash
 cd server
-npm install
+npm ci # Use npm ci for deterministic builds in production, or npm install for dev
 ```
 
 Create a `.env` file in the `server` directory:
@@ -129,7 +133,7 @@ Open a new terminal, navigate to the client directory, and install dependencies:
 
 ```bash
 cd client
-npm install
+npm ci # Use npm ci for deterministic builds in production, or npm install for dev
 ```
 
 Create a `.env` file in the `client` directory (optional for dev):
@@ -154,11 +158,11 @@ The application will be live at `http://localhost:5173`.
 1. **Frontend Protection**: The `<ProtectedRoute />` component explicitly checks active sessions and role scopes to prevent cross-role contamination. Unauthorized attempts trigger a full-screen "Access Denied" overlay (preventing layout exposure) and securely redirect users back to their authorized dynamic dashboards.
 2. **Authentication Middleware**: The backend employs `betterAuthMiddleware.js` to ensure the requester is logged into a valid session.
 3. **Authorization Middleware**: The `adminMiddleware.js` operates as an Express gatekeeper, strictly validating that the secure session token belongs to a `system_admin` before any sensitive database queries are run.
-4. **Rate Limiting**: Defends the server from brute-force and DDoS attacks. Global limits apply broadly, with strict 20-request caps on authentication routes.
+4. **Distributed Rate Limiting**: Defends the server from brute-force and DDoS attacks. Rate limit states are synchronized globally via PostgreSQL (`@acpr/rate-limit-postgresql`), ensuring absolute effectiveness across multi-process and load-balanced cluster deployments.
 5. **SQL Injection Prevention**: All custom database interactions are securely parameterized through `pg` bounds.
 6. **Payload Limits**: Incoming JSON requests are strictly capped at 500kb to mathematically prevent memory exhaustion and buffer attacks.
 7. **HTTP Parameter Pollution (HPP)**: The server safely parses query strings to prevent duplication-based backend bypasses.
-8. **Targeted XSS Sanitization**: A custom `sanitize-html` utility scrubs incoming rich-text content for the LMS modules, explicitly permitting safe HTML formatting while completely eliminating XSS vectors like `<script>` or `<iframe>` injections.
+8. **Targeted XSS Sanitization**: A custom `sanitize-html` utility scrubs incoming rich-text content for the LMS modules, explicitly permitting safe HTML formatting while completely eliminating XSS vectors like `<script>`, inline CSS (`<p style>`), and malicious `<iframe>` injections.
 9. **Credential Security**: All password mutations, hashing algorithms, and session invalidations rely 100% on Better Auth's internal secure server API, ensuring zero manual database manipulation.
 10. **Device Management**: Users can monitor all active sessions across different devices (e.g., Mobile, Windows, Mac) and can selectively or completely revoke active sessions from the Settings dashboard.
 11. **Security Cooldowns**: A strict 24-hour cooldown lock is enforced on manual password changes via the user dashboard to mitigate brute-force account takeovers. Legitimate owners can bypass this lock via the secure Email Recovery flow.
@@ -166,3 +170,6 @@ The application will be live at `http://localhost:5173`.
 13. **Data Privacy**: The platform includes standardized Privacy Policy and Terms & Conditions. API routes are strictly structured utilizing isolated `/routes` modules (e.g. `authRoutes.js`, `userRoutes.js`) to strictly scope SQL `SELECT` statements and prevent data over-fetching.
 14. **Optimized Frontend Architecture**: Large administrative components (like User Management) are strictly decoupled into independent Container Components and Presentation Components. This limits re-renders, prevents UI layout shifting during data fetches, and cleanly separates React Query data mutations from pure visual rendering.
 15. **Zero-Downtime Secret Rotation**: The backend features automated utility scripts (`npm run rotate-better-auth` and `npm run rotate-secrets`) to securely cycle Better Auth cryptographic keys using envelope encryption (versioned secrets) and rotate dotenvx file encryption keys without invalidating active user sessions.
+16. **Strict Startup Validation**: The server enforces a strict boot sequence that automatically crashes if critical environment variables (like Database credentials or Auth secrets) are missing, preventing the application from booting into an insecure default state.
+17. **Strict CORS Policy**: Production environments strictly enforce CORS to exclusively match the explicitly defined frontend origin, neutralizing cross-origin attacks from compromised local environments.
+18. **Payload Validation & S3 Readiness**: High-risk endpoints (like system branding) employ hybrid validation—strictly limiting raw Base64 payloads to 2MB and checking MIME types to prevent Denial of Service, while securely accepting AWS S3 HTTPS URLs for cloud storage.

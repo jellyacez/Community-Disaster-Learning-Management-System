@@ -94,8 +94,8 @@ const auth = betterAuth({
       defaultRole: "resident",
       adminRole: "system_admin",
       roles: {
-        barangay_admin: {},
-        MDRRMO_admin: {},
+        // SEC-008: Removed barangay_admin and MDRRMO_admin from here to strictly enforce 
+        // row-level scoping in custom API routes instead of relying on the unscoped admin plugin.
       },
     }),
     twoFactor({

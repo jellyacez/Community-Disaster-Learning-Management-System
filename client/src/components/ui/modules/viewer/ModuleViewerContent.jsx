@@ -1,4 +1,5 @@
 import React from "react";
+import DOMPurify from "dompurify";
 
 export default function ModuleViewerContent({
   activeStep,
@@ -22,23 +23,24 @@ export default function ModuleViewerContent({
                 {activeStep.title}
               </h1>
               
-              <div className="aspect-video w-full bg-gray-900 rounded-2xl mb-8 flex items-center justify-center overflow-hidden shadow-lg relative group">
-                 {activeStep.type === "video" ? (
-                   <div className="absolute inset-0 flex flex-col items-center justify-center">
-                     <div className="w-16 h-16 bg-red-600 text-white rounded-full flex items-center justify-center pl-1 shadow-xl group-hover:scale-110 transition-transform cursor-pointer">
-                        <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
-                     </div>
-                   </div>
-                 ) : activeStep.type === "quiz" ? (
-                   <p className="text-white/60 font-bold tracking-widest uppercase">Interactive Quiz Canvas</p>
-                 ) : (
-                   <p className="text-white/60 font-bold tracking-widest uppercase">Rich Text / PDF Viewer</p>
-                 )}
-              </div>
+              {activeStep.type !== "text" && (
+                <div className="aspect-video w-full bg-gray-900 rounded-2xl mb-8 flex items-center justify-center overflow-hidden shadow-lg relative group">
+                  {activeStep.type === "video" ? (
+                    <div className="absolute inset-0 flex flex-col items-center justify-center">
+                      <div className="w-16 h-16 bg-red-600 text-white rounded-full flex items-center justify-center pl-1 shadow-xl group-hover:scale-110 transition-transform cursor-pointer">
+                          <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
+                      </div>
+                    </div>
+                  ) : activeStep.type === "quiz" ? (
+                    <p className="text-white/60 font-bold tracking-widest uppercase">Interactive Quiz Canvas</p>
+                  ) : null}
+                </div>
+              )}
 
-              <div className="prose prose-lg prose-red max-w-none text-gray-600">
-                <p>{activeStep.content}</p>
-              </div>
+              <div 
+                className="prose prose-lg prose-red max-w-none text-gray-600"
+                dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(activeStep.content) }}
+              />
             </>
           ) : (
             <div className="text-center py-20 text-gray-500">Select a lesson from the curriculum</div>

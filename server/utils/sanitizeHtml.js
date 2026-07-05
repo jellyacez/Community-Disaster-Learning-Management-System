@@ -36,7 +36,6 @@ const cleanRichText = (htmlContent) => {
       "th",
       "td",
       "pre",
-      "iframe",
       "img",
       "span",
       "video",
@@ -49,18 +48,8 @@ const cleanRichText = (htmlContent) => {
       video: ["src", "controls", "width", "height", "autoplay", "muted", "loop", "poster"],
       source: ["src", "type"],
       track: ["kind", "src", "srclang", "label", "default"],
-      iframe: [
-        "src",
-        "width",
-        "height",
-        "allowfullscreen",
-        "allow",
-        "frameborder",
-      ],
       "*": ["class"],
-      "p": ["style"],
     },
-    allowedIframeHostnames: [],
     allowedSchemes: ["http", "https", "mailto"],
   });
 };

@@ -1,4 +1,15 @@
 require("dotenv").config();
+
+// SEC-005: Ensure critical environment variables exist before booting
+const requiredEnvVars = ["DB_USER", "DB_PASSWORD", "DB_DATABASE", "BETTER_AUTH_SECRET"];
+const missingEnvVars = requiredEnvVars.filter((envVar) => !process.env[envVar]);
+
+if (missingEnvVars.length > 0) {
+  console.error(`\x1b[31m[FATAL ERROR] Missing critical environment variables: ${missingEnvVars.join(", ")}\x1b[0m`);
+  console.error("The server will not start. Please check your .env file.");
+  process.exit(1);
+}
+
 const express = require("express");
 const helmet = require("helmet");
 const cors = require("cors");
@@ -31,15 +42,15 @@ app.use(
       },
     },
     crossOriginResourcePolicy: { policy: "cross-origin" },
+    crossOriginOpenerPolicy: { policy: "same-origin-allow-popups" },
   }),
 );
 
 app.use(
   cors({
-    origin: [
-      process.env.FRONTEND_URL || "http://localhost:5173",
-      "http://localhost:5174",
-    ],
+    origin: process.env.NODE_ENV === "production" 
+      ? [process.env.FRONTEND_URL]
+      : [process.env.FRONTEND_URL, "http://localhost:5173", "http://localhost:5174"].filter(Boolean),
     credentials: true,
   }),
 );

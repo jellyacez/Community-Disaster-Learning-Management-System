@@ -83,14 +83,15 @@ export default function EmailSignInForm({ errorMessage, clearGlobalError, onRequ
     });
     if (error) {
       console.error("Sign in failed:", error);
-      let errorMsg = error.message || "Invalid email or password. Please try again.";
+      let errorMsg = "Invalid email or password. Please try again.";
+      const rawMsg = (error?.message || "").toLowerCase();
 
-      if (error.status === 429 || errorMsg.toLowerCase().includes("too many")) {
+      if (error.status === 429 || rawMsg.includes("too many")) {
         errorMsg = "Too many login attempts. Please wait 15 minutes and try again.";
         toast.error(errorMsg);
       } else if (
-        errorMsg.toLowerCase().includes("not verified") ||
-        errorMsg.toLowerCase().includes("verify your email")
+        rawMsg.includes("not verified") ||
+        rawMsg.includes("verify your email")
       ) {
         errorMsg = "Please verify your email address before signing in. Check your inbox!";
       }

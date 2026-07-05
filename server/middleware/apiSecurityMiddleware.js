@@ -1,13 +1,8 @@
 // @desc    Prevents direct API access via browser navigation by inspecting headers
 // @access  Global API routes
 const apiSecurityMiddleware = (req, res, next) => {
-  // Enforce custom client header (prevents basic Postman/CURL access without header)
-  if (req.headers['x-lms-client'] !== 'true') {
-    return res.status(403).json({ 
-      error: "Forbidden", 
-      message: "Direct API access is forbidden. Missing required client header." 
-    });
-  }
+  // SEC-009 Fix: Removed the x-lms-client header check as it was security theater.
+  // We rely on standard session cookies, CORS policies, and CSRF protection instead.
 
   // If the browser natively reports that the user is trying to navigate to this API as a webpage
   if (req.headers['sec-fetch-mode'] === 'navigate') {

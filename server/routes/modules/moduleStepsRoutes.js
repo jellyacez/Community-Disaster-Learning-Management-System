@@ -4,7 +4,7 @@ const { betterAuthMiddleware } = require("../../middleware/betterAuthMiddleware"
 const adminMiddleware = require("../../middleware/adminMiddleware");
 const { stepCreation } = require("../../controllers/modules/moduleStepsController");
 
-router.post("/:levelId", betterAuthMiddleware, adminMiddleware, async (req, res) => {
+router.post("/steps/:levelId", betterAuthMiddleware, adminMiddleware, async (req, res) => {
 
     const { levelId } = req.params;
     const { stepOrder, stepTitle, stepContent, mediaUrl, stepType } = req.body;
