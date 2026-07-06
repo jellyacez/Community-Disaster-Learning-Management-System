@@ -38,7 +38,7 @@ export default function UserSidebar({
         },
       });
       toast.success("Successfully logged out!");
-    } catch (error) {
+    } catch {
       toast.error("Logout failed");
     } finally {
       setIsLogoutModalOpen(false);
