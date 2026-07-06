@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import apiClient from "../../lib/apiClient";
 import { authClient } from "../../lib/auth-client";
 import { HugeiconsIcon } from "@hugeicons/react";

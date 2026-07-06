@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 
 export default function SequenceCanvas({ stagedFlows, setStagedFlows, triggerFlowSequencePreview }) {
   const [draggedItemIndex, setDraggedItemIndex] = useState(null);

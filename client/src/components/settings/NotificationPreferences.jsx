@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Megaphone01Icon, Alert02Icon, Notification03Icon } from "@hugeicons/core-free-icons";
 

@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect, memo } from "react";
+import { useRef, useState, useEffect, memo, Fragment } from "react";
 
 const OtpInput = memo(function OtpInput({ value, onChange, length = 6 }) {
   const [otp, setOtp] = useState(new Array(length).fill(""));
@@ -66,7 +66,7 @@ const OtpInput = memo(function OtpInput({ value, onChange, length = 6 }) {
   return (
     <div className="flex items-center justify-center gap-1.5 md:gap-2">
       {otp.map((digit, index) => (
-        <React.Fragment key={`otp-digit-${index}`}>
+        <Fragment key={`otp-digit-${index}`}>
           <input
             ref={(ref) => (inputRefs.current[index] = ref)}
             type="text"
@@ -81,7 +81,7 @@ const OtpInput = memo(function OtpInput({ value, onChange, length = 6 }) {
           {index === 2 && (
             <div className="w-3 h-[2px] bg-gray-300 rounded-full shrink-0 mx-0.5" />
           )}
-        </React.Fragment>
+        </Fragment>
       ))}
     </div>
   );

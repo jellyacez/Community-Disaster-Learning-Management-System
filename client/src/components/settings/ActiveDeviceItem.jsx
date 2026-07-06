@@ -1,4 +1,4 @@
-import React, { memo } from "react";
+import { memo } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { getDeviceDetails } from "../../utils/deviceUtils";
 

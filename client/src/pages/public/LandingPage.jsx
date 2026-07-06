@@ -1,5 +1,5 @@
 // --- START: LandingPage.jsx ---
-import React, { useEffect } from "react";
+import { useEffect } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { authClient } from "../../lib/auth-client";

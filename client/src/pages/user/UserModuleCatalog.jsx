@@ -1,7 +1,6 @@
-import React, { useState, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { useOutletContext } from "react-router-dom";
-import { HugeiconsIcon } from "@hugeicons/react";
-import { Search01Icon } from "@hugeicons/core-free-icons";
+
 import ModuleCard from "../../components/ui/modules/ModuleCard.jsx";
 import ModuleSkeleton from "../../components/ui/modules/ModuleSkeleton.jsx";
 import useDocumentTitle from "../../hooks/useDocumentTitle";
@@ -11,7 +10,6 @@ import apiClient from "../../lib/apiClient";
 import continuousLearningImg from "../../assets/continuous-learning.svg";
 
 export default function UserModuleCatalog() {
-  const { currentUser } = useOutletContext();
   const queryClient = useQueryClient();
   const { data: modules = [], isLoading } = useQuery({
     queryKey: ["availableModules"],

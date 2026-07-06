@@ -1,4 +1,3 @@
-import React from "react";
 import { SkeletonTableRow } from "../../../../../components/ui/Skeleton.jsx";
 
 export default function ResidentDirectoryTable({ 

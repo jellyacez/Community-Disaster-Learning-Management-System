@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import toast from "react-hot-toast";
 import { authClient } from "../../lib/auth-client";
 import apiClient from "../../lib/apiClient";

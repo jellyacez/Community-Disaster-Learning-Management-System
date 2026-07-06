@@ -1,4 +1,3 @@
-import React from "react";
 import { Link } from "react-router-dom";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { ArrowLeft01Icon, Shield01Icon } from "@hugeicons/core-free-icons";

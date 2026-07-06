@@ -1,4 +1,3 @@
-import React from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Notification03Icon, AlertCircleIcon } from "@hugeicons/core-free-icons";
 import AnnouncementSkeleton from "../announcements/AnnouncementSkeleton.jsx";

@@ -1,4 +1,3 @@
-import React from "react";
 import { CheckCircleIcon, LockIcon, PlayIcon, DocumentIcon, QuizIcon, CloseIcon } from "./ModuleIcons";
 
 export default function ModuleViewerSidebar({

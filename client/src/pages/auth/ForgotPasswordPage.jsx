@@ -1,5 +1,5 @@
 // --- START: ForgotPasswordPage.jsx ---
-import React, { useState } from "react";
+import { useState } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Mail01Icon, CheckmarkBadge01Icon, Alert01Icon, Shield01Icon } from "@hugeicons/core-free-icons";
 import { authClient } from "../../lib/auth-client";

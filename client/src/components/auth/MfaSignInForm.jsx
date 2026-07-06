@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Alert01Icon } from "@hugeicons/core-free-icons";
 import toast from "react-hot-toast";

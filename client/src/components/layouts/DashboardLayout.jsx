@@ -1,4 +1,3 @@
-import React from "react";
 import UserNavbar from "./UserNavbar";
 import UserSidebar from "./UserSidebar";
 

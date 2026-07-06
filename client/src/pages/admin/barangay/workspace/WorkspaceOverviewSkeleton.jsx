@@ -1,4 +1,3 @@
-import React from "react";
 import { SkeletonBlock } from "../../../../components/ui/Skeleton";
 
 export default function WorkspaceOverviewSkeleton() {

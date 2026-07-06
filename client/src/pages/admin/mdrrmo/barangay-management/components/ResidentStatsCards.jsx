@@ -1,4 +1,3 @@
-import React from "react";
 
 export default function ResidentStatsCards({ stats, isLoading }) {
   const { totalResidentsCount, readyCount, averageScore, coverageRate } = stats;

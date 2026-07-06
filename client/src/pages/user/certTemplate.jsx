@@ -1,4 +1,3 @@
-import React from "react";
 import { useOutletContext } from "react-router-dom"; 
 import { useQuery } from "@tanstack/react-query";
 import apiClient from "../../lib/apiClient";
@@ -36,7 +35,7 @@ export default function CertificateTemplate() {
   const { currentUser } = useOutletContext();
   const residentName = currentUser?.name || "Resident"; 
 
-  const { data: certData, isLoading } = useQuery({
+  const { data: certData } = useQuery({
     queryKey: ["certificateData"],
     queryFn: async () => {
       const response = await apiClient.get('/users/certificate-data');

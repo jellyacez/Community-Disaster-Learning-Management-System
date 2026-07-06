@@ -1,4 +1,3 @@
-import React from 'react';
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Download01Icon, Delete01Icon } from "@hugeicons/core-free-icons";
 

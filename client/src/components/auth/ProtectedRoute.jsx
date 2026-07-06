@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Navigate, Outlet, Link, useSearchParams, useLocation } from "react-router-dom";
 import { authClient } from "../../lib/auth-client";
 import apiClient from "../../lib/apiClient";

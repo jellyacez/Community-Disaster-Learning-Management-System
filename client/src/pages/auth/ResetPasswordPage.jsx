@@ -1,5 +1,5 @@
 // --- START: ResetPasswordPage.jsx ---
-import React, { useState } from "react";
+import { useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Alert01Icon, Shield01Icon } from "@hugeicons/core-free-icons";

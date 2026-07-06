@@ -1,5 +1,4 @@
 // --- START: AdminMfaSetupPage.jsx ---
-import React from "react";
 import { useNavigate } from "react-router-dom";
 import useDocumentTitle from "../../hooks/useDocumentTitle";
 import AuthLayout from "../../components/layouts/AuthLayout";

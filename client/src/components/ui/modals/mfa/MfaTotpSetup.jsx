@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState, useCallback } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import PasswordInput from "../../inputs/PasswordInput";
 import OtpInput from "../../inputs/OtpInput";
@@ -20,7 +20,7 @@ export default function MfaTotpSetup({
   const [totpCode, setTotpCode] = useState("");
   const [isVerifying, setIsVerifying] = useState(false);
 
-  const handlePasswordChange = React.useCallback((e) => setPassword(e.target.value), [setPassword]);
+  const handlePasswordChange = useCallback((e) => setPassword(e.target.value), [setPassword]);
 
   const handleVerifyAndComplete = async () => {
     if (totpCode.length !== 6) {

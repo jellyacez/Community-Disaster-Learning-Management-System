@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { authClient } from "../../lib/auth-client";
 import toast from "react-hot-toast";
 import ConfirmationModal from "../ui/modals/ConfirmationModal";
@@ -24,7 +24,7 @@ export default function ActiveDevices() {
     fetchSessions();
   }, [activeSession]);
 
-  const handleConfirmRevoke = React.useCallback(async () => {
+  const handleConfirmRevoke = useCallback(async () => {
     setIsRevoking(true);
 
     if (revokeTarget === "ALL") {
@@ -57,12 +57,12 @@ export default function ActiveDevices() {
     }
   }, [revokeTarget, sessions, activeSession]);
 
-  const initiateRevoke = React.useCallback((target) => {
+  const initiateRevoke = useCallback((target) => {
     setRevokeTarget(target);
     setIsModalOpen(true);
   }, []);
 
-  const handleCloseModal = React.useCallback(() => {
+  const handleCloseModal = useCallback(() => {
     setIsModalOpen(false);
   }, []);
 

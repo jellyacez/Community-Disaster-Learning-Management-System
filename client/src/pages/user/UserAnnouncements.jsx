@@ -1,5 +1,4 @@
 // --- START: UserAnnouncements.jsx ---
-import React from "react";
 import { useOutletContext } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import AnnouncementCard from "../../components/ui/announcements/AnnouncementCard";

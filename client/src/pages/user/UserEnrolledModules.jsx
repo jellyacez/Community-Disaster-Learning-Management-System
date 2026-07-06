@@ -1,5 +1,5 @@
 // --- START: UserEnrolledModules.jsx ---
-import React, { useState, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { useOutletContext, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import apiClient from "../../lib/apiClient";
@@ -13,7 +13,6 @@ import SearchBar from "../../components/ui/inputs/SearchBar.jsx";
 
 export default function UserEnrolledModules() {
   useDocumentTitle("Enrolled Modules | Bacolor LMS");
-  const { currentUser } = useOutletContext();
   const { data: dashboardData, isLoading } = useQuery({
     queryKey: ['userDashboard'],
     queryFn: async () => {
@@ -24,7 +23,7 @@ export default function UserEnrolledModules() {
   
   const [searchTerm, setSearchTerm] = useState("");
   const [activeTab, setActiveTab] = useState("in_progress");
-  const enrolledModules = dashboardData?.enrolledModules || [];
+  const enrolledModules = useMemo(() => dashboardData?.enrolledModules || [], [dashboardData?.enrolledModules]);
   
   const inProgressModules = useMemo(() => 
     enrolledModules.filter((m) => m.status !== "Completed" && m.progress < 100),

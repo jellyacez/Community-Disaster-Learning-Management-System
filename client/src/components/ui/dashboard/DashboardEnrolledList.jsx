@@ -1,4 +1,3 @@
-import React from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { BookOpen01Icon } from "@hugeicons/core-free-icons";
 import ModuleSkeleton from "../modules/ModuleSkeleton.jsx";

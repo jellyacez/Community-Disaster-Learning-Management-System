@@ -1,4 +1,3 @@
-import React from "react";
 import { useUserManagement } from "./hooks/useUserManagement";
 import UserDirectoryTable from "./components/UserDirectoryTable";
 import RegisterPersonnelForm from "./components/RegisterPersonnelForm";

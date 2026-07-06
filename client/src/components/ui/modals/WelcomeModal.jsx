@@ -1,4 +1,3 @@
-import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Cancel01Icon, CheckmarkBadge01Icon } from "@hugeicons/core-free-icons";

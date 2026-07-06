@@ -1,4 +1,4 @@
-import React, { memo } from 'react';
+import { memo } from 'react';
 
 const StatCard = memo(function StatCard({ title, value, subtitle }) {
   return (

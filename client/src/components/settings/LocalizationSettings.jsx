@@ -1,4 +1,3 @@
-import React from 'react';
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Globe02Icon, PaintBoardIcon } from "@hugeicons/core-free-icons";
 

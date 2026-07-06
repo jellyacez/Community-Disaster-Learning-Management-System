@@ -1,4 +1,3 @@
-import React from "react";
 
 export default function HealthRow({ label, value, pill, pillColor, progress }) {
   const pillColors = {

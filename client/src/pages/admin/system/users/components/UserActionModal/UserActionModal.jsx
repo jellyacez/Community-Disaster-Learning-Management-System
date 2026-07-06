@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Cancel01Icon } from "@hugeicons/core-free-icons";
 import EditDetailsTab from "./EditDetailsTab";

@@ -1,4 +1,3 @@
-import React from "react";
 import AssessmentEditor from "./AssessmentEditor";
 
 export default function StepBuilder({ 

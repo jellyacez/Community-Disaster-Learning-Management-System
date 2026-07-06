@@ -1,5 +1,4 @@
 // --- START: UserSettings.jsx ---
-import React from "react";
 import { useOutletContext } from "react-router-dom";
 import useDocumentTitle from "../../hooks/useDocumentTitle";
 import ProfilePreferences from "../../components/settings/ProfilePreferences";

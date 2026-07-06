@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Activity01Icon } from "@hugeicons/core-free-icons";
 

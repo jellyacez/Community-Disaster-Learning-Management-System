@@ -1,5 +1,5 @@
 // --- START: UserDashboard.jsx ---
-import React, { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useOutletContext, useLocation, useNavigate, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import apiClient from "../../lib/apiClient";
@@ -7,13 +7,8 @@ import { authClient } from "../../lib/auth-client";
 import { motion, AnimatePresence } from "framer-motion";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
-  Notification03Icon,
   CheckmarkBadge01Icon,
-  Cancel01Icon,
-  BookOpen01Icon,
-  AlertCircleIcon,
 } from "@hugeicons/core-free-icons";
-import DashboardLayout from "../../components/layouts/DashboardLayout.jsx";
 import WelcomeModal from "../../components/ui/modals/WelcomeModal.jsx";
 import WelcomeBanner from "../../components/ui/dashboard/WelcomeBanner.jsx";
 import DashboardStats from "../../components/ui/dashboard/DashboardStats.jsx";
@@ -23,7 +18,6 @@ import DashboardEmergencyContacts from "../../components/ui/dashboard/DashboardE
 
 import useDocumentTitle from "../../hooks/useDocumentTitle";
 import toast from "react-hot-toast";
-import { SkeletonText } from "../../components/ui/Skeleton.jsx";
 import OnboardingModal from "../../components/ui/modals/OnboardingModal.jsx";
 
 export default function UserDashboard() {
@@ -38,7 +32,6 @@ export default function UserDashboard() {
   const {
     data: dashboardData,
     isLoading: loading,
-    error,
   } = useQuery({
     queryKey: ["userDashboard"],
     queryFn: async () => {
@@ -60,6 +53,7 @@ export default function UserDashboard() {
 
   useEffect(() => {
     if (location.state?.showWelcome || location.state?.fromLogin) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setShowWelcomeModal(true);
       sessionStorage.setItem("hasSeenWelcome", "true");
       navigate(location.pathname, { replace: true, state: {} });
@@ -71,13 +65,14 @@ export default function UserDashboard() {
       const hasSeenWelcome = sessionStorage.getItem("hasSeenWelcome");
 
       if (isNewAccount && !hasSeenWelcome) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setShowWelcomeModal(true);
         sessionStorage.setItem("hasSeenWelcome", "true");
       }
     }
   }, [location, navigate, session]);
 
-  const handleResume = React.useCallback(
+  const handleResume = useCallback(
     (moduleId) => {
       navigate(`/user/modules/${moduleId}`);
     },

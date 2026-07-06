@@ -1,4 +1,3 @@
-import React from 'react';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { Notification03Icon, Menu01Icon } from '@hugeicons/core-free-icons';
 import { useLocation, useNavigate } from 'react-router-dom';

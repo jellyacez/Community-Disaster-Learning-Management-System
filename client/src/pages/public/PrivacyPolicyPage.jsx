@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import useDocumentTitle from "../../hooks/useDocumentTitle";
 import { Link } from "react-router-dom";
 

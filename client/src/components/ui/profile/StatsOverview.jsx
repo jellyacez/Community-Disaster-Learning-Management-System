@@ -1,4 +1,3 @@
-import React from 'react';
 import { HugeiconsIcon } from "@hugeicons/react";
 import { CheckmarkBadge01Icon, Time02Icon, BookOpen01Icon } from "@hugeicons/core-free-icons";
 

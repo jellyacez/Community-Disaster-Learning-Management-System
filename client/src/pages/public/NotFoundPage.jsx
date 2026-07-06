@@ -1,5 +1,4 @@
 // --- START: NotFoundPage.jsx ---
-import React from "react";
 import { Link } from "react-router-dom";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { DiscoverCircleIcon, Home09Icon } from "@hugeicons/core-free-icons";

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { CheckmarkBadge01Icon } from "@hugeicons/core-free-icons";

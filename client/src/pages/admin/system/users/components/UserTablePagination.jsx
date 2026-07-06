@@ -1,4 +1,3 @@
-import React from "react";
 
 export default function UserTablePagination({ isLoading, meta, setPage, limit, setLimit }) {
   if (isLoading || (meta.totalPages <= 1 && meta.total <= 10)) return null;

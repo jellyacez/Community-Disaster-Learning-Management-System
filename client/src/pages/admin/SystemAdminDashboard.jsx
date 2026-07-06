@@ -1,4 +1,3 @@
-import React from "react";
 import useDocumentTitle from "../../hooks/useDocumentTitle";
 import { useSystemAdmin } from "./hooks/useSystemAdmin";
 import SystemAdminUserTable from "./components/SystemAdminUserTable";

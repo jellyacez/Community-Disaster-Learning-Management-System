@@ -1,4 +1,3 @@
-import React from "react";
 import ResidentInspectorPanel from "../../shared/ResidentInspectorPanel";
 import { useBarangayManagement } from "./hooks/useBarangayManagement";
 import BarangayFilters from "./components/BarangayFilters";

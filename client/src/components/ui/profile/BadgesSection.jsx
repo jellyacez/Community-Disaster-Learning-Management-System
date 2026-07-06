@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Award02Icon, CheckmarkCircle02Icon } from "@hugeicons/core-free-icons";
 

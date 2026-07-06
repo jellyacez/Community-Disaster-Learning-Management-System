@@ -1,5 +1,5 @@
 // --- START: VerifyEmail.jsx ---
-import React, { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { authClient } from "../../lib/auth-client";
 import { HugeiconsIcon } from "@hugeicons/react";

@@ -1,4 +1,3 @@
-import React from "react";
 import PasswordInput from "../../inputs/PasswordInput";
 
 export default function MfaDisableForm({

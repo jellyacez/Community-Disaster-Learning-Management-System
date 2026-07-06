@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import { useState, useRef, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Alert01Icon } from "@hugeicons/core-free-icons";
@@ -29,7 +29,7 @@ export default function EmailSignInForm({ errorMessage, clearGlobalError, onRequ
     return error;
   };
 
-  const handleChange = React.useCallback((e) => {
+  const handleChange = useCallback((e) => {
     const { name, value } = e.target;
     setFormData((prev) => {
       const newData = { ...prev, [name]: value };
@@ -51,7 +51,7 @@ export default function EmailSignInForm({ errorMessage, clearGlobalError, onRequ
     if (clearGlobalError) clearGlobalError();
   }, [clearGlobalError]);
 
-  const handleBlur = React.useCallback((e) => {
+  const handleBlur = useCallback((e) => {
     const { name, value } = e.target;
     const error = validateField(name, value);
     setErrors((prev) => ({ ...prev, [name]: error }));

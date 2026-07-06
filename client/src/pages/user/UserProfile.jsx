@@ -1,5 +1,5 @@
 // --- START: UserProfile.jsx ---
-import React, { useMemo } from "react";
+import { useMemo } from "react";
 import { useOutletContext } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import apiClient from "../../lib/apiClient";

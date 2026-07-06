@@ -1,4 +1,4 @@
-import React, { useState, useMemo, memo } from "react";
+import { useState, useMemo, memo } from "react";
 import { BACOLOR_BARANGAYS } from "../../../constants/locations";
 
 const BarangayDropdown = memo(function BarangayDropdown({ value, onChange, onBlur, error }) {

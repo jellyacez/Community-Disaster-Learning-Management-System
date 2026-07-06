@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import PasswordInput from "../../inputs/PasswordInput";
 import OtpInput from "../../inputs/OtpInput";
 import { authClient } from "../../../../lib/auth-client";

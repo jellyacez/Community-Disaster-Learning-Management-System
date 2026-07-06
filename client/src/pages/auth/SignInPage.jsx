@@ -1,5 +1,5 @@
 // --- START: SignInPage.jsx ---
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import toast from "react-hot-toast";
 import { authClient } from "../../lib/auth-client";

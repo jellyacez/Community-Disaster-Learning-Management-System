@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import ModuleHeaderForm from "./ModuleHeaderForm";
 import SequenceCanvas from "./SequenceCanvas";

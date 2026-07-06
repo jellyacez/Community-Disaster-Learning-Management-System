@@ -1,4 +1,3 @@
-import React from "react";
 
 export default function Spinner({ className = "w-4 h-4 text-white" }) {
   return (

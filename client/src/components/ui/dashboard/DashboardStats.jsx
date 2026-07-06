@@ -1,4 +1,3 @@
-import React from "react";
 import StatCard from "./StatCard.jsx";
 import { SkeletonText } from "../Skeleton.jsx";
 

@@ -1,4 +1,3 @@
-import React from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Shield01Icon, Mail01Icon } from "@hugeicons/core-free-icons";
 

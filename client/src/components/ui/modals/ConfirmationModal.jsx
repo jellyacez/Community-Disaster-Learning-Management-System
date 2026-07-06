@@ -1,4 +1,4 @@
-import React, { memo } from "react";
+import { memo } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Alert01Icon, Cancel01Icon, CheckmarkBadge01Icon } from "@hugeicons/core-free-icons";
 

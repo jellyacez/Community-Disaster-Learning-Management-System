@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Settings01Icon, EyeIcon, EyeOffIcon } from "@hugeicons/core-free-icons";
 import PasswordRequirements from "../../../../../../components/auth/PasswordRequirements";

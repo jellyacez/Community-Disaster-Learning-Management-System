@@ -1,4 +1,4 @@
-import React from "react";
+import { memo } from "react";
 import UserStatusBadge from "./UserStatusBadge";
 
 const ROLE_COLORS = {
@@ -68,4 +68,4 @@ function UserTableRow({ user, onManageClick, isSelected, onToggleSelect }) {
 
 // React.memo prevents re-rendering the row unless the user object or the onManageClick function changes.
 // We must ensure onManageClick is wrapped in useCallback in the parent!
-export default React.memo(UserTableRow);
+export default memo(UserTableRow);
