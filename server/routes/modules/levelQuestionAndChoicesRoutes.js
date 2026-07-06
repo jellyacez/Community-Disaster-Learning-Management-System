@@ -25,7 +25,7 @@ router.post("/:moduleId/questions", betterAuthMiddleware, adminMiddleware, async
         if (error.code === '23503') {
             return res.status(400).json({
                 success: false,
-                message: `Foreign Key Violation: level ID ${levelId} does not exist.`
+                message: `Foreign Key Violation: Module ID ${moduleId} does not exist.`
             });
         }
         

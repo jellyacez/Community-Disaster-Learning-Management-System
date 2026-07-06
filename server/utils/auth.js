@@ -2,11 +2,11 @@ const { betterAuth } = require("better-auth");
 const pool = require("../config/db");
 const { admin, twoFactor } = require("better-auth/plugins");
 const { transporter } = require("./mailer");
-const { APIError } = require("better-auth/api");
+
 const {
   getResetPasswordEmail,
   getVerificationEmail,
-  getPasswordChangedEmail,
+
   getOTPEmail,
 } = require("./emailTemplates");
 const { securityHooksPlugin } = require("./authHooks");
@@ -46,7 +46,7 @@ const auth = betterAuth({
     revokeSessionsOnPasswordReset: true,
     requireEmailVerification: false, // Disabled for development
     passwordResetTokenExpiresIn: 15 * 60, // 15 minutes in seconds
-    sendResetPassword: async ({ user, url, token }, request) => {
+    sendResetPassword: async ({ user, token }) => {
       const mailOptions = getResetPasswordEmail(user, token);
       await transporter.sendMail(mailOptions);
     },
@@ -54,7 +54,7 @@ const auth = betterAuth({
   emailVerification: {
     sendOnSignUp: false, // Disabled for development
     autoSignInAfterVerification: true,
-    sendVerificationEmail: async ({ user, url, token }, request) => {
+    sendVerificationEmail: async ({ user, token }) => {
       const mailOptions = getVerificationEmail(user, token);
       await transporter.sendMail(mailOptions);
     },
@@ -99,7 +99,7 @@ const auth = betterAuth({
     }),
     twoFactor({
       otpOptions: {
-        sendOTP: async ({ user, otp }, request) => {
+        sendOTP: async ({ user, otp }) => {
           const mailOptions = getOTPEmail(user, otp);
           await transporter.sendMail(mailOptions);
         },

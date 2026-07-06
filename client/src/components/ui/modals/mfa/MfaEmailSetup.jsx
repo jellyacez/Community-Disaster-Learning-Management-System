@@ -3,7 +3,7 @@ import PasswordInput from "../../inputs/PasswordInput";
 import OtpInput from "../../inputs/OtpInput";
 import { authClient } from "../../../../lib/auth-client";
 import toast from "react-hot-toast";
-import apiClient from "../../../../lib/apiClient";
+
 
 export default function MfaEmailSetup({
   isGoogleUser,

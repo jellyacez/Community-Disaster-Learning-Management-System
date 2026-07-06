@@ -14,13 +14,13 @@ try {
 
   try {
     currentSecretsStr = execSync('npx --yes @dotenvx/dotenvx get BETTER_AUTH_SECRETS', { encoding: 'utf8' }).trim();
-  } catch (e) {
+  } catch {
     // BETTER_AUTH_SECRETS might not exist yet
   }
 
   try {
     legacySecret = execSync('npx --yes @dotenvx/dotenvx get BETTER_AUTH_SECRET', { encoding: 'utf8' }).trim();
-  } catch (e) {
+  } catch {
     // BETTER_AUTH_SECRET might not exist
   }
 

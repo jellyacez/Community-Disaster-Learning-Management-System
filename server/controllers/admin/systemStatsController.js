@@ -91,7 +91,7 @@ exports.getHealthStatus = async (req, res) => {
         memory_usage_mb: Math.round(process.memoryUsage().rss / 1024 / 1024)
       }
     });
-  } catch (err) {
+  } catch {
     res.status(500).json({ success: true, data: { db_status: 'disconnected', db_latency_ms: null } });
   }
 };

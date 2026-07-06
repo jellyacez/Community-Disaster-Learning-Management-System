@@ -12,7 +12,7 @@ const requiredRole = (allowedRoles) => {
         return res.status(401).json({ error: "Unauthorized. Please Log In" });
       }
       const userRole = session.user.role;
-      const userId = session.user.id;
+
       if (!allowedRoles.includes(userRole)) {
         return res.status(403).json({
           error:
@@ -30,7 +30,7 @@ const requiredRole = (allowedRoles) => {
       `, [session.user.id]).catch(err => console.error("Role online tracking err:", err.message));
 
       next();
-    } catch (error) {
+    } catch {
       return res.status(500).json({ error: "Internal Server Error" });
     }
   };

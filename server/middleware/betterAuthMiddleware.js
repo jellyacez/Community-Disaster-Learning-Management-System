@@ -26,7 +26,7 @@ const betterAuthMiddleware = async (req, res, next) => {
     `, [session.user.id]).catch(err => console.error("Online tracking err:", err.message));
 
     next();
-  } catch (err) {
+  } catch {
     res.status(500).json({ error: "Server Error" });
   }
 };

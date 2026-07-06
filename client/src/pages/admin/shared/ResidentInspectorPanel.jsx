@@ -21,7 +21,7 @@ export default function ResidentInspectorPanel({ selectedResident, onVerifyCerti
         </div>
         <p className="font-bold text-gray-900 leading-tight">{selectedResident.name}</p>
         <p className="text-xs text-gray-500 uppercase tracking-wide font-mono">
-          ID: {selectedResident.id || selectedResident._id || Math.floor((Date.now() % 10000))}
+          ID: {selectedResident.id || selectedResident._id || "Unknown"}
         </p>
       </div>
       

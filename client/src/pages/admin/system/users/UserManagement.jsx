@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import apiClient from "../../../../lib/apiClient";
-import { authClient } from "../../../../lib/auth-client";
+
 import toast from "react-hot-toast";
 import useDocumentTitle from "../../../../hooks/useDocumentTitle";
 
@@ -26,7 +26,7 @@ export default function UserManagement() {
 
   // Clear selections when filters or pagination change
   useEffect(() => {
-    setSelectedUserIds(new Set());
+    setTimeout(() => setSelectedUserIds(new Set()), 0);
   }, [page, limit, debouncedSearch, roleFilter, statusFilter, setSelectedUserIds]);
 
   // Debounce search

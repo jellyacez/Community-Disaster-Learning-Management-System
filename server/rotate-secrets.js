@@ -1,5 +1,5 @@
 const { execSync } = require('child_process');
-const fs = require('fs');
+
 
 console.log('Starting local secret rotation...\n');
 
@@ -18,7 +18,7 @@ try {
   console.log('5. Redeploy your server if it does not automatically redeploy on push.');
   console.log('================================================================\n');
 
-} catch (error) {
+} catch {
   console.error('\n❌ Failed to rotate secrets. Ensure you have npx installed and network access.');
   process.exit(1);
 }

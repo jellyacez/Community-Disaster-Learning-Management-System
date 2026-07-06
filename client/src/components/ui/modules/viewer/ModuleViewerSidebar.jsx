@@ -49,6 +49,7 @@ export default function ModuleViewerSidebar({
         {steps.map((step) => {
           const isLocked = step.step_order > currentProgressOrder + 1;
           const isActive = step.id === activeStepId;
+          const isCompleted = step.step_order <= currentProgressOrder;
 
           return (
             <button

@@ -32,7 +32,7 @@ export function useModuleViewer(moduleId) {
 
   // Derived state
   const moduleData = data?.module || {};
-  const steps = data?.steps || [];
+  const steps = useMemo(() => data?.steps || [], [data?.steps]);
   const currentProgressOrder = data?.currentProgressOrder || 0;
   const activeStep = useMemo(() => steps.find(s => s.id === activeStepId), [steps, activeStepId]);
   const progressPercentage = steps.length > 0 ? Math.round((currentProgressOrder / steps.length) * 100) : 0;

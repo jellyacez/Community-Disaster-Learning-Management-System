@@ -53,8 +53,7 @@ export default function UserDashboard() {
 
   useEffect(() => {
     if (location.state?.showWelcome || location.state?.fromLogin) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setShowWelcomeModal(true);
+      setTimeout(() => setShowWelcomeModal(true), 0);
       sessionStorage.setItem("hasSeenWelcome", "true");
       navigate(location.pathname, { replace: true, state: {} });
     }
@@ -65,8 +64,7 @@ export default function UserDashboard() {
       const hasSeenWelcome = sessionStorage.getItem("hasSeenWelcome");
 
       if (isNewAccount && !hasSeenWelcome) {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        setShowWelcomeModal(true);
+        setTimeout(() => setShowWelcomeModal(true), 0);
         sessionStorage.setItem("hasSeenWelcome", "true");
       }
     }

@@ -21,22 +21,24 @@ export const useRegisterForm = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const isSubmittingRef = useRef(false);
 
-  const validateField = (name, value, currentFormData = formData) => {
+  const validateField = useCallback((name, value, currentFormData = formData) => {
     let error = null;
     switch (name) {
       case "fullName":
         if (!value.trim()) error = "Full name is required.";
         break;
-      case "email":
+      case "email": {
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(value)) error = "Please enter a valid email address.";
         break;
-      case "password":
+      }
+      case "password": {
         const passwordRegex = /^(?=.*[A-Z])(?=.*[!@#$%^&*_=+\-/.]).{8,}$/;
         if (!passwordRegex.test(value)) {
           error = "Must be 8+ characters and include an uppercase letter and a symbol.";
         }
         break;
+      }
       case "confirmPassword":
         if (value !== currentFormData.password) {
           error = "Passwords do not match.";
@@ -49,7 +51,7 @@ export const useRegisterForm = () => {
         break;
     }
     return error;
-  };
+  }, [formData]);
 
   const handleChange = useCallback((e) => {
     const { name, value } = e.target;
@@ -67,13 +69,13 @@ export const useRegisterForm = () => {
       
       return newData;
     });
-  }, []);
+  }, [validateField]);
 
   const handleBlur = useCallback((e) => {
     const { name, value } = e.target;
     const error = validateField(name, value);
     setErrors((prev) => ({ ...prev, [name]: error }));
-  }, [formData]);
+  }, [validateField]);
 
   const handleSubmit = (e) => {
     e.preventDefault();

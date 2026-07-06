@@ -14,7 +14,7 @@ const express = require("express");
 const helmet = require("helmet");
 const cors = require("cors");
 const hpp = require("hpp");
-const pool = require("./config/db");
+
 const { toNodeHandler } = require("better-auth/node");
 const { auth } = require("./utils/auth");
 const { authRateLimiter, globalLimiter } = require("./middleware/rateLimiters");
@@ -96,11 +96,12 @@ app.use("/api/modules", apiSecurityMiddleware, moduleCompleteRoutes);
 app.use("/api/modules", apiSecurityMiddleware, moduleStepsRoutes);
 
 // 404 Catch-All Route
-app.use((req, res, next) => {
+app.use((req, res) => {
   res.status(404).json({ error: "Route not found" });
 });
 
 // Global Error Handler
+// eslint-disable-next-line no-unused-vars
 app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(err.status || 500).json({

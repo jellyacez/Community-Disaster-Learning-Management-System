@@ -25,7 +25,7 @@ const adminMiddleware = async (req, res, next) => {
     `, [session.user.id]).catch(err => console.error("Admin online tracking err:", err.message));
 
     next();
-  } catch (err) {
+  } catch {
     res.status(500).json({ error: "Server Error" });
   }
 };

@@ -12,7 +12,7 @@ const fetchModules = async () => {
 };
 
 export default function ModuleManagement() {
-  const { data: modules = [], isLoading, isError } = useQuery({
+  const { isLoading, isError } = useQuery({
     queryKey: ["adminModules"],
     queryFn: fetchModules,
     retry: 1

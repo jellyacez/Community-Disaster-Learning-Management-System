@@ -10,7 +10,7 @@ export default function ProfilePreferences({ currentUser }) {
 
   useEffect(() => {
     if (currentUser?.name) {
-      setName(currentUser.name);
+      setTimeout(() => setName(currentUser.name), 0);
     }
   }, [currentUser, setName]);
 
