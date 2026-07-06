@@ -1,7 +1,7 @@
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Link } from "react-router-dom";
 
-export default function StatCard({ icon, label, value, sub, color = "gray", loading, href, trendText }) {
+export default function StatCard({ icon, label, value, sub, color = "gray", loading, href, trendText, zeroText }) {
   const colorMap = {
     gray: "bg-gray-50 text-gray-700 border-gray-100",
     blue: "bg-blue-50 text-blue-700 border-blue-100",
@@ -18,7 +18,7 @@ export default function StatCard({ icon, label, value, sub, color = "gray", load
       href ? "hover:-translate-y-1 hover:shadow-[0_8px_20px_-4px_rgba(0,0,0,0.1)] hover:border-gray-100 cursor-pointer transition-all duration-300 border border-transparent" : "border border-transparent"
     }`}>
       <div className="flex items-start justify-between">
-        <div className={`w-10 h-10 rounded-xl flex items-center justify-center border ${colorMap[color]}`}>
+        <div className={`w-10 h-10 rounded-xl flex items-center justify-center border ${colorMap[color]} transition-opacity ${isZero ? 'opacity-40' : 'opacity-100'}`}>
           <HugeiconsIcon icon={icon} className="w-5 h-5" />
         </div>
         {trendText && (
@@ -40,7 +40,7 @@ export default function StatCard({ icon, label, value, sub, color = "gray", load
           <div>
             <p className="text-sm font-semibold text-gray-700 mt-1">{label}</p>
             {sub && <div className="text-xs text-gray-500 mt-0.5">
-              {isZero && typeof sub === 'string' && !sub.includes('online') ? "No activity yet" : sub}
+              {isZero && zeroText ? zeroText : (isZero && typeof sub === 'string' && !sub.includes('online') ? "No activity yet" : sub)}
             </div>}
           </div>
         </div>

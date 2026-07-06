@@ -88,3 +88,35 @@ exports.setMaintenanceMode = async (req, res) => {
     res.status(500).json({ success: false, error: 'Failed to toggle maintenance mode' });
   }
 };
+
+// @desc    Update system-wide broadcast override
+// @access  Private (system_admin only)
+exports.updateBroadcast = async (req, res) => {
+  const { broadcast_message, broadcast_active } = req.body;
+  try {
+    await pool.query('BEGIN');
+    
+    if (broadcast_message !== undefined) {
+      await pool.query(
+        `INSERT INTO public.system_settings (key, value, updated_at) VALUES ('broadcast_message', $1, NOW())
+         ON CONFLICT (key) DO UPDATE SET value = $1, updated_at = NOW()`,
+        [broadcast_message]
+      );
+    }
+    
+    if (broadcast_active !== undefined) {
+      await pool.query(
+        `INSERT INTO public.system_settings (key, value, updated_at) VALUES ('broadcast_active', $1, NOW())
+         ON CONFLICT (key) DO UPDATE SET value = $1, updated_at = NOW()`,
+        [broadcast_active ? 'true' : 'false']
+      );
+    }
+    
+    await pool.query('COMMIT');
+    res.json({ success: true, message: 'Broadcast settings updated successfully' });
+  } catch (err) {
+    await pool.query('ROLLBACK');
+    console.error(err);
+    res.status(500).json({ success: false, error: 'Failed to update broadcast settings' });
+  }
+};

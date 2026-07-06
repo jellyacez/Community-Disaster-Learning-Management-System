@@ -74,6 +74,22 @@ router.patch("/settings/branding", adminMiddleware, systemSettingsController.upd
 // @access  Private (system_admin only)
 router.patch("/settings/maintenance", adminMiddleware, systemSettingsController.setMaintenanceMode);
 
+// @route   PATCH /api/admin/settings/broadcast
+// @desc    Update broadcast message
+// @access  Private (system_admin only)
+router.patch("/settings/broadcast", adminMiddleware, systemSettingsController.updateBroadcast);
+
+const ipBlocklistController = require("../../controllers/admin/ipBlocklistController");
+
+// @route   GET /api/admin/security/blocked-ips
+router.get("/security/blocked-ips", adminMiddleware, ipBlocklistController.getBlockedIps);
+
+// @route   POST /api/admin/security/blocked-ips
+router.post("/security/blocked-ips", adminMiddleware, ipBlocklistController.addBlockedIp);
+
+// @route   DELETE /api/admin/security/blocked-ips/:id
+router.delete("/security/blocked-ips/:id", adminMiddleware, ipBlocklistController.removeBlockedIp);
+
 // @route   GET /api/admin/health
 // @desc    Get system health status
 // @access  Private (system_admin only)

@@ -19,15 +19,17 @@ export default function UserManagement() {
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  const [barangayFilter, setBarangayFilter] = useState("");
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
   const [selectedUserIds, setSelectedUserIds] = useState(new Set());
   const [selectedUser, setSelectedUser] = useState(null);
+  const [initialModalTab, setInitialModalTab] = useState(0);
 
   // Clear selections when filters or pagination change
   useEffect(() => {
     setTimeout(() => setSelectedUserIds(new Set()), 0);
-  }, [page, limit, debouncedSearch, roleFilter, statusFilter, setSelectedUserIds]);
+  }, [page, limit, debouncedSearch, roleFilter, statusFilter, barangayFilter, setSelectedUserIds]);
 
   // Debounce search
   useEffect(() => {
@@ -36,8 +38,9 @@ export default function UserManagement() {
   }, [search]);
 
   // Expert tip: Stable callback reference prevents re-rendering all memoized rows
-  const handleManageClick = useCallback((user) => {
+  const handleManageClick = useCallback((user, tabIndex = 0) => {
     setSelectedUser(user);
+    setInitialModalTab(tabIndex);
   }, []);
 
   const handleToggleSelect = useCallback((id) => {
@@ -52,12 +55,13 @@ export default function UserManagement() {
 
 
   const { data, isLoading } = useQuery({
-    queryKey: ["adminUsers", page, limit, debouncedSearch, roleFilter, statusFilter],
+    queryKey: ["adminUsers", page, limit, debouncedSearch, roleFilter, statusFilter, barangayFilter],
     queryFn: async () => {
       const params = new URLSearchParams({ page, limit });
       if (debouncedSearch) params.set("search", debouncedSearch);
       if (roleFilter) params.set("role", roleFilter);
       if (statusFilter) params.set("status", statusFilter);
+      if (barangayFilter) params.set("barangay", barangayFilter);
       const res = await apiClient.get(`/users?${params}`);
       return res.data;
     },
@@ -122,6 +126,8 @@ export default function UserManagement() {
         setRoleFilter={setRoleFilter}
         statusFilter={statusFilter}
         setStatusFilter={setStatusFilter}
+        barangayFilter={barangayFilter}
+        setBarangayFilter={setBarangayFilter}
         setPage={setPage}
       />
 
@@ -229,6 +235,7 @@ export default function UserManagement() {
           user={selectedUser}
           onClose={() => setSelectedUser(null)}
           onSave={handleSave}
+          initialTab={initialModalTab}
         />
       )}
     </div>

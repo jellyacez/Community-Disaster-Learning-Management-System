@@ -88,11 +88,13 @@ import ProtectedRoute from "./components/auth/ProtectedRoute";
 import UserLayout from "./components/layouts/UserLayout";
 import AdminLayout from "./components/layouts/AdminLayout";
 import ScrollToTop from "./components/ScrollToTop";
+import GlobalBroadcastBanner from "./components/ui/GlobalBroadcastBanner";
 
 export default function App() {
   return (
     <>
       <ScrollToTop />
+      <GlobalBroadcastBanner />
       <Toaster
         position="top-center"
         toastOptions={{

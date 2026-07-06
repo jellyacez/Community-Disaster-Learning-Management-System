@@ -2,6 +2,7 @@ import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 
 import ResidentRegistrySkeleton from "./ResidentRegistrySkeleton";
+import { BACOLOR_BARANGAYS } from "../../../../constants/locations";
 
 const fetchResidents = async () => {
   const res = await fetch("/api/admin/residents");
@@ -57,9 +58,9 @@ export default function ResidentRegistry() {
             className="p-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-red-500 transition-all shadow-sm"
           >
             <option value="All">All Registered Sectors</option>
-            <option value="Balas">Barangay Balas</option>
-            <option value="San Vicente">Barangay San Vicente</option>
-            <option value="Cabalantian">Barangay Cabalantian</option>
+            {BACOLOR_BARANGAYS.map((b) => (
+              <option key={b} value={b}>Barangay {b}</option>
+            ))}
           </select>
         </div>
         <input 

@@ -3,7 +3,8 @@ import { useQuery } from "@tanstack/react-query";
 import apiClient from "../../../../lib/apiClient";
 import useDocumentTitle from "../../../../hooks/useDocumentTitle";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { Search01Icon, Note01Icon } from "@hugeicons/core-free-icons";
+import { Search01Icon, Note01Icon, Download01Icon, Folder01Icon } from "@hugeicons/core-free-icons";
+import toast from "react-hot-toast";
 
 const ROLE_COLORS = {
   system_admin: "bg-purple-100 text-purple-800",
@@ -50,6 +51,10 @@ export default function ActivityLog() {
   const logs = data?.data || [];
   const meta = data?.meta || { totalPages: 1, page: 1, total: 0 };
 
+  const handleExportLogs = () => {
+    toast.success("Activity logs exported successfully! (Placeholder)");
+  };
+
   return (
     <div className="space-y-4">
       {/* Header */}
@@ -68,6 +73,13 @@ export default function ActivityLog() {
         <span className="self-center text-xs text-gray-500 font-mono whitespace-nowrap">
           {meta.total.toLocaleString()} total entries
         </span>
+        <button
+          onClick={handleExportLogs}
+          className="flex items-center gap-2 px-4 py-2 border border-gray-200 bg-gray-50 text-gray-800 rounded-xl text-sm font-semibold hover:bg-gray-100 transition-colors whitespace-nowrap"
+        >
+          <HugeiconsIcon icon={Download01Icon} className="w-4 h-4" />
+          Export Logs
+        </button>
       </div>
 
       {/* Log Table */}
@@ -88,8 +100,16 @@ export default function ActivityLog() {
                 : logs.length === 0
                 ? (
                   <tr>
-                    <td colSpan={4} className="py-16 text-center text-gray-500 text-sm">
-                      No log entries found.
+                    <td colSpan={4} className="py-24 text-center">
+                      <div className="flex flex-col items-center justify-center space-y-3">
+                        <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mb-2">
+                          <HugeiconsIcon icon={Folder01Icon} className="w-8 h-8 text-gray-300" />
+                        </div>
+                        <h3 className="text-sm font-bold text-gray-900">No log entries found</h3>
+                        <p className="text-xs text-gray-500 max-w-sm text-center">
+                          System events, admin actions, and authentication updates will be recorded here dynamically.
+                        </p>
+                      </div>
                     </td>
                   </tr>
                 )

@@ -1,5 +1,6 @@
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Search01Icon } from "@hugeicons/core-free-icons";
+import { BACOLOR_BARANGAYS } from "../../../../../constants/locations";
 
 export default function UserFilters({
   search,
@@ -8,6 +9,8 @@ export default function UserFilters({
   setRoleFilter,
   statusFilter,
   setStatusFilter,
+  barangayFilter,
+  setBarangayFilter,
   setPage,
 }) {
   return (
@@ -23,7 +26,20 @@ export default function UserFilters({
           className="w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10"
         />
       </div>
-      <div className="flex gap-2">
+      <div className="flex gap-2 flex-wrap">
+        <label htmlFor="barangay-filter" className="sr-only">Filter by barangay</label>
+        <select
+          id="barangay-filter"
+          value={barangayFilter}
+          aria-label="Filter by barangay"
+          onChange={e => { setBarangayFilter(e.target.value); setPage(1); }}
+          className="px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10 bg-white"
+        >
+          <option value="">All Barangays</option>
+          {BACOLOR_BARANGAYS.map(b => (
+            <option key={b} value={b}>{b}</option>
+          ))}
+        </select>
         <label htmlFor="role-filter" className="sr-only">Filter by role</label>
         <select
           id="role-filter"

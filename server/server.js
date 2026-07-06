@@ -62,6 +62,9 @@ app.use(
 app.use(hpp());
 app.use(globalLimiter);
 
+const ipBlocklistMiddleware = require("./middleware/ipBlocklistMiddleware");
+app.use(ipBlocklistMiddleware);
+
 const maintenanceMiddleware = require("./middleware/maintenanceMiddleware");
 app.use(maintenanceMiddleware);
 
@@ -75,6 +78,7 @@ const adminRoutes = require("./routes/admin/adminRoutes");
 const userRoutes = require("./routes/users/userRoutes");
 const userDashboardRoutes = require("./routes/users/userDashboardRoutes");
 const moduleRoutes = require("./routes/modules/moduleRoutes");
+const publicRoutes = require("./routes/publicRoutes");
 
 const levelCreationRoute = require("./routes/modules/levelCreationRoute");
 const levelQuestionAndChoicesRoutes = require("./routes/modules/levelQuestionAndChoicesRoutes");
@@ -84,6 +88,7 @@ const moduleStepsRoutes = require("./routes/modules/moduleStepsRoutes");
 const apiSecurityMiddleware = require("./middleware/apiSecurityMiddleware");
 
 // API Routes (Business logic protected by security middleware)
+app.use("/api/public", publicRoutes);
 app.use("/api/admin", apiSecurityMiddleware, adminRoutes);
 app.use("/api/users", apiSecurityMiddleware, userRoutes);
 app.use("/api/user/dashboard", apiSecurityMiddleware, userDashboardRoutes);

@@ -11,19 +11,11 @@ import {
   Task01Icon,
 } from "@hugeicons/core-free-icons";
 
-function SettingRow({ label, value, description, mono = false }) {
-  return (
-    <div className="flex flex-col sm:flex-row sm:items-center justify-between py-4 border-b border-gray-50 last:border-0 gap-1">
-      <div>
-        <p className="text-sm font-semibold text-gray-800">{label}</p>
-        {description && <p className="text-xs text-gray-500 mt-0.5">{description}</p>}
-      </div>
-      <span className={`text-sm ${mono ? "font-mono text-gray-600" : "font-semibold text-gray-700"} sm:text-right`}>
-        {value ?? "—"}
-      </span>
-    </div>
-  );
-}
+import BrandingPanel from "./components/BrandingPanel";
+import RuntimeInfoPanel from "./components/RuntimeInfoPanel";
+import BroadcastOverridePanel from "./components/BroadcastOverridePanel";
+import DatabaseStatusPanel from "./components/DatabaseStatusPanel";
+import IPBlocklistPanel from "./components/IPBlocklistPanel";
 
 export default function SystemSettings() {
   useDocumentTitle("System Settings | Admin Console");
@@ -109,120 +101,11 @@ export default function SystemSettings() {
         </div>
       </div>
 
-      {/* System Branding */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-        <div className="flex items-center gap-2 mb-4">
-          <HugeiconsIcon icon={Settings01Icon} className="w-5 h-5 text-gray-500" />
-          <h2 className="text-base font-bold text-gray-900">System Branding</h2>
-        </div>
-        <p className="text-xs text-gray-500 mb-6 max-w-lg">Customize the platform's white-label identity. Upload a logo and set the display name.</p>
-        
-        <form
-          onSubmit={async (e) => {
-            e.preventDefault();
-            const formData = new FormData(e.target);
-            const system_name = formData.get("system_name");
-            const file = formData.get("system_logo");
-            
-            let system_logo = undefined;
-            
-            if (file && file.size > 0) {
-              // Convert to Base64 using FileReader (Panelist Feedback)
-              system_logo = await new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onload = () => resolve(reader.result);
-                reader.onerror = reject;
-                reader.readAsDataURL(file);
-              });
-            }
-
-            try {
-              toast.loading("Updating branding...", { id: "branding" });
-              await apiClient.patch("/admin/settings/branding", { system_name, system_logo });
-              toast.success("Branding updated successfully", { id: "branding" });
-              queryClient.invalidateQueries({ queryKey: ["systemSettings"] });
-            } catch {
-              toast.error("Failed to update branding", { id: "branding" });
-            }
-          }}
-          className="space-y-4"
-        >
-          <div className="grid md:grid-cols-2 gap-4">
-            <div>
-              <label htmlFor="system_name" className="block text-xs font-semibold text-gray-700 mb-1">System Name</label>
-              <input 
-                id="system_name"
-                type="text" 
-                name="system_name" 
-                defaultValue={settingsData?.system_name || "Community-Disaster-Learning-Management-System"} 
-                className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10"
-              />
-            </div>
-            <div>
-              <label htmlFor="system_logo" className="block text-xs font-semibold text-gray-700 mb-1">Platform Logo</label>
-              <input 
-                id="system_logo"
-                type="file" 
-                name="system_logo" 
-                accept="image/*"
-                className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-gray-50 file:text-gray-700 hover:file:bg-gray-100"
-              />
-            </div>
-          </div>
-          {settingsData?.system_logo && (
-             <div className="mt-2">
-                <p className="text-xs text-gray-500 mb-2">Current Logo:</p>
-                <img src={settingsData.system_logo} alt="System Logo" className="h-12 object-contain rounded border border-gray-100 p-1 bg-gray-50" />
-             </div>
-          )}
-          <div className="pt-2">
-             <button type="submit" className="px-4 py-2 bg-gray-900 text-white text-sm font-bold rounded-lg hover:bg-black transition-colors">
-               Save Branding
-             </button>
-          </div>
-        </form>
-      </div>
-
-      {/* Runtime Info */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-        <div className="flex items-center gap-2 mb-2">
-          <HugeiconsIcon icon={Settings01Icon} className="w-5 h-5 text-gray-500" />
-          <h2 className="text-base font-bold text-gray-900">Runtime Environment</h2>
-        </div>
-        <p className="text-xs text-gray-500 mb-4">Read-only system information.</p>
-        {isLoading ? (
-          <div className="space-y-3">
-            {[1, 2, 3].map(i => <div key={i} className="h-10 bg-gray-50 rounded animate-pulse" />)}
-          </div>
-        ) : (
-          <>
-            <SettingRow label="Environment" value={settingsData?.node_env || "—"} description="NODE_ENV value" mono />
-            <SettingRow label="Node.js Version" value={settingsData?.node_version || "—"} description="Server runtime version" mono />
-            <SettingRow label="Platform" value={settingsData?.platform || "—"} description="Operating system" mono />
-          </>
-        )}
-      </div>
-
-      {/* Database Status */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-        <div className="flex items-center gap-2 mb-2">
-          <HugeiconsIcon icon={Database01Icon} className="w-5 h-5 text-gray-500" />
-          <h2 className="text-base font-bold text-gray-900">Database Status</h2>
-        </div>
-        <p className="text-xs text-gray-500 mb-4">Live connection diagnostics (refreshes every 15s).</p>
-        <SettingRow
-          label="Connection"
-          value={
-            healthData?.db_status === "connected"
-              ? <span className="flex items-center gap-1.5 text-emerald-700 font-bold"><HugeiconsIcon icon={Task01Icon} className="w-4 h-4" /> Connected</span>
-              : <span className="text-red-700 font-bold">Disconnected</span>
-          }
-          description="PostgreSQL connection pool"
-        />
-        <SettingRow label="Query Latency" value={healthData?.db_latency_ms != null ? `${healthData.db_latency_ms} ms` : "—"} description="Round-trip time for a simple SELECT 1" mono />
-        <SettingRow label="Server Uptime" value={healthData?.uptime_seconds != null ? `${Math.floor(healthData.uptime_seconds / 3600)}h ${Math.floor((healthData.uptime_seconds % 3600) / 60)}m` : "—"} description="Time since last server restart" mono />
-        <SettingRow label="Memory (RSS)" value={healthData?.memory_usage_mb != null ? `${healthData.memory_usage_mb} MB` : "—"} description="Resident set size" mono />
-      </div>
+      <BrandingPanel settingsData={settingsData} />
+      <RuntimeInfoPanel settingsData={settingsData} isLoading={isLoading} />
+      <BroadcastOverridePanel settingsData={settingsData} />
+      <DatabaseStatusPanel healthData={healthData} />
+      <IPBlocklistPanel />
 
     </div>
   );

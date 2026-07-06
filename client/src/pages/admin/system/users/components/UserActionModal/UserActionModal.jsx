@@ -8,8 +8,8 @@ import DeactivateArchiveTab from "./DeactivateArchiveTab";
 
 const TABS = ["Edit Details", "Change Role", "Reset Password", "Deactivate / Archive"];
 
-export default function UserActionModal({ user, onClose, onSave }) {
-  const [tab, setTab] = useState(0);
+export default function UserActionModal({ user, onClose, onSave, initialTab = 0 }) {
+  const [tab, setTab] = useState(initialTab);
 
   if (!user) return null;
 

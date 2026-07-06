@@ -88,7 +88,8 @@ exports.getHealthStatus = async (req, res) => {
         db_status: 'connected',
         db_latency_ms: latency,
         uptime_seconds: Math.floor(process.uptime()),
-        memory_usage_mb: Math.round(process.memoryUsage().rss / 1024 / 1024)
+        memory_usage_mb: Math.round(process.memoryUsage().rss / 1024 / 1024),
+        disk_usage_percent: 42 // Mocked for Capstone UI
       }
     });
   } catch {

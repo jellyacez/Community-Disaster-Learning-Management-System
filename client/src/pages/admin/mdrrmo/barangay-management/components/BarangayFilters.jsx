@@ -1,3 +1,4 @@
+import { BACOLOR_BARANGAYS } from "../../../../../constants/locations";
 
 export default function BarangayFilters({ 
   selectedBarangay, 
@@ -15,9 +16,9 @@ export default function BarangayFilters({
           className="p-2 bg-gray-50 border border-gray-200 rounded-lg text-gray-700 font-medium focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all"
         >
           <option value="All">All Barangays</option>
-          <option value="Balas">Barangay Balas</option>
-          <option value="San Vicente">Barangay San Vicente</option>
-          <option value="Cabalantian">Barangay Cabalantian</option>
+          {BACOLOR_BARANGAYS.map((b) => (
+            <option key={b} value={b}>Barangay {b}</option>
+          ))}
         </select>
       </div>
       <input 

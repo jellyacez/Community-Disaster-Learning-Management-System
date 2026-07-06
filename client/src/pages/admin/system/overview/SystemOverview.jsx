@@ -13,7 +13,7 @@ import {
   Certificate01Icon,
 } from "@hugeicons/core-free-icons";
 
-import StatCard from "./components/StatCard";
+import PlatformOverviewGrid from "./components/PlatformOverviewGrid";
 import HealthRow from "./components/HealthRow";
 import SystemAlertBanner from "./components/SystemAlertBanner";
 import SystemCharts from "./components/SystemCharts";
@@ -67,98 +67,7 @@ export default function SystemOverview() {
     <div className="space-y-6">
       <SystemAlertBanner healthData={healthData} />
 
-      {/* Stats Grid */}
-      <div>
-        <h2 className="text-sm font-bold uppercase tracking-widest text-gray-500 mb-3">
-          Platform Overview
-        </h2>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          <StatCard
-            icon={UserGroupIcon}
-            label="Total Users"
-            value={s.total_users}
-            href="/admin/system/users"
-            trendText="+12% Active"
-            sub={
-              <span className="flex items-center gap-1.5 text-emerald-700 font-medium">
-                <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                </span>
-                {s.online_users > 100
-                  ? `${Math.round((s.online_users / (s.total_users || 1)) * 100)}% online`
-                  : `${s.online_users ?? 0} online now`}
-              </span>
-            }
-            color="blue"
-            loading={statsLoading}
-          />
-          <StatCard
-            icon={Shield01Icon}
-            label="Banned Accounts"
-            value={s.banned_users}
-            href="/admin/system/users"
-            sub="Platform-wide bans"
-            color="red"
-            loading={statsLoading}
-          />
-          <StatCard
-            icon={FolderAddIcon}
-            label="Total Modules"
-            value={s.total_modules}
-            sub="Published content"
-            trendText="Stable"
-            color="purple"
-            loading={statsLoading}
-          />
-          <StatCard
-            icon={Note01Icon}
-            label="Enrollments"
-            value={s.total_enrollments}
-            sub="All-time"
-            trendText="Growing"
-            color="amber"
-            loading={statsLoading}
-          />
-          <StatCard
-            icon={Certificate01Icon}
-            label="Certificates"
-            value={s.total_certificates}
-            sub="Issued to users"
-            trendText="+5 This Week"
-            color="green"
-            loading={statsLoading}
-          />
-          <StatCard
-            icon={Clock01Icon}
-            label="Active Sessions"
-            value={s.online_users || 0}
-            sub="Current system load"
-            trendText={s.online_users > 50 ? "High Load" : "Normal Load"}
-            color={s.online_users > 50 ? "red" : "green"}
-            loading={statsLoading}
-          />
-
-          <StatCard
-            icon={Database01Icon}
-            label="Archived Users"
-            value={s.archived_users}
-            sub="Soft-deleted accounts"
-            color="gray"
-            loading={statsLoading}
-          />
-          <StatCard
-            icon={Settings01Icon}
-            label="Audit Logs"
-            value={s.total_log_entries}
-            href="/admin/system/logs"
-            sub="Recent security events"
-            trendText="Live"
-            color="gray"
-            loading={statsLoading}
-          />
-        </div>
-      </div>
+      <PlatformOverviewGrid stats={s} loading={statsLoading} />
 
       <div className="grid lg:grid-cols-3 gap-6">
         {/* Left Side: Charts & Logs */}
@@ -226,6 +135,19 @@ export default function SystemOverview() {
                   value={
                     healthData?.memory_usage_mb != null
                       ? `${healthData.memory_usage_mb} MB`
+                      : "—"
+                  }
+                />
+                <HealthRow
+                  label="Disk Storage"
+                  progress={
+                    healthData?.disk_usage_percent != null
+                      ? healthData.disk_usage_percent
+                      : 0
+                  }
+                  value={
+                    healthData?.disk_usage_percent != null
+                      ? `${healthData.disk_usage_percent}%`
                       : "—"
                   }
                 />

@@ -45,6 +45,7 @@ exports.getAllUsers = async (req, res) => {
     const search = req.query.search || "";
     const role = req.query.role || "";
     const status = req.query.status || "";
+    const barangay = req.query.barangay || "";
 
     const conditions = [];
     const values = [];
@@ -58,6 +59,11 @@ exports.getAllUsers = async (req, res) => {
     if (role) {
       conditions.push(`role = $${idx}`);
       values.push(role);
+      idx++;
+    }
+    if (barangay) {
+      conditions.push(`barangay = $${idx}`);
+      values.push(barangay);
       idx++;
     }
     if (status === "active") {
