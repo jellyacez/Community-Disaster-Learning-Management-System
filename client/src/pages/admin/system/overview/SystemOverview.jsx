@@ -2,16 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import apiClient from "../../../../lib/apiClient";
 import useDocumentTitle from "../../../../hooks/useDocumentTitle";
 import { HugeiconsIcon } from "@hugeicons/react";
-import {
-  UserGroupIcon,
-  Database01Icon,
-  Shield01Icon,
-  Note01Icon,
-  Settings01Icon,
-  FolderAddIcon,
-  Clock01Icon,
-  Certificate01Icon,
-} from "@hugeicons/core-free-icons";
+import { Settings01Icon } from "@hugeicons/core-free-icons";
 
 import PlatformOverviewGrid from "./components/PlatformOverviewGrid";
 import HealthRow from "./components/HealthRow";

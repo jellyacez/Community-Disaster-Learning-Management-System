@@ -6,16 +6,11 @@ import useDocumentTitle from "../../../../hooks/useDocumentTitle";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   Settings01Icon,
-  Database01Icon,
   Notification01Icon,
-  Task01Icon,
 } from "@hugeicons/core-free-icons";
 
 import BrandingPanel from "./components/BrandingPanel";
-import RuntimeInfoPanel from "./components/RuntimeInfoPanel";
 import BroadcastOverridePanel from "./components/BroadcastOverridePanel";
-import DatabaseStatusPanel from "./components/DatabaseStatusPanel";
-import IPBlocklistPanel from "./components/IPBlocklistPanel";
 
 export default function SystemSettings() {
   useDocumentTitle("System Settings | Admin Console");
@@ -58,6 +53,12 @@ export default function SystemSettings() {
 
   return (
     <div className="space-y-6 max-w-3xl">
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-gray-900">System Settings</h1>
+        <p className="text-sm text-gray-500 mt-1">
+          Configure platform appearance and global behavior for end-users.
+        </p>
+      </div>
 
       {/* Maintenance Mode — Actionable */}
       <div className={`rounded-2xl border shadow-sm overflow-hidden ${maintenanceActive ? "border-red-200 bg-red-50" : "border-gray-100 bg-white"}`}>
@@ -102,10 +103,7 @@ export default function SystemSettings() {
       </div>
 
       <BrandingPanel settingsData={settingsData} />
-      <RuntimeInfoPanel settingsData={settingsData} isLoading={isLoading} />
       <BroadcastOverridePanel settingsData={settingsData} />
-      <DatabaseStatusPanel healthData={healthData} />
-      <IPBlocklistPanel />
 
     </div>
   );

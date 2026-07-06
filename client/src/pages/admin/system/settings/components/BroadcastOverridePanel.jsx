@@ -35,6 +35,7 @@ export default function BroadcastOverridePanel({ settingsData }) {
           updateBroadcastMutation.mutate({
             broadcast_message: formData.get("broadcast_message"),
             broadcast_active: formData.get("broadcast_active") === "true",
+            broadcast_severity: formData.get("broadcast_severity"),
           });
         }}
         className="space-y-4"
@@ -74,6 +75,41 @@ export default function BroadcastOverridePanel({ settingsData }) {
                 className="w-4 h-4 text-red-600 focus:ring-red-500"
               />
               <span className="text-sm font-bold text-red-600">Active</span>
+            </label>
+          </div>
+        </div>
+        <div className="flex flex-col gap-2 pt-2 border-t border-gray-100">
+          <label className="text-xs font-bold text-gray-700">Severity Level:</label>
+          <div className="flex gap-4">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="radio"
+                name="broadcast_severity"
+                value="info"
+                defaultChecked={settingsData?.broadcast_severity === "info"}
+                className="w-4 h-4 text-blue-600 focus:ring-blue-500"
+              />
+              <span className="text-sm text-blue-700 font-medium">Info (Blue)</span>
+            </label>
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="radio"
+                name="broadcast_severity"
+                value="warning"
+                defaultChecked={!settingsData?.broadcast_severity || settingsData?.broadcast_severity === "warning"}
+                className="w-4 h-4 text-amber-500 focus:ring-amber-500"
+              />
+              <span className="text-sm text-amber-700 font-medium">Warning (Yellow)</span>
+            </label>
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="radio"
+                name="broadcast_severity"
+                value="critical"
+                defaultChecked={settingsData?.broadcast_severity === "critical"}
+                className="w-4 h-4 text-red-600 focus:ring-red-500"
+              />
+              <span className="text-sm text-red-700 font-bold">Critical (Red)</span>
             </label>
           </div>
         </div>

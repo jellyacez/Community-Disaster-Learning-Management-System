@@ -92,7 +92,7 @@ exports.setMaintenanceMode = async (req, res) => {
 // @desc    Update system-wide broadcast override
 // @access  Private (system_admin only)
 exports.updateBroadcast = async (req, res) => {
-  const { broadcast_message, broadcast_active } = req.body;
+  const { broadcast_message, broadcast_active, broadcast_severity } = req.body;
   try {
     await pool.query('BEGIN');
     
@@ -109,6 +109,14 @@ exports.updateBroadcast = async (req, res) => {
         `INSERT INTO public.system_settings (key, value, updated_at) VALUES ('broadcast_active', $1, NOW())
          ON CONFLICT (key) DO UPDATE SET value = $1, updated_at = NOW()`,
         [broadcast_active ? 'true' : 'false']
+      );
+    }
+
+    if (broadcast_severity !== undefined) {
+      await pool.query(
+        `INSERT INTO public.system_settings (key, value, updated_at) VALUES ('broadcast_severity', $1, NOW())
+         ON CONFLICT (key) DO UPDATE SET value = $1, updated_at = NOW()`,
+        [broadcast_severity]
       );
     }
     

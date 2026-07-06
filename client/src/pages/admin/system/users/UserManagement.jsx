@@ -11,6 +11,9 @@ import UserTableSkeleton from "./components/UserTableSkeleton";
 import UserFilters from "./components/UserFilters";
 import UserTablePagination from "./components/UserTablePagination";
 
+import BulkActionBar from "./components/BulkActionBar";
+import UserTable from "./components/UserTable";
+
 export default function UserManagement() {
   useDocumentTitle("User Management | Admin Console");
   const queryClient = useQueryClient();
@@ -131,35 +134,14 @@ export default function UserManagement() {
         setPage={setPage}
       />
 
-      {/* Bulk Action Bar */}
-      {selectedUserIds.size > 0 && (
-        <div className="bg-red-50 border border-red-100 rounded-xl p-3 flex items-center justify-between shadow-sm animate-in fade-in slide-in-from-top-2">
-          <span className="text-sm font-semibold text-red-800">
-            {selectedUserIds.size} users selected
-          </span>
-          <div className="flex gap-2">
-            <button
-              onClick={() => handleSave({ type: "bulk_archive", data: { userIds: Array.from(selectedUserIds), archived: true } })}
-              disabled={mutation.isPending}
-              className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-bold rounded-lg transition-colors flex items-center gap-2 disabled:opacity-50"
-            >
-              {mutation.isPending && mutation.variables?.type === "bulk_archive" && (
-                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-              )}
-              Archive Selected
-            </button>
-            <button
-              onClick={() => setSelectedUserIds(new Set())}
-              disabled={mutation.isPending}
-              className="px-4 py-2 bg-white border border-red-200 text-red-600 hover:bg-red-50 text-sm font-bold rounded-lg transition-colors"
-            >
-              Cancel
-            </button>
-          </div>
-        </div>
-      )}
+      <BulkActionBar 
+        selectedCount={selectedUserIds.size} 
+        onArchive={() => handleSave({ type: "bulk_archive", data: { userIds: Array.from(selectedUserIds), archived: true } })}
+        onCancel={() => setSelectedUserIds(new Set())}
+        isPending={mutation.isPending && mutation.variables?.type === "bulk_archive"}
+      />
 
-      {/* Table */}
+      {/* Table Area */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
         <div className="px-6 py-4 border-b border-gray-50 flex items-center justify-between">
           <h2 className="text-base font-bold text-gray-900">
@@ -169,55 +151,16 @@ export default function UserManagement() {
             {meta.total} total
           </span>
         </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-left">
-            <thead>
-              <tr className="bg-gray-50 text-gray-500 text-xs uppercase tracking-wider">
-                <th className="px-4 py-3 font-semibold w-10">
-                  <label htmlFor="select-all-users" className="sr-only">Select all users</label>
-                  <input 
-                    id="select-all-users"
-                    type="checkbox" 
-                    aria-label="Select all users"
-                    onChange={(e) => {
-                      if (e.target.checked) setSelectedUserIds(new Set(users.map(u => u.id)));
-                      else setSelectedUserIds(new Set());
-                    }}
-                    checked={users.length > 0 && selectedUserIds.size === users.length}
-                    className="w-4 h-4 text-red-600 rounded border-gray-300 focus:ring-red-500 cursor-pointer"
-                  />
-                </th>
-                <th className="px-4 py-3 font-semibold">User</th>
-                <th className="px-4 py-3 font-semibold">Barangay</th>
-                <th className="px-4 py-3 font-semibold">Role</th>
-                <th className="px-4 py-3 font-semibold">Status</th>
-                <th className="px-4 py-3 font-semibold">Joined</th>
-                <th className="px-4 py-3 font-semibold text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-50">
-              {isLoading
-                ? [1, 2, 3, 4, 5, 6, 7].map(i => <UserTableSkeleton key={i} />)
-                : users.length === 0
-                ? (
-                  <tr>
-                    <td colSpan={6} className="py-16 text-center text-gray-500 text-sm">
-                      No users found.
-                    </td>
-                  </tr>
-                )
-                : users.map(user => (
-                  <UserTableRow
-                    key={user.id}
-                    user={user}
-                    onManageClick={handleManageClick}
-                    isSelected={selectedUserIds.has(user.id)}
-                    onToggleSelect={handleToggleSelect}
-                  />
-                ))}
-            </tbody>
-          </table>
-        </div>
+        
+        <UserTable 
+          users={users}
+          meta={meta}
+          isLoading={isLoading}
+          selectedUserIds={selectedUserIds}
+          setSelectedUserIds={setSelectedUserIds}
+          handleManageClick={handleManageClick}
+          handleToggleSelect={handleToggleSelect}
+        />
 
         {/* Pagination */}
         <UserTablePagination 
