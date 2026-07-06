@@ -28,6 +28,12 @@ const BarangayDropdown = memo(function BarangayDropdown({ value, onChange, onBlu
         id="barangay"
         type="text"
         name="barangay"
+        role="combobox"
+        aria-expanded={showBarangayList}
+        aria-haspopup="listbox"
+        aria-controls="barangay-listbox"
+        aria-invalid={!!error}
+        aria-describedby={error ? "barangay-error" : undefined}
         value={value}
         onChange={(e) => {
           onChange({ target: { name: "barangay", value: e.target.value } });
@@ -43,14 +49,16 @@ const BarangayDropdown = memo(function BarangayDropdown({ value, onChange, onBlu
         required
         autoComplete="off"
       />
-      {error && <p className="text-red-500 text-xs mt-1 font-medium">{error}</p>}
+      {error && <p id="barangay-error" className="text-red-500 text-xs mt-1 font-medium">{error}</p>}
 
       {showBarangayList && (
-        <ul className="absolute z-10 w-full bg-white border border-gray-200 rounded-xl mt-1 max-h-48 overflow-y-auto shadow-lg">
+        <ul id="barangay-listbox" role="listbox" className="absolute z-10 w-full bg-white border border-gray-200 rounded-xl mt-1 max-h-48 overflow-y-auto shadow-lg">
           {filteredBarangays.length > 0 ? (
             filteredBarangays.map((b) => (
               <li
                 key={b}
+                role="option"
+                aria-selected={b === value}
                 onClick={() => {
                   onChange({ target: { name: "barangay", value: b } });
                   setShowBarangayList(false);

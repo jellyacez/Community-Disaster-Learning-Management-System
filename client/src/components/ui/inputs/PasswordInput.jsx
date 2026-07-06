@@ -36,6 +36,8 @@ const PasswordInput = memo(function PasswordInput({
           type={showPassword ? "text" : "password"}
           name={name}
           autoComplete={autoComplete}
+          aria-invalid={!!error}
+          aria-describedby={error ? `${id}-error` : undefined}
           value={value}
           onChange={onChange}
           onBlur={onBlur}
@@ -45,6 +47,7 @@ const PasswordInput = memo(function PasswordInput({
         />
         <button
           type="button"
+          aria-label={showPassword ? "Hide password" : "Show password"}
           onClick={() => setShowPassword(!showPassword)}
           className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none"
         >
@@ -56,7 +59,7 @@ const PasswordInput = memo(function PasswordInput({
         </button>
       </div>
       {error && (
-        <p className="text-red-500 text-xs mt-1 font-medium">{error}</p>
+        <p id={`${id}-error`} className="text-red-500 text-xs mt-1 font-medium">{error}</p>
       )}
     </div>
   );

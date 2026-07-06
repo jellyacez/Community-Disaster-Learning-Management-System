@@ -33,6 +33,8 @@ export default function RegisterForm() {
             type="text"
             name="fullName"
             autoComplete="name"
+            aria-invalid={!!errors.fullName}
+            aria-describedby={errors.fullName ? "fullName-error" : undefined}
             value={formData.fullName}
             onChange={actions.handleChange}
             onBlur={actions.handleBlur}
@@ -40,7 +42,7 @@ export default function RegisterForm() {
             className={actions.getInputClass("fullName")}
             required
           />
-          {errors.fullName && <p className="text-red-500 text-xs mt-1 font-medium">{errors.fullName}</p>}
+          {errors.fullName && <p id="fullName-error" className="text-red-500 text-xs mt-1 font-medium">{errors.fullName}</p>}
         </div>
 
         <div>
@@ -52,6 +54,8 @@ export default function RegisterForm() {
             type="email"
             name="email"
             autoComplete="email"
+            aria-invalid={!!errors.email}
+            aria-describedby={errors.email ? "email-error" : undefined}
             value={formData.email}
             onChange={actions.handleChange}
             onBlur={actions.handleBlur}
@@ -59,7 +63,7 @@ export default function RegisterForm() {
             className={actions.getInputClass("email")}
             required
           />
-          {errors.email && <p className="text-red-500 text-xs mt-1 font-medium">{errors.email}</p>}
+          {errors.email && <p id="email-error" className="text-red-500 text-xs mt-1 font-medium">{errors.email}</p>}
         </div>
 
         <BarangayDropdown 

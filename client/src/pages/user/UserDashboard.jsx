@@ -106,17 +106,17 @@ export default function UserDashboard() {
               <HugeiconsIcon icon={CheckmarkBadge01Icon} className="w-8 h-8" />
             </div>
             <div>
-              <h3 className="text-lg font-bold text-green-800">
+              <p className="text-lg font-bold text-green-800">
                 [TEST MODE] Certificate Route
-              </h3>
-              <p className="text-green-600 text-sm mt-1">
+              </p>
+              <p className="text-green-700 text-sm mt-1">
                 The logic gate is disabled. Click the button to test the PDF rendering.
               </p>
             </div>
           </div>
           <Link
             to="/user/certTemplate"
-            className="px-6 py-3 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition-colors shadow-md text-center whitespace-nowrap"
+            className="px-6 py-3 bg-green-700 text-white font-semibold rounded-lg hover:bg-green-800 transition-colors shadow-md text-center whitespace-nowrap"
           >
             Test PDF View
           </Link>

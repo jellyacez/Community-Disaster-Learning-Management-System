@@ -6,13 +6,18 @@ export default function ExplicitConsentModal({ isOpen, onCancel, onConfirm, isSu
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+      <div 
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="consent-modal-title"
+        className="bg-white rounded-2xl shadow-xl w-full max-w-lg flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200"
+      >
         <div className="flex items-center justify-between p-6 border-b border-gray-100">
           <div className="flex items-center gap-2">
             <div className="p-2 bg-blue-50 text-blue-600 rounded-lg">
               <HugeiconsIcon aria-hidden="true" icon={Shield01Icon} className="w-5 h-5" />
             </div>
-            <h2 className="text-xl font-bold text-gray-900">Data Privacy Consent</h2>
+            <h2 id="consent-modal-title" className="text-lg font-bold text-gray-900">Important Consent Required</h2>
           </div>
           <button
             onClick={onCancel}

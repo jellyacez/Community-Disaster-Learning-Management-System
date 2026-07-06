@@ -39,7 +39,7 @@ export default function DashboardAnnouncementsList({ displayData, loading, navig
                 <p className="text-xs font-semibold uppercase tracking-wide text-red-600">
                   {item.date}
                 </p>
-                <p className="text-[10px] text-gray-400 font-medium">
+                <p className="text-[10px] text-gray-500 font-medium">
                   {item.author}
                 </p>
               </div>

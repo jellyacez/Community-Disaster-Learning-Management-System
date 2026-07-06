@@ -6,11 +6,15 @@ export default function PrivacyModal({ isOpen, onClose }) {
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[85vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+      <div 
+        aria-labelledby="privacy-modal-title"
+        className="bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[85vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200"
+      >
         <div className="flex items-center justify-between p-6 border-b border-gray-100">
-          <h2 className="text-2xl font-bold text-gray-900">Privacy Policy</h2>
+          <h2 id="privacy-modal-title" className="text-2xl font-bold text-gray-900">Privacy Policy</h2>
           <button
             onClick={onClose}
+            aria-label="Close Privacy Policy"
             className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
           >
             <HugeiconsIcon aria-hidden="true" icon={Cancel01Icon} className="w-5 h-5" />

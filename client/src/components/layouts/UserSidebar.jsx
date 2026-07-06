@@ -93,7 +93,7 @@ export default function UserSidebar({
             <HugeiconsIcon aria-hidden="true" icon={Shield01Icon} className="w-5 h-5" />
           </div>
           <div>
-            <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">
+            <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">
               Bacolor LMS
             </p>
             <h2 className="text-lg font-extrabold text-gray-900">
@@ -104,6 +104,7 @@ export default function UserSidebar({
 
         <button
           onClick={() => setSidebarOpen(false)}
+          aria-label="Close sidebar menu"
           className="rounded-lg p-2 text-gray-500 hover:bg-gray-100 lg:hidden cursor-pointer"
         >
           <HugeiconsIcon aria-hidden="true" icon={Cancel01Icon} className="w-5 h-5" />
@@ -152,7 +153,7 @@ export default function UserSidebar({
               <HugeiconsIcon
                 icon={ArrowRight01Icon}
                 className={`relative z-10 w-4 h-4 ${
-                  active ? "text-white" : "text-gray-400"
+                  active ? "text-white" : "text-gray-500"
                 }`}
               />
             </button>

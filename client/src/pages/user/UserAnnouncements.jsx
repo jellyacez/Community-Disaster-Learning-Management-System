@@ -7,7 +7,14 @@ import useDocumentTitle from "../../hooks/useDocumentTitle";
 export default function UserAnnouncements() {
   useDocumentTitle("Announcements | Bacolor LMS");
   const { currentUser } = useOutletContext();
-  const { data: dashboardData } = useQuery({ queryKey: ['userDashboard'] });
+  const { data: dashboardData } = useQuery({
+    queryKey: ['userDashboard'],
+    queryFn: async () => {
+      const { default: apiClient } = await import("../../lib/apiClient");
+      const response = await apiClient.get('/user/dashboard');
+      return response.data;
+    }
+  });
   const announcements = dashboardData?.announcements || [];
 
   return (

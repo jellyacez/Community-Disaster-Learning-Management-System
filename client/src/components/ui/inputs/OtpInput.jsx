@@ -69,6 +69,9 @@ const OtpInput = memo(function OtpInput({ value, onChange, length = 6 }) {
         <Fragment key={`otp-digit-${index}`}>
           <input
             ref={(ref) => (inputRefs.current[index] = ref)}
+            id={`otp-input-${index}`}
+            name={`otp-input-${index}`}
+            aria-label={`Digit ${index + 1} of ${length}`}
             type="text"
             inputMode="numeric"
             value={digit}

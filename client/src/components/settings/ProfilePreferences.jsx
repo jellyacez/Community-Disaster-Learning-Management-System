@@ -40,12 +40,14 @@ export default function ProfilePreferences({ currentUser }) {
         <div className="md:w-1/3 flex-shrink-0">
           <h4 className="text-base font-bold text-gray-900 flex items-center gap-2">
             <HugeiconsIcon icon={UserCircle02Icon} className="w-5 h-5 text-red-500" />
-            Display Name
+            <label htmlFor="displayName">Display Name</label>
           </h4>
           <p className="text-sm text-gray-500 mt-1">This is how you will appear to other users on the platform.</p>
         </div>
         <div className="md:w-2/3 max-w-md">
           <input
+            id="displayName"
+            name="displayName"
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
@@ -59,7 +61,7 @@ export default function ProfilePreferences({ currentUser }) {
         <div className="md:w-1/3 flex-shrink-0">
           <h4 className="text-base font-bold text-gray-900 flex items-center gap-2">
             <HugeiconsIcon icon={Mail01Icon} className="w-5 h-5 text-red-500" />
-            Email Address
+            <label htmlFor="emailAddress">Email Address</label>
             <span className="px-2 py-0.5 rounded-full bg-gray-100 text-gray-500 text-[10px] font-bold uppercase tracking-wider ml-1">
               Uneditable
             </span>
@@ -68,6 +70,8 @@ export default function ProfilePreferences({ currentUser }) {
         </div>
         <div className="md:w-2/3 max-w-md">
           <input
+            id="emailAddress"
+            name="emailAddress"
             type="email"
             value={currentUser?.email || ""}
             disabled

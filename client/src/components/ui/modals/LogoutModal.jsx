@@ -18,6 +18,9 @@ export default function LogoutModal({ isOpen, onClose, onConfirm }) {
             exit={{ scale: 0.9, opacity: 0, y: 20 }}
             transition={{ type: "spring", damping: 25, stiffness: 300 }}
             className="relative w-full max-w-sm rounded-3xl bg-white p-8 shadow-2xl"
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="logout-modal-title"
           >
             <button
               onClick={onClose}
@@ -30,7 +33,7 @@ export default function LogoutModal({ isOpen, onClose, onConfirm }) {
               <HugeiconsIcon aria-hidden="true" icon={Logout01Icon} className="w-8 h-8 translate-x-1" />
             </div>
 
-            <h2 className="text-center text-2xl font-extrabold text-gray-900">
+            <h2 id="logout-modal-title" className="text-center text-2xl font-extrabold text-gray-900">
               Confirm Logout
             </h2>
             <p className="mt-2 text-center text-sm text-gray-500">

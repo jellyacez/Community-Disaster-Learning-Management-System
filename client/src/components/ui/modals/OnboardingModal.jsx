@@ -59,10 +59,12 @@ export default function OnboardingModal({ currentUser }) {
 
         <form onSubmit={handleOnboardingSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-bold text-gray-700 mb-2">
+            <label htmlFor="onboardingName" className="block text-sm font-bold text-gray-700 mb-2">
               Full Name
             </label>
             <input
+              id="onboardingName"
+              name="onboardingName"
               type="text"
               value={onboardingName}
               onChange={(e) => setOnboardingName(e.target.value)}
@@ -72,10 +74,12 @@ export default function OnboardingModal({ currentUser }) {
           </div>
 
           <div>
-            <label className="block text-sm font-bold text-gray-700 mb-2">
+            <label htmlFor="onboardingBarangay" className="block text-sm font-bold text-gray-700 mb-2">
               Which Barangay do you live in?
             </label>
             <select
+              id="onboardingBarangay"
+              name="onboardingBarangay"
               value={onboardingBarangay}
               onChange={(e) => setOnboardingBarangay(e.target.value)}
               className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-red-500 outline-none transition"

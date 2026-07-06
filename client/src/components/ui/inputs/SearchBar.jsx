@@ -14,7 +14,10 @@ export default function SearchBar({
         icon={Search01Icon}
         className="absolute left-3 top-1/2 w-4 h-4 -translate-y-1/2 text-gray-400"
       />
+      <label htmlFor="search-input" className="sr-only">Search</label>
       <input
+        id="search-input"
+        name="search"
         type="text"
         value={value}
         onChange={onChange}

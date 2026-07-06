@@ -35,7 +35,13 @@ const ConfirmationModal = memo(function ConfirmationModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm transition-opacity">
-      <div className="relative w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl animate-in zoom-in-95 duration-200">
+      <div 
+        role="alertdialog" 
+        aria-modal="true"
+        aria-labelledby="confirmation-modal-title"
+        aria-describedby="confirmation-modal-desc"
+        className="relative w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl animate-in zoom-in-95 duration-200"
+      >
         <button
           onClick={onClose}
           disabled={isLoading}
@@ -49,8 +55,8 @@ const ConfirmationModal = memo(function ConfirmationModal({
             <HugeiconsIcon aria-hidden="true" icon={getIcon()} className={`w-6 h-6 ${colors.text}`} />
           </div>
           
-          <h3 className="mb-2 text-lg font-bold text-gray-900">{title}</h3>
-          <p className="mb-6 text-sm text-gray-500 leading-relaxed">{description}</p>
+          <h3 id="confirmation-modal-title" className="mb-2 text-xl font-bold text-gray-900">{title}</h3>
+          <p id="confirmation-modal-desc" className="mb-6 text-sm leading-relaxed text-gray-500">{description}</p>
           
           <div className="flex w-full gap-3">
             <button

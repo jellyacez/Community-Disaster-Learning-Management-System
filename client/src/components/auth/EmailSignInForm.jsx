@@ -149,6 +149,8 @@ export default function EmailSignInForm({ errorMessage, clearGlobalError, onRequ
           type="email"
           name="email"
           autoComplete="email"
+          aria-invalid={!!errors.email}
+          aria-describedby={errors.email ? "email-error" : undefined}
           value={formData.email}
           onChange={handleChange}
           onBlur={handleBlur}
@@ -156,7 +158,7 @@ export default function EmailSignInForm({ errorMessage, clearGlobalError, onRequ
           className={getInputClass("email")}
         />
         {errors.email && (
-          <p className="text-red-500 text-xs mt-1 font-medium">{errors.email}</p>
+          <p id="email-error" className="text-red-500 text-xs mt-1 font-medium">{errors.email}</p>
         )}
       </div>
 

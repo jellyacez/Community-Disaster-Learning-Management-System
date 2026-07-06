@@ -5,6 +5,7 @@ export default function WelcomeBanner({ userName, onBrowse, onContinue }) {
       
       {/* Background Graphic (Shield) */}
       <svg 
+        aria-hidden="true"
         className="absolute -right-12 -bottom-16 w-80 h-80 text-white opacity-[0.07] rotate-[15deg] pointer-events-none" 
         fill="currentColor" 
         viewBox="0 0 24 24" 

@@ -6,11 +6,17 @@ export default function TermsModal({ isOpen, onClose }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[85vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+      <div 
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="terms-modal-title"
+        className="bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[85vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200"
+      >
         <div className="flex items-center justify-between p-6 border-b border-gray-100">
-          <h2 className="text-2xl font-bold text-gray-900">Terms & Conditions</h2>
+          <h2 id="terms-modal-title" className="text-2xl font-bold text-gray-900">Terms & Conditions</h2>
           <button
             onClick={onClose}
+            aria-label="Close Terms and Conditions"
             className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
           >
             <HugeiconsIcon aria-hidden="true" icon={Cancel01Icon} className="w-5 h-5" />
