@@ -7,7 +7,7 @@ function ToggleSwitch({ enabled, onChange, disabled = false }) {
     <button
       type="button"
       onClick={() => !disabled && onChange(!enabled)}
-      className={`${enabled ? 'bg-red-600' : 'bg-gray-200'} ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'} relative inline-flex h-6 w-11 flex-shrink-0 rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-offset-2`}
+      className={`${enabled ? 'bg-red-600' : 'bg-gray-200'} ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'} relative inline-flex h-6 w-11 shrink-0 rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-offset-2`}
     >
       <span className={`${enabled ? 'translate-x-5' : 'translate-x-0'} pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out`} />
     </button>
@@ -23,7 +23,7 @@ export default function NotificationPreferences() {
       
       {/* System Announcements Row */}
       <div className="flex flex-col md:flex-row gap-8 md:gap-16 p-4 -mx-4 rounded-2xl hover:bg-gray-50/80 transition-colors group">
-        <div className="md:w-1/3 flex-shrink-0">
+        <div className="md:w-1/3 shrink-0">
           <h4 className="text-base font-bold text-gray-900 flex items-center gap-2">
             <HugeiconsIcon icon={Megaphone01Icon} className="w-5 h-5 text-red-500" />
             System Announcements
@@ -37,7 +37,7 @@ export default function NotificationPreferences() {
 
       {/* Disaster Alerts Row */}
       <div className="flex flex-col md:flex-row gap-8 md:gap-16 p-4 -mx-4 rounded-2xl hover:bg-gray-50/80 transition-colors group">
-        <div className="md:w-1/3 flex-shrink-0">
+        <div className="md:w-1/3 shrink-0">
           <h4 className="text-base font-bold text-gray-900 flex items-center gap-2">
             <HugeiconsIcon icon={Alert02Icon} className="w-5 h-5 text-red-500" />
             Disaster Alerts
@@ -51,7 +51,7 @@ export default function NotificationPreferences() {
 
       {/* Module Reminders Row */}
       <div className="flex flex-col md:flex-row gap-8 md:gap-16 p-4 -mx-4 rounded-2xl hover:bg-gray-50/80 transition-colors group">
-        <div className="md:w-1/3 flex-shrink-0">
+        <div className="md:w-1/3 shrink-0">
           <h4 className="text-base font-bold text-gray-900 flex items-center gap-2">
             <HugeiconsIcon icon={Notification03Icon} className="w-5 h-5 text-red-500" />
             Module Reminders

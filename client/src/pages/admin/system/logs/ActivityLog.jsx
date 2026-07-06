@@ -97,7 +97,7 @@ export default function ActivityLog() {
                   <tr key={log.act_id} className="hover:bg-gray-50/60 transition-colors">
                     <td className="px-4 py-3 text-xs font-mono text-gray-500 whitespace-nowrap">
                       <div className="flex items-center gap-1.5">
-                        <HugeiconsIcon icon={Note01Icon} className="w-3.5 h-3.5 text-gray-300 flex-shrink-0" />
+                        <HugeiconsIcon icon={Note01Icon} className="w-3.5 h-3.5 text-gray-300 shrink-0" />
                         <div>
                           <p>{new Date(log.act_date).toLocaleDateString("en-PH", { year: "numeric", month: "short", day: "numeric" })}</p>
                           <p className="text-gray-500">{new Date(log.act_date).toLocaleTimeString("en-PH", { hour: "2-digit", minute: "2-digit" })}</p>
@@ -106,7 +106,7 @@ export default function ActivityLog() {
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
-                        <div className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center text-xs font-bold text-gray-500 uppercase flex-shrink-0">
+                        <div className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center text-xs font-bold text-gray-500 uppercase shrink-0">
                           {log.user_name?.charAt(0) || "?"}
                         </div>
                         <div>

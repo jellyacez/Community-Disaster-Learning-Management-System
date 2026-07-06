@@ -8,7 +8,7 @@ export default function LandingFooter() {
       <div className="max-w-6xl mx-auto px-4">
         <div className="flex flex-col md:flex-row justify-between gap-8 mb-8">
           <div className="flex items-start gap-3">
-            <div className="w-10 h-10 rounded-xl bg-red-700 flex items-center justify-center flex-shrink-0">
+            <div className="w-10 h-10 rounded-xl bg-red-700 flex items-center justify-center shrink-0">
               <HugeiconsIcon aria-hidden="true" icon={Shield01Icon} className="w-5 h-5 text-white" />
             </div>
             <div>

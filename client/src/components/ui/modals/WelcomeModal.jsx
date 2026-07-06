@@ -27,7 +27,7 @@ export default function WelcomeModal({ isOpen, onClose, userName, onGoToCatalog 
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[100] flex items-center justify-center bg-gray-900/60 p-4"
+          className="fixed inset-0 z-100 flex items-center justify-center bg-gray-900/60 p-4"
         >
           <motion.div
             initial={{ scale: 0.9, opacity: 0, y: 20 }}
@@ -63,7 +63,7 @@ export default function WelcomeModal({ isOpen, onClose, userName, onGoToCatalog 
               className="mt-8 space-y-6"
             >
               <motion.div variants={itemVariants} className="flex items-start gap-4">
-                <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-red-100 text-red-600 shadow-sm">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-red-100 text-red-600 shadow-sm">
                   <span className="text-sm font-bold">1</span>
                 </div>
                 <div>
@@ -76,7 +76,7 @@ export default function WelcomeModal({ isOpen, onClose, userName, onGoToCatalog 
               </motion.div>
 
               <motion.div variants={itemVariants} className="flex items-start gap-4">
-                <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-red-100 text-red-600 shadow-sm">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-red-100 text-red-600 shadow-sm">
                   <span className="text-sm font-bold">2</span>
                 </div>
                 <div>

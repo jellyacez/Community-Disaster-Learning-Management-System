@@ -17,7 +17,7 @@ export default function MfaInitialChoice({ isGoogleUser, handleSelectMethod }) {
             : "border-gray-200 hover:border-red-300 hover:bg-red-50"
         }`}
       >
-        <div className={`p-2.5 rounded-xl flex-shrink-0 ${isGoogleUser ? "bg-gray-200 text-gray-500" : "bg-red-100 text-red-600"}`}>
+        <div className={`p-2.5 rounded-xl shrink-0 ${isGoogleUser ? "bg-gray-200 text-gray-500" : "bg-red-100 text-red-600"}`}>
           <HugeiconsIcon aria-hidden="true" icon={Shield01Icon} className="w-6 h-6" />
         </div>
         <div>
@@ -33,7 +33,7 @@ export default function MfaInitialChoice({ isGoogleUser, handleSelectMethod }) {
         onClick={() => handleSelectMethod("otp")}
         className="w-full flex items-start gap-4 p-4 rounded-2xl border border-gray-200 hover:border-red-300 hover:bg-red-50 transition-colors text-left"
       >
-        <div className="bg-red-100 p-2.5 rounded-xl text-red-600 flex-shrink-0">
+        <div className="bg-red-100 p-2.5 rounded-xl text-red-600 shrink-0">
           <HugeiconsIcon aria-hidden="true" icon={Mail01Icon} className="w-6 h-6" />
         </div>
         <div>

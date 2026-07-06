@@ -85,7 +85,7 @@ export default function TwoFactorSettings() {
     <>
       <div className="p-6 md:p-8 w-full flex flex-col space-y-2">
         <div className="flex flex-col md:flex-row gap-8 md:gap-16 p-4 -mx-4 rounded-2xl hover:bg-gray-50/80 transition-colors group">
-          <div className="md:w-1/3 flex-shrink-0">
+          <div className="md:w-1/3 shrink-0">
             <h4 className="text-base font-bold text-gray-900 flex items-center gap-2">
               <HugeiconsIcon icon={Shield01Icon} className="w-5 h-5 text-red-500" />
               Two-Factor Auth
@@ -100,7 +100,7 @@ export default function TwoFactorSettings() {
                 <span className="text-sm font-semibold text-gray-700">Authenticator App</span>
                 <button
                   onClick={handleToggleClick}
-                  className={`relative inline-flex h-7 w-12 flex-shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-offset-2 ${
+                  className={`relative inline-flex h-7 w-12 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-offset-2 ${
                     isCurrentlyEnabled ? "bg-red-600" : "bg-gray-200"
                   }`}
                 >

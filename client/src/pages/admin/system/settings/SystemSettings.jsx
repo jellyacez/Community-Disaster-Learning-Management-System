@@ -72,7 +72,7 @@ export default function SystemSettings() {
         <div className="p-6">
           <div className="flex items-start justify-between gap-4">
             <div className="flex items-start gap-3">
-              <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${maintenanceActive ? "bg-red-100" : "bg-gray-100"}`}>
+              <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${maintenanceActive ? "bg-red-100" : "bg-gray-100"}`}>
                 <HugeiconsIcon icon={Settings01Icon} className={`w-5 h-5 ${maintenanceActive ? "text-red-700" : "text-gray-600"}`} />
               </div>
               <div>
@@ -91,7 +91,7 @@ export default function SystemSettings() {
             <button
               onClick={() => toggleMaintenance.mutate(!maintenanceActive)}
               disabled={isLoading || isToggling}
-              className={`relative inline-flex h-8 w-14 flex-shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed ${maintenanceActive ? "bg-red-600 focus:ring-red-600" : "bg-gray-200 focus:ring-gray-900"}`}
+              className={`relative inline-flex h-8 w-14 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed ${maintenanceActive ? "bg-red-600 focus:ring-red-600" : "bg-gray-200 focus:ring-gray-900"}`}
               aria-label="Toggle maintenance mode"
             >
               <span className={`inline-block h-6 w-6 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${maintenanceActive ? "translate-x-6" : "translate-x-0"}`} />
@@ -100,7 +100,7 @@ export default function SystemSettings() {
 
           {maintenanceActive && (
             <div className="mt-4 flex items-start gap-2 bg-red-100/60 rounded-xl p-3">
-              <HugeiconsIcon icon={Notification01Icon} className="w-4 h-4 text-red-700 mt-0.5 flex-shrink-0" />
+              <HugeiconsIcon icon={Notification01Icon} className="w-4 h-4 text-red-700 mt-0.5 shrink-0" />
               <p className="text-xs font-semibold text-red-800">
                 All residents will see a maintenance page. Disable maintenance mode when your updates are complete.
               </p>

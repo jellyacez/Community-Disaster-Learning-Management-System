@@ -33,7 +33,7 @@ export default function AuthLayout({
         )}
 
         <div className="flex items-center gap-3 mb-6">
-          <div className="w-12 h-12 rounded-xl bg-red-600 flex items-center justify-center flex-shrink-0">
+          <div className="w-12 h-12 rounded-xl bg-red-600 flex items-center justify-center shrink-0">
             <HugeiconsIcon aria-hidden="true" icon={icon} className="w-6 h-6 text-white" />
           </div>
           <div>

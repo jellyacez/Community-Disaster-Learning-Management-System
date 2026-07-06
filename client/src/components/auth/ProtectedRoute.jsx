@@ -109,7 +109,7 @@ export default function ProtectedRoute({ allowedRoles = [] }) {
         homePath = "/userDashboard";
 
       return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-white px-4">
+        <div className="fixed inset-0 z-100 flex items-center justify-center bg-white px-4">
           <div className="bg-white p-8 rounded-2xl shadow-xl max-w-sm w-full text-center border border-gray-100">
             <div className="w-16 h-16 bg-red-100 text-red-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
               <HugeiconsIcon

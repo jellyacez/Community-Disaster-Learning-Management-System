@@ -10,7 +10,7 @@ export default function LogoutModal({ isOpen, onClose, onConfirm }) {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[100] flex items-center justify-center bg-gray-900/60 p-4"
+          className="fixed inset-0 z-100 flex items-center justify-center bg-gray-900/60 p-4"
         >
           <motion.div
             initial={{ scale: 0.9, opacity: 0, y: 20 }}

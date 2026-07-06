@@ -8,7 +8,7 @@ export default function ModuleSkeleton() {
           <div className="h-6 w-3/4 bg-gray-200 rounded mb-2"></div>
           <div className="h-4 w-full bg-gray-200 rounded"></div>
         </div>
-        <div className="min-w-52 w-full md:w-52 flex-shrink-0">
+        <div className="min-w-52 w-full md:w-52 shrink-0">
           <div className="h-4 w-full bg-gray-200 rounded mb-3"></div>
           <div className="h-10 w-full bg-gray-200 rounded-xl"></div>
         </div>

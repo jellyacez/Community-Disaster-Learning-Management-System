@@ -5,7 +5,7 @@ export default function ExplicitConsentModal({ isOpen, onCancel, onConfirm, isSu
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4">
+    <div className="fixed inset-0 z-100 flex items-center justify-center bg-black/50 p-4">
       <div 
         role="dialog"
         aria-modal="true"
@@ -37,15 +37,15 @@ export default function ExplicitConsentModal({ isOpen, onCancel, onConfirm, isSu
             <h3 className="font-semibold text-gray-900 text-base">We will securely collect and store:</h3>
             <ul className="space-y-2">
               <li className="flex items-start gap-2">
-                <HugeiconsIcon aria-hidden="true" icon={CheckmarkBadge01Icon} className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
+                <HugeiconsIcon aria-hidden="true" icon={CheckmarkBadge01Icon} className="w-4 h-4 text-green-500 mt-0.5 shrink-0" />
                 <span><strong>Your Name & Email</strong> to issue your official DRRM completion certificates.</span>
               </li>
               <li className="flex items-start gap-2">
-                <HugeiconsIcon aria-hidden="true" icon={CheckmarkBadge01Icon} className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
+                <HugeiconsIcon aria-hidden="true" icon={CheckmarkBadge01Icon} className="w-4 h-4 text-green-500 mt-0.5 shrink-0" />
                 <span><strong>Your Barangay</strong> to help the MDRRMO track municipal disaster readiness.</span>
               </li>
               <li className="flex items-start gap-2">
-                <HugeiconsIcon aria-hidden="true" icon={CheckmarkBadge01Icon} className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
+                <HugeiconsIcon aria-hidden="true" icon={CheckmarkBadge01Icon} className="w-4 h-4 text-green-500 mt-0.5 shrink-0" />
                 <span><strong>Your IP Address & Activity Logs</strong> to secure your account against hackers and monitor active sessions.</span>
               </li>
             </ul>

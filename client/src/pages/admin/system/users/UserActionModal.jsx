@@ -155,7 +155,7 @@ export default function UserActionModal({ user, onClose, onSave }) {
                   </div>
                 </div>
                 <div className="bg-amber-50 border border-amber-100 rounded-xl p-4 flex gap-3">
-                  <HugeiconsIcon icon={Notification01Icon} className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                  <HugeiconsIcon icon={Notification01Icon} className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
                   <p className="text-sm text-amber-800">
                     Assigning <strong>system_admin</strong> grants full platform control. Assign with caution.
                   </p>

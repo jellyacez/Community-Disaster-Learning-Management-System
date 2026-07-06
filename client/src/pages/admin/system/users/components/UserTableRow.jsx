@@ -34,7 +34,7 @@ function UserTableRow({ user, onManageClick, isSelected, onToggleSelect }) {
       </td>
       <td className="px-4 py-3">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-xs font-bold text-gray-600 uppercase flex-shrink-0">
+          <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-xs font-bold text-gray-600 uppercase shrink-0">
             {user.name?.charAt(0) || "?"}
           </div>
           <div>

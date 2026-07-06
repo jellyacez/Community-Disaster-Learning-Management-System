@@ -70,7 +70,7 @@ export default function ActiveDevices() {
   return (
     <div className="p-6 md:p-8 w-full flex flex-col space-y-2">
       <div className="flex flex-col md:flex-row gap-8 md:gap-16 p-4 -mx-4 rounded-2xl hover:bg-gray-50/80 transition-colors group">
-        <div className="md:w-1/3 flex-shrink-0">
+        <div className="md:w-1/3 shrink-0">
           <h4 className="text-base font-bold text-gray-900 flex items-center gap-2">
             <HugeiconsIcon icon={LaptopProgrammingIcon} className="w-5 h-5 text-red-500" />
             Active Devices

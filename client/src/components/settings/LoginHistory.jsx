@@ -38,7 +38,7 @@ export default function LoginHistory() {
   return (
     <div className="p-6 md:p-8 w-full flex flex-col space-y-2">
       <div className="flex flex-col md:flex-row gap-8 md:gap-16 p-4 -mx-4 rounded-2xl hover:bg-gray-50/80 transition-colors group">
-        <div className="md:w-1/3 flex-shrink-0">
+        <div className="md:w-1/3 shrink-0">
           <h4 className="text-base font-bold text-gray-900 flex items-center gap-2">
             <HugeiconsIcon icon={Clock01Icon} className="w-5 h-5 text-red-500" />
             Login History
@@ -67,7 +67,7 @@ export default function LoginHistory() {
       
       {/* Footer / View Full History */}
       <div className="flex flex-col md:flex-row gap-8 md:gap-16 mt-2">
-        <div className="md:w-1/3 flex-shrink-0"></div>
+        <div className="md:w-1/3 shrink-0"></div>
         <div className="md:w-2/3 max-w-md flex justify-end pt-4 border-t border-gray-100">
           <button className="text-sm font-bold text-red-600 hover:text-red-700 transition">
             View Full History

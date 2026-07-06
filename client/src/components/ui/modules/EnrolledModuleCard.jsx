@@ -43,7 +43,7 @@ const EnrolledModuleCard = memo(function EnrolledModuleCard({ module, onResume }
           </p>
         </div>
 
-        <div className="min-w-52 flex-shrink-0">
+        <div className="min-w-52 shrink-0">
           <div className="mb-2 flex items-center justify-between text-sm">
             <span className="font-medium text-gray-500">
               Progress
