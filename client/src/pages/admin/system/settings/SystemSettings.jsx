@@ -141,7 +141,7 @@ export default function SystemSettings() {
               await apiClient.patch("/admin/settings/branding", { system_name, system_logo });
               toast.success("Branding updated successfully", { id: "branding" });
               queryClient.invalidateQueries({ queryKey: ["systemSettings"] });
-            } catch (err) {
+            } catch {
               toast.error("Failed to update branding", { id: "branding" });
             }
           }}

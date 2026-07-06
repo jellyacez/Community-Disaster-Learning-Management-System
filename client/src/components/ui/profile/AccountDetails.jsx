@@ -49,7 +49,7 @@ export default function AccountDetails({ currentUser }) {
             Member Since
           </p>
           <p className="mt-1 text-base font-semibold text-gray-900">
-            {new Date(currentUser.createdAt || Date.now()).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+            {(currentUser?.createdAt ? new Date(currentUser.createdAt) : new Date()).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
           </p>
         </div>
       </div>

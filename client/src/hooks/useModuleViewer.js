@@ -26,7 +26,7 @@ export function useModuleViewer(moduleId) {
     if (data && data.steps && data.steps.length > 0 && !activeStepId) {
       const currentOrder = data.currentProgressOrder;
       const nextStep = data.steps.find(s => s.step_order === currentOrder + 1) || data.steps[data.steps.length - 1];
-      setActiveStepId(nextStep.id);
+      setTimeout(() => setActiveStepId(nextStep.id), 0);
     }
   }, [data, activeStepId]);
 

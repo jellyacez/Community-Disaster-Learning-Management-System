@@ -1,6 +1,6 @@
 // --- START: UserEnrolledModules.jsx ---
 import { useState, useMemo } from "react";
-import { useOutletContext, Link } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import apiClient from "../../lib/apiClient";
 import educationImg from "../../assets/education.svg";

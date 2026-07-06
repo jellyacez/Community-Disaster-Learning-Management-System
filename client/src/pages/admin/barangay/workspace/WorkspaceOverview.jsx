@@ -1,7 +1,8 @@
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 
 import WorkspaceOverviewSkeleton from "./WorkspaceOverviewSkeleton";
+import ResidentInspectorPanel from "../../shared/ResidentInspectorPanel";
 
 const fetchResidents = async () => {
   const res = await fetch("/api/admin/residents");

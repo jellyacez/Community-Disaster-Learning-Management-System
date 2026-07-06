@@ -13,7 +13,7 @@ export default function RegisterPage() {
   const navigate = useNavigate();
   const { data: session, isPending } = authClient.useSession();
 
-  const [justRegistered, setJustRegistered] = useState(false);
+
 
   useEffect(() => {
     sessionStorage.removeItem("isLoggingOut");
@@ -22,9 +22,7 @@ export default function RegisterPage() {
   useEffect(() => {
     if (session && !isPending) {
       const userRole = session.user?.role;
-      const navState = justRegistered
-        ? { state: { showWelcome: true }, replace: true }
-        : { replace: true };
+      const navState = { replace: true };
 
       if (userRole === "system_admin") navigate("/admin/dashboard", navState);
       else if (userRole === "mdrrmo_admin")
@@ -40,7 +38,7 @@ export default function RegisterPage() {
         });
       }
     }
-  }, [session, isPending, navigate, justRegistered]);
+  }, [session, isPending, navigate]);
 
   return (
     <AuthLayout

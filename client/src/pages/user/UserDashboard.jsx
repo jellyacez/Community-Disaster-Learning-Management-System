@@ -4,7 +4,7 @@ import { useOutletContext, useLocation, useNavigate, Link } from "react-router-d
 import { useQuery } from "@tanstack/react-query";
 import apiClient from "../../lib/apiClient";
 import { authClient } from "../../lib/auth-client";
-import { motion, AnimatePresence } from "framer-motion";
+
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   CheckmarkBadge01Icon,

@@ -44,7 +44,7 @@ export default function ResetPasswordPage() {
 
     setStatus("loading");
 
-    const { data, error } = await authClient.resetPassword({
+    const { error } = await authClient.resetPassword({
       newPassword: formData.newPassword,
       token,
     });

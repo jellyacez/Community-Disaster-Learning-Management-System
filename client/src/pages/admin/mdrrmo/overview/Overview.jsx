@@ -40,7 +40,6 @@ export default function Overview() {
     retry: 1
   });
 
-  const isLoading = isLoadingModules || isLoadingUsers || isLoadingLogs;
 
   if (isErrorModules) {
     return (

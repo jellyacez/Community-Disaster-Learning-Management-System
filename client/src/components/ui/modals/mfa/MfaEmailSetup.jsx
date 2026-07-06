@@ -123,7 +123,7 @@ export default function MfaEmailSetup({
             <div className="flex justify-center mt-4">
               <button
                 type="button"
-                onClick={(e) => handleSendOtp()}
+                onClick={() => handleSendOtp()}
                 disabled={countdown > 0 || isSendingOtp}
                 className="text-xs font-semibold text-gray-500 hover:text-gray-800 disabled:opacity-50 disabled:hover:text-gray-500 transition-colors"
               >

@@ -108,7 +108,7 @@ export default function ModuleManagement() {
         };
 
        
-        const stepResponse = await apiClient.post(`modules/steps/${targetLevelId}`, stepPayload);
+        await apiClient.post(`modules/steps/${targetLevelId}`, stepPayload);
 
         // Optional individual inner logic checks can be safely evaluated using standard Axios errors or status checks
       }

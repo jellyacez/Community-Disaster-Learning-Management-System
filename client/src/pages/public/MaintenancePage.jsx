@@ -28,7 +28,7 @@ export default function MaintenancePage() {
       if (res.status === 200) {
         navigate("/");
       }
-    } catch (error) {
+    } catch {
       // Global interceptor handles 503 errors
     } finally {
       setIsChecking(false);

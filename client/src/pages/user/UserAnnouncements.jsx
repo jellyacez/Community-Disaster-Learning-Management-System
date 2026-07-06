@@ -1,12 +1,12 @@
 // --- START: UserAnnouncements.jsx ---
-import { useOutletContext } from "react-router-dom";
+
 import { useQuery } from "@tanstack/react-query";
 import AnnouncementCard from "../../components/ui/announcements/AnnouncementCard";
 import useDocumentTitle from "../../hooks/useDocumentTitle";
 
 export default function UserAnnouncements() {
   useDocumentTitle("Announcements | Bacolor LMS");
-  const { currentUser } = useOutletContext();
+
   const { data: dashboardData } = useQuery({
     queryKey: ['userDashboard'],
     queryFn: async () => {

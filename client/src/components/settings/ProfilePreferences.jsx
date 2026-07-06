@@ -12,7 +12,7 @@ export default function ProfilePreferences({ currentUser }) {
     if (currentUser?.name) {
       setName(currentUser.name);
     }
-  }, [currentUser]);
+  }, [currentUser, setName]);
 
   const handleUpdateProfile = async () => {
     if (!name.trim()) {

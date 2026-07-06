@@ -1,5 +1,11 @@
 import { useState, useEffect } from "react";
-import { Navigate, Outlet, Link, useSearchParams, useLocation } from "react-router-dom";
+import {
+  Navigate,
+  Outlet,
+  Link,
+  useSearchParams,
+  useLocation,
+} from "react-router-dom";
 import { authClient } from "../../lib/auth-client";
 import apiClient from "../../lib/apiClient";
 import { HugeiconsIcon } from "@hugeicons/react";
@@ -13,20 +19,27 @@ export default function ProtectedRoute({ allowedRoles = [] }) {
 
   useEffect(() => {
     if (session && !isPending && session.user?.role === "resident") {
-      apiClient.get("/user/dashboard")
+      apiClient
+        .get("/user/dashboard")
         .then(() => setIsMaintenanceChecked(true))
         .catch(() => {
           // Block render on 503
         });
     } else if (session && !isPending) {
       // Bypass check for admin roles
-      setIsMaintenanceChecked(true);
+      setTimeout(() => setIsMaintenanceChecked(true), 0);
     }
-  }, [session, isPending]);
+  }, [session, isPending, setIsMaintenanceChecked]);
 
-  if (isPending || (session && session.user?.role === "resident" && !isMaintenanceChecked)) {
+  if (
+    isPending ||
+    (session && session.user?.role === "resident" && !isMaintenanceChecked)
+  ) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-white" aria-hidden="true">
+      <div
+        className="min-h-screen flex items-center justify-center bg-white"
+        aria-hidden="true"
+      >
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600"></div>
       </div>
     );
@@ -36,11 +49,16 @@ export default function ProtectedRoute({ allowedRoles = [] }) {
     if (sessionStorage.getItem("isLoggingOut") === "true") {
       return <Navigate to="/signin" replace />;
     }
-    
+
     const errorParam = searchParams.get("error");
-    
+
     if (errorParam) {
-      return <Navigate to={`/signin?error=${encodeURIComponent(errorParam)}`} replace />;
+      return (
+        <Navigate
+          to={`/signin?error=${encodeURIComponent(errorParam)}`}
+          replace
+        />
+      );
     }
 
     return (
@@ -59,7 +77,10 @@ export default function ProtectedRoute({ allowedRoles = [] }) {
     const userRole = session.user?.role;
     if (!userRole) {
       return (
-        <div className="min-h-screen flex items-center justify-center bg-white" aria-hidden="true">
+        <div
+          className="min-h-screen flex items-center justify-center bg-white"
+          aria-hidden="true"
+        >
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600"></div>
         </div>
       );
@@ -67,7 +88,11 @@ export default function ProtectedRoute({ allowedRoles = [] }) {
 
     const adminRoles = ["system_admin", "mdrrmo_admin", "barangay_admin"];
     const mfaBypass = import.meta.env.VITE_DISABLE_MFA === "true";
-    if (adminRoles.includes(userRole) && !session.user.twoFactorEnabled && !mfaBypass) {
+    if (
+      adminRoles.includes(userRole) &&
+      !session.user.twoFactorEnabled &&
+      !mfaBypass
+    ) {
       if (location.pathname !== "/admin/mfa-setup") {
         return <Navigate to="/admin/mfa-setup" replace />;
       }
@@ -76,15 +101,22 @@ export default function ProtectedRoute({ allowedRoles = [] }) {
     if (!allowedRoles.includes(userRole)) {
       let homePath = "/";
       if (userRole === "system_admin") homePath = "/admin/dashboard";
-      else if (userRole === "mdrrmo_admin") homePath = "/admin/mdrrmo/dashboard";
-      else if (userRole === "barangay_admin") homePath = "/admin/barangay/dashboard";
-      else if (userRole === "resident" || userRole === "user") homePath = "/userDashboard";
+      else if (userRole === "mdrrmo_admin")
+        homePath = "/admin/mdrrmo/dashboard";
+      else if (userRole === "barangay_admin")
+        homePath = "/admin/barangay/dashboard";
+      else if (userRole === "resident" || userRole === "user")
+        homePath = "/userDashboard";
 
       return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-white px-4">
           <div className="bg-white p-8 rounded-2xl shadow-xl max-w-sm w-full text-center border border-gray-100">
             <div className="w-16 h-16 bg-red-100 text-red-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <HugeiconsIcon aria-hidden="true" icon={Alert01Icon} className="w-8 h-8" />
+              <HugeiconsIcon
+                aria-hidden="true"
+                icon={Alert01Icon}
+                className="w-8 h-8"
+              />
             </div>
             <h2 className="text-2xl font-bold text-gray-900 mb-2">
               Access Denied

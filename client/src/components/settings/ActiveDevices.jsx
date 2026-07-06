@@ -4,7 +4,7 @@ import toast from "react-hot-toast";
 import ConfirmationModal from "../ui/modals/ConfirmationModal";
 import ActiveDeviceItem from "./ActiveDeviceItem";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { LaptopIcon, SmartPhone01Icon, LaptopProgrammingIcon } from "@hugeicons/core-free-icons";
+import { LaptopProgrammingIcon } from "@hugeicons/core-free-icons";
 
 export default function ActiveDevices() {
   const { data: activeSession } = authClient.useSession();
@@ -66,19 +66,6 @@ export default function ActiveDevices() {
     setIsModalOpen(false);
   }, []);
 
-  const getDeviceDetails = (ua) => {
-    if (!ua) return { name: "Unknown Device", icon: LaptopIcon };
-    if (
-      ua.includes("Mobi") ||
-      ua.includes("Android") ||
-      ua.includes("iPhone")
-    ) {
-      return { name: "Mobile Device", icon: SmartPhone01Icon };
-    }
-    if (ua.includes("Windows")) return { name: "Windows PC", icon: LaptopIcon };
-    if (ua.includes("Mac")) return { name: "Mac", icon: LaptopIcon };
-    return { name: "Desktop", icon: LaptopIcon };
-  };
 
   return (
     <div className="p-6 md:p-8 w-full flex flex-col space-y-2">

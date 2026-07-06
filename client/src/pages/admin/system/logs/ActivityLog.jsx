@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import apiClient from "../../../../lib/apiClient";
 import useDocumentTitle from "../../../../hooks/useDocumentTitle";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { Search01Icon, Note01Icon, UserGroupIcon } from "@hugeicons/core-free-icons";
+import { Search01Icon } from "@hugeicons/core-free-icons";
 
 const ROLE_COLORS = {
   system_admin: "bg-purple-100 text-purple-800",

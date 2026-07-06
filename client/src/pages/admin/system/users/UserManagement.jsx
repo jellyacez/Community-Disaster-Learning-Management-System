@@ -4,12 +4,7 @@ import apiClient from "../../../../lib/apiClient";
 import { authClient } from "../../../../lib/auth-client";
 import toast from "react-hot-toast";
 import useDocumentTitle from "../../../../hooks/useDocumentTitle";
-import { HugeiconsIcon } from "@hugeicons/react";
-import {
-  Search01Icon,
-  UserGroupIcon,
-  Settings01Icon,
-} from "@hugeicons/core-free-icons";
+
 import UserActionModal from "./components/UserActionModal/UserActionModal";
 import UserTableRow from "./components/UserTableRow";
 import UserTableSkeleton from "./components/UserTableSkeleton";
@@ -32,7 +27,7 @@ export default function UserManagement() {
   // Clear selections when filters or pagination change
   useEffect(() => {
     setSelectedUserIds(new Set());
-  }, [page, limit, debouncedSearch, roleFilter, statusFilter]);
+  }, [page, limit, debouncedSearch, roleFilter, statusFilter, setSelectedUserIds]);
 
   // Debounce search
   useEffect(() => {
@@ -54,14 +49,7 @@ export default function UserManagement() {
     });
   }, []);
 
-  const handleSelectAll = useCallback((e) => {
-    if (e.target.checked) {
-      // Avoid referencing stale 'users' inside useCallback without adding it to deps, 
-      // but wait, we need 'users'. Since handleSelectAll needs 'users', we define it inline 
-      // later or just use dependency array.
-      // Wait, let's just not useCallback for handleSelectAll to avoid stale data, or add users to deps.
-    }
-  }, []); // We will redefine this inline in the JSX to ensure access to latest 'users'.
+
 
   const { data, isLoading } = useQuery({
     queryKey: ["adminUsers", page, limit, debouncedSearch, roleFilter, statusFilter],

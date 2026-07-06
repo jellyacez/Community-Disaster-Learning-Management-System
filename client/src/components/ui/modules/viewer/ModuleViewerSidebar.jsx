@@ -47,8 +47,6 @@ export default function ModuleViewerSidebar({
         <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4 px-2">Course Contents</p>
         
         {steps.map((step) => {
-          const isCompleted = step.step_order <= currentProgressOrder;
-          const isNextAvailable = step.step_order === currentProgressOrder + 1;
           const isLocked = step.step_order > currentProgressOrder + 1;
           const isActive = step.id === activeStepId;
 

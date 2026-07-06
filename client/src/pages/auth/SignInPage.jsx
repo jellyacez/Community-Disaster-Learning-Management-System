@@ -49,7 +49,7 @@ export default function SignInPage() {
 
   useEffect(() => {
     if (sessionStorage.getItem("showLogoutModal") === "true") {
-      setShowLogoutModal(true);
+      setTimeout(() => setShowLogoutModal(true), 0);
       sessionStorage.removeItem("showLogoutModal");
     }
 

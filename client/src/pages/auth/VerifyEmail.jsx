@@ -26,7 +26,7 @@ export default function VerifyEmail() {
       hasFired.current = true;
 
       try {
-        const { data, error } = await authClient.verifyEmail({
+        const { error } = await authClient.verifyEmail({
           query: { token },
         });
 
