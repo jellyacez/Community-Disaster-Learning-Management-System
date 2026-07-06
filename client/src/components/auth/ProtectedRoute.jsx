@@ -26,7 +26,7 @@ export default function ProtectedRoute({ allowedRoles = [] }) {
 
   if (isPending || (session && session.user?.role === "resident" && !isMaintenanceChecked)) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="min-h-screen flex items-center justify-center bg-white" aria-hidden="true">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600"></div>
       </div>
     );
@@ -59,7 +59,7 @@ export default function ProtectedRoute({ allowedRoles = [] }) {
     const userRole = session.user?.role;
     if (!userRole) {
       return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="min-h-screen flex items-center justify-center bg-white" aria-hidden="true">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600"></div>
         </div>
       );
@@ -81,7 +81,7 @@ export default function ProtectedRoute({ allowedRoles = [] }) {
       else if (userRole === "resident" || userRole === "user") homePath = "/userDashboard";
 
       return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-gray-50 px-4">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-white px-4">
           <div className="bg-white p-8 rounded-2xl shadow-xl max-w-sm w-full text-center border border-gray-100">
             <div className="w-16 h-16 bg-red-100 text-red-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
               <HugeiconsIcon aria-hidden="true" icon={Alert01Icon} className="w-8 h-8" />

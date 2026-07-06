@@ -5,7 +5,7 @@ export default function AccountDetails({ currentUser }) {
       <h2 className="text-xl font-bold text-gray-900">Account Details</h2>
       <div className="mt-6 grid gap-4 sm:grid-cols-2">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">
+          <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
             Full Name
           </p>
           <p className="mt-1 text-base font-semibold text-gray-900">
@@ -13,7 +13,7 @@ export default function AccountDetails({ currentUser }) {
           </p>
         </div>
         <div>
-          <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">
+          <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
             Email
           </p>
           <p className="mt-1 text-base font-semibold text-gray-900">
@@ -21,7 +21,7 @@ export default function AccountDetails({ currentUser }) {
           </p>
         </div>
         <div>
-          <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">
+          <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
             Barangay
           </p>
           <p className="mt-1 text-base font-semibold text-gray-900">
@@ -29,7 +29,7 @@ export default function AccountDetails({ currentUser }) {
           </p>
         </div>
         <div>
-          <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">
+          <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
             Role
           </p>
           <p className="mt-1 text-base font-semibold text-gray-900 capitalize">
@@ -37,15 +37,15 @@ export default function AccountDetails({ currentUser }) {
           </p>
         </div>
         <div>
-          <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">
+          <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
             Emergency Contact
           </p>
-          <p className="mt-1 text-sm font-semibold text-red-500">
+          <p className="mt-1 text-sm font-semibold text-red-600">
             Not Configured
           </p>
         </div>
         <div>
-          <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">
+          <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
             Member Since
           </p>
           <p className="mt-1 text-base font-semibold text-gray-900">

@@ -40,7 +40,7 @@ export default function DashboardStats({ displayData, loading }) {
       <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm flex items-center justify-between hover:shadow-md transition-shadow">
         <div>
           <p className="text-sm font-medium text-gray-500">Completion Rate</p>
-          <p className="mt-2 text-3xl font-extrabold text-gray-900">{loading ? '...' : `${displayData.completionRate}%`}</p>
+          <div className="mt-2 text-3xl font-extrabold text-gray-900">{loading ? '...' : `${displayData.completionRate}%`}</div>
           <p className="mt-1 text-xs text-gray-500">Overall learning progress estimate</p>
         </div>
         <div className="relative w-16 h-16 flex items-center justify-center shrink-0">

@@ -24,7 +24,7 @@ export default function UserAnnouncements() {
           <h1 className="text-3xl font-extrabold text-gray-900">
             Announcements
           </h1>
-          <p className="mt-1 text-sm text-gray-500">
+          <p className="mt-1 text-sm text-gray-600">
             Stay updated with training notices, local schedules, and portal
             updates.
           </p>

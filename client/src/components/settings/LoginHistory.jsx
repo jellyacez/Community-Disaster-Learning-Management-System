@@ -49,13 +49,13 @@ export default function LoginHistory() {
           <div className="flex flex-col space-y-4">
             {historyData.map((record) => (
               <div key={record.id} className="flex items-start gap-4 p-4 rounded-2xl border border-gray-100 bg-gray-50/50">
-                <div className="mt-1 text-gray-400">
+                <div className="mt-1 text-gray-500">
                   <HugeiconsIcon icon={record.type === 'laptop' ? LaptopIcon : SmartPhone01Icon} className="w-5 h-5" />
                 </div>
                 <div className="flex-1">
                   <div className="flex items-center justify-between">
                     <p className="text-sm font-bold text-gray-900">{record.device} &bull; {record.location}</p>
-                    <span className="text-xs font-medium text-gray-400 whitespace-nowrap ml-2">{record.time}</span>
+                    <span className="text-xs font-medium text-gray-500 whitespace-nowrap ml-2">{record.time}</span>
                   </div>
                   <p className="text-xs text-gray-500 mt-1">{record.browser} &bull; IP: {record.ip}</p>
                 </div>

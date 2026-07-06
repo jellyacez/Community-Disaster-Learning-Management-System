@@ -60,7 +60,7 @@ export default function UserEnrolledModules() {
             <h1 className="text-3xl font-extrabold text-gray-900">
               Enrolled Modules
             </h1>
-            <p className="mt-1 text-sm text-gray-500">
+            <p className="mt-1 text-sm text-gray-600">
               Keep track of your current learning progress and continue training.
             </p>
           </div>

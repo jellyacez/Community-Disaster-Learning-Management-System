@@ -112,7 +112,7 @@ export default function PasswordUpdateForm({ isCooldownActive, availableDateText
             disabled={isUpdatingPassword || isCooldownActive}
             className={`flex items-center justify-center w-full md:w-auto rounded-xl border px-6 py-2.5 text-sm font-bold transition-all ${
               isUpdatingPassword || isCooldownActive
-                ? "bg-gray-50 border-gray-100 text-gray-400 cursor-not-allowed"
+                ? "bg-gray-50 border-gray-100 text-gray-500 cursor-not-allowed"
                 : "bg-white border-red-200 text-red-600 hover:bg-red-50 active:scale-95"
             }`}
           >

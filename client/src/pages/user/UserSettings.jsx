@@ -28,7 +28,7 @@ export default function UserSettings() {
         
         {/* Group 1: Account Preferences */}
         <section>
-          <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider mb-4 px-1">Account Preferences</h3>
+          <h2 className="text-sm font-bold text-gray-900 uppercase tracking-wider mb-4 px-1">Account Preferences</h2>
           <div className="rounded-3xl border border-gray-100 bg-white shadow-sm overflow-hidden divide-y divide-gray-100">
             <ProfilePreferences currentUser={currentUser} />
             <LocalizationSettings />
@@ -37,7 +37,7 @@ export default function UserSettings() {
 
         {/* Group 2: Security & Activity */}
         <section>
-          <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider mb-4 px-1">Security & Activity</h3>
+          <h2 className="text-sm font-bold text-gray-900 uppercase tracking-wider mb-4 px-1">Security & Activity</h2>
           <div className="rounded-3xl border border-gray-100 bg-white shadow-sm overflow-hidden divide-y divide-gray-100">
             <SecuritySettings />
             <TwoFactorSettings />
@@ -48,7 +48,7 @@ export default function UserSettings() {
 
         {/* Group 3: Communications & Help */}
         <section>
-          <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider mb-4 px-1">Communications & Help</h3>
+          <h2 className="text-sm font-bold text-gray-900 uppercase tracking-wider mb-4 px-1">Communications & Help</h2>
           <div className="rounded-3xl border border-gray-100 bg-white shadow-sm overflow-hidden divide-y divide-gray-100">
             <NotificationPreferences />
             <HelpSupport />
@@ -57,7 +57,7 @@ export default function UserSettings() {
 
         {/* Group 4: Danger Zone */}
         <section>
-          <h3 className="text-sm font-bold text-red-600 uppercase tracking-wider mb-4 px-1">Danger Zone</h3>
+          <h2 className="text-sm font-bold text-red-600 uppercase tracking-wider mb-4 px-1">Danger Zone</h2>
           <DangerZone />
         </section>
 

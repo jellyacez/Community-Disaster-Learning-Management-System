@@ -49,7 +49,7 @@ const PasswordInput = memo(function PasswordInput({
           type="button"
           aria-label={showPassword ? "Hide password" : "Show password"}
           onClick={() => setShowPassword(!showPassword)}
-          className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none"
+          className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-gray-500 hover:text-gray-700 focus:outline-none"
         >
           {showPassword ? (
             <HugeiconsIcon aria-hidden="true" icon={EyeOffIcon} className="w-5 h-5" />

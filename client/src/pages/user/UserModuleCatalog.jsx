@@ -45,7 +45,7 @@ export default function UserModuleCatalog() {
             <h1 className="text-3xl font-extrabold text-gray-900">
               Module Catalog
             </h1>
-            <p className="mt-1 text-sm text-gray-500">
+            <p className="mt-1 text-sm text-gray-600">
               Explore training modules and enroll when ready.
             </p>
           </div>
@@ -81,10 +81,10 @@ export default function UserModuleCatalog() {
               alt="No modules mascot"
               className="w-48 h-48 mb-6 opacity-80"
             />
-            <h3 className="text-lg font-semibold text-gray-700">
+            <h2 className="text-lg font-semibold text-gray-700">
               All caught up!
-            </h3>
-            <p className="text-sm text-gray-500 max-w-xs mt-2">
+            </h2>
+            <p className="text-sm text-gray-600 max-w-xs mt-2">
               You've explored all available modules. Check back later for new
               disaster readiness training!
             </p>
