@@ -64,6 +64,7 @@ export default function AdminSidebar({ sidebarOpen, setSidebarOpen }) {
           <button 
             className="lg:hidden text-white hover:text-red-200"
             onClick={() => setSidebarOpen(false)}
+            aria-label="Close sidebar"
           >
             <HugeiconsIcon icon={Cancel01Icon} className="w-6 h-6" />
           </button>

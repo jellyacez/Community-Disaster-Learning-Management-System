@@ -59,12 +59,13 @@ export default function ActivityLog() {
           <input
             type="text"
             placeholder="Search by user name or action..."
+            aria-label="Search logs"
             value={search}
             onChange={e => setSearch(e.target.value)}
             className="w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10"
           />
         </div>
-        <span className="self-center text-xs text-gray-400 font-mono whitespace-nowrap">
+        <span className="self-center text-xs text-gray-500 font-mono whitespace-nowrap">
           {meta.total.toLocaleString()} total entries
         </span>
       </div>
@@ -87,19 +88,19 @@ export default function ActivityLog() {
                 : logs.length === 0
                 ? (
                   <tr>
-                    <td colSpan={4} className="py-16 text-center text-gray-400 text-sm">
+                    <td colSpan={4} className="py-16 text-center text-gray-500 text-sm">
                       No log entries found.
                     </td>
                   </tr>
                 )
                 : logs.map(log => (
                   <tr key={log.act_id} className="hover:bg-gray-50/60 transition-colors">
-                    <td className="px-4 py-3 text-xs font-mono text-gray-400 whitespace-nowrap">
+                    <td className="px-4 py-3 text-xs font-mono text-gray-500 whitespace-nowrap">
                       <div className="flex items-center gap-1.5">
                         <HugeiconsIcon icon={Note01Icon} className="w-3.5 h-3.5 text-gray-300 flex-shrink-0" />
                         <div>
                           <p>{new Date(log.act_date).toLocaleDateString("en-PH", { year: "numeric", month: "short", day: "numeric" })}</p>
-                          <p className="text-gray-300">{new Date(log.act_date).toLocaleTimeString("en-PH", { hour: "2-digit", minute: "2-digit" })}</p>
+                          <p className="text-gray-500">{new Date(log.act_date).toLocaleTimeString("en-PH", { hour: "2-digit", minute: "2-digit" })}</p>
                         </div>
                       </div>
                     </td>
@@ -110,7 +111,7 @@ export default function ActivityLog() {
                         </div>
                         <div>
                           <p className="text-sm font-semibold text-gray-800">{log.user_name || "Unknown"}</p>
-                          <p className="text-xs text-gray-400 font-mono">{log.user_id?.slice(0, 8)}…</p>
+                          <p className="text-xs text-gray-500 font-mono">{log.user_id?.slice(0, 8)}…</p>
                         </div>
                       </div>
                     </td>

@@ -26,6 +26,7 @@ function UserTableRow({ user, onManageClick, isSelected, onToggleSelect }) {
       <td className="px-4 py-3 w-10">
         <input 
           type="checkbox" 
+          aria-label={`Select user ${user.name}`}
           checked={isSelected} 
           onChange={() => onToggleSelect(user.id)}
           className="w-4 h-4 text-red-600 rounded border-gray-300 focus:ring-red-500 cursor-pointer"
@@ -38,7 +39,7 @@ function UserTableRow({ user, onManageClick, isSelected, onToggleSelect }) {
           </div>
           <div>
             <p className="text-sm font-semibold text-gray-900">{user.name}</p>
-            <p className="text-xs text-gray-400">{user.email}</p>
+            <p className="text-xs text-gray-500">{user.email}</p>
           </div>
         </div>
       </td>
@@ -51,7 +52,7 @@ function UserTableRow({ user, onManageClick, isSelected, onToggleSelect }) {
       <td className="px-4 py-3">
         <UserStatusBadge user={user} />
       </td>
-      <td className="px-4 py-3 text-xs text-gray-400 font-mono whitespace-nowrap">
+      <td className="px-4 py-3 text-xs text-gray-500 font-mono whitespace-nowrap">
         {user.createdAt ? new Date(user.createdAt).toLocaleDateString("en-PH", { year: "numeric", month: "short", day: "numeric" }) : "—"}
       </td>
       <td className="px-4 py-3 text-right">

@@ -16,7 +16,7 @@ function SettingRow({ label, value, description, mono = false }) {
     <div className="flex flex-col sm:flex-row sm:items-center justify-between py-4 border-b border-gray-50 last:border-0 gap-1">
       <div>
         <p className="text-sm font-semibold text-gray-800">{label}</p>
-        {description && <p className="text-xs text-gray-400 mt-0.5">{description}</p>}
+        {description && <p className="text-xs text-gray-500 mt-0.5">{description}</p>}
       </div>
       <span className={`text-sm ${mono ? "font-mono text-gray-600" : "font-semibold text-gray-700"} sm:text-right`}>
         {value ?? "—"}
@@ -76,9 +76,9 @@ export default function SystemSettings() {
                 <HugeiconsIcon icon={Settings01Icon} className={`w-5 h-5 ${maintenanceActive ? "text-red-700" : "text-gray-600"}`} />
               </div>
               <div>
-                <h3 className={`text-base font-bold ${maintenanceActive ? "text-red-900" : "text-gray-900"}`}>
+                <h2 className={`text-base font-bold ${maintenanceActive ? "text-red-900" : "text-gray-900"}`}>
                   Maintenance Mode
-                </h3>
+                </h2>
                 <p className={`text-sm mt-1 max-w-md ${maintenanceActive ? "text-red-700" : "text-gray-500"}`}>
                   {maintenanceActive
                     ? "The platform is currently under maintenance. All resident and module routes return 503. Admin and auth routes remain accessible."
@@ -113,7 +113,7 @@ export default function SystemSettings() {
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
         <div className="flex items-center gap-2 mb-4">
           <HugeiconsIcon icon={Settings01Icon} className="w-5 h-5 text-gray-500" />
-          <h3 className="text-base font-bold text-gray-900">System Branding</h3>
+          <h2 className="text-base font-bold text-gray-900">System Branding</h2>
         </div>
         <p className="text-xs text-gray-500 mb-6 max-w-lg">Customize the platform's white-label identity. Upload a logo and set the display name.</p>
         
@@ -149,8 +149,9 @@ export default function SystemSettings() {
         >
           <div className="grid md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-semibold text-gray-700 mb-1">System Name</label>
+              <label htmlFor="system_name" className="block text-xs font-semibold text-gray-700 mb-1">System Name</label>
               <input 
+                id="system_name"
                 type="text" 
                 name="system_name" 
                 defaultValue={settingsData?.system_name || "Community-Disaster-Learning-Management-System"} 
@@ -158,8 +159,9 @@ export default function SystemSettings() {
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-gray-700 mb-1">Platform Logo</label>
+              <label htmlFor="system_logo" className="block text-xs font-semibold text-gray-700 mb-1">Platform Logo</label>
               <input 
+                id="system_logo"
                 type="file" 
                 name="system_logo" 
                 accept="image/*"
@@ -169,7 +171,7 @@ export default function SystemSettings() {
           </div>
           {settingsData?.system_logo && (
              <div className="mt-2">
-                <p className="text-xs text-gray-400 mb-2">Current Logo:</p>
+                <p className="text-xs text-gray-500 mb-2">Current Logo:</p>
                 <img src={settingsData.system_logo} alt="System Logo" className="h-12 object-contain rounded border border-gray-100 p-1 bg-gray-50" />
              </div>
           )}
@@ -185,9 +187,9 @@ export default function SystemSettings() {
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
         <div className="flex items-center gap-2 mb-2">
           <HugeiconsIcon icon={Settings01Icon} className="w-5 h-5 text-gray-500" />
-          <h3 className="text-base font-bold text-gray-900">Runtime Environment</h3>
+          <h2 className="text-base font-bold text-gray-900">Runtime Environment</h2>
         </div>
-        <p className="text-xs text-gray-400 mb-4">Read-only system information.</p>
+        <p className="text-xs text-gray-500 mb-4">Read-only system information.</p>
         {isLoading ? (
           <div className="space-y-3">
             {[1, 2, 3].map(i => <div key={i} className="h-10 bg-gray-50 rounded animate-pulse" />)}
@@ -205,9 +207,9 @@ export default function SystemSettings() {
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
         <div className="flex items-center gap-2 mb-2">
           <HugeiconsIcon icon={Database01Icon} className="w-5 h-5 text-gray-500" />
-          <h3 className="text-base font-bold text-gray-900">Database Status</h3>
+          <h2 className="text-base font-bold text-gray-900">Database Status</h2>
         </div>
-        <p className="text-xs text-gray-400 mb-4">Live connection diagnostics (refreshes every 15s).</p>
+        <p className="text-xs text-gray-500 mb-4">Live connection diagnostics (refreshes every 15s).</p>
         <SettingRow
           label="Connection"
           value={

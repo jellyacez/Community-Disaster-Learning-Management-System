@@ -17,14 +17,18 @@ export default function UserFilters({
         <input
           type="text"
           placeholder="Search by name or email..."
+          aria-label="Search users"
           value={search}
           onChange={e => setSearch(e.target.value)}
           className="w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10"
         />
       </div>
       <div className="flex gap-2">
+        <label htmlFor="role-filter" className="sr-only">Filter by role</label>
         <select
+          id="role-filter"
           value={roleFilter}
+          aria-label="Filter by role"
           onChange={e => { setRoleFilter(e.target.value); setPage(1); }}
           className="px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10 bg-white"
         >
@@ -34,8 +38,11 @@ export default function UserFilters({
           <option value="mdrrmo_admin">MDRRMO Admin</option>
           <option value="system_admin">System Admin</option>
         </select>
+        <label htmlFor="status-filter" className="sr-only">Filter by status</label>
         <select
+          id="status-filter"
           value={statusFilter}
+          aria-label="Filter by status"
           onChange={e => { setStatusFilter(e.target.value); setPage(1); }}
           className="px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10 bg-white"
         >

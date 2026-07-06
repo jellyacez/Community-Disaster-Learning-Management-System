@@ -70,7 +70,7 @@ export default function SystemOverview() {
 
       {/* Stats Grid */}
       <div>
-        <h2 className="text-sm font-bold uppercase tracking-widest text-gray-400 mb-3">
+        <h2 className="text-sm font-bold uppercase tracking-widest text-gray-500 mb-3">
           Platform Overview
         </h2>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
@@ -81,7 +81,7 @@ export default function SystemOverview() {
             href="/admin/system/users"
             trendText="+12% Active"
             sub={
-              <span className="flex items-center gap-1.5 text-emerald-600 font-medium">
+              <span className="flex items-center gap-1.5 text-emerald-700 font-medium">
                 <span className="relative flex h-2 w-2">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                   <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>

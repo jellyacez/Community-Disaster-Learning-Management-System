@@ -18,6 +18,7 @@ export default function AdminLayout() {
           <button 
             className="text-gray-500 hover:text-gray-900"
             onClick={() => setSidebarOpen(true)}
+            aria-label="Open sidebar"
           >
             <HugeiconsIcon icon={Menu01Icon} className="w-6 h-6" />
           </button>

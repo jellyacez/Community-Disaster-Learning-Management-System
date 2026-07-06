@@ -171,7 +171,7 @@ export default function UserManagement() {
           <h2 className="text-base font-bold text-gray-900">
             User Directory
           </h2>
-          <span className="text-xs text-gray-400 font-mono">
+          <span className="text-xs text-gray-500 font-mono">
             {meta.total} total
           </span>
         </div>
@@ -180,8 +180,11 @@ export default function UserManagement() {
             <thead>
               <tr className="bg-gray-50 text-gray-500 text-xs uppercase tracking-wider">
                 <th className="px-4 py-3 font-semibold w-10">
+                  <label htmlFor="select-all-users" className="sr-only">Select all users</label>
                   <input 
+                    id="select-all-users"
                     type="checkbox" 
+                    aria-label="Select all users"
                     onChange={(e) => {
                       if (e.target.checked) setSelectedUserIds(new Set(users.map(u => u.id)));
                       else setSelectedUserIds(new Set());
@@ -204,7 +207,7 @@ export default function UserManagement() {
                 : users.length === 0
                 ? (
                   <tr>
-                    <td colSpan={6} className="py-16 text-center text-gray-400 text-sm">
+                    <td colSpan={6} className="py-16 text-center text-gray-500 text-sm">
                       No users found.
                     </td>
                   </tr>

@@ -39,7 +39,7 @@ export default function StatCard({ icon, label, value, sub, color = "gray", load
           </p>
           <div>
             <p className="text-sm font-semibold text-gray-700 mt-1">{label}</p>
-            {sub && <div className="text-xs text-gray-400 mt-0.5">
+            {sub && <div className="text-xs text-gray-500 mt-0.5">
               {isZero && typeof sub === 'string' && !sub.includes('online') ? "No activity yet" : sub}
             </div>}
           </div>
