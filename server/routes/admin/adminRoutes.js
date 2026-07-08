@@ -8,6 +8,7 @@ const systemStatsController = require("../../controllers/admin/systemStatsContro
 const systemSettingsController = require("../../controllers/admin/systemSettingsController");
 const activityLogController = require("../../controllers/admin/activityLogController");
 const ipBlocklistController = require("../../controllers/admin/ipBlocklistController");
+const infrastructureController = require("../../controllers/admin/infrastructureController");
 
 // Existing routes
 
@@ -100,5 +101,10 @@ router.delete("/security/blocked-ips/:id", adminMiddleware, requirePermission('m
 // @desc    Get system health status
 // @access  Private (system_admin only)
 router.get("/health", adminMiddleware, requirePermission('view_system_stats'), systemStatsController.getHealthStatus);
+
+// @route   GET /api/admin/infrastructure/backup
+// @desc    Download full database backup
+// @access  Private (system_admin only)
+router.get("/infrastructure/backup", adminMiddleware, requirePermission('manage_security'), infrastructureController.downloadDatabaseBackup);
 
 module.exports = router;

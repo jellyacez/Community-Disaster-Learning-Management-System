@@ -30,6 +30,8 @@ export default function ActivityLog() {
 
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [roleFilter, setRoleFilter] = useState("");
+  const [actionFilter, setActionFilter] = useState("");
   const [page, setPage] = useState(1);
 
   useEffect(() => {
@@ -37,11 +39,18 @@ export default function ActivityLog() {
     return () => clearTimeout(t);
   }, [search]);
 
+  // Reset page on filter changes
+  useEffect(() => {
+    setPage(1);
+  }, [roleFilter, actionFilter]);
+
   const { data, isLoading } = useQuery({
-    queryKey: ["activityLog", page, debouncedSearch],
+    queryKey: ["activityLog", page, debouncedSearch, roleFilter, actionFilter],
     queryFn: async () => {
       const params = new URLSearchParams({ page, limit: 25 });
       if (debouncedSearch) params.set("search", debouncedSearch);
+      if (roleFilter) params.set("role", roleFilter);
+      if (actionFilter) params.set("action", actionFilter);
       const res = await apiClient.get(`/admin/activity-log?${params}`);
       return res.data;
     },
@@ -58,19 +67,45 @@ export default function ActivityLog() {
   return (
     <div className="space-y-4">
       {/* Header */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
-        <div className="relative flex-1">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 flex flex-col sm:flex-row gap-3 items-stretch sm:items-center flex-wrap">
+        <div className="relative flex-1 min-w-[200px]">
           <HugeiconsIcon icon={Search01Icon} className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           <input
             type="text"
-            placeholder="Search by user name or action..."
+            placeholder="Search by user name or log text..."
             aria-label="Search logs"
             value={search}
             onChange={e => setSearch(e.target.value)}
             className="w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10"
           />
         </div>
-        <span className="self-center text-xs text-gray-500 font-mono whitespace-nowrap">
+        
+        <select
+          value={roleFilter}
+          onChange={(e) => setRoleFilter(e.target.value)}
+          className="px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-900/10 min-w-[140px]"
+        >
+          <option value="">All Roles</option>
+          <option value="system_admin">System Admin</option>
+          <option value="mdrrmo_admin">MDRRMO Admin</option>
+          <option value="barangay_admin">Barangay Admin</option>
+          <option value="resident">Resident</option>
+        </select>
+        
+        <select
+          value={actionFilter}
+          onChange={(e) => setActionFilter(e.target.value)}
+          className="px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-900/10 min-w-[160px]"
+        >
+          <option value="">All Actions</option>
+          <option value="login">Authentication</option>
+          <option value="provision">Provisioning</option>
+          <option value="update">Updates & Edits</option>
+          <option value="archive">Suspension & Archive</option>
+          <option value="settings">System Settings</option>
+        </select>
+
+        <span className="self-center text-xs text-gray-500 font-mono whitespace-nowrap ml-auto">
           {meta.total.toLocaleString()} total entries
         </span>
         <button

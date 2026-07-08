@@ -1,0 +1,75 @@
+const { exec } = require("child_process");
+const fs = require("fs");
+const path = require("path");
+
+// @desc    Download full database backup (.sql)
+// @access  Private (system_admin only)
+exports.downloadDatabaseBackup = async (req, res) => {
+  try {
+    const dbUser = process.env.DB_USER || "postgres";
+    const dbHost = process.env.DB_HOST || "localhost";
+    const dbPort = process.env.DB_PORT || "5432";
+    const dbName = process.env.DB_NAME || "cdlms";
+    const dbPassword = process.env.DB_PASSWORD || "";
+
+    // Generate a timestamped filename
+    const dateStr = new Date().toISOString().replace(/[:.]/g, "-");
+    const filename = `backup_cdlms_${dateStr}.sql`;
+    
+    // Create a temporary file path
+    const backupPath = path.join(__dirname, "..", "..", "tmp", filename);
+
+    // Ensure tmp directory exists
+    const tmpDir = path.dirname(backupPath);
+    if (!fs.existsSync(tmpDir)) {
+      fs.mkdirSync(tmpDir, { recursive: true });
+    }
+
+    // Construct the pg_dump command
+    // We pass the password securely via environment variables in the exec options,
+    // avoiding passing it as a string argument which is a security risk.
+    const command = `pg_dump -U ${dbUser} -h ${dbHost} -p ${dbPort} -d ${dbName} -F c -f "${backupPath}"`;
+
+    const execOptions = {
+      env: {
+        ...process.env,
+        PGPASSWORD: dbPassword
+      }
+    };
+
+    exec(command, execOptions, (error, stdout, stderr) => {
+      if (error) {
+        console.error("pg_dump error:", error);
+        
+        // Check if pg_dump is not recognized
+        if (error.message && (error.message.includes("is not recognized") || error.message.includes("not found") || error.code === 127)) {
+          return res.status(500).json({ 
+            success: false, 
+            error: "pg_dump utility not found in environment. PostgreSQL client tools must be installed on the server." 
+          });
+        }
+        
+        return res.status(500).json({ success: false, error: "Failed to generate database backup" });
+      }
+
+      // If successful, download the file to the client
+      res.download(backupPath, filename, (err) => {
+        if (err) {
+          console.error("Error sending backup file:", err);
+          if (!res.headersSent) {
+            res.status(500).json({ success: false, error: "Failed to download backup file" });
+          }
+        }
+        
+        // Clean up: delete the temporary backup file after download
+        fs.unlink(backupPath, (unlinkErr) => {
+          if (unlinkErr) console.error("Error cleaning up backup file:", unlinkErr);
+        });
+      });
+    });
+
+  } catch (err) {
+    console.error("Backup route error:", err);
+    res.status(500).json({ success: false, error: "Server Error" });
+  }
+};

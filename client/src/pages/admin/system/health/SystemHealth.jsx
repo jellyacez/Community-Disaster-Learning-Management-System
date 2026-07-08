@@ -4,6 +4,7 @@ import useDocumentTitle from "../../../../hooks/useDocumentTitle";
 
 import RuntimeInfoPanel from "../settings/components/RuntimeInfoPanel";
 import DatabaseStatusPanel from "../settings/components/DatabaseStatusPanel";
+import InfrastructureOperationsPanel from "./components/InfrastructureOperationsPanel";
 
 export default function SystemHealth() {
   useDocumentTitle("System Health | Admin Console");
@@ -36,6 +37,7 @@ export default function SystemHealth() {
 
       <RuntimeInfoPanel settingsData={settingsData} isLoading={isSettingsLoading} />
       <DatabaseStatusPanel healthData={healthData} />
+      <InfrastructureOperationsPanel />
     </div>
   );
 }
