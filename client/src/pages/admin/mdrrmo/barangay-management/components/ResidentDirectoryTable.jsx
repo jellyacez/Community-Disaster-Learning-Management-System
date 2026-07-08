@@ -11,7 +11,7 @@ export default function ResidentDirectoryTable({
       <h3 className="text-xs font-bold uppercase tracking-wide mb-4 text-gray-400 border-b border-gray-100 pb-2 font-mono">
         District Accreditation Directory
       </h3>
-      <div className="overflow-x-auto">
+      <div className="overflow-x-auto min-h-[280px]">
         <table className="w-full text-left border-collapse">
           <thead>
             <tr className="text-xs text-gray-400 border-b border-gray-100">

@@ -11,7 +11,7 @@ export default function UserTable({
   handleToggleSelect
 }) {
   return (
-    <div className="overflow-x-auto">
+    <div className="overflow-x-auto min-h-[280px]">
       <table className="w-full text-left">
         <thead>
           <tr className="bg-gray-50 text-gray-500 text-xs uppercase tracking-wider">
