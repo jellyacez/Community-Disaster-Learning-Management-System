@@ -55,23 +55,23 @@ exports.provisionAdmin = async (req, res) => {
       return res.status(400).json({ error: "A user with this email already exists." });
     }
 
-    const userId = crypto.randomUUID();
-    const context = await auth.$context;
-    const hashedPassword = await context.password.hash(password);
+    // Let Better Auth handle user and account creation
+    const resAuth = await auth.api.createUser({
+      body: {
+        email,
+        password,
+        name,
+        role,
+        data: {
+          barangay: role === 'barangay_admin' ? barangay : 'Unassigned'
+        }
+      }
+    });
 
-    // Insert into user table (bypass session)
-    await pool.query(
-      `INSERT INTO "user" (id, name, email, "emailVerified", role, barangay, "createdAt", "updatedAt") 
-       VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())`,
-      [userId, name, email, true, role, role === 'barangay_admin' ? barangay : 'Unassigned']
-    );
-
-    // Insert into account table
-    await pool.query(
-      `INSERT INTO "account" (id, "userId", "accountId", "providerId", password, "createdAt", "updatedAt") 
-       VALUES ($1, $2, $3, $4, $5, NOW(), NOW())`,
-      [crypto.randomUUID(), userId, email, 'credential', hashedPassword]
-    );
+    // Mark email as verified manually since admin provisioned it
+    await pool.query('UPDATE "user" SET "emailVerified" = true WHERE id = $1', [resAuth.user.id]);
+    
+    const userId = resAuth.user.id;
 
     // Send email with credentials
     if (isGenerated) {

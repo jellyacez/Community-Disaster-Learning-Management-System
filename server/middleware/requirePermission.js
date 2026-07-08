@@ -12,17 +12,13 @@ const requirePermission = (permission) => {
     const userRole = req.user.role;
     const userPermissions = ROLE_PERMISSIONS[userRole] || [];
 
-    console.log(`[PBAC] Checking ${permission} for role ${userRole}. Has permission? ${userPermissions.includes(permission)}`);
-
     if (!userPermissions.includes(permission)) {
-      console.log(`[PBAC] Denied! ${userRole} missing ${permission}`);
       return res.status(403).json({ 
         error: "Forbidden", 
-        message: `Missing required permission: ${permission}` 
+        message: "You do not have the required permissions to perform this action." 
       });
     }
 
-    console.log(`[PBAC] Granted! Request proceeding to controller.`);
     next();
   };
 };

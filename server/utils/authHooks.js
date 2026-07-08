@@ -15,7 +15,8 @@ const securityHooksPlugin = () => {
             const email = ctx.body?.email;
             if (email) {
               try {
-                const res = await pool.query(`SELECT archived FROM "user" WHERE email = $1`, [email]);
+                const normalizedEmail = email.toLowerCase();
+                const res = await pool.query(`SELECT archived FROM "user" WHERE email = $1`, [normalizedEmail]);
                 if (res.rows.length > 0 && res.rows[0].archived) {
                   throw new APIError("FORBIDDEN", {
                     message: "This account has been archived. Please contact an administrator.",
@@ -110,7 +111,8 @@ const securityHooksPlugin = () => {
 
             if (!user && ctx.body?.email) {
               try {
-                const res = await pool.query(`SELECT * FROM "user" WHERE email = $1`, [ctx.body.email]);
+                const normalizedEmail = ctx.body.email.toLowerCase();
+                const res = await pool.query(`SELECT * FROM "user" WHERE email = $1`, [normalizedEmail]);
                 if (res.rows.length > 0) {
                   user = res.rows[0];
                   userId = user.id;
