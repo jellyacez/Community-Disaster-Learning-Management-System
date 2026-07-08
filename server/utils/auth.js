@@ -24,9 +24,8 @@ const parseSecrets = () => {
 const auth = betterAuth({
   database: pool,
   baseURL: process.env.BETTER_AUTH_URL,
-  ...(process.env.BETTER_AUTH_SECRETS 
-    ? { secrets: parseSecrets() } 
-    : { secret: process.env.BETTER_AUTH_SECRET }),
+  ...(process.env.BETTER_AUTH_SECRETS ? { secrets: parseSecrets() } : {}),
+  ...(process.env.BETTER_AUTH_SECRET ? { secret: process.env.BETTER_AUTH_SECRET } : {}),
   socialProviders: {
     google: {
       clientId: process.env.GOOGLE_CLIENT_ID,
@@ -94,7 +93,8 @@ const auth = betterAuth({
       defaultRole: "resident",
       adminRole: "system_admin",
       roles: {
-        // note: custom roles (barangay_admin, MDRRMO_admin) are checked in custom routes 
+        barangay_admin: {},
+        mdrrmo_admin: {},
       },
     }),
     twoFactor({

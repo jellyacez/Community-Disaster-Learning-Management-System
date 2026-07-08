@@ -11,6 +11,9 @@ const adminMiddleware = async (req, res, next) => {
     if (!session || !ADMIN_ROLES.includes(session.user.role)) {
       return res.status(403).json({ error: "Forbidden: Admins Only" });
     }
+    if (session.user.archived) {
+      return res.status(403).json({ error: "FORBIDDEN", message: "This account has been archived. Please contact an administrator." });
+    }
     const mfaBypass = process.env.DISABLE_MFA === "true";
     if (!session.user.twoFactorEnabled && !mfaBypass) {
       return res.status(403).json({ error: "MFA_REQUIRED", message: "Multi-Factor Authentication is mandatory." });
@@ -24,6 +27,7 @@ const adminMiddleware = async (req, res, next) => {
       AND (last_active IS NULL OR last_active < NOW() - INTERVAL '1 minute')
     `, [session.user.id]).catch(err => console.error("Admin online tracking err:", err.message));
 
+    req.user = session.user; // Attach user to request for downstream middleware (e.g. PBAC)
     next();
   } catch {
     res.status(500).json({ error: "Server Error" });

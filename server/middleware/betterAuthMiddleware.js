@@ -9,6 +9,9 @@ const betterAuthMiddleware = async (req, res, next) => {
     if (!session || !session.user) {
       return res.status(401).json({ error: "Unauthorized" });
     }
+    if (session.user.archived) {
+      return res.status(403).json({ error: "FORBIDDEN", message: "This account has been archived. Please contact an administrator." });
+    }
     const adminRoles = ["system_admin", "mdrrmo_admin", "barangay_admin"];
     const mfaBypass = process.env.DISABLE_MFA === "true";
     if (adminRoles.includes(session.user.role) && !session.user.twoFactorEnabled && !mfaBypass) {

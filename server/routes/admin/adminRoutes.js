@@ -1,98 +1,104 @@
 const express = require("express");
 const router = express.Router();
 const adminMiddleware = require("../../middleware/adminMiddleware");
+const requirePermission = require("../../middleware/requirePermission");
 
-const userManagementController = require("../../controllers/admin/userManagementController");
+const userManagementController = require("../../controllers/admin/user-management");
 const systemStatsController = require("../../controllers/admin/systemStatsController");
 const systemSettingsController = require("../../controllers/admin/systemSettingsController");
 const activityLogController = require("../../controllers/admin/activityLogController");
+const ipBlocklistController = require("../../controllers/admin/ipBlocklistController");
 
 // Existing routes
+
+// @route   POST /api/admin/users/provision
+// @desc    Provision a new Admin Account
+// @access  Private (system_admin only)
+router.post("/users/provision", adminMiddleware, requirePermission('provision_admins'), userManagementController.provisionAdmin);
+
 // @route   PUT /api/admin/users/:id
 // @desc    Update a user
 // @access  Private (admin only)
-router.put("/users/:id", adminMiddleware, userManagementController.updateUser);
+router.put("/users/:id", adminMiddleware, requirePermission('update_user_details'), userManagementController.updateUser);
 
 // @route   PUT /api/admin/users/:id/password
 // @desc    Reset user password (admin only)
 // @access  Private (admin only)
-router.put("/users/:id/password", adminMiddleware, userManagementController.resetUserPassword);
+router.put("/users/:id/password", adminMiddleware, requirePermission('reset_passwords'), userManagementController.resetUserPassword);
 
 // System Admin specific routes
 // @route   GET /api/admin/stats
 // @desc    Get system-wide statistics
 // @access  Private (system_admin only)
-router.get("/stats", adminMiddleware, systemStatsController.getSystemStats);
+router.get("/stats", adminMiddleware, requirePermission('view_system_stats'), systemStatsController.getSystemStats);
 
 // @route   GET /api/admin/activity-log
 // @desc    Get paginated activity log
 // @access  Private (system_admin only)
-router.get("/activity-log", adminMiddleware, activityLogController.getActivityLog);
+router.get("/activity-log", adminMiddleware, requirePermission('view_activity_logs'), activityLogController.getActivityLog);
 
 // @route   PATCH /api/admin/users/:id/role
 // @desc    Update a user's role
 // @access  Private (system_admin only)
-router.patch("/users/:id/role", adminMiddleware, userManagementController.updateUserRole);
+router.patch("/users/:id/role", adminMiddleware, requirePermission('update_user_roles'), userManagementController.updateUserRole);
 
 // @route   PATCH /api/admin/users/:id/ban
 // @desc    Ban a user
 // @access  Private (system_admin only)
-router.patch("/users/:id/ban", adminMiddleware, userManagementController.banUser);
+router.patch("/users/:id/ban", adminMiddleware, requirePermission('ban_users'), userManagementController.banUser);
 
 // @route   PATCH /api/admin/users/:id/unban
 // @desc    Unban a user
 // @access  Private (system_admin only)
-router.patch("/users/:id/unban", adminMiddleware, userManagementController.unbanUser);
+router.patch("/users/:id/unban", adminMiddleware, requirePermission('ban_users'), userManagementController.unbanUser);
 
 // @route   PATCH /api/admin/users/:id/archive
 // @desc    Archive or unarchive a user
 // @access  Private (system_admin only)
-router.patch("/users/:id/archive", adminMiddleware, userManagementController.archiveUser);
+router.patch("/users/:id/archive", adminMiddleware, requirePermission('archive_users'), userManagementController.archiveUser);
 
 // @route   PATCH /api/admin/users/bulk-archive
 // @desc    Bulk archive users
 // @access  Private (system_admin only)
-router.patch("/users/bulk-archive", adminMiddleware, userManagementController.bulkArchiveUsers);
+router.patch("/users/bulk-archive", adminMiddleware, requirePermission('archive_users'), userManagementController.bulkArchiveUsers);
 
 // @route   GET /api/admin/analytics/traffic
 // @desc    Get 24h traffic analytics
 // @access  Private (system_admin only)
-router.get("/analytics/traffic", adminMiddleware, systemStatsController.getTrafficAnalytics);
+router.get("/analytics/traffic", adminMiddleware, requirePermission('view_system_stats'), systemStatsController.getTrafficAnalytics);
 
 // @route   GET /api/admin/settings
 // @desc    Get system settings
 // @access  Private (system_admin only)
-router.get("/settings", adminMiddleware, systemSettingsController.getSystemSettings);
+router.get("/settings", adminMiddleware, requirePermission('manage_system_settings'), systemSettingsController.getSystemSettings);
 
 // @route   PATCH /api/admin/settings/branding
 // @desc    Update system branding (name and logo)
 // @access  Private (system_admin only)
-router.patch("/settings/branding", adminMiddleware, systemSettingsController.updateSystemBranding);
+router.patch("/settings/branding", adminMiddleware, requirePermission('manage_system_settings'), systemSettingsController.updateSystemBranding);
 
 // @route   PATCH /api/admin/settings/maintenance
 // @desc    Toggle maintenance mode
 // @access  Private (system_admin only)
-router.patch("/settings/maintenance", adminMiddleware, systemSettingsController.setMaintenanceMode);
+router.patch("/settings/maintenance", adminMiddleware, requirePermission('manage_system_settings'), systemSettingsController.setMaintenanceMode);
 
 // @route   PATCH /api/admin/settings/broadcast
 // @desc    Update broadcast message
 // @access  Private (system_admin only)
-router.patch("/settings/broadcast", adminMiddleware, systemSettingsController.updateBroadcast);
-
-const ipBlocklistController = require("../../controllers/admin/ipBlocklistController");
+router.patch("/settings/broadcast", adminMiddleware, requirePermission('manage_system_settings'), systemSettingsController.updateBroadcast);
 
 // @route   GET /api/admin/security/blocked-ips
-router.get("/security/blocked-ips", adminMiddleware, ipBlocklistController.getBlockedIps);
+router.get("/security/blocked-ips", adminMiddleware, requirePermission('manage_security'), ipBlocklistController.getBlockedIps);
 
 // @route   POST /api/admin/security/blocked-ips
-router.post("/security/blocked-ips", adminMiddleware, ipBlocklistController.addBlockedIp);
+router.post("/security/blocked-ips", adminMiddleware, requirePermission('manage_security'), ipBlocklistController.addBlockedIp);
 
 // @route   DELETE /api/admin/security/blocked-ips/:id
-router.delete("/security/blocked-ips/:id", adminMiddleware, ipBlocklistController.removeBlockedIp);
+router.delete("/security/blocked-ips/:id", adminMiddleware, requirePermission('manage_security'), ipBlocklistController.removeBlockedIp);
 
 // @route   GET /api/admin/health
 // @desc    Get system health status
 // @access  Private (system_admin only)
-router.get("/health", adminMiddleware, systemStatsController.getHealthStatus);
+router.get("/health", adminMiddleware, requirePermission('view_system_stats'), systemStatsController.getHealthStatus);
 
 module.exports = router;

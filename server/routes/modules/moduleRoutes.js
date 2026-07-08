@@ -8,10 +8,12 @@ const moduleProgressController = require("../../controllers/modules/moduleProgre
 const adminMiddleware = require("../../middleware/adminMiddleware");
 const { betterAuthMiddleware } = require("../../middleware/betterAuthMiddleware");
 
+const requirePermission = require("../../middleware/requirePermission");
+
 // @route   POST /api/modules
 // @desc    Create a new training module
 // @access  Private (admin only)
-router.post("/", betterAuthMiddleware, adminMiddleware, moduleController.createModule);
+router.post("/", betterAuthMiddleware, adminMiddleware, requirePermission('manage_modules'), moduleController.createModule);
 
 
 

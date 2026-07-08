@@ -4,7 +4,9 @@ const { betterAuthMiddleware } = require("../../middleware/betterAuthMiddleware"
 const adminMiddleware = require("../../middleware/adminMiddleware");
 const { stepCreation } = require("../../controllers/modules/moduleStepsController");
 
-router.post("/steps/:levelId", betterAuthMiddleware, adminMiddleware, async (req, res) => {
+const requirePermission = require("../../middleware/requirePermission");
+
+router.post("/steps/:levelId", betterAuthMiddleware, adminMiddleware, requirePermission('manage_modules'), async (req, res) => {
 
     const { levelId } = req.params;
     const { stepOrder, stepTitle, stepContent, mediaUrl, stepType } = req.body;

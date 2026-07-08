@@ -1,11 +1,17 @@
 require("dotenv").config();
 
 // Check if required env variables are present
-const requiredEnvVars = ["DB_USER", "DB_PASSWORD", "DB_DATABASE", "BETTER_AUTH_SECRET"];
-const missingEnvVars = requiredEnvVars.filter((envVar) => !process.env[envVar]);
+const requiredEnvVars = ["DB_USER", "DB_PASSWORD", "DB_DATABASE"];
 
-if (missingEnvVars.length > 0) {
-  console.error(`\x1b[31m[FATAL ERROR] Missing critical environment variables: ${missingEnvVars.join(", ")}\x1b[0m`);
+const missingVars = requiredEnvVars.filter((varName) => !process.env[varName]);
+
+// Require at least one of the better-auth secrets
+if (!process.env.BETTER_AUTH_SECRET && !process.env.BETTER_AUTH_SECRETS) {
+  missingVars.push("BETTER_AUTH_SECRET or BETTER_AUTH_SECRETS");
+}
+
+if (missingVars.length > 0) {
+  console.error(`\x1b[31m[FATAL ERROR] Missing critical environment variables: ${missingVars.join(", ")}\x1b[0m`);
   console.error("The server will not start. Please check your .env file.");
   process.exit(1);
 }

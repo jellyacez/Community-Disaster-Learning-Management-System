@@ -14,10 +14,12 @@ router.get("/me/provider", betterAuthMiddleware, userController.getProviders);
 // @access  Private
 router.post("/onboarding", betterAuthMiddleware, userController.onboarding);
 
+const requirePermission = require("../../middleware/requirePermission");
+
 // @route   GET /api/users
 // @desc    Get all users (for admin dashboard)
 // @access  Private (admin only)
-router.get("/", adminMiddleware, userController.getAllUsers);
+router.get("/", adminMiddleware, requirePermission('view_users'), userController.getAllUsers);
 
 // @route   DELETE /api/users/me
 // @desc    Hard delete the current user's account (Right to Be Forgotten)

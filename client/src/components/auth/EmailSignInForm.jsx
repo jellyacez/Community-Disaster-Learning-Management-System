@@ -94,6 +94,8 @@ export default function EmailSignInForm({ errorMessage, clearGlobalError, onRequ
         rawMsg.includes("verify your email")
       ) {
         errorMsg = "Please verify your email address before signing in. Check your inbox!";
+      } else if (error.status === 403 || rawMsg.includes("archived") || rawMsg.includes("banned")) {
+        errorMsg = error.message; // Preserve the backend's custom message for archived/banned accounts
       }
 
       setErrors({ form: errorMsg });

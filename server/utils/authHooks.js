@@ -9,6 +9,28 @@ const securityHooksPlugin = () => {
       before: [
         {
           matcher(context) {
+            return context.path?.includes("sign-in") || false;
+          },
+          handler: async (ctx) => {
+            const email = ctx.body?.email;
+            if (email) {
+              try {
+                const res = await pool.query(`SELECT archived FROM "user" WHERE email = $1`, [email]);
+                if (res.rows.length > 0 && res.rows[0].archived) {
+                  throw new APIError("FORBIDDEN", {
+                    message: "This account has been archived. Please contact an administrator.",
+                  });
+                }
+              } catch (err) {
+                if (err instanceof APIError) throw err;
+                console.error("Error checking archive status:", err);
+              }
+            }
+            return {};
+          }
+        },
+        {
+          matcher(context) {
             return context.path?.includes("change-password") || false;
           },
           handler: async (ctx) => {

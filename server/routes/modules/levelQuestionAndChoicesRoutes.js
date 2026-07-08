@@ -3,8 +3,9 @@ const router = express.Router();
 const { betterAuthMiddleware } = require("../../middleware/betterAuthMiddleware");
 const adminMiddleware = require("../../middleware/adminMiddleware");
 const { questionCreation, choicesCreation } = require("../../controllers/modules/moduleQuestionAndChoices");
+const requirePermission = require("../../middleware/requirePermission");
 
-router.post("/:moduleId/questions", betterAuthMiddleware, adminMiddleware, async (req, res) => {
+router.post("/:moduleId/questions", betterAuthMiddleware, adminMiddleware, requirePermission('manage_modules'), async (req, res) => {
    
     const { moduleId } = req.params;  
     const { questionText, points, imageURL } = req.body;
@@ -37,7 +38,7 @@ router.post("/:moduleId/questions", betterAuthMiddleware, adminMiddleware, async
 });
 
 
-router.post("/:questionId/choices", betterAuthMiddleware, adminMiddleware, async (req, res) => {
+router.post("/:questionId/choices", betterAuthMiddleware, adminMiddleware, requirePermission('manage_modules'), async (req, res) => {
  
     const { questionId } = req.params;
     const { choiceText, isCorrect } = req.body;
