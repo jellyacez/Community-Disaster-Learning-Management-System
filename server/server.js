@@ -25,11 +25,13 @@ const { toNodeHandler } = require("better-auth/node");
 const { auth } = require("./utils/auth");
 const { authRateLimiter, globalLimiter } = require("./middleware/rateLimiters");
 const { startLogRetentionCron } = require("./utils/logRetention");
+const { startAlertMonitor } = require("./services/alertMonitorService");
 
 const app = express();
 
 // Start background cron jobs
 startLogRetentionCron();
+startAlertMonitor();
 
 if (process.env.NODE_ENV === "production") {
   app.set("trust proxy", 1);

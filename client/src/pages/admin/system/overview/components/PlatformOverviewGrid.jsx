@@ -23,7 +23,6 @@ export default function PlatformOverviewGrid({ stats, loading }) {
           label="Total Users"
           value={s.total_users}
           href="/admin/system/users"
-          trendText="+12% Active"
           sub={
             <span className="flex items-center gap-1.5 text-emerald-700 font-medium">
               <span className="relative flex h-2 w-2">
@@ -53,7 +52,6 @@ export default function PlatformOverviewGrid({ stats, loading }) {
           label="Total Modules"
           value={s.total_modules}
           sub="Published content"
-          trendText="Stable"
           color="purple"
           loading={loading}
         />
@@ -62,7 +60,6 @@ export default function PlatformOverviewGrid({ stats, loading }) {
           label="Enrollments"
           value={s.total_enrollments}
           sub="All-time"
-          trendText="Growing"
           color="amber"
           loading={loading}
         />
@@ -71,7 +68,6 @@ export default function PlatformOverviewGrid({ stats, loading }) {
           label="Certificates"
           value={s.total_certificates}
           sub="Issued to users"
-          trendText="+5 This Week"
           color="green"
           loading={loading}
         />

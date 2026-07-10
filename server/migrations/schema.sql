@@ -1226,6 +1226,8 @@ CREATE INDEX idx_activity_log_user_date ON public.activity_log USING btree (user
 --
 
 CREATE INDEX idx_activity_log_user_id ON public.activity_log USING btree (user_id);
+CREATE INDEX IF NOT EXISTS activity_log_user_role_idx ON public.activity_log USING btree (user_role);
+CREATE INDEX IF NOT EXISTS idx_activity_log_act_date ON public.activity_log USING btree (act_date);
 
 
 --

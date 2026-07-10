@@ -9,8 +9,14 @@ const systemSettingsController = require("../../controllers/admin/systemSettings
 const activityLogController = require("../../controllers/admin/activityLogController");
 const ipBlocklistController = require("../../controllers/admin/ipBlocklistController");
 const infrastructureController = require("../../controllers/admin/infrastructureController");
+const alertController = require("../../controllers/admin/alertController");
 
 // Existing routes
+
+// @route   GET /api/admin/alerts/active
+// @desc    Get all active critical system alerts
+// @access  Private (admin only)
+router.get("/alerts/active", adminMiddleware, alertController.getActiveAlerts);
 
 // @route   POST /api/admin/users/provision
 // @desc    Provision a new Admin Account

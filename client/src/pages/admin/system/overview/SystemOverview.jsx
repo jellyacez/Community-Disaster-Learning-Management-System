@@ -134,6 +134,19 @@ export default function SystemOverview() {
                   }
                 />
                 <HealthRow
+                  label="CPU Load"
+                  progress={
+                    healthData?.cpu_load_percent != null
+                      ? healthData.cpu_load_percent
+                      : 0
+                  }
+                  value={
+                    healthData?.cpu_load_percent != null
+                      ? `${healthData.cpu_load_percent}%`
+                      : "—"
+                  }
+                />
+                <HealthRow
                   label="Disk Storage"
                   progress={
                     healthData?.disk_usage_percent != null

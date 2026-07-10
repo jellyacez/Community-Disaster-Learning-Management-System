@@ -35,6 +35,7 @@ export default function SystemSettings() {
   });
 
   const [isToggling, setIsToggling] = useState(false);
+  const [showMaintenanceModal, setShowMaintenanceModal] = useState(false);
   const maintenanceActive = settingsData?.maintenance_mode === "true";
 
   const toggleMaintenance = useMutation({
@@ -88,7 +89,7 @@ export default function SystemSettings() {
             {/* Toggle */}
             <div className="flex flex-col items-end gap-2">
               <button
-                onClick={() => toggleMaintenance.mutate(!maintenanceActive)}
+                onClick={() => setShowMaintenanceModal(true)}
                 disabled={isLoading || isToggling}
                 className={`relative inline-flex h-8 w-14 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed ${maintenanceActive ? "bg-red-600 focus:ring-red-600" : "bg-gray-200 focus:ring-gray-900"}`}
                 aria-label="Toggle maintenance mode"
@@ -127,6 +128,49 @@ export default function SystemSettings() {
           <BroadcastOverridePanel settingsData={settingsData} />
         </div>
       </div>
+
+      {/* Maintenance Mode Confirmation Modal */}
+      {showMaintenanceModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-gray-900/50 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl w-full max-w-md shadow-2xl overflow-hidden border border-gray-100 scale-in-95 duration-200">
+            <div className={`p-6 ${maintenanceActive ? 'bg-green-50/50' : 'bg-red-50/50'}`}>
+              <div className="flex items-center gap-3">
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${maintenanceActive ? "bg-green-100" : "bg-red-100"}`}>
+                  <HugeiconsIcon icon={Settings01Icon} className={`w-5 h-5 ${maintenanceActive ? "text-green-700" : "text-red-700"}`} />
+                </div>
+                <h3 className={`text-lg font-bold ${maintenanceActive ? 'text-green-900' : 'text-red-900'}`}>
+                  {maintenanceActive ? "Disable Maintenance Mode?" : "Enable Maintenance Mode?"}
+                </h3>
+              </div>
+              <p className={`mt-4 text-sm font-medium leading-relaxed ${maintenanceActive ? 'text-green-800' : 'text-red-800'}`}>
+                {maintenanceActive 
+                  ? "This will bring the platform back online for all residents and standard users. They will be able to log in and access learning modules again." 
+                  : "This will instantly force all non-admin traffic to receive a 503 Service Unavailable error. Residents will see a maintenance page. Are you sure you want to proceed?"}
+              </p>
+            </div>
+            <div className="p-4 flex items-center justify-end gap-3 bg-white border-t border-gray-100">
+              <button
+                onClick={() => setShowMaintenanceModal(false)}
+                disabled={isToggling}
+                className="px-5 py-2.5 text-sm font-bold text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-xl transition-colors disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  toggleMaintenance.mutate(!maintenanceActive, {
+                    onSuccess: () => setShowMaintenanceModal(false)
+                  });
+                }}
+                disabled={isToggling}
+                className={`px-5 py-2.5 text-sm font-bold text-white rounded-xl shadow-sm transition-all active:scale-95 disabled:opacity-50 ${maintenanceActive ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'}`}
+              >
+                {isToggling ? "Processing..." : maintenanceActive ? "Go Live" : "Enable Maintenance"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );

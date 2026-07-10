@@ -7,7 +7,7 @@ export default function RecentActivityFeed() {
   const { data, isLoading, isFetching, refetch } = useQuery({
     queryKey: ["recentLogs"],
     queryFn: async () => {
-      const res = await apiClient.get("/admin/logs?limit=5&page=1");
+      const res = await apiClient.get("/admin/activity-log?limit=5&page=1");
       return res.data.data;
     },
     refetchInterval: 15000, // Poll every 15s as suggested
@@ -15,10 +15,10 @@ export default function RecentActivityFeed() {
 
   const getLogIcon = (logText) => {
     const text = logText?.toLowerCase() || "";
-    if (text.includes("login") || text.includes("user")) return <UserIcon className="w-4 h-4 text-blue-500" />;
-    if (text.includes("ban") || text.includes("role") || text.includes("security")) return <Shield01Icon className="w-4 h-4 text-red-500" />;
-    if (text.includes("setting") || text.includes("maintenance")) return <Settings01Icon className="w-4 h-4 text-gray-500" />;
-    return <Alert01Icon className="w-4 h-4 text-amber-500" />;
+    if (text.includes("login") || text.includes("user")) return <HugeiconsIcon icon={UserIcon} className="w-4 h-4 text-blue-500" />;
+    if (text.includes("ban") || text.includes("role") || text.includes("security")) return <HugeiconsIcon icon={Shield01Icon} className="w-4 h-4 text-red-500" />;
+    if (text.includes("setting") || text.includes("maintenance")) return <HugeiconsIcon icon={Settings01Icon} className="w-4 h-4 text-gray-500" />;
+    return <HugeiconsIcon icon={Alert01Icon} className="w-4 h-4 text-amber-500" />;
   };
 
   return (

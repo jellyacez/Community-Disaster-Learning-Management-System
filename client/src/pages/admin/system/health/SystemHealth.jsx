@@ -48,6 +48,11 @@ export default function SystemHealth() {
     return `${m}m`;
   };
 
+  const formatMBtoGB = (mb) => {
+    if (mb == null) return "—";
+    return (mb / 1024).toFixed(1) + " GB";
+  };
+
   return (
     <div className="space-y-6">
       <div className="mb-6">
@@ -107,7 +112,7 @@ export default function SystemHealth() {
               <div className="space-y-1">
                 <HealthRow 
                   label="Memory (RAM) Usage" 
-                  value={healthData?.memory_usage_mb != null ? `${healthData.memory_usage_mb} MB / ${healthData.memory_total_mb} MB` : "—"} 
+                  value={healthData?.memory_usage_mb != null ? `${formatMBtoGB(healthData.memory_usage_mb)} / ${formatMBtoGB(healthData.memory_total_mb)}` : "—"} 
                   progress={healthData?.memory_usage_percent || 0}
                 />
                 <HealthRow 
