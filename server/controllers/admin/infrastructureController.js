@@ -15,7 +15,7 @@ exports.downloadDatabaseBackup = async (req, res) => {
     // Generate a timestamped filename
     const dateStr = new Date().toISOString().replace(/[:.]/g, "-");
     const filename = `backup_cdlms_${dateStr}.sql`;
-    
+
     // Create a temporary file path
     const backupPath = path.join(__dirname, "..", "..", "tmp", filename);
 
@@ -33,18 +33,25 @@ exports.downloadDatabaseBackup = async (req, res) => {
     const execOptions = {
       env: {
         ...process.env,
-        PGPASSWORD: dbPassword
-      }
+        PGPASSWORD: dbPassword,
+      },
     };
 
-    exec(command, execOptions, (error, stdout, stderr) => {
+    exec(command, execOptions, (error) => {
       if (error) {
         console.error("pg_dump error:", error);
-        
+
         // Check if pg_dump is not recognized (common on local Windows setups during Capstone defenses)
-        if (error.message && (error.message.includes("is not recognized") || error.message.includes("not found") || error.code === 127)) {
-          console.log("pg_dump not found. Generating a mock SQL backup for defense demonstration purposes.");
-          
+        if (
+          error.message &&
+          (error.message.includes("is not recognized") ||
+            error.message.includes("not found") ||
+            error.code === 127)
+        ) {
+          console.log(
+            "pg_dump not found. Generating a mock SQL backup for defense demonstration purposes.",
+          );
+
           const mockSqlContent = `-- Community Disaster LMS Mock Database Backup
 -- Generated for Capstone Defense Demonstration
 -- Timestamp: ${new Date().toISOString()}
@@ -60,17 +67,26 @@ CREATE TABLE "user" (
 -- In a production Linux environment, this file will contain the full binary schema and data dump.
 `;
           fs.writeFileSync(backupPath, mockSqlContent);
-          
+
           return res.download(backupPath, filename, (err) => {
             if (err) console.error("Error sending mock backup file:", err);
             fs.unlink(backupPath, (unlinkErr) => {
-              if (unlinkErr) console.error("Error cleaning up mock backup file:", unlinkErr);
+              if (unlinkErr)
+                console.error("Error cleaning up mock backup file:", unlinkErr);
             });
-            require('../../utils/logger').logActivity(req.user.id, 'Triggered full database backup download (Mock)');
+            require("../../utils/logger").logActivity(
+              req.user.id,
+              "Triggered full database backup download (Mock)",
+            );
           });
         }
-        
-        return res.status(500).json({ success: false, error: "Failed to generate database backup" });
+
+        return res
+          .status(500)
+          .json({
+            success: false,
+            error: "Failed to generate database backup",
+          });
       }
 
       // If successful, download the file to the client
@@ -78,19 +94,27 @@ CREATE TABLE "user" (
         if (err) {
           console.error("Error sending backup file:", err);
           if (!res.headersSent) {
-            res.status(500).json({ success: false, error: "Failed to download backup file" });
+            res
+              .status(500)
+              .json({
+                success: false,
+                error: "Failed to download backup file",
+              });
           }
         }
-        
+
         // Clean up: delete the temporary backup file after download
         fs.unlink(backupPath, (unlinkErr) => {
-          if (unlinkErr) console.error("Error cleaning up backup file:", unlinkErr);
+          if (unlinkErr)
+            console.error("Error cleaning up backup file:", unlinkErr);
         });
       });
-      
-      require('../../utils/logger').logActivity(req.user.id, 'Triggered full database backup download');
-    });
 
+      require("../../utils/logger").logActivity(
+        req.user.id,
+        "Triggered full database backup download",
+      );
+    });
   } catch (err) {
     console.error("Backup route error:", err);
     res.status(500).json({ success: false, error: "Server Error" });
@@ -129,7 +153,10 @@ exports.downloadServerLogs = async (req, res) => {
       fs.unlink(logsPath, (unlinkErr) => {
         if (unlinkErr) console.error("Error cleaning up log file:", unlinkErr);
       });
-      require('../../utils/logger').logActivity(req.user.id, 'Downloaded raw server error logs (.log)');
+      require("../../utils/logger").logActivity(
+        req.user.id,
+        "Downloaded raw server error logs (.log)",
+      );
     });
   } catch (err) {
     console.error("Logs route error:", err);

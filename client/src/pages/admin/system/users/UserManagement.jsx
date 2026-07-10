@@ -1,16 +1,10 @@
-import { useState, useCallback, useEffect } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import apiClient from "../../../../lib/apiClient";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { UserAdd01Icon } from "@hugeicons/core-free-icons";
 
-import toast from "react-hot-toast";
 import useDocumentTitle from "../../../../hooks/useDocumentTitle";
 
 import UserActionModal from "./components/UserActionModal/UserActionModal";
 import AdminProvisionModal from "./components/AdminProvisionModal";
-import UserTableRow from "./components/UserTableRow";
-import UserTableSkeleton from "./components/UserTableSkeleton";
 import UserFilters from "./components/UserFilters";
 import UserTablePagination from "./components/UserTablePagination";
 
@@ -37,11 +31,21 @@ export default function UserManagement() {
         setPage={actions.setPage}
       />
 
-      <BulkActionBar 
-        selectedCount={state.selectedUserIds.size} 
-        onArchive={() => actions.handleSave({ type: "bulk_archive", data: { userIds: Array.from(state.selectedUserIds), archived: true } })}
+      <BulkActionBar
+        selectedCount={state.selectedUserIds.size}
+        onArchive={() =>
+          actions.handleSave({
+            type: "bulk_archive",
+            data: {
+              userIds: Array.from(state.selectedUserIds),
+              archived: true,
+            },
+          })
+        }
         onCancel={() => actions.setSelectedUserIds(new Set())}
-        isPending={state.isMutationPending && state.mutationType === "bulk_archive"}
+        isPending={
+          state.isMutationPending && state.mutationType === "bulk_archive"
+        }
       />
 
       {/* Table Area */}
@@ -55,8 +59,8 @@ export default function UserManagement() {
               {state.meta.total} total
             </span>
           </div>
-          
-          <button 
+
+          <button
             onClick={() => actions.setShowProvisionModal(true)}
             className="flex items-center justify-center gap-2 px-3 py-1.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors w-full sm:w-auto"
           >
@@ -64,8 +68,8 @@ export default function UserManagement() {
             <span>Add Admin</span>
           </button>
         </div>
-        
-        <UserTable 
+
+        <UserTable
           users={state.users}
           meta={state.meta}
           isLoading={state.isLoading}
@@ -76,10 +80,10 @@ export default function UserManagement() {
         />
 
         {/* Pagination */}
-        <UserTablePagination 
-          isLoading={state.isLoading} 
-          meta={state.meta} 
-          setPage={actions.setPage} 
+        <UserTablePagination
+          isLoading={state.isLoading}
+          meta={state.meta}
+          setPage={actions.setPage}
           limit={state.limit}
           setLimit={actions.setLimit}
         />
@@ -94,9 +98,11 @@ export default function UserManagement() {
           initialTab={state.initialModalTab}
         />
       )}
-      
+
       {state.showProvisionModal && (
-        <AdminProvisionModal onClose={() => actions.setShowProvisionModal(false)} />
+        <AdminProvisionModal
+          onClose={() => actions.setShowProvisionModal(false)}
+        />
       )}
     </div>
   );
