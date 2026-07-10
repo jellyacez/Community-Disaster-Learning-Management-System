@@ -11,6 +11,7 @@ import {
 
 import BrandingPanel from "./components/BrandingPanel";
 import BroadcastOverridePanel from "./components/BroadcastOverridePanel";
+import OrganizationDetailsPanel from "./components/OrganizationDetailsPanel";
 
 export default function SystemSettings() {
   useDocumentTitle("System Settings | Admin Console");
@@ -52,7 +53,7 @@ export default function SystemSettings() {
   });
 
   return (
-    <div className="space-y-6 max-w-3xl">
+    <div className="space-y-6">
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900">System Settings</h1>
         <p className="text-sm text-gray-500 mt-1">
@@ -61,7 +62,11 @@ export default function SystemSettings() {
       </div>
 
       {/* Maintenance Mode — Actionable */}
-      <div className={`rounded-2xl border shadow-sm overflow-hidden ${maintenanceActive ? "border-red-200 bg-red-50" : "border-gray-100 bg-white"}`}>
+      <div>
+        <h2 className="text-sm font-bold uppercase tracking-widest text-gray-500 mb-3 mt-8">
+          System State
+        </h2>
+        <div className={`rounded-2xl border shadow-sm overflow-hidden ${maintenanceActive ? "border-red-200 bg-red-50" : "border-gray-100 bg-white"}`}>
         <div className="p-6">
           <div className="flex items-start justify-between gap-4">
             <div className="flex items-start gap-3">
@@ -81,14 +86,17 @@ export default function SystemSettings() {
             </div>
 
             {/* Toggle */}
-            <button
-              onClick={() => toggleMaintenance.mutate(!maintenanceActive)}
-              disabled={isLoading || isToggling}
-              className={`relative inline-flex h-8 w-14 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed ${maintenanceActive ? "bg-red-600 focus:ring-red-600" : "bg-gray-200 focus:ring-gray-900"}`}
-              aria-label="Toggle maintenance mode"
-            >
-              <span className={`inline-block h-6 w-6 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${maintenanceActive ? "translate-x-6" : "translate-x-0"}`} />
-            </button>
+            <div className="flex flex-col items-end gap-2">
+              <button
+                onClick={() => toggleMaintenance.mutate(!maintenanceActive)}
+                disabled={isLoading || isToggling}
+                className={`relative inline-flex h-8 w-14 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed ${maintenanceActive ? "bg-red-600 focus:ring-red-600" : "bg-gray-200 focus:ring-gray-900"}`}
+                aria-label="Toggle maintenance mode"
+              >
+                <span className={`inline-block h-6 w-6 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${maintenanceActive ? "translate-x-6" : "translate-x-0"}`} />
+              </button>
+              <span className="text-[10px] font-medium text-gray-400 uppercase tracking-wider">Changes save automatically</span>
+            </div>
           </div>
 
           {maintenanceActive && (
@@ -101,9 +109,24 @@ export default function SystemSettings() {
           )}
         </div>
       </div>
+      </div>
 
-      <BrandingPanel settingsData={settingsData} />
-      <BroadcastOverridePanel settingsData={settingsData} />
+      <div>
+        <h2 className="text-sm font-bold uppercase tracking-widest text-gray-500 mb-3 mt-8">
+          Branding & Appearance
+        </h2>
+        <BrandingPanel settingsData={settingsData} />
+      </div>
+
+      <div>
+        <h2 className="text-sm font-bold uppercase tracking-widest text-gray-500 mb-3 mt-8">
+          Communication & Support
+        </h2>
+        <div className="space-y-6">
+          <OrganizationDetailsPanel settingsData={settingsData} />
+          <BroadcastOverridePanel settingsData={settingsData} />
+        </div>
+      </div>
 
     </div>
   );

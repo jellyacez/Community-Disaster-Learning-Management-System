@@ -5,6 +5,7 @@ const {
   getNewDeviceLoginEmail,
   getPasswordRecoveredEmail,
 } = require("../utils/emailTemplates");
+const { getOrgSettings } = require("../utils/settings");
 
 const redactEmail = (email) => {
   if (!email || typeof email !== "string") return "[REDACTED]";
@@ -23,7 +24,8 @@ const handlePasswordChangeAlert = async (user) => {
       [user.id],
     );
 
-    await transporter.sendMail(getPasswordChangedEmail(user));
+    const { orgFooterText, supportEmail } = await getOrgSettings();
+    await transporter.sendMail(getPasswordChangedEmail(user, orgFooterText, supportEmail));
     console.log("Password change email sent to user ID:", user.id);
   } catch (err) {
     console.error("Password change service error:", err);

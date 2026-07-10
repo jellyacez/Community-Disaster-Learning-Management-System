@@ -66,7 +66,22 @@ export default function SystemCharts({ stats }) {
                 <Tooltip 
                   contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
                 />
-                <Legend verticalAlign="bottom" height={36} iconType="circle" />
+                <Legend 
+                  verticalAlign="bottom" 
+                  content={(props) => {
+                    const { payload } = props;
+                    return (
+                      <div className="grid grid-cols-2 gap-y-2 gap-x-4 px-2 mt-4">
+                        {payload.map((entry, index) => (
+                          <div key={`item-${index}`} className="flex items-center gap-2">
+                            <div className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: entry.color }} />
+                            <span className="text-xs font-medium text-gray-600 truncate">{entry.value}</span>
+                          </div>
+                        ))}
+                      </div>
+                    );
+                  }}
+                />
               </PieChart>
             </ResponsiveContainer>
           </div>
@@ -92,7 +107,14 @@ export default function SystemCharts({ stats }) {
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
-                <XAxis dataKey="time" tick={{fontSize: 10, fill: '#9ca3af'}} tickLine={false} axisLine={false} minTickGap={30} />
+                <XAxis 
+                  dataKey="time" 
+                  tick={{fontSize: 10, fill: '#9ca3af'}} 
+                  tickLine={false} 
+                  axisLine={false} 
+                  minTickGap={30} 
+                  tickFormatter={(val) => typeof val === 'string' ? val.replace(/^0/, '').replace(/:\d{2}/, '') : val}
+                />
                 <YAxis tick={{fontSize: 10, fill: '#9ca3af'}} tickLine={false} axisLine={false} />
                 <Tooltip 
                   contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', fontSize: '12px' }}

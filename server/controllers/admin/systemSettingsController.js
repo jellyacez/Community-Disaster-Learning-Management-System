@@ -7,8 +7,7 @@ exports.getSystemSettings = async (req, res) => {
     const result = await pool.query(`SELECT key, value FROM public.system_settings`);
     const settings = {};
     result.rows.forEach(row => { settings[row.key] = row.value; });
-    // Also return runtime info
-    settings.node_env = process.env.NODE_ENV || 'development';
+    // Runtime data deliberately omitted (Data Minimization)
     res.json({ success: true, data: settings });
   } catch (err) {
     console.error(err);
@@ -126,5 +125,37 @@ exports.updateBroadcast = async (req, res) => {
     await pool.query('ROLLBACK');
     console.error(err);
     res.status(500).json({ success: false, error: 'Failed to update broadcast settings' });
+  }
+};
+
+// @desc    Update organization details
+// @access  Private (system_admin only)
+exports.updateOrganizationDetails = async (req, res) => {
+  const { support_email, org_footer_text } = req.body;
+  try {
+    await pool.query('BEGIN');
+    
+    if (support_email !== undefined) {
+      await pool.query(
+        `INSERT INTO public.system_settings (key, value, updated_at) VALUES ('support_email', $1, NOW())
+         ON CONFLICT (key) DO UPDATE SET value = $1, updated_at = NOW()`,
+        [support_email]
+      );
+    }
+    
+    if (org_footer_text !== undefined) {
+      await pool.query(
+        `INSERT INTO public.system_settings (key, value, updated_at) VALUES ('org_footer_text', $1, NOW())
+         ON CONFLICT (key) DO UPDATE SET value = $1, updated_at = NOW()`,
+        [org_footer_text]
+      );
+    }
+    
+    await pool.query('COMMIT');
+    res.json({ success: true, message: 'Organization details updated successfully' });
+  } catch (err) {
+    await pool.query('ROLLBACK');
+    console.error(err);
+    res.status(500).json({ success: false, error: 'Failed to update organization details' });
   }
 };

@@ -3,6 +3,7 @@ const { auth } = require("../../../utils/auth");
 const crypto = require("crypto");
 const { transporter } = require("../../../utils/mailer");
 const { getAdminPasswordResetEmail } = require("../../../utils/emailTemplates");
+const { getOrgSettings } = require("../../../utils/settings");
 
 // @desc    Resets a user's password using the better-auth admin API (auto-generates if none provided)
 // @access  Private (admin only)
@@ -66,7 +67,8 @@ exports.resetUserPassword = async (req, res) => {
 
     // 3. Email the user their new password (if auto-generated)
     if (isGenerated) {
-      const mailOptions = getAdminPasswordResetEmail(user, password);
+      const { orgFooterText, supportEmail } = await getOrgSettings();
+      const mailOptions = getAdminPasswordResetEmail(user, password, orgFooterText, supportEmail);
       await transporter.sendMail(mailOptions);
     }
     

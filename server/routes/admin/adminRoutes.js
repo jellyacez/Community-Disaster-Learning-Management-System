@@ -88,6 +88,11 @@ router.patch("/settings/maintenance", adminMiddleware, requirePermission('manage
 // @access  Private (system_admin only)
 router.patch("/settings/broadcast", adminMiddleware, requirePermission('manage_system_settings'), systemSettingsController.updateBroadcast);
 
+// @route   PATCH /api/admin/settings/organization
+// @desc    Update organization details
+// @access  Private (system_admin only)
+router.patch("/settings/organization", adminMiddleware, requirePermission('manage_system_settings'), systemSettingsController.updateOrganizationDetails);
+
 // @route   GET /api/admin/security/blocked-ips
 router.get("/security/blocked-ips", adminMiddleware, requirePermission('manage_security'), ipBlocklistController.getBlockedIps);
 
@@ -96,6 +101,9 @@ router.post("/security/blocked-ips", adminMiddleware, requirePermission('manage_
 
 // @route   DELETE /api/admin/security/blocked-ips/:id
 router.delete("/security/blocked-ips/:id", adminMiddleware, requirePermission('manage_security'), ipBlocklistController.removeBlockedIp);
+
+// @route   POST /api/admin/security/force-logout-all
+router.post("/security/force-logout-all", adminMiddleware, requirePermission('manage_security'), ipBlocklistController.forceLogoutAll);
 
 // @route   GET /api/admin/health
 // @desc    Get system health status

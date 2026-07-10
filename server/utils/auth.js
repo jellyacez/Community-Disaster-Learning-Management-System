@@ -11,6 +11,8 @@ const {
 } = require("./emailTemplates");
 const { securityHooksPlugin } = require("./authHooks");
 
+const { getOrgSettings } = require("./settings");
+
 const parseSecrets = () => {
   if (process.env.BETTER_AUTH_SECRETS) {
     return process.env.BETTER_AUTH_SECRETS.split(',').map(part => {
@@ -36,8 +38,8 @@ const auth = betterAuth({
     expiresIn: 60 * 60 * 24 * 7, // Absolute expiration set to 7 days
     updateAge: 60 * 60 * 24, // Roll the session forward if active within 24 hours
     cookieCache: {
-      enabled: true,
-      maxAge: 5 * 60 // Cache for 5 minutes to reduce DB reads
+      enabled: false, // Disabled to ensure instant session invalidation for Global Force Logout
+      maxAge: 5 * 60
     }
   },
   emailAndPassword: {
@@ -46,7 +48,8 @@ const auth = betterAuth({
     requireEmailVerification: false, // Disabled for development
     passwordResetTokenExpiresIn: 15 * 60, // 15 minutes in seconds
     sendResetPassword: async ({ user, token }) => {
-      const mailOptions = getResetPasswordEmail(user, token);
+      const { orgFooterText, supportEmail } = await getOrgSettings();
+      const mailOptions = getResetPasswordEmail(user, token, orgFooterText, supportEmail);
       await transporter.sendMail(mailOptions);
     },
   },
@@ -54,7 +57,8 @@ const auth = betterAuth({
     sendOnSignUp: false, // Disabled for development
     autoSignInAfterVerification: true,
     sendVerificationEmail: async ({ user, token }) => {
-      const mailOptions = getVerificationEmail(user, token);
+      const { orgFooterText, supportEmail } = await getOrgSettings();
+      const mailOptions = getVerificationEmail(user, token, orgFooterText, supportEmail);
       await transporter.sendMail(mailOptions);
     },
   },
@@ -100,7 +104,8 @@ const auth = betterAuth({
     twoFactor({
       otpOptions: {
         sendOTP: async ({ user, otp }) => {
-          const mailOptions = getOTPEmail(user, otp);
+          const { orgFooterText, supportEmail } = await getOrgSettings();
+          const mailOptions = getOTPEmail(user, otp, orgFooterText, supportEmail);
           await transporter.sendMail(mailOptions);
         },
       },

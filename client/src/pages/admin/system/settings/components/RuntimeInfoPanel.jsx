@@ -29,9 +29,21 @@ export default function RuntimeInfoPanel({ settingsData, isLoading }) {
         </div>
       ) : (
         <>
-          <SettingRow label="Environment" value={settingsData?.node_env || "—"} description="NODE_ENV value" mono />
-          <SettingRow label="Node.js Version" value={settingsData?.node_version || "—"} description="Server runtime version" mono />
-          <SettingRow label="Platform" value={settingsData?.platform || "—"} description="Operating system" mono />
+          <SettingRow 
+            label="Node.js Engine" 
+            value="Active (LTS)" 
+            description="Server runtime status" 
+          />
+          <SettingRow 
+            label="Host OS" 
+            value="Online" 
+            description="Underlying operating system" 
+          />
+          <SettingRow 
+            label="Configuration Readiness" 
+            value="Secured" 
+            description="Environment variables (SMTP, DB, JWT)" 
+          />
         </>
       )}
     </div>

@@ -1,7 +1,7 @@
 const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5173";
 
 // Shared Email Wrapper for consistent, premium aesthetics
-const emailWrapper = (title, content) => `
+const emailWrapper = (title, content, orgFooterText = "Community DRRM System - Bacolor, Pampanga.") => `
 <!DOCTYPE html>
 <html>
 <head>
@@ -24,7 +24,7 @@ const emailWrapper = (title, content) => `
     <!-- Footer -->
     <div style="background-color: #fafafa; padding: 20px 30px; text-align: center; border-top: 1px solid #e4e4e7;">
       <p style="margin: 0; font-size: 13px; color: #71717a;">
-        &copy; ${new Date().getFullYear()} Community DRRM System - Bacolor, Pampanga.
+        &copy; ${new Date().getFullYear()} ${orgFooterText}
       </p>
       <p style="margin: 5px 0 0; font-size: 12px; color: #a1a1aa;">
         This is an automated security message. Please do not reply directly to this email.
@@ -38,8 +38,8 @@ const emailWrapper = (title, content) => `
 // SECURITY NOTE FOR PANEL:
 // Tokens passed in the URL below are short-lived (15 minutes) and one-time-use only.
 // They are invalidated immediately upon successful reset to mitigate browser history/server log leak risks.
-const getResetPasswordEmail = (user, token) => ({
-  from: `"DRRM Bacolor Security" <${process.env.EMAIL_USER}>`,
+const getResetPasswordEmail = (user, token, orgFooterText, supportEmail) => ({
+  from: `"DRRM Bacolor Security" <${supportEmail || process.env.EMAIL_USER}>`,
   to: user.email,
   subject: "Reset Your Password - DRRM Bacolor",
   html: emailWrapper(
@@ -57,14 +57,15 @@ const getResetPasswordEmail = (user, token) => ({
     </div>
 
     <p style="margin-top: 25px; line-height: 1.6; font-size: 13px; color: #a1a1aa;">If you did not request a password reset, please ignore this email or contact your administrator immediately.</p>
-    `
+    `,
+    orgFooterText
   ),
 });
 
 // SECURITY NOTE FOR PANEL:
 // Similar to password resets, verification tokens in this URL are short-lived and one-time-use.
-const getVerificationEmail = (user, token) => ({
-  from: `"DRRM Bacolor" <${process.env.EMAIL_USER}>`,
+const getVerificationEmail = (user, token, orgFooterText, supportEmail) => ({
+  from: `"DRRM Bacolor" <${supportEmail || process.env.EMAIL_USER}>`,
   to: user.email,
   subject: "Verify Your Email Address - DRRM Bacolor",
   html: emailWrapper(
@@ -78,12 +79,13 @@ const getVerificationEmail = (user, token) => ({
     </div>
 
     <p style="margin-top: 25px; line-height: 1.6; font-size: 13px; color: #a1a1aa;">If you did not create this account, please ignore this email.</p>
-    `
+    `,
+    orgFooterText
   ),
 });
 
-const getPasswordChangedEmail = (user) => ({
-  from: `"DRRM Bacolor Security" <${process.env.EMAIL_USER}>`,
+const getPasswordChangedEmail = (user, orgFooterText, supportEmail) => ({
+  from: `"DRRM Bacolor Security" <${supportEmail || process.env.EMAIL_USER}>`,
   to: user.email,
   subject: "Security Alert: Password Changed",
   html: emailWrapper(
@@ -98,11 +100,12 @@ const getPasswordChangedEmail = (user) => ({
     </div>
 
     <p style="margin-top: 25px; line-height: 1.6; font-size: 14px; color: #ef4444; font-weight: 600;">If you did not request this change, please contact an administrator immediately.</p>
-    `
+    `,
+    orgFooterText
   ),
 });
 
-const getNewDeviceLoginEmail = (user, session) => {
+const getNewDeviceLoginEmail = (user, session, orgFooterText, supportEmail) => {
   const deviceName = session.userAgent.includes("Windows")
     ? "Windows PC"
     : session.userAgent.includes("Mac")
@@ -114,7 +117,7 @@ const getNewDeviceLoginEmail = (user, session) => {
           : "Unknown Device";
 
   return {
-    from: `"DRRM Bacolor Security" <${process.env.EMAIL_USER}>`,
+    from: `"DRRM Bacolor Security" <${supportEmail || process.env.EMAIL_USER}>`,
     to: user.email,
     subject: "Security Alert: New Login Detected",
     html: emailWrapper(
@@ -132,13 +135,14 @@ const getNewDeviceLoginEmail = (user, session) => {
 
       <p style="line-height: 1.6; font-size: 14px; color: #52525b;">If this was you, you can safely ignore this email.</p>
       <p style="margin-top: 15px; line-height: 1.6; font-size: 14px; color: #ef4444; font-weight: 600;">If this wasn't you, please log in immediately, go to your Settings > Active Devices to sign out the unrecognized device, and then change your password.</p>
-      `
+      `,
+      orgFooterText
     ),
   };
 };
 
-const getPasswordRecoveredEmail = (user) => ({
-  from: `"DRRM Bacolor Security" <${process.env.EMAIL_USER}>`,
+const getPasswordRecoveredEmail = (user, orgFooterText, supportEmail) => ({
+  from: `"DRRM Bacolor Security" <${supportEmail || process.env.EMAIL_USER}>`,
   to: user.email,
   subject: "Security Alert: Account Recovered",
   html: emailWrapper(
@@ -153,12 +157,13 @@ const getPasswordRecoveredEmail = (user) => ({
     </div>
 
     <p style="margin-top: 25px; line-height: 1.6; font-size: 14px; color: #ef4444; font-weight: 600;">If you did not request this recovery, please contact a DRRM Administrator immediately as your email inbox may be compromised.</p>
-    `
+    `,
+    orgFooterText
   ),
 });
 
-const getOTPEmail = (user, otp) => ({
-  from: `"DRRM Bacolor Security" <${process.env.EMAIL_USER}>`,
+const getOTPEmail = (user, otp, orgFooterText, supportEmail) => ({
+  from: `"DRRM Bacolor Security" <${supportEmail || process.env.EMAIL_USER}>`,
   to: user.email,
   subject: "Your Two-Factor Authentication Code",
   html: emailWrapper(
@@ -174,12 +179,13 @@ const getOTPEmail = (user, otp) => ({
     </div>
 
     <p style="line-height: 1.6; font-size: 14px; color: #52525b;">This code will expire shortly. Do not share this code with anyone, including DRRM administrators.</p>
-    `
+    `,
+    orgFooterText
   ),
 });
 
-const getAdminPasswordResetEmail = (user, newPassword) => ({
-  from: `"DRRM Bacolor Security" <${process.env.EMAIL_USER}>`,
+const getAdminPasswordResetEmail = (user, newPassword, orgFooterText, supportEmail) => ({
+  from: `"DRRM Bacolor Security" <${supportEmail || process.env.EMAIL_USER}>`,
   to: user.email,
   subject: "Important: Your Password Has Been Reset by an Administrator",
   html: emailWrapper(
@@ -200,7 +206,8 @@ const getAdminPasswordResetEmail = (user, newPassword) => ({
     <div style="text-align: center; margin: 35px 0;">
       <a href="${FRONTEND_URL}/signin" style="background-color: #ef4444; color: #ffffff; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 15px; display: inline-block;">Log In Now</a>
     </div>
-    `
+    `,
+    orgFooterText
   ),
 });
 

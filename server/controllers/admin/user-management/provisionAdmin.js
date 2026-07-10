@@ -3,6 +3,7 @@ const { auth } = require("../../../utils/auth");
 const crypto = require("crypto");
 const { transporter } = require("../../../utils/mailer");
 const { getAdminPasswordResetEmail } = require("../../../utils/emailTemplates");
+const { getOrgSettings } = require("../../../utils/settings");
 
 // @desc    Provision a new Admin Account
 // @access  Private (system_admin only)
@@ -75,10 +76,18 @@ exports.provisionAdmin = async (req, res) => {
 
     // Send email with credentials
     if (isGenerated) {
-      // Re-using the admin password reset email for simplicity, or we could create a new template
-      const userObj = { name, email };
-      const mailOptions = getAdminPasswordResetEmail(userObj, password);
-      await transporter.sendMail(mailOptions);
+      try {
+        const { orgFooterText, supportEmail } = await getOrgSettings();
+        const mailOptions = getAdminPasswordResetEmail({ name, email }, password, orgFooterText, supportEmail);
+        await transporter.sendMail(mailOptions);
+      } catch (emailError) {
+        console.error("Failed to send admin provisioning email:", emailError);
+        return res.status(201).json({ 
+          message: "Admin account provisioned successfully, but failed to send credentials email.",
+          user: { id: userId, name, email, role, barangay },
+          generatedPassword: password 
+        });
+      }
     }
 
     res.status(201).json({ 

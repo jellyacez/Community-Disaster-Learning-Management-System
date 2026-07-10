@@ -14,12 +14,39 @@ exports.getBlockedIps = async (req, res) => {
   }
 };
 
+// @desc    Force logout all users globally
+// @access  Private (system_admin only)
+exports.forceLogoutAll = async (req, res) => {
+  try {
+    const currentUserId = req.user.id;
+    
+    // Delete all active sessions EXCEPT the current admin's session
+    const result = await pool.query(
+      `DELETE FROM "session" WHERE "userId" != $1`,
+      [currentUserId]
+    );
+    
+    res.json({ 
+      success: true, 
+      message: `All global sessions have been terminated. (${result.rowCount} sessions cleared)` 
+    });
+  } catch (err) {
+    console.error("Error forcing logout all:", err);
+    res.status(500).json({ success: false, error: "Server Error" });
+  }
+};
+
 // @desc    Add a blocked IP
 // @access  Private (system_admin only)
 exports.addBlockedIp = async (req, res) => {
   const { ip_address, reason } = req.body;
   if (!ip_address) {
     return res.status(400).json({ success: false, error: "IP address is required" });
+  }
+  
+  const ipv4Regex = /^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
+  if (!ipv4Regex.test(ip_address)) {
+    return res.status(400).json({ success: false, error: "Invalid IPv4 address format" });
   }
   
   try {

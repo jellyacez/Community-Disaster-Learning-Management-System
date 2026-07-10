@@ -9,6 +9,7 @@ export default function IPBlocklistPanel() {
   const queryClient = useQueryClient();
   const [ipAddress, setIpAddress] = useState("");
   const [reason, setReason] = useState("");
+  const [ipError, setIpError] = useState("");
 
   const { data: blockedIps, isLoading } = useQuery({
     queryKey: ["blockedIps"],
@@ -26,6 +27,7 @@ export default function IPBlocklistPanel() {
       toast.success("IP address blocked successfully");
       setIpAddress("");
       setReason("");
+      setIpError("");
       queryClient.invalidateQueries({ queryKey: ["blockedIps"] });
     },
     onError: (err) => {
@@ -49,6 +51,14 @@ export default function IPBlocklistPanel() {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!ipAddress) return;
+    
+    const ipv4Regex = /^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
+    if (!ipv4Regex.test(ipAddress)) {
+      setIpError("Invalid IPv4 address format.");
+      return;
+    }
+    
+    setIpError("");
     addIpMutation.mutate({ ip_address: ipAddress, reason });
   };
 
@@ -63,34 +73,40 @@ export default function IPBlocklistPanel() {
       </p>
 
       {/* Add New IP Form */}
-      <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3 mb-6">
-        <div className="flex-1">
-          <input
-            type="text"
-            placeholder="IP Address (e.g., 192.168.1.50)"
-            value={ipAddress}
-            onChange={(e) => setIpAddress(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10"
-            required
-          />
+      <form onSubmit={handleSubmit} className="mb-6">
+        <div className="flex flex-col sm:flex-row gap-3">
+          <div className="flex-1 flex flex-col">
+            <input
+              type="text"
+              placeholder="IP Address (e.g., 192.168.1.50)"
+              value={ipAddress}
+              onChange={(e) => {
+                setIpAddress(e.target.value);
+                if (ipError) setIpError("");
+              }}
+              className={`w-full px-3 py-2 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10 ${ipError ? 'border-red-400 bg-red-50' : 'border-gray-200'}`}
+              required
+            />
+          </div>
+          <div className="flex-1 flex flex-col">
+            <input
+              type="text"
+              placeholder="Reason (Optional)"
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10"
+            />
+          </div>
+          <button
+            type="submit"
+            disabled={addIpMutation.isLoading || !ipAddress}
+            className="flex items-center justify-center gap-2 px-4 py-2 bg-gray-900 text-white text-sm font-bold rounded-xl hover:bg-black transition-colors disabled:opacity-50 shrink-0"
+          >
+            <HugeiconsIcon icon={PlusSignIcon} className="w-4 h-4" />
+            Block IP
+          </button>
         </div>
-        <div className="flex-1">
-          <input
-            type="text"
-            placeholder="Reason (Optional)"
-            value={reason}
-            onChange={(e) => setReason(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10"
-          />
-        </div>
-        <button
-          type="submit"
-          disabled={addIpMutation.isLoading || !ipAddress}
-          className="flex items-center justify-center gap-2 px-4 py-2 bg-gray-900 text-white text-sm font-bold rounded-xl hover:bg-black transition-colors disabled:opacity-50"
-        >
-          <HugeiconsIcon icon={PlusSignIcon} className="w-4 h-4" />
-          Block IP
-        </button>
+        {ipError && <p className="text-[11px] font-semibold text-red-600 mt-1.5 ml-1">{ipError}</p>}
       </form>
 
       {/* Blocked IPs Table */}
@@ -127,6 +143,7 @@ export default function IPBlocklistPanel() {
                   </td>
                   <td className="px-4 py-3 text-right">
                     <button
+                      title="Unblock IP"
                       onClick={() => removeIpMutation.mutate(ip.id)}
                       disabled={removeIpMutation.isLoading}
                       className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"

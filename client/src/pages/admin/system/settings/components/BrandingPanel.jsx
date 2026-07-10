@@ -1,11 +1,13 @@
+import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import apiClient from "../../../../../lib/apiClient";
 import toast from "react-hot-toast";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { Settings01Icon } from "@hugeicons/core-free-icons";
+import { Settings01Icon, Image01Icon } from "@hugeicons/core-free-icons";
 
 export default function BrandingPanel({ settingsData }) {
   const queryClient = useQueryClient();
+  const [isSaving, setIsSaving] = useState(false);
 
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
@@ -35,12 +37,15 @@ export default function BrandingPanel({ settingsData }) {
           }
 
           try {
+            setIsSaving(true);
             toast.loading("Updating branding...", { id: "branding" });
             await apiClient.patch("/admin/settings/branding", { system_name, system_logo });
             toast.success("Branding updated successfully", { id: "branding" });
             queryClient.invalidateQueries({ queryKey: ["systemSettings"] });
           } catch {
             toast.error("Failed to update branding", { id: "branding" });
+          } finally {
+            setIsSaving(false);
           }
         }}
         className="space-y-4"
@@ -57,14 +62,23 @@ export default function BrandingPanel({ settingsData }) {
             />
           </div>
           <div>
-            <label htmlFor="system_logo" className="block text-xs font-semibold text-gray-700 mb-1">Platform Logo</label>
-            <input 
-              id="system_logo"
-              type="file" 
-              name="system_logo" 
-              accept="image/*"
-              className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-gray-50 file:text-gray-700 hover:file:bg-gray-100"
-            />
+            <label className="block text-xs font-semibold text-gray-700 mb-1">Platform Logo</label>
+            <label 
+              htmlFor="system_logo" 
+              className="flex flex-col items-center justify-center w-full h-[38px] border border-gray-200 border-dashed rounded-xl cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors"
+            >
+              <div className="flex items-center justify-center gap-2">
+                <HugeiconsIcon icon={Image01Icon} className="w-4 h-4 text-gray-400" />
+                <p className="text-xs text-gray-500"><span className="font-semibold text-gray-700">Click to upload</span> or drag</p>
+              </div>
+              <input 
+                id="system_logo"
+                type="file" 
+                name="system_logo" 
+                accept="image/*"
+                className="hidden"
+              />
+            </label>
           </div>
         </div>
         {settingsData?.system_logo && (
@@ -73,9 +87,14 @@ export default function BrandingPanel({ settingsData }) {
               <img src={settingsData.system_logo} alt="System Logo" className="h-12 object-contain rounded border border-gray-100 p-1 bg-gray-50" />
            </div>
         )}
-        <div className="pt-2">
-           <button type="submit" className="px-4 py-2 bg-gray-900 text-white text-sm font-bold rounded-lg hover:bg-black transition-colors">
-             Save Branding
+        <div className="pt-2 border-t border-gray-100/50 mt-2">
+           <button 
+             type="submit" 
+             disabled={isSaving}
+             className="flex items-center justify-center px-4 py-2 bg-gray-900 text-white text-sm font-bold rounded-lg hover:bg-black transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+           >
+             {isSaving && <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2" />}
+             {isSaving ? "Saving..." : "Save Branding"}
            </button>
         </div>
       </form>

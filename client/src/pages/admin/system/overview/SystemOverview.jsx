@@ -119,12 +119,16 @@ export default function SystemOverview() {
                 <HealthRow
                   label="Memory Usage"
                   progress={
-                    healthData?.memory_usage_mb != null
+                    healthData?.memory_usage_percent != null
+                      ? healthData.memory_usage_percent
+                      : healthData?.memory_usage_mb != null
                       ? (healthData.memory_usage_mb / 512) * 100
                       : 0
                   }
                   value={
-                    healthData?.memory_usage_mb != null
+                    healthData?.memory_total_mb != null
+                      ? `${(healthData.memory_usage_mb / 1024).toFixed(1)} GB / ${(healthData.memory_total_mb / 1024).toFixed(1)} GB`
+                      : healthData?.memory_usage_mb != null
                       ? `${healthData.memory_usage_mb} MB`
                       : "—"
                   }
