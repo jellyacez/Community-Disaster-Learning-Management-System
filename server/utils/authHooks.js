@@ -32,6 +32,23 @@ const securityHooksPlugin = () => {
         },
         {
           matcher(context) {
+            return context.path?.includes("sign-out") || false;
+          },
+          handler: async (ctx) => {
+            let userId = ctx.context?.session?.userId || ctx.context?.user?.id;
+            if (!userId) {
+              const { auth } = require("./auth");
+              const sessionContext = await auth.api.getSession({ headers: ctx.headers });
+              userId = sessionContext?.user?.id;
+            }
+            if (userId) {
+              require('./logger').logActivity(userId, 'Logged out successfully');
+            }
+            return {};
+          }
+        },
+        {
+          matcher(context) {
             return context.path?.includes("change-password") || false;
           },
           handler: async (ctx) => {
@@ -125,8 +142,10 @@ const securityHooksPlugin = () => {
             if (userId && user.email) {
               if (ctx.path?.includes("reset-password")) {
                 securityService.handlePasswordResetRecovery(user.email);
+                require('./logger').logActivity(userId, 'Reset password');
               } else {
                 securityService.handlePasswordChangeAlert(user);
+                require('./logger').logActivity(userId, 'Changed password');
               }
             }
             return {};
@@ -137,11 +156,39 @@ const securityHooksPlugin = () => {
             return context.path?.includes("sign-in/email") || false;
           },
           handler: async (ctx) => {
-            if (ctx.context?.returned instanceof APIError) return {};
-              let email = ctx.body?.email;
+            const email = ctx.body?.email;
+            
+            // Check for failed login attempt
+            if (ctx.context?.returned instanceof APIError) {
               if (email) {
-                securityService.handleNewDeviceLoginCheck(email);
+                try {
+                  const res = await pool.query(`SELECT id FROM "user" WHERE email = $1`, [email.toLowerCase()]);
+                  if (res.rows.length > 0) {
+                    require('./logger').logActivity(res.rows[0].id, 'Failed login attempt');
+                  }
+                } catch (e) {
+                  console.error("Failed to log failed login attempt:", e);
+                }
               }
+              return {};
+            }
+            
+            // Successful login
+            if (email) {
+              securityService.handleNewDeviceLoginCheck(email);
+              const userId = ctx.context?.session?.user?.id || ctx.context?.user?.id || ctx.context?.newSession?.user?.id;
+              if (userId) {
+                require('./logger').logActivity(userId, 'Logged in successfully');
+              } else {
+                // fallback to fetch user
+                try {
+                  const res = await pool.query(`SELECT id FROM "user" WHERE email = $1`, [email.toLowerCase()]);
+                  if (res.rows.length > 0) {
+                    require('./logger').logActivity(res.rows[0].id, 'Logged in successfully');
+                  }
+                } catch(e) {}
+              }
+            }
             return {};
           }
         },

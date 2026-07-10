@@ -72,6 +72,8 @@ exports.resetUserPassword = async (req, res) => {
       await transporter.sendMail(mailOptions);
     }
     
+    require('../../../utils/logger').logActivity(req.user.id, `Reset password for user ${user.email} (Admin Initiated)`);
+    
     res.json({ 
       message: isGenerated ? "Password auto-generated and emailed successfully." : "Password updated successfully",
       generatedPassword: isGenerated ? password : null 

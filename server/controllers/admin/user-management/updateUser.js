@@ -17,6 +17,9 @@ exports.updateUser = async (req, res) => {
     );
     if (result.rows.length === 0)
       return res.status(404).json({ error: "User not found" });
+      
+    require('../../../utils/logger').logActivity(req.user.id, `Updated details for user ${email}`);
+    
     res.json(result.rows[0]);
   } catch (err) {
     console.error(err);

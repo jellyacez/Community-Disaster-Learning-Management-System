@@ -66,6 +66,7 @@ CREATE TABLE "user" (
             fs.unlink(backupPath, (unlinkErr) => {
               if (unlinkErr) console.error("Error cleaning up mock backup file:", unlinkErr);
             });
+            require('../../utils/logger').logActivity(req.user.id, 'Triggered full database backup download (Mock)');
           });
         }
         
@@ -86,6 +87,8 @@ CREATE TABLE "user" (
           if (unlinkErr) console.error("Error cleaning up backup file:", unlinkErr);
         });
       });
+      
+      require('../../utils/logger').logActivity(req.user.id, 'Triggered full database backup download');
     });
 
   } catch (err) {

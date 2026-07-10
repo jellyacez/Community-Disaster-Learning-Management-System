@@ -99,7 +99,7 @@ exports.enrollInModule = async (req, res) => {
 
   try {
     const moduleCheck = await pool.query(
-      "SELECT mod_id FROM module_data WHERE mod_id = $1",
+      "SELECT mod_id, modname FROM module_data WHERE mod_id = $1",
       [mod_id],
     );
     if (moduleCheck.rowCount === 0) {
@@ -127,6 +127,8 @@ exports.enrollInModule = async (req, res) => {
        VALUES ($1, $2, 'In Progress', 0)`,
       [user_id, mod_id],
     );
+
+    require('../../utils/logger').logActivity(req.user.id, `Enrolled in module: ${moduleCheck.rows[0].modname}`);
 
     return res.status(201).json({
       success: true,

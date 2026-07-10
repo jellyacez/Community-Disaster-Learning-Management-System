@@ -6,11 +6,15 @@ exports.archiveUser = async (req, res) => {
   const { id } = req.params;
   const archived = req.body.archived === true || req.body.archived === "true";
   try {
-    await pool.query(`UPDATE "user" SET archived = $1 WHERE id = $2`, [archived, id]);
+    const result = await pool.query(`UPDATE "user" SET archived = $1 WHERE id = $2 RETURNING email`, [archived, id]);
     
     // Immediately revoke sessions if archived
     if (archived) {
       await pool.query(`DELETE FROM "session" WHERE "userId" = $1`, [id]);
+    }
+    
+    if (result.rows.length > 0) {
+      require('../../../utils/logger').logActivity(req.user.id, `${archived ? 'Archived' : 'Restored'} user ${result.rows[0].email}`);
     }
 
     res.json({ success: true, message: archived ? 'User archived' : 'User restored' });
@@ -35,6 +39,8 @@ exports.bulkArchiveUsers = async (req, res) => {
     if (isArchived) {
       await pool.query(`DELETE FROM "session" WHERE "userId" = ANY($1)`, [userIds]);
     }
+
+    require('../../../utils/logger').logActivity(req.user.id, `Bulk ${isArchived ? 'archived' : 'restored'} ${userIds.length} users`);
 
     res.json({ success: true, message: `${userIds.length} users ${isArchived ? 'archived' : 'restored'}` });
   } catch (err) {

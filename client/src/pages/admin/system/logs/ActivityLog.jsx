@@ -30,7 +30,7 @@ export default function ActivityLog() {
 
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
-  const [roleFilter, setRoleFilter] = useState("");
+  const [roleFilter, setRoleFilter] = useState("non_resident");
   const [actionFilter, setActionFilter] = useState("");
   const [page, setPage] = useState(1);
 
@@ -61,7 +61,25 @@ export default function ActivityLog() {
   const meta = data?.meta || { totalPages: 1, page: 1, total: 0 };
 
   const handleExportLogs = () => {
-    toast.success("Activity logs exported successfully! (Placeholder)");
+    toast.promise(
+      apiClient.get("/admin/activity-log/export", { responseType: "blob" })
+        .then((res) => {
+          const blob = new Blob([res.data], { type: "text/csv" });
+          const downloadUrl = window.URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = downloadUrl;
+          a.download = "system_activity_logs.csv";
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+          window.URL.revokeObjectURL(downloadUrl);
+        }),
+      {
+        loading: 'Exporting logs...',
+        success: 'System logs exported successfully!',
+        error: 'Failed to export logs.'
+      }
+    );
   };
 
   return (
@@ -85,6 +103,7 @@ export default function ActivityLog() {
           onChange={(e) => setRoleFilter(e.target.value)}
           className="px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-900/10 min-w-[140px]"
         >
+          <option value="non_resident">Admins Only (Default)</option>
           <option value="">All Roles</option>
           <option value="system_admin">System Admin</option>
           <option value="mdrrmo_admin">MDRRMO Admin</option>
@@ -98,11 +117,12 @@ export default function ActivityLog() {
           className="px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-900/10 min-w-[160px]"
         >
           <option value="">All Actions</option>
-          <option value="login">Authentication</option>
+          <option value="auth">Authentication</option>
           <option value="provision">Provisioning</option>
-          <option value="update">Updates & Edits</option>
-          <option value="archive">Suspension & Archive</option>
+          <option value="role">Roles & Updates</option>
+          <option value="ban">Bans & Archiving</option>
           <option value="settings">System Settings</option>
+          <option value="security">Security & Infra</option>
         </select>
 
         <span className="self-center text-xs text-gray-500 font-mono whitespace-nowrap ml-auto">

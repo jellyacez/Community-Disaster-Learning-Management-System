@@ -14,10 +14,13 @@ exports.updateUserRole = async (req, res) => {
     // the Better Auth admin plugin enforces a rigid session check that rejects 
     // custom adminRole hierarchies in some versions.
     // The endpoint is fully secured by our adminMiddleware.
-    const result = await pool.query('UPDATE "user" SET role = $1 WHERE id = $2 RETURNING id', [role, id]);
+    const result = await pool.query('UPDATE "user" SET role = $1 WHERE id = $2 RETURNING id, email', [role, id]);
     if (result.rowCount === 0) {
       return res.status(404).json({ success: false, error: 'User not found' });
     }
+    
+    require('../../../utils/logger').logActivity(req.user.id, `Updated role to ${role} for user ${result.rows[0].email}`);
+    
     res.json({ success: true, message: 'Role updated successfully' });
   } catch (err) {
     console.error("Role Update Error:", err);

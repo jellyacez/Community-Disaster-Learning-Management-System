@@ -2,12 +2,12 @@
 -- PostgreSQL database dump
 --
 
-\restrict sW3R2077vwrLcteBFg5de7rmaFAfALxfqxoc42ZdoR9IGdA1izTXBYiJsDcHL7Z
+\restrict wUwg6d5oAD0VdjHInziNYyGsONlCbep6ObEjr0jlX5URejcbYrsQVyFoOychhXT
 
 -- Dumped from database version 18.4
 -- Dumped by pg_dump version 18.4
 
--- Started on 2026-07-07 19:02:31
+-- Started on 2026-07-10 15:50:00
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -377,7 +377,7 @@ ALTER TABLE public.account OWNER TO postgres;
 CREATE TABLE public.activity_log (
     act_id integer NOT NULL,
     user_id text NOT NULL,
-    act_date date NOT NULL,
+    act_date timestamp with time zone NOT NULL,
     act_log character varying(500) NOT NULL
 );
 
@@ -1205,7 +1205,7 @@ CREATE INDEX "account_userId_idx" ON public.account USING btree ("userId");
 
 
 --
--- TOC entry 5031 (class 1259 OID 25131)
+-- TOC entry 5031 (class 1259 OID 25239)
 -- Name: idx_activity_log_act_date; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -1213,7 +1213,7 @@ CREATE INDEX idx_activity_log_act_date ON public.activity_log USING btree (act_d
 
 
 --
--- TOC entry 5032 (class 1259 OID 25132)
+-- TOC entry 5032 (class 1259 OID 25240)
 -- Name: idx_activity_log_user_date; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -1495,11 +1495,11 @@ ALTER TABLE ONLY rate_limit.records_aggregated
     ADD CONSTRAINT records_aggregated_session_id_fkey FOREIGN KEY (session_id) REFERENCES rate_limit.sessions(id) ON DELETE CASCADE;
 
 
--- Completed on 2026-07-07 19:02:32
+-- Completed on 2026-07-10 15:50:01
 
 --
 -- PostgreSQL database dump complete
 --
 
-\unrestrict sW3R2077vwrLcteBFg5de7rmaFAfALxfqxoc42ZdoR9IGdA1izTXBYiJsDcHL7Z
+\unrestrict wUwg6d5oAD0VdjHInziNYyGsONlCbep6ObEjr0jlX5URejcbYrsQVyFoOychhXT
 

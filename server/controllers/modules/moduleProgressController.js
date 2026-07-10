@@ -84,13 +84,55 @@ exports.completeModuleStep = async (req, res) => {
       const percentage = totalSteps > 0 ? Math.round((completedSteps / totalSteps) * 100) : 0;
       const modStatus = percentage === 100 ? 'Completed' : 'In Progress';
 
-      await client.query(
+      const updateResult = await client.query(
         `UPDATE module_activity 
          SET progress = $1, modstatus = $2, 
              completed_at = CASE WHEN $1 = 100 AND completed_at IS NULL THEN CURRENT_TIMESTAMP ELSE completed_at END 
-         WHERE user_id = $3 AND mod_id = $4`,
+         WHERE user_id = $3 AND mod_id = $4
+         RETURNING modact_id`,
         [percentage, modStatus, user_id, mod_id]
       );
+      
+      const modact_id = updateResult.rows[0]?.modact_id;
+
+      // Handle Completion logic & Certificates
+      if (percentage === 100) {
+        // Fetch module name for logging and certificate
+        const modResult = await client.query(`SELECT modname FROM module_data WHERE mod_id = $1`, [mod_id]);
+        const modTitle = modResult.rows.length > 0 ? modResult.rows[0].modname : 'Unknown Module';
+
+        require('../../utils/logger').logActivity(user_id, `Completed module: ${modTitle}`);
+
+        // Check if certificate already exists to prevent duplicates
+        const certCheck = await client.query(
+          `SELECT cert_id FROM certificates 
+           WHERE user_id = $1 AND module_id = $2`, 
+          [user_id, mod_id]
+        );
+
+        if (certCheck.rowCount === 0) {
+          // Fetch result_id if exists, otherwise 0
+          const resultIdCheck = await client.query(
+            `SELECT result_id FROM results WHERE user_id = $1 AND mod_id = $2 ORDER BY result_id DESC LIMIT 1`, 
+            [user_id, mod_id]
+          );
+          const result_id = resultIdCheck.rows.length > 0 ? resultIdCheck.rows[0].result_id : 0;
+          
+          const cert_rec = `CERT-${Date.now().toString(36).toUpperCase()}-${Math.floor(Math.random() * 1000)}`;
+
+          // Generate an initial basic certificate record
+          const certInsert = await client.query(
+            `INSERT INTO certificates (user_id, modact_id, result_id, cert_rec, module_id, completion_date) 
+             VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP) RETURNING cert_id`,
+            [user_id, modact_id, result_id, cert_rec, mod_id]
+          );
+          
+          if (certInsert.rowCount > 0) {
+            const certId = certInsert.rows[0].cert_id;
+            require('../../utils/logger').logActivity(user_id, `Earned certificate: ${modTitle} (ID: CERT-${certId})`);
+          }
+        }
+      }
 
       await client.query("COMMIT");
 

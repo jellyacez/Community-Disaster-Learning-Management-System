@@ -13,8 +13,8 @@ exports.getActivityLog = async (req, res) => {
     const action = req.query.action || '';
 
     const conditions = [];
-    const params = [limit, offset];
-    let paramIndex = 3;
+    const params = [];
+    let paramIndex = 1;
 
     if (search) {
       conditions.push(`(u.name ILIKE $${paramIndex} OR al.act_log ILIKE $${paramIndex})`);
@@ -23,16 +23,45 @@ exports.getActivityLog = async (req, res) => {
     }
 
     if (role) {
-      conditions.push(`u.role = $${paramIndex}`);
-      params.push(role);
-      paramIndex++;
+      if (role === 'non_resident') {
+        conditions.push(`u.role != 'resident'`);
+      } else {
+        conditions.push(`u.role = $${paramIndex}`);
+        params.push(role);
+        paramIndex++;
+      }
     }
 
     if (action) {
-      // Use ILIKE to match common actions since we don't have an action_type column
-      conditions.push(`al.act_log ILIKE $${paramIndex}`);
-      params.push(`%${action}%`);
-      paramIndex++;
+      if (action === 'auth') {
+        conditions.push(`(al.act_log ILIKE $${paramIndex} OR al.act_log ILIKE $${paramIndex+1})`);
+        params.push('%log%', '%password%');
+        paramIndex += 2;
+      } else if (action === 'provision') {
+        conditions.push(`al.act_log ILIKE $${paramIndex}`);
+        params.push('%provision%');
+        paramIndex++;
+      } else if (action === 'role') {
+        conditions.push(`(al.act_log ILIKE $${paramIndex} OR al.act_log ILIKE $${paramIndex+1})`);
+        params.push('%role%', '%update%');
+        paramIndex += 2;
+      } else if (action === 'ban') {
+        conditions.push(`(al.act_log ILIKE $${paramIndex} OR al.act_log ILIKE $${paramIndex+1} OR al.act_log ILIKE $${paramIndex+2} OR al.act_log ILIKE $${paramIndex+3})`);
+        params.push('%ban%', '%unban%', '%archiv%', '%restor%');
+        paramIndex += 4;
+      } else if (action === 'settings') {
+        conditions.push(`(al.act_log ILIKE $${paramIndex} OR al.act_log ILIKE $${paramIndex+1} OR al.act_log ILIKE $${paramIndex+2} OR al.act_log ILIKE $${paramIndex+3})`);
+        params.push('%branding%', '%maintenance%', '%broadcast%', '%organization%');
+        paramIndex += 4;
+      } else if (action === 'security') {
+        conditions.push(`(al.act_log ILIKE $${paramIndex} OR al.act_log ILIKE $${paramIndex+1} OR al.act_log ILIKE $${paramIndex+2})`);
+        params.push('%IP%', '%force logout%', '%backup%');
+        paramIndex += 3;
+      } else {
+        conditions.push(`al.act_log ILIKE $${paramIndex}`);
+        params.push(`%${action}%`);
+        paramIndex++;
+      }
     }
 
     const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
@@ -42,11 +71,8 @@ exports.getActivityLog = async (req, res) => {
       LEFT JOIN "user" u ON al.user_id = u.id
       ${whereClause}
     `;
-    
-    // We only pass the filtering params to the count query, ignoring limit and offset (indices 0 and 1)
-    const countParams = params.slice(2);
 
-    const countResult = await pool.query(countQuery, countParams);
+    const countResult = await pool.query(countQuery, params);
     const total = parseInt(countResult.rows[0].count);
 
     const result = await pool.query(
@@ -56,8 +82,8 @@ exports.getActivityLog = async (req, res) => {
        LEFT JOIN "user" u ON al.user_id = u.id
        ${whereClause}
        ORDER BY al.act_date DESC, al.act_id DESC
-       LIMIT $1 OFFSET $2`,
-      params
+       LIMIT $${paramIndex} OFFSET $${paramIndex+1}`,
+      [...params, limit, offset]
     );
 
     res.json({
@@ -104,6 +130,8 @@ exports.exportActivityLog = async (req, res) => {
     });
 
     const csvContent = [headers.join(','), ...rows].join('\\n');
+
+    require('../../utils/logger').logActivity(req.user.id, 'Exported system audit logs');
 
     res.setHeader('Content-Type', 'text/csv');
     res.setHeader('Content-Disposition', 'attachment; filename="system_activity_logs.csv"');

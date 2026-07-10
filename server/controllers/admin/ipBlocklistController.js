@@ -26,6 +26,8 @@ exports.forceLogoutAll = async (req, res) => {
       [currentUserId]
     );
     
+    require('../../utils/logger').logActivity(req.user.id, 'Triggered force logout for all users globally');
+    
     res.json({ 
       success: true, 
       message: `All global sessions have been terminated. (${result.rowCount} sessions cleared)` 
@@ -54,6 +56,9 @@ exports.addBlockedIp = async (req, res) => {
       `INSERT INTO public.blocked_ips (ip_address, reason) VALUES ($1, $2) RETURNING *`,
       [ip_address, reason || '']
     );
+    
+    require('../../utils/logger').logActivity(req.user.id, `Blocked IP address: ${ip_address}`);
+    
     res.status(201).json({ success: true, data: result.rows[0], message: "IP blocked successfully" });
   } catch (err) {
     if (err.code === '23505') { // unique violation
@@ -76,6 +81,9 @@ exports.removeBlockedIp = async (req, res) => {
     if (result.rowCount === 0) {
       return res.status(404).json({ success: false, error: "Blocked IP not found" });
     }
+    
+    require('../../utils/logger').logActivity(req.user.id, `Unblocked IP address: ${result.rows[0].ip_address}`);
+    
     res.json({ success: true, message: "IP unblocked successfully" });
   } catch (err) {
     console.error("Error removing blocked IP:", err);

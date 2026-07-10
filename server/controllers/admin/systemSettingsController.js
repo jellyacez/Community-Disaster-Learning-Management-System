@@ -60,6 +60,7 @@ exports.updateSystemBranding = async (req, res) => {
       }
     }
     
+    require('../../utils/logger').logActivity(req.user.id, 'Updated system branding');
     res.json({ success: true, message: 'System branding updated successfully' });
   } catch (err) {
     console.error(err);
@@ -78,6 +79,9 @@ exports.setMaintenanceMode = async (req, res) => {
        ON CONFLICT (key) DO UPDATE SET value = $1, updated_at = NOW()`,
       [enabled ? 'true' : 'false']
     );
+    
+    require('../../utils/logger').logActivity(req.user.id, enabled ? 'Enabled maintenance mode' : 'Disabled maintenance mode');
+    
     res.json({
       success: true,
       message: enabled ? 'Maintenance mode enabled' : 'Maintenance mode disabled'
@@ -120,6 +124,7 @@ exports.updateBroadcast = async (req, res) => {
     }
     
     await pool.query('COMMIT');
+    require('../../utils/logger').logActivity(req.user.id, 'Updated global broadcast settings');
     res.json({ success: true, message: 'Broadcast settings updated successfully' });
   } catch (err) {
     await pool.query('ROLLBACK');
@@ -152,6 +157,7 @@ exports.updateOrganizationDetails = async (req, res) => {
     }
     
     await pool.query('COMMIT');
+    require('../../utils/logger').logActivity(req.user.id, 'Updated organization details');
     res.json({ success: true, message: 'Organization details updated successfully' });
   } catch (err) {
     await pool.query('ROLLBACK');

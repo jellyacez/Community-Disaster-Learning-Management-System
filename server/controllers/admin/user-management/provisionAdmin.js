@@ -82,6 +82,7 @@ exports.provisionAdmin = async (req, res) => {
         await transporter.sendMail(mailOptions);
       } catch (emailError) {
         console.error("Failed to send admin provisioning email:", emailError);
+        require('../../../utils/logger').logActivity(req.user.id, `Provisioned new admin account (${email} - ${role}) but failed to send credentials email`);
         return res.status(201).json({ 
           message: "Admin account provisioned successfully, but failed to send credentials email.",
           user: { id: userId, name, email, role, barangay },
@@ -89,6 +90,8 @@ exports.provisionAdmin = async (req, res) => {
         });
       }
     }
+
+    require('../../../utils/logger').logActivity(req.user.id, `Provisioned new admin account (${email} - ${role})`);
 
     res.status(201).json({ 
       message: "Admin account provisioned successfully.",
