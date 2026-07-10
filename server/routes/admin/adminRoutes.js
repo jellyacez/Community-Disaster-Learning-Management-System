@@ -125,5 +125,6 @@ router.get("/health", adminMiddleware, requirePermission('view_system_stats'), s
 // @desc    Download full database backup
 // @access  Private (system_admin only)
 router.get("/infrastructure/backup", adminMiddleware, requirePermission('manage_security'), infrastructureController.downloadDatabaseBackup);
+router.get("/infrastructure/logs", adminMiddleware, requirePermission('manage_security'), infrastructureController.downloadServerLogs);
 
 module.exports = router;

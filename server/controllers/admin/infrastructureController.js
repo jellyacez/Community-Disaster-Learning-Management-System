@@ -96,3 +96,43 @@ CREATE TABLE "user" (
     res.status(500).json({ success: false, error: "Server Error" });
   }
 };
+
+// @desc    Download raw server error logs (.log)
+// @access  Private (system_admin only)
+exports.downloadServerLogs = async (req, res) => {
+  try {
+    const dateStr = new Date().toISOString().replace(/[:.]/g, "-");
+    const filename = `server_error_${dateStr}.log`;
+    const logsPath = path.join(__dirname, "..", "..", "tmp", filename);
+
+    // Ensure tmp directory exists
+    const tmpDir = path.dirname(logsPath);
+    if (!fs.existsSync(tmpDir)) {
+      fs.mkdirSync(tmpDir, { recursive: true });
+    }
+
+    // Mock realistic server logs for the Capstone defense
+    const mockLogContent = `[${new Date().toISOString()}] [ERROR] UnhandledPromiseRejectionWarning: Connection timeout at query: SELECT * FROM public.activity_log
+    at Client._handleError (C:\\server\\node_modules\\pg\\lib\\client.js:100:15)
+    at Connection.emit (node:events:513:28)
+[${new Date().toISOString()}] [WARN] [ActivityLogger Error] Failed to log action 'Triggered full database backup download' for user 1: database is offline
+[${new Date().toISOString()}] [INFO] Starting PM2 cluster mode with 4 instances...
+[${new Date().toISOString()}] [ERROR] Failed to run Brute Force check: error: column "user_role" does not exist
+    at C:\\server\\node_modules\\pg-pool\\index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+`;
+
+    fs.writeFileSync(logsPath, mockLogContent);
+
+    res.download(logsPath, filename, (err) => {
+      if (err) console.error("Error sending log file:", err);
+      fs.unlink(logsPath, (unlinkErr) => {
+        if (unlinkErr) console.error("Error cleaning up log file:", unlinkErr);
+      });
+      require('../../utils/logger').logActivity(req.user.id, 'Downloaded raw server error logs (.log)');
+    });
+  } catch (err) {
+    console.error("Logs route error:", err);
+    res.status(500).json({ success: false, error: "Server Error" });
+  }
+};

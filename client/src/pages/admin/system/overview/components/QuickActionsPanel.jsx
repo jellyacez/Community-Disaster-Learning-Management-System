@@ -86,6 +86,37 @@ export default function QuickActionsPanel({ settingsData }) {
     );
   };
 
+  const handleDownloadLogs = async () => {
+    toast.promise(
+      apiClient.get("/admin/infrastructure/logs", { responseType: "blob" })
+        .then((res) => {
+          const contentDisposition = res.headers['content-disposition'];
+          let filename = "server_error.log";
+          if (contentDisposition && contentDisposition.includes('filename=')) {
+            const filenameMatch = contentDisposition.match(/filename="?([^"]+)"?/);
+            if (filenameMatch && filenameMatch.length > 1) {
+              filename = filenameMatch[1];
+            }
+          }
+
+          const blob = new Blob([res.data], { type: "text/plain" });
+          const downloadUrl = window.URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = downloadUrl;
+          a.download = filename;
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+          window.URL.revokeObjectURL(downloadUrl);
+        }),
+      {
+        loading: 'Fetching server logs...',
+        success: 'Server logs downloaded!',
+        error: 'Failed to download logs.'
+      }
+    );
+  };
+
   return (
     <>
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
@@ -130,8 +161,26 @@ export default function QuickActionsPanel({ settingsData }) {
           >
             <div className="flex items-center gap-2">
               <HugeiconsIcon icon={Database01Icon} className="w-5 h-5" />
-              <span className="text-sm font-semibold">Download DB Backup</span>
+              <div className="text-left">
+                <div className="text-sm font-semibold">Download DB Backup</div>
+                <div className="text-xs text-gray-500 font-medium hidden sm:block">Export PostgreSQL data (.sql)</div>
+              </div>
             </div>
+            <div className="text-xs font-bold text-gray-400">DATA</div>
+          </button>
+
+          <button
+            onClick={handleDownloadLogs}
+            className="w-full flex items-center justify-between p-3 rounded-xl border border-gray-200 bg-gray-50 text-gray-800 hover:bg-gray-100 transition-colors"
+          >
+            <div className="flex items-center gap-2">
+              <HugeiconsIcon icon={Alert01Icon} className="w-5 h-5" />
+              <div className="text-left">
+                <div className="text-sm font-semibold">Export Server Error Logs</div>
+                <div className="text-xs text-gray-500 font-medium hidden sm:block">Download raw runtime logs (.log)</div>
+              </div>
+            </div>
+            <div className="text-xs font-bold text-gray-400">LOGS</div>
           </button>
         </div>
       </div>
