@@ -11,6 +11,9 @@ export default function QuickActionsPanel({ settingsData }) {
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [showExportModal, setShowExportModal] = useState(false);
 
+  const [showBackupModal, setShowBackupModal] = useState(false);
+  const [showLogsModal, setShowLogsModal] = useState(false);
+
   const toggleMaintenanceMutation = useMutation({
     mutationFn: async (enabled) => {
       const res = await apiClient.patch("/admin/settings/maintenance", { enabled });
@@ -55,10 +58,10 @@ export default function QuickActionsPanel({ settingsData }) {
   };
 
   const handleDownloadBackup = async () => {
+    setShowBackupModal(false);
     toast.promise(
       apiClient.get("/admin/infrastructure/backup", { responseType: "blob" })
         .then((res) => {
-          // Extract filename from Content-Disposition header if available
           const contentDisposition = res.headers['content-disposition'];
           let filename = "database_backup.sql";
           if (contentDisposition && contentDisposition.includes('filename=')) {
@@ -87,6 +90,7 @@ export default function QuickActionsPanel({ settingsData }) {
   };
 
   const handleDownloadLogs = async () => {
+    setShowLogsModal(false);
     toast.promise(
       apiClient.get("/admin/infrastructure/logs", { responseType: "blob" })
         .then((res) => {
@@ -156,7 +160,7 @@ export default function QuickActionsPanel({ settingsData }) {
           </button>
           
           <button
-            onClick={handleDownloadBackup}
+            onClick={() => setShowBackupModal(true)}
             className="w-full flex items-center justify-between p-3 rounded-xl border border-gray-200 bg-gray-50 text-gray-800 hover:bg-gray-100 transition-colors"
           >
             <div className="flex items-center gap-2">
@@ -170,7 +174,7 @@ export default function QuickActionsPanel({ settingsData }) {
           </button>
 
           <button
-            onClick={handleDownloadLogs}
+            onClick={() => setShowLogsModal(true)}
             className="w-full flex items-center justify-between p-3 rounded-xl border border-gray-200 bg-gray-50 text-gray-800 hover:bg-gray-100 transition-colors"
           >
             <div className="flex items-center gap-2">
@@ -246,6 +250,66 @@ export default function QuickActionsPanel({ settingsData }) {
                 className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-lg transition-colors flex justify-center items-center gap-2"
               >
                 Export CSV
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showBackupModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in">
+          <div className="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl animate-in zoom-in-95">
+            <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mb-4 mx-auto">
+              <HugeiconsIcon icon={Database01Icon} className="w-6 h-6" />
+            </div>
+            <h3 className="text-lg font-bold text-center text-gray-900 mb-2">
+              Download Database Backup?
+            </h3>
+            <p className="text-sm text-gray-500 text-center mb-6">
+              This will generate and download a complete SQL dump of the PostgreSQL database, including all schemas and records.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowBackupModal(false)}
+                className="flex-1 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-800 text-sm font-bold rounded-lg transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDownloadBackup}
+                className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-lg transition-colors flex justify-center items-center gap-2"
+              >
+                Download SQL
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showLogsModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in">
+          <div className="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl animate-in zoom-in-95">
+            <div className="w-12 h-12 bg-red-50 text-red-600 rounded-full flex items-center justify-center mb-4 mx-auto">
+              <HugeiconsIcon icon={Alert01Icon} className="w-6 h-6" />
+            </div>
+            <h3 className="text-lg font-bold text-center text-gray-900 mb-2">
+              Export Server Logs?
+            </h3>
+            <p className="text-sm text-gray-500 text-center mb-6">
+              This will securely download the raw Node.js runtime `.log` file containing system crashes and errors.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowLogsModal(false)}
+                className="flex-1 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-800 text-sm font-bold rounded-lg transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDownloadLogs}
+                className="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-bold rounded-lg transition-colors flex justify-center items-center gap-2"
+              >
+                Download .log
               </button>
             </div>
           </div>
