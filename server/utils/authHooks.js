@@ -153,10 +153,10 @@ const securityHooksPlugin = () => {
         },
         {
           matcher(context) {
-            return context.path?.includes("sign-in/email") || false;
+            return context.path?.includes("sign-in") || context.path?.includes("callback/") || false;
           },
           handler: async (ctx) => {
-            const email = ctx.body?.email;
+            let email = ctx.body?.email;
             
             // Check for failed login attempt
             if (ctx.context?.returned instanceof APIError) {
@@ -174,19 +174,74 @@ const securityHooksPlugin = () => {
             }
             
             // Successful login
-            if (email) {
-              securityService.handleNewDeviceLoginCheck(email);
-              const userId = ctx.context?.session?.user?.id || ctx.context?.user?.id || ctx.context?.newSession?.user?.id;
-              if (userId) {
-                require('./logger').logActivity(userId, 'Logged in successfully');
-              } else {
-                // fallback to fetch user
-                try {
-                  const res = await pool.query(`SELECT id FROM "user" WHERE email = $1`, [email.toLowerCase()]);
-                  if (res.rows.length > 0) {
-                    require('./logger').logActivity(res.rows[0].id, 'Logged in successfully');
+            let user = ctx.context?.session?.user || ctx.context?.user || ctx.context?.newSession?.user;
+            let userId = user?.id;
+
+            if (!userId) {
+              try {
+                let responseData = null;
+                if (ctx.response && typeof ctx.response.clone === "function") {
+                  // Only try to parse json if it's not a redirect
+                  if (ctx.response.status < 300) {
+                    const clone = ctx.response.clone();
+                    responseData = await clone.json();
                   }
-                } catch(e) {}
+                } else if (ctx.responseBody) {
+                  responseData = typeof ctx.responseBody === "string" ? JSON.parse(ctx.responseBody) : ctx.responseBody;
+                }
+                if (responseData?.user) {
+                  user = responseData.user;
+                  userId = user.id;
+                }
+              } catch (e) {}
+            }
+
+            // Fallback for OAuth redirects: extract session token from Set-Cookie header
+            if (!userId && ctx.response?.headers) {
+              try {
+                const setCookie = ctx.response.headers.get("set-cookie");
+                if (setCookie) {
+                  // Better auth usually uses better-auth.session_token
+                  const match = setCookie.match(/better-auth\.session_token=([^;]+)/);
+                  if (match) {
+                    const token = match[1];
+                    const sessionRes = await pool.query(`SELECT "userId" FROM "session" WHERE token = $1`, [token]);
+                    if (sessionRes.rows.length > 0) {
+                      userId = sessionRes.rows[0].userId;
+                    }
+                  }
+                }
+              } catch (e) {
+                console.error("Error extracting session from cookie:", e);
+              }
+            }
+
+            if (!userId && email) {
+              try {
+                const res = await pool.query(`SELECT id, email FROM "user" WHERE email = $1`, [email.toLowerCase()]);
+                if (res.rows.length > 0) {
+                  userId = res.rows[0].id;
+                  email = res.rows[0].email;
+                }
+              } catch(e) {}
+            }
+            
+            // Re-fetch email if we have a userId but no email (e.g. from cookie)
+            if (userId && !email) {
+               try {
+                 const res = await pool.query(`SELECT email FROM "user" WHERE id = $1`, [userId]);
+                 if (res.rows.length > 0) {
+                   email = res.rows[0].email;
+                 }
+               } catch(e) {}
+            }
+
+            email = email || user?.email;
+
+            if (userId) {
+              require('./logger').logActivity(userId, 'Logged in successfully');
+              if (email) {
+                securityService.handleNewDeviceLoginCheck(email);
               }
             }
             return {};
