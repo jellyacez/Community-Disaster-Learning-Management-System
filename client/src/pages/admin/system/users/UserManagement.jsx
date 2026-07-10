@@ -46,7 +46,7 @@ export default function UserManagement() {
 
       {/* Table Area */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-50 flex items-center justify-between">
+        <div className="px-6 py-4 border-b border-gray-50 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <h2 className="text-base font-bold text-gray-900">
               User Directory
@@ -58,7 +58,7 @@ export default function UserManagement() {
           
           <button 
             onClick={() => actions.setShowProvisionModal(true)}
-            className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
+            className="flex items-center justify-center gap-2 px-3 py-1.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors w-full sm:w-auto"
           >
             <HugeiconsIcon icon={UserAdd01Icon} size={16} />
             <span>Add Admin</span>

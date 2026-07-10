@@ -69,7 +69,7 @@ export default function SystemSettings() {
         </h2>
         <div className={`rounded-2xl border shadow-sm overflow-hidden ${maintenanceActive ? "border-red-200 bg-red-50" : "border-gray-100 bg-white"}`}>
         <div className="p-6">
-          <div className="flex items-start justify-between gap-4">
+          <div className="flex flex-col sm:flex-row items-start sm:justify-between gap-4">
             <div className="flex items-start gap-3">
               <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${maintenanceActive ? "bg-red-100" : "bg-gray-100"}`}>
                 <HugeiconsIcon icon={Settings01Icon} className={`w-5 h-5 ${maintenanceActive ? "text-red-700" : "text-gray-600"}`} />
@@ -87,7 +87,7 @@ export default function SystemSettings() {
             </div>
 
             {/* Toggle */}
-            <div className="flex flex-col items-end gap-2">
+            <div className="flex flex-col sm:items-end gap-2 w-full sm:w-auto mt-4 sm:mt-0">
               <button
                 onClick={() => setShowMaintenanceModal(true)}
                 disabled={isLoading || isToggling}

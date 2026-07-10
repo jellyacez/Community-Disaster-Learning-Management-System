@@ -71,20 +71,22 @@ export default function InfrastructureOperationsPanel() {
         <h3 className="text-sm font-bold text-gray-900">Infrastructure Operations</h3>
       </div>
       <div className="p-5">
-        <div className="flex items-start gap-4 p-4 rounded-xl border border-gray-100 bg-gray-50/50">
-          <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center shrink-0">
-            <HugeiconsIcon icon={Database01Icon} className="w-5 h-5 text-blue-600" />
-          </div>
-          <div className="flex-1">
-            <h4 className="text-sm font-bold text-gray-900">Manual Database Backup</h4>
-            <p className="text-xs text-gray-500 mt-1 max-w-md">
-              Generate and download a full SQL dump of the current PostgreSQL database. This includes all schemas, tables, and records.
-            </p>
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 p-4 rounded-xl border border-gray-100 bg-gray-50/50">
+          <div className="flex items-start gap-4 flex-1 w-full">
+            <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center shrink-0">
+              <HugeiconsIcon icon={Database01Icon} className="w-5 h-5 text-blue-600" />
+            </div>
+            <div className="flex-1">
+              <h4 className="text-sm font-bold text-gray-900">Manual Database Backup</h4>
+              <p className="text-xs text-gray-500 mt-1 max-w-md">
+                Generate and download a full SQL dump of the current PostgreSQL database. This includes all schemas, tables, and records.
+              </p>
+            </div>
           </div>
           <button
             onClick={handleBackup}
             disabled={isBackingUp}
-            className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-800 rounded-lg text-sm font-semibold hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full sm:w-auto justify-center flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-800 rounded-lg text-sm font-semibold hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
           >
             {isBackingUp ? (
               <svg className="animate-spin w-4 h-4 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">

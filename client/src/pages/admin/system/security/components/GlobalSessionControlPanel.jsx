@@ -39,7 +39,7 @@ export default function GlobalSessionControlPanel() {
           
           <button
             onClick={() => setIsConfirming(true)}
-            className="px-4 py-2 bg-red-600 text-white text-sm font-bold rounded-xl hover:bg-red-700 transition-colors shrink-0"
+            className="w-full md:w-auto px-4 py-2 bg-red-600 text-white text-sm font-bold rounded-xl hover:bg-red-700 transition-colors shrink-0"
           >
             Force Logout All Users
           </button>

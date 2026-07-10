@@ -67,10 +67,11 @@ function startAlertMonitor() {
     try {
       const bruteForceRes = await pool.query(`
         SELECT COUNT(*) 
-        FROM public.activity_log 
-        WHERE act_log ILIKE '%failed login%' 
-          AND user_role IN ('system_admin', 'mdrrmo_admin', 'barangay_admin') 
-          AND act_date >= NOW() - INTERVAL '3 minutes'
+        FROM public.activity_log al
+        JOIN public.users u ON al.user_id = u.user_id
+        WHERE al.act_log ILIKE '%failed login%' 
+          AND u.role IN ('system_admin', 'mdrrmo_admin', 'barangay_admin') 
+          AND al.act_date >= NOW() - INTERVAL '3 minutes'
       `);
       if (parseInt(bruteForceRes.rows[0].count, 10) >= 50) {
         setAlert("BRUTE_FORCE", {
