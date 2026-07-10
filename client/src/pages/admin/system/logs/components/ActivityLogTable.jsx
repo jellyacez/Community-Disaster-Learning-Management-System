@@ -20,7 +20,7 @@ function SkeletonRow() {
   );
 }
 
-export default function ActivityLogTable({ logs, isLoading, meta, setPage }) {
+export default function ActivityLogTable({ logs, isLoading, meta, setPage, limit, setLimit }) {
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
       <div className="overflow-x-auto">
@@ -90,10 +90,28 @@ export default function ActivityLogTable({ logs, isLoading, meta, setPage }) {
 
       {/* Pagination */}
       {!isLoading && meta.totalPages > 1 && (
-        <div className="px-6 py-4 border-t border-gray-50 flex items-center justify-between">
-          <span className="text-sm text-gray-500">
-            Page {meta.page} of {meta.totalPages}
-          </span>
+        <div className="px-6 py-4 border-t border-gray-50 flex flex-wrap gap-4 items-center justify-between">
+          <div className="flex items-center gap-6">
+            <span className="text-sm text-gray-500">
+              Page {meta.page} of {meta.totalPages}
+            </span>
+            <div className="flex items-center gap-2">
+              <label htmlFor="rowsPerPage" className="text-sm text-gray-500">
+                Rows per page:
+              </label>
+              <select
+                id="rowsPerPage"
+                value={limit}
+                onChange={(e) => setLimit(Number(e.target.value))}
+                className="px-2 py-1 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-900/10 cursor-pointer"
+              >
+                <option value={10}>10</option>
+                <option value={25}>25</option>
+                <option value={50}>50</option>
+                <option value={100}>100</option>
+              </select>
+            </div>
+          </div>
           <div className="flex gap-2">
             <button
               onClick={() => setPage((p) => Math.max(1, p - 1))}

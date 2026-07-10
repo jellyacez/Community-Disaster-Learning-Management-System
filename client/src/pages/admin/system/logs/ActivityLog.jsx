@@ -15,6 +15,7 @@ export default function ActivityLog() {
   const [roleFilter, setRoleFilter] = useState("non_resident");
   const [actionFilter, setActionFilter] = useState("");
   const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(25);
 
   useEffect(() => {
     const t = setTimeout(() => { setDebouncedSearch(search); setPage(1); }, 400);
@@ -24,12 +25,12 @@ export default function ActivityLog() {
   // Reset page on filter changes
   useEffect(() => {
     setPage(1);
-  }, [roleFilter, actionFilter]);
+  }, [roleFilter, actionFilter, limit]);
 
   const { data, isLoading } = useQuery({
-    queryKey: ["activityLog", page, debouncedSearch, roleFilter, actionFilter],
+    queryKey: ["activityLog", page, limit, debouncedSearch, roleFilter, actionFilter],
     queryFn: async () => {
-      const params = new URLSearchParams({ page, limit: 25 });
+      const params = new URLSearchParams({ page, limit });
       if (debouncedSearch) params.set("search", debouncedSearch);
       if (roleFilter) params.set("role", roleFilter);
       if (actionFilter) params.set("action", actionFilter);
@@ -81,7 +82,9 @@ export default function ActivityLog() {
         logs={logs} 
         isLoading={isLoading} 
         meta={meta} 
-        setPage={setPage} 
+        setPage={setPage}
+        limit={limit}
+        setLimit={setLimit}
       />
     </div>
   );

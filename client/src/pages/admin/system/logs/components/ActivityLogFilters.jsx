@@ -51,7 +51,7 @@ export default function ActivityLogFilters({
         <option value="settings">System Settings</option>
         <option value="security">Security & Infra</option>
       </select>
-
+      
       <span className="self-center text-xs text-gray-500 font-mono whitespace-nowrap ml-auto">
         {totalEntries.toLocaleString()} total entries
       </span>
