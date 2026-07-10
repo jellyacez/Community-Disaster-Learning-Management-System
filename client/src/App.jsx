@@ -181,61 +181,63 @@ export default function App() {
             </Route>
           </Route>
 
-          <Route element={<AdminLayout />}>
-            <Route element={<ProtectedRoute allowedRoles={["system_admin"]} />}>
-              <Route
-                path="/admin/dashboard"
-                element={<Navigate to="/admin/system/dashboard" replace />}
-              />
-              <Route path="/admin/system" element={<SystemAdminRoot />}>
-                <Route index element={<Navigate to="dashboard" replace />} />
-                <Route path="dashboard" element={<SystemOverview />} />
-                <Route path="users" element={<SystemUserManagement />} />
-                <Route path="logs" element={<SystemActivityLog />} />
-                <Route path="settings" element={<SystemSettings />} />
-                <Route path="health" element={<SystemHealth />} />
-                <Route path="security" element={<SystemSecurity />} />
-              </Route>
-            </Route>
-
-            <Route element={<ProtectedRoute allowedRoles={["mdrrmo_admin"]} />}>
-              <Route path="/admin/mdrrmo" element={<MdrrmoAdminDashboard />}>
-                <Route index element={<Navigate to="dashboard" replace />} />
-                <Route path="dashboard" element={<MdrrmoOverview />} />
+          <Route element={<ProtectedRoute allowedRoles={["system_admin", "mdrrmo_admin", "barangay_admin"]} />}>
+            <Route element={<AdminLayout />}>
+              <Route element={<ProtectedRoute allowedRoles={["system_admin"]} />}>
                 <Route
-                  path="barangay-management"
-                  element={<MdrrmoBarangayManagement />}
+                  path="/admin/dashboard"
+                  element={<Navigate to="/admin/system/dashboard" replace />}
                 />
-                <Route path="modules" element={<MdrrmoModuleManagement />} />
-                <Route path="users" element={<MdrrmoUserManagement />} />
-                <Route path="alerts" element={<LiveAlerts />} />
-                <Route
-                  path="overview"
-                  element={<Navigate to="dashboard" replace />}
-                />
+                <Route path="/admin/system" element={<SystemAdminRoot />}>
+                  <Route index element={<Navigate to="dashboard" replace />} />
+                  <Route path="dashboard" element={<SystemOverview />} />
+                  <Route path="users" element={<SystemUserManagement />} />
+                  <Route path="logs" element={<SystemActivityLog />} />
+                  <Route path="settings" element={<SystemSettings />} />
+                  <Route path="health" element={<SystemHealth />} />
+                  <Route path="security" element={<SystemSecurity />} />
+                </Route>
               </Route>
-            </Route>
 
-            <Route
-              element={<ProtectedRoute allowedRoles={["barangay_admin"]} />}
-            >
+              <Route element={<ProtectedRoute allowedRoles={["mdrrmo_admin"]} />}>
+                <Route path="/admin/mdrrmo" element={<MdrrmoAdminDashboard />}>
+                  <Route index element={<Navigate to="dashboard" replace />} />
+                  <Route path="dashboard" element={<MdrrmoOverview />} />
+                  <Route
+                    path="barangay-management"
+                    element={<MdrrmoBarangayManagement />}
+                  />
+                  <Route path="modules" element={<MdrrmoModuleManagement />} />
+                  <Route path="users" element={<MdrrmoUserManagement />} />
+                  <Route path="alerts" element={<LiveAlerts />} />
+                  <Route
+                    path="overview"
+                    element={<Navigate to="dashboard" replace />}
+                  />
+                </Route>
+              </Route>
+
               <Route
-                path="/admin/barangay"
-                element={<BarangayAdminDashboard />}
+                element={<ProtectedRoute allowedRoles={["barangay_admin"]} />}
               >
-                <Route index element={<Navigate to="dashboard" replace />} />
                 <Route
-                  path="dashboard"
-                  element={<BarangayWorkspaceOverview />}
-                />
-                <Route path="registry" element={<BarangayResidentRegistry />} />
-                <Route path="categories" element={<BarangayCategoryConfig />} />
-                <Route path="logs" element={<BarangaySystemLogs />} />
-                <Route path="syllabus" element={<BarangayActiveSyllabus />} />
-                <Route
-                  path="workspace"
-                  element={<Navigate to="dashboard" replace />}
-                />
+                  path="/admin/barangay"
+                  element={<BarangayAdminDashboard />}
+                >
+                  <Route index element={<Navigate to="dashboard" replace />} />
+                  <Route
+                    path="dashboard"
+                    element={<BarangayWorkspaceOverview />}
+                  />
+                  <Route path="registry" element={<BarangayResidentRegistry />} />
+                  <Route path="categories" element={<BarangayCategoryConfig />} />
+                  <Route path="logs" element={<BarangaySystemLogs />} />
+                  <Route path="syllabus" element={<BarangayActiveSyllabus />} />
+                  <Route
+                    path="workspace"
+                    element={<Navigate to="dashboard" replace />}
+                  />
+                </Route>
               </Route>
             </Route>
           </Route>

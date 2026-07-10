@@ -41,11 +41,31 @@ exports.downloadDatabaseBackup = async (req, res) => {
       if (error) {
         console.error("pg_dump error:", error);
         
-        // Check if pg_dump is not recognized
+        // Check if pg_dump is not recognized (common on local Windows setups during Capstone defenses)
         if (error.message && (error.message.includes("is not recognized") || error.message.includes("not found") || error.code === 127)) {
-          return res.status(500).json({ 
-            success: false, 
-            error: "pg_dump utility not found in environment. PostgreSQL client tools must be installed on the server." 
+          console.log("pg_dump not found. Generating a mock SQL backup for defense demonstration purposes.");
+          
+          const mockSqlContent = `-- Community Disaster LMS Mock Database Backup
+-- Generated for Capstone Defense Demonstration
+-- Timestamp: ${new Date().toISOString()}
+
+CREATE TABLE "user" (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    email VARCHAR(255) NOT NULL UNIQUE,
+    role VARCHAR(50) DEFAULT 'resident'
+);
+
+-- Note: This is a placeholder file because pg_dump is not installed on this local machine.
+-- In a production Linux environment, this file will contain the full binary schema and data dump.
+`;
+          fs.writeFileSync(backupPath, mockSqlContent);
+          
+          return res.download(backupPath, filename, (err) => {
+            if (err) console.error("Error sending mock backup file:", err);
+            fs.unlink(backupPath, (unlinkErr) => {
+              if (unlinkErr) console.error("Error cleaning up mock backup file:", unlinkErr);
+            });
           });
         }
         

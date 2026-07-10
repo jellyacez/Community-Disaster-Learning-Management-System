@@ -38,6 +38,11 @@ router.get("/stats", adminMiddleware, requirePermission('view_system_stats'), sy
 // @access  Private (system_admin only)
 router.get("/activity-log", adminMiddleware, requirePermission('view_activity_logs'), activityLogController.getActivityLog);
 
+// @route   GET /api/admin/activity-log/export
+// @desc    Export activity log to CSV
+// @access  Private (system_admin only)
+router.get("/activity-log/export", adminMiddleware, requirePermission('view_activity_logs'), activityLogController.exportActivityLog);
+
 // @route   PATCH /api/admin/users/:id/role
 // @desc    Update a user's role
 // @access  Private (system_admin only)

@@ -70,3 +70,46 @@ exports.getActivityLog = async (req, res) => {
     res.status(500).json({ success: false, error: 'Server Error' });
   }
 };
+
+// @desc    Export activity log to CSV
+// @access  Private (system_admin only)
+exports.exportActivityLog = async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT al.act_id, al.user_id, u.name AS user_name, u.role AS user_role,
+              al.act_date, al.act_log
+       FROM activity_log al
+       LEFT JOIN "user" u ON al.user_id = u.id
+       ORDER BY al.act_date DESC`
+    );
+
+    const headers = ['ID', 'User ID', 'User Name', 'Role', 'Date', 'Action'];
+    const rows = result.rows.map(r => {
+      const escapeCsv = (str) => {
+        if (str === null || str === undefined) return '""';
+        const s = String(str);
+        if (s.includes(',') || s.includes('"') || s.includes('\\n')) {
+          return `"${s.replace(/"/g, '""')}"`;
+        }
+        return s;
+      };
+      return [
+        r.act_id,
+        r.user_id,
+        escapeCsv(r.user_name),
+        escapeCsv(r.user_role),
+        new Date(r.act_date).toISOString(),
+        escapeCsv(r.act_log)
+      ].join(',');
+    });
+
+    const csvContent = [headers.join(','), ...rows].join('\\n');
+
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', 'attachment; filename="system_activity_logs.csv"');
+    return res.send(csvContent);
+  } catch (err) {
+    console.error("Export logs error:", err);
+    res.status(500).json({ success: false, error: 'Server Error' });
+  }
+};

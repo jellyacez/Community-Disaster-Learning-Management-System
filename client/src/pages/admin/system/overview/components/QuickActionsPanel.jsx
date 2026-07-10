@@ -3,12 +3,13 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import apiClient from "../../../../../lib/apiClient";
 import toast from "react-hot-toast";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { Settings02Icon, Download01Icon, Alert01Icon } from "@hugeicons/core-free-icons";
+import { Settings02Icon, Download01Icon, Alert01Icon, Database01Icon } from "@hugeicons/core-free-icons";
 
 export default function QuickActionsPanel({ settingsData }) {
   const queryClient = useQueryClient();
   const isMaintenanceMode = settingsData?.maintenance_mode === "true";
   const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [showExportModal, setShowExportModal] = useState(false);
 
   const toggleMaintenanceMutation = useMutation({
     mutationFn: async (enabled) => {
@@ -31,7 +32,58 @@ export default function QuickActionsPanel({ settingsData }) {
   };
 
   const handleExportLogs = () => {
-    toast.success("System logs exported successfully! (Placeholder)");
+    toast.promise(
+      apiClient.get("/admin/activity-log/export", { responseType: "blob" })
+        .then((res) => {
+          const blob = new Blob([res.data], { type: "text/csv" });
+          const downloadUrl = window.URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = downloadUrl;
+          a.download = "system_activity_logs.csv";
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+          window.URL.revokeObjectURL(downloadUrl);
+          setShowExportModal(false);
+        }),
+      {
+        loading: 'Exporting logs...',
+        success: 'System logs exported successfully!',
+        error: 'Failed to export logs.'
+      }
+    );
+  };
+
+  const handleDownloadBackup = async () => {
+    toast.promise(
+      apiClient.get("/admin/infrastructure/backup", { responseType: "blob" })
+        .then((res) => {
+          // Extract filename from Content-Disposition header if available
+          const contentDisposition = res.headers['content-disposition'];
+          let filename = "database_backup.sql";
+          if (contentDisposition && contentDisposition.includes('filename=')) {
+            const filenameMatch = contentDisposition.match(/filename="?([^"]+)"?/);
+            if (filenameMatch && filenameMatch.length > 1) {
+              filename = filenameMatch[1];
+            }
+          }
+
+          const blob = new Blob([res.data], { type: "application/sql" });
+          const downloadUrl = window.URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = downloadUrl;
+          a.download = filename;
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+          window.URL.revokeObjectURL(downloadUrl);
+        }),
+      {
+        loading: 'Generating database backup...',
+        success: 'Backup downloaded successfully!',
+        error: 'Failed to generate backup.'
+      }
+    );
   };
 
   return (
@@ -63,12 +115,22 @@ export default function QuickActionsPanel({ settingsData }) {
           </button>
 
           <button
-            onClick={handleExportLogs}
+            onClick={() => setShowExportModal(true)}
             className="w-full flex items-center justify-between p-3 rounded-xl border border-gray-200 bg-gray-50 text-gray-800 hover:bg-gray-100 transition-colors"
           >
             <div className="flex items-center gap-2">
               <HugeiconsIcon icon={Download01Icon} className="w-5 h-5" />
               <span className="text-sm font-semibold">Export System Logs</span>
+            </div>
+          </button>
+          
+          <button
+            onClick={handleDownloadBackup}
+            className="w-full flex items-center justify-between p-3 rounded-xl border border-gray-200 bg-gray-50 text-gray-800 hover:bg-gray-100 transition-colors"
+          >
+            <div className="flex items-center gap-2">
+              <HugeiconsIcon icon={Database01Icon} className="w-5 h-5" />
+              <span className="text-sm font-semibold">Download DB Backup</span>
             </div>
           </button>
         </div>
@@ -105,6 +167,36 @@ export default function QuickActionsPanel({ settingsData }) {
                   <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                 )}
                 Confirm
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {showExportModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in">
+          <div className="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl animate-in zoom-in-95">
+            <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mb-4 mx-auto">
+              <HugeiconsIcon icon={Download01Icon} className="w-6 h-6" />
+            </div>
+            <h3 className="text-lg font-bold text-center text-gray-900 mb-2">
+              Export System Logs?
+            </h3>
+            <p className="text-sm text-gray-500 text-center mb-6">
+              This will download a comprehensive CSV file containing all system activity logs for auditing purposes.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowExportModal(false)}
+                className="flex-1 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-800 text-sm font-bold rounded-lg transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleExportLogs}
+                className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-lg transition-colors flex justify-center items-center gap-2"
+              >
+                Export CSV
               </button>
             </div>
           </div>
