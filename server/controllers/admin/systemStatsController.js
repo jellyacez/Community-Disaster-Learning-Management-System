@@ -47,31 +47,42 @@ exports.getSystemStats = async (req, res) => {
   }
 };
 
-// @desc    Get 24h Traffic Analytics Template
+// @desc    Get 24h Traffic Analytics
 // @access  Private (system_admin only)
 exports.getTrafficAnalytics = async (req, res) => {
   try {
-    // Template: In a production environment, this would query activity logs grouped by hour
-    // For the defense demonstration, we generate a realistic static traffic curve
-    const hours = [];
-    const now = new Date();
-    for (let i = 23; i >= 0; i--) {
-      const d = new Date(now);
-      d.setHours(now.getHours() - i);
-      const hourStr = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-      
-      // Simulate peak traffic between 10am-4pm
-      const h = d.getHours();
-      let users = 10 + Math.floor(Math.random() * 20); // Baseline
-      if (h >= 9 && h <= 17) users += 40 + Math.floor(Math.random() * 30); // Work hours
-      if (h === 12) users -= 20; // Lunch dip
-      
-      hours.push({ time: hourStr, activeUsers: users });
-    }
+    const query = `
+      WITH hours AS (
+        SELECT generate_series(
+          date_trunc('hour', NOW() - INTERVAL '23 hours'),
+          date_trunc('hour', NOW()),
+          '1 hour'::interval
+        ) AS hour
+      )
+      SELECT 
+        h.hour,
+        COUNT(DISTINCT al.user_id) AS active_users
+      FROM hours h
+      LEFT JOIN activity_log al ON date_trunc('hour', al.act_date) = h.hour
+      GROUP BY h.hour
+      ORDER BY h.hour ASC;
+    `;
 
-    res.json({ success: true, data: hours });
+    const result = await pool.query(query);
+
+    // Format for Recharts (e.g. "10:00 AM")
+    const data = result.rows.map(row => {
+      const d = new Date(row.hour);
+      const timeStr = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      return {
+        time: timeStr,
+        activeUsers: parseInt(row.active_users, 10) || 0
+      };
+    });
+
+    res.json({ success: true, data });
   } catch (err) {
-    console.error(err);
+    console.error("Traffic Analytics Error:", err);
     res.status(500).json({ success: false, error: 'Server Error' });
   }
 };
