@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import apiClient from "../../../../lib/apiClient";
 import useDocumentTitle from "../../../../hooks/useDocumentTitle";
+import useDebounce from "../../../../hooks/useDebounce";
 import toast from "react-hot-toast";
 
 import ActivityLogFilters from "./components/ActivityLogFilters";
@@ -11,16 +12,11 @@ export default function ActivityLog() {
   useDocumentTitle("Activity Log | Admin Console");
 
   const [search, setSearch] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const debouncedSearch = useDebounce(search, 350);
   const [roleFilter, setRoleFilter] = useState("non_resident");
   const [actionFilter, setActionFilter] = useState("");
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(25);
-
-  useEffect(() => {
-    const t = setTimeout(() => { setDebouncedSearch(search); setPage(1); }, 400);
-    return () => clearTimeout(t);
-  }, [search]);
 
   // Reset page on filter changes
   useEffect(() => {

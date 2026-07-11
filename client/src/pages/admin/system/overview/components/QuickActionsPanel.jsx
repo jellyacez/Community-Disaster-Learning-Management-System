@@ -19,13 +19,42 @@ export default function QuickActionsPanel({ settingsData }) {
       const res = await apiClient.patch("/admin/settings/maintenance", { enabled });
       return res.data;
     },
-    onSuccess: (data) => {
-      toast.success(data.message || "Maintenance mode updated.");
-      queryClient.invalidateQueries({ queryKey: ["systemSettings"] });
+    onMutate: async (enabled) => {
+      // Cancel any outgoing refetches so they don't overwrite our optimistic update
+      await queryClient.cancelQueries({ queryKey: ["systemSettings"] });
+
+      // Snapshot the previous value
+      const previousSettings = queryClient.getQueryData(["systemSettings"]);
+
+      // Optimistically update to the new value
+      queryClient.setQueryData(["systemSettings"], (old) => {
+        if (!old) return old;
+        return {
+          ...old,
+          maintenanceMode: enabled
+        };
+      });
+
+      // Return a context object with the snapshotted value
+      return { previousSettings };
+    },
+    onError: (err, enabled, context) => {
+      // Roll back to the previous value if the mutation fails
+      if (context?.previousSettings) {
+        queryClient.setQueryData(["systemSettings"], context.previousSettings);
+      }
+      toast.error(
+        err.response?.data?.error || "Failed to toggle Maintenance Mode."
+      );
       setShowConfirmModal(false);
     },
-    onError: () => {
-      toast.error("Failed to update maintenance mode.");
+    onSettled: () => {
+      // Always refetch after error or success to ensure backend sync
+      queryClient.invalidateQueries({ queryKey: ["systemSettings"] });
+    },
+    onSuccess: (data) => {
+      toast.success(data.message || "Maintenance mode updated successfully.");
+      queryClient.invalidateQueries({ queryKey: ["recentLogs"] });
       setShowConfirmModal(false);
     },
   });

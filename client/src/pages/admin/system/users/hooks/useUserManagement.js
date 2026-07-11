@@ -2,12 +2,13 @@ import { useState, useCallback, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import apiClient from "../../../../../lib/apiClient";
 import toast from "react-hot-toast";
+import useDebounce from "../../../../../hooks/useDebounce";
 
 export const useUserManagement = () => {
   const queryClient = useQueryClient();
 
   const [search, setSearch] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const debouncedSearch = useDebounce(search, 350);
   const [roleFilter, setRoleFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [barangayFilter, setBarangayFilter] = useState("");
@@ -20,14 +21,9 @@ export const useUserManagement = () => {
 
   // Clear selections when filters or pagination change
   useEffect(() => {
-    setTimeout(() => setSelectedUserIds(new Set()), 0);
+    setSelectedUserIds(new Set());
+    setPage(1);
   }, [page, limit, debouncedSearch, roleFilter, statusFilter, barangayFilter, setSelectedUserIds]);
-
-  // Debounce search
-  useEffect(() => {
-    const t = setTimeout(() => { setDebouncedSearch(search); setPage(1); }, 350);
-    return () => clearTimeout(t);
-  }, [search]);
 
   // Stable callback reference prevents re-rendering all memoized rows
   const handleManageClick = useCallback((user, tabIndex = 0) => {
@@ -79,6 +75,49 @@ export const useUserManagement = () => {
           throw new Error("Unknown action type");
       }
     },
+    onMutate: async (variables) => {
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ["adminUsers"] });
+
+      // Snapshot the previous value
+      const previousUsersData = queryClient.getQueryData([
+        "adminUsers", page, limit, debouncedSearch, roleFilter, statusFilter, barangayFilter
+      ]);
+
+      // Optimistically update to the new value if it's a simple toggle like ban/unban
+      if (variables.type === "ban" || variables.type === "unban") {
+        queryClient.setQueryData(
+          ["adminUsers", page, limit, debouncedSearch, roleFilter, statusFilter, barangayFilter],
+          (old) => {
+            if (!old || !old.data) return old;
+            return {
+              ...old,
+              data: old.data.map(user => 
+                user.id === variables.userId 
+                  ? { ...user, status: variables.type === "ban" ? "banned" : "active" }
+                  : user
+              )
+            };
+          }
+        );
+      }
+
+      // Return context
+      return { previousUsersData };
+    },
+    onError: (err, variables, context) => {
+      // Roll back
+      if (context?.previousUsersData) {
+        queryClient.setQueryData(
+          ["adminUsers", page, limit, debouncedSearch, roleFilter, statusFilter, barangayFilter],
+          context.previousUsersData
+        );
+      }
+      toast.error(err?.response?.data?.error || "Action failed.");
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["adminUsers"] });
+    },
     onSuccess: (_, variables) => {
       const messages = {
         edit: "User details updated.",
@@ -90,13 +129,9 @@ export const useUserManagement = () => {
         bulk_archive: "Bulk action completed successfully.",
       };
       toast.success(messages[variables.type] || "Done.");
-      queryClient.invalidateQueries({ queryKey: ["adminUsers"] });
       queryClient.invalidateQueries({ queryKey: ["systemStats"] });
       setSelectedUser(null);
       setSelectedUserIds(new Set());
-    },
-    onError: (err) => {
-      toast.error(err?.response?.data?.error || "Action failed.");
     },
   });
 

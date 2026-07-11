@@ -8,12 +8,12 @@ export default function UserAnnouncements() {
   useDocumentTitle("Announcements | Bacolor LMS");
 
   const { data: dashboardData } = useQuery({
-    queryKey: ['userDashboard'],
+    queryKey: ["userDashboard"],
     queryFn: async () => {
       const { default: apiClient } = await import("../../lib/apiClient");
-      const response = await apiClient.get('/user/dashboard');
+      const response = await apiClient.get("/user/dashboard");
       return response.data;
-    }
+    },
   });
   const announcements = dashboardData?.announcements || [];
 

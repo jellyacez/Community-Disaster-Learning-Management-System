@@ -26,6 +26,13 @@ apiClient.interceptors.request.use(
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
+    // Handle 401 Unauthorized globally
+    if (error.response && error.response.status === 401) {
+      if (window.location.pathname !== '/signin' && window.location.pathname !== '/register' && window.location.pathname !== '/') {
+        window.location.href = '/signin';
+      }
+    }
+
     // Handle 503 Maintenance Mode
     if (error.response && error.response.status === 503 && error.response.data?.error === 'MAINTENANCE_MODE') {
       // Prevent redirect loop

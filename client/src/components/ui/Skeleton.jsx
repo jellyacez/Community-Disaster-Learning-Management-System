@@ -50,3 +50,15 @@ export function SkeletonTableRow({ columns = 5 }) {
     </tr>
   );
 }
+
+export function SkeletonFeedItem() {
+  return (
+    <div className="flex gap-3 animate-pulse">
+      <div className="w-8 h-8 rounded-full bg-gray-100 shrink-0" />
+      <div className="flex-1 space-y-2 py-1">
+        <div className="h-3.5 bg-gray-100 rounded w-3/4" />
+        <div className="h-2.5 bg-gray-50 rounded w-1/4" />
+      </div>
+    </div>
+  );
+}

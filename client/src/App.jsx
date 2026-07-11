@@ -1,6 +1,7 @@
 import { lazy, Suspense } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
+import ErrorBoundary from "./components/ErrorBoundary";
 
 const LandingPage = lazy(() => import("./pages/public/LandingPage"));
 const PrivacyPolicyPage = lazy(() => import("./pages/public/PrivacyPolicyPage"));
@@ -98,7 +99,7 @@ import GlobalBroadcastBanner from "./components/ui/GlobalBroadcastBanner";
 
 export default function App() {
   return (
-    <>
+    <ErrorBoundary>
       <ScrollToTop />
       <GlobalBroadcastBanner />
       <Toaster
@@ -245,6 +246,6 @@ export default function App() {
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </Suspense>
-    </>
+    </ErrorBoundary>
   );
 }

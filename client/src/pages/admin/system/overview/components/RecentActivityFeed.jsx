@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import apiClient from "../../../../../lib/apiClient";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Time02Icon, UserIcon, Shield01Icon, Settings01Icon, Alert01Icon, RefreshIcon } from "@hugeicons/core-free-icons";
+import { SkeletonFeedItem } from "../../../../../components/ui/Skeleton";
 
 export default function RecentActivityFeed() {
   const { data, isLoading, isFetching, refetch } = useQuery({
@@ -42,13 +43,7 @@ export default function RecentActivityFeed() {
         {isLoading ? (
           <div className="space-y-4">
             {[1, 2, 3, 4].map(i => (
-              <div key={i} className="flex gap-3">
-                <div className="w-8 h-8 rounded-full bg-gray-100 animate-pulse shrink-0" />
-                <div className="flex-1 space-y-2 py-1">
-                  <div className="h-3.5 bg-gray-100 rounded w-3/4 animate-pulse" />
-                  <div className="h-2.5 bg-gray-50 rounded w-1/4 animate-pulse" />
-                </div>
-              </div>
+              <SkeletonFeedItem key={i} />
             ))}
           </div>
         ) : !data || data.length === 0 ? (

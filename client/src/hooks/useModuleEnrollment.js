@@ -12,15 +12,22 @@ export function useModuleEnrollment({ moduleId, moduleTitle, initialEnrolled = f
     isEnrollingRef.current = true;
     setIsEnrolling(true);
 
+    // Optimistically update the UI instantly
+    setLocalEnrolled(true);
+
     try {
       const response = await apiClient.post(`/modules/${moduleId}/enroll`);
 
       if (response.data.success) {
         toast.success(`Enrollment Success! You are now enrolled in ${moduleTitle}.`);
-        setLocalEnrolled(true);
         if (onEnrollSuccess) onEnrollSuccess(moduleId);
+      } else {
+        // Rollback if the server indicates failure despite a 200 OK
+        setLocalEnrolled(false);
       }
     } catch (error) {
+      // Rollback on error
+      setLocalEnrolled(false);
       console.error("Enrollment error:", error);
       toast.error(
         error.response?.data?.message || "Failed to enroll in module. Please try again."
