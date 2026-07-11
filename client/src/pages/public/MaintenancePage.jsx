@@ -5,6 +5,7 @@ import apiClient from "../../lib/apiClient";
 import { authClient } from "../../lib/auth-client";
 import { useNavigate, Link } from "react-router-dom";
 import useDocumentTitle from "../../hooks/useDocumentTitle";
+import toast from "react-hot-toast";
 
 export default function MaintenancePage() {
   useDocumentTitle("System Maintenance | DRRM Portal");
@@ -26,10 +27,17 @@ export default function MaintenancePage() {
       // Ping protected route to check system status
       const res = await apiClient.get("/user/dashboard");
       if (res.status === 200) {
+        toast.success("System is back online!");
         navigate("/");
       }
-    } catch {
-      // Global interceptor handles 503 errors
+    } catch (error) {
+      if (error.response?.status === 503) {
+        toast.error("System is still undergoing maintenance. Please try again later.");
+      } else {
+        // If it's 401 Unauthorized, that actually means maintenance is OFF and they just aren't logged in
+        toast.success("System is back online!");
+        navigate("/");
+      }
     } finally {
       setIsChecking(false);
     }
