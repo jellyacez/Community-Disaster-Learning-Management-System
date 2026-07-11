@@ -23,7 +23,7 @@ export default function SystemHealth() {
     },
   });
 
-  const { data: healthData, isLoading: isHealthLoading, isError } = useQuery({
+  const { data: healthData, isLoading: isHealthLoading } = useQuery({
     queryKey: ["systemHealth"],
     queryFn: async () => {
       const res = await apiClient.get("/admin/health");

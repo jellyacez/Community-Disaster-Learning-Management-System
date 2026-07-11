@@ -21,6 +21,7 @@ export const useUserManagement = () => {
 
   // Clear selections when filters or pagination change
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setSelectedUserIds(new Set());
     setPage(1);
   }, [page, limit, debouncedSearch, roleFilter, statusFilter, barangayFilter, setSelectedUserIds]);

@@ -26,7 +26,7 @@ export default function SystemSettings() {
     },
   });
 
-  const { data: healthData } = useQuery({
+  useQuery({
     queryKey: ["systemHealth"],
     queryFn: async () => {
       const res = await apiClient.get("/admin/health");

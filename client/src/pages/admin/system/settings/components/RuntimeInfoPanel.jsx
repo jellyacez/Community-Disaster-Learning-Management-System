@@ -15,7 +15,7 @@ function SettingRow({ label, value, description, mono = false }) {
   );
 }
 
-export default function RuntimeInfoPanel({ settingsData, isLoading }) {
+export default function RuntimeInfoPanel({ isLoading }) {
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
       <div className="flex items-center gap-2 mb-2">

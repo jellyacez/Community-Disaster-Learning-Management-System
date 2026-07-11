@@ -73,7 +73,7 @@ export default function useInfrastructureOperations() {
           const text = await err.response.data.text();
           const errorData = JSON.parse(text);
           toast.error(errorData.error || "Failed to generate backup");
-        } catch (e) {
+        } catch {
           toast.error("Failed to generate backup");
         }
       } else if (err.message && err.message !== "Network Error") {
@@ -127,7 +127,7 @@ export default function useInfrastructureOperations() {
           const text = await err.response.data.text();
           const errorData = JSON.parse(text);
           toast.error(errorData.error || "Failed to download logs");
-        } catch (e) {
+        } catch {
           toast.error("Failed to download logs");
         }
       } else if (err.message && err.message !== "Network Error") {

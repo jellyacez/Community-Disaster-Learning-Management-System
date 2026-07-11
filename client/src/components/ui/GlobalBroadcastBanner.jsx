@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { Alert01Icon, Notification02Icon } from "@hugeicons/core-free-icons";
+import { Notification02Icon } from "@hugeicons/core-free-icons";
 import apiClient from "../../lib/apiClient";
 
 export default function GlobalBroadcastBanner() {

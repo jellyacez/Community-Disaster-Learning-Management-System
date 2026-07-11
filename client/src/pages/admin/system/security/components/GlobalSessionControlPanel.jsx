@@ -14,7 +14,7 @@ export default function GlobalSessionControlPanel() {
       const res = await apiClient.post("/admin/security/force-logout-all");
       toast.success(res.data.message || "All active user sessions have been terminated.");
       setIsConfirming(false);
-    } catch (err) {
+    } catch {
       toast.error("Failed to terminate sessions.");
     } finally {
       setIsLoading(false);

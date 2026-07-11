@@ -3,7 +3,6 @@ import UserTableSkeleton from "./UserTableSkeleton";
 
 export default function UserTable({
   users,
-  meta,
   isLoading,
   selectedUserIds,
   setSelectedUserIds,

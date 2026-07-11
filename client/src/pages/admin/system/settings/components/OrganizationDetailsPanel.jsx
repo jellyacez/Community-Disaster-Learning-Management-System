@@ -13,6 +13,7 @@ export default function OrganizationDetailsPanel({ settingsData }) {
 
   useEffect(() => {
     if (settingsData) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSupportEmail(settingsData.support_email || "");
       setOrgFooterText(settingsData.org_footer_text || "Community DRRM System - Bacolor, Pampanga.");
     }
