@@ -37,10 +37,10 @@ export default function BadgesSection({ enrolledModules }) {
       </h2>
       
       {earnedBadges.length > 0 ? (
-        <div className="flex flex-wrap gap-4 flex-1">
+        <div className="flex flex-wrap gap-3 mt-2">
           {earnedBadges.map((badge, idx) => (
-            <div key={idx} className={`flex items-center gap-3 px-4 py-3 rounded-xl font-bold ${badge.color} border border-white/20 shadow-sm transition-transform hover:scale-105 duration-300 cursor-default h-fit`}>
-              <HugeiconsIcon icon={CheckmarkCircle02Icon} className={`h-6 w-6 ${badge.iconColor}`} />
+            <div key={idx} className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold ${badge.color} ring-1 ring-inset ring-black/5 shadow-sm transition-all hover:-translate-y-0.5 duration-300 cursor-default`}>
+              <HugeiconsIcon icon={CheckmarkCircle02Icon} className={`h-5 w-5 ${badge.iconColor}`} />
               {badge.title}
             </div>
           ))}

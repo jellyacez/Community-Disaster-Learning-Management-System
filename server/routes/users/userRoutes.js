@@ -31,4 +31,9 @@ router.delete("/me", betterAuthMiddleware, userController.deleteAccount);
 // @access  Private
 router.get("/certificate-data", betterAuthMiddleware, userController.getCertificateData);
 
+// @route   GET /api/users/me/export
+// @desc    Export current user's data
+// @access  Private
+router.get("/me/export", betterAuthMiddleware, userController.exportUserData);
+
 module.exports = router;

@@ -183,3 +183,43 @@ exports.getCertificateData = async (req, res) => {
   }
 };
 // --- End of getCertificateData ---
+
+// @desc    Exports the current user's profile, activity, and learning data as JSON
+// @access  Private
+exports.exportUserData = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    
+    // Fetch basic user profile
+    const userRes = await pool.query('SELECT name, email, role, barangay, "createdAt", "updatedAt" FROM "user" WHERE id = $1', [userId]);
+    
+    if (userRes.rows.length === 0) {
+      return res.status(404).json({ error: "User not found" });
+    }
+    
+    // Fetch activity log (if exists)
+    const logRes = await pool.query('SELECT act_date, act_log, act_type FROM activity_log WHERE user_id = $1', [userId]).catch(() => ({ rows: [] }));
+    
+    // Fetch certificates (if exists)
+    const certRes = await pool.query('SELECT * FROM certificates WHERE user_id = $1', [userId]).catch(() => ({ rows: [] }));
+    
+    // Fetch progress (if exists)
+    const progressRes = await pool.query('SELECT * FROM user_step_progress WHERE user_id = $1', [userId]).catch(() => ({ rows: [] }));
+    
+    const exportData = {
+      profile: userRes.rows[0],
+      activityLogs: logRes.rows,
+      certificates: certRes.rows,
+      learningProgress: progressRes.rows,
+      exportedAt: new Date().toISOString()
+    };
+    
+    const date = new Date().toISOString().split('T')[0];
+    res.setHeader('Content-disposition', `attachment; filename=BacolorLMS_Data_Export_${date}.json`);
+    res.setHeader('Content-type', 'application/json');
+    res.send(JSON.stringify(exportData, null, 2));
+  } catch (err) {
+    console.error("Export error:", err.message);
+    res.status(500).json({ error: "Failed to export data" });
+  }
+};
