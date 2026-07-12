@@ -91,9 +91,9 @@ const BarangayActiveSyllabus = lazy(
 const CertificatePDF = lazy(
   () => import("./pages/user/certTemplate"),
 );
-import ProtectedRoute from "./components/auth/ProtectedRoute";
-import UserLayout from "./components/layouts/UserLayout";
-import AdminLayout from "./components/layouts/AdminLayout";
+const ProtectedRoute = lazy(() => import("./components/auth/ProtectedRoute"));
+const UserLayout = lazy(() => import("./components/layouts/UserLayout"));
+const AdminLayout = lazy(() => import("./components/layouts/AdminLayout"));
 import ScrollToTop from "./components/ScrollToTop";
 import GlobalBroadcastBanner from "./components/ui/GlobalBroadcastBanner";
 
