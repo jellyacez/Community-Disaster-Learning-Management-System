@@ -1,6 +1,7 @@
 import { HugeiconsIcon } from '@hugeicons/react';
-import { Notification03Icon, Menu01Icon } from '@hugeicons/core-free-icons';
+import { Menu01Icon } from '@hugeicons/core-free-icons';
 import { useLocation, useNavigate } from 'react-router-dom';
+import NotificationDropdown from './NotificationDropdown';
 
 export default function UserNavbar({
   currentUser,
@@ -42,26 +43,28 @@ export default function UserNavbar({
         </div>
 
         <div className="flex items-center gap-3">
-          <button
-            onClick={() => navigate('/user/announcements')}
-            aria-label="View announcements"
-            className="relative rounded-xl border border-gray-200 p-2.5 text-gray-600 hover:bg-gray-50 cursor-pointer"
-          >
-            <HugeiconsIcon aria-hidden="true" icon={Notification03Icon} className="w-5 h-5" />
-            <span className="absolute right-2 top-2 h-2.5 w-2.5 rounded-full bg-red-500" />
-          </button>
+          <NotificationDropdown />
 
           <button
             onClick={() => navigate('/user/profile')}
             aria-label="User profile settings"
-            className="flex items-center gap-3 rounded-xl border border-gray-200 px-3 py-2 hover:bg-gray-50 cursor-pointer"
+            className="flex items-center gap-3 rounded-xl border border-gray-200 px-3 py-2 hover:bg-gray-50 cursor-pointer transition-colors"
           >
-            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-red-100 font-bold text-red-700">
-              {userInitials}
-            </div>
+            {currentUser?.image ? (
+              <img 
+                src={currentUser.image} 
+                alt={`${currentUser.name}'s profile`} 
+                className="h-9 w-9 rounded-full object-cover border border-gray-200"
+              />
+            ) : (
+              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-red-100 font-bold text-red-700">
+                {userInitials}
+              </div>
+            )}
+            
             <div className="hidden text-left sm:block">
               <p className="text-sm font-bold text-gray-900">{currentUser.name}</p>
-              <p className="text-xs text-gray-500">{currentUser.role}</p>
+              <p className="text-xs text-gray-500 capitalize">{currentUser.role}</p>
             </div>
           </button>
         </div>

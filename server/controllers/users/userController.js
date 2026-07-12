@@ -223,3 +223,44 @@ exports.exportUserData = async (req, res) => {
     res.status(500).json({ error: "Failed to export data" });
   }
 };
+// --- End of exportUserData ---
+
+// @desc    Get user's notification settings
+// @access  Private
+exports.getUserSettings = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { rows } = await pool.query('SELECT settings FROM "user" WHERE id = $1', [userId]);
+    
+    if (rows.length === 0) {
+      return res.status(404).json({ error: "User not found" });
+    }
+    
+    // Send back settings or the default object
+    res.json(rows[0].settings || { announcements: true, reminders: true });
+  } catch (err) {
+    console.error("Error fetching settings:", err.message);
+    res.status(500).json({ error: "Server Error" });
+  }
+};
+// --- End of getUserSettings ---
+
+// @desc    Update user's notification settings
+// @access  Private
+exports.updateUserSettings = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const newSettings = req.body;
+    
+    await pool.query(
+      'UPDATE "user" SET settings = $1 WHERE id = $2',
+      [newSettings, userId]
+    );
+    
+    res.json({ success: true, settings: newSettings });
+  } catch (err) {
+    console.error("Error updating settings:", err.message);
+    res.status(500).json({ error: "Server Error" });
+  }
+};
+// --- End of updateUserSettings ---

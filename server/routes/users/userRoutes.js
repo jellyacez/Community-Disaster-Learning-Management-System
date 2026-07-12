@@ -36,4 +36,14 @@ router.get("/certificate-data", betterAuthMiddleware, userController.getCertific
 // @access  Private
 router.get("/me/export", betterAuthMiddleware, userController.exportUserData);
 
+// @route   GET /api/users/me/settings
+// @desc    Get user's notification settings
+// @access  Private
+router.get("/me/settings", betterAuthMiddleware, userController.getUserSettings);
+
+// @route   PUT /api/users/me/settings
+// @desc    Update user's notification settings
+// @access  Private
+router.put("/me/settings", betterAuthMiddleware, userController.updateUserSettings);
+
 module.exports = router;

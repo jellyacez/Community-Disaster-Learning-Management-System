@@ -820,7 +820,8 @@ CREATE TABLE public."user" (
     archived boolean,
     "lastPasswordChange" timestamp without time zone,
     "twoFactorEnabled" boolean,
-    last_active timestamp with time zone
+    last_active timestamp with time zone,
+    settings jsonb DEFAULT '{"reminders": true, "announcements": true}'::jsonb
 );
 
 
