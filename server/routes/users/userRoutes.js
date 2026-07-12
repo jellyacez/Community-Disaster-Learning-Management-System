@@ -1,8 +1,10 @@
 const express = require("express");
 const router = express.Router();
 const userController = require("../../controllers/users/userController");
+const announcementController = require("../../controllers/users/announcementController");
 const adminMiddleware = require("../../middleware/adminMiddleware");
 const { betterAuthMiddleware } = require("../../middleware/betterAuthMiddleware");
+const requirePermission = require("../../middleware/requirePermission");
 
 // @route   GET /api/users/me/provider
 // @desc    Get current user's auth providers
@@ -14,7 +16,10 @@ router.get("/me/provider", betterAuthMiddleware, userController.getProviders);
 // @access  Private
 router.post("/onboarding", betterAuthMiddleware, userController.onboarding);
 
-const requirePermission = require("../../middleware/requirePermission");
+// @route   GET /api/users/announcements
+// @desc    Get paginated announcements
+// @access  Private
+router.get("/announcements", betterAuthMiddleware, announcementController.getPaginatedAnnouncements);
 
 // @route   GET /api/users
 // @desc    Get all users (for admin dashboard)
