@@ -5,16 +5,16 @@ import { HugeiconsIcon } from '@hugeicons/react';
 import { Notification03Icon } from '@hugeicons/core-free-icons';
 import { motion, AnimatePresence } from 'framer-motion';
 import apiClient from '../../lib/apiClient';
+import { useNotificationPreferences } from '../settings/hooks/useNotificationPreferences';
 
 export default function NotificationDropdown() {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
   const navigate = useNavigate();
 
-  // Track the ID of the newest announcement the user has seen
-  const [lastSeenId, setLastSeenId] = useState(() => {
-    return localStorage.getItem('lastSeenAnnouncementId') || null;
-  });
+  // Pull settings from DB via our custom hook
+  const { settings, updatePreference } = useNotificationPreferences();
+  const lastSeenId = settings?.lastSeenAnnouncementId || null;
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -27,7 +27,7 @@ export default function NotificationDropdown() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const { data: dashboardData, isLoading } = useQuery({
+  const { data: dashboardData, isLoading: isLoadingAnnouncements } = useQuery({
     queryKey: ["userDashboard"],
     queryFn: async () => {
       const response = await apiClient.get("/user/dashboard");
@@ -38,19 +38,18 @@ export default function NotificationDropdown() {
   const announcements = dashboardData?.announcements || [];
   const recentAnnouncements = announcements.slice(0, 3);
   
-  // A notification is "new" if the newest announcement ID doesn't match what we last saw
+  // A notification is "new" if the newest announcement ID doesn't match what is stored in DB settings
   const hasUnread = recentAnnouncements.length > 0 && String(recentAnnouncements[0].id) !== String(lastSeenId);
 
-  // When dropdown opens, mark the newest announcement as seen
+  // When dropdown opens, mark the newest announcement as seen in the DB
   useEffect(() => {
     if (isOpen && recentAnnouncements.length > 0) {
       const topId = String(recentAnnouncements[0].id);
-      if (topId !== lastSeenId) {
-        setLastSeenId(topId);
-        localStorage.setItem('lastSeenAnnouncementId', topId);
+      if (topId !== String(lastSeenId)) {
+        updatePreference("lastSeenAnnouncementId", topId);
       }
     }
-  }, [isOpen, recentAnnouncements, lastSeenId]);
+  }, [isOpen, recentAnnouncements, lastSeenId, updatePreference]);
 
   return (
     <div className="relative" ref={dropdownRef}>
@@ -84,7 +83,7 @@ export default function NotificationDropdown() {
             </div>
 
             <div className="max-h-[320px] overflow-y-auto p-2">
-              {isLoading ? (
+              {isLoadingAnnouncements ? (
                 <div className="p-4 text-center text-sm text-gray-500">Loading...</div>
               ) : recentAnnouncements.length === 0 ? (
                 <div className="p-4 text-center text-sm text-gray-500">No new announcements.</div>
