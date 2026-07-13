@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueries, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import apiClient from "../lib/apiClient";
 import toast from "react-hot-toast";
@@ -21,6 +21,13 @@ export function useModuleViewer(moduleId) {
     retry: false
   });
 
+  // Derived state
+  const moduleData = data?.module || {};
+  const steps = useMemo(() => data?.steps || [], [data?.steps]);
+  const currentProgressOrder = data?.currentProgressOrder || 0;
+  const activeStep = useMemo(() => steps.find(s => s.id === activeStepId), [steps, activeStepId]);
+  const progressPercentage = steps.length > 0 ? Math.round((currentProgressOrder / steps.length) * 100) : 0;
+
   // Initialize default step
   useEffect(() => {
     if (data && data.steps && data.steps.length > 0 && !activeStepId) {
@@ -30,12 +37,27 @@ export function useModuleViewer(moduleId) {
     }
   }, [data, activeStepId]);
 
-  // Derived state
-  const moduleData = data?.module || {};
-  const steps = useMemo(() => data?.steps || [], [data?.steps]);
-  const currentProgressOrder = data?.currentProgressOrder || 0;
-  const activeStep = useMemo(() => steps.find(s => s.id === activeStepId), [steps, activeStepId]);
-  const progressPercentage = steps.length > 0 ? Math.round((currentProgressOrder / steps.length) * 100) : 0;
+  // PRELOAD ALL ASSESSMENT DATA FOR OFFLINE PWA CAPABILITY
+  const assessmentStepIds = useMemo(() => steps.map(s => s.id), [steps]);
+
+  const assessmentQueries = useQueries({
+    queries: assessmentStepIds.map(stepId => ({
+      queryKey: ['stepAssessment', stepId],
+      queryFn: async () => {
+        const res = await apiClient.get(`/modules/steps/${stepId}/assessment`);
+        return { stepId, questions: res.data.data };
+      },
+      staleTime: Infinity, // Keep in cache indefinitely for offline usage
+    }))
+  });
+
+  const getAssessmentForStep = (stepId) => {
+    const query = assessmentQueries.find(q => String(q.data?.stepId) === String(stepId));
+    return {
+      questions: query?.data?.questions || [],
+      isLoading: query?.isLoading || false
+    };
+  };
 
   // Step completion mutation
   const completeStepMutation = useMutation({
@@ -113,6 +135,7 @@ export function useModuleViewer(moduleId) {
     isCompleting: completeStepMutation.isPending,
     handleStepClick,
     handleCompleteAndContinue,
-    handlePrevious
+    handlePrevious,
+    getAssessmentForStep // Pass the assessment fetcher
   };
 }

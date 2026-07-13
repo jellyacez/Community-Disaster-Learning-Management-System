@@ -211,4 +211,60 @@ exports.getModuleViewerData = async (req, res) => {
     return res.status(500).json({ success: false, message: "Internal server error" });
   }
 };
+// --- End of getModuleViewerData ---
 
+// @desc    Get assessment data (questions and choices) for a specific step
+// @access  Private
+exports.getStepAssessment = async (req, res) => {
+  const { stepId } = req.params;
+
+  try {
+    // Verify the step exists
+    const stepCheck = await pool.query(
+      "SELECT step_id FROM module_steps WHERE step_id = $1",
+      [stepId]
+    );
+
+    if (stepCheck.rowCount === 0) {
+      return res.status(404).json({ success: false, message: "Step not found." });
+    }
+
+    // Fetch questions
+    const questionsResult = await pool.query(
+      "SELECT question_id, question_text, points, image_url FROM questions WHERE step_id = $1 ORDER BY question_id ASC",
+      [stepId]
+    );
+
+    const questions = questionsResult.rows;
+
+    // Fetch choices for all these questions
+    if (questions.length > 0) {
+      const questionIds = questions.map(q => q.question_id);
+      
+      const choicesResult = await pool.query(
+        "SELECT choice_id, question_id, choice_text, is_correct, rationale FROM choices WHERE question_id = ANY($1::int[]) ORDER BY choice_id ASC",
+        [questionIds]
+      );
+
+      const allChoices = choicesResult.rows;
+
+      // Map choices to their respective questions
+      questions.forEach(q => {
+        q.options = allChoices.filter(c => c.question_id === q.question_id).map(c => ({
+          id: c.choice_id,
+          text: c.choice_text,
+          isCorrect: c.is_correct,
+          rationale: c.rationale
+        }));
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      data: questions
+    });
+  } catch (error) {
+    console.error("Error fetching step assessment data:", error);
+    return res.status(500).json({ success: false, message: "Internal server error" });
+  }
+};

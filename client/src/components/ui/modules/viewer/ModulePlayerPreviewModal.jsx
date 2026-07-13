@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import toast from "react-hot-toast";
 import ModuleViewerSidebar from "./ModuleViewerSidebar";
 import ModuleViewerContent from "./ModuleViewerContent";
 import { MenuIcon } from "./ModuleIcons";
@@ -76,7 +77,7 @@ export default function ModulePlayerPreviewModal({
       }
     } else {
       // Complete module logic
-      alert("Module Preview Completed!");
+      toast.success("Module Preview Completed!");
       onClose();
     }
   };

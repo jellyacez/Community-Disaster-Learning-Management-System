@@ -33,6 +33,10 @@ router.post("/:id/enroll", betterAuthMiddleware, moduleController.enrollInModule
 // @access  Private
 router.get("/:id/viewer", betterAuthMiddleware, moduleController.getModuleViewerData);
 
+// @route   GET /api/modules/steps/:stepId/assessment
+// @desc    Get questions and choices for a specific assessment step
+router.get("/steps/:stepId/assessment", betterAuthMiddleware, moduleController.getStepAssessment);
+
 // @route   GET /api/modules/:id/progress
 // @desc    Get module progress percentage
 // @access  Private

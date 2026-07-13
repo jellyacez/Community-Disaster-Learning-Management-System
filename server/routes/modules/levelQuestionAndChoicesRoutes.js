@@ -8,11 +8,11 @@ const requirePermission = require("../../middleware/requirePermission");
 router.post("/:moduleId/questions", betterAuthMiddleware, adminMiddleware, requirePermission('manage_modules'), async (req, res) => {
    
     const { moduleId } = req.params;  
-    const { questionText, points, imageURL } = req.body;
+    const { questionText, points, imageURL, stepId } = req.body;
     
     try {
         
-        const result = await questionCreation(moduleId, questionText, points, imageURL)
+        const result = await questionCreation(moduleId, questionText, points, imageURL, stepId)
         
         return res.status(201).json({
             success: true,

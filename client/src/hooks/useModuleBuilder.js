@@ -54,11 +54,21 @@ export function useModuleBuilder() {
     }
 
     const stepWithMeta = { ...currentFlowStep, id: crypto.randomUUID() };
-    if (currentFlowStep.type === "text" && writtenMaterialFile) {
+    
+    // Auto-detect step type to ensure proper rendering in ModuleViewer
+    if (currentFlowStep.quizQuestions && currentFlowStep.quizQuestions.length > 0) {
+      stepWithMeta.type = "quiz";
+    } else if (writtenMaterialFile && writtenMaterialFile.type.startsWith("video/")) {
+      stepWithMeta.type = "video";
+    } else {
+      stepWithMeta.type = "text";
+    }
+
+    if ((stepWithMeta.type === "text" || stepWithMeta.type === "video") && writtenMaterialFile) {
       stepWithMeta.attachedFile = writtenMaterialFile;
       stepWithMeta.attachedFileName = writtenMaterialFile.name;
     }
-    if (currentFlowStep.type === "assessment" && currentFlowStep.assessmentType === "situational" && situationalImage) {
+    if (currentFlowStep.assessmentType === "situational" && situationalImage) {
       stepWithMeta.attachedFile = situationalImage;
       stepWithMeta.attachedImageName = situationalImage.name;
     }

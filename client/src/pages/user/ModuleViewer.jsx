@@ -26,7 +26,8 @@ export default function ModuleViewer() {
     isCompleting,
     handleStepClick,
     handleCompleteAndContinue,
-    handlePrevious
+    handlePrevious,
+    getAssessmentForStep
   } = useModuleViewer(moduleId);
 
   useDocumentTitle(moduleData?.title ? `${moduleData.title} | Bacolor LMS` : 'Module Viewer');
@@ -95,6 +96,7 @@ export default function ModuleViewer() {
         handlePrevious={handlePrevious}
         handleCompleteAndContinue={handleCompleteAndContinue}
         isCompleting={isCompleting}
+        getAssessmentForStep={getAssessmentForStep}
       />
 
     </div>
