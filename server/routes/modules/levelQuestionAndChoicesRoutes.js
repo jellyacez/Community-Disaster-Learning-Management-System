@@ -41,10 +41,10 @@ router.post("/:moduleId/questions", betterAuthMiddleware, adminMiddleware, requi
 router.post("/:questionId/choices", betterAuthMiddleware, adminMiddleware, requirePermission('manage_modules'), async (req, res) => {
  
     const { questionId } = req.params;
-    const { choiceText, isCorrect } = req.body;
+    const { choiceText, isCorrect, rationale } = req.body;
 
     try {
-       const result = await choicesCreation(questionId, choiceText, isCorrect)
+       const result = await choicesCreation(questionId, choiceText, isCorrect, rationale);
         
         return res.status(201).json({
             success: true,

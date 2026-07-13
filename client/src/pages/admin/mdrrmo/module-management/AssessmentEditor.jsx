@@ -35,9 +35,9 @@ export default function AssessmentEditor({
     }
   };
 
-  const handleOptionChange = (oIdx, value) => {
+  const handleOptionChange = (oIdx, field, value) => {
     const updated = [...currentQuizQuestion.options];
-    updated[oIdx] = value;
+    updated[oIdx] = { ...updated[oIdx], [field]: value };
     setCurrentQuizQuestion({ ...currentQuizQuestion, options: updated });
     if (formErrors.options) {
       setFormErrors(prev => {
@@ -78,18 +78,26 @@ export default function AssessmentEditor({
           </div>
           <div className="grid grid-cols-1 gap-2">
             {currentQuizQuestion.options.map((opt, oIdx) => (
-              <input 
-                key={oIdx} 
-                type="text" 
-                placeholder={`Choice Answer Option ${oIdx + 1}`} 
-                value={opt} 
-                onChange={(e) => handleOptionChange(oIdx, e.target.value)} 
-                className={`p-2.5 rounded-xl text-sm focus:outline-none shadow-sm transition-colors ${
+              <div key={oIdx} className={`p-2 rounded-xl text-sm transition-colors ${
                   currentQuizQuestion.correctAnswerIndex === oIdx 
                     ? "border-2 border-emerald-500 bg-emerald-50" 
                     : formErrors.options ? "border border-red-500 bg-white" : "border border-slate-200 bg-white"
-                }`}
-              />
+                }`}>
+                <input 
+                  type="text" 
+                  placeholder={`Choice Answer Option ${oIdx + 1}`} 
+                  value={opt.text} 
+                  onChange={(e) => handleOptionChange(oIdx, 'text', e.target.value)} 
+                  className="w-full p-2 bg-transparent focus:outline-none font-medium mb-1"
+                />
+                <textarea 
+                  rows="2"
+                  placeholder={`Rationale / Formative Feedback (Shown if selected)`}
+                  value={opt.rationale}
+                  onChange={(e) => handleOptionChange(oIdx, 'rationale', e.target.value)}
+                  className="w-full p-2 bg-white/50 border border-slate-200 rounded focus:outline-none text-xs resize-none"
+                />
+              </div>
             ))}
             {formErrors.options && <p className="text-red-500 text-xs mt-1 font-medium">{formErrors.options}</p>}
           </div>

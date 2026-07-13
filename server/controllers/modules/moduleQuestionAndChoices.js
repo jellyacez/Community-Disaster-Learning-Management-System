@@ -12,13 +12,14 @@ const questionCreation = async (moduleId, questionText, points, imageURL, stepId
     return result.rows[0];
 }
 
-const choicesCreation = async (questionId, choiceText, isCorrect) => {
+const choicesCreation = async (questionId, choiceText, isCorrect, rationale = null) => {
     const sanitizedChoiceText = cleanRichText(choiceText);
+    const sanitizedRationale = rationale ? cleanRichText(rationale) : null;
     const result = await pool.query(
-        `INSERT INTO public.choices (question_id, choice_text, is_correct)
-         VALUES ($1, $2, $3)
+        `INSERT INTO public.choices (question_id, choice_text, is_correct, rationale)
+         VALUES ($1, $2, $3, $4)
          RETURNING *`,
-        [questionId, sanitizedChoiceText, isCorrect]
+        [questionId, sanitizedChoiceText, isCorrect, sanitizedRationale]
     );
     return result.rows[0];
 }

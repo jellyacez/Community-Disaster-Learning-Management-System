@@ -19,7 +19,14 @@ export function useModuleBuilder() {
     type: "text", title: "", textContent: "", videoUrl: "", assessmentType: "quiz", quizQuestions: [], situationalScenario: "", situationalGuide: ""
   });
   const [currentQuizQuestion, setCurrentQuizQuestion] = useState({
-    questionText: "", options: ["", "", "", ""], correctAnswerIndex: 0
+    questionText: "", 
+    options: [
+      { text: "", rationale: "" }, 
+      { text: "", rationale: "" }, 
+      { text: "", rationale: "" }, 
+      { text: "", rationale: "" }
+    ], 
+    correctAnswerIndex: 0
   });
 
   const [situationalImage, setSituationalImage] = useState(null);
@@ -67,7 +74,8 @@ export function useModuleBuilder() {
   const addQuizQuestionToStep = () => {
     const errors = {};
     if (!currentQuizQuestion.questionText.trim()) errors.questionText = "Question text is required to proceed.";
-    if (currentQuizQuestion.options.some(opt => !opt.trim())) errors.options = "All four multiple-choice options must be populated.";
+    if (currentQuizQuestion.options.some(opt => !opt.text.trim())) errors.options = "All four multiple-choice options must be populated.";
+    if (currentQuizQuestion.options.some(opt => !opt.rationale.trim())) errors.options = "Rationale / Formative Feedback is required for all options to ensure pedagogical effectiveness.";
     
     if (Object.keys(errors).length > 0) {
       setFormErrors({ ...formErrors, ...errors });
@@ -78,7 +86,16 @@ export function useModuleBuilder() {
       ...currentFlowStep,
       quizQuestions: [...currentFlowStep.quizQuestions, currentQuizQuestion]
     });
-    setCurrentQuizQuestion({ questionText: "", options: ["", "", "", ""], correctAnswerIndex: 0 });
+    setCurrentQuizQuestion({ 
+      questionText: "", 
+      options: [
+        { text: "", rationale: "" }, 
+        { text: "", rationale: "" }, 
+        { text: "", rationale: "" }, 
+        { text: "", rationale: "" }
+      ], 
+      correctAnswerIndex: 0 
+    });
     const newErrors = { ...formErrors };
     delete newErrors.questionText;
     delete newErrors.options;
@@ -162,7 +179,30 @@ export function useModuleBuilder() {
           stepType: flow.type
         };
 
-        await apiClient.post(`modules/steps/${targetLevelId}`, stepPayload);
+        const stepResponse = await apiClient.post(`modules/steps/${targetLevelId}`, stepPayload);
+        const targetStepId = stepResponse.data.data.step_id;
+
+        // INSERT QUIZ QUESTIONS AND CHOICES
+        if (flow.assessmentType === "quiz" && flow.quizQuestions.length > 0) {
+          for (let q of flow.quizQuestions) {
+             const qRes = await apiClient.post(`modules/${targetModuleId}/questions`, {
+                 questionText: q.questionText,
+                 points: 10,
+                 imageURL: '',
+                 stepId: targetStepId
+             });
+             const qId = qRes.data.data.question_id;
+
+             for (let oIndex = 0; oIndex < q.options.length; oIndex++) {
+                const opt = q.options[oIndex];
+                await apiClient.post(`modules/${qId}/choices`, {
+                    choiceText: opt.text,
+                    isCorrect: oIndex === q.correctAnswerIndex,
+                    rationale: opt.rationale
+                });
+             }
+          }
+        }
       }
 
       toast.success("Syllabus configuration successfully published to the production database.", { id: loadingToastId });
