@@ -1,3 +1,4 @@
+import DOMPurify from "dompurify";
 import { memo } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Activity01Icon, Alert01Icon, Book01Icon } from "@hugeicons/core-free-icons";
@@ -38,9 +39,10 @@ const EnrolledModuleCard = memo(function EnrolledModuleCard({ module, onResume }
           <h3 className="text-lg font-bold text-gray-900 group-hover:text-red-700 transition-colors">
             {module.title}
           </h3>
-          <p className="mt-1 text-sm text-gray-500 line-clamp-2">
-            {module.description}
-          </p>
+          <div 
+            className="mt-1 text-sm text-gray-500 line-clamp-2 prose-sm max-w-none"
+            dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(module.description || "") }}
+          />
         </div>
 
         <div className="min-w-52 shrink-0">
