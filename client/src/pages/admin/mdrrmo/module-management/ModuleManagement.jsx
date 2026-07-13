@@ -28,7 +28,8 @@ export default function ModuleManagement() {
     currentFlowStep,
     currentQuizQuestion,
     situationalImage,
-    writtenMaterialFile
+    writtenMaterialFile,
+    formErrors
   } = state;
 
   const {
@@ -37,7 +38,8 @@ export default function ModuleManagement() {
     setCurrentFlowStep,
     setCurrentQuizQuestion,
     setSituationalImage,
-    setWrittenMaterialFile
+    setWrittenMaterialFile,
+    setFormErrors
   } = setters;
 
   const {
@@ -81,9 +83,7 @@ export default function ModuleManagement() {
   };
 
   const handlePreviewClick = () => {
-    if (stagedFlows.length === 0) {
-      return alert("Please add at least one step to the Module Steps Order Sequence before previewing.");
-    }
+    if (!triggerFlowSequencePreview()) return;
     setShowPreviewModal(true);
   };
 
@@ -99,6 +99,8 @@ export default function ModuleManagement() {
                 editingModuleId={editingModuleId}
                 moduleForm={moduleForm}
                 setModuleForm={setModuleForm}
+                formErrors={formErrors}
+                setFormErrors={setFormErrors}
               />
 
               <SequenceCanvas 
@@ -106,6 +108,10 @@ export default function ModuleManagement() {
                 setStagedFlows={setStagedFlows}
                 triggerFlowSequencePreview={handlePreviewClick}
               />
+              
+              {formErrors.flows && (
+                <p className="text-red-500 text-xs font-bold px-2">{formErrors.flows}</p>
+              )}
 
               <StepBuilder 
                 currentFlowStep={currentFlowStep}
@@ -118,6 +124,8 @@ export default function ModuleManagement() {
                 situationalImage={situationalImage}
                 setSituationalImage={setSituationalImage}
                 addStepToFlow={addStepToFlow}
+                formErrors={formErrors}
+                setFormErrors={setFormErrors}
               />
 
               <button 

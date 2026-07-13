@@ -1,4 +1,5 @@
 import { useState } from "react";
+import toast from "react-hot-toast";
 import apiClient from "../lib/apiClient";
 
 export function useModuleBuilder() {
@@ -12,6 +13,7 @@ export function useModuleBuilder() {
     image_url: ""
   });
 
+  const [formErrors, setFormErrors] = useState({});
   const [stagedFlows, setStagedFlows] = useState([]);
   const [currentFlowStep, setCurrentFlowStep] = useState({
     type: "text", title: "", textContent: "", videoUrl: "", assessmentType: "quiz", quizQuestions: [], situationalScenario: "", situationalGuide: ""
@@ -24,12 +26,27 @@ export function useModuleBuilder() {
   const [writtenMaterialFile, setWrittenMaterialFile] = useState(null);
 
   const addStepToFlow = () => {
-    if (!currentFlowStep.title.trim()) return alert("Please enter a step name.");
-    if (currentFlowStep.type === "text" && !currentFlowStep.textContent.trim()) return alert("Please fill in the documentation text block.");
-    if (currentFlowStep.type === "assessment") {
-      if (currentFlowStep.assessmentType === "quiz" && currentFlowStep.quizQuestions.length === 0) return alert("Please add at least one question.");
-      if (currentFlowStep.assessmentType === "situational" && !currentFlowStep.situationalScenario.trim()) return alert("Please describe the scenario.");
+    const errors = {};
+    if (!currentFlowStep.title.trim()) errors.stepTitle = "A step title is required to identify this module segment.";
+    
+    if (currentFlowStep.type === "text" && !currentFlowStep.textContent.trim()) {
+      errors.stepContent = "Instructional content is required. Please provide the necessary documentation.";
     }
+    if (currentFlowStep.type === "assessment") {
+      if (currentFlowStep.assessmentType === "quiz" && currentFlowStep.quizQuestions.length === 0) {
+        errors.stepQuiz = "At least one assessment question must be saved for this verification step.";
+      }
+      if (currentFlowStep.assessmentType === "situational" && !currentFlowStep.situationalScenario.trim()) {
+        errors.stepScenario = "A scenario description is required for this situational assessment.";
+      }
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
+      toast.error("Validation failed. Please ensure all required fields in this step are completed.");
+      return;
+    }
+
     const stepWithMeta = { ...currentFlowStep, id: crypto.randomUUID() };
     if (currentFlowStep.type === "text" && writtenMaterialFile) stepWithMeta.attachedFileName = writtenMaterialFile.name;
     if (currentFlowStep.type === "assessment" && currentFlowStep.assessmentType === "situational" && situationalImage) stepWithMeta.attachedImageName = situationalImage.name;
@@ -38,23 +55,48 @@ export function useModuleBuilder() {
     setWrittenMaterialFile(null);
     setSituationalImage(null);
     setCurrentFlowStep({ type: "text", title: "", textContent: "", videoUrl: "", assessmentType: "quiz", quizQuestions: [], situationalScenario: "", situationalGuide: "" });
+    setFormErrors({});
+    toast.success("Step successfully appended to the sequence module.");
   };
 
   const addQuizQuestionToStep = () => {
-    if (!currentQuizQuestion.questionText.trim()) return alert("Please write a question.");
-    if (currentQuizQuestion.options.some(opt => !opt.trim())) return alert("Please fill out all choice options.");
+    const errors = {};
+    if (!currentQuizQuestion.questionText.trim()) errors.questionText = "Question text is required to proceed.";
+    if (currentQuizQuestion.options.some(opt => !opt.trim())) errors.options = "All four multiple-choice options must be populated.";
+    
+    if (Object.keys(errors).length > 0) {
+      setFormErrors({ ...formErrors, ...errors });
+      return;
+    }
+
     setCurrentFlowStep({
       ...currentFlowStep,
       quizQuestions: [...currentFlowStep.quizQuestions, currentQuizQuestion]
     });
     setCurrentQuizQuestion({ questionText: "", options: ["", "", "", ""], correctAnswerIndex: 0 });
+    const newErrors = { ...formErrors };
+    delete newErrors.questionText;
+    delete newErrors.options;
+    setFormErrors(newErrors);
+    toast.success("Assessment question successfully saved.");
   };
 
   const handleModuleSubmit = async (e) => {
     e.preventDefault();
-    if (!moduleForm.title || !moduleForm.description) return alert("Please enter title and description.");
-    if (stagedFlows.length === 0) return alert("Please add at least one step.");
     
+    const errors = {};
+    if (!moduleForm.title.trim()) errors.title = "A module topic title is required.";
+    if (!moduleForm.description.trim() || moduleForm.description === "<p></p>") errors.description = "A short description or summary is required for the module overview.";
+    if (stagedFlows.length === 0) errors.flows = "A module must contain at least one instructional or assessment step before publishing.";
+    
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
+      toast.error("Module validation failed. Please review the highlighted errors before publishing.");
+      return;
+    }
+
+    const loadingToastId = toast.loading("Executing module publication process...");
+
     try {
       const moduleResponse = await apiClient.post("modules", {
         moduleName: moduleForm.title,
@@ -93,19 +135,24 @@ export function useModuleBuilder() {
         await apiClient.post(`modules/steps/${targetLevelId}`, stepPayload);
       }
 
-      alert("Syllabus configuration structure successfully published to production database!");
+      toast.success("Syllabus configuration successfully published to the production database.", { id: loadingToastId });
       setEditingModuleId(null);
       setModuleForm({ title: "", description: "", level: "Level 1", category: "General Safety / Protocols", duration: "15 mins", image_url: "" });
       setStagedFlows([]);
+      setFormErrors({});
     } catch (error) {
       console.error("Critical error executing data synchronization processing:", error);
-      alert(`Publishing aborted: ${error.response?.data?.message || error.message}`);
+      toast.error(`Publication aborted: ${error.response?.data?.message || error.message}`, { id: loadingToastId });
     }
   };
 
   const triggerFlowSequencePreview = () => {
-    const seq = stagedFlows.map((item, idx) => `${idx + 1}. [${item.type.toUpperCase()}] ${item.title}`).join("\n");
-    alert(`Current Staged Curriculum Layout:\n\n${seq}`);
+    // This is handled by the modal toggle now, but if used standalone:
+    if (stagedFlows.length === 0) {
+      toast.error("No structural steps found. Please stage at least one sequence step to initiate preview.");
+      return false;
+    }
+    return true;
   };
 
   return {
@@ -116,7 +163,8 @@ export function useModuleBuilder() {
       currentFlowStep,
       currentQuizQuestion,
       situationalImage,
-      writtenMaterialFile
+      writtenMaterialFile,
+      formErrors
     },
     setters: {
       setEditingModuleId,
@@ -125,7 +173,8 @@ export function useModuleBuilder() {
       setCurrentFlowStep,
       setCurrentQuizQuestion,
       setSituationalImage,
-      setWrittenMaterialFile
+      setWrittenMaterialFile,
+      setFormErrors
     },
     actions: {
       addStepToFlow,

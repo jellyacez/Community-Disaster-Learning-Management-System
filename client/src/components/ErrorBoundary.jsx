@@ -37,13 +37,21 @@ class ErrorBoundary extends React.Component {
               We encountered an unexpected issue while loading this section. Please refresh the page to try again, or return to the dashboard.
             </p>
 
-            <button
-              onClick={() => window.location.reload()}
-              className="w-full flex justify-center items-center gap-2 py-3 px-4 bg-red-600 hover:bg-red-700 focus:ring-4 focus:ring-red-500/20 text-white rounded-xl font-bold transition-all"
-            >
-              <HugeiconsIcon icon={RefreshIcon} className="w-5 h-5" />
-              Reload Application
-            </button>
+            <div className="flex flex-col gap-3">
+              <button
+                onClick={() => window.location.reload()}
+                className="w-full flex justify-center items-center gap-2 py-3 px-4 bg-red-600 hover:bg-red-700 focus:ring-4 focus:ring-red-500/20 text-white rounded-xl font-bold transition-all"
+              >
+                <HugeiconsIcon icon={RefreshIcon} className="w-5 h-5" />
+                Reload Application
+              </button>
+              <button
+                onClick={() => window.location.href = '/'}
+                className="w-full flex justify-center items-center gap-2 py-3 px-4 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 rounded-xl font-bold transition-all"
+              >
+                Return to Dashboard
+              </button>
+            </div>
           </div>
         </div>
       );

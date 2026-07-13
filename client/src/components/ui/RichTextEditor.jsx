@@ -2,7 +2,7 @@ import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Underline from '@tiptap/extension-underline';
 import { Bold, Italic, Underline as UnderlineIcon, List, ListOrdered } from 'lucide-react';
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 
 const MenuBar = ({ editor }) => {
   if (!editor) {
@@ -69,12 +69,12 @@ const MenuBar = ({ editor }) => {
   );
 };
 
-const extensions = [
-  StarterKit,
-  Underline,
-];
-
 export default function RichTextEditor({ value, onChange, placeholder, className = "" }) {
+  const extensions = useMemo(() => [
+    StarterKit,
+    Underline,
+  ], []);
+
   const editor = useEditor({
     extensions,
     content: value,
