@@ -32,22 +32,22 @@ export default function SequenceCanvas({ stagedFlows, setStagedFlows, triggerFlo
   };
 
   return (
-    <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm space-y-4">
-      <div className="flex items-center justify-between border-b border-gray-100 pb-2">
-        <h3 className="text-xs font-bold uppercase text-gray-400 font-mono">Module Steps Order Sequence</h3>
+    <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm space-y-5">
+      <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+        <h3 className="text-sm font-bold text-gray-800 uppercase tracking-wider">Module Steps Order Sequence</h3>
         {stagedFlows.length >= 2 && (
           <button 
             type="button" 
             onClick={triggerFlowSequencePreview} 
-            className="px-3 py-1 text-[10px] font-bold text-red-600 bg-red-50 border border-red-200 hover:bg-red-600 hover:text-white rounded-lg transition-colors shadow-sm"
+            className="px-3 py-1.5 text-xs font-semibold text-red-600 bg-red-50 border border-red-200 hover:bg-red-600 hover:text-white rounded-lg transition-colors shadow-sm"
           >
             Preview Flow Blueprint
           </button>
         )}
       </div>
-      <div className="space-y-2">
+      <div className="space-y-3">
         {stagedFlows.length === 0 ? (
-          <p className="text-xs text-gray-400 italic text-center py-4">No steps added yet. Use the builder below.</p>
+          <p className="text-sm text-gray-400 italic text-center py-6">No steps added yet. Use the builder below.</p>
         ) : (
           stagedFlows.map((flow, index) => (
             <div 
@@ -56,20 +56,20 @@ export default function SequenceCanvas({ stagedFlows, setStagedFlows, triggerFlo
               onDragStart={(e) => handleDragStart(e, index)} 
               onDragOver={(e) => handleDragOver(e, index)} 
               onDragEnd={handleDragEnd} 
-              className="flex items-center justify-between p-3 bg-gray-50 border border-gray-200/80 rounded-xl text-sm shadow-sm cursor-grab active:cursor-grabbing hover:border-gray-300 transition-colors"
+              className="flex items-center justify-between p-4 bg-gray-50 border border-gray-200 rounded-xl text-sm shadow-sm cursor-grab active:cursor-grabbing hover:border-gray-300 transition-colors"
             >
-              <div className="flex items-center gap-3">
-                <span className="text-gray-400">☰</span>
+              <div className="flex items-center gap-4">
+                <span className="text-gray-400 cursor-grab">☰</span>
                 <span className="font-semibold text-gray-800">{flow.title}</span>
-                <span className="bg-gray-200 text-gray-600 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider">{flow.type}</span>
+                <span className="bg-gray-200 text-gray-700 px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wide">{flow.type}</span>
               </div>
               <div className="flex items-center gap-2">
-                <button type="button" onClick={() => moveFlowStep(index, "up")} disabled={index === 0} className="px-2 py-1 bg-white border border-gray-200 text-[10px] rounded hover:bg-gray-50 disabled:opacity-50">▲</button>
-                <button type="button" onClick={() => moveFlowStep(index, "down")} disabled={index === stagedFlows.length - 1} className="px-2 py-1 bg-white border border-gray-200 text-[10px] rounded hover:bg-gray-50 disabled:opacity-50">▼</button>
+                <button type="button" onClick={() => moveFlowStep(index, "up")} disabled={index === 0} className="px-2 py-1 bg-white border border-gray-200 text-xs rounded-md hover:bg-gray-50 disabled:opacity-50">▲</button>
+                <button type="button" onClick={() => moveFlowStep(index, "down")} disabled={index === stagedFlows.length - 1} className="px-2 py-1 bg-white border border-gray-200 text-xs rounded-md hover:bg-gray-50 disabled:opacity-50">▼</button>
                 <button type="button" onClick={() => {
                   const updated = stagedFlows.filter((_, i) => i !== index);
                   setStagedFlows(updated);
-                }} className="text-xs font-semibold text-red-600 ml-2 hover:underline">Delete</button>
+                }} className="text-xs font-bold text-red-600 ml-3 hover:underline">Delete</button>
               </div>
             </div>
           ))

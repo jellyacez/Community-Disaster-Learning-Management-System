@@ -23,7 +23,8 @@ export default function ModuleManagement() {
     title: "", 
     description: "", 
     riskLevel: "Low",
-    status: "Public"
+    category: "General Safety / Protocols",
+    duration: "15 mins"
   });
 
   const [stagedFlows, setStagedFlows] = useState([]);
@@ -73,10 +74,10 @@ export default function ModuleManagement() {
       
       const moduleResponse = await apiClient.post("modules", {
         moduleName: moduleForm.title,
-        moduleCategory: moduleForm.status,
+        moduleCategory: moduleForm.category,
         description: moduleForm.description,
         level: moduleForm.riskLevel,
-        duration: "Varies",
+        duration: moduleForm.duration,
         image_url: "",
         video_url: ""
       });
@@ -115,7 +116,7 @@ export default function ModuleManagement() {
 
       alert("Syllabus configuration structure successfully published to production database!");
       setEditingModuleId(null);
-      setModuleForm({ title: "", description: "", riskLevel: "Low", status: "Public" });
+      setModuleForm({ title: "", description: "", riskLevel: "Low", category: "General Safety / Protocols", duration: "15 mins" });
       setStagedFlows([]);
     } catch (error) {
       console.error("Critical error executing data synchronization processing:", error);
