@@ -78,8 +78,8 @@ export default function ModuleManagement() {
     duration: moduleForm.duration,
     description: moduleForm.description || "Start typing a description to see it here...",
     image_url: moduleForm.image_url,
-    progress: 100, // Show completed state to preview all badges
-    status: "Completed"
+    progress: 0,
+    status: "Not Started"
   };
 
   const handlePreviewClick = () => {
@@ -130,7 +130,7 @@ export default function ModuleManagement() {
 
               <button 
                 type="submit" 
-                className="w-full py-4 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl text-sm uppercase tracking-wider shadow-md transition-colors"
+                className="w-full py-4 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-sm uppercase tracking-wider shadow-md transition-colors"
               >
                 {editingModuleId ? "Commit Changes to Syllabus" : "Publish Training Module Layout"}
               </button>
@@ -146,13 +146,17 @@ export default function ModuleManagement() {
               <p className="text-xs text-gray-500 mb-4 pl-2">
                 This is a live preview of how this module will appear on the resident's Enrolled Modules page.
               </p>
-              <div className="pointer-events-none">
+              <div className="relative group cursor-pointer">
+                <div className="absolute inset-0 z-10" onClick={handlePreviewClick}></div>
                 <ModuleCard 
                   module={previewModule} 
                   enrolled={true} 
                   isPreview={true} 
                   onPreviewClick={handlePreviewClick} 
                 />
+                <div className="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl pointer-events-none flex items-center justify-center">
+                  <span className="bg-gray-900 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-lg pointer-events-none">Click to Launch Live Viewer</span>
+                </div>
               </div>
             </div>
           </div>

@@ -5,6 +5,7 @@ import { Activity01Icon, Alert01Icon, Book01Icon, CheckmarkCircle02Icon } from "
 import { useModuleEnrollment } from "../../../hooks/useModuleEnrollment";
 import Spinner from "../../ui/Spinner";
 import DOMPurify from "dompurify";
+import toast from "react-hot-toast";
 
 const getCategoryIcon = (category) => {
   const cat = (category || "").toLowerCase();
@@ -33,13 +34,13 @@ const ModuleCard = memo(function ModuleCard({
 
   const handleNavigation = () => {
     if (isPreview && onPreviewClick) return onPreviewClick();
-    if (isPreview) return alert("Navigation is disabled in Live Preview Mode.");
+    if (isPreview) return toast.error("Navigation is disabled in Live Preview Mode.");
     navigate(`/user/modules/${module.id}`);
   };
 
   const handleEnrollClick = () => {
     if (isPreview && onPreviewClick) return onPreviewClick();
-    if (isPreview) return alert("Enrollment is disabled in Live Preview Mode.");
+    if (isPreview) return toast.error("Enrollment is disabled in Live Preview Mode.");
     handleEnroll();
   };
 
@@ -47,14 +48,21 @@ const ModuleCard = memo(function ModuleCard({
     <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm hover:shadow-md transition-shadow duration-300 flex flex-col sm:flex-row items-stretch gap-5 group overflow-hidden">
       
       {/* Thumbnail */}
-      <div className="hidden sm:block w-32 sm:w-40 shrink-0 overflow-hidden rounded-xl bg-gray-100 relative">
-        <img
-          loading="lazy"
-          src={module.image_url || "https://placehold.co/600x400/f3f4f6/9ca3af?text=No+Image+Available"}
-          alt={module.title}
-          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 absolute inset-0"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+      <div className="hidden sm:flex w-32 sm:w-40 md:w-48 shrink-0 overflow-hidden rounded-xl bg-slate-50 border border-slate-100 relative items-center justify-center text-slate-400">
+        {module.image_url ? (
+          <img
+            loading="lazy"
+            src={module.image_url}
+            alt={module.title}
+            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 absolute inset-0"
+          />
+        ) : (
+          <div className="w-full h-full absolute inset-0 flex flex-col items-center justify-center transition-transform duration-700 group-hover:scale-110">
+            <svg xmlns="http://www.w3.org/2000/svg" className="w-10 h-10 mb-1.5 opacity-40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>
+            <span className="text-[9px] font-bold uppercase tracking-widest opacity-50">No Cover</span>
+          </div>
+        )}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
       </div>
 
       {/* Card Content */}

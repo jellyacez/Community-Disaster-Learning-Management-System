@@ -29,16 +29,15 @@ export function useModuleBuilder() {
     const errors = {};
     if (!currentFlowStep.title.trim()) errors.stepTitle = "A step title is required to identify this module segment.";
     
-    if (currentFlowStep.type === "text" && !currentFlowStep.textContent.trim()) {
+    if (!currentFlowStep.textContent.trim()) {
       errors.stepContent = "Instructional content is required. Please provide the necessary documentation.";
     }
-    if (currentFlowStep.type === "assessment") {
-      if (currentFlowStep.assessmentType === "quiz" && currentFlowStep.quizQuestions.length === 0) {
-        errors.stepQuiz = "At least one assessment question must be saved for this verification step.";
-      }
-      if (currentFlowStep.assessmentType === "situational" && !currentFlowStep.situationalScenario.trim()) {
-        errors.stepScenario = "A scenario description is required for this situational assessment.";
-      }
+    
+    if (currentFlowStep.assessmentType === "quiz" && currentFlowStep.quizQuestions.length === 0) {
+      errors.stepQuiz = "At least one assessment question must be saved for this verification step.";
+    }
+    if (currentFlowStep.assessmentType === "situational" && !currentFlowStep.situationalScenario.trim()) {
+      errors.stepScenario = "A scenario description is required for this situational assessment.";
     }
 
     if (Object.keys(errors).length > 0) {
@@ -48,8 +47,14 @@ export function useModuleBuilder() {
     }
 
     const stepWithMeta = { ...currentFlowStep, id: crypto.randomUUID() };
-    if (currentFlowStep.type === "text" && writtenMaterialFile) stepWithMeta.attachedFileName = writtenMaterialFile.name;
-    if (currentFlowStep.type === "assessment" && currentFlowStep.assessmentType === "situational" && situationalImage) stepWithMeta.attachedImageName = situationalImage.name;
+    if (currentFlowStep.type === "text" && writtenMaterialFile) {
+      stepWithMeta.attachedFile = writtenMaterialFile;
+      stepWithMeta.attachedFileName = writtenMaterialFile.name;
+    }
+    if (currentFlowStep.type === "assessment" && currentFlowStep.assessmentType === "situational" && situationalImage) {
+      stepWithMeta.attachedFile = situationalImage;
+      stepWithMeta.attachedImageName = situationalImage.name;
+    }
     
     setStagedFlows([...stagedFlows, stepWithMeta]);
     setWrittenMaterialFile(null);
@@ -123,12 +128,27 @@ export function useModuleBuilder() {
       // STEPS
       for (let i = 0; i < stagedFlows.length; i++) {
         const activeFlow = stagedFlows[i];
+        let finalMediaUrl = "";
+
+        if (activeFlow.attachedFile) {
+          toast.loading(`Uploading media for Step ${i + 1}...`, { id: loadingToastId });
+          const formData = new FormData();
+          formData.append("mediaFile", activeFlow.attachedFile);
+          try {
+             const uploadRes = await apiClient.post("modules/upload-media", formData, {
+               headers: { 'Content-Type': 'multipart/form-data' }
+             });
+             finalMediaUrl = uploadRes.data.url;
+          } catch(err) {
+             throw new Error(`Upload failed for Step ${i+1}: ${err.response?.data?.message || err.message}`);
+          }
+        }
 
         const stepPayload = {
           stepOrder: i + 1,
           stepTitle: activeFlow.title,
           stepContent: activeFlow.type === "text" ? activeFlow.textContent : activeFlow.situationalScenario,
-          mediaUrl: activeFlow.type === "text" ? (activeFlow.attachedFileName || "") : (activeFlow.attachedImageName || ""),
+          mediaUrl: finalMediaUrl,
           stepType: activeFlow.type
         };
 

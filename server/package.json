@@ -17,6 +17,7 @@
   "type": "commonjs",
   "dependencies": {
     "@acpr/rate-limit-postgresql": "1.4.1",
+    "@aws-sdk/client-s3": "^3.1085.0",
     "@react-pdf/renderer": "4.5.1",
     "better-auth": "1.6.15",
     "cors": "2.8.6",
@@ -25,6 +26,8 @@
     "express-rate-limit": "8.5.2",
     "helmet": "8.2.0",
     "hpp": "0.2.3",
+    "multer": "^2.2.0",
+    "multer-s3": "^3.0.1",
     "node-cron": "^4.5.0",
     "nodemailer": "9.0.1",
     "pg": "8.21.0",

@@ -141,7 +141,7 @@ export default function AssessmentEditor({
             {formErrors.stepScenario && <p className="text-red-500 text-xs mt-1 font-medium">{formErrors.stepScenario}</p>}
           </div>
           <div className="flex flex-col gap-2 bg-white p-3 border border-gray-200 rounded-xl shadow-sm">
-            <span className="text-[10px] uppercase font-bold text-gray-400 font-mono">Upload Attachment Reference Picture</span>
+            <span className="text-[10px] uppercase font-bold text-gray-400">Upload Attachment Reference Picture</span>
             <input 
               type="file" 
               accept="image/*" 
@@ -152,9 +152,9 @@ export default function AssessmentEditor({
                   toast.success(`Asset assigned successfully: ${targetFile.name}`);
                 }
               }}
-              className="text-xs text-gray-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200 transition-colors" 
+              className="text-xs text-gray-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:font-semibold file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200 transition-colors" 
             />
-            {situationalImage && <p className="text-[10px] text-emerald-600 font-mono font-medium mt-1">Staged Image: {situationalImage.name}</p>}
+            {situationalImage && <p className="text-[10px] text-emerald-600 font-medium mt-1">Staged Image: {situationalImage.name}</p>}
           </div>
           <textarea 
             rows="2" 

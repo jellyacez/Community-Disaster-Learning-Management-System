@@ -37,7 +37,9 @@ if (process.env.NODE_ENV === "production") {
   app.set("trust proxy", 1);
 }
 
+const path = require('path');
 app.use(express.json({ limit: "500kb" }));
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use(
   helmet({
     contentSecurityPolicy: {
@@ -93,6 +95,7 @@ const levelQuestionAndChoicesRoutes = require("./routes/modules/levelQuestionAnd
 const levelResultRoutes = require("./routes/modules/levelResultRoutes");
 const moduleCompleteRoutes = require("./routes/modules/moduleCompleteRoutes");
 const moduleStepsRoutes = require("./routes/modules/moduleStepsRoutes");
+const mediaUploadRoutes = require("./routes/modules/mediaUploadRoutes");
 const apiSecurityMiddleware = require("./middleware/apiSecurityMiddleware");
 
 // API Routes (Business logic protected by security middleware)
@@ -101,6 +104,9 @@ app.use("/api/admin", apiSecurityMiddleware, adminRoutes);
 app.use("/api/users", apiSecurityMiddleware, userRoutes);
 app.use("/api/user/dashboard", apiSecurityMiddleware, userDashboardRoutes);
 app.use("/api/modules", apiSecurityMiddleware, moduleRoutes);
+
+// Static routes must go before dynamic param routes (/:id) to prevent shadowing
+app.use("/api/modules", apiSecurityMiddleware, mediaUploadRoutes);
 
 app.use("/api/modules", apiSecurityMiddleware, levelCreationRoute);
 app.use("/api/modules", apiSecurityMiddleware, levelQuestionAndChoicesRoutes);
