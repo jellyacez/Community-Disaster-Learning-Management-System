@@ -4,6 +4,7 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import { Activity01Icon, Alert01Icon, Book01Icon, CheckmarkCircle02Icon } from "@hugeicons/core-free-icons";
 import { useModuleEnrollment } from "../../../hooks/useModuleEnrollment";
 import Spinner from "../../ui/Spinner";
+import DOMPurify from "dompurify";
 
 const getCategoryIcon = (category) => {
   const cat = (category || "").toLowerCase();
@@ -66,9 +67,10 @@ const ModuleCard = memo(function ModuleCard({
         <h2 className="text-xl font-bold text-gray-900 group-hover:text-red-700 transition-colors">
           {module.title}
         </h2>
-        <p className="mt-2 text-sm leading-relaxed text-gray-600 line-clamp-2 flex-1">
-          {module.description}
-        </p>
+        <div 
+          className="mt-2 text-sm leading-relaxed text-gray-600 line-clamp-2 flex-1 prose-sm max-w-none"
+          dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(module.description || "") }}
+        />
 
         {/* Progress Bar (Only visible if enrolled) */}
         {localEnrolled && (

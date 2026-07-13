@@ -33,15 +33,15 @@ export default function ModuleHeaderForm({ editingModuleId, moduleForm, setModul
           </select>
         </div>
         <div>
-          <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1.5">Risk Level</label>
+          <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1.5">Competency Level</label>
           <select 
-            value={moduleForm.riskLevel} 
-            onChange={(e) => setModuleForm({ ...moduleForm, riskLevel: e.target.value })} 
+            value={moduleForm.level} 
+            onChange={(e) => setModuleForm({ ...moduleForm, level: e.target.value })} 
             className="w-full p-2.5 bg-gray-50 border border-gray-200 text-gray-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all"
           >
-            <option value="Low">Low Risk</option>
-            <option value="Medium">Medium Risk</option>
-            <option value="High">High Urgency</option>
+            <option value="Level 1">Level 1: Beginner</option>
+            <option value="Level 2">Level 2: Intermediate</option>
+            <option value="Level 3">Level 3: Advanced</option>
           </select>
         </div>
         <div>

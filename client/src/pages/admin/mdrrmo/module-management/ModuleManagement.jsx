@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import ModuleHeaderForm from "./ModuleHeaderForm";
 import SequenceCanvas from "./SequenceCanvas";
 import StepBuilder from "./StepBuilder";
+import ModuleCard from "../../../../components/ui/modules/ModuleCard";
 import apiClient  from "../../../../lib/apiClient";
 
 const fetchModules = async () => {
@@ -22,7 +23,7 @@ export default function ModuleManagement() {
   const [moduleForm, setModuleForm] = useState({ 
     title: "", 
     description: "", 
-    riskLevel: "Low",
+    level: "Level 1",
     category: "General Safety / Protocols",
     duration: "15 mins"
   });
@@ -76,7 +77,7 @@ export default function ModuleManagement() {
         moduleName: moduleForm.title,
         moduleCategory: moduleForm.category,
         description: moduleForm.description,
-        level: moduleForm.riskLevel,
+        level: moduleForm.level,
         duration: moduleForm.duration,
         image_url: "",
         video_url: ""
@@ -116,7 +117,7 @@ export default function ModuleManagement() {
 
       alert("Syllabus configuration structure successfully published to production database!");
       setEditingModuleId(null);
-      setModuleForm({ title: "", description: "", riskLevel: "Low", category: "General Safety / Protocols", duration: "15 mins" });
+      setModuleForm({ title: "", description: "", level: "Level 1", category: "General Safety / Protocols", duration: "15 mins" });
       setStagedFlows([]);
     } catch (error) {
       console.error("Critical error executing data synchronization processing:", error);
@@ -148,42 +149,76 @@ export default function ModuleManagement() {
     );
   }
 
+  // Create a mock module object for the live preview card
+  const previewModule = {
+    id: "preview",
+    title: moduleForm.title || "Module Title Preview",
+    category: moduleForm.category,
+    level: moduleForm.level,
+    duration: moduleForm.duration,
+    description: moduleForm.description || "Start typing a description to see it here...",
+    image_url: "",
+    progress: 100, // Show completed state to preview all badges
+    status: "Completed"
+  };
+
   return (
-    <div className="max-w-3xl mx-auto space-y-6 animate-in fade-in duration-150 pb-12">
-      <form onSubmit={handleModuleSubmit} className="space-y-6">
+    <div className="max-w-7xl mx-auto animate-in fade-in duration-150 pb-12">
+      <div className="grid grid-cols-1 xl:grid-cols-12 gap-8">
         
-        <ModuleHeaderForm 
-          editingModuleId={editingModuleId}
-          moduleForm={moduleForm}
-          setModuleForm={setModuleForm}
-        />
+        {/* Left Column: Form Builder */}
+        <div className="xl:col-span-7 space-y-6">
+          <form onSubmit={handleModuleSubmit} className="space-y-6">
+            <ModuleHeaderForm 
+              editingModuleId={editingModuleId}
+              moduleForm={moduleForm}
+              setModuleForm={setModuleForm}
+            />
 
-        <SequenceCanvas 
-          stagedFlows={stagedFlows}
-          setStagedFlows={setStagedFlows}
-          triggerFlowSequencePreview={triggerFlowSequencePreview}
-        />
+            <SequenceCanvas 
+              stagedFlows={stagedFlows}
+              setStagedFlows={setStagedFlows}
+              triggerFlowSequencePreview={triggerFlowSequencePreview}
+            />
 
-        <StepBuilder 
-          currentFlowStep={currentFlowStep}
-          setCurrentFlowStep={setCurrentFlowStep}
-          writtenMaterialFile={writtenMaterialFile}
-          setWrittenMaterialFile={setWrittenMaterialFile}
-          currentQuizQuestion={currentQuizQuestion}
-          setCurrentQuizQuestion={setCurrentQuizQuestion}
-          addQuizQuestionToStep={addQuizQuestionToStep}
-          situationalImage={situationalImage}
-          setSituationalImage={setSituationalImage}
-          addStepToFlow={addStepToFlow}
-        />
+            <StepBuilder 
+              currentFlowStep={currentFlowStep}
+              setCurrentFlowStep={setCurrentFlowStep}
+              writtenMaterialFile={writtenMaterialFile}
+              setWrittenMaterialFile={setWrittenMaterialFile}
+              currentQuizQuestion={currentQuizQuestion}
+              setCurrentQuizQuestion={setCurrentQuizQuestion}
+              addQuizQuestionToStep={addQuizQuestionToStep}
+              situationalImage={situationalImage}
+              setSituationalImage={setSituationalImage}
+              addStepToFlow={addStepToFlow}
+            />
 
-        <button 
-          type="submit" 
-          className="w-full py-3.5 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl text-sm uppercase tracking-wider shadow-md transition-colors"
-        >
-          {editingModuleId ? "Commit Changes to Syllabus" : "Publish Training Module Layout"}
-        </button>
-      </form>
+            <button 
+              type="submit" 
+              className="w-full py-4 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl text-sm uppercase tracking-wider shadow-md transition-colors"
+            >
+              {editingModuleId ? "Commit Changes to Syllabus" : "Publish Training Module Layout"}
+            </button>
+          </form>
+        </div>
+
+        {/* Right Column: Live Card Preview */}
+        <div className="xl:col-span-5">
+          <div className="sticky top-6 space-y-4">
+            <h3 className="text-sm font-bold text-gray-800 uppercase tracking-wider pl-2 border-l-4 border-red-600">
+              Resident Dashboard Preview
+            </h3>
+            <p className="text-xs text-gray-500 mb-4 pl-2">
+              This is a live preview of how this module will appear on the resident's Enrolled Modules page.
+            </p>
+            <div className="pointer-events-none">
+              <ModuleCard module={previewModule} enrolled={true} />
+            </div>
+          </div>
+        </div>
+
+      </div>
     </div>
   );
 }
