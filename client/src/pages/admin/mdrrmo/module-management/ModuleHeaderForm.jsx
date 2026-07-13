@@ -18,6 +18,17 @@ export default function ModuleHeaderForm({ editingModuleId, moduleForm, setModul
         />
       </div>
 
+      <div>
+        <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1.5">Thumbnail Image URL (Optional)</label>
+        <input 
+          type="text" 
+          placeholder="e.g., https://example.com/flood-image.jpg" 
+          value={moduleForm.image_url || ""} 
+          onChange={(e) => setModuleForm({ ...moduleForm, image_url: e.target.value })} 
+          className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all" 
+        />
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div>
           <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1.5">Disaster Category</label>
