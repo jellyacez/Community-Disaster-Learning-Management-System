@@ -69,12 +69,12 @@ const MenuBar = ({ editor }) => {
   );
 };
 
-export default function RichTextEditor({ value, onChange, placeholder, className = "" }) {
-  const extensions = useMemo(() => [
-    StarterKit,
-    Underline,
-  ], []);
+const extensions = [
+  StarterKit,
+  Underline,
+];
 
+export default function RichTextEditor({ value, onChange, placeholder, className = "" }) {
   const editor = useEditor({
     extensions,
     content: value,
