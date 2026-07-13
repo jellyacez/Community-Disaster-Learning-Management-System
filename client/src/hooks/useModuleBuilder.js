@@ -103,6 +103,32 @@ export function useModuleBuilder() {
     const loadingToastId = toast.loading("Executing module publication process...");
 
     try {
+      // 1. PRE-UPLOAD ALL MEDIA FIRST
+      // This prevents creating orphaned Module/Level DB records if a 50MB video upload fails.
+      const uploadedFlows = [];
+      for (let i = 0; i < stagedFlows.length; i++) {
+        const activeFlow = stagedFlows[i];
+        let finalMediaUrl = "";
+
+        if (activeFlow.attachedFile) {
+          toast.loading(`Uploading media for Step ${i + 1}...`, { id: loadingToastId });
+          const formData = new FormData();
+          formData.append("mediaFile", activeFlow.attachedFile);
+          try {
+             const uploadRes = await apiClient.post("modules/upload-media", formData, {
+               headers: { 'Content-Type': 'multipart/form-data' }
+             });
+             finalMediaUrl = uploadRes.data.url;
+          } catch(err) {
+             throw new Error(`Upload failed for Step ${i+1}: ${err.response?.data?.message || err.message}`);
+          }
+        }
+        uploadedFlows.push({ ...activeFlow, finalMediaUrl });
+      }
+
+      toast.loading("Synchronizing module data to database...", { id: loadingToastId });
+
+      // 2. CREATE DB RECORDS ONLY AFTER UPLOADS SUCCEED
       const moduleResponse = await apiClient.post("modules", {
         moduleName: moduleForm.title,
         moduleCategory: moduleForm.category,
@@ -125,31 +151,15 @@ export function useModuleBuilder() {
       const levelResult = levelResponse.data;
       const targetLevelId = levelResult.data.level_id;
 
-      // STEPS
-      for (let i = 0; i < stagedFlows.length; i++) {
-        const activeFlow = stagedFlows[i];
-        let finalMediaUrl = "";
-
-        if (activeFlow.attachedFile) {
-          toast.loading(`Uploading media for Step ${i + 1}...`, { id: loadingToastId });
-          const formData = new FormData();
-          formData.append("mediaFile", activeFlow.attachedFile);
-          try {
-             const uploadRes = await apiClient.post("modules/upload-media", formData, {
-               headers: { 'Content-Type': 'multipart/form-data' }
-             });
-             finalMediaUrl = uploadRes.data.url;
-          } catch(err) {
-             throw new Error(`Upload failed for Step ${i+1}: ${err.response?.data?.message || err.message}`);
-          }
-        }
-
+      // 3. INSERT STEPS INTO DB
+      for (let i = 0; i < uploadedFlows.length; i++) {
+        const flow = uploadedFlows[i];
         const stepPayload = {
           stepOrder: i + 1,
-          stepTitle: activeFlow.title,
-          stepContent: activeFlow.type === "text" ? activeFlow.textContent : activeFlow.situationalScenario,
-          mediaUrl: finalMediaUrl,
-          stepType: activeFlow.type
+          stepTitle: flow.title,
+          stepContent: flow.type === "text" ? flow.textContent : flow.situationalScenario,
+          mediaUrl: flow.finalMediaUrl,
+          stepType: flow.type
         };
 
         await apiClient.post(`modules/steps/${targetLevelId}`, stepPayload);
