@@ -83,12 +83,16 @@ export default function AssessmentEditor({
                     ? "border-2 border-emerald-500 bg-emerald-50" 
                     : formErrors.options ? "border border-red-500 bg-white" : "border border-slate-200 bg-white"
                 }`}>
-                <input 
-                  type="text" 
-                  placeholder={`Choice Answer Option ${oIdx + 1}`} 
-                  value={opt.text} 
-                  onChange={(e) => handleOptionChange(oIdx, 'text', e.target.value)} 
-                  className="w-full p-2 bg-transparent focus:outline-none font-medium mb-1"
+                <label className="block text-base font-bold text-slate-800 mb-2">
+                 Choice Answer Option {oIdx + 1}
+                </label>
+
+                <input
+                  type="text"
+                  placeholder="Enter answer choice"
+                  value={opt.text}
+                  onChange={(e) => handleOptionChange(oIdx, 'text', e.target.value)}
+                  className="w-full p-2 bg-transparent border-b border-slate-300 focus:outline-none text-base placeholder:text-slate-400"
                 />
                 <textarea 
                   rows="2"

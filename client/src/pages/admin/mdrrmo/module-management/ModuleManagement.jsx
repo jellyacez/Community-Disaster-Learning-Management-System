@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import ModuleHeaderForm from "./ModuleHeaderForm";
+import LevelSelector from "./LevelBuilder"; 
 import SequenceCanvas from "./SequenceCanvas";
 import StepBuilder from "./StepBuilder";
 import ModuleCard from "../../../../components/ui/modules/ModuleCard";
@@ -19,6 +20,11 @@ export default function ModuleManagement() {
     queryFn: fetchModules,
     retry: 1
   });
+
+const [stagedLevels, setStagedLevels] = useState([
+  { levelOrder: 1, levelTitle: "Phase 1: Foundation", levelDescription: "Basic concepts container." }
+]);
+const [activeLevelOrder, setActiveLevelOrder] = useState(1);
 
   const { state, setters, actions } = useModuleBuilder();
   const {
@@ -86,7 +92,13 @@ export default function ModuleManagement() {
     if (!triggerFlowSequencePreview()) return;
     setShowPreviewModal(true);
   };
+const handleAddStepWithLevel = () => {
+  
+  currentFlowStep.levelOrder = activeLevelOrder;
 
+  
+  addStepToFlow();
+};
   return (
     <>
       <div className="max-w-7xl mx-auto animate-in fade-in duration-150 pb-12">
@@ -101,6 +113,13 @@ export default function ModuleManagement() {
                 setModuleForm={setModuleForm}
                 formErrors={formErrors}
                 setFormErrors={setFormErrors}
+              />
+              <LevelSelector 
+               stagedLevels={stagedLevels}
+               setStagedLevels={setStagedLevels}
+               activeLevelOrder={activeLevelOrder}
+               setActiveLevelOrder={setActiveLevelOrder}
+               stagedFlows={stagedFlows}
               />
 
               <SequenceCanvas 
@@ -123,6 +142,8 @@ export default function ModuleManagement() {
                 addQuizQuestionToStep={addQuizQuestionToStep}
                 situationalImage={situationalImage}
                 setSituationalImage={setSituationalImage}
+                addStepToFlow={handleAddStepWithLevel}
+                activeLevelOrder={activeLevelOrder}
                 addStepToFlow={addStepToFlow}
                 formErrors={formErrors}
                 setFormErrors={setFormErrors}
