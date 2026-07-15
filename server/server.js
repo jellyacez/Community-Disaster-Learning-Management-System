@@ -43,7 +43,7 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads'), {
   // SECURITY: Force the browser to download files rather than render them.
   // This is a defence-in-depth measure — even if a non-whitelisted file somehow
   // lands in /uploads/, it cannot be executed as HTML/SVG/JS in the browser.
-  setHeaders: (res, filePath) => {
+  setHeaders: (res) => {
     res.setHeader('Content-Disposition', 'attachment');
     res.setHeader('X-Content-Type-Options', 'nosniff');
   }
