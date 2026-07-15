@@ -180,20 +180,26 @@ exports.completeModuleStep = async (req, res) => {
         [user_id, stepId]
       );
 
-      // Check module completion (all final assessments passed)
-      const levelsRes = await client.query(`SELECT level_id FROM levels WHERE mod_id = $1`, [mod_id]);
-      const totalLevels = levelsRes.rowCount;
-
-      const passedLevelsRes = await client.query(
-        `SELECT COUNT(DISTINCT level_id) as passed_levels FROM results WHERE user_id = $1 AND mod_id = $2 AND passed = true AND step_id IN (
-            SELECT step_id FROM module_steps WHERE is_final_assessment = true
-        )`, [user_id, mod_id]
+      // Check total steps in the entire module
+      const totalStepsRes = await client.query(
+        `SELECT COUNT(step_id) as total_steps FROM module_steps WHERE level_id IN (SELECT level_id FROM levels WHERE mod_id = $1)`, 
+        [mod_id]
       );
-      const passedLevels = parseInt(passedLevelsRes.rows[0].passed_levels, 10);
+      const totalSteps = parseInt(totalStepsRes.rows[0].total_steps, 10);
+
+      // Check how many unique steps this user has completed for this module
+      const completedStepsRes = await client.query(
+        `SELECT COUNT(DISTINCT usp.step_id) as completed_steps 
+         FROM user_step_progress usp
+         JOIN module_steps ms ON usp.step_id = ms.step_id
+         WHERE usp.user_id = $1 AND ms.level_id IN (SELECT level_id FROM levels WHERE mod_id = $2)`,
+        [user_id, mod_id]
+      );
+      const completedSteps = parseInt(completedStepsRes.rows[0].completed_steps, 10);
       
-      const moduleCompleted = passedLevels >= totalLevels && totalLevels > 0;
+      const moduleCompleted = completedSteps >= totalSteps && totalSteps > 0;
       const modStatus = moduleCompleted ? 'Completed' : 'In Progress';
-      const modulePercentage = totalLevels > 0 ? Math.round((passedLevels / totalLevels) * 100) : 100;
+      const modulePercentage = totalSteps > 0 ? Math.round((completedSteps / totalSteps) * 100) : 100;
 
       const updateResult = await client.query(
         `UPDATE module_activity 

@@ -1,5 +1,6 @@
 const pool = require("../../config/db");
 const { cleanRichText } = require("../../utils/sanitizeHtml");
+const { validateModuleCreation } = require("../../utils/validators");
 
 // @desc    Creates a new module and all its nested levels and steps in a transaction
 // @access  Private (admin only)
@@ -15,10 +16,11 @@ exports.createModule = async (req, res) => {
     levels // Array of nested levels
   } = req.body;
 
-  if (!moduleName || !moduleCategory || !duration || !levels || !Array.isArray(levels)) {
+  const validation = validateModuleCreation(req.body);
+  if (!validation.isValid) {
     return res.status(400).json({
       success: false,
-      message: "Missing required fields or levels array.",
+      message: validation.error,
     });
   }
 
