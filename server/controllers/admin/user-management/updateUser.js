@@ -6,7 +6,10 @@ exports.updateUser = async (req, res) => {
   const { id } = req.params;
   const { name, email, archived } = req.body;
   
-  if (!name || !email || !email.includes("@")) {
+  // M-4 FIX: Use a proper RFC-5322 compatible regex instead of the weak includes("@") check.
+  // The old check accepted malformed emails like "a@", "@b", and "@@".
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!name || !email || !emailRegex.test(email)) {
     return res.status(400).json({ error: "Valid name and email are required." });
   }
 

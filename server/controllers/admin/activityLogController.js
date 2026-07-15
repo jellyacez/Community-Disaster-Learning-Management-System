@@ -5,7 +5,7 @@ const pool = require("../../config/db");
 exports.getActivityLog = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 20;
+    const limit = Math.min(parseInt(req.query.limit) || 20, 100); // M-6: Cap at 100 to prevent DoS
     const offset = (page - 1) * limit;
     
     const search = req.query.search || '';

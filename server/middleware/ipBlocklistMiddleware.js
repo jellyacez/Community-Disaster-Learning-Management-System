@@ -6,9 +6,12 @@ let lastCacheTime = 0;
 const CACHE_TTL = 30000; // 30 seconds
 
 const ipBlocklistMiddleware = async (req, res, next) => {
-  const clientIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+  // SECURITY: Use req.ip which Express normalizes based on the `trust proxy` setting
+  // (configured in server.js for production). Reading req.headers['x-forwarded-for']
+  // directly is spoofable by any client that can forge that header.
+  const clientIp = req.ip || req.socket.remoteAddress;
   // Normalize IPv6 localhost to IPv4 if needed
-  const normalizedIp = clientIp === '::1' ? '127.0.0.1' : clientIp;
+  const normalizedIp = clientIp === '::1' ? '127.0.0.1' : clientIp?.split(',')[0].trim();
   
   try {
     const now = Date.now();

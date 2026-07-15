@@ -22,7 +22,7 @@ exports.banUser = async (req, res) => {
     res.json({ success: true, message: 'User banned' });
   } catch (err) {
     console.error("Ban Error:", err);
-    res.status(500).json({ success: false, error: err.message || 'Failed to ban user' });
+    res.status(500).json({ success: false, error: 'An internal server error occurred while banning the user.' });
   }
 };
 
@@ -43,6 +43,6 @@ exports.unbanUser = async (req, res) => {
     res.json({ success: true, message: 'User unbanned' });
   } catch (err) {
     console.error("Unban Error:", err);
-    res.status(500).json({ success: false, error: err.message || 'Failed to unban user' });
+    res.status(500).json({ success: false, error: 'An internal server error occurred while unbanning the user.' });
   }
 };

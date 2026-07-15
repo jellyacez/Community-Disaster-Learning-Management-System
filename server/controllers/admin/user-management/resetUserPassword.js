@@ -75,11 +75,13 @@ exports.resetUserPassword = async (req, res) => {
     require('../../../utils/logger').logActivity(req.user.id, `Reset password for user ${user.email} (Admin Initiated)`);
     
     res.json({ 
-      message: isGenerated ? "Password auto-generated and emailed successfully." : "Password updated successfully",
-      generatedPassword: isGenerated ? password : null 
+      message: isGenerated
+        ? "Password auto-generated and emailed to the user successfully."
+        : "Password updated successfully."
+      // SECURITY: generatedPassword intentionally omitted — transmitted via email only.
     });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Server Error", details: err.message });
+    console.error("Reset password error:", err);
+    res.status(500).json({ error: "An internal server error occurred while resetting the password." });
   }
 };

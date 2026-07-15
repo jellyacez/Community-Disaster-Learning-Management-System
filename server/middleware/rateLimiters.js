@@ -11,7 +11,11 @@ const dbConfig = {
   database: pool.options.database,
 };
 
-const authLimiter = rateLimit({
+// M-7 FIX: authRateLimiter is now a plain rate-limit middleware instance.
+// It is mounted globally on the /api/auth/* path prefix in server.js, meaning
+// ALL auth endpoints are covered automatically — no fragile path substring
+// matching that could miss new Better Auth endpoints.
+const authRateLimiter = rateLimit({
   store: new PostgresStore(dbConfig, "auth_"),
   windowMs: 15 * 60 * 1000,
   max: 10,
@@ -20,21 +24,6 @@ const authLimiter = rateLimit({
     error: "Too many login attempts from this IP, please try again later.",
   },
 });
-
-const authRateLimiter = (req, res, next) => {
-  const path = req.path.toLowerCase();
-  if (
-    path.includes("sign-in") ||
-    path.includes("sign-up") ||
-    path.includes("forget-password") ||
-    path.includes("request-password-reset") ||
-    path.includes("reset-password") ||
-    path.includes("change-password")
-  ) {
-    return authLimiter(req, res, next);
-  }
-  next();
-};
 
 const globalLimiter = rateLimit({
   store: new PostgresStore(dbConfig, "global_"),

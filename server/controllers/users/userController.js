@@ -40,7 +40,7 @@ exports.onboarding = async (req, res) => {
 exports.getAllUsers = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 10;
+    const limit = Math.min(parseInt(req.query.limit) || 10, 100); // M-6: Cap at 100 to prevent DoS
     const offset = (page - 1) * limit;
     const search = req.query.search || "";
     const role = req.query.role || "";
@@ -250,14 +250,22 @@ exports.getUserSettings = async (req, res) => {
 exports.updateUserSettings = async (req, res) => {
   try {
     const userId = req.user.id;
-    const newSettings = req.body;
+
+    // M-5 FIX: Whitelist only the known settings fields.
+    // Accepting req.body directly would allow users to inject arbitrary
+    // keys or very large payloads into the settings JSON column.
+    const { announcements, reminders } = req.body;
+    const safeSettings = {
+      announcements: announcements === undefined ? true : Boolean(announcements),
+      reminders:     reminders     === undefined ? true : Boolean(reminders),
+    };
     
     await pool.query(
       'UPDATE "user" SET settings = $1 WHERE id = $2',
-      [newSettings, userId]
+      [safeSettings, userId]
     );
     
-    res.json({ success: true, settings: newSettings });
+    res.json({ success: true, settings: safeSettings });
   } catch (err) {
     console.error("Error updating settings:", err.message);
     res.status(500).json({ error: "Server Error" });

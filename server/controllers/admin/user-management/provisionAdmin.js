@@ -74,19 +74,25 @@ exports.provisionAdmin = async (req, res) => {
     
     const userId = resAuth.user.id;
 
-    // Send email with credentials
+    // Send email with credentials (mandatory when auto-generated)
     if (isGenerated) {
       try {
         const { orgFooterText, supportEmail } = await getOrgSettings();
         const mailOptions = getAdminPasswordResetEmail({ name, email }, password, orgFooterText, supportEmail);
         await transporter.sendMail(mailOptions);
       } catch (emailError) {
-        console.error("Failed to send admin provisioning email:", emailError);
-        require('../../../utils/logger').logActivity(req.user.id, `Provisioned new admin account (${email} - ${role}) but failed to send credentials email`);
-        return res.status(201).json({ 
-          message: "Admin account provisioned successfully, but failed to send credentials email.",
-          user: { id: userId, name, email, role, barangay },
-          generatedPassword: password 
+        // SECURITY: If email delivery fails, delete the account we just created
+        // so the operation is atomic. The admin must retry — the plaintext password
+        // must NEVER be returned in the JSON body.
+        console.error("Failed to send admin provisioning email — rolling back account creation:", emailError);
+        try {
+          await auth.api.removeUser({ body: { userId } });
+        } catch (deleteErr) {
+          console.error("Failed to roll back account after email failure:", deleteErr);
+        }
+        require('../../../utils/logger').logActivity(req.user.id, `Attempted to provision admin account (${email} - ${role}) but email delivery failed. Account creation rolled back.`);
+        return res.status(500).json({ 
+          error: "Account provisioning failed: could not deliver credentials via email. Please check the email configuration and try again."
         });
       }
     }
@@ -94,9 +100,11 @@ exports.provisionAdmin = async (req, res) => {
     require('../../../utils/logger').logActivity(req.user.id, `Provisioned new admin account (${email} - ${role})`);
 
     res.status(201).json({ 
-      message: "Admin account provisioned successfully.",
-      user: { id: userId, name, email, role, barangay },
-      generatedPassword: isGenerated ? password : null
+      message: isGenerated
+        ? "Admin account provisioned successfully. Credentials have been sent to the admin's email."
+        : "Admin account provisioned successfully.",
+      user: { id: userId, name, email, role, barangay }
+      // SECURITY: generatedPassword intentionally omitted — transmitted via email only.
     });
   } catch (err) {
     console.error("Provisioning error:", err);

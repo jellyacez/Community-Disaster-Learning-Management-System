@@ -1,4 +1,4 @@
-const { exec } = require("child_process");
+const { execFile } = require("child_process");
 const fs = require("fs");
 const path = require("path");
 
@@ -25,10 +25,17 @@ exports.downloadDatabaseBackup = async (req, res) => {
       fs.mkdirSync(tmpDir, { recursive: true });
     }
 
-    // Construct the pg_dump command
-    // We pass the password securely via environment variables in the exec options,
-    // avoiding passing it as a string argument which is a security risk.
-    const command = `pg_dump -U ${dbUser} -h ${dbHost} -p ${dbPort} -d ${dbName} -F c -f "${backupPath}"`;
+    // SECURITY: Use execFile instead of exec to pass arguments as an array,
+    // which bypasses shell interpretation entirely and eliminates any command
+    // injection risk from environment variable values containing metacharacters.
+    const pgDumpArgs = [
+      "-U", dbUser,
+      "-h", dbHost,
+      "-p", String(dbPort),
+      "-d", dbName,
+      "-F", "c",
+      "-f", backupPath,
+    ];
 
     const execOptions = {
       env: {
@@ -37,7 +44,7 @@ exports.downloadDatabaseBackup = async (req, res) => {
       },
     };
 
-    exec(command, execOptions, (error) => {
+    execFile("pg_dump", pgDumpArgs, execOptions, (error) => {
       if (error) {
         console.error("pg_dump error:", error);
 
