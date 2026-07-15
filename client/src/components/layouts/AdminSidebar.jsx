@@ -59,10 +59,10 @@ export default function AdminSidebar({ sidebarOpen, setSidebarOpen }) {
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         } flex flex-col`}
       >
-        <div className="h-16 flex items-center justify-between px-6 border-b border-gray-200 bg-red-600">
+        <div className="h-16 flex items-center justify-between px-6 border-b border-red-800 bg-red-700">
           <span className="text-white font-bold text-xl tracking-tight">Admin Portal</span>
           <button 
-            className="lg:hidden text-white hover:text-red-200"
+            className="lg:hidden text-white/70 hover:text-white"
             onClick={() => setSidebarOpen(false)}
             aria-label="Close sidebar"
           >

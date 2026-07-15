@@ -136,7 +136,7 @@ export default function InteractiveQuiz({ stepType, questions = [], isLoading = 
 
   return (
     <div 
-      className="bg-gradient-to-br from-purple-50/50 via-white to-blue-50/50 border border-purple-100/50 rounded-3xl p-6 md:p-8 shadow-sm relative overflow-hidden select-none"
+      className="bg-gradient-to-br from-purple-50/50 via-white to-blue-50/50 border border-purple-100/50 rounded-2xl p-4 md:p-6 shadow-sm relative overflow-hidden select-none"
       onCopy={handlePreventCopy}
       onContextMenu={handlePreventCopy}
     >
@@ -147,7 +147,7 @@ export default function InteractiveQuiz({ stepType, questions = [], isLoading = 
       />
 
       {/* Question */}
-      <h2 className="text-xl md:text-2xl font-bold text-gray-900 mb-6 leading-relaxed">
+      <h2 className="text-lg md:text-xl font-bold text-gray-900 mb-4 leading-relaxed">
         {currentQ.question_text}
       </h2>
 
@@ -179,8 +179,14 @@ export default function InteractiveQuiz({ stepType, questions = [], isLoading = 
 
       {/* Footer Area with Black Next Button */}
       <div className="mt-8">
-        {(hasSubmitted || isLocked) && !isCorrect && rationale && (
-          <QuizFeedback rationale={rationale} isCorrect={isCorrect} isLocked={isLocked} />
+        {(hasSubmitted || isLocked) && (
+          <QuizFeedback 
+            hasSubmitted={hasSubmitted}
+            selectedChoiceId={selectedChoiceIds.length > 0 ? selectedChoiceIds[0] : null}
+            isCorrect={isCorrect}
+            rationale={rationale}
+            isLocked={isLocked}
+          />
         )}
         
         {hasSubmitted && !isLocked && (

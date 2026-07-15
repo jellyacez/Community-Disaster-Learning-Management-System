@@ -113,7 +113,8 @@ exports.completeModuleStep = async (req, res) => {
              });
 
              answers.forEach(ans => {
-                 if (correctMap[ans.questionId] === ans.choiceId) {
+                 const submittedChoiceId = ans.selectedChoiceIds && ans.selectedChoiceIds.length > 0 ? ans.selectedChoiceIds[0] : null;
+                 if (correctMap[ans.questionId] === submittedChoiceId) {
                      score += pointsMap[ans.questionId] || 1;
                  }
              });

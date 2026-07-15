@@ -3,7 +3,7 @@ export default function QuizHeader({ currentQIndex, totalQuestions, timeLeft }) 
   return (
     <div className="mb-8">
       <div className="flex justify-between items-center mb-4">
-        <span className="text-sm font-bold text-purple-700 tracking-wide">
+        <span className="text-sm font-bold text-red-700 tracking-wide">
           Question {currentQIndex + 1} of {totalQuestions}
         </span>
         <div className={`flex items-center gap-1.5 font-bold text-sm ${timeLeft <= 5 ? 'text-red-600 animate-pulse' : 'text-gray-800'}`}>
@@ -13,9 +13,9 @@ export default function QuizHeader({ currentQIndex, totalQuestions, timeLeft }) 
       </div>
       
       {/* Purple Progress Bar Line */}
-      <div className="w-full h-1 bg-purple-100 rounded-full overflow-hidden">
+      <div className="w-full h-1 bg-red-100 rounded-full overflow-hidden">
         <div 
-          className="h-full bg-purple-600 transition-all duration-500 ease-out" 
+          className="h-full bg-red-600 transition-all duration-500 ease-out" 
           style={{ width: `${progressPercent}%` }}
         />
       </div>

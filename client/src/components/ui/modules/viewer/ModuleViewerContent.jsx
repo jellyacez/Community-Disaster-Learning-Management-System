@@ -60,15 +60,15 @@ export default function ModuleViewerContent({
         </div>
       )}
 
-      <div className="flex-1 overflow-y-auto p-6 md:p-12">
+      <div className="flex-1 overflow-y-auto p-4 md:p-8">
         {activeStep ? (
-          <div className="max-w-3xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500 bg-white p-6 md:p-10 rounded-[2rem] shadow-sm border border-gray-100">
-            <div className="mb-6">
+          <div className="max-w-2xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500 bg-white p-5 md:p-8 rounded-[2rem] shadow-sm border border-gray-100">
+            <div className="mb-4">
               <span className="px-3 py-1 bg-red-50 text-red-600 text-[10px] font-black rounded-full uppercase tracking-wider border border-red-100">
                 Step {activeStep.step_order} of {totalSteps}
               </span>
             </div>
-            <h1 className="text-3xl md:text-4xl font-black text-gray-900 mb-8 leading-tight tracking-tight">
+            <h1 className="text-2xl md:text-3xl font-black text-gray-900 mb-6 leading-tight tracking-tight">
               {activeStep.title}
             </h1>
             
