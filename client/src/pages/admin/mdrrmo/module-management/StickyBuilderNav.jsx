@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import { useMemo } from "react";
 import { useScrollSpy } from "../../../../hooks/useScrollSpy";
 
 const NAV_ITEMS = [

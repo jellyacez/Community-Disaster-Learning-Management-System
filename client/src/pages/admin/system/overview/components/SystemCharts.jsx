@@ -14,6 +14,33 @@ import {
   CartesianGrid,
 } from "recharts";
 
+const CustomTooltip = ({ active, payload }) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-white/80 backdrop-blur-md border border-white/50 shadow-xl rounded-xl p-3 px-4">
+        <p className="text-sm font-bold text-gray-900">{payload[0].name}</p>
+        <p className="text-xs font-semibold text-gray-600 mt-1">Count: {payload[0].value}</p>
+      </div>
+    );
+  }
+  return null;
+};
+
+const TrafficTooltip = ({ active, payload, label }) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-gray-900/90 backdrop-blur-md shadow-xl rounded-xl p-3 px-4 border border-gray-700/50">
+        <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest">{label}</p>
+        <p className="text-sm font-bold text-white mt-1">
+          <span className="text-red-400 mr-2">●</span>
+          {payload[0].value} Active Users
+        </p>
+      </div>
+    );
+  }
+  return null;
+};
+
 export default function SystemCharts({ stats }) {
   const { data: trafficData } = useQuery({
     queryKey: ["trafficAnalytics"],
@@ -30,38 +57,11 @@ export default function SystemCharts({ stats }) {
   const pieData = [
     { name: "Residents", value: Number(stats.resident_users || 0), gradientId: "gradResident", color1: "#cbd5e1", color2: "#94a3b8", dotColor: "#94a3b8" }, 
     { name: "Barangay Admins", value: Number(stats.barangay_admin_users || 0), gradientId: "gradBrgy", color1: "#2dd4bf", color2: "#0f766e", dotColor: "#14b8a6" }, 
-    { name: "MDRRMO Admins", value: Number(stats.mdrrmo_admin_users || 0), gradientId: "gradMdrrmo", color1: "#60a5fa", color2: "#1d4ed8", dotColor: "#3b82f6" }, 
+    { name: "Mdrrmo Admins", value: Number(stats.mdrrmo_admin_users || 0), gradientId: "gradMdrrmo", color1: "#60a5fa", color2: "#1d4ed8", dotColor: "#3b82f6" }, 
     { name: "System Admins", value: Number(stats.system_admin_users || 0), gradientId: "gradSys", color1: "#c084fc", color2: "#7e22ce", dotColor: "#a855f7" }, 
   ];
 
   const filteredPieData = pieData.filter(item => item.value > 0);
-
-  const CustomTooltip = ({ active, payload }) => {
-    if (active && payload && payload.length) {
-      return (
-        <div className="bg-white/80 backdrop-blur-md border border-white/50 shadow-xl rounded-xl p-3 px-4">
-          <p className="text-sm font-bold text-gray-900">{payload[0].name}</p>
-          <p className="text-xs font-semibold text-gray-600 mt-1">Count: {payload[0].value}</p>
-        </div>
-      );
-    }
-    return null;
-  };
-
-  const TrafficTooltip = ({ active, payload, label }) => {
-    if (active && payload && payload.length) {
-      return (
-        <div className="bg-gray-900/90 backdrop-blur-md shadow-xl rounded-xl p-3 px-4 border border-gray-700/50">
-          <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest">{label}</p>
-          <p className="text-sm font-bold text-white mt-1">
-            <span className="text-red-400 mr-2">●</span>
-            {payload[0].value} Active Users
-          </p>
-        </div>
-      );
-    }
-    return null;
-  };
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full h-full">

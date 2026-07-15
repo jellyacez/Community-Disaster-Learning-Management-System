@@ -65,9 +65,6 @@ export default function ModulePlayerPreviewModal({
 
   // Calculate progress safely based on the mock progress order
   const mockCompletedStepIds = mockSteps.filter(s => s.step_order <= currentProgressOrder).map(s => s.id);
-  const progressPercentage = Math.round(
-    (mockCompletedStepIds.length / (mockSteps.length || 1)) * 100
-  );
 
   const handleStepClick = (step) => {
     setActiveStepId(step.id);

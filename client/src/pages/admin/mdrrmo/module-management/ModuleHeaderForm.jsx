@@ -13,7 +13,7 @@ import {
   File01Icon 
 } from "@hugeicons/core-free-icons";
 
-export default function ModuleHeaderForm({ editingModuleId, moduleForm, setModuleForm, formErrors = {}, setFormErrors }) {
+export default function ModuleHeaderForm({ moduleForm, setModuleForm, formErrors = {}, setFormErrors }) {
   const [isUploading, setIsUploading] = useState(false);
   
   const handleFieldChange = (field, value) => {

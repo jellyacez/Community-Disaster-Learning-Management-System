@@ -51,7 +51,7 @@ export function useModuleSubmit({
              });
              finalMediaUrl = uploadRes.data.url;
           } catch(err) {
-             throw new Error(`Upload failed for Step ${i+1}: ${err.response?.data?.message || err.message}`);
+             throw new Error(`Upload failed for Step ${i+1}: ${err.response?.data?.message || err.message}`, { cause: err });
           }
         }
         uploadedFlows.push({ ...activeFlow, finalMediaUrl });
@@ -139,7 +139,7 @@ export function useModuleSubmit({
         levels: levelsPayload
       };
 
-      const moduleResponse = await apiClient.post("modules", modulePayload);
+      await apiClient.post("modules", modulePayload);
 
       toast.success("Syllabus configuration successfully published to the production database.", { id: loadingToastId });
       setEditingModuleId(null);

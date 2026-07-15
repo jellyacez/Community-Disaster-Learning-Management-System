@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import toast from 'react-hot-toast';
 import QuizHeader from './QuizHeader';
 import QuizChoice from './QuizChoice';
@@ -16,28 +16,26 @@ function shuffle(array) {
 }
 
 export default function InteractiveQuiz({ stepType, questions = [], isLoading = false, onCompleteStep }) {
-  const [shuffledQuestions, setShuffledQuestions] = useState([]);
   const [currentQIndex, setCurrentQIndex] = useState(0);
   const [selectedChoiceIds, setSelectedChoiceIds] = useState([]);
   const isMultiSelect = stepType === 'hazard_identification' || stepType === 'action_sequence';
   const [hasSubmitted, setHasSubmitted] = useState(false);
   const [timeLeft, setTimeLeft] = useState(20);
   const [tabSwitchWarnings, setTabSwitchWarnings] = useState(0);
-  const [isLocked, setIsLocked] = useState(false);
   const [answers, setAnswers] = useState([]);
   
   // 1. DYNAMIC RANDOMIZATION
-  useEffect(() => {
-    if (questions && questions.length > 0) {
-      const shuffledQ = shuffle(questions).map(q => ({
-        ...q,
-        options: shuffle(q.options || [])
-      }));
-      setShuffledQuestions(shuffledQ);
-    }
+  const shuffledQuestions = useMemo(() => {
+    if (!questions || questions.length === 0) return [];
+    return shuffle(questions).map(q => ({
+      ...q,
+      options: shuffle(q.options || [])
+    }));
   }, [questions]);
 
   const currentQ = shuffledQuestions[currentQIndex];
+  
+  const isLocked = tabSwitchWarnings >= 2;
 
   // 2. THE VISIBILITY API (Tab-Switching Detection)
   useEffect(() => {
@@ -54,10 +52,14 @@ export default function InteractiveQuiz({ stepType, questions = [], isLoading = 
     if (tabSwitchWarnings === 1) {
       toast.error("Attention: Navigating away from the active assessment window is not permitted. Further infractions will lock the assessment.", { duration: 6000, id: 'tab-warn-1' });
     } else if (tabSwitchWarnings >= 2) {
-      setIsLocked(true);
       toast.error("Assessment Locked: Multiple unauthorized navigation events detected. Please restart the module.", { duration: 6000, id: 'tab-warn-2' });
     }
   }, [tabSwitchWarnings]);
+
+  const selectedChoiceIdsRef = useRef(selectedChoiceIds);
+  useEffect(() => {
+    selectedChoiceIdsRef.current = selectedChoiceIds;
+  }, [selectedChoiceIds]);
 
   // 3. STRICT COMPONENT-LEVEL TIMERS
   useEffect(() => {
@@ -68,7 +70,7 @@ export default function InteractiveQuiz({ stepType, questions = [], isLoading = 
         if (prev <= 1) {
           clearInterval(timer);
           setHasSubmitted(true);
-          setAnswers(prevAns => [...prevAns, { questionId: currentQ.question_id || currentQ.id, selectedChoiceIds }]);
+          setAnswers(prevAns => [...prevAns, { questionId: currentQ.question_id || currentQ.id, selectedChoiceIds: selectedChoiceIdsRef.current }]);
           return 0;
         }
         return prev - 1;

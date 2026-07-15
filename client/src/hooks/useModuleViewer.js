@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { useQuery, useQueries, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import apiClient from "../lib/apiClient";
@@ -23,17 +23,18 @@ export function useModuleViewer(moduleId) {
   });
 
   const moduleData = data?.module || {};
-  const levels = data?.levels || [];
   const completedStepIds = data?.completedStepIds || [];
-  const passedLevelIds = data?.passedLevelIds || [];
 
   const enhancedLevels = useMemo(() => {
+    const levels = data?.levels || [];
+    const passedLevelIds = data?.passedLevelIds || [];
+    
     return levels.map((lvl, index) => {
        const previousLvl = index > 0 ? levels[index - 1] : null;
        const isUnlocked = lvl.level_order === 1 || !lvl.is_locked_by_default || (previousLvl && passedLevelIds.includes(previousLvl.id));
        return { ...lvl, isUnlocked };
     });
-  }, [levels, passedLevelIds]);
+  }, [data?.levels, data?.passedLevelIds]);
 
   const allSteps = useMemo(() => {
     return enhancedLevels.reduce((acc, lvl) => [...acc, ...(lvl.steps || [])], []);

@@ -1,4 +1,3 @@
-import React from "react";
 import toast from "react-hot-toast";
 import PriorityActionEditor from "./PriorityActionEditor";
 import HazardIdentificationEditor from "./HazardIdentificationEditor";

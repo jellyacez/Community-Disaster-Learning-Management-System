@@ -25,7 +25,6 @@ export function useModuleBuilder() {
     currentSituationalData, setCurrentSituationalData,
     situationalImage, setSituationalImage,
     writtenMaterialFile, setWrittenMaterialFile,
-    editingStepId, setEditingStepId,
     addStepToFlow, addQuizQuestionToStep, handleEditStep
   } = useStepStager(activeLevelOrder, setFormErrors);
 
@@ -92,8 +91,7 @@ export function useModuleBuilder() {
       currentSituationalData,
       situationalImage,
       writtenMaterialFile,
-      formErrors,
-      editingStepId
+      formErrors
     },
     setters: {
       setEditingModuleId,

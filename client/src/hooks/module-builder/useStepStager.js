@@ -52,7 +52,7 @@ export function useStepStager(activeLevelOrder, setFormErrors) {
     }
   };
 
-  const addStepToFlow = (formErrors) => {
+  const addStepToFlow = () => {
     const errors = {};
     if (!currentFlowStep.title.trim()) errors.stepTitle = "A step title is required to identify this module segment.";
     
@@ -182,7 +182,6 @@ export function useStepStager(activeLevelOrder, setFormErrors) {
     currentSituationalData, setCurrentSituationalData,
     situationalImage, setSituationalImage,
     writtenMaterialFile, setWrittenMaterialFile,
-    editingStepId, setEditingStepId,
     addStepToFlow, addQuizQuestionToStep, handleEditStep
   };
 }
