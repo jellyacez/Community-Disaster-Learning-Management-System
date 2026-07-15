@@ -38,13 +38,26 @@ export function useStepStager(activeLevelOrder, setFormErrors) {
 
   const [situationalImage, setSituationalImage] = useState(null);
   const [writtenMaterialFile, setWrittenMaterialFile] = useState(null);
+  const [editingStepId, setEditingStepId] = useState(null);
+
+  const handleEditStep = (stepId) => {
+    const stepToEdit = stagedFlows.find(s => s.id === stepId);
+    if (!stepToEdit) return;
+    
+    // We scroll back to top of builder
+    setCurrentFlowStep(stepToEdit);
+    setEditingStepId(stepId);
+    if (stepToEdit.assessmentType === "situational") {
+      setCurrentSituationalData(stepToEdit.situationalData);
+    }
+  };
 
   const addStepToFlow = (formErrors) => {
     const errors = {};
     if (!currentFlowStep.title.trim()) errors.stepTitle = "A step title is required to identify this module segment.";
     
     if (currentFlowStep.builderStepType === "learning_material") {
-      if (!currentFlowStep.textContent.trim() && !writtenMaterialFile) {
+      if (!currentFlowStep.textContent.trim() && !writtenMaterialFile && !currentFlowStep.attachedFileName) {
         errors.stepContent = "Instructional content or a media file is required for a learning material.";
       }
     }
@@ -78,7 +91,7 @@ export function useStepStager(activeLevelOrder, setFormErrors) {
       return false;
     }
 
-    const stepWithMeta = { ...currentFlowStep, id: crypto.randomUUID(), levelOrder: activeLevelOrder };
+    const stepWithMeta = { ...currentFlowStep, levelOrder: activeLevelOrder };
     
     // Assign proper backend type
     if (currentFlowStep.builderStepType === "quiz") {
@@ -89,7 +102,7 @@ export function useStepStager(activeLevelOrder, setFormErrors) {
       stepWithMeta.situationalData = currentSituationalData;
     } else if (writtenMaterialFile && writtenMaterialFile.type.startsWith("video/")) {
       stepWithMeta.type = "video";
-    } else {
+    } else if (!stepWithMeta.type || stepWithMeta.type === "") {
       stepWithMeta.type = "text";
     }
 
@@ -102,10 +115,23 @@ export function useStepStager(activeLevelOrder, setFormErrors) {
       stepWithMeta.attachedImageName = situationalImage.name;
     }
     
-    setStagedFlows([...stagedFlows, stepWithMeta]);
+    if (editingStepId) {
+      stepWithMeta.id = editingStepId;
+      const index = stagedFlows.findIndex(s => s.id === editingStepId);
+      if (index !== -1) {
+        const newFlows = [...stagedFlows];
+        newFlows[index] = stepWithMeta;
+        setStagedFlows(newFlows);
+      }
+      setEditingStepId(null);
+    } else {
+      stepWithMeta.id = crypto.randomUUID();
+      setStagedFlows([...stagedFlows, stepWithMeta]);
+    }
+
     setWrittenMaterialFile(null);
     setSituationalImage(null);
-    setCurrentFlowStep({ type: "text", title: "", textContent: "", videoUrl: "", assessmentType: "quiz", quizQuestions: [], situationalScenario: "", is_final_assessment: false });
+    setCurrentFlowStep({ builderStepType: "learning_material", type: "text", title: "", textContent: "", videoUrl: "", assessmentType: "quiz", quizQuestions: [], situationalScenario: "", is_final_assessment: false });
     setCurrentSituationalData({
       interactionType: "priority_action",
       options: [{ text: "", rationale: "" }, { text: "", rationale: "" }, { text: "", rationale: "" }, { text: "", rationale: "" }],
@@ -134,13 +160,13 @@ export function useStepStager(activeLevelOrder, setFormErrors) {
     });
     setCurrentQuizQuestion({ 
       questionText: "", 
+      correctAnswerIndex: 0,
       options: [
         { text: "", rationale: "" }, 
         { text: "", rationale: "" }, 
         { text: "", rationale: "" }, 
         { text: "", rationale: "" }
-      ], 
-      correctAnswerIndex: 0 
+      ] 
     });
     const newErrors = { ...formErrors };
     delete newErrors.questionText;
@@ -156,6 +182,7 @@ export function useStepStager(activeLevelOrder, setFormErrors) {
     currentSituationalData, setCurrentSituationalData,
     situationalImage, setSituationalImage,
     writtenMaterialFile, setWrittenMaterialFile,
-    addStepToFlow, addQuizQuestionToStep
+    editingStepId, setEditingStepId,
+    addStepToFlow, addQuizQuestionToStep, handleEditStep
   };
 }

@@ -25,7 +25,8 @@ export function useModuleBuilder() {
     currentSituationalData, setCurrentSituationalData,
     situationalImage, setSituationalImage,
     writtenMaterialFile, setWrittenMaterialFile,
-    addStepToFlow, addQuizQuestionToStep
+    editingStepId, setEditingStepId,
+    addStepToFlow, addQuizQuestionToStep, handleEditStep
   } = useStepStager(activeLevelOrder, setFormErrors);
 
   const { handleModuleSubmit } = useModuleSubmit({
@@ -48,6 +49,37 @@ export function useModuleBuilder() {
     return true;
   };
 
+  const resetForm = () => {
+    setEditingModuleId(null);
+    setModuleForm({ title: "", category: "General Safety / Protocols", level: "Level 1", duration: "15 mins", description: "", image_url: "" });
+    setStagedLevels([{ levelOrder: 1, levelTitle: "", levelDescription: "", passing_threshold: 80, is_locked_by_default: false }]);
+    setActiveLevelOrder(1);
+    setStagedFlows([]);
+    setCurrentFlowStep({ builderStepType: "learning_material", type: "text", title: "", textContent: "", videoUrl: "", assessmentType: "quiz", quizQuestions: [], situationalScenario: "", is_final_assessment: false });
+    setCurrentQuizQuestion({ 
+      questionText: "", 
+      correctAnswerIndex: 0, 
+      options: [
+        { text: "", rationale: "" },
+        { text: "", rationale: "" },
+        { text: "", rationale: "" },
+        { text: "", rationale: "" }
+      ] 
+    });
+    setCurrentSituationalData({ 
+      interactionType: "priority_action", 
+      options: [
+        { text: "", rationale: "" },
+        { text: "", rationale: "" },
+        { text: "", rationale: "" },
+        { text: "", rationale: "" }
+      ], 
+      hazards: [], 
+      sequenceSteps: [] 
+    });
+    setFormErrors({});
+  };
+
   return {
     state: {
       editingModuleId,
@@ -60,7 +92,8 @@ export function useModuleBuilder() {
       currentSituationalData,
       situationalImage,
       writtenMaterialFile,
-      formErrors
+      formErrors,
+      editingStepId
     },
     setters: {
       setEditingModuleId,
@@ -79,7 +112,9 @@ export function useModuleBuilder() {
       addStepToFlow: () => addStepToFlow(formErrors),
       addQuizQuestionToStep: () => addQuizQuestionToStep(formErrors),
       handleModuleSubmit,
-      triggerFlowSequencePreview
+      triggerFlowSequencePreview,
+      resetForm,
+      handleEditStep
     }
   };
 }

@@ -20,6 +20,8 @@ export default function LevelSelector({
         levelOrder: nextOrder,
         levelTitle: "",
         levelDescription: "",
+        passing_threshold: 80,
+        is_locked_by_default: true
       },
     ]);
     setActiveLevelOrder(nextOrder);

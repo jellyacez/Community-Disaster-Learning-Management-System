@@ -2,6 +2,16 @@ import { useState } from "react";
 import toast from "react-hot-toast";
 import apiClient from "../../../../lib/apiClient";
 import RichTextEditor from "../../../../components/ui/RichTextEditor";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { 
+  Link01Icon, 
+  Upload01Icon, 
+  Alert01Icon, 
+  GridIcon, 
+  Time01Icon, 
+  StarIcon, 
+  File01Icon 
+} from "@hugeicons/core-free-icons";
 
 export default function ModuleHeaderForm({ editingModuleId, moduleForm, setModuleForm, formErrors = {}, setFormErrors }) {
   const [isUploading, setIsUploading] = useState(false);
@@ -58,7 +68,7 @@ export default function ModuleHeaderForm({ editingModuleId, moduleForm, setModul
         
         {/* Floating Thumbnail Controls */}
         <div className="relative z-10 bg-white/90 backdrop-blur-sm p-2 rounded-xl shadow-lg w-full max-w-md mx-auto flex items-center gap-2 transform translate-y-4 opacity-0 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300">
-          <svg className="w-5 h-5 text-gray-400 ml-2 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+          <HugeiconsIcon icon={Link01Icon} className="w-5 h-5 text-gray-400 ml-2 shrink-0" />
           <input 
             type="text" 
             placeholder="Paste URL..." 
@@ -71,7 +81,7 @@ export default function ModuleHeaderForm({ editingModuleId, moduleForm, setModul
             {isUploading ? (
               <svg className="animate-spin h-3.5 w-3.5 text-gray-700" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
             ) : (
-              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
+              <HugeiconsIcon icon={Upload01Icon} className="w-3.5 h-3.5" />
             )}
             Upload
             <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} disabled={isUploading} />
@@ -90,14 +100,14 @@ export default function ModuleHeaderForm({ editingModuleId, moduleForm, setModul
             onChange={(e) => handleFieldChange('title', e.target.value)} 
             className={`w-full text-2xl md:text-3xl font-black text-gray-900 bg-transparent placeholder-gray-300 outline-none transition-all ${formErrors.title ? 'border-b-2 border-red-500' : 'border-b-2 border-transparent focus:border-gray-200'} pb-2`} 
           />
-          {formErrors.title && <p className="text-red-500 text-sm mt-1 font-bold flex items-center gap-1"><svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>{formErrors.title}</p>}
+          {formErrors.title && <p className="text-red-500 text-sm mt-1 font-bold flex items-center gap-1"><HugeiconsIcon icon={Alert01Icon} className="w-4 h-4" />{formErrors.title}</p>}
         </div>
 
         {/* Metadata Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="flex flex-col gap-1.5">
             <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest flex items-center gap-2">
-              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>
+              <HugeiconsIcon icon={GridIcon} className="w-3.5 h-3.5" />
               Category
             </label>
             <select 
@@ -114,7 +124,7 @@ export default function ModuleHeaderForm({ editingModuleId, moduleForm, setModul
 
           <div className="flex flex-col gap-1.5">
             <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest flex items-center gap-2">
-              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+              <HugeiconsIcon icon={Time01Icon} className="w-3.5 h-3.5" />
               Est. Duration
             </label>
             <select 
@@ -132,7 +142,7 @@ export default function ModuleHeaderForm({ editingModuleId, moduleForm, setModul
 
           <div className="flex flex-col gap-1.5">
             <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest flex items-center gap-2">
-              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" /></svg>
+              <HugeiconsIcon icon={StarIcon} className="w-3.5 h-3.5" />
               Level
             </label>
             <select 
@@ -149,7 +159,7 @@ export default function ModuleHeaderForm({ editingModuleId, moduleForm, setModul
 
         <div className="w-full pt-2">
            <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2 flex items-center gap-2">
-              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h7" /></svg>
+              <HugeiconsIcon icon={File01Icon} className="w-3.5 h-3.5" />
               Description / Summary
            </label>
            <div className={`rounded-xl overflow-hidden border transition-all ${formErrors.description ? 'border-red-500 ring-2 ring-red-500/10' : 'border-gray-200 focus-within:border-gray-300'}`}>
@@ -160,7 +170,7 @@ export default function ModuleHeaderForm({ editingModuleId, moduleForm, setModul
                 className="min-h-[160px] text-sm border-none"
               />
            </div>
-           {formErrors.description && <p className="text-red-500 text-xs mt-1.5 font-bold flex items-center gap-1"><svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>{formErrors.description}</p>}
+           {formErrors.description && <p className="text-red-500 text-xs mt-1.5 font-bold flex items-center gap-1"><HugeiconsIcon icon={Alert01Icon} className="w-4 h-4" />{formErrors.description}</p>}
         </div>
       </div>
     </div>

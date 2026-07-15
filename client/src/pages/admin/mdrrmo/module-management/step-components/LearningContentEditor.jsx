@@ -38,8 +38,17 @@ export default function LearningContentEditor({
             onChange={(e) => {
               const targetFile = e.target.files[0];
               if (targetFile) {
-                setWrittenMaterialFile(targetFile);
-                toast.success(`Media staged: ${targetFile.name}`);
+                const validTypes = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'video/mp4', 'video/webm', 'video/ogg'];
+                const fileExt = targetFile.name.split('.').pop().toLowerCase();
+                const isValidExt = ['pdf', 'docx', 'mp4', 'webm', 'ogg'].includes(fileExt);
+                
+                if (validTypes.includes(targetFile.type) || isValidExt) {
+                  setWrittenMaterialFile(targetFile);
+                  toast.success(`Media staged: ${targetFile.name}`);
+                } else {
+                  toast.error("Invalid file type. Only PDF, DOCX, and Video files are allowed.");
+                  e.target.value = null;
+                }
               }
             }}
             className="text-xs text-slate-600 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border file:border-slate-300 file:text-xs file:font-bold file:bg-slate-50 file:text-slate-700 hover:file:bg-slate-100 cursor-pointer transition-colors" 

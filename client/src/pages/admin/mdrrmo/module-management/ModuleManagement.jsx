@@ -12,6 +12,8 @@ import ModuleBuilderWizard from "./ModuleBuilderWizard";
 import apiClient from "../../../../lib/apiClient";
 import { useModuleBuilder } from "../../../../hooks/useModuleBuilder";
 import useDebounce from "../../../../hooks/useDebounce";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { Add01Icon, Search01Icon, GridIcon, StarIcon, Folder01Icon } from "@hugeicons/core-free-icons";
 
 const fetchModules = async () => {
   const res = await apiClient.get("/modules/available"); 
@@ -19,7 +21,7 @@ const fetchModules = async () => {
 };
 
 export default function ModuleManagement() {
-  const { isLoading, isError } = useQuery({
+  const { data: rawModules = [], isLoading, isError, refetch } = useQuery({
     queryKey: ["adminModules"],
     queryFn: fetchModules,
     retry: 1
@@ -71,12 +73,6 @@ export default function ModuleManagement() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 6;
 
-  const rawModules = isError ? [] : (useQuery({
-    queryKey: ["adminModules"],
-    queryFn: fetchModules,
-    retry: 1
-  }).data || []);
-
   const filteredModules = useMemo(() => {
     return rawModules.filter(mod => {
       const matchesSearch = mod.title.toLowerCase().includes(debouncedSearchQuery.toLowerCase());
@@ -90,6 +86,7 @@ export default function ModuleManagement() {
   const paginatedModules = filteredModules.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   const handleOpenWizard = () => {
+    actions.resetForm();
     setIsWizardOpen(true);
   };
 
@@ -108,7 +105,7 @@ export default function ModuleManagement() {
               onClick={handleOpenWizard}
               className="flex items-center gap-2 px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl transition-all shadow-sm"
             >
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" /></svg>
+              <HugeiconsIcon icon={Add01Icon} className="w-5 h-5" />
               Create New Module
             </button>
           </div>
@@ -117,11 +114,11 @@ export default function ModuleManagement() {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 bg-white p-4 rounded-2xl border border-gray-200 shadow-sm items-end">
             <div className="md:col-span-2 relative">
               <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest flex items-center gap-1.5 px-1 mb-1.5">
-                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                <HugeiconsIcon icon={Search01Icon} className="w-3 h-3" />
                 Search Modules
               </label>
               <div className="relative">
-                <svg className="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                <HugeiconsIcon icon={Search01Icon} className="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
                 <input 
                   type="text" 
                   placeholder="Search by title or description..." 
@@ -134,7 +131,7 @@ export default function ModuleManagement() {
             
             <div className="md:col-span-1">
               <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest flex items-center gap-1.5 px-1 mb-1.5">
-                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>
+                <HugeiconsIcon icon={GridIcon} className="w-3 h-3" />
                 Category
               </label>
               <select 
@@ -152,7 +149,7 @@ export default function ModuleManagement() {
             
             <div className="md:col-span-1">
               <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest flex items-center gap-1.5 px-1 mb-1.5">
-                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" /></svg>
+                <HugeiconsIcon icon={StarIcon} className="w-3 h-3" />
                 Level
               </label>
               <select 
@@ -182,7 +179,7 @@ export default function ModuleManagement() {
         ) : rawModules.length === 0 ? (
           <div className="text-center py-24 bg-white rounded-3xl border border-gray-200 border-dashed">
              <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-               <svg className="w-8 h-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
+               <HugeiconsIcon icon={Folder01Icon} className="w-8 h-8 text-gray-400" />
              </div>
              <h3 className="text-xl font-bold text-gray-900 mb-2">No Learning Paths Yet</h3>
              <p className="text-gray-500 mb-6 max-w-md mx-auto">You haven't created any training modules yet. Click the button above to start building your first learning path.</p>
@@ -247,6 +244,7 @@ export default function ModuleManagement() {
         state={state}
         setters={setters}
         actions={actions}
+        refetchModules={refetch}
         triggerFlowSequencePreview={triggerFlowSequencePreview}
         showPreviewModal={showPreviewModal}
         setShowPreviewModal={setShowPreviewModal}

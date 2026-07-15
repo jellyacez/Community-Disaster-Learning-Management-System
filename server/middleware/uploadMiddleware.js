@@ -20,11 +20,15 @@ const ALLOWED_MIME_TYPES = new Set([
   'image/png',
   'image/webp',
   'image/gif',
+  'application/pdf',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/msword',
 ]);
 
 const ALLOWED_EXTENSIONS = new Set([
   '.mp4', '.webm', '.ogg',
   '.jpg', '.jpeg', '.png', '.webp', '.gif',
+  '.pdf', '.docx', '.doc',
 ]);
 
 const fileFilter = (req, file, cb) => {
@@ -38,7 +42,7 @@ const fileFilter = (req, file, cb) => {
 
   // Reject — create a typed error so the wrapper can return the right response
   const err = new Error(
-    `File type not permitted. Only videos (MP4, WebM, OGG) and images (JPEG, PNG, WebP, GIF) are accepted. Received: ${file.mimetype}`
+    `File type not permitted. Only videos (MP4, WebM, OGG), documents (PDF, DOCX), and images are accepted. Received: ${file.mimetype}`
   );
   err.code = 'INVALID_FILE_TYPE';
   return cb(err, false);

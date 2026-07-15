@@ -1,6 +1,17 @@
 import AssessmentEditor from "./AssessmentEditor";
 import LearningContentEditor from "./step-components/LearningContentEditor";
 import toast from "react-hot-toast";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { 
+  Edit01Icon, 
+  Alert01Icon, 
+  File01Icon, 
+  Task01Icon, 
+  Target01Icon, 
+  RefreshIcon, 
+  CheckmarkBadge01Icon 
+} from "@hugeicons/core-free-icons";
+
 export default function StepBuilder({ 
   currentFlowStep, 
   setCurrentFlowStep, 
@@ -16,7 +27,8 @@ export default function StepBuilder({
   addStepToFlow,
   activeLevelOrder = 1,
   formErrors = {},
-  setFormErrors
+  setFormErrors,
+  editingStepId
 }) {
 
   const handleFieldChange = (field, value) => {
@@ -48,7 +60,7 @@ export default function StepBuilder({
       <div className="bg-gray-50 border-b border-gray-100 p-5 shrink-0 flex items-center justify-between">
          <div>
             <h3 className="text-base font-bold text-gray-900 tracking-tight flex items-center gap-2">
-               <svg className="w-5 h-5 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
+               <HugeiconsIcon icon={Edit01Icon} className="w-5 h-5 text-red-500" />
                Step Configurator
             </h3>
             <p className="text-xs text-gray-500 font-medium mt-0.5 ml-7">Drafting for Level {activeLevelOrder}</p>
@@ -67,7 +79,7 @@ export default function StepBuilder({
             onChange={(e) => handleFieldChange('title', e.target.value)} 
             className={`w-full p-3.5 bg-gray-50 hover:bg-gray-100 border ${formErrors.stepTitle ? 'border-red-500 ring-2 ring-red-500/10' : 'border-transparent focus:border-red-200 focus:bg-white focus:ring-4 focus:ring-red-500/10'} rounded-xl text-sm font-bold text-gray-900 outline-none transition-all placeholder-gray-400`} 
           />
-          {formErrors.stepTitle && <p className="text-red-500 text-xs mt-1.5 font-bold flex items-center gap-1"><svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>{formErrors.stepTitle}</p>}
+          {formErrors.stepTitle && <p className="text-red-500 text-xs mt-1.5 font-bold flex items-center gap-1"><HugeiconsIcon icon={Alert01Icon} className="w-4 h-4" />{formErrors.stepTitle}</p>}
         </div>
 
         {/* Step Type Selector */}
@@ -77,9 +89,9 @@ export default function StepBuilder({
           </label>
           <div className="flex flex-col gap-2">
             {[
-              { id: 'learning_material', label: 'Learning Material', icon: 'M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253' },
-              { id: 'quiz', label: 'Multiple Choice Quiz', icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z' },
-              { id: 'situational', label: 'Situational Assessment', icon: 'M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z' }
+              { id: 'learning_material', label: 'Learning Material', icon: File01Icon },
+              { id: 'quiz', label: 'Multiple Choice Quiz', icon: Task01Icon },
+              { id: 'situational', label: 'Situational Assessment', icon: Target01Icon }
             ].map((tab) => (
               <button
                 key={tab.id}
@@ -91,9 +103,7 @@ export default function StepBuilder({
                     : "bg-white border-gray-200 text-gray-600 hover:bg-gray-50 hover:border-gray-300"
                 }`}
               >
-                <svg className={`w-5 h-5 ${currentFlowStep.builderStepType === tab.id ? 'text-red-600' : 'text-gray-400'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={tab.icon} />
-                </svg>
+                <HugeiconsIcon icon={tab.icon} className={`w-5 h-5 ${currentFlowStep.builderStepType === tab.id ? 'text-red-600' : 'text-gray-400'}`} />
                 {tab.label}
               </button>
             ))}
@@ -135,10 +145,19 @@ export default function StepBuilder({
          <button 
            type="button" 
            onClick={handleSaveClick} 
-           className="w-full py-3.5 bg-gray-900 hover:bg-black text-white text-sm font-bold rounded-xl shadow-md transition-all outline-none flex items-center justify-center gap-2"
+           className={`w-full py-3.5 text-white text-sm font-bold rounded-xl shadow-md transition-all outline-none flex items-center justify-center gap-2 ${editingStepId ? 'bg-blue-600 hover:bg-blue-700' : 'bg-gray-900 hover:bg-black'}`}
          >
-           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" /></svg>
-           Save Content to Sequence
+           {editingStepId ? (
+             <>
+               <HugeiconsIcon icon={RefreshIcon} className="w-5 h-5" />
+               Update Content in Sequence
+             </>
+           ) : (
+             <>
+               <HugeiconsIcon icon={CheckmarkBadge01Icon} className="w-5 h-5" />
+               Save Content to Sequence
+             </>
+           )}
          </button>
       </div>
     </div>

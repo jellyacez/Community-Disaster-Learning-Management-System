@@ -34,7 +34,7 @@ const ConfirmationModal = memo(function ConfirmationModal({
   const colors = getColors();
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm transition-opacity">
+    <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm transition-opacity">
       <div 
         role="alertdialog" 
         aria-modal="true"
