@@ -98,8 +98,8 @@ exports.completeModuleStep = async (req, res) => {
                      .sort((a, b) => a.order - b.order)
                      .map(c => c.choice_id);
                  
-                 // Assuming ans.sequenceChoiceIds is the array of choice IDs in the order the user placed them
-                 const submittedSequence = ans.sequenceChoiceIds || [];
+                 // Assuming ans.selectedChoiceIds is the array of choice IDs in the order the user placed them
+                 const submittedSequence = ans.selectedChoiceIds || [];
                  
                  if (JSON.stringify(correctSequence) === JSON.stringify(submittedSequence)) {
                      score += pointsMap[ans.questionId] || 1;
@@ -130,6 +130,27 @@ exports.completeModuleStep = async (req, res) => {
             [mod_id, step.level_id, stepId, user_id, score, totalPoints, passed]
         );
         
+        let dynamicLoopBackId = step.loop_back_step_id;
+        if (!step.is_final_assessment && !dynamicLoopBackId) {
+             const prevStepResult = await pool.query(
+                 `SELECT step_id FROM module_steps 
+                  WHERE level_id = $1 AND step_order < $2 AND step_type IN ('text', 'video')
+                  ORDER BY step_order DESC LIMIT 1`,
+                 [step.level_id, step.step_order]
+             );
+             if (prevStepResult.rowCount > 0) {
+                 dynamicLoopBackId = prevStepResult.rows[0].step_id;
+             } else {
+                 const firstStepResult = await pool.query(
+                     `SELECT step_id FROM module_steps WHERE level_id = $1 ORDER BY step_order ASC LIMIT 1`,
+                     [step.level_id]
+                 );
+                 if (firstStepResult.rowCount > 0) {
+                     dynamicLoopBackId = firstStepResult.rows[0].step_id;
+                 }
+             }
+        }
+
         if (!passed) {
              return res.status(200).json({
                   success: true,
@@ -137,7 +158,7 @@ exports.completeModuleStep = async (req, res) => {
                   score,
                   totalPoints,
                   percentage,
-                  loop_back_step_id: step.is_final_assessment ? null : step.loop_back_step_id, 
+                  loop_back_step_id: step.is_final_assessment ? null : dynamicLoopBackId, 
                   is_final_assessment: step.is_final_assessment,
                   message: "You did not meet the passing threshold."
              });
@@ -176,8 +197,8 @@ exports.completeModuleStep = async (req, res) => {
 
       const updateResult = await client.query(
         `UPDATE module_activity 
-         SET progress = $1, modstatus = $2, 
-             completed_at = CASE WHEN $2 = 'Completed' AND completed_at IS NULL THEN CURRENT_TIMESTAMP ELSE completed_at END 
+         SET progress = $1, modstatus = $2::varchar, 
+             completed_at = CASE WHEN $2::varchar = 'Completed' AND completed_at IS NULL THEN CURRENT_TIMESTAMP ELSE completed_at END 
          WHERE user_id = $3 AND mod_id = $4
          RETURNING modact_id`,
         [modulePercentage, modStatus, user_id, mod_id]

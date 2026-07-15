@@ -15,10 +15,11 @@ function shuffle(array) {
   return newArray;
 }
 
-export default function InteractiveQuiz({ questions = [], isLoading = false, onCompleteStep }) {
+export default function InteractiveQuiz({ stepType, questions = [], isLoading = false, onCompleteStep }) {
   const [shuffledQuestions, setShuffledQuestions] = useState([]);
   const [currentQIndex, setCurrentQIndex] = useState(0);
-  const [selectedChoiceId, setSelectedChoiceId] = useState(null);
+  const [selectedChoiceIds, setSelectedChoiceIds] = useState([]);
+  const isMultiSelect = stepType === 'hazard_identification' || stepType === 'action_sequence';
   const [hasSubmitted, setHasSubmitted] = useState(false);
   const [timeLeft, setTimeLeft] = useState(20);
   const [tabSwitchWarnings, setTabSwitchWarnings] = useState(0);
@@ -67,7 +68,7 @@ export default function InteractiveQuiz({ questions = [], isLoading = false, onC
         if (prev <= 1) {
           clearInterval(timer);
           setHasSubmitted(true);
-          setAnswers(prevAns => [...prevAns, { questionId: currentQ.question_id || currentQ.id, choiceId: null }]);
+          setAnswers(prevAns => [...prevAns, { questionId: currentQ.question_id || currentQ.id, selectedChoiceIds }]);
           return 0;
         }
         return prev - 1;
@@ -81,7 +82,7 @@ export default function InteractiveQuiz({ questions = [], isLoading = false, onC
   const handleNextQuestion = () => {
     if (currentQIndex < shuffledQuestions.length - 1) {
       setCurrentQIndex(prev => prev + 1);
-      setSelectedChoiceId(null);
+      setSelectedChoiceIds([]);
       setHasSubmitted(false);
       setTimeLeft(20);
     } else {
@@ -91,9 +92,20 @@ export default function InteractiveQuiz({ questions = [], isLoading = false, onC
 
   const handleChoiceClick = (choiceId) => {
     if (hasSubmitted || isLocked) return;
-    setSelectedChoiceId(choiceId);
+    
+    if (isMultiSelect) {
+      setSelectedChoiceIds(prev => 
+        prev.includes(choiceId) ? prev.filter(id => id !== choiceId) : [...prev, choiceId]
+      );
+    } else {
+      setSelectedChoiceIds([choiceId]);
+      submitAnswer([choiceId]);
+    }
+  };
+
+  const submitAnswer = (choiceIds) => {
     setHasSubmitted(true);
-    setAnswers(prev => [...prev, { questionId: currentQ.question_id || currentQ.id, choiceId }]);
+    setAnswers(prev => [...prev, { questionId: currentQ.question_id || currentQ.id, selectedChoiceIds: choiceIds }]);
   };
 
   const handlePreventCopy = (e) => e.preventDefault();
@@ -103,8 +115,24 @@ export default function InteractiveQuiz({ questions = [], isLoading = false, onC
   if (questions.length === 0) return <QuizStateMessage type="empty" onBypass={() => onCompleteStep([])} />;
   if (!currentQ) return null;
 
-  const isCorrect = selectedChoiceId && currentQ.options.find(o => o.id === selectedChoiceId)?.isCorrect;
-  const rationale = currentQ.options.find(o => o.id === selectedChoiceId)?.rationale;
+  const isCorrect = (() => {
+    if (stepType === 'action_sequence') {
+      const correctSequence = [...currentQ.options]
+        .sort((a, b) => (a.sequenceOrder || 0) - (b.sequenceOrder || 0))
+        .map(o => o.id);
+      return JSON.stringify(selectedChoiceIds) === JSON.stringify(correctSequence);
+    }
+    
+    if (isMultiSelect) { // hazard_identification
+      const correctOptionIds = currentQ.options.filter(o => o.isCorrect).map(o => o.id);
+      return selectedChoiceIds.length === correctOptionIds.length && selectedChoiceIds.every(id => correctOptionIds.includes(id));
+    }
+    
+    // regular quiz
+    return selectedChoiceIds.length > 0 && currentQ.options.find(o => o.id === selectedChoiceIds[0])?.isCorrect;
+  })();
+    
+  const rationale = selectedChoiceIds.length > 0 ? currentQ.options.find(o => o.id === selectedChoiceIds[0])?.rationale : null;
 
   return (
     <div 
@@ -129,16 +157,29 @@ export default function InteractiveQuiz({ questions = [], isLoading = false, onC
           <QuizChoice 
             key={opt.id} 
             opt={opt} 
-            isSelected={selectedChoiceId === opt.id} 
+            isSelected={selectedChoiceIds.includes(opt.id)} 
+            selectionOrder={stepType === 'action_sequence' && selectedChoiceIds.includes(opt.id) ? selectedChoiceIds.indexOf(opt.id) + 1 : 0}
             hasSubmitted={hasSubmitted} 
             onChoiceClick={handleChoiceClick} 
           />
         ))}
       </div>
 
+      {isMultiSelect && !hasSubmitted && (
+        <div className="mt-6 flex justify-end">
+          <button 
+            onClick={() => submitAnswer(selectedChoiceIds)}
+            disabled={selectedChoiceIds.length === 0}
+            className="px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Submit Answer
+          </button>
+        </div>
+      )}
+
       <QuizFeedback 
         hasSubmitted={hasSubmitted}
-        selectedChoiceId={selectedChoiceId}
+        selectedChoiceId={selectedChoiceIds[0]}
         isCorrect={isCorrect}
         rationale={rationale}
         onNextQuestion={handleNextQuestion}

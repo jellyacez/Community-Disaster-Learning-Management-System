@@ -303,7 +303,7 @@ export function useModuleBuilder() {
       setEditingModuleId(null);
       setModuleForm({ title: "", description: "", level: "Level 1", category: "General Safety / Protocols", duration: "15 mins", image_url: "" });
       setStagedFlows([]);
-      setStagedLevels([{ levelOrder: 1, levelTitle: "Phase 1: Basic Awareness", levelDescription: "Fundamental concepts container.", passing_threshold: 80, is_locked_by_default: true }]);
+      setStagedLevels([{ levelOrder: 1, levelTitle: "", levelDescription: "", passing_threshold: 80, is_locked_by_default: false }]);
       setActiveLevelOrder(1);
       setFormErrors({});
     } catch (error) {

@@ -108,12 +108,25 @@ export default function ModuleViewerContent({
             {/* INTERACTIVE QUIZ COMPONENT */}
             {isAssessment && (
               <div className="mt-10">
-                <InteractiveQuiz 
-                  key={activeStep.id} 
-                  questions={assessmentData.questions} 
-                  isLoading={assessmentData.isLoading}
-                  onCompleteStep={handleCompleteAndContinue} 
-                />
+                {completedStepIds.includes(activeStep.id) ? (
+                  <div className="bg-emerald-50 border border-emerald-100 rounded-3xl p-8 text-center flex flex-col items-center justify-center">
+                    <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mb-4">
+                      <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                      </svg>
+                    </div>
+                    <h3 className="text-2xl font-black text-emerald-900 mb-2">Assessment Completed</h3>
+                    <p className="text-emerald-700 font-medium">You have already successfully passed this assessment.</p>
+                  </div>
+                ) : (
+                  <InteractiveQuiz 
+                    key={activeStep.id} 
+                    stepType={activeStep.type}
+                    questions={assessmentData.questions} 
+                    isLoading={assessmentData.isLoading}
+                    onCompleteStep={handleCompleteAndContinue} 
+                  />
+                )}
               </div>
             )}
           </div>
@@ -201,7 +214,7 @@ export default function ModuleViewerContent({
                   isCompleting ? "bg-red-400 cursor-not-allowed" : "bg-red-600 hover:bg-red-700 active:scale-95 shadow-md shadow-red-600/20"
                 }`}
               >
-                {isCompleting ? "Saving..." : activeStep?.step_order === totalSteps ? "Finish Module" : "Complete & Continue"}
+                {isCompleting ? "Saving..." : activeStep?.id === levels[levels.length - 1]?.steps?.[levels[levels.length - 1]?.steps?.length - 1]?.id ? "Finish Module" : "Complete & Continue"}
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" />
                 </svg>

@@ -97,6 +97,11 @@ export function useModuleViewer(moduleId) {
         const nextStep = allSteps[currentIndex + 1];
         if (nextStep) {
             setActiveStepId(nextStep.id);
+        } else {
+            // No next step means they finished the end of the module map
+            toast.success("You have reached the end of the module.");
+            queryClient.invalidateQueries(["userDashboard"]);
+            navigate("/userDashboard");
         }
       }
     },

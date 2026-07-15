@@ -309,7 +309,7 @@ exports.getStepAssessment = async (req, res) => {
       const questionIds = questions.map(q => q.question_id);
       
       const choicesResult = await pool.query(
-        "SELECT choice_id, question_id, choice_text, is_correct, rationale FROM choices WHERE question_id = ANY($1::int[]) ORDER BY choice_id ASC",
+        "SELECT choice_id, question_id, choice_text, is_correct, rationale, sequence_order FROM choices WHERE question_id = ANY($1::int[]) ORDER BY choice_id ASC",
         [questionIds]
       );
 
@@ -321,7 +321,8 @@ exports.getStepAssessment = async (req, res) => {
           id: c.choice_id,
           text: c.choice_text,
           isCorrect: c.is_correct,
-          rationale: c.rationale
+          rationale: c.rationale,
+          sequenceOrder: c.sequence_order
         }));
       });
     }

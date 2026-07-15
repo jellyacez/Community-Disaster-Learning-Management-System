@@ -268,10 +268,11 @@ export default function AssessmentEditor({
       <ConfirmationModal
         isOpen={questionToDelete !== null}
         title="Delete Quiz Question"
-        message="Are you sure you want to remove this question from the quiz? This action cannot be undone."
+        description="Are you sure you want to remove this question from the quiz? This action cannot be undone."
         confirmText="Delete Question"
+        type="danger"
         onConfirm={confirmDeleteQuestion}
-        onCancel={() => setQuestionToDelete(null)}
+        onClose={() => setQuestionToDelete(null)}
       />
     </div>
   );

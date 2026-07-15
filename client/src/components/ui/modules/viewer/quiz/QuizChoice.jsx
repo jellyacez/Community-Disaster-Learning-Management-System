@@ -1,4 +1,4 @@
-export default function QuizChoice({ opt, isSelected, hasSubmitted, onChoiceClick }) {
+export default function QuizChoice({ opt, isSelected, hasSubmitted, onChoiceClick, selectionOrder = 0 }) {
   let baseClasses = "w-full text-left p-4 rounded-xl border-2 transition-all duration-200 focus:outline-none";
   
   if (!hasSubmitted) {
@@ -24,11 +24,14 @@ export default function QuizChoice({ opt, isSelected, hasSubmitted, onChoiceClic
     >
       <div className="flex items-center gap-3">
         <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors ${
-          isSelected ? (opt.isCorrect ? 'border-emerald-500 bg-emerald-500 text-white' : 'border-red-500 bg-red-500 text-white') 
-          : (hasSubmitted && opt.isCorrect ? 'border-emerald-500 bg-emerald-500 text-white' : 'border-gray-300')
+          hasSubmitted 
+            ? (isSelected ? (opt.isCorrect ? 'border-emerald-500 bg-emerald-500 text-white' : 'border-red-500 bg-red-500 text-white') 
+               : (opt.isCorrect ? 'border-emerald-500 bg-emerald-500 text-white' : 'border-gray-300'))
+            : (isSelected ? 'border-red-600 bg-red-600 text-white' : 'border-gray-300')
         }`}>
           {hasSubmitted && opt.isCorrect && <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>}
           {hasSubmitted && isSelected && !opt.isCorrect && <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>}
+          {!hasSubmitted && isSelected && selectionOrder > 0 && <span className="text-[11px] font-bold">{selectionOrder}</span>}
         </div>
         <span>{opt.text}</span>
       </div>

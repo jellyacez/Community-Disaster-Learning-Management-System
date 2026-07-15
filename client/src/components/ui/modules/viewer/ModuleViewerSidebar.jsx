@@ -87,7 +87,7 @@ export default function ModuleViewerSidebar({
                         {step.step_order}. {step.title}
                       </p>
                       <p className="text-xs text-gray-500 capitalize mt-0.5">
-                         {step.type} {step.is_final_assessment ? "(Final Assessment)" : ""}
+                         {step.type.replace(/_/g, ' ')} {step.is_final_assessment ? "(Final Assessment)" : ""}
                       </p>
                     </div>
                   </button>

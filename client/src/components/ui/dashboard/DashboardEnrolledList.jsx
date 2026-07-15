@@ -21,45 +21,49 @@ export default function DashboardEnrolledList({ displayData, loading, navigate, 
         <div className="space-y-4">
           {loading ? (
             [1, 2].map((i) => <ModuleSkeleton key={i} />)
-          ) : displayData.enrolledModules.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-12 text-center">
-              <div className="h-16 w-16 rounded-full bg-gray-50 flex items-center justify-center mb-4">
-                <HugeiconsIcon
-                  icon={BookOpen01Icon}
-                  className="w-8 h-8 text-gray-400"
-                />
-              </div>
-              <h3 className="text-lg font-bold text-gray-900 mb-2">
-                No Modules Enrolled
-              </h3>
-              <p className="text-sm text-gray-500 max-w-sm mb-6">
-                You haven't enrolled in any disaster preparedness modules
-                yet. Head over to the catalog to get started!
-              </p>
-              <button
-                onClick={() => navigate("/user/catalog")}
-                className="rounded-xl bg-red-600 px-6 py-3 text-sm font-bold text-white hover:bg-red-700 transition"
-              >
-                Explore Catalog
-              </button>
-            </div>
-          ) : (
-            displayData.enrolledModules.slice(0, 4).map((module) => (
+          ) : (() => {
+            const activeModules = displayData.enrolledModules.filter(m => m.progress < 100);
+            if (activeModules.length === 0) {
+              return (
+                <div className="flex flex-col items-center justify-center py-12 text-center">
+                  <div className="h-16 w-16 rounded-full bg-gray-50 flex items-center justify-center mb-4">
+                    <HugeiconsIcon
+                      icon={BookOpen01Icon}
+                      className="w-8 h-8 text-gray-400"
+                    />
+                  </div>
+                  <h3 className="text-lg font-bold text-gray-900 mb-2">
+                    No Active Modules
+                  </h3>
+                  <p className="text-sm text-gray-500 max-w-sm mb-6">
+                    You have no modules currently in progress. Head over to the catalog to start a new one!
+                  </p>
+                  <button
+                    onClick={() => navigate("/user/catalog")}
+                    className="rounded-xl bg-red-600 px-6 py-3 text-sm font-bold text-white hover:bg-red-700 transition"
+                  >
+                    Explore Catalog
+                  </button>
+                </div>
+              );
+            }
+            
+            return activeModules.slice(0, 4).map((module) => (
               <EnrolledModuleCard
                 key={module.id}
                 module={module}
                 onResume={handleResume}
               />
-            ))
-          )}
+            ));
+          })()}
         </div>
 
-        {!loading && displayData.enrolledModules.length > 4 && (
+        {!loading && displayData.enrolledModules.filter(m => m.progress < 100).length > 4 && (
           <button
             onClick={() => navigate("/user/enrolled")}
             className="w-full mt-6 py-3 rounded-xl border border-gray-200 text-sm font-bold text-gray-700 hover:text-gray-900 hover:bg-gray-50 transition-colors"
           >
-            View All Enrolled Modules
+            View All Active Modules
           </button>
         )}
       </div>
