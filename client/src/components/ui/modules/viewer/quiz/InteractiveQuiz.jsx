@@ -136,7 +136,7 @@ export default function InteractiveQuiz({ stepType, questions = [], isLoading = 
 
   return (
     <div 
-      className="bg-white border border-gray-200 rounded-3xl p-6 md:p-8 shadow-sm relative overflow-hidden select-none"
+      className="bg-gradient-to-br from-purple-50/50 via-white to-blue-50/50 border border-purple-100/50 rounded-3xl p-6 md:p-8 shadow-sm relative overflow-hidden select-none"
       onCopy={handlePreventCopy}
       onContextMenu={handlePreventCopy}
     >
@@ -177,14 +177,22 @@ export default function InteractiveQuiz({ stepType, questions = [], isLoading = 
         </div>
       )}
 
-      <QuizFeedback 
-        hasSubmitted={hasSubmitted}
-        selectedChoiceId={selectedChoiceIds[0]}
-        isCorrect={isCorrect}
-        rationale={rationale}
-        onNextQuestion={handleNextQuestion}
-        isLastQuestion={currentQIndex >= shuffledQuestions.length - 1}
-      />
+      {/* Footer Area with Black Next Button */}
+      <div className="mt-8">
+        {(hasSubmitted || isLocked) && !isCorrect && rationale && (
+          <QuizFeedback rationale={rationale} isCorrect={isCorrect} isLocked={isLocked} />
+        )}
+        
+        {hasSubmitted && !isLocked && (
+          <button 
+            onClick={handleNextQuestion}
+            className="w-full mt-4 px-6 py-4 bg-gray-900 hover:bg-black active:scale-[0.98] text-white rounded-2xl font-bold transition-all shadow-md flex items-center justify-center gap-2 text-[15px]"
+          >
+            {currentQIndex < shuffledQuestions.length - 1 ? 'Next' : 'Complete Assessment'}
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
+          </button>
+        )}
+      </div>
     </div>
   );
 }
