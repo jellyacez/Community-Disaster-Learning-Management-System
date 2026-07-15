@@ -1,56 +1,109 @@
 const pool = require("../../config/db");
 const { cleanRichText } = require("../../utils/sanitizeHtml");
 
-// @desc    Creates a new module in the database
+// @desc    Creates a new module and all its nested levels and steps in a transaction
 // @access  Private (admin only)
 exports.createModule = async (req, res) => {
   const {
     moduleName,
     moduleCategory,
     description,
-    level,
+    level, // Legacy audience string
     duration,
     video_url,
     image_url,
+    levels // Array of nested levels
   } = req.body;
 
-  if (!moduleName || !moduleCategory || !duration) {
+  if (!moduleName || !moduleCategory || !duration || !levels || !Array.isArray(levels)) {
     return res.status(400).json({
       success: false,
-      message:
-        "Missing required fields: moduleName, moduleCategory, and duration are mandatory.",
+      message: "Missing required fields or levels array.",
     });
   }
 
   const safeDescription = cleanRichText(description);
+  const client = await pool.connect();
 
   try {
-    const moduleCreation = await pool.query(
-      `INSERT INTO public.module_data (modname, modcat, description, level, duration, video_url, image_url) 
-             VALUES ($1, $2, $3, $4, $5, $6, $7) 
-             RETURNING *`,
-      [
-        moduleName,
-        moduleCategory,
-        safeDescription,
-        level,
-        duration,
-        video_url,
-        image_url,
-      ],
-    );
+    await client.query("BEGIN");
 
+    // 1. Insert Module
+    const moduleCreation = await client.query(
+      `INSERT INTO public.module_data (modname, modcat, description, level, duration, video_url, image_url) 
+       VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING mod_id`,
+      [moduleName, moduleCategory, safeDescription, level, duration, video_url, image_url]
+    );
+    const mod_id = moduleCreation.rows[0].mod_id;
+
+    // 2. Insert Levels
+    for (const lvl of levels) {
+      const levelRes = await client.query(
+        `INSERT INTO public.levels (mod_id, level_order, level_title, level_description, passing_threshold, is_locked_by_default)
+         VALUES ($1, $2, $3, $4, $5, $6) RETURNING level_id`,
+        [mod_id, lvl.levelOrder, lvl.levelTitle, cleanRichText(lvl.levelDescription || ""), lvl.passing_threshold || 80, lvl.is_locked_by_default ?? true]
+      );
+      const level_id = levelRes.rows[0].level_id;
+
+      // 3. Insert Steps for this level
+      let lastLearningStepId = null; // Track the most recent non-quiz step
+      
+      for (const step of lvl.steps) {
+        // Calculate loop_back_step_id if it's a quiz
+        let loopBackId = null;
+        if ((step.stepType === 'quiz' || step.stepType === 'situational') && lastLearningStepId) {
+           loopBackId = lastLearningStepId;
+        }
+
+        const stepRes = await client.query(
+          `INSERT INTO public.module_steps (level_id, step_order, step_title, step_content, media_url, step_type, is_final_assessment, loop_back_step_id)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING step_id`,
+          [level_id, step.stepOrder, step.stepTitle, step.stepContent, step.mediaUrl, step.stepType, step.is_final_assessment || false, loopBackId]
+        );
+        const step_id = stepRes.rows[0].step_id;
+
+        // Update lastLearningStepId if this is a learning material
+        if (step.stepType !== 'quiz' && step.stepType !== 'situational') {
+           lastLearningStepId = step_id;
+        }
+
+        // 4. Insert Quiz Questions and Choices
+        if (step.quizQuestions && step.quizQuestions.length > 0) {
+          for (const q of step.quizQuestions) {
+            const qRes = await client.query(
+              `INSERT INTO public.questions (mod_id, step_id, question_text, points, image_url)
+               VALUES ($1, $2, $3, $4, $5) RETURNING question_id`,
+              [mod_id, step_id, q.questionText, 10, q.imageURL || '']
+            );
+            const question_id = qRes.rows[0].question_id;
+
+            for (const opt of q.options) {
+              await client.query(
+                `INSERT INTO public.choices (question_id, choice_text, is_correct, rationale, sequence_order)
+                 VALUES ($1, $2, $3, $4, $5)`,
+                [question_id, opt.text, opt.isCorrect, cleanRichText(opt.rationale || ""), opt.sequence_order || null]
+              );
+            }
+          }
+        }
+      }
+    }
+
+    await client.query("COMMIT");
     return res.status(201).json({
       success: true,
-      message: "Module created successfully.",
-      data: moduleCreation.rows[0],
+      message: "Module structure created successfully.",
+      data: { mod_id }
     });
   } catch (error) {
-    console.error("Error creating module:", error);
+    await client.query("ROLLBACK");
+    console.error("Transaction Error creating module structure:", error);
     return res.status(500).json({
       success: false,
-      message: "An internal server error occurred while creating the module.",
+      message: "Transaction failed. Database changes rolled back. " + error.message,
     });
+  } finally {
+    client.release();
   }
 };
 // --- End of createModule ---
@@ -151,7 +204,6 @@ exports.getModuleViewerData = async (req, res) => {
   const user_id = req.user?.id;
 
   try {
-    // Check enrollment status
     const enrollmentCheck = await pool.query(
       "SELECT 1 FROM module_activity WHERE user_id = $1 AND mod_id = $2 LIMIT 1",
       [user_id, mod_id]
@@ -161,7 +213,6 @@ exports.getModuleViewerData = async (req, res) => {
       return res.status(403).json({ success: false, message: "You are not enrolled in this module." });
     }
 
-    // Get module data
     const moduleResult = await pool.query(
       "SELECT mod_id as id, modname as title, modcat as category FROM module_data WHERE mod_id = $1",
       [mod_id]
@@ -171,39 +222,55 @@ exports.getModuleViewerData = async (req, res) => {
       return res.status(404).json({ success: false, message: "Module not found." });
     }
 
-    // Get module steps
-    const stepsResult = await pool.query(
-      `SELECT ms.step_id as id, ms.step_order, ms.step_type as type, ms.step_title as title, ms.step_content as content, ms.media_url
-       FROM module_steps ms
-       JOIN levels l ON ms.level_id = l.level_id
-       WHERE l.mod_id = $1
-       ORDER BY l.level_order ASC, ms.step_order ASC`,
+    const levelsResult = await pool.query(
+      `SELECT level_id as id, level_order, level_title as title, level_description as description, passing_threshold, is_locked_by_default
+       FROM levels WHERE mod_id = $1 ORDER BY level_order ASC`,
       [mod_id]
     );
 
-    // Calculate current progress
+    const stepsResult = await pool.query(
+      `SELECT ms.step_id as id, ms.level_id, ms.step_order, ms.step_type as type, ms.step_title as title, ms.step_content as content, ms.media_url, ms.is_final_assessment, ms.loop_back_step_id
+       FROM module_steps ms
+       JOIN levels l ON ms.level_id = l.level_id
+       WHERE l.mod_id = $1 ORDER BY ms.step_order ASC`,
+      [mod_id]
+    );
+
+    // Get completed step IDs
     const progressResult = await pool.query(
-      `SELECT COALESCE(MAX(ms.step_order), 0) as current_progress_order
+      `SELECT usp.step_id 
        FROM user_step_progress usp
        JOIN module_steps ms ON usp.step_id = ms.step_id
        JOIN levels l ON ms.level_id = l.level_id
-       WHERE usp.user_id = $1 AND l.mod_id = $2
-       GROUP BY l.level_order, ms.step_order
-       ORDER BY l.level_order DESC, ms.step_order DESC
-       LIMIT 1`,
+       WHERE usp.user_id = $1 AND l.mod_id = $2`,
       [user_id, mod_id]
     );
+    const completedStepIds = progressResult.rows.map(r => r.step_id);
 
-    const currentProgressOrder = progressResult.rows.length > 0 
-      ? parseInt(progressResult.rows[0].current_progress_order, 10) 
-      : 0;
+    // Get passed levels (levels where final assessment was passed)
+    const passedLevelsResult = await pool.query(
+      `SELECT DISTINCT level_id FROM results WHERE user_id = $1 AND mod_id = $2 AND passed = true`,
+      [user_id, mod_id]
+    );
+    const passedLevelIds = passedLevelsResult.rows.map(r => r.level_id);
+
+    // Assemble the nested structure
+    const levels = levelsResult.rows.map(level => {
+      // Find steps for this level
+      const levelSteps = stepsResult.rows.filter(s => s.level_id === level.id);
+      return {
+        ...level,
+        steps: levelSteps
+      };
+    });
 
     return res.status(200).json({
       success: true,
       data: {
         module: moduleResult.rows[0],
-        steps: stepsResult.rows,
-        currentProgressOrder
+        levels: levels,
+        completedStepIds: completedStepIds,
+        passedLevelIds: passedLevelIds
       }
     });
   } catch (error) {

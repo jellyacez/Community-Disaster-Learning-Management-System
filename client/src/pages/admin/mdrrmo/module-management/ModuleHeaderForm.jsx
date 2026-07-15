@@ -14,13 +14,13 @@ export default function ModuleHeaderForm({ editingModuleId, moduleForm, setModul
   };
 
   return (
-    <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm space-y-5">
-      <h2 className="text-lg font-bold text-gray-800 uppercase tracking-wider border-b border-gray-100 pb-3">
+    <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-6">
+      <h2 className="text-lg font-bold text-slate-800 uppercase tracking-wide border-b border-slate-100 pb-4">
         {editingModuleId ? "Modify Training Module" : "Setup New Training Module"}
       </h2>
       
       <div>
-        <label className="block text-sm font-bold text-gray-700 uppercase tracking-wide mb-1.5">
+        <label className="block text-xs font-bold text-slate-600 uppercase tracking-wide mb-2">
           Module Topic Title <span className="text-red-500" aria-hidden="true">*</span>
         </label>
         <input 
@@ -34,7 +34,7 @@ export default function ModuleHeaderForm({ editingModuleId, moduleForm, setModul
       </div>
 
       <div>
-        <label className="block text-sm font-bold text-gray-700 uppercase tracking-wide mb-1.5">
+        <label className="block text-xs font-bold text-slate-600 uppercase tracking-wide mb-2">
           Thumbnail Image URL (Optional)
         </label>
         <input 
@@ -42,17 +42,17 @@ export default function ModuleHeaderForm({ editingModuleId, moduleForm, setModul
           placeholder="e.g., https://example.com/flood-image.jpg" 
           value={moduleForm.image_url || ""} 
           onChange={(e) => handleFieldChange('image_url', e.target.value)} 
-          className="w-full p-3 bg-white border border-gray-300 focus:border-red-500 focus:ring-4 focus:ring-red-500/10 rounded-xl text-sm font-medium transition-all outline-none" 
+          className="w-full p-3 bg-white border border-slate-300 focus:border-red-500 focus:ring-4 focus:ring-red-500/10 rounded-xl text-sm font-medium transition-all outline-none" 
         />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
         <div>
-          <label className="block text-sm font-bold text-gray-700 uppercase tracking-wide mb-1.5">Disaster Category</label>
+          <label className="block text-xs font-bold text-slate-600 uppercase tracking-wide mb-2">Disaster Category</label>
           <select 
             value={moduleForm.category} 
             onChange={(e) => handleFieldChange('category', e.target.value)} 
-            className="w-full p-3 bg-white border border-gray-300 text-gray-800 rounded-xl text-sm font-bold transition-all outline-none cursor-pointer focus:border-red-500 focus:ring-4 focus:ring-red-500/10"
+            className="w-full p-3 bg-white border border-slate-300 text-slate-800 rounded-xl text-sm font-bold transition-all outline-none cursor-pointer focus:border-red-500 focus:ring-4 focus:ring-red-500/10"
           >
             <option value="Flooding">Flooding</option>
             <option value="Earthquakes">Earthquakes</option>
@@ -61,11 +61,11 @@ export default function ModuleHeaderForm({ editingModuleId, moduleForm, setModul
           </select>
         </div>
         <div>
-          <label className="block text-sm font-bold text-gray-700 uppercase tracking-wide mb-1.5">Competency Level</label>
+          <label className="block text-xs font-bold text-slate-600 uppercase tracking-wide mb-2">Competency Level</label>
           <select 
             value={moduleForm.level} 
             onChange={(e) => handleFieldChange('level', e.target.value)} 
-            className="w-full p-3 bg-white border border-gray-300 text-gray-800 rounded-xl text-sm font-bold transition-all outline-none cursor-pointer focus:border-red-500 focus:ring-4 focus:ring-red-500/10"
+            className="w-full p-3 bg-white border border-slate-300 text-slate-800 rounded-xl text-sm font-bold transition-all outline-none cursor-pointer focus:border-red-500 focus:ring-4 focus:ring-red-500/10"
           >
             <option value="Level 1">Level 1: Beginner</option>
             <option value="Level 2">Level 2: Intermediate</option>
@@ -73,11 +73,11 @@ export default function ModuleHeaderForm({ editingModuleId, moduleForm, setModul
           </select>
         </div>
         <div>
-          <label className="block text-sm font-bold text-gray-700 uppercase tracking-wide mb-1.5">Estimated Duration</label>
+          <label className="block text-xs font-bold text-slate-600 uppercase tracking-wide mb-2">Estimated Duration</label>
           <select 
             value={moduleForm.duration} 
             onChange={(e) => handleFieldChange('duration', e.target.value)} 
-            className="w-full p-3 bg-white border border-gray-300 text-gray-800 rounded-xl text-sm font-bold transition-all outline-none cursor-pointer focus:border-red-500 focus:ring-4 focus:ring-red-500/10"
+            className="w-full p-3 bg-white border border-slate-300 text-slate-800 rounded-xl text-sm font-bold transition-all outline-none cursor-pointer focus:border-red-500 focus:ring-4 focus:ring-red-500/10"
           >
             <option value="15 mins">15 mins</option>
             <option value="30 mins">30 mins</option>
@@ -89,7 +89,7 @@ export default function ModuleHeaderForm({ editingModuleId, moduleForm, setModul
       </div>
 
       <div>
-        <label className="block text-sm font-bold text-gray-700 uppercase tracking-wide mb-1.5">
+        <label className="block text-xs font-bold text-slate-600 uppercase tracking-wide mb-2">
           Short Description / Summary <span className="text-red-500" aria-hidden="true">*</span>
         </label>
         <div className="text-sm">

@@ -14,10 +14,17 @@ export function useModuleBuilder() {
   });
 
   const [formErrors, setFormErrors] = useState({});
+  const [stagedLevels, setStagedLevels] = useState([
+    { levelOrder: 1, levelTitle: "", levelDescription: "", passing_threshold: 80, is_locked_by_default: false }
+  ]);
+  const [activeLevelOrder, setActiveLevelOrder] = useState(1);
   const [stagedFlows, setStagedFlows] = useState([]);
+  
   const [currentFlowStep, setCurrentFlowStep] = useState({
-    type: "text", title: "", textContent: "", videoUrl: "", assessmentType: "quiz", quizQuestions: [], situationalScenario: "", situationalGuide: ""
+    builderStepType: "learning_material", // "learning_material", "quiz", or "situational"
+    type: "text", title: "", textContent: "", videoUrl: "", assessmentType: "quiz", quizQuestions: [], situationalScenario: "", is_final_assessment: false
   });
+  
   const [currentQuizQuestion, setCurrentQuizQuestion] = useState({
     questionText: "", 
     options: [
@@ -29,6 +36,26 @@ export function useModuleBuilder() {
     correctAnswerIndex: 0
   });
 
+  const [currentSituationalData, setCurrentSituationalData] = useState({
+    interactionType: "priority_action",
+    // Priority Action (similar to quiz)
+    options: [
+      { text: "", rationale: "" },
+      { text: "", rationale: "" },
+      { text: "", rationale: "" },
+      { text: "", rationale: "" }
+    ],
+    correctAnswerIndex: 0,
+    // Hazard Identification
+    hazards: [
+      { text: "", rationale: "", isRequired: true }
+    ],
+    // Action Sequence
+    sequenceSteps: [
+      { text: "", order: 1 }
+    ]
+  });
+
   const [situationalImage, setSituationalImage] = useState(null);
   const [writtenMaterialFile, setWrittenMaterialFile] = useState(null);
 
@@ -36,28 +63,50 @@ export function useModuleBuilder() {
     const errors = {};
     if (!currentFlowStep.title.trim()) errors.stepTitle = "A step title is required to identify this module segment.";
     
-    if (!currentFlowStep.textContent.trim()) {
-      errors.stepContent = "Instructional content is required. Please provide the necessary documentation.";
+    if (currentFlowStep.builderStepType === "learning_material") {
+      if (!currentFlowStep.textContent.trim() && !writtenMaterialFile) {
+        errors.stepContent = "Instructional content or a media file is required for a learning material.";
+      }
     }
     
-    if (currentFlowStep.assessmentType === "quiz" && currentFlowStep.quizQuestions.length === 0) {
-      errors.stepQuiz = "At least one assessment question must be saved for this verification step.";
+    if (currentFlowStep.builderStepType === "quiz") {
+      if (currentFlowStep.quizQuestions.length === 0) {
+        errors.stepQuiz = "At least one assessment question must be saved for this verification step.";
+      }
     }
-    if (currentFlowStep.assessmentType === "situational" && !currentFlowStep.situationalScenario.trim()) {
-      errors.stepScenario = "A scenario description is required for this situational assessment.";
+    
+    if (currentFlowStep.builderStepType === "situational") {
+      if (!currentFlowStep.situationalScenario.trim()) {
+        errors.stepScenario = "A scenario description is required for this situational assessment.";
+      }
+      
+      if (currentSituationalData.interactionType === "priority_action") {
+        if (currentSituationalData.options.some(opt => !opt.text.trim())) errors.situationalOptions = "All four options must be populated.";
+        if (currentSituationalData.options.some(opt => !opt.rationale.trim())) errors.situationalOptions = "Rationale is required for all options.";
+      } else if (currentSituationalData.interactionType === "hazard_identification") {
+        if (currentSituationalData.hazards.length === 0) errors.situationalHazards = "At least one hazard must be defined.";
+        if (currentSituationalData.hazards.some(h => !h.text.trim() || !h.rationale.trim())) errors.situationalHazards = "All hazards must have text and rationale.";
+      } else if (currentSituationalData.interactionType === "action_sequence") {
+        if (currentSituationalData.sequenceSteps.length < 2) errors.situationalSequence = "At least two sequence steps must be defined.";
+        if (currentSituationalData.sequenceSteps.some(s => !s.text.trim())) errors.situationalSequence = "All sequence steps must have text.";
+      }
     }
 
     if (Object.keys(errors).length > 0) {
       setFormErrors(errors);
-      toast.error("Validation failed. Please ensure all required fields in this step are completed.");
-      return;
+      toast.error("System Error: Validation failed. Please ensure all required fields are populated.");
+      return false;
     }
 
-    const stepWithMeta = { ...currentFlowStep, id: crypto.randomUUID() };
+    const stepWithMeta = { ...currentFlowStep, id: crypto.randomUUID(), levelOrder: activeLevelOrder };
     
-    // Auto-detect step type to ensure proper rendering in ModuleViewer
-    if (currentFlowStep.quizQuestions && currentFlowStep.quizQuestions.length > 0) {
+    // Assign proper backend type
+    if (currentFlowStep.builderStepType === "quiz") {
       stepWithMeta.type = "quiz";
+    } else if (currentFlowStep.builderStepType === "situational") {
+      stepWithMeta.type = currentSituationalData.interactionType;
+      stepWithMeta.assessmentType = "situational";
+      stepWithMeta.situationalData = currentSituationalData;
     } else if (writtenMaterialFile && writtenMaterialFile.type.startsWith("video/")) {
       stepWithMeta.type = "video";
     } else {
@@ -76,9 +125,16 @@ export function useModuleBuilder() {
     setStagedFlows([...stagedFlows, stepWithMeta]);
     setWrittenMaterialFile(null);
     setSituationalImage(null);
-    setCurrentFlowStep({ type: "text", title: "", textContent: "", videoUrl: "", assessmentType: "quiz", quizQuestions: [], situationalScenario: "", situationalGuide: "" });
+    setCurrentFlowStep({ type: "text", title: "", textContent: "", videoUrl: "", assessmentType: "quiz", quizQuestions: [], situationalScenario: "", is_final_assessment: false });
+    setCurrentSituationalData({
+      interactionType: "priority_action",
+      options: [{ text: "", rationale: "" }, { text: "", rationale: "" }, { text: "", rationale: "" }, { text: "", rationale: "" }],
+      correctAnswerIndex: 0,
+      hazards: [{ text: "", rationale: "", isRequired: true }],
+      sequenceSteps: [{ text: "", order: 1 }]
+    });
     setFormErrors({});
-    toast.success("Step successfully appended to the sequence module.");
+    return true;
   };
 
   const addQuizQuestionToStep = () => {
@@ -121,9 +177,15 @@ export function useModuleBuilder() {
     if (!moduleForm.description.trim() || moduleForm.description === "<p></p>") errors.description = "A short description or summary is required for the module overview.";
     if (stagedFlows.length === 0) errors.flows = "A module must contain at least one instructional or assessment step before publishing.";
     
+    const hasEmptyLevelTitles = stagedLevels.some(lvl => !lvl.levelTitle.trim());
+    if (hasEmptyLevelTitles) {
+      toast.error("System Error: One or more curriculum levels are missing a valid title. Please verify inputs before publishing.");
+      return;
+    }
+
     if (Object.keys(errors).length > 0) {
       setFormErrors(errors);
-      toast.error("Module validation failed. Please review the highlighted errors before publishing.");
+      toast.error("System Error: Module validation failed. Please review the highlighted fields before publishing.");
       return;
     }
 
@@ -131,7 +193,6 @@ export function useModuleBuilder() {
 
     try {
       // 1. PRE-UPLOAD ALL MEDIA FIRST
-      // This prevents creating orphaned Module/Level DB records if a 50MB video upload fails.
       const uploadedFlows = [];
       for (let i = 0; i < stagedFlows.length; i++) {
         const activeFlow = stagedFlows[i];
@@ -155,70 +216,95 @@ export function useModuleBuilder() {
 
       toast.loading("Synchronizing module data to database...", { id: loadingToastId });
 
-      // 2. CREATE DB RECORDS ONLY AFTER UPLOADS SUCCEED
-      const moduleResponse = await apiClient.post("modules", {
+      // 2. CREATE NESTED PAYLOAD
+      const levelsPayload = stagedLevels.map(lvl => {
+         // Filter steps that belong to this level
+         const levelFlows = uploadedFlows.filter(f => f.levelOrder === lvl.levelOrder);
+         
+         const stepsPayload = levelFlows.map((flow, index) => {
+             let questionsToSave = [];
+             
+             if (flow.type === "quiz") {
+                 questionsToSave = flow.quizQuestions?.map(q => ({
+                     questionText: q.questionText,
+                     imageURL: '',
+                     options: q.options.map((opt, optIdx) => ({
+                         text: opt.text,
+                         isCorrect: optIdx === q.correctAnswerIndex,
+                         rationale: opt.rationale
+                     }))
+                 })) || [];
+             } else if (flow.assessmentType === "situational" && flow.situationalData) {
+                 const interaction = flow.situationalData.interactionType;
+                 
+                 let options = [];
+                 if (interaction === "priority_action") {
+                     options = flow.situationalData.options.map((opt, optIdx) => ({
+                         text: opt.text,
+                         isCorrect: optIdx === flow.situationalData.correctAnswerIndex,
+                         rationale: opt.rationale
+                     }));
+                 } else if (interaction === "hazard_identification") {
+                     options = flow.situationalData.hazards.map((hazard) => ({
+                         text: hazard.text,
+                         isCorrect: hazard.isRequired,
+                         rationale: hazard.rationale
+                     }));
+                 } else if (interaction === "action_sequence") {
+                     options = flow.situationalData.sequenceSteps.map((step) => ({
+                         text: step.text,
+                         isCorrect: true, // all steps are "correct" parts of the sequence
+                         sequence_order: step.order
+                     }));
+                 }
+                 
+                 questionsToSave = [{
+                     questionText: flow.situationalScenario,
+                     imageURL: '',
+                     options: options
+                 }];
+             }
+             
+             return {
+                 stepOrder: index + 1,
+                 stepTitle: flow.title,
+                 stepContent: flow.type === "text" ? flow.textContent : flow.situationalScenario,
+                 mediaUrl: flow.finalMediaUrl,
+                 stepType: flow.type,
+                 is_final_assessment: flow.is_final_assessment || false,
+                 quizQuestions: questionsToSave
+             };
+         });
+
+         return {
+            levelOrder: lvl.levelOrder,
+            levelTitle: lvl.levelTitle,
+            levelDescription: lvl.levelDescription,
+            passing_threshold: Number(lvl.passing_threshold) || 80,
+            is_locked_by_default: lvl.is_locked_by_default ?? true,
+            steps: stepsPayload
+         };
+      });
+
+      const modulePayload = {
         moduleName: moduleForm.title,
         moduleCategory: moduleForm.category,
         description: moduleForm.description,
         level: moduleForm.level,
         duration: moduleForm.duration,
         image_url: moduleForm.image_url,
-        video_url: ""
-      });
+        video_url: "",
+        levels: levelsPayload
+      };
 
-      const moduleResult = moduleResponse.data;
-      const targetModuleId = moduleResult.data.mod_id;
-
-      const levelResponse = await apiClient.post(`modules/${targetModuleId}`, {
-        levelOrder: 1,
-        levelTitle: `Core Curriculum for ${moduleForm.title}`,
-        levelDescription: "Auto-generated structural configuration container."
-      });
-
-      const levelResult = levelResponse.data;
-      const targetLevelId = levelResult.data.level_id;
-
-      // 3. INSERT STEPS INTO DB
-      for (let i = 0; i < uploadedFlows.length; i++) {
-        const flow = uploadedFlows[i];
-        const stepPayload = {
-          stepOrder: i + 1,
-          stepTitle: flow.title,
-          stepContent: flow.type === "text" ? flow.textContent : flow.situationalScenario,
-          mediaUrl: flow.finalMediaUrl,
-          stepType: flow.type
-        };
-
-        const stepResponse = await apiClient.post(`modules/steps/${targetLevelId}`, stepPayload);
-        const targetStepId = stepResponse.data.data.step_id;
-
-        // INSERT QUIZ QUESTIONS AND CHOICES
-        if (flow.assessmentType === "quiz" && flow.quizQuestions.length > 0) {
-          for (let q of flow.quizQuestions) {
-             const qRes = await apiClient.post(`modules/${targetModuleId}/questions`, {
-                 questionText: q.questionText,
-                 points: 10,
-                 imageURL: '',
-                 stepId: targetStepId
-             });
-             const qId = qRes.data.data.question_id;
-
-             for (let oIndex = 0; oIndex < q.options.length; oIndex++) {
-                const opt = q.options[oIndex];
-                await apiClient.post(`modules/${qId}/choices`, {
-                    choiceText: opt.text,
-                    isCorrect: oIndex === q.correctAnswerIndex,
-                    rationale: opt.rationale
-                });
-             }
-          }
-        }
-      }
+      const moduleResponse = await apiClient.post("modules", modulePayload);
 
       toast.success("Syllabus configuration successfully published to the production database.", { id: loadingToastId });
       setEditingModuleId(null);
       setModuleForm({ title: "", description: "", level: "Level 1", category: "General Safety / Protocols", duration: "15 mins", image_url: "" });
       setStagedFlows([]);
+      setStagedLevels([{ levelOrder: 1, levelTitle: "Phase 1: Basic Awareness", levelDescription: "Fundamental concepts container.", passing_threshold: 80, is_locked_by_default: true }]);
+      setActiveLevelOrder(1);
       setFormErrors({});
     } catch (error) {
       console.error("Critical error executing data synchronization processing:", error);
@@ -227,9 +313,8 @@ export function useModuleBuilder() {
   };
 
   const triggerFlowSequencePreview = () => {
-    // This is handled by the modal toggle now, but if used standalone:
     if (stagedFlows.length === 0) {
-      toast.error("No structural steps found. Please stage at least one sequence step to initiate preview.");
+      toast.error("System Error: No curriculum sequences detected. Please stage at least one sequence step to initiate the preview.");
       return false;
     }
     return true;
@@ -239,9 +324,12 @@ export function useModuleBuilder() {
     state: {
       editingModuleId,
       moduleForm,
+      stagedLevels,
+      activeLevelOrder,
       stagedFlows,
       currentFlowStep,
       currentQuizQuestion,
+      currentSituationalData,
       situationalImage,
       writtenMaterialFile,
       formErrors
@@ -249,9 +337,12 @@ export function useModuleBuilder() {
     setters: {
       setEditingModuleId,
       setModuleForm,
+      setStagedLevels,
+      setActiveLevelOrder,
       setStagedFlows,
       setCurrentFlowStep,
       setCurrentQuizQuestion,
+      setCurrentSituationalData,
       setSituationalImage,
       setWrittenMaterialFile,
       setFormErrors

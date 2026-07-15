@@ -17,19 +17,30 @@ export default function ModulePlayerPreviewModal({
   // Map the local stagedFlows to the schema expected by the Viewer components
   const mockSteps = stagedFlows.map((flow, index) => ({
     id: flow.id,
+    level_id: 1, // Mock
     step_order: index + 1,
     title: flow.title,
     type: flow.type,
     content: flow.type === "text" ? flow.textContent : flow.situationalScenario,
-    media_url: flow.type === "text" ? flow.attachedFileName : flow.attachedImageName
+    media_url: flow.type === "text" ? flow.attachedFileName : flow.attachedImageName,
+    is_final_assessment: flow.is_final_assessment || false
   }));
 
-  // Initialize the first step when the modal opens or stagedFlows changes
-  useEffect(() => {
-    if (isOpen && mockSteps.length > 0 && !activeStepId) {
-      setActiveStepId(mockSteps[0].id);
+  // Mock a single level containing all steps
+  const mockLevels = [
+    {
+      id: 1,
+      level_order: 1,
+      title: moduleForm.title || "Core Curriculum",
+      description: "Preview mode curriculum.",
+      is_locked_by_default: false,
+      isUnlocked: true,
+      steps: mockSteps
     }
-  }, [isOpen, mockSteps, activeStepId]);
+  ];
+
+  // Initialize the first step when the modal opens or stagedFlows changes
+  // Actually, we default to Map view (null), but if the user wants to jump in they can click it.
 
   // Prevent background scrolling when modal is open
   useEffect(() => {
@@ -53,8 +64,9 @@ export default function ModulePlayerPreviewModal({
   const activeStep = mockSteps.find((s) => s.id === activeStepId);
 
   // Calculate progress safely based on the mock progress order
+  const mockCompletedStepIds = mockSteps.filter(s => s.step_order <= currentProgressOrder).map(s => s.id);
   const progressPercentage = Math.round(
-    (currentProgressOrder / (mockSteps.length || 1)) * 100
+    (mockCompletedStepIds.length / (mockSteps.length || 1)) * 100
   );
 
   const handleStepClick = (step) => {
@@ -122,13 +134,12 @@ export default function ModulePlayerPreviewModal({
       <div className="flex w-full h-full pt-[68px] md:pt-0 relative z-[115]">
         <ModuleViewerSidebar 
           module={mockModuleData}
-          steps={mockSteps}
-          currentProgressOrder={currentProgressOrder}
+          levels={mockLevels}
+          completedStepIds={mockCompletedStepIds}
           activeStepId={activeStepId}
           isSidebarOpen={isSidebarOpen}
           setIsSidebarOpen={setIsSidebarOpen}
           handleStepClick={handleStepClick}
-          progressPercentage={progressPercentage}
           navigate={mockNavigate}
         />
 
@@ -143,11 +154,15 @@ export default function ModulePlayerPreviewModal({
           </div>
 
           <ModuleViewerContent 
+            levels={mockLevels}
+            completedStepIds={mockCompletedStepIds}
+            handleStepClick={handleStepClick}
             activeStep={activeStep}
             totalSteps={mockSteps.length}
             handlePrevious={handlePreviousStep}
             handleCompleteAndContinue={handleNextStep}
             isCompleting={false}
+            getAssessmentForStep={() => ({ questions: [], isLoading: false })}
           />
         </div>
       </div>

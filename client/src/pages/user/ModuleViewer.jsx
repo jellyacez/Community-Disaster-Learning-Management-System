@@ -13,11 +13,11 @@ export default function ModuleViewer() {
 
   const {
     moduleData,
-    steps,
-    currentProgressOrder,
+    levels,
+    allSteps,
+    completedStepIds,
     activeStepId,
     activeStep,
-    progressPercentage,
     isSidebarOpen,
     setIsSidebarOpen,
     isLoading,
@@ -27,7 +27,9 @@ export default function ModuleViewer() {
     handleStepClick,
     handleCompleteAndContinue,
     handlePrevious,
-    getAssessmentForStep
+    getAssessmentForStep,
+    loopBackData,
+    acknowledgeLoopBack
   } = useModuleViewer(moduleId);
 
   useDocumentTitle(moduleData?.title ? `${moduleData.title} | Bacolor LMS` : 'Module Viewer');
@@ -80,23 +82,27 @@ export default function ModuleViewer() {
 
       <ModuleViewerSidebar 
         module={moduleData}
-        steps={steps}
-        currentProgressOrder={currentProgressOrder}
+        levels={levels}
+        completedStepIds={completedStepIds}
         activeStepId={activeStepId}
         isSidebarOpen={isSidebarOpen}
         setIsSidebarOpen={setIsSidebarOpen}
         handleStepClick={handleStepClick}
-        progressPercentage={progressPercentage}
         navigate={navigate}
       />
 
       <ModuleViewerContent 
+        levels={levels}
+        completedStepIds={completedStepIds}
+        handleStepClick={handleStepClick}
         activeStep={activeStep}
-        totalSteps={steps.length}
+        totalSteps={allSteps.length}
         handlePrevious={handlePrevious}
         handleCompleteAndContinue={handleCompleteAndContinue}
         isCompleting={isCompleting}
         getAssessmentForStep={getAssessmentForStep}
+        loopBackData={loopBackData}
+        acknowledgeLoopBack={acknowledgeLoopBack}
       />
 
     </div>

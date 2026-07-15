@@ -515,7 +515,8 @@ CREATE TABLE public.choices (
     question_id integer NOT NULL,
     choice_text text NOT NULL,
     is_correct boolean DEFAULT false NOT NULL,
-    rationale text
+    rationale text,
+    sequence_order integer
 );
 
 
@@ -546,7 +547,9 @@ CREATE TABLE public.levels (
     mod_id integer NOT NULL,
     level_order integer NOT NULL,
     level_title character varying(255) NOT NULL,
-    level_description text
+    level_description text,
+    passing_threshold integer DEFAULT 80,
+    is_locked_by_default boolean DEFAULT true
 );
 
 
@@ -663,7 +666,9 @@ CREATE TABLE public.module_steps (
     step_title character varying(255),
     step_content text,
     media_url character varying(500),
-    step_type character varying(50) NOT NULL
+    step_type character varying(50) NOT NULL,
+    is_final_assessment boolean DEFAULT false,
+    loop_back_step_id integer NULL
 );
 
 
@@ -729,7 +734,9 @@ CREATE TABLE public.results (
     score integer NOT NULL,
     total_points integer NOT NULL,
     passed boolean NOT NULL,
-    date_taken timestamp with time zone DEFAULT CURRENT_TIMESTAMP
+    date_taken timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+    level_id integer NULL,
+    step_id integer NULL
 );
 
 

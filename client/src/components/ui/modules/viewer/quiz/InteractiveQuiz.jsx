@@ -23,6 +23,7 @@ export default function InteractiveQuiz({ questions = [], isLoading = false, onC
   const [timeLeft, setTimeLeft] = useState(20);
   const [tabSwitchWarnings, setTabSwitchWarnings] = useState(0);
   const [isLocked, setIsLocked] = useState(false);
+  const [answers, setAnswers] = useState([]);
   
   // 1. DYNAMIC RANDOMIZATION
   useEffect(() => {
@@ -66,6 +67,7 @@ export default function InteractiveQuiz({ questions = [], isLoading = false, onC
         if (prev <= 1) {
           clearInterval(timer);
           setHasSubmitted(true);
+          setAnswers(prevAns => [...prevAns, { questionId: currentQ.question_id || currentQ.id, choiceId: null }]);
           return 0;
         }
         return prev - 1;
@@ -83,7 +85,7 @@ export default function InteractiveQuiz({ questions = [], isLoading = false, onC
       setHasSubmitted(false);
       setTimeLeft(20);
     } else {
-      onCompleteStep();
+      onCompleteStep(answers);
     }
   };
 
@@ -91,13 +93,14 @@ export default function InteractiveQuiz({ questions = [], isLoading = false, onC
     if (hasSubmitted || isLocked) return;
     setSelectedChoiceId(choiceId);
     setHasSubmitted(true);
+    setAnswers(prev => [...prev, { questionId: currentQ.question_id || currentQ.id, choiceId }]);
   };
 
   const handlePreventCopy = (e) => e.preventDefault();
 
   if (isLoading) return <QuizStateMessage type="loading" />;
   if (isLocked) return <QuizStateMessage type="locked" onRestart={() => window.location.reload()} />;
-  if (questions.length === 0) return <QuizStateMessage type="empty" onBypass={onCompleteStep} />;
+  if (questions.length === 0) return <QuizStateMessage type="empty" onBypass={() => onCompleteStep([])} />;
   if (!currentQ) return null;
 
   const isCorrect = selectedChoiceId && currentQ.options.find(o => o.id === selectedChoiceId)?.isCorrect;

@@ -2,22 +2,26 @@ import { CheckCircleIcon, LockIcon, PlayIcon, DocumentIcon, QuizIcon, CloseIcon 
 
 export default function ModuleViewerSidebar({
   module,
-  steps,
-  currentProgressOrder,
+  levels = [],
+  completedStepIds = [],
   activeStepId,
   isSidebarOpen,
   setIsSidebarOpen,
   handleStepClick,
-  progressPercentage,
   navigate
 }) {
   const getStepIcon = (type) => {
     switch(type) {
       case "video": return <PlayIcon />;
-      case "quiz": return <QuizIcon />;
+      case "quiz":
+      case "situational": return <QuizIcon />;
       default: return <DocumentIcon />;
     }
   };
+
+  // Calculate overall module progress
+  const totalSteps = levels.reduce((acc, lvl) => acc + (lvl.steps?.length || 0), 0);
+  const progressPercentage = totalSteps > 0 ? Math.round((completedStepIds.length / totalSteps) * 100) : 0;
 
   return (
     <aside className={`
@@ -27,7 +31,7 @@ export default function ModuleViewerSidebar({
     `}>
       <div className="p-5 border-b border-gray-100 flex items-center justify-between">
         <div className="flex-1">
-          <h2 className="font-bold text-gray-900 line-clamp-2">{module.title}</h2>
+          <h2 className="font-bold text-gray-900 line-clamp-2">{module.title || "Module Loading..."}</h2>
           <div className="mt-3 flex items-center gap-3">
             <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden relative">
               <div 
@@ -43,37 +47,58 @@ export default function ModuleViewerSidebar({
         </button>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-4 space-y-2">
-        <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4 px-2">Course Contents</p>
-        
-        {steps.map((step) => {
-          const isLocked = step.step_order > currentProgressOrder + 1;
-          const isActive = step.id === activeStepId;
-          const isCompleted = step.step_order <= currentProgressOrder;
+      <div className="flex-1 overflow-y-auto p-4 space-y-6">
+        {levels.map((lvl) => (
+          <div key={lvl.id || lvl.levelOrder} className="space-y-2">
+            <div className="flex items-center gap-2 px-2 pb-1 border-b border-gray-50">
+               <h3 className={`text-xs font-bold uppercase ${lvl.isUnlocked ? 'text-gray-700' : 'text-gray-400'}`}>
+                 Level {lvl.level_order}: {lvl.title}
+               </h3>
+               {!lvl.isUnlocked && <LockIcon className="w-3 h-3 text-gray-400" />}
+            </div>
+            
+            <div className="space-y-1.5">
+              {(lvl.steps || []).map((step, idx) => {
+                const isCompleted = completedStepIds.includes(step.id);
+                // Determine if this step is the exact next step available globally
+                // But simplified for the UI: if level is unlocked and step is either completed or next in line, it's clickable.
+                const isActive = step.id === activeStepId;
+                
+                // For the sidebar visual, we lock steps in unlocked levels if they haven't completed the previous step
+                const previousStepInLevel = idx > 0 ? lvl.steps[idx - 1] : null;
+                const isStepLocked = !lvl.isUnlocked || (previousStepInLevel && !completedStepIds.includes(previousStepInLevel.id) && !isCompleted);
 
-          return (
-            <button
-              key={step.id}
-              onClick={() => handleStepClick(step)}
-              disabled={isLocked}
-              className={`
-                w-full text-left px-4 py-3 rounded-xl flex items-start gap-3 transition-all duration-200
-                ${isActive ? "bg-red-50 border border-red-200 shadow-sm" : "border border-transparent hover:bg-gray-50"}
-                ${isLocked ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}
-              `}
-            >
-              <div className="shrink-0 mt-0.5">
-                {isCompleted ? <CheckCircleIcon /> : isLocked ? <LockIcon /> : getStepIcon(step.type)}
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className={`text-sm font-semibold line-clamp-2 ${isActive ? "text-red-900" : "text-gray-700"}`}>
-                  {step.step_order}. {step.title}
-                </p>
-                <p className="text-xs text-gray-500 capitalize mt-0.5">{step.type}</p>
-              </div>
-            </button>
-          );
-        })}
+                return (
+                  <button
+                    key={step.id}
+                    onClick={() => handleStepClick(step)}
+                    disabled={isStepLocked && !isActive}
+                    className={`
+                      w-full text-left px-4 py-3 rounded-xl flex items-start gap-3 transition-all duration-200
+                      ${isActive ? "bg-red-50 border border-red-200 shadow-sm" : "border border-transparent hover:bg-gray-50"}
+                      ${isStepLocked && !isActive ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}
+                    `}
+                  >
+                    <div className="shrink-0 mt-0.5">
+                      {isCompleted ? <CheckCircleIcon /> : (isStepLocked && !isActive) ? <LockIcon /> : getStepIcon(step.type)}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className={`text-sm font-semibold line-clamp-2 ${isActive ? "text-red-900" : "text-gray-700"}`}>
+                        {step.step_order}. {step.title}
+                      </p>
+                      <p className="text-xs text-gray-500 capitalize mt-0.5">
+                         {step.type} {step.is_final_assessment ? "(Final Assessment)" : ""}
+                      </p>
+                    </div>
+                  </button>
+                );
+              })}
+              {(!lvl.steps || lvl.steps.length === 0) && (
+                 <p className="text-xs text-gray-400 px-2 italic">No steps in this level.</p>
+              )}
+            </div>
+          </div>
+        ))}
       </div>
       
       <div className="hidden md:block p-4 border-t border-gray-100 bg-gray-50">

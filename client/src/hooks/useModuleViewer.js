@@ -10,6 +10,7 @@ export function useModuleViewer(moduleId) {
 
   const [activeStepId, setActiveStepId] = useState(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [loopBackData, setLoopBackData] = useState(null); // { message, score, percentage, loopBackStepId }
 
   // Fetch module data
   const { data, isLoading, error } = useQuery({
@@ -21,25 +22,29 @@ export function useModuleViewer(moduleId) {
     retry: false
   });
 
-  // Derived state
   const moduleData = data?.module || {};
-  const steps = useMemo(() => data?.steps || [], [data?.steps]);
-  const currentProgressOrder = data?.currentProgressOrder || 0;
-  const activeStep = useMemo(() => steps.find(s => s.id === activeStepId), [steps, activeStepId]);
-  const progressPercentage = steps.length > 0 ? Math.round((currentProgressOrder / steps.length) * 100) : 0;
+  const levels = data?.levels || [];
+  const completedStepIds = data?.completedStepIds || [];
+  const passedLevelIds = data?.passedLevelIds || [];
 
-  // Initialize default step
-  useEffect(() => {
-    if (data && data.steps && data.steps.length > 0 && !activeStepId) {
-      const currentOrder = data.currentProgressOrder;
-      const nextStep = data.steps.find(s => s.step_order === currentOrder + 1) || data.steps[data.steps.length - 1];
-      setTimeout(() => setActiveStepId(nextStep.id), 0);
-    }
-  }, [data, activeStepId]);
+  const enhancedLevels = useMemo(() => {
+    return levels.map((lvl, index) => {
+       const previousLvl = index > 0 ? levels[index - 1] : null;
+       const isUnlocked = lvl.level_order === 1 || !lvl.is_locked_by_default || (previousLvl && passedLevelIds.includes(previousLvl.id));
+       return { ...lvl, isUnlocked };
+    });
+  }, [levels, passedLevelIds]);
 
-  // PRELOAD ALL ASSESSMENT DATA FOR OFFLINE PWA CAPABILITY
-  const assessmentStepIds = useMemo(() => steps.map(s => s.id), [steps]);
+  const allSteps = useMemo(() => {
+    return enhancedLevels.reduce((acc, lvl) => [...acc, ...(lvl.steps || [])], []);
+  }, [enhancedLevels]);
 
+  // Default to Map View (activeStepId = null)
+  // User selects a step/level from the Map or Sidebar.
+  const activeStep = useMemo(() => allSteps.find(s => s.id === activeStepId), [allSteps, activeStepId]);
+
+  // Preload assessments
+  const assessmentStepIds = useMemo(() => allSteps.map(s => s.id), [allSteps]);
   const assessmentQueries = useQueries({
     queries: assessmentStepIds.map(stepId => ({
       queryKey: ['stepAssessment', stepId],
@@ -47,7 +52,7 @@ export function useModuleViewer(moduleId) {
         const res = await apiClient.get(`/modules/steps/${stepId}/assessment`);
         return { stepId, questions: res.data.data };
       },
-      staleTime: Infinity, // Keep in cache indefinitely for offline usage
+      staleTime: Infinity, 
     }))
   });
 
@@ -61,22 +66,37 @@ export function useModuleViewer(moduleId) {
 
   // Step completion mutation
   const completeStepMutation = useMutation({
-    mutationFn: async (stepId) => {
-      const response = await apiClient.post(`/modules/${moduleId}/steps/${stepId}/complete`);
+    mutationFn: async ({ stepId, answers }) => {
+      const response = await apiClient.post(`/modules/${moduleId}/steps/${stepId}/complete`, { answers });
       return response.data;
     },
-    onSuccess: () => {
+    onSuccess: (responseData) => {
       queryClient.invalidateQueries(['moduleViewer', moduleId]);
       queryClient.invalidateQueries(['userDashboard']);
       
-      if (activeStep) {
-        const nextStep = steps.find(s => s.step_order === activeStep.step_order + 1);
-        if (nextStep) {
-          setActiveStepId(nextStep.id);
-          toast.success("Step completed! Unlocked next lesson.");
-        } else {
+      if (responseData.passed === false) {
+          setLoopBackData({
+              message: responseData.message,
+              score: responseData.score,
+              percentage: responseData.percentage,
+              loopBackStepId: responseData.loop_back_step_id,
+              isFinalAssessment: responseData.is_final_assessment
+          });
+          return;
+      }
+
+      if (responseData.moduleCompleted) {
           toast.success("Congratulations! You have completed the entire module!", { duration: 5000 });
           navigate("/userDashboard");
+          return;
+      }
+
+      if (activeStep) {
+        toast.success(responseData.message || "Step completed!");
+        const currentIndex = allSteps.findIndex(s => s.id === activeStep.id);
+        const nextStep = allSteps[currentIndex + 1];
+        if (nextStep) {
+            setActiveStepId(nextStep.id);
         }
       }
     },
@@ -86,47 +106,56 @@ export function useModuleViewer(moduleId) {
   });
 
   const handleStepClick = (step) => {
-    const isCompleted = step.step_order <= currentProgressOrder;
-    const isNextAvailable = step.step_order === currentProgressOrder + 1;
+    if (!step) {
+      setActiveStepId(null);
+      return;
+    }
 
-    if (isCompleted || isNextAvailable) {
+    const isCompleted = completedStepIds.includes(step.id);
+    const currentIndex = allSteps.findIndex(s => s.id === step.id);
+    const previousStep = allSteps[currentIndex - 1];
+    const isNextAvailable = !previousStep || completedStepIds.includes(previousStep.id);
+    
+    const parentLevel = enhancedLevels.find(l => l.id === step.level_id);
+
+    if (parentLevel?.isUnlocked && (isCompleted || isNextAvailable)) {
       setActiveStepId(step.id);
       setIsSidebarOpen(false);
     } else {
-      toast.error("Please complete previous steps first to unlock this lesson.", { id: "lock-toast" });
+      toast.error("Please complete previous lessons or levels first.", { id: "lock-toast" });
     }
   };
 
-  const handleCompleteAndContinue = () => {
+  const handleCompleteAndContinue = (answers = null) => {
     if (!activeStep || completeStepMutation.isPending) return;
     
-    if (activeStep.step_order > currentProgressOrder) {
-      completeStepMutation.mutate(activeStep.id);
-    } else {
-      const nextStep = steps.find(s => s.step_order === activeStep.step_order + 1);
-      if (nextStep) {
-        setActiveStepId(nextStep.id);
-      } else {
-        navigate("/userDashboard");
-      }
-    }
+    // Only send answers if they were provided (e.g. from quiz)
+    completeStepMutation.mutate({ stepId: activeStep.id, answers });
   };
 
   const handlePrevious = () => {
     if (!activeStep) return;
-    const prevStep = steps.find(s => s.step_order === activeStep.step_order - 1);
+    const currentIndex = allSteps.findIndex(s => s.id === activeStep.id);
+    const prevStep = allSteps[currentIndex - 1];
     if (prevStep) {
       setActiveStepId(prevStep.id);
     }
   };
 
+  const acknowledgeLoopBack = () => {
+      if (loopBackData?.loopBackStepId) {
+          setActiveStepId(loopBackData.loopBackStepId);
+      }
+      setLoopBackData(null);
+  };
+
   return {
     moduleData,
-    steps,
-    currentProgressOrder,
+    levels: enhancedLevels,
+    allSteps,
+    completedStepIds,
     activeStepId,
     activeStep,
-    progressPercentage,
     isSidebarOpen,
     setIsSidebarOpen,
     isLoading,
@@ -136,6 +165,8 @@ export function useModuleViewer(moduleId) {
     handleStepClick,
     handleCompleteAndContinue,
     handlePrevious,
-    getAssessmentForStep // Pass the assessment fetcher
+    getAssessmentForStep,
+    loopBackData,
+    acknowledgeLoopBack
   };
 }

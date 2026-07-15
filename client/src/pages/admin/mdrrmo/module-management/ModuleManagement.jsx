@@ -6,6 +6,8 @@ import SequenceCanvas from "./SequenceCanvas";
 import StepBuilder from "./StepBuilder";
 import ModuleCard from "../../../../components/ui/modules/ModuleCard";
 import ModulePlayerPreviewModal from "../../../../components/ui/modules/viewer/ModulePlayerPreviewModal";
+import ConfirmationModal from "../../../../components/ui/modals/ConfirmationModal";
+import StickyBuilderNav from "./StickyBuilderNav";
 import apiClient from "../../../../lib/apiClient";
 import { useModuleBuilder } from "../../../../hooks/useModuleBuilder";
 
@@ -21,18 +23,16 @@ export default function ModuleManagement() {
     retry: 1
   });
 
-const [stagedLevels, setStagedLevels] = useState([
-  { levelOrder: 1, levelTitle: "Phase 1: Foundation", levelDescription: "Basic concepts container." }
-]);
-const [activeLevelOrder, setActiveLevelOrder] = useState(1);
-
   const { state, setters, actions } = useModuleBuilder();
   const {
     editingModuleId,
     moduleForm,
+    stagedLevels,
+    activeLevelOrder,
     stagedFlows,
     currentFlowStep,
     currentQuizQuestion,
+    currentSituationalData,
     situationalImage,
     writtenMaterialFile,
     formErrors
@@ -40,9 +40,12 @@ const [activeLevelOrder, setActiveLevelOrder] = useState(1);
 
   const {
     setModuleForm,
+    setStagedLevels,
+    setActiveLevelOrder,
     setStagedFlows,
     setCurrentFlowStep,
     setCurrentQuizQuestion,
+    setCurrentSituationalData,
     setSituationalImage,
     setWrittenMaterialFile,
     setFormErrors
@@ -56,6 +59,7 @@ const [activeLevelOrder, setActiveLevelOrder] = useState(1);
   } = actions;
 
   const [showPreviewModal, setShowPreviewModal] = useState(false);
+  const [showResetModal, setShowResetModal] = useState(false);
 
   if (isLoading) {
     return (
@@ -92,13 +96,7 @@ const [activeLevelOrder, setActiveLevelOrder] = useState(1);
     if (!triggerFlowSequencePreview()) return;
     setShowPreviewModal(true);
   };
-const handleAddStepWithLevel = () => {
-  
-  currentFlowStep.levelOrder = activeLevelOrder;
 
-  
-  addStepToFlow();
-};
   return (
     <>
       <div className="max-w-7xl mx-auto animate-in fade-in duration-150 pb-12">
@@ -106,48 +104,69 @@ const handleAddStepWithLevel = () => {
           
           {/* Left Column: Form Builder */}
           <div className="lg:col-span-7 space-y-6">
-            <form onSubmit={handleModuleSubmit} className="space-y-6">
-              <ModuleHeaderForm 
-                editingModuleId={editingModuleId}
-                moduleForm={moduleForm}
-                setModuleForm={setModuleForm}
-                formErrors={formErrors}
-                setFormErrors={setFormErrors}
-              />
-              <LevelSelector 
-               stagedLevels={stagedLevels}
-               setStagedLevels={setStagedLevels}
-               activeLevelOrder={activeLevelOrder}
-               setActiveLevelOrder={setActiveLevelOrder}
-               stagedFlows={stagedFlows}
+            <div className="mb-4">
+              <h2 className="text-xl font-bold text-slate-800">Module Builder</h2>
+            </div>
+            
+            <form onSubmit={handleModuleSubmit} className="space-y-6 relative">
+              <StickyBuilderNav 
+                onReset={() => setShowResetModal(true)}
+                showReset={!editingModuleId}
               />
 
-              <SequenceCanvas 
-                stagedFlows={stagedFlows}
-                setStagedFlows={setStagedFlows}
-                triggerFlowSequencePreview={handlePreviewClick}
-              />
+              <section id="module-details" className="scroll-mt-28">
+                <ModuleHeaderForm 
+                  editingModuleId={editingModuleId}
+                  moduleForm={moduleForm}
+                  setModuleForm={setModuleForm}
+                  formErrors={formErrors}
+                  setFormErrors={setFormErrors}
+                />
+              </section>
+
+              <section id="phases-levels" className="scroll-mt-28">
+                <LevelSelector 
+                  stagedLevels={stagedLevels}
+                  setStagedLevels={setStagedLevels}
+                  activeLevelOrder={activeLevelOrder}
+                  setActiveLevelOrder={setActiveLevelOrder}
+                  stagedFlows={stagedFlows}
+                  setStagedFlows={setStagedFlows}
+                />
+              </section>
+
+              <section id="sequence-canvas" className="scroll-mt-28">
+                <SequenceCanvas 
+                  stagedFlows={stagedFlows}
+                  setStagedFlows={setStagedFlows}
+                  activeLevelOrder={activeLevelOrder}
+                  triggerFlowSequencePreview={handlePreviewClick}
+                />
+              </section>
               
               {formErrors.flows && (
                 <p className="text-red-500 text-xs font-bold px-2">{formErrors.flows}</p>
               )}
 
-              <StepBuilder 
+              <section id="step-builder" className="scroll-mt-28">
+                <StepBuilder 
                 currentFlowStep={currentFlowStep}
                 setCurrentFlowStep={setCurrentFlowStep}
                 writtenMaterialFile={writtenMaterialFile}
                 setWrittenMaterialFile={setWrittenMaterialFile}
                 currentQuizQuestion={currentQuizQuestion}
                 setCurrentQuizQuestion={setCurrentQuizQuestion}
+                currentSituationalData={currentSituationalData}
+                setCurrentSituationalData={setCurrentSituationalData}
                 addQuizQuestionToStep={addQuizQuestionToStep}
                 situationalImage={situationalImage}
                 setSituationalImage={setSituationalImage}
-                addStepToFlow={handleAddStepWithLevel}
-                activeLevelOrder={activeLevelOrder}
                 addStepToFlow={addStepToFlow}
+                activeLevelOrder={activeLevelOrder}
                 formErrors={formErrors}
                 setFormErrors={setFormErrors}
               />
+              </section>
 
               <button 
                 type="submit" 
@@ -190,6 +209,27 @@ const handleAddStepWithLevel = () => {
         onClose={() => setShowPreviewModal(false)}
         moduleForm={moduleForm}
         stagedFlows={stagedFlows}
+      />
+      
+      <ConfirmationModal
+        isOpen={showResetModal}
+        onClose={() => setShowResetModal(false)}
+        onConfirm={() => {
+          // Reset everything to defaults
+          setModuleForm({ title: "", category: "General Safety / Protocols", level: "Level 1", duration: "15 mins", description: "", image_url: "" });
+          setStagedLevels([{ levelOrder: 1, levelTitle: "", levelDescription: "", passing_threshold: 80, is_locked_by_default: false }]);
+          setActiveLevelOrder(1);
+          setStagedFlows([]);
+          setCurrentFlowStep({ builderStepType: "learning_material", type: "text", title: "", textContent: "", mediaUrl: null, videoUrl: null, is_final_assessment: false });
+          setCurrentQuizQuestion({ questionText: "", correctAnswerIndex: 0, options: [{ text: "", rationale: "" }] });
+          setCurrentSituationalData({ interactionType: "priority_action", options: [], hazards: [], sequenceSteps: [] });
+          setFormErrors({});
+          setShowResetModal(false);
+        }}
+        title="Reset Builder"
+        description="Are you sure you want to completely clear this module? All levels, steps, and unsaved configurations will be permanently lost."
+        confirmText="Yes, Wipe Slate Clean"
+        type="danger"
       />
     </>
   );

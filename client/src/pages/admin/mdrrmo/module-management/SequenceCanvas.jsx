@@ -1,4 +1,5 @@
 import { useState } from "react";
+import ConfirmationModal from "../../../../components/ui/modals/ConfirmationModal";
 
 export default function SequenceCanvas({ 
   stagedFlows, 
@@ -7,6 +8,7 @@ export default function SequenceCanvas({
   triggerFlowSequencePreview 
 }) {
   const [draggedItemIndex, setDraggedItemIndex] = useState(null);
+  const [stepToDelete, setStepToDelete] = useState(null);
 
  
   const localizedFlows = stagedFlows.filter(flow => flow.levelOrder === activeLevelOrder);
@@ -53,13 +55,13 @@ export default function SequenceCanvas({
   };
 
   return (
-    <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm space-y-5">
-      <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+    <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm space-y-5">
+      <div className="flex items-center justify-between border-b border-slate-100 pb-3">
         <div>
-          <h3 className="text-sm font-bold text-gray-800 uppercase tracking-wider">
+          <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wide">
             Steps Sequence (Level {activeLevelOrder})
           </h3>
-          <p className="text-[10px] text-gray-400 font-medium mt-0.5">
+          <p className="text-[11px] text-slate-500 font-medium mt-0.5">
             Drag rows or use arrow buttons to arrange sequencing within this phase.
           </p>
         </div>
@@ -75,7 +77,7 @@ export default function SequenceCanvas({
       </div>
       <div className="space-y-3">
         {localizedFlows.length === 0 ? (
-          <p className="text-sm text-gray-400 italic text-center py-6">
+          <p className="text-sm text-slate-400 italic text-center py-6">
             No micro-learning steps added to Level {activeLevelOrder} yet. Use the builder utility below.
           </p>
         ) : (
@@ -86,12 +88,12 @@ export default function SequenceCanvas({
               onDragStart={(e) => handleDragStart(e, index)} 
               onDragOver={(e) => handleDragOver(e, index)} 
               onDragEnd={handleDragEnd} 
-              className="flex items-center justify-between p-4 bg-gray-50 border border-gray-200 rounded-xl text-sm shadow-sm cursor-grab active:cursor-grabbing hover:border-gray-300 transition-colors"
+              className="flex items-center justify-between p-4 bg-slate-50 border border-slate-200 rounded-xl text-sm shadow-sm cursor-grab active:cursor-grabbing hover:border-slate-300 transition-colors"
             >
               <div className="flex items-center gap-4">
-                <span className="text-gray-400 cursor-grab">☰</span>
-                <span className="font-semibold text-gray-800">{flow.title}</span>
-                <span className="bg-gray-200 text-gray-700 px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wide">
+                <span className="text-slate-400 cursor-grab">☰</span>
+                <span className="font-semibold text-slate-800">{flow.title}</span>
+                <span className="bg-slate-200 text-slate-700 px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wide">
                   {flow.type}
                 </span>
               </div>
@@ -100,7 +102,7 @@ export default function SequenceCanvas({
                   type="button" 
                   onClick={() => moveFlowStep(index, "up")} 
                   disabled={index === 0} 
-                  className="px-2 py-1 bg-white border border-gray-200 text-xs rounded-md hover:bg-gray-50 disabled:opacity-50"
+                  className="px-2 py-1 bg-white border border-slate-200 text-xs rounded-md hover:bg-slate-50 disabled:opacity-50"
                 >
                   ▲
                 </button>
@@ -108,16 +110,13 @@ export default function SequenceCanvas({
                   type="button" 
                   onClick={() => moveFlowStep(index, "down")} 
                   disabled={index === localizedFlows.length - 1} 
-                  className="px-2 py-1 bg-white border border-gray-200 text-xs rounded-md hover:bg-gray-50 disabled:opacity-50"
+                  className="px-2 py-1 bg-white border border-slate-200 text-xs rounded-md hover:bg-slate-50 disabled:opacity-50"
                 >
                   ▼
                 </button>
                 <button 
                   type="button" 
-                  onClick={() => {
-                    const updated = stagedFlows.filter(f => f.id !== flow.id);
-                    setStagedFlows(updated);
-                  }} 
+                  onClick={() => setStepToDelete(flow)} 
                   className="text-xs font-bold text-red-600 ml-3 hover:underline"
                 >
                   Delete
@@ -127,6 +126,22 @@ export default function SequenceCanvas({
           ))
         )}
       </div>
+      
+      <ConfirmationModal
+        isOpen={!!stepToDelete}
+        onClose={() => setStepToDelete(null)}
+        onConfirm={() => {
+          if (stepToDelete) {
+            const updated = stagedFlows.filter(f => f.id !== stepToDelete.id);
+            setStagedFlows(updated);
+            setStepToDelete(null);
+          }
+        }}
+        title="Delete Step"
+        description={`Are you sure you want to delete the step "${stepToDelete?.title}"? This action cannot be undone.`}
+        confirmText="Delete Step"
+        type="danger"
+      />
     </div>
   );
 }
