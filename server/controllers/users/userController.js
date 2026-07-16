@@ -118,12 +118,9 @@ exports.getUserSettings = async (req, res) => {
 };
 // --- End of getUserSettings ---
 
-// @desc    Update user's notification settings
-// @access  Private
 exports.updateUserSettings = async (req, res) => {
   try {
-    const { announcements, reminders } = req.body;
-    const settings = await UserService.updateUserSettings(req.user.id, announcements, reminders);
+    const settings = await UserService.updateUserSettings(req.user.id, req.body);
     res.json({ success: true, settings });
   } catch (err) {
     console.error("Error updating settings:", err.message);

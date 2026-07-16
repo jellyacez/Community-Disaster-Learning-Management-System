@@ -152,11 +152,16 @@ class UserService {
     return rows[0].settings || { announcements: true, reminders: true };
   }
 
-  async updateUserSettings(userId, announcements, reminders) {
+  async updateUserSettings(userId, newSettings) {
+    // Merge new settings with existing settings
+    const { rows } = await pool.query('SELECT settings FROM "user" WHERE id = $1', [userId]);
+    const currentSettings = (rows.length > 0 && rows[0].settings) ? rows[0].settings : { announcements: true, reminders: true };
+    
     const safeSettings = {
-      announcements: announcements === undefined ? true : Boolean(announcements),
-      reminders:     reminders     === undefined ? true : Boolean(reminders),
+      ...currentSettings,
+      ...newSettings
     };
+    
     await pool.query('UPDATE "user" SET settings = $1 WHERE id = $2', [safeSettings, userId]);
     return safeSettings;
   }

@@ -1,3 +1,4 @@
+import { useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import apiClient from "../../../lib/apiClient";
@@ -36,12 +37,12 @@ export function useNotificationPreferences() {
     },
   });
 
-  const updatePreference = (key, value) => {
+  const updatePreference = useCallback((key, value) => {
     mutation.mutate({
       ...settings,
       [key]: value,
     });
-  };
+  }, [mutation, settings]);
 
   return {
     settings,

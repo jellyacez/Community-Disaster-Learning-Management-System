@@ -10,11 +10,20 @@ export default function GoogleSignInButton({ clearGlobalError }) {
     if (clearGlobalError) clearGlobalError();
     setIsLoading(true);
     try {
-      await authClient.signIn.social({
+      const { error } = await authClient.signIn.social({
         provider: "google",
         callbackURL: `${import.meta.env.VITE_FRONTEND_URL || "http://localhost:5173"}/userDashboard`,
         errorCallbackURL: `${import.meta.env.VITE_FRONTEND_URL || "http://localhost:5173"}/signin`,
       });
+
+      if (error) {
+        if (error.status === 429 || error.message?.toLowerCase().includes("too many")) {
+          toast.error("Too many login attempts. Please wait 15 minutes and try again.");
+        } else {
+          toast.error(error.message || "Failed to sign in with Google.");
+        }
+        setIsLoading(false);
+      }
     } catch (err) {
       console.error("Google sign in failed:", err);
       toast.error("Failed to sign in with Google.");
