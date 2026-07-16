@@ -12,9 +12,21 @@ import {
 // Link to the centralized semantic administrative stylesheet
 import "./admin.css";
 import { initialModules, initialUsers, initialResidents } from "./mockData";
+import ModuleBuilder from "./ModuleBuilder";
+
+// Only accounts with this exact role (as reported by authClient's session)
+// can see or use the Module Approval page.
+const HEAD_ADMIN_ROLE = "Head Admin";
+
+// Modules created before the approval workflow existed (or any module
+// missing the field) are treated as already-approved so nothing already
+// live suddenly disappears from view.
+const getApprovalStatus = (mod) => mod?.approvalStatus ?? "Approved";
 
 export default function Dashboard() {
   const { data: session } = authClient.useSession();
+  const isHeadAdmin = session?.user?.role === HEAD_ADMIN_ROLE;
+
   const [activeTab, setActiveTab] = useState("overview");
 
   // Core filter parameters mapped out at the top of the component scope
@@ -27,31 +39,14 @@ export default function Dashboard() {
   const [residents, setResidents] = useState(initialResidents);
 
   const [editingModuleId, setEditingModuleId] = useState(null);
-  const [moduleForm, setModuleForm] = useState({ 
-    title: "", 
-    description: "", 
-    riskLevel: "Low",
-    status: "Public"
-  });
+  // "author" = the normal create/edit flow any MDRRMO admin uses.
+  // "review" = head-admin reviewing a submission from the Approvals page;
+  // ModuleBuilder swaps its footer to Approve/Reject in this mode.
+  const [moduleBuilderMode, setModuleBuilderMode] = useState("author");
 
-  const [stagedFlows, setStagedFlows] = useState([]);
-  const [currentFlowStep, setCurrentFlowStep] = useState({
-    type: "text", title: "", textContent: "", videoUrl: "", assessmentType: "quiz", quizQuestions: [], situationalScenario: "", situationalGuide: ""
-  });
-
-  const [currentQuizQuestion, setCurrentQuizQuestion] = useState({
-    questionText: "", options: ["", "", "", ""], correctAnswerIndex: 0
-  });
-
-  // Structural state to accommodate picture file attachments inside situational scenarios
-  const [situationalImage, setSituationalImage] = useState(null);
-
-  // Structural state to accommodate supplementary docx, sound, or video media files inside instructional materials
-  const [writtenMaterialFile, setWrittenMaterialFile] = useState(null);
+  const pendingModules = modules.filter((m) => getApprovalStatus(m) === "Pending");
 
   const [userForm, setUserForm] = useState({ name: "", email: "", role: "MDRRMO Officer" });
-
-  const [draggedItemIndex, setDraggedItemIndex] = useState(null);
 
   // Core audit trail log ledger as mapped out in Capstone DFD Level-1
   const [systemLogs, setSystemLogs] = useState([
@@ -60,112 +55,28 @@ export default function Dashboard() {
     { id: 3, timestamp: "2026-06-29 19:10", source: "AWS RDS Security", log: "Asynchronous data sync pipeline completed across all participating sectors." }
   ]);
 
-  const handleDragStart = (e, index) => {
-    setDraggedItemIndex(index);
-    e.dataTransfer.effectAllowed = "move";
-  };
-
-  const handleDragOver = (e, index) => {
-    e.preventDefault();
-    if (draggedItemIndex === null || draggedItemIndex === index) return;
-    
-    const updatedFlows = [...stagedFlows];
-    const itemToMove = updatedFlows[draggedItemIndex];
-    
-    updatedFlows.splice(draggedItemIndex, 1);
-    updatedFlows.splice(index, 0, itemToMove);
-    
-    setDraggedItemIndex(index);
-    setStagedFlows(updatedFlows);
-  };
-
-  const handleDragEnd = () => {
-    setDraggedItemIndex(null);
-  };
-
-  const moveFlowStep = (index, direction) => {
-    const updated = [...stagedFlows];
-    const targetIndex = direction === "up" ? index - 1 : index + 1;
-    if (targetIndex < 0 || targetIndex >= updated.length) return;
-    
-    const temp = updated[index];
-    updated[index] = updated[targetIndex];
-    updated[targetIndex] = temp;
-    setStagedFlows(updated);
-  };
-
   const handleEditModuleLoad = (mod) => {
     setEditingModuleId(mod.id);
-    setModuleForm({ title: mod.title, description: mod.description, riskLevel: mod.riskLevel, status: mod.status || "Public" });
-    setStagedFlows(mod.flows || []);
+    setModuleBuilderMode("author");
     setActiveTab("modules");
   };
 
-  const addStepToFlow = () => {
-    if (!currentFlowStep.title.trim()) return alert("Please enter a step name.");
-    
-    if (currentFlowStep.type === "text" && !currentFlowStep.textContent.trim()) return alert("Please fill in the documentation text block.");
-    if (currentFlowStep.type === "assessment") {
-      if (currentFlowStep.assessmentType === "quiz" && currentFlowStep.quizQuestions.length === 0) {
-        return alert("Please add at least one multiple choice question.");
-      }
-      if (currentFlowStep.assessmentType === "situational" && !currentFlowStep.situationalScenario.trim()) {
-        return alert("Please describe the real-world scenario details.");
-      }
-    }
-
-    const stepWithMeta = { ...currentFlowStep };
-    
-    // Attach document/audio/video file metadata to instructional materials
-    if (currentFlowStep.type === "text" && writtenMaterialFile) {
-      stepWithMeta.attachedFileName = writtenMaterialFile.name;
-    }
-    
-    // Attach image metadata to situational assessments
-    if (currentFlowStep.type === "assessment" && currentFlowStep.assessmentType === "situational" && situationalImage) {
-      stepWithMeta.attachedImageName = situationalImage.name;
-    }
-
-    setStagedFlows([...stagedFlows, stepWithMeta]);
-    setWrittenMaterialFile(null);
-    setSituationalImage(null);
-    setCurrentFlowStep({ type: "text", title: "", textContent: "", videoUrl: "", assessmentType: "quiz", quizQuestions: [], situationalScenario: "", situationalGuide: "" });
+  // Head-admin only: open a pending submission in ModuleBuilder's review
+  // mode, where edits are allowed before an Approve/Reject decision.
+  const handleReviewModule = (mod) => {
+    setEditingModuleId(mod.id);
+    setModuleBuilderMode("review");
+    setActiveTab("modules");
   };
 
-  const removeFlowStep = (index) => {
-    setStagedFlows(stagedFlows.filter((_, i) => i !== index));
+  // Head-admin only: decide on a submission without opening the editor.
+  const handleQuickApprove = (mod) => {
+    setModules(modules.map((m) => (m.id === mod.id ? { ...m, approvalStatus: "Approved" } : m)));
   };
 
-  const addQuizQuestionToStep = () => {
-    if (!currentQuizQuestion.questionText.trim()) return alert("Please write a question.");
-    if (currentQuizQuestion.options.some(opt => !opt.trim())) return alert("Please fill out all choice options.");
-
-    setCurrentFlowStep({
-      ...currentFlowStep,
-      quizQuestions: [...currentFlowStep.quizQuestions, currentQuizQuestion]
-    });
-
-    setCurrentQuizQuestion({
-      questionText: "", options: ["", "", "", ""], correctAnswerIndex: 0
-    });
-  };
-
-  const handleModuleSubmit = (e) => {
-    e.preventDefault();
-    if (!moduleForm.title || !moduleForm.description) return alert("Please enter the title and description details.");
-    if (stagedFlows.length === 0) return alert("Please add at least one step element.");
-
-    if (editingModuleId) {
-      setModules(modules.map(m => m.id === editingModuleId ? { ...m, ...moduleForm, flows: stagedFlows } : m));
-      alert("Changes saved successfully.");
-    } else {
-      setModules([...modules, { id: Date.now(), ...moduleForm, flows: stagedFlows }]);
-      alert("Module created successfully.");
-    }
-    setEditingModuleId(null);
-    setModuleForm({ title: "", description: "", riskLevel: "Low", status: "Public" });
-    setStagedFlows([]);
-    setActiveTab("overview");
+  const handleQuickReject = (mod) => {
+    if (!window.confirm(`Reject "${mod.title}"? The author will need to revise and resubmit.`)) return;
+    setModules(modules.map((m) => (m.id === mod.id ? { ...m, approvalStatus: "Rejected" } : m)));
   };
 
   const handleUserSubmit = (e) => {
@@ -184,14 +95,6 @@ export default function Dashboard() {
     sessionStorage.setItem("isLoggingOut", "true");
     await authClient.signOut();
     window.location.href = "/signin";
-  };
-
-  // Maps and lists the structural layout order array via native dialog triggers
-  const triggerFlowSequencePreview = () => {
-    const sequenceLayoutSummary = stagedFlows
-      .map((item, idx) => `${idx + 1}. [${item.type.toUpperCase()}] ${item.title}`)
-      .join("\n");
-    alert(`Current Staged Curriculum Layout:\n\n${sequenceLayoutSummary}`);
   };
 
   const filteredResidents = residents.filter(r => {
@@ -245,8 +148,7 @@ export default function Dashboard() {
               type="button"
               onClick={() => {
                 setEditingModuleId(null);
-                setModuleForm({ title: "", description: "", riskLevel: "Low", status: "Public" });
-                setStagedFlows([]);
+                setModuleBuilderMode("author");
                 setActiveTab("modules");
               }}
               className={`admin-nav-item ${activeTab === "modules" ? "active" : ""}`}
@@ -263,6 +165,27 @@ export default function Dashboard() {
               <HugeiconsIcon icon={UserAddIcon} className="w-4 h-4" />
               Personnel Directory
             </button>
+
+            {isHeadAdmin && (
+              <button
+                type="button"
+                onClick={() => setActiveTab("approvals")}
+                className={`admin-nav-item ${activeTab === "approvals" ? "active" : ""}`}
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Module Approvals
+                {pendingModules.length > 0 && (
+                  <span
+                    className="counter"
+                    style={{ marginLeft: "auto", padding: "1px 6px", fontSize: "9px" }}
+                  >
+                    {pendingModules.length}
+                  </span>
+                )}
+              </button>
+            )}
           </nav>
         </div>
 
@@ -326,26 +249,47 @@ export default function Dashboard() {
                     <thead>
                       <tr>
                         <th>Module Topic</th>
-                        <th className="text-center">Steps Inside</th>
+                        <th className="text-center">Levels / Steps</th>
                         <th className="text-center">Visibility</th>
+                        <th className="text-center">Approval</th>
                         <th className="text-right">Actions</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {modules.map((mod) => (
-                        <tr key={mod.id}>
-                          <td className="font-semibold max-w-[160px] truncate">{mod.title}</td>
-                          <td className="text-center font-mono text-gray-500 font-bold">{mod.flows?.length || 0} Steps</td>
-                          <td className="text-center">
-                            <span className={mod.status === "Private" ? "badge-review" : "badge-ready"}>
-                              {mod.status || "Public"}
-                            </span>
-                          </td>
-                          <td className="text-right">
-                            <button type="button" onClick={() => handleEditModuleLoad(mod)} className="px-2 py-0.5 text-[11px] border border-gray-200 bg-white hover:bg-red-50 rounded">View / Edit</button>
-                          </td>
-                        </tr>
-                      ))}
+                      {modules.map((mod) => {
+                        const levelCount = mod.levels?.length || 0;
+                        const stepCount = (mod.levels || []).reduce((sum, l) => sum + (l.steps?.length || 0), 0);
+                        const approvalStatus = getApprovalStatus(mod);
+                        return (
+                          <tr key={mod.id}>
+                            <td className="font-semibold max-w-[160px] truncate">{mod.title}</td>
+                            <td className="text-center font-mono text-gray-500 font-bold">
+                              {levelCount} Levels &middot; {stepCount} Steps
+                            </td>
+                            <td className="text-center">
+                              <span className={mod.status === "Private" ? "badge-review" : "badge-ready"}>
+                                {mod.status || "Public"}
+                              </span>
+                            </td>
+                            <td className="text-center">
+                              <span
+                                className={
+                                  approvalStatus === "Approved"
+                                    ? "badge-ready"
+                                    : approvalStatus === "Rejected"
+                                    ? "counter"
+                                    : "badge-review"
+                                }
+                              >
+                                {approvalStatus}
+                              </span>
+                            </td>
+                            <td className="text-right">
+                              <button type="button" onClick={() => handleEditModuleLoad(mod)} className="px-2 py-0.5 text-[11px] border border-gray-200 bg-white hover:bg-red-50 rounded">View / Edit</button>
+                            </td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>
@@ -474,182 +418,195 @@ export default function Dashboard() {
             </div>
           )}
 
-          {/* TAB 3: TRAINING MODULES CONSTRUCTOR */}
+          {/* TAB 3: TRAINING MODULES CONSTRUCTOR (Module > Levels > Steps) */}
           {activeTab === "modules" && (
-            <div className="max-w-2xl mx-auto space-y-6 animate-in fade-in duration-150 pb-12">
-              <form onSubmit={handleModuleSubmit} className="space-y-6">
-                <div className="admin-card-panel w-full space-y-4">
-                  <h2 className="text-sm font-bold text-gray-800 uppercase tracking-wider border-b pb-1.5">{editingModuleId ? "Modify Training Module" : "Setup New Training Module"}</h2>
-                  <div>
-                    <label className="block text-[11px] font-bold text-gray-500 uppercase mb-1">Module Topic Title</label>
-                    <input type="text" placeholder="e.g., Protocol for Flash Floods" value={moduleForm.title} onChange={(e) => setModuleForm({ ...moduleForm, title: e.target.value })} className="w-full p-2 border border-gray-200 rounded-xl text-xs focus:outline-none" />
-                  </div>
-                  <div>
-                    <label className="block text-[11px] font-bold text-gray-500 uppercase mb-1">Short Description / Summary</label>
-                    <textarea rows="2" placeholder="Brief summary of scopes..." value={moduleForm.description} onChange={(e) => setModuleForm({ ...moduleForm, description: e.target.value })} className="w-full p-2 border border-gray-200 rounded-xl text-xs focus:outline-none" />
-                  </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="block text-[11px] font-bold text-gray-500 uppercase mb-1">Risk Level</label>
-                      <select value={moduleForm.riskLevel} onChange={(e) => setModuleForm({ ...moduleForm, riskLevel: e.target.value })} className="w-full p-2 border border-gray-200 text-gray-700 rounded-xl text-xs">
-                        <option value="Low">Low Risk</option>
-                        <option value="Medium">Medium Risk</option>
-                        <option value="High">High Urgency</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-[11px] font-bold text-gray-500 uppercase mb-1">Visibility State</label>
-                      <select value={moduleForm.status} onChange={(e) => setModuleForm({ ...moduleForm, status: e.target.value })} className="w-full p-2 border border-gray-200 text-gray-700 rounded-xl text-xs">
-                        <option value="Public">Public</option>
-                        <option value="Private">Private Draft</option>
-                      </select>
-                    </div>
-                  </div>
+            <ModuleBuilder
+              editingModule={modules.find((m) => m.id === editingModuleId) ?? null}
+              mode={isHeadAdmin && moduleBuilderMode === "review" ? "review" : "author"}
+              onSave={(savedModule) => {
+                // Review-mode "Save Edits" just persists content changes and
+                // leaves the pending decision untouched (ModuleBuilder already
+                // preserves the existing approvalStatus in that case). Normal
+                // author-mode saves apply the approval policy: head-admins
+                // publish immediately, everyone else goes back to Pending.
+                const finalModule =
+                  moduleBuilderMode === "review"
+                    ? savedModule
+                    : { ...savedModule, approvalStatus: isHeadAdmin ? "Approved" : "Pending" };
+
+                if (editingModuleId) {
+                  setModules(modules.map((m) => (m.id === editingModuleId ? finalModule : m)));
+                  alert("Changes saved successfully.");
+                } else {
+                  setModules([...modules, finalModule]);
+                  alert(
+                    isHeadAdmin
+                      ? "Module created and published successfully."
+                      : "Module submitted for head-admin approval."
+                  );
+                }
+                setEditingModuleId(null);
+                setModuleBuilderMode("author");
+                setActiveTab(moduleBuilderMode === "review" ? "approvals" : "overview");
+              }}
+              onApprove={(savedModule) => {
+                setModules(modules.map((m) => (m.id === savedModule.id ? savedModule : m)));
+                setEditingModuleId(null);
+                setModuleBuilderMode("author");
+                setActiveTab("approvals");
+              }}
+              onReject={(savedModule) => {
+                setModules(modules.map((m) => (m.id === savedModule.id ? savedModule : m)));
+                setEditingModuleId(null);
+                setModuleBuilderMode("author");
+                setActiveTab("approvals");
+              }}
+              onCancel={() => {
+                const returningFromReview = moduleBuilderMode === "review";
+                setEditingModuleId(null);
+                setModuleBuilderMode("author");
+                setActiveTab(returningFromReview ? "approvals" : "overview");
+              }}
+            />
+          )}
+
+          {/* TAB 5: MODULE APPROVALS (head-admin only) */}
+          {activeTab === "approvals" && isHeadAdmin && (
+            <div className="space-y-6 animate-in fade-in duration-150">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="admin-card-panel w-full">
+                  <p className="text-[10px] text-amber-600 uppercase font-bold">Pending Review</p>
+                  <p className="text-2xl font-black text-amber-600 mt-1 font-mono">
+                    {modules.filter((m) => getApprovalStatus(m) === "Pending").length}
+                  </p>
                 </div>
-
-                <div className="admin-card-panel w-full space-y-3">
-                  <div className="flex items-center justify-between border-b pb-1">
-                    <h3 className="text-xs font-bold uppercase text-gray-400 font-mono">Module Steps Order Sequence</h3>
-                    {stagedFlows.length >= 2 && (
-                      <button 
-                        type="button" 
-                        onClick={triggerFlowSequencePreview} 
-                        className="px-2.5 py-0.5 text-[10px] font-bold text-red-600 bg-red-50 border border-red-200 hover:bg-red-600 hover:text-white rounded-md transition-all"
-                      >
-                        Preview Flow Blueprint
-                      </button>
-                    )}
-                  </div>
-                  {stagedFlows.map((flow, index) => (
-                    <div key={index} draggable onDragStart={(e) => handleDragStart(e, index)} onDragOver={(e) => handleDragOver(e, index)} onDragEnd={handleDragEnd} className="flex items-center justify-between p-2.5 bg-gray-50 border rounded-xl text-xs">
-                      <div className="flex items-center gap-2">
-                        <span className="cursor-grab text-gray-400">☰</span>
-                        <span className="font-semibold text-gray-800">{flow.title}</span>
-                        <span className="counter" style={{ padding: '2px 6px', fontSize: '9px' }}>{flow.type}</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <button type="button" onClick={() => moveFlowStep(index, "up")} disabled={index === 0} className="px-1.5 py-0.5 bg-white border text-[10px] rounded">▲</button>
-                        <button type="button" onClick={() => moveFlowStep(index, "down")} disabled={index === stagedFlows.length - 1} className="px-1.5 py-0.5 bg-white border text-[10px] rounded">▼</button>
-                        <button type="button" onClick={() => removeFlowStep(index)} className="text-red-600 ml-2 hover:underline">Delete</button>
-                      </div>
-                    </div>
-                  ))}
+                <div className="admin-card-panel w-full">
+                  <p className="text-[10px] text-emerald-600 uppercase font-bold">Approved</p>
+                  <p className="text-2xl font-black text-emerald-600 mt-1 font-mono">
+                    {modules.filter((m) => getApprovalStatus(m) === "Approved").length}
+                  </p>
                 </div>
-
-                <div className="admin-card-panel space-y-4">
-                  <h3 className="text-xs font-bold uppercase text-gray-400 border-b pb-1.5 font-mono">Step Content Configuration Builder</h3>
-                  <div className="grid grid-cols-2 gap-3">
-                    <input type="text" placeholder="Step Title Name..." value={currentFlowStep.title} onChange={(e) => setCurrentFlowStep({ ...currentFlowStep, title: e.target.value })} className="p-2 border border-gray-200 rounded-xl text-xs focus:outline-none" />
-                    <select value={currentFlowStep.type} onChange={(e) => setCurrentFlowStep({ ...currentFlowStep, type: e.target.value })} className="p-2 border border-gray-200 rounded-xl text-xs">
-                      <option value="text">Instructional Materials</option>
-                      <option value="assessment">Assessment Verification</option>
-                    </select>
-                  </div>
-
-                  <div className="p-3 bg-gray-50 border border-gray-200 border-dashed rounded-xl space-y-3">
-                    {/* INSTRUCTIONAL MATERIALS FORM INJECTOR AREA (With merged DOCX / Audio / Video multi-file attachment capacity) */}
-                    {currentFlowStep.type === "text" && (
-                      <div className="space-y-2">
-                        <textarea rows="3" placeholder="Type instructions here..." value={currentFlowStep.textContent} onChange={(e) => setCurrentFlowStep({ ...currentFlowStep, textContent: e.target.value })} className="w-full p-2 bg-white border rounded-xl text-xs focus:outline-none" />
-                        
-                        <div className="flex flex-col gap-1 bg-white p-2 border border-slate-200 rounded-xl">
-                          <span className="text-[10px] uppercase font-bold text-gray-400 font-mono">Upload Reference File (DOCX / Audio / Video Material)</span>
-                          <input 
-                            type="file" 
-                            accept=".docx, audio/*, video/*" 
-                            onChange={(e) => {
-                              const targetFile = e.target.files[0];
-                              if (targetFile) {
-                                setWrittenMaterialFile(targetFile);
-                                alert(`Instructional attachment staged: ${targetFile.name}`);
-                              }
-                            }}
-                            className="text-[11px] text-gray-500 mt-1 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-[11px] file:font-semibold file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200" 
-                          />
-                          {writtenMaterialFile && <p className="text-[10px] text-emerald-600 font-mono font-medium mt-0.5">Staged Attachment: {writtenMaterialFile.name}</p>}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* EVALUATION ASSESSMENT ENGINE LINK */}
-                    {currentFlowStep.type === "assessment" && (
-                      <div className="space-y-3 text-xs">
-                        <div className="flex items-center justify-between">
-                          <span className="font-bold text-gray-600">Verification Type Selection:</span>
-                          <select value={currentFlowStep.assessmentType} onChange={(e) => setCurrentFlowStep({ ...currentFlowStep, assessmentType: e.target.value })} className="p-1 border rounded bg-white">
-                            <option value="quiz">Multiple Choice Quiz</option>
-                            <option value="situational">Situational Scenario Case</option>
-                          </select>
-                        </div>
-                        
-                        {/* MULTIPLE CHOICE QUIZ FORM AREA */}
-                        {currentFlowStep.assessmentType === "quiz" && (
-                          <div className="space-y-2 border-t pt-2">
-                            <input type="text" placeholder="Write quiz question text block..." value={currentQuizQuestion.questionText} onChange={(e) => setCurrentQuizQuestion({ ...currentQuizQuestion, questionText: e.target.value })} className="w-full p-2 bg-white border rounded-xl text-xs focus:outline-none" />
-                            <div className="grid grid-cols-1 gap-2">
-                              {currentQuizQuestion.options.map((opt, oIdx) => (
-                                <input 
-                                  key={oIdx} 
-                                  type="text" 
-                                  placeholder={`Choice Answer Option ${oIdx + 1}`} 
-                                  value={opt} 
-                                  onChange={(e) => {
-                                    const updated = [...currentQuizQuestion.options];
-                                    updated[oIdx] = e.target.value;
-                                    setCurrentQuizQuestion({ ...currentQuizQuestion, options: updated });
-                                  }} 
-                                  className="p-2 bg-white border rounded-xl text-xs focus:outline-none" 
-                                  style={{
-                                    border: currentQuizQuestion.correctAnswerIndex === oIdx ? "2px solid #10b981" : "1px solid #e2e8f0",
-                                    backgroundColor: currentQuizQuestion.correctAnswerIndex === oIdx ? "#f0fdf4" : "#ffffff"
-                                  }}
-                                />
-                              ))}
-                            </div>
-                            <div className="flex items-center justify-between gap-4 pt-1">
-                              <select value={currentQuizQuestion.correctAnswerIndex} onChange={(e) => setCurrentQuizQuestion({ ...currentQuizQuestion, correctAnswerIndex: parseInt(e.target.value) })} className="p-1 border rounded bg-white text-[11px] focus:outline-none">
-                                <option value={0}>Option 1 is correct</option>
-                                <option value={1}>Option 2 is correct</option>
-                                <option value={2}>Option 3 is correct</option>
-                                <option value={3}>Option 4 is correct</option>
-                              </select>
-                              <button type="button" onClick={addQuizQuestionToStep} className="px-3 py-1 bg-white border rounded text-[11px] font-bold text-gray-700 hover:bg-gray-50">+ Save Question</button>
-                            </div>
-                          </div>
-                        )}
-                        
-                        {/* SITUATIONAL SCENARIO FORM AREA */}
-                        {currentFlowStep.assessmentType === "situational" && (
-                          <div className="space-y-2 border-t pt-2">
-                            <textarea rows="2" placeholder="Describe crisis scenario circumstances..." value={currentFlowStep.situationalScenario} onChange={(e) => setCurrentFlowStep({ ...currentFlowStep, situationalScenario: e.target.value })} className="w-full p-2 bg-white border rounded-xl text-xs focus:outline-none" />
-                            
-                            <div className="flex flex-col gap-1 bg-white p-2 border border-slate-200 rounded-xl">
-                              <span className="text-[10px] uppercase font-bold text-gray-400 font-mono">Upload Attachment Reference Picture</span>
-                              <input 
-                                type="file" 
-                                accept="image/*" 
-                                onChange={(e) => {
-                                  const targetFile = e.target.files[0];
-                                  if(targetFile) {
-                                    setSituationalImage(targetFile);
-                                    alert(`Asset assigned successfully: ${targetFile.name}`);
-                                  }
-                                }}
-                                className="text-[11px] text-gray-500 mt-1 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-[11px] file:font-semibold file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200" 
-                              />
-                              {situationalImage && <p className="text-[10px] text-emerald-600 font-mono font-medium mt-0.5">Staged Image: {situationalImage.name}</p>}
-                            </div>
-
-                            <textarea rows="1" placeholder="Officer check rubric grading guides..." value={currentFlowStep.situationalGuide} onChange={(e) => setCurrentFlowStep({ ...currentFlowStep, situationalGuide: e.target.value })} className="w-full p-2 bg-white border rounded-xl text-xs focus:outline-none" />
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                  <button type="button" onClick={addStepToFlow} className="w-full py-2 bg-gray-100 hover:bg-gray-200 border text-xs font-bold rounded-xl text-gray-700">+ Save Content Step Element</button>
+                <div className="admin-card-panel w-full">
+                  <p className="text-[10px] text-red-600 uppercase font-bold">Rejected</p>
+                  <p className="text-2xl font-black text-red-600 mt-1 font-mono">
+                    {modules.filter((m) => getApprovalStatus(m) === "Rejected").length}
+                  </p>
                 </div>
-                <button type="submit" className="w-full py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl text-xs uppercase tracking-wider shadow-sm">{editingModuleId ? "Commit Changes to Syllabus" : "Publish Training Module Layout"}</button>
-              </form>
+              </div>
+
+              <div className="admin-card-panel w-full">
+                <h3 className="text-xs font-bold uppercase tracking-wide mb-3 text-gray-400 border-b border-gray-100 pb-1.5 font-mono">
+                  Pending Submissions
+                </h3>
+                {modules.filter((m) => getApprovalStatus(m) === "Pending").length === 0 ? (
+                  <p className="text-xs text-gray-400 text-center py-6 italic">
+                    Nothing waiting on your review right now.
+                  </p>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="admin-table">
+                      <thead>
+                        <tr>
+                          <th>Module Topic</th>
+                          <th className="text-center">Levels / Steps</th>
+                          <th className="text-center">Visibility</th>
+                          <th className="text-right">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {modules
+                          .filter((m) => getApprovalStatus(m) === "Pending")
+                          .map((mod) => {
+                            const levelCount = mod.levels?.length || 0;
+                            const stepCount = (mod.levels || []).reduce((sum, l) => sum + (l.steps?.length || 0), 0);
+                            return (
+                              <tr key={mod.id}>
+                                <td className="font-semibold max-w-[160px] truncate">{mod.title}</td>
+                                <td className="text-center font-mono text-gray-500 font-bold">
+                                  {levelCount} Levels &middot; {stepCount} Steps
+                                </td>
+                                <td className="text-center">
+                                  <span className={mod.status === "Private" ? "badge-review" : "badge-ready"}>
+                                    {mod.status || "Public"}
+                                  </span>
+                                </td>
+                                <td className="text-right space-x-1.5">
+                                  <button
+                                    type="button"
+                                    onClick={() => handleReviewModule(mod)}
+                                    className="px-2 py-0.5 text-[11px] border border-gray-200 bg-white hover:bg-gray-50 rounded"
+                                  >
+                                    Review &amp; Edit
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleQuickReject(mod)}
+                                    className="px-2 py-0.5 text-[11px] border border-red-200 text-red-600 hover:bg-red-600 hover:text-white font-semibold rounded"
+                                  >
+                                    Reject
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleQuickApprove(mod)}
+                                    className="px-2 py-0.5 text-[11px] border border-emerald-200 text-emerald-700 hover:bg-emerald-600 hover:text-white font-semibold rounded"
+                                  >
+                                    Approve
+                                  </button>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+
+              <div className="admin-card-panel w-full">
+                <h3 className="text-xs font-bold uppercase tracking-wide mb-3 text-gray-400 border-b border-gray-100 pb-1.5 font-mono">
+                  Decision History
+                </h3>
+                {modules.filter((m) => getApprovalStatus(m) !== "Pending").length === 0 ? (
+                  <p className="text-xs text-gray-400 text-center py-6 italic">No decisions recorded yet.</p>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="admin-table">
+                      <thead>
+                        <tr>
+                          <th>Module Topic</th>
+                          <th className="text-center">Decision</th>
+                          <th>Reviewer Notes</th>
+                          <th className="text-right">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {modules
+                          .filter((m) => getApprovalStatus(m) !== "Pending")
+                          .map((mod) => (
+                            <tr key={mod.id}>
+                              <td className="font-semibold max-w-[160px] truncate">{mod.title}</td>
+                              <td className="text-center">
+                                <span className={getApprovalStatus(mod) === "Approved" ? "badge-ready" : "counter"}>
+                                  {getApprovalStatus(mod)}
+                                </span>
+                              </td>
+                              <td className="text-gray-500 max-w-[220px] truncate">{mod.reviewNote || "—"}</td>
+                              <td className="text-right">
+                                <button
+                                  type="button"
+                                  onClick={() => handleReviewModule(mod)}
+                                  className="px-2 py-0.5 text-[11px] border border-gray-200 bg-white hover:bg-gray-50 rounded"
+                                >
+                                  Reopen
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
             </div>
           )}
 
