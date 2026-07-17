@@ -18,7 +18,6 @@ function shuffle(array) {
 export default function InteractiveQuiz({ stepType, questions = [], isLoading = false, onCompleteStep }) {
   const [currentQIndex, setCurrentQIndex] = useState(0);
   const [selectedChoiceIds, setSelectedChoiceIds] = useState([]);
-  const isMultiSelect = stepType === 'hazard_identification' || stepType === 'action_sequence';
   const [hasSubmitted, setHasSubmitted] = useState(false);
   const [timeLeft, setTimeLeft] = useState(20);
   const [tabSwitchWarnings, setTabSwitchWarnings] = useState(0);
@@ -34,6 +33,16 @@ export default function InteractiveQuiz({ stepType, questions = [], isLoading = 
   }, [questions]);
 
   const currentQ = shuffledQuestions[currentQIndex];
+
+  const actualStepType = useMemo(() => {
+    if (stepType !== 'situational') return stepType;
+    if (!currentQ) return stepType;
+    if (currentQ.options && currentQ.options.some(o => o.sequenceOrder > 0)) return 'action_sequence';
+    if (currentQ.options && currentQ.options.filter(o => o.isCorrect).length > 1) return 'hazard_identification';
+    return 'priority_action';
+  }, [stepType, currentQ]);
+
+  const isMultiSelect = actualStepType === 'hazard_identification' || actualStepType === 'action_sequence';
   
   const isLocked = tabSwitchWarnings >= 2;
 
@@ -118,7 +127,7 @@ export default function InteractiveQuiz({ stepType, questions = [], isLoading = 
   if (!currentQ) return null;
 
   const isCorrect = (() => {
-    if (stepType === 'action_sequence') {
+    if (actualStepType === 'action_sequence') {
       const correctSequence = [...currentQ.options]
         .sort((a, b) => (a.sequenceOrder || 0) - (b.sequenceOrder || 0))
         .map(o => o.id);
@@ -160,7 +169,7 @@ export default function InteractiveQuiz({ stepType, questions = [], isLoading = 
             key={opt.id} 
             opt={opt} 
             isSelected={selectedChoiceIds.includes(opt.id)} 
-            selectionOrder={stepType === 'action_sequence' && selectedChoiceIds.includes(opt.id) ? selectedChoiceIds.indexOf(opt.id) + 1 : 0}
+            selectionOrder={actualStepType === 'action_sequence' && selectedChoiceIds.includes(opt.id) ? selectedChoiceIds.indexOf(opt.id) + 1 : 0}
             hasSubmitted={hasSubmitted} 
             onChoiceClick={handleChoiceClick} 
           />

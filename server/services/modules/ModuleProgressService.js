@@ -60,53 +60,49 @@ class ModuleProgressService {
             pointsMap[q.question_id] = q.points || 1;
         });
 
-        // Grade based on step_type
-        if (step.step_type === 'hazard_identification') {
-             const correctChoicesMap = {};
-             correctChoicesResult.rows.forEach(row => {
-                 if (!correctChoicesMap[row.question_id]) correctChoicesMap[row.question_id] = [];
-                 correctChoicesMap[row.question_id].push(row.choice_id);
-             });
-             
-             answers.forEach(ans => {
-                 const correctArray = (correctChoicesMap[ans.questionId] || []).sort((a, b) => a - b);
-                 const submittedArray = (ans.selectedChoiceIds || []).sort((a, b) => a - b);
-                 
-                 if (JSON.stringify(correctArray) === JSON.stringify(submittedArray)) {
-                     score += pointsMap[ans.questionId] || 1;
-                 }
-             });
-        } else if (step.step_type === 'action_sequence') {
-             const sequenceMap = {};
-             correctChoicesResult.rows.forEach(row => {
-                 if (!sequenceMap[row.question_id]) sequenceMap[row.question_id] = [];
-                 sequenceMap[row.question_id].push({ choice_id: row.choice_id, order: row.sequence_order });
-             });
-             
-             answers.forEach(ans => {
-                 const correctSequence = (sequenceMap[ans.questionId] || [])
-                     .sort((a, b) => a.order - b.order)
-                     .map(c => c.choice_id);
-                 
-                 const submittedSequence = ans.selectedChoiceIds || [];
-                 
-                 if (JSON.stringify(correctSequence) === JSON.stringify(submittedSequence)) {
-                     score += pointsMap[ans.questionId] || 1;
-                 }
-             });
-        } else {
-             const correctMap = {};
-             correctChoicesResult.rows.forEach(row => {
-                 correctMap[row.question_id] = row.choice_id;
-             });
+        // Dynamically grade each question based on its characteristics
+        const correctChoicesMap = {};
+        const sequenceMap = {};
+        
+        correctChoicesResult.rows.forEach(row => {
+            if (!correctChoicesMap[row.question_id]) correctChoicesMap[row.question_id] = [];
+            correctChoicesMap[row.question_id].push(row.choice_id);
+            
+            if (row.sequence_order && row.sequence_order > 0) {
+                if (!sequenceMap[row.question_id]) sequenceMap[row.question_id] = [];
+                sequenceMap[row.question_id].push({ choice_id: row.choice_id, order: row.sequence_order });
+            }
+        });
 
-             answers.forEach(ans => {
-                 const submittedChoiceId = ans.selectedChoiceIds && ans.selectedChoiceIds.length > 0 ? ans.selectedChoiceIds[0] : null;
-                 if (correctMap[ans.questionId] === submittedChoiceId) {
-                     score += pointsMap[ans.questionId] || 1;
-                 }
-             });
-        }
+        answers.forEach(ans => {
+            const isActionSequence = sequenceMap[ans.questionId] !== undefined;
+            const isMultiSelect = correctChoicesMap[ans.questionId] && correctChoicesMap[ans.questionId].length > 1;
+
+            if (isActionSequence) {
+                const correctSequence = sequenceMap[ans.questionId]
+                    .sort((a, b) => a.order - b.order)
+                    .map(c => c.choice_id);
+                const submittedSequence = ans.selectedChoiceIds || [];
+                
+                if (JSON.stringify(correctSequence) === JSON.stringify(submittedSequence)) {
+                    score += pointsMap[ans.questionId] || 1;
+                }
+            } else if (isMultiSelect) {
+                const correctArray = correctChoicesMap[ans.questionId].sort((a, b) => a - b);
+                const submittedArray = (ans.selectedChoiceIds || []).sort((a, b) => a - b);
+                
+                if (JSON.stringify(correctArray) === JSON.stringify(submittedArray)) {
+                    score += pointsMap[ans.questionId] || 1;
+                }
+            } else {
+                const correctChoiceId = correctChoicesMap[ans.questionId] ? correctChoicesMap[ans.questionId][0] : null;
+                const submittedChoiceId = ans.selectedChoiceIds && ans.selectedChoiceIds.length > 0 ? ans.selectedChoiceIds[0] : null;
+                
+                if (correctChoiceId === submittedChoiceId) {
+                    score += pointsMap[ans.questionId] || 1;
+                }
+            }
+        });
 
         const passingThreshold = step.passing_threshold || 80;
         const percentage = totalPoints > 0 ? (score / totalPoints) * 100 : 100;

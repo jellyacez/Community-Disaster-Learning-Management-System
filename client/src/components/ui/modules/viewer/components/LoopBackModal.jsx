@@ -16,7 +16,7 @@ export default function LoopBackModal({ loopBackData, acknowledgeLoopBack }) {
         <div className="bg-red-50 text-red-900 py-3 px-4 rounded-xl mb-8 font-bold flex justify-between items-center border border-red-100">
           <span>Your Score</span>
           <span className="text-xl">
-            {loopBackData.score} <span className="text-sm font-medium opacity-70">({loopBackData.percentage}%)</span>
+            {loopBackData.score} <span className="text-sm font-medium opacity-70">({Number(loopBackData.percentage).toFixed(2).replace(/\.00$/, '')}%)</span>
           </span>
         </div>
         <button
