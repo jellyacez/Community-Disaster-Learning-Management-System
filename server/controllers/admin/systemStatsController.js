@@ -128,6 +128,6 @@ exports.getHealthStatus = async (req, res) => {
       }
     });
   } catch {
-    res.status(500).json({ success: true, data: { db_status: 'disconnected', db_latency_ms: null } });
+    res.status(500).json({ success: false, data: { db_status: 'disconnected', db_latency_ms: null } });
   }
 };

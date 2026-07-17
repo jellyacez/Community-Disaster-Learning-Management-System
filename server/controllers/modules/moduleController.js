@@ -69,15 +69,25 @@ exports.enrollInModule = async (req, res) => {
     const result = await pool.query(
       `INSERT INTO public.user_modules (user_id, mod_id, progress, status)
        VALUES ($1, $2, 0, 'Not Started')
-       ON CONFLICT (user_id, mod_id) DO UPDATE SET status = 'Not Started'
+       ON CONFLICT (user_id, mod_id) DO NOTHING
        RETURNING *`,
       [user_id, mod_id]
     );
 
+    // If DO NOTHING triggered (already enrolled), fetch the existing record
+    let enrollmentData = result.rows[0];
+    if (!enrollmentData) {
+      const existing = await pool.query(
+        `SELECT * FROM public.user_modules WHERE user_id = $1 AND mod_id = $2`,
+        [user_id, mod_id]
+      );
+      enrollmentData = existing.rows[0];
+    }
+
     return res.status(200).json({ 
       success: true, 
       message: "Successfully enrolled in module.", 
-      data: result.rows[0] 
+      data: enrollmentData
     });
   } catch (error) {
     // This logs the exact database error inside your backend terminal!

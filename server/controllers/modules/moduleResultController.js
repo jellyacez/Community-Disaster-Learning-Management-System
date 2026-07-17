@@ -1,16 +1,17 @@
 const pool = require("../../config/db");
 
 
-const levelResult = async (levelId, userId, answers) => {
+const levelResult = async (moduleId, userId, answers) => {
     // 1. Validate answers format
     if (!answers || !Array.isArray(answers)) {
         throw new Error("Answers array is required");
     }
 
-    // 2. Fetch all questions for this level to get their points
+    // 2. Fetch all questions for this module to get their points
+    // NOTE: questions.mod_id stores the module ID (confirmed in schema.sql L699)
     const questionsResult = await pool.query(
         `SELECT question_id, points FROM public.questions WHERE mod_id = $1`,
-        [levelId]
+        [moduleId]
     );
     const questions = questionsResult.rows;
     const totalPoints = questions.reduce((sum, q) => sum + (q.points || 1), 0);
@@ -21,7 +22,7 @@ const levelResult = async (levelId, userId, answers) => {
          FROM public.choices c 
          JOIN public.questions q ON c.question_id = q.question_id 
          WHERE q.mod_id = $1 AND c.is_correct = true`,
-        [levelId]
+        [moduleId]
     );
 
     // Create maps for quick lookup
@@ -51,7 +52,7 @@ const levelResult = async (levelId, userId, answers) => {
         `INSERT INTO public.results (mod_id, user_id, score, total_points, passed)
          VALUES ($1, $2, $3, $4, $5)
          RETURNING *`,
-        [levelId, userId, score, totalPoints, passed]
+        [moduleId, userId, score, totalPoints, passed]
     );
 
     return result.rows[0];

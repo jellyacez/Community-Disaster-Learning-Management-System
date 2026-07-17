@@ -33,12 +33,7 @@ const SystemActivityLog = lazy(
 const SystemSettings = lazy(
   () => import("./pages/admin/system/settings/SystemSettings"),
 );
-const SystemHealth = lazy(
-  () => import("./pages/admin/system/health/SystemHealth"),
-);
-const SystemSecurity = lazy(
-  () => import("./pages/admin/system/security/SystemSecurity"),
-);
+
 const UserDashboard = lazy(() => import("./pages/user/UserDashboard"));
 const UserAnnouncements = lazy(() => import("./pages/user/UserAnnouncements"));
 const UserModuleCatalog = lazy(() => import("./pages/user/UserModuleCatalog"));
@@ -198,8 +193,6 @@ export default function App() {
                   <Route path="users" element={<SystemUserManagement />} />
                   <Route path="logs" element={<SystemActivityLog />} />
                   <Route path="settings" element={<SystemSettings />} />
-                  <Route path="health" element={<SystemHealth />} />
-                  <Route path="security" element={<SystemSecurity />} />
                 </Route>
               </Route>
 
