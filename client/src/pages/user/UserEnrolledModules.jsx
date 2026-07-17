@@ -13,6 +13,7 @@ import SearchBar from "../../components/ui/inputs/SearchBar.jsx";
 
 export default function UserEnrolledModules() {
   useDocumentTitle("Enrolled Modules | Bacolor LMS");
+  
   const { data: dashboardData, isLoading } = useQuery({
     queryKey: ['userDashboard'],
     queryFn: async () => {
@@ -23,7 +24,22 @@ export default function UserEnrolledModules() {
   
   const [searchTerm, setSearchTerm] = useState("");
   const [activeTab, setActiveTab] = useState("in_progress");
-  const enrolledModules = useMemo(() => dashboardData?.enrolledModules || [], [dashboardData?.enrolledModules]);
+
+  // FIX: Normalize database columns into standard object properties expected by ModuleCard
+  const enrolledModules = useMemo(() => {
+    const rawModules = dashboardData?.enrolledModules || [];
+    return rawModules.map(mod => ({
+      ...mod,
+      id: mod.id || mod.mod_id,                        // Maps mod_id safely to id
+      title: mod.title || mod.modname || "Untitled Module", // Maps modname safely to title
+      category: mod.category || mod.modcat || "General",  // Maps modcat safely to category
+      level: mod.level || "Level 1",
+      duration: mod.duration || "Varies",
+      image_url: mod.image_url || null,
+      progress: parseInt(mod.progress || 0),
+      status: mod.status || "Not Started"
+    }));
+  }, [dashboardData?.enrolledModules]);
   
   const inProgressModules = useMemo(() => 
     enrolledModules.filter((m) => m.status !== "Completed" && m.progress < 100),
@@ -41,7 +57,6 @@ export default function UserEnrolledModules() {
     if (!searchTerm) return activeModules;
     const lower = searchTerm.toLowerCase();
     return activeModules.filter((module) =>
-      module.modname?.toLowerCase().includes(lower) ||
       module.title?.toLowerCase().includes(lower) ||
       module.category?.toLowerCase().includes(lower)
     );
@@ -74,7 +89,7 @@ export default function UserEnrolledModules() {
           )}
         </div>
 
-        {/* Tabs */}
+        {/* Tabs Grid Navigation */}
         {enrolledModules.length > 0 && (
           <div className="flex gap-2">
             {tabs.map((tab) => (
@@ -158,7 +173,7 @@ export default function UserEnrolledModules() {
         ) : (
           <div className="grid gap-5 lg:grid-cols-2">
             {filteredModules.map((module) => (
-              <ModuleCard key={module.id} module={module} enrolled />
+              <ModuleCard key={module.id} module={module} enrolled={true} />
             ))}
           </div>
         )}
@@ -167,4 +182,3 @@ export default function UserEnrolledModules() {
   );
 }
 // --- END: UserEnrolledModules.jsx ---
-

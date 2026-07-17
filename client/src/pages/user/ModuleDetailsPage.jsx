@@ -44,6 +44,9 @@ export default function ModuleDetailsPage() {
   }
 
   const { module, levels = [] } = data;
+  
+  const currentProgress = parseInt(module.progress || 0, 10);
+  const isCompleted = module.status === "Completed" || currentProgress === 100;
 
   return (
     <div className="max-w-4xl mx-auto space-y-8 p-4 md:p-6 animate-in fade-in duration-200">
@@ -56,7 +59,7 @@ export default function ModuleDetailsPage() {
         <span className="text-lg">←</span> Back
       </button>
 
-      {/* Module Cover & Header Profile */}
+      {/* Module Cover & Header Profile (Progress Bar Integrated Directly Inside) */}
       <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden grid grid-cols-1 md:grid-cols-12 gap-6 p-6 items-center">
         <div className="md:col-span-4 h-48 w-full bg-slate-50 border border-slate-100 rounded-2xl overflow-hidden relative flex items-center justify-center text-slate-400">
           {module.image_url ? (
@@ -82,18 +85,41 @@ export default function ModuleDetailsPage() {
               <span className="bg-amber-50 text-amber-700 text-xs font-extrabold px-3 py-1 rounded-full border border-amber-100">
                 {module.duration || "Varies"}
               </span>
+              {isCompleted && (
+                <span className="bg-green-50 text-green-700 text-xs font-extrabold px-3 py-1 rounded-full border border-green-100">
+                  ✓ Completed
+                </span>
+              )}
             </div>
             <h1 className="text-2xl md:text-3xl font-black text-gray-900 leading-tight">
               {module.modname}
             </h1>
           </div>
 
-          <div className="flex items-center gap-3">
+          {/* Integrated Inline Progress Section */}
+          <div className="w-full space-y-1.5">
+            <div className="flex justify-between items-center text-xs">
+              <span className="font-bold text-gray-400 uppercase tracking-wider">Module Progress</span>
+              <span className={`font-black ${isCompleted ? "text-green-600" : "text-gray-900"}`}>
+                {currentProgress}%
+              </span>
+            </div>
+            <div className="h-2.5 w-full overflow-hidden rounded-full bg-gray-100 border border-gray-200/50">
+              <div
+                className={`h-full rounded-full transition-all duration-700 ease-out ${
+                  isCompleted ? "bg-green-500" : "bg-red-600"
+                }`}
+                style={{ width: `${currentProgress}%` }}
+              />
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3 pt-2">
             <button 
-              onClick={() => navigate(`/user/modules/${module.mod_id}/viewer`)}
+              onClick={() => navigate(`/user/modules/${module.mod_id || module.id}`)}
               className="flex items-center gap-2 px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl text-sm shadow-md hover:shadow-lg transition-all"
             >
-              <span className="text-xs">▶</span> Launch Learning Viewer
+              <span className="text-xs">▶</span> {isCompleted ? "Review Module Content" : "Launch Learning Viewer"}
             </button>
           </div>
         </div>

@@ -86,19 +86,30 @@ class ModuleService {
 
   async getAvailableModules(user_id) {
     const result = await pool.query(
-      `
-      SELECT 
-        md.mod_id as id, 
-        md.modname as title, 
-        md.modcat as category, 
+     `SELECT 
+        md.mod_id AS id, 
+        md.modname AS title, 
+        md.modcat AS category, 
+        md.description, 
         md.level, 
         md.duration, 
-        md.description
-      FROM module_data md
-      LEFT JOIN module_activity ma ON md.mod_id = ma.mod_id AND ma.user_id = $1
-      WHERE ma.modact_id IS NULL
-      ORDER BY md.mod_id DESC
-    `,
+        md.image_url,
+        EXISTS (
+          SELECT 1 FROM public.user_modules um 
+          WHERE um.mod_id = md.mod_id AND um.user_id = $1
+        ) AS is_enrolled,
+        (
+          SELECT um.progress FROM public.user_modules um 
+          WHERE um.mod_id = md.mod_id AND um.user_id = $1
+          LIMIT 1
+        ) AS progress,
+        (
+          SELECT um.status FROM public.user_modules um 
+          WHERE um.mod_id = md.mod_id AND um.user_id = $1
+          LIMIT 1
+        ) AS status
+       FROM public.module_data md
+       ORDER BY md.mod_id DESC`,
       [user_id]
     );
     return result.rows;

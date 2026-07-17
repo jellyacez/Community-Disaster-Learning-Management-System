@@ -1,6 +1,4 @@
 import { useState, useMemo } from "react";
-
-
 import ModuleCard from "../../components/ui/modules/ModuleCard.jsx";
 import ModuleSkeleton from "../../components/ui/modules/ModuleSkeleton.jsx";
 import useDocumentTitle from "../../hooks/useDocumentTitle";
@@ -11,13 +9,30 @@ import continuousLearningImg from "../../assets/continuous-learning.svg";
 
 export default function UserModuleCatalog() {
   const queryClient = useQueryClient();
-  const { data: modules = [], isLoading } = useQuery({
+  
+  const { data: rawModules = [], isLoading } = useQuery({
     queryKey: ["availableModules"],
     queryFn: async () => {
       const res = await apiClient.get('/modules/available');
       return res.data;
     },
   });
+
+  // Normalize dataset to standardize fields across components
+  const modules = useMemo(() => {
+    return rawModules.map((mod) => ({
+      ...mod,
+      id: mod.id || mod.mod_id,
+      title: mod.title || mod.modname || "Untitled Module",
+      category: mod.category || mod.modcat || "General",
+      level: mod.level || "Level 1",
+      duration: mod.duration || "Varies",
+      image_url: mod.image_url || null,
+      progress: parseInt(mod.progress || 0),
+      status: mod.status || "Not Started",
+      is_enrolled: mod.is_enrolled || false
+    }));
+  }, [rawModules]);
 
   const handleEnrollSuccess = () => {
     queryClient.invalidateQueries({ queryKey: ["availableModules"] });
@@ -37,31 +52,21 @@ export default function UserModuleCatalog() {
   }, [modules, searchQuery]);
 
   useDocumentTitle("Module Catalog | Bacolor LMS");
+
   return (
     <div className="animate-in fade-in duration-300">
       <div className="space-y-6">
         <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
           <div>
-            <h1 className="text-3xl font-extrabold text-gray-900">
-              Module Catalog
-            </h1>
-            <p className="mt-1 text-sm text-gray-600">
-              Explore training modules and enroll when ready.
-            </p>
+            <h1 className="text-3xl font-extrabold text-gray-900">Module Catalog</h1>
+            <p className="mt-1 text-sm text-gray-600">Explore training modules and enroll when ready.</p>
           </div>
-
-          <SearchBar
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search modules..."
-          />
+          <SearchBar value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Search modules..." />
         </div>
 
         {isLoading ? (
           <div className="grid gap-5 lg:grid-cols-2">
-            {[1, 2, 3, 4].map((i) => (
-              <ModuleSkeleton key={i} />
-            ))}
+            {[1, 2, 3, 4].map((i) => <ModuleSkeleton key={i} />)}
           </div>
         ) : filteredModules.length > 0 ? (
           <div className="grid gap-5 lg:grid-cols-2">
@@ -71,27 +76,17 @@ export default function UserModuleCatalog() {
                 module={module}
                 enrolled={module.is_enrolled}
                 onEnrollSuccess={handleEnrollSuccess}
-              ></ModuleCard>
+              />
             ))}
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center py-16 text-center">
-            <img
-              src={continuousLearningImg}
-              alt="No modules mascot"
-              className="w-48 h-48 mb-6 opacity-80"
-            />
-            <h2 className="text-lg font-semibold text-gray-700">
-              All caught up!
-            </h2>
-            <p className="text-sm text-gray-600 max-w-xs mt-2">
-              You've explored all available modules. Check back later for new
-              disaster readiness training!
-            </p>
+            <img src={continuousLearningImg} alt="No modules mascot" className="w-48 h-48 mb-6 opacity-80" />
+            <h2 className="text-lg font-semibold text-gray-700">All caught up!</h2>
+            <p className="text-sm text-gray-600 max-w-xs mt-2">You've explored all available modules. Check back later for training updates!</p>
           </div>
         )}
       </div>
     </div>
   );
 }
-// --- END: UserModuleCatalog.jsx ---

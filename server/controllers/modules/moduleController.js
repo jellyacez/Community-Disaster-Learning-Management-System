@@ -1,7 +1,7 @@
 const { validateModuleCreation } = require("../../utils/validators");
 const ModuleService = require("../../services/modules/ModuleService");
 const logger = require('../../utils/logger');
-
+const pool = require("../../config/db")
 // @desc    Creates a new module and all its nested levels and steps in a transaction
 // @access  Private (admin only)
 exports.createModule = async (req, res) => {
@@ -48,39 +48,41 @@ exports.getAvailableModules = async (req, res) => {
 // @access  Private
 exports.enrollInModule = async (req, res) => {
   const { id: mod_id } = req.params;
-  const user_id = req.user?.id;
+  
+  // 1. Double check how your betterAuthMiddleware injects user parameters (e.g., req.user vs req.session.user)
+  const user_id = req.user?.id || req.user?.userId; 
 
-  if (!mod_id || isNaN(mod_id)) {
-    return res.status(400).json({ success: false, message: "Invalid module ID." });
+  if (!user_id) {
+    return res.status(401).json({ success: false, message: "Unauthorized: User identifier missing." });
   }
 
   try {
-    const moduleInfo = await ModuleService.getModuleById(mod_id);
-    if (!moduleInfo) {
-      return res.status(404).json({ success: false, message: "Module not found." });
+
+    const moduleCheck = await pool.query(
+      "SELECT mod_id FROM public.module_data WHERE mod_id = $1", 
+      [mod_id]
+    );
+    if (moduleCheck.rowCount === 0) {
+      return res.status(404).json({ success: false, message: "Target training module not found." });
     }
+    // 2. Ensure your linking table exists in your database with matching columns
+    const result = await pool.query(
+      `INSERT INTO public.user_modules (user_id, mod_id, progress, status)
+       VALUES ($1, $2, 0, 'Not Started')
+       ON CONFLICT (user_id, mod_id) DO UPDATE SET status = 'Not Started'
+       RETURNING *`,
+      [user_id, mod_id]
+    );
 
-    const isEnrolled = await ModuleService.checkUserEnrollment(user_id, mod_id);
-    if (isEnrolled) {
-      return res.status(400).json({
-        success: false,
-        message: "You are already enrolled in this module.",
-      });
-    }
-
-    await ModuleService.enrollUserInModule(user_id, mod_id);
-    logger.logActivity(user_id, `Enrolled in module: ${moduleInfo.modname}`);
-
-    return res.status(201).json({
-      success: true,
-      message: "Successfully enrolled in the module.",
+    return res.status(200).json({ 
+      success: true, 
+      message: "Successfully enrolled in module.", 
+      data: result.rows[0] 
     });
   } catch (error) {
-    console.error("Error enrolling in module:", error);
-    return res.status(500).json({
-      success: false,
-      message: "An internal server error occurred while enrolling.",
-    });
+    // This logs the exact database error inside your backend terminal!
+    console.error("Database error during enrollment execution pipeline:", error); 
+    return res.status(500).json({ success: false, message: "Internal server error completing enrollment." });
   }
 };
 // --- End of enrollInModule ---

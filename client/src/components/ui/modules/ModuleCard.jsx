@@ -22,6 +22,7 @@ const ModuleCard = memo(function ModuleCard({
   onEnrollSuccess,
 }) {
   const navigate = useNavigate();
+  
   const isCompleted = enrolled && (module.progress === 100 || module.status === "Completed");
   
   const { localEnrolled, isEnrolling, handleEnroll } = useModuleEnrollment({
@@ -31,15 +32,30 @@ const ModuleCard = memo(function ModuleCard({
     onEnrollSuccess
   });
 
-  // FIX: Redirect to the core details page instead of jumping straight into the viewer
-  const handleNavigationToDetails = () => {
+  const resolveImageUrl = (url) => {
+    if (!url) return null;
+    if (url.startsWith("http://") || url.startsWith("https://")) return url;
+    return `http://localhost:5000/${url}`;
+  };
+
+  const handleLaunchViewer = (e) => {
+    e.stopPropagation();
     if (isPreview && onPreviewClick) return onPreviewClick();
     if (isPreview) return toast.error("Navigation is disabled in Live Preview Mode.");
-    navigate(`/user/modules/${module.id}/details`); // 👈 Routes to details first!
+    // Matches the separate viewer route path configuration in App.jsx
+    navigate(`/user/modules/${module.id}`); 
+  };
+
+  const handleViewDetails = (e) => {
+    e.stopPropagation();
+    if (isPreview && onPreviewClick) return onPreviewClick();
+    if (isPreview) return toast.error("Navigation is disabled in Live Preview Mode.");
+    // Matches the layout inner route path configuration in App.jsx
+    navigate(`/user/modules/${module.id}/details`); 
   };
 
   const handleEnrollClick = (e) => {
-    e.stopPropagation(); // Prevents card container clicks from triggering navigation simultaneously
+    e.stopPropagation();
     if (isPreview && onPreviewClick) return onPreviewClick();
     if (isPreview) return toast.error("Enrollment is disabled in Live Preview Mode.");
     handleEnroll();
@@ -47,29 +63,28 @@ const ModuleCard = memo(function ModuleCard({
 
   return (
     <div 
-      onClick={handleNavigationToDetails} // 👈 Clicking the card body navigates to Details
-      className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col sm:flex-row items-stretch gap-5 group overflow-hidden cursor-pointer hover:border-gray-300"
+      onClick={handleViewDetails}
+      className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm hover:shadow-md transition-shadow duration-300 flex flex-col sm:flex-row items-stretch gap-5 group overflow-hidden cursor-pointer hover:border-gray-300"
     >
-      
       {/* Thumbnail */}
       <div className="hidden sm:flex w-32 sm:w-40 md:w-48 shrink-0 overflow-hidden rounded-xl bg-slate-50 border border-slate-100 relative items-center justify-center text-slate-400">
         {module.image_url ? (
           <img
             loading="lazy"
-            src={module.image_url}
+            src={resolveImageUrl(module.image_url)}
             alt={module.title}
             className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 absolute inset-0"
           />
         ) : (
           <div className="w-full h-full absolute inset-0 flex flex-col items-center justify-center transition-transform duration-700 group-hover:scale-110">
-            <svg xmlns="http://www.w3.org/2000/svg" className="w-10 h-10 mb-1.5 opacity-40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>
+            <svg xmlns="http://www.w3.org/2000/svg" className="w-10 h-10 mb-1.5 opacity-40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>
             <span className="text-[9px] font-bold uppercase tracking-widest opacity-50">No Cover</span>
           </div>
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
       </div>
 
-      {/* Card Content */}
+      {/* Content */}
       <div className="flex-1 flex flex-col justify-between min-w-0">
         <div>
           <div className="mb-3 flex flex-wrap gap-2 items-center">
@@ -85,8 +100,7 @@ const ModuleCard = memo(function ModuleCard({
             </span>
             {isCompleted && (
               <span className="flex items-center gap-1 rounded-full bg-green-50 px-2.5 py-1 text-xs font-bold text-green-700 border border-green-100 shrink-0">
-                <HugeiconsIcon icon={CheckmarkCircle02Icon} className="w-3.5 h-3.5" />
-                Completed
+                ✔️ Completed
               </span>
             )}
           </div>
@@ -120,10 +134,7 @@ const ModuleCard = memo(function ModuleCard({
         <div className="mt-6 flex flex-row gap-3 w-full">
           {localEnrolled ? (
             <button 
-              onClick={(e) => {
-                e.stopPropagation(); // Avoid triggering details navigation twice
-                handleNavigationToDetails();
-              }}
+              onClick={handleLaunchViewer}
               className={`flex-1 rounded-xl px-2 sm:px-4 py-2.5 text-xs sm:text-sm font-bold text-white transition cursor-pointer truncate ${
                 isCompleted ? "bg-green-600 hover:bg-green-700" : "bg-red-600 hover:bg-red-700"
               }`}
@@ -138,19 +149,12 @@ const ModuleCard = memo(function ModuleCard({
                 isEnrolling ? "bg-gray-400 cursor-not-allowed" : "bg-gray-900 hover:bg-black cursor-pointer"
               }`}
             >
-              {isEnrolling ? (
-                <><Spinner /> Enrolling...</>
-              ) : (
-                "Enroll Now"
-              )}
+              {isEnrolling ? "Enrolling..." : "Enroll Now"}
             </button>
           )}
 
           <button 
-            onClick={(e) => {
-              e.stopPropagation();
-              handleNavigationToDetails();
-            }}
+            onClick={handleViewDetails}
             className="flex-1 rounded-xl border border-gray-200 px-2 sm:px-4 py-2.5 text-xs sm:text-sm font-bold text-gray-700 hover:bg-gray-50 transition cursor-pointer truncate"
           >
             View Details
