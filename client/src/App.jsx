@@ -51,6 +51,9 @@ const UserSettings = lazy(() => import("./pages/user/UserSettings"));
 const NotFoundPage = lazy(() => import("./pages/public/NotFoundPage"));
 const MaintenancePage = lazy(() => import("./pages/public/MaintenancePage"));
 
+const ModuleDetailsPage = lazy(
+  () => import("./pages/user/ModuleDetailsPage"),
+);
 const BarangayAdminDashboard = lazy(
   () => import("./pages/admin/barangay/BarangayAdminDashboard"),
 );
@@ -177,7 +180,7 @@ export default function App() {
               <Route path="/user/enrolled" element={<UserEnrolledModules />} />
               <Route path="/user/profile" element={<UserProfile />} />
               <Route path="/user/settings" element={<UserSettings />} />
-
+              <Route path="/user/modules/:id/details" element={<ModuleDetailsPage />} />
               <Route path="/user/certTemplate" element={<CertificatePDF />} />
             </Route>
           </Route>

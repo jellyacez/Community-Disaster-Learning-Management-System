@@ -133,3 +133,61 @@ exports.getStepAssessment = async (req, res) => {
     return res.status(500).json({ success: false, message: "Internal server error" });
   }
 };
+
+
+// @desc    Gets detailed module, level, and step properties (hierarchical view)
+// @access  Private
+exports.getModuleSyllabusDetails = async (req, res) => {
+  const { id: mod_id } = req.params;
+
+  try {
+    // 1. Fetch parent module details
+    const moduleRes = await pool.query(
+      `SELECT mod_id, modname, modcat, description, level, duration, image_url 
+       FROM public.module_data 
+       WHERE mod_id = $1`,
+      [mod_id]
+    );
+
+    if (moduleRes.rowCount === 0) {
+      return res.status(404).json({ success: false, message: "Module not found." });
+    }
+
+    // 2. Fetch levels assigned to this module, including threshold settings
+    const levelsRes = await pool.query(
+      `SELECT level_id, level_order, level_title, level_description, passing_threshold, is_locked_by_default
+       FROM public.levels 
+       WHERE mod_id = $1 
+       ORDER BY level_order ASC`,
+      [mod_id]
+    );
+
+    // 3. Fetch steps and relate them to levels
+    const stepsRes = await pool.query(
+      `SELECT ms.step_id, ms.level_id, ms.step_order, ms.step_title, ms.step_type, ms.is_final_assessment, ms.loop_back_step_id
+       FROM public.module_steps ms
+       JOIN public.levels l ON ms.level_id = l.level_id
+       WHERE l.mod_id = $1
+       ORDER BY ms.step_order ASC`,
+      [mod_id]
+    );
+
+    // Group steps neatly into their corresponding level objects
+    const structuredLevels = levelsRes.rows.map(lvl => {
+      return {
+        ...lvl,
+        steps: stepsRes.rows.filter(step => step.level_id === lvl.level_id)
+      };
+    });
+
+    return res.status(200).json({
+      success: true,
+      module: moduleRes.rows[0],
+      levels: structuredLevels
+    });
+
+  } catch (error) {
+    console.error("Error fetching complete syllabus details:", error);
+    return res.status(500).json({ success: false, message: "Internal server error assembling details view." });
+  }
+};

@@ -17,7 +17,7 @@ router.post("/", betterAuthMiddleware, adminMiddleware, requirePermission('manag
 
 
 
-
+router.get("/:id/details", betterAuthMiddleware, moduleController.getModuleSyllabusDetails);
 // @route   GET /api/modules/available
 // @desc    Get all available modules for residents
 // @access  Private
