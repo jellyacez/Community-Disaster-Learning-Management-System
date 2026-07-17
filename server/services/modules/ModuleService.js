@@ -23,6 +23,11 @@ class ModuleService {
 
       // 2. Insert Levels
       for (const lvl of levels) {
+        // Guard against multiple final assessments per level
+        const finalAssessmentsCount = lvl.steps.filter(s => s.is_final_assessment).length;
+        if (finalAssessmentsCount > 1) {
+            throw new Error(`Validation Error: Level "${lvl.levelTitle || lvl.levelOrder}" contains multiple Final Assessments. Only one final assessment is permitted per level.`);
+        }
         const levelRes = await client.query(
           `INSERT INTO public.levels (mod_id, level_order, level_title, level_description, passing_threshold, is_locked_by_default)
            VALUES ($1, $2, $3, $4, $5, $6) RETURNING level_id`,
@@ -95,16 +100,16 @@ class ModuleService {
         md.duration, 
         md.image_url,
         EXISTS (
-          SELECT 1 FROM public.user_modules um 
+          SELECT 1 FROM public.module_activity um 
           WHERE um.mod_id = md.mod_id AND um.user_id = $1
         ) AS is_enrolled,
         (
-          SELECT um.progress FROM public.user_modules um 
+          SELECT um.progress FROM public.module_activity um 
           WHERE um.mod_id = md.mod_id AND um.user_id = $1
           LIMIT 1
         ) AS progress,
         (
-          SELECT um.status FROM public.user_modules um 
+          SELECT um.modstatus FROM public.module_activity um 
           WHERE um.mod_id = md.mod_id AND um.user_id = $1
           LIMIT 1
         ) AS status

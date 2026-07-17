@@ -76,41 +76,43 @@ export function useModuleSubmit({
                          rationale: opt.rationale
                      }))
                  })) || [];
-             } else if (flow.assessmentType === "situational" && flow.situationalData) {
-                 const interaction = flow.situationalData.interactionType;
-                 
-                 let options = [];
-                 if (interaction === "priority_action") {
-                     options = flow.situationalData.options.map((opt, optIdx) => ({
-                         text: opt.text,
-                         isCorrect: optIdx === flow.situationalData.correctAnswerIndex,
-                         rationale: opt.rationale
-                     }));
-                 } else if (interaction === "hazard_identification") {
-                     options = flow.situationalData.hazards.map((hazard) => ({
-                         text: hazard.text,
-                         isCorrect: hazard.isRequired,
-                         rationale: hazard.rationale
-                     }));
-                 } else if (interaction === "action_sequence") {
-                     options = flow.situationalData.sequenceSteps.map((step) => ({
-                         text: step.text,
-                         isCorrect: true, // all steps are "correct" parts of the sequence
-                         sequence_order: step.order
-                     }));
-                 }
-                 
-                 questionsToSave = [{
-                     questionText: flow.situationalScenario,
-                     imageURL: '',
-                     options: options
-                 }];
-             }
+             } else if (flow.assessmentType === "situational" && flow.situationalScenarios?.length > 0) {
+                 questionsToSave = flow.situationalScenarios.map(scenario => {
+                     const interaction = scenario.interactionType;
+                     let options = [];
+                     
+                     if (interaction === "priority_action") {
+                         options = scenario.options.map((opt, optIdx) => ({
+                             text: opt.text,
+                             isCorrect: optIdx === scenario.correctAnswerIndex,
+                             rationale: opt.rationale
+                         }));
+                     } else if (interaction === "hazard_identification") {
+                         options = scenario.hazards.map((hazard) => ({
+                             text: hazard.text,
+                             isCorrect: hazard.isRequired,
+                             rationale: hazard.rationale
+                         }));
+                     } else if (interaction === "action_sequence") {
+                         options = scenario.sequenceSteps.map((step) => ({
+                             text: step.text,
+                             isCorrect: true,
+                             sequence_order: step.order
+                         }));
+                     }
+                     
+                     return {
+                         questionText: scenario.scenarioDescription,
+                         imageURL: '',
+                         options: options
+                     };
+                 });
+              }
              
              return {
                  stepOrder: index + 1,
                  stepTitle: flow.title,
-                 stepContent: flow.type === "text" ? flow.textContent : flow.situationalScenario,
+                 stepContent: flow.type === "text" ? flow.textContent : "",
                  mediaUrl: flow.finalMediaUrl,
                  stepType: flow.type,
                  is_final_assessment: flow.is_final_assessment || false,

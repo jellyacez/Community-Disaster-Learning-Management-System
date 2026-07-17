@@ -25,7 +25,7 @@ export function useModuleBuilder() {
     currentSituationalData, setCurrentSituationalData,
     situationalImage, setSituationalImage,
     writtenMaterialFile, setWrittenMaterialFile,
-    addStepToFlow, addQuizQuestionToStep, handleEditStep
+    addStepToFlow, addQuizQuestionToStep, addSituationalScenarioToStep, handleEditStep
   } = useStepStager(activeLevelOrder, setFormErrors);
 
   const { handleModuleSubmit } = useModuleSubmit({
@@ -109,6 +109,7 @@ export function useModuleBuilder() {
     actions: {
       addStepToFlow: () => addStepToFlow(formErrors),
       addQuizQuestionToStep: () => addQuizQuestionToStep(formErrors),
+      addSituationalScenarioToStep: () => addSituationalScenarioToStep(formErrors),
       handleModuleSubmit,
       triggerFlowSequencePreview,
       resetForm,

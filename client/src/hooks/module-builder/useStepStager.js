@@ -5,7 +5,7 @@ export function useStepStager(activeLevelOrder, setFormErrors) {
   const [stagedFlows, setStagedFlows] = useState([]);
   const [currentFlowStep, setCurrentFlowStep] = useState({
     builderStepType: "learning_material", // "learning_material", "quiz", or "situational"
-    type: "text", title: "", textContent: "", videoUrl: "", assessmentType: "quiz", quizQuestions: [], situationalScenario: "", is_final_assessment: false
+    type: "text", title: "", textContent: "", videoUrl: "", assessmentType: "quiz", quizQuestions: [], situationalScenarios: [], is_final_assessment: false
   });
   
   const [currentQuizQuestion, setCurrentQuizQuestion] = useState({
@@ -20,6 +20,7 @@ export function useStepStager(activeLevelOrder, setFormErrors) {
   });
 
   const [currentSituationalData, setCurrentSituationalData] = useState({
+    scenarioDescription: "",
     interactionType: "priority_action",
     options: [
       { text: "", rationale: "" },
@@ -48,7 +49,8 @@ export function useStepStager(activeLevelOrder, setFormErrors) {
     setCurrentFlowStep(stepToEdit);
     setEditingStepId(stepId);
     if (stepToEdit.assessmentType === "situational") {
-      setCurrentSituationalData(stepToEdit.situationalData);
+      // For editing, we don't need to push it into currentSituationalData yet,
+      // because situationalScenarios is already in stepToEdit and mapped down.
     }
   };
 
@@ -69,19 +71,8 @@ export function useStepStager(activeLevelOrder, setFormErrors) {
     }
     
     if (currentFlowStep.builderStepType === "situational") {
-      if (!currentFlowStep.situationalScenario.trim()) {
-        errors.stepScenario = "A scenario description is required for this situational assessment.";
-      }
-      
-      if (currentSituationalData.interactionType === "priority_action") {
-        if (currentSituationalData.options.some(opt => !opt.text.trim())) errors.situationalOptions = "All four options must be populated.";
-        if (currentSituationalData.options.some(opt => !opt.rationale.trim())) errors.situationalOptions = "Rationale is required for all options.";
-      } else if (currentSituationalData.interactionType === "hazard_identification") {
-        if (currentSituationalData.hazards.length === 0) errors.situationalHazards = "At least one hazard must be defined.";
-        if (currentSituationalData.hazards.some(h => !h.text.trim() || !h.rationale.trim())) errors.situationalHazards = "All hazards must have text and rationale.";
-      } else if (currentSituationalData.interactionType === "action_sequence") {
-        if (currentSituationalData.sequenceSteps.length < 2) errors.situationalSequence = "At least two sequence steps must be defined.";
-        if (currentSituationalData.sequenceSteps.some(s => !s.text.trim())) errors.situationalSequence = "All sequence steps must have text.";
+      if (currentFlowStep.situationalScenarios.length === 0) {
+        errors.stepScenario = "At least one situational scenario must be added to this assessment step.";
       }
     }
 
@@ -97,9 +88,9 @@ export function useStepStager(activeLevelOrder, setFormErrors) {
     if (currentFlowStep.builderStepType === "quiz") {
       stepWithMeta.type = "quiz";
     } else if (currentFlowStep.builderStepType === "situational") {
-      stepWithMeta.type = currentSituationalData.interactionType;
+      stepWithMeta.type = "situational"; // General step type
       stepWithMeta.assessmentType = "situational";
-      stepWithMeta.situationalData = currentSituationalData;
+      // situationalScenarios is already correctly mapped via currentFlowStep.situationalScenarios
     } else if (writtenMaterialFile && writtenMaterialFile.type.startsWith("video/")) {
       stepWithMeta.type = "video";
     } else if (!stepWithMeta.type || stepWithMeta.type === "") {
@@ -131,8 +122,9 @@ export function useStepStager(activeLevelOrder, setFormErrors) {
 
     setWrittenMaterialFile(null);
     setSituationalImage(null);
-    setCurrentFlowStep({ builderStepType: "learning_material", type: "text", title: "", textContent: "", videoUrl: "", assessmentType: "quiz", quizQuestions: [], situationalScenario: "", is_final_assessment: false });
+    setCurrentFlowStep({ builderStepType: "learning_material", type: "text", title: "", textContent: "", videoUrl: "", assessmentType: "quiz", quizQuestions: [], situationalScenarios: [], is_final_assessment: false });
     setCurrentSituationalData({
+      scenarioDescription: "",
       interactionType: "priority_action",
       options: [{ text: "", rationale: "" }, { text: "", rationale: "" }, { text: "", rationale: "" }, { text: "", rationale: "" }],
       correctAnswerIndex: 0,
@@ -171,8 +163,63 @@ export function useStepStager(activeLevelOrder, setFormErrors) {
     const newErrors = { ...formErrors };
     delete newErrors.questionText;
     delete newErrors.options;
-    setFormErrors(newErrors);
-    toast.success("Assessment question successfully saved.");
+    setFormErrors({});
+    toast.success("Quiz question added to step!");
+  };
+
+  const addSituationalScenarioToStep = (formErrors) => {
+    const errors = {};
+    if (!currentSituationalData.scenarioDescription.trim()) {
+      errors.scenarioDescription = "A scenario description is required to proceed.";
+    }
+    
+    if (currentSituationalData.interactionType === "priority_action") {
+      if (currentSituationalData.options.some(opt => !opt.text.trim())) errors.options = "All four options must be populated.";
+      if (currentSituationalData.options.some(opt => !opt.rationale.trim())) errors.options = "Rationale is required for all options.";
+    } else if (currentSituationalData.interactionType === "hazard_identification") {
+      if (currentSituationalData.hazards.length === 0) errors.hazards = "At least one hazard must be defined.";
+      if (currentSituationalData.hazards.some(h => !h.text.trim() || !h.rationale.trim())) errors.hazards = "All hazards must have text and rationale.";
+    } else if (currentSituationalData.interactionType === "action_sequence") {
+      if (currentSituationalData.sequenceSteps.length < 2) errors.sequence = "At least two sequence steps must be defined.";
+      if (currentSituationalData.sequenceSteps.some(s => !s.text.trim())) errors.sequence = "All sequence steps must have text.";
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
+      toast.error("Please fill all required scenario fields before adding.");
+      return;
+    }
+
+    const newScenario = {
+      id: crypto.randomUUID(),
+      ...currentSituationalData
+    };
+
+    setCurrentFlowStep({
+      ...currentFlowStep,
+      situationalScenarios: [...currentFlowStep.situationalScenarios, newScenario]
+    });
+
+    // Reset situational editor form
+    setCurrentSituationalData({
+      scenarioDescription: "",
+      interactionType: "priority_action",
+      options: [
+        { text: "", rationale: "" },
+        { text: "", rationale: "" },
+        { text: "", rationale: "" },
+        { text: "", rationale: "" }
+      ],
+      correctAnswerIndex: 0,
+      hazards: [
+        { text: "", rationale: "", isRequired: true }
+      ],
+      sequenceSteps: [
+        { text: "", order: 1 }
+      ]
+    });
+    setFormErrors({});
+    toast.success("Situational scenario added to step!");
   };
 
   return {
@@ -182,6 +229,6 @@ export function useStepStager(activeLevelOrder, setFormErrors) {
     currentSituationalData, setCurrentSituationalData,
     situationalImage, setSituationalImage,
     writtenMaterialFile, setWrittenMaterialFile,
-    addStepToFlow, addQuizQuestionToStep, handleEditStep
+    addStepToFlow, addQuizQuestionToStep, addSituationalScenarioToStep, handleEditStep
   };
 }

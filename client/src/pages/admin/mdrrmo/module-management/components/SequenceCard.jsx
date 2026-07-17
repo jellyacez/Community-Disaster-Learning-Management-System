@@ -79,6 +79,11 @@ export default function SequenceCard({
                   Final Assessment
                 </span>
               )}
+              {flow.type === 'situational' && flow.situationalScenarios && (
+                <span className="px-2.5 py-0.5 rounded-md text-[11px] font-bold uppercase tracking-widest bg-amber-100 text-amber-700 flex items-center gap-1">
+                  {flow.situationalScenarios.length} Scenario{flow.situationalScenarios.length !== 1 ? 's' : ''}
+                </span>
+              )}
             </div>
             <div className="flex items-center gap-2 text-xs font-medium text-gray-500">
               <HugeiconsIcon icon={Task01Icon} className="w-4 h-4" />

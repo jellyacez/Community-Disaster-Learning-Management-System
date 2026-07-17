@@ -26,6 +26,7 @@ export default function StepBuilder({
   setSituationalImage, 
   addStepToFlow,
   activeLevelOrder = 1,
+  stagedFlows = [],
   formErrors = {},
   setFormErrors,
   editingStepId
@@ -134,6 +135,7 @@ export default function StepBuilder({
                addQuizQuestionToStep={addQuizQuestionToStep}
                situationalImage={situationalImage}
                setSituationalImage={setSituationalImage}
+               hasFinalAssessmentInLevel={stagedFlows.some(f => f.levelOrder === activeLevelOrder && f.is_final_assessment && f.id !== currentFlowStep.id)}
                formErrors={formErrors}
                setFormErrors={setFormErrors}
              />

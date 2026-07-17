@@ -75,23 +75,16 @@ exports.enrollInModule = async (req, res) => {
       return res.status(404).json({ success: false, message: "Target training module not found." });
     }
     // 2. Ensure your linking table exists in your database with matching columns
-    const result = await pool.query(
-      `INSERT INTO public.user_modules (user_id, mod_id, progress, status)
-       VALUES ($1, $2, 0, 'Not Started')
-       ON CONFLICT (user_id, mod_id) DO NOTHING
-       RETURNING *`,
-      [user_id, mod_id]
-    );
-
-    // If DO NOTHING triggered (already enrolled), fetch the existing record
-    let enrollmentData = result.rows[0];
-    if (!enrollmentData) {
-      const existing = await pool.query(
-        `SELECT * FROM public.user_modules WHERE user_id = $1 AND mod_id = $2`,
-        [user_id, mod_id]
-      );
-      enrollmentData = existing.rows[0];
+    const isEnrolled = await ModuleService.checkUserEnrollment(user_id, parsedModId);
+    if (!isEnrolled) {
+      await ModuleService.enrollUserInModule(user_id, parsedModId);
     }
+    
+    const existing = await pool.query(
+      `SELECT * FROM public.module_activity WHERE user_id = $1 AND mod_id = $2`,
+      [user_id, parsedModId]
+    );
+    const enrollmentData = existing.rows[0];
 
     return res.status(200).json({ 
       success: true, 

@@ -208,7 +208,9 @@ export default function ModuleBuilderWizard({
                     situationalImage={situationalImage}
                     setSituationalImage={setSituationalImage}
                     addStepToFlow={addStepToFlow}
+                    addSituationalScenarioToStep={actions.addSituationalScenarioToStep}
                     activeLevelOrder={activeLevelOrder}
+                    stagedFlows={stagedFlows}
                     formErrors={formErrors}
                     setFormErrors={setFormErrors}
                     editingStepId={editingStepId}

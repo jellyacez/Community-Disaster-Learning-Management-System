@@ -2,6 +2,9 @@ import toast from "react-hot-toast";
 import PriorityActionEditor from "./PriorityActionEditor";
 import HazardIdentificationEditor from "./HazardIdentificationEditor";
 import ActionSequenceEditor from "./ActionSequenceEditor";
+import ConfirmationModal from "../../../../../components/ui/modals/ConfirmationModal";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { Edit01Icon, Delete01Icon, PlusSignIcon } from "@hugeicons/core-free-icons";
 
 export default function SituationalEditor({
   currentFlowStep,
@@ -10,32 +13,90 @@ export default function SituationalEditor({
   setCurrentSituationalData,
   situationalImage,
   setSituationalImage,
+  addSituationalScenarioToStep,
   formErrors,
   setFormErrors
 }) {
-  const handleStepChange = (field, value) => {
-    setCurrentFlowStep({ ...currentFlowStep, [field]: value });
-    if (formErrors[field] || formErrors.stepScenario) {
+  const [scenarioToDelete, setScenarioToDelete] = useState(null);
+
+  const handleScenarioChange = (field, value) => {
+    setCurrentSituationalData({ ...currentSituationalData, [field]: value });
+    if (formErrors[field] || formErrors.scenarioDescription) {
       setFormErrors(prev => {
         const newErrors = { ...prev };
-        if (field === 'situationalScenario') delete newErrors.stepScenario;
+        delete newErrors.scenarioDescription;
         delete newErrors[field];
         return newErrors;
       });
     }
   };
 
+  const handleEditScenario = (id) => {
+    const scenario = currentFlowStep.situationalScenarios.find(s => s.id === id);
+    if (scenario) {
+      setCurrentSituationalData(scenario);
+      const filtered = currentFlowStep.situationalScenarios.filter(s => s.id !== id);
+      setCurrentFlowStep({ ...currentFlowStep, situationalScenarios: filtered });
+    }
+  };
+
+  const confirmDeleteScenario = () => {
+    if (scenarioToDelete) {
+      const filtered = currentFlowStep.situationalScenarios.filter(s => s.id !== scenarioToDelete);
+      setCurrentFlowStep({ ...currentFlowStep, situationalScenarios: filtered });
+      setScenarioToDelete(null);
+    }
+  };
+
   return (
     <div className="space-y-4 pt-2">
-      <div>
+      {formErrors.stepScenario && (
+        <p className="text-red-500 text-xs font-bold bg-red-50 p-2 rounded border border-red-100">
+          {formErrors.stepScenario}
+        </p>
+      )}
+
+      {currentFlowStep.situationalScenarios?.length > 0 && (
+        <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 space-y-2 mb-4">
+          <h4 className="text-xs font-bold text-slate-600 uppercase tracking-wide px-1">
+            Added Scenarios ({currentFlowStep.situationalScenarios.length})
+          </h4>
+          <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+            {currentFlowStep.situationalScenarios.map((scenario, idx) => (
+              <div key={scenario.id} className="flex items-center justify-between bg-white p-3 rounded-lg border border-slate-200 shadow-sm group">
+                <div className="flex-1 min-w-0 mr-3">
+                  <p className="text-xs font-bold text-slate-800 truncate">Scenario {idx + 1}: {scenario.interactionType.replace('_', ' ')}</p>
+                  <p className="text-xs text-slate-500 truncate">{scenario.scenarioDescription}</p>
+                </div>
+                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <button
+                    onClick={() => handleEditScenario(scenario.id)}
+                    className="p-1.5 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded transition-colors"
+                  >
+                    <HugeiconsIcon icon={Edit01Icon} className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => setScenarioToDelete(scenario.id)}
+                    className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+                  >
+                    <HugeiconsIcon icon={Delete01Icon} className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <div className="pt-2 border-t border-slate-100">
         <textarea 
           rows="4" 
           placeholder="Describe crisis scenario circumstances..." 
-          value={currentFlowStep.situationalScenario} 
-          onChange={(e) => handleStepChange('situationalScenario', e.target.value)} 
-          className={`w-full p-3 bg-white border ${formErrors.stepScenario ? 'border-red-500 ring-2 ring-red-500/10' : 'border-slate-300'} rounded-xl text-sm font-medium text-slate-800 focus:outline-none focus:border-red-500 focus:ring-4 focus:ring-red-500/10 shadow-sm resize-none transition-all`} 
+          value={currentSituationalData.scenarioDescription} 
+          onChange={(e) => handleScenarioChange('scenarioDescription', e.target.value)} 
+          className={`w-full p-3 bg-white border ${formErrors.scenarioDescription ? 'border-red-500 ring-2 ring-red-500/10' : 'border-slate-300'} rounded-xl text-sm font-medium text-slate-800 focus:outline-none focus:border-red-500 focus:ring-4 focus:ring-red-500/10 shadow-sm resize-none transition-all`} 
         />
-        {formErrors.stepScenario && <p className="text-red-500 text-xs mt-1.5 font-bold">{formErrors.stepScenario}</p>}
+        {formErrors.scenarioDescription && <p className="text-red-500 text-xs mt-1.5 font-bold">{formErrors.scenarioDescription}</p>}
       </div>
       <div className="flex flex-col gap-2.5 bg-white p-4 border border-slate-200 rounded-xl shadow-sm">
         <span className="text-xs font-bold text-slate-600 uppercase tracking-wide">Upload Attachment Reference Picture</span>
@@ -96,6 +157,27 @@ export default function SituationalEditor({
           formErrors={formErrors}
         />
       )}
+
+      <div className="pt-4 border-t border-slate-100 flex justify-end">
+        <button
+          type="button"
+          onClick={() => addSituationalScenarioToStep(formErrors)}
+          className="flex items-center gap-2 px-4 py-2 bg-slate-800 rounded-lg text-xs font-bold text-white shadow-sm hover:bg-slate-900 transition-colors uppercase tracking-wide"
+        >
+          <HugeiconsIcon icon={PlusSignIcon} className="w-4 h-4" />
+          Add Scenario to Step
+        </button>
+      </div>
+
+      <ConfirmationModal
+        isOpen={!!scenarioToDelete}
+        onClose={() => setScenarioToDelete(null)}
+        onConfirm={confirmDeleteScenario}
+        title="Delete Scenario"
+        description="Are you sure you want to remove this scenario from the step?"
+        confirmText="Delete"
+        type="danger"
+      />
     </div>
   );
 }
