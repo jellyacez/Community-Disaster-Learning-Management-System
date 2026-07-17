@@ -37,7 +37,8 @@ exports.getSystemStats = async (req, res) => {
     // Postgres COUNT returns strings, parse them to match previous behavior exactly if needed
     // (though JS clients generally handle strings, it's safer to ensure they're numbers)
     for (let key in data) {
-      data[key] = parseInt(data[key], 10) || 0;
+      const parsed = parseInt(data[key], 10);
+      data[key] = Number.isNaN(parsed) ? 0 : parsed;
     }
 
     res.json({ success: true, data });
@@ -114,6 +115,21 @@ exports.getHealthStatus = async (req, res) => {
       cpuLoadPercent = Math.min(100, parseFloat(((load / cpus) * 100).toFixed(1)));
     }
 
+    // Try to get real disk usage using Node.js fs.statfsSync (available in modern Node versions)
+    let diskUsagePercent = null;
+    try {
+      if (fs.statfsSync) {
+        const stats = fs.statfsSync(__dirname);
+        const total = stats.blocks * stats.bsize;
+        const free = stats.bfree * stats.bsize;
+        if (total > 0) {
+          diskUsagePercent = Math.round(((total - free) / total) * 100);
+        }
+      }
+    } catch (e) {
+      // Silently fall back to null if stats are unavailable or lacking permissions
+    }
+
     res.json({
       success: true,
       data: {
@@ -124,7 +140,7 @@ exports.getHealthStatus = async (req, res) => {
         memory_total_mb: Math.round(totalMemBytes / 1024 / 1024),
         memory_usage_percent: Math.round((usedMemBytes / totalMemBytes) * 100),
         cpu_load_percent: cpuLoadPercent,
-        disk_usage_percent: 42 // Mocked for Capstone UI
+        disk_usage_percent: diskUsagePercent
       }
     });
   } catch {

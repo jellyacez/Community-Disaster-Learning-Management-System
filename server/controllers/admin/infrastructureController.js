@@ -142,18 +142,30 @@ exports.downloadServerLogs = async (req, res) => {
       fs.mkdirSync(tmpDir, { recursive: true });
     }
 
-    // Mock realistic server logs for the Capstone defense
-    const mockLogContent = `[${new Date().toISOString()}] [ERROR] UnhandledPromiseRejectionWarning: Connection timeout at query: SELECT * FROM public.activity_log
-    at Client._handleError (C:\\server\\node_modules\\pg\\lib\\client.js:100:15)
-    at Connection.emit (node:events:513:28)
-[${new Date().toISOString()}] [WARN] [ActivityLogger Error] Failed to log action 'Triggered full database backup download' for user 1: database is offline
-[${new Date().toISOString()}] [INFO] Starting PM2 cluster mode with 4 instances...
-[${new Date().toISOString()}] [ERROR] Failed to run Brute Force check: error: column "user_role" does not exist
-    at C:\\server\\node_modules\\pg-pool\\index.js:45:11
-    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
-`;
+    // Determine if we have real logs to serve
+    const potentialLogPaths = [
+      path.join(__dirname, "..", "..", "logs", "error.log"),
+      path.join(__dirname, "..", "..", "error.log")
+    ];
+    
+    let realLogFound = false;
+    for (const logPath of potentialLogPaths) {
+      if (fs.existsSync(logPath)) {
+        fs.copyFileSync(logPath, logsPath);
+        realLogFound = true;
+        break;
+      }
+    }
 
-    fs.writeFileSync(logsPath, mockLogContent);
+    if (!realLogFound) {
+      // If no real logs exist (e.g., local dev environment without a file logger),
+      // provide a clean fallback message instead of a fake error trace.
+      const fallbackLogContent = `[${new Date().toISOString()}] [INFO] System Log Export
+No active server error log file was found at export time.
+The system is currently operating normally or file-based logging is disabled in this environment.
+`;
+      fs.writeFileSync(logsPath, fallbackLogContent);
+    }
 
     res.download(logsPath, filename, (err) => {
       if (err) console.error("Error sending log file:", err);
