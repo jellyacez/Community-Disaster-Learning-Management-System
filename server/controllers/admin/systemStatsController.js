@@ -54,8 +54,8 @@ exports.getTrafficAnalytics = async (req, res) => {
     const query = `
       WITH hours AS (
         SELECT generate_series(
-          date_trunc('hour', NOW() - INTERVAL '23 hours'),
-          date_trunc('hour', NOW()),
+          date_trunc('hour', NOW() AT TIME ZONE 'UTC' - INTERVAL '23 hours'),
+          date_trunc('hour', NOW() AT TIME ZONE 'UTC'),
           '1 hour'::interval
         ) AS hour
       )

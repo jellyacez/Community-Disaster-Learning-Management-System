@@ -33,8 +33,11 @@ exports.createModule = async (req, res) => {
 // @desc    Fetches all modules that the current user is not enrolled in
 // @access  Private
 exports.getAvailableModules = async (req, res) => {
+  const user_id = req.user?.id;
+  if (!user_id) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
   try {
-    const user_id = req.user?.id;
     const availableModules = await ModuleService.getAvailableModules(user_id);
     res.json(availableModules);
   } catch (error) {
@@ -57,10 +60,16 @@ exports.enrollInModule = async (req, res) => {
   }
 
   try {
+    // Validate mod_id is a proper integer before querying (prevents DB type errors
+    // and stack trace leaks from malformed params like "../etc" or "abc")
+    const parsedModId = parseInt(mod_id, 10);
+    if (isNaN(parsedModId) || parsedModId <= 0) {
+      return res.status(400).json({ success: false, message: "Invalid module ID format." });
+    }
 
     const moduleCheck = await pool.query(
       "SELECT mod_id FROM public.module_data WHERE mod_id = $1", 
-      [mod_id]
+      [parsedModId]
     );
     if (moduleCheck.rowCount === 0) {
       return res.status(404).json({ success: false, message: "Target training module not found." });

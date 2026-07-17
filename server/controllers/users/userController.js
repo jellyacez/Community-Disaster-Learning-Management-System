@@ -89,8 +89,8 @@ exports.exportUserData = async (req, res) => {
   try {
     const exportData = await UserService.exportUserData(req.user.id);
     const date = new Date().toISOString().split('T')[0];
-    res.setHeader('Content-disposition', `attachment; filename=BacolorLMS_Data_Export_${date}.json`);
-    res.setHeader('Content-type', 'application/json');
+    res.setHeader('Content-Disposition', `attachment; filename=BacolorLMS_Data_Export_${date}.json`);
+    res.setHeader('Content-Type', 'application/json');
     res.send(JSON.stringify(exportData, null, 2));
   } catch (err) {
     if (err.message === "NOT_FOUND") {

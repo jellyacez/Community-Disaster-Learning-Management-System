@@ -1,13 +1,31 @@
 const pool = require("../../config/db");
 
+// Allowlist of safe keys that are permitted to be returned to the frontend.
+// Sensitive or future internal keys stored in system_settings are excluded by default.
+const SAFE_SETTINGS_KEYS = new Set([
+  'maintenance_mode',
+  'system_name',
+  'system_logo',
+  'broadcast_active',
+  'broadcast_message',
+  'broadcast_severity',
+  'support_email',
+  'org_footer_text',
+]);
+
 // @desc    Get system settings (including maintenance mode)
 // @access  Private (system_admin only)
 exports.getSystemSettings = async (req, res) => {
   try {
     const result = await pool.query(`SELECT key, value FROM public.system_settings`);
     const settings = {};
-    result.rows.forEach(row => { settings[row.key] = row.value; });
-    // Runtime data deliberately omitted (Data Minimization)
+    result.rows.forEach(row => {
+      // Only expose keys on the safe allowlist — prevents accidental leak of
+      // any sensitive keys added to system_settings in the future.
+      if (SAFE_SETTINGS_KEYS.has(row.key)) {
+        settings[row.key] = row.value;
+      }
+    });
     res.json({ success: true, data: settings });
   } catch (err) {
     console.error(err);
