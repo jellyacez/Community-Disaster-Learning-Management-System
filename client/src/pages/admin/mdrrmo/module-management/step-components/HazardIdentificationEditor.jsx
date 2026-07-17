@@ -1,25 +1,38 @@
+import { useEffect } from "react";
+
 export default function HazardIdentificationEditor({
   currentSituationalData,
   setCurrentSituationalData,
   formErrors,
   addSituationalScenarioToStep
 }) {
+  useEffect(() => {
+    if (!currentSituationalData.hazards || currentSituationalData.hazards.length === 0) {
+      setCurrentSituationalData((prev) => ({
+        ...prev,
+        hazards: [{ text: "", rationale: "", isRequired: true }]
+      }));
+    }
+  }, []);
+
+  const hazardsList = currentSituationalData.hazards?.length > 0 ? currentSituationalData.hazards : [{ text: "", rationale: "", isRequired: true }];
+
   const addHazard = () => {
     setCurrentSituationalData({
       ...currentSituationalData,
-      hazards: [...currentSituationalData.hazards, { text: "", rationale: "", isRequired: true }]
+      hazards: [...hazardsList, { text: "", rationale: "", isRequired: true }]
     });
   };
 
   const removeHazard = (index) => {
-    if (currentSituationalData.hazards.length <= 1) return;
-    const updated = [...currentSituationalData.hazards];
+    if (hazardsList.length <= 1) return;
+    const updated = [...hazardsList];
     updated.splice(index, 1);
     setCurrentSituationalData({ ...currentSituationalData, hazards: updated });
   };
 
   const handleHazardChange = (index, field, value) => {
-    const updated = [...currentSituationalData.hazards];
+    const updated = [...hazardsList];
     updated[index] = { ...updated[index], [field]: value };
     setCurrentSituationalData({ ...currentSituationalData, hazards: updated });
   };
@@ -38,7 +51,7 @@ export default function HazardIdentificationEditor({
       </div>
 
       <div className="space-y-3">
-        {currentSituationalData.hazards.map((hazard, hIdx) => (
+        {hazardsList.map((hazard, hIdx) => (
           <div key={hIdx} className={`p-4 rounded-xl text-sm transition-all border ${
             formErrors.situationalHazards ? "border-red-500 bg-white" : "border-slate-200 bg-slate-50 hover:bg-slate-100/50"
           }`}>

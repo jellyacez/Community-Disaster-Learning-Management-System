@@ -1,22 +1,41 @@
+import { useEffect } from "react";
+
 export default function ActionSequenceEditor({
   currentSituationalData,
   setCurrentSituationalData,
   formErrors,
   addSituationalScenarioToStep
 }) {
+  useEffect(() => {
+    if (!currentSituationalData.sequenceSteps || currentSituationalData.sequenceSteps.length < 2) {
+      setCurrentSituationalData((prev) => ({
+        ...prev,
+        sequenceSteps: [
+          { text: "", order: 1 },
+          { text: "", order: 2 }
+        ]
+      }));
+    }
+  }, []);
+
+  const stepsList = currentSituationalData.sequenceSteps?.length >= 2 ? currentSituationalData.sequenceSteps : [
+    { text: "", order: 1 },
+    { text: "", order: 2 }
+  ];
+
   const addStep = () => {
     setCurrentSituationalData({
       ...currentSituationalData,
       sequenceSteps: [
-        ...currentSituationalData.sequenceSteps, 
-        { text: "", order: currentSituationalData.sequenceSteps.length + 1 }
+        ...stepsList, 
+        { text: "", order: stepsList.length + 1 }
       ]
     });
   };
 
   const removeStep = (index) => {
-    if (currentSituationalData.sequenceSteps.length <= 2) return;
-    const updated = [...currentSituationalData.sequenceSteps];
+    if (stepsList.length <= 2) return;
+    const updated = [...stepsList];
     updated.splice(index, 1);
     
     // Re-normalize the 'order' values
@@ -30,7 +49,7 @@ export default function ActionSequenceEditor({
   };
 
   const handleStepChange = (index, field, value) => {
-    const updated = [...currentSituationalData.sequenceSteps];
+    const updated = [...stepsList];
     updated[index] = { ...updated[index], [field]: value };
     setCurrentSituationalData({ ...currentSituationalData, sequenceSteps: updated });
   };
@@ -49,7 +68,7 @@ export default function ActionSequenceEditor({
       </div>
 
       <div className="space-y-3">
-        {currentSituationalData.sequenceSteps.map((step, sIdx) => (
+        {stepsList.map((step, sIdx) => (
           <div key={sIdx} className={`flex items-start gap-3 p-3 rounded-xl transition-all border ${
             formErrors.situationalSequence ? "border-red-500 bg-white" : "border-slate-200 bg-slate-50 hover:bg-slate-100/50"
           }`}>
@@ -59,7 +78,7 @@ export default function ActionSequenceEditor({
                 onChange={(e) => handleStepChange(sIdx, 'order', parseInt(e.target.value))}
                 className="p-1.5 border border-slate-300 rounded-lg bg-white text-xs font-bold text-slate-700 outline-none cursor-pointer focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20"
               >
-                {Array.from({ length: currentSituationalData.sequenceSteps.length }).map((_, i) => (
+                {Array.from({ length: stepsList.length }).map((_, i) => (
                   <option key={i} value={i + 1}>Step {i + 1}</option>
                 ))}
               </select>
@@ -77,7 +96,7 @@ export default function ActionSequenceEditor({
               type="button"
               onClick={() => removeStep(sIdx)}
               className="pt-2.5 text-xs font-bold text-red-500 hover:text-red-700 disabled:opacity-30"
-              disabled={currentSituationalData.sequenceSteps.length <= 2}
+              disabled={stepsList.length <= 2}
             >
               Remove
             </button>

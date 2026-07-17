@@ -174,14 +174,14 @@ export function useStepStager(activeLevelOrder, setFormErrors) {
     }
     
     if (currentSituationalData.interactionType === "priority_action") {
-      if (currentSituationalData.options.some(opt => !opt.text.trim())) errors.options = "All four options must be populated.";
-      if (currentSituationalData.options.some(opt => !opt.rationale.trim())) errors.options = "Rationale is required for all options.";
+      if (currentSituationalData.options.some(opt => !opt.text.trim())) errors.situationalOptions = "All four options must be populated.";
+      if (currentSituationalData.options.some(opt => !opt.rationale.trim())) errors.situationalOptions = "Rationale is required for all options.";
     } else if (currentSituationalData.interactionType === "hazard_identification") {
-      if (currentSituationalData.hazards.length === 0) errors.hazards = "At least one hazard must be defined.";
-      if (currentSituationalData.hazards.some(h => !h.text.trim() || !h.rationale.trim())) errors.hazards = "All hazards must have text and rationale.";
+      if (currentSituationalData.hazards.length === 0) errors.situationalHazards = "At least one hazard must be defined.";
+      if (currentSituationalData.hazards.some(h => !h.text.trim() || !h.rationale.trim())) errors.situationalHazards = "All hazards must have text and rationale.";
     } else if (currentSituationalData.interactionType === "action_sequence") {
-      if (currentSituationalData.sequenceSteps.length < 2) errors.sequence = "At least two sequence steps must be defined.";
-      if (currentSituationalData.sequenceSteps.some(s => !s.text.trim())) errors.sequence = "All sequence steps must have text.";
+      if (currentSituationalData.sequenceSteps.length < 2) errors.situationalSequence = "At least two sequence steps must be defined.";
+      if (currentSituationalData.sequenceSteps.some(s => !s.text.trim())) errors.situationalSequence = "All sequence steps must have text.";
     }
 
     if (Object.keys(errors).length > 0) {

@@ -140,6 +140,7 @@ export default function SituationalEditor({
           currentSituationalData={currentSituationalData}
           setCurrentSituationalData={setCurrentSituationalData}
           formErrors={formErrors}
+          addSituationalScenarioToStep={addSituationalScenarioToStep}
         />
       )}
 
