@@ -42,6 +42,9 @@ exports.completeModuleStep = async (req, res) => {
     if (error.message === "ANSWERS_REQUIRED") {
       return res.status(400).json({ success: false, message: "Answers are required for this assessment step." });
     }
+    if (error.message === "MODULE_HAS_NO_STEPS") {
+      return res.status(400).json({ success: false, message: "This module has no steps and cannot be completed. Please contact your administrator." });
+    }
     console.error("Error completing module step:", error);
     return res.status(500).json({ success: false, message: "Internal server error" });
   }

@@ -98,29 +98,29 @@ CREATE TABLE "user" (
 
       // If successful, download the file to the client
       res.download(backupPath, filename, (err) => {
-        if (err) {
-          console.error("Error sending backup file:", err);
-          if (!res.headersSent) {
-            res
-              .status(500)
-              .json({
-                success: false,
-                error: "Failed to download backup file",
-              });
-          }
-        }
-
-        // Clean up: delete the temporary backup file after download
+        // Clean up: delete the temporary backup file after download attempt
         fs.unlink(backupPath, (unlinkErr) => {
           if (unlinkErr)
             console.error("Error cleaning up backup file:", unlinkErr);
         });
-      });
 
-      require("../../utils/logger").logActivity(
-        req.user.id,
-        "Triggered full database backup download",
-      );
+        if (err) {
+          console.error("Error sending backup file:", err);
+          if (!res.headersSent) {
+            res.status(500).json({
+              success: false,
+              error: "Failed to download backup file",
+            });
+          }
+          return;
+        }
+
+        // Only log after the download actually succeeded
+        require("../../utils/logger").logActivity(
+          req.user.id,
+          "Triggered full database backup download",
+        );
+      });
     });
   } catch (err) {
     console.error("Backup route error:", err);

@@ -114,7 +114,7 @@ exports.exportActivityLog = async (req, res) => {
       const escapeCsv = (str) => {
         if (str === null || str === undefined) return '""';
         const s = String(str);
-        if (s.includes(',') || s.includes('"') || s.includes('\\n')) {
+        if (s.includes(',') || s.includes('"') || s.includes('\n') || s.includes('\r')) {
           return `"${s.replace(/"/g, '""')}"`;
         }
         return s;
@@ -129,7 +129,7 @@ exports.exportActivityLog = async (req, res) => {
       ].join(',');
     });
 
-    const csvContent = [headers.join(','), ...rows].join('\\n');
+    const csvContent = [headers.join(','), ...rows].join('\n');
 
     require('../../utils/logger').logActivity(req.user.id, 'Exported system audit logs');
 

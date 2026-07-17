@@ -108,6 +108,19 @@ exports.provisionAdmin = async (req, res) => {
     });
   } catch (err) {
     console.error("Provisioning error:", err);
-    res.status(500).json({ error: "Failed to provision admin account." });
+
+    // Parse known error shapes from Better Auth's createUser API
+    const authMessage = err?.message || err?.body?.message || '';
+    const authStatus = err?.status || err?.statusCode;
+
+    if (authStatus === 422 || authMessage.toLowerCase().includes('already exist') || authMessage.toLowerCase().includes('duplicate')) {
+      return res.status(409).json({ error: "A user with this email already exists in the auth system." });
+    }
+
+    if (authStatus === 400 || authMessage.toLowerCase().includes('invalid')) {
+      return res.status(400).json({ error: `Invalid provisioning data: ${authMessage}` });
+    }
+
+    res.status(500).json({ error: "Failed to provision admin account. Check server logs for details." });
   }
 };

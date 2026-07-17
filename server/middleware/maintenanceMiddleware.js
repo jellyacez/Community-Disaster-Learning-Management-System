@@ -6,8 +6,9 @@ let lastCacheTime = 0;
 const CACHE_TTL = 15000; // 15 seconds
 
 const maintenanceMiddleware = async (req, res, next) => {
-  // Allow admin and auth routes through always
-  if (req.path.startsWith('/api/admin') || req.path.startsWith('/api/auth')) {
+  // Use req.originalUrl (not req.path) so the bypass works correctly regardless
+  // of where this middleware is mounted in the router hierarchy.
+  if (req.originalUrl.startsWith('/api/admin') || req.originalUrl.startsWith('/api/auth')) {
     return next();
   }
   

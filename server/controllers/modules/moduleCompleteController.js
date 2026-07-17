@@ -22,19 +22,25 @@ const completeQuery =  async (client, userId,stepId,moduleId) =>{
         
         const total = parseInt(total_steps, 10);
         const completed = parseInt(completed_steps, 10);
+
+        // Guard: a module with no steps can never be completed — surface this
+        // to the caller rather than silently leaving the user stuck in "In Progress"
+        if (total === 0) {
+            throw new Error("MODULE_HAS_NO_STEPS");
+        }
         
         let moduleStatus = "In Progress";
         let isFullyCompleted = false;
 
-        if (total > 0 && completed === total) {
+        if (completed === total) {
             moduleStatus = "Completed";
             isFullyCompleted = true;
 
             await client.query(
                 `UPDATE public.module_activity 
-                 SET modstatus = $1, completed_at = $2
-                 WHERE user_id = $3 AND mod_id = $4`,
-                [moduleStatus, new Date().toISOString(), userId, moduleId]
+                 SET modstatus = $1, completed_at = NOW()
+                 WHERE user_id = $2 AND mod_id = $3`,
+                [moduleStatus, userId, moduleId]
             );
         }
         return{
