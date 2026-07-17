@@ -42,13 +42,18 @@ export default function UserModuleCatalog() {
   const [searchQuery, setSearchQuery] = useState("");
 
   const filteredModules = useMemo(() => {
-    if (!searchQuery) return modules;
-    const lowerQuery = searchQuery.toLowerCase();
-    return modules.filter(
-      (mod) =>
-        mod.title?.toLowerCase().includes(lowerQuery) ||
-        mod.category?.toLowerCase().includes(lowerQuery)
-    );
+    // Exclude modules the user is already enrolled in (whether in-progress or done)
+    let result = modules.filter(mod => !mod.is_enrolled);
+
+    if (searchQuery) {
+      const lowerQuery = searchQuery.toLowerCase();
+      result = result.filter(
+        (mod) =>
+          mod.title?.toLowerCase().includes(lowerQuery) ||
+          mod.category?.toLowerCase().includes(lowerQuery)
+      );
+    }
+    return result;
   }, [modules, searchQuery]);
 
   useDocumentTitle("Module Catalog | Bacolor LMS");
