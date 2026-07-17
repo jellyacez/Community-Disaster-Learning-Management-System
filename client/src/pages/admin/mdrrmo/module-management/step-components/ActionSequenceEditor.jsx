@@ -1,7 +1,8 @@
 export default function ActionSequenceEditor({
   currentSituationalData,
   setCurrentSituationalData,
-  formErrors
+  formErrors,
+  addSituationalScenarioToStep
 }) {
   const addStep = () => {
     setCurrentSituationalData({
@@ -83,6 +84,15 @@ export default function ActionSequenceEditor({
           </div>
         ))}
         {formErrors.situationalSequence && <p className="text-red-500 text-xs mt-1.5 font-bold">{formErrors.situationalSequence}</p>}
+      </div>
+      <div className="flex justify-end pt-3 border-t border-slate-100">
+        <button
+          type="button"
+          onClick={() => addSituationalScenarioToStep(formErrors)}
+          className="px-4 py-2 bg-slate-800 rounded-lg text-xs font-bold text-white shadow-sm hover:bg-slate-900 transition-colors uppercase tracking-wide"
+        >
+          + Add Scenario to Step
+        </button>
       </div>
     </div>
   );

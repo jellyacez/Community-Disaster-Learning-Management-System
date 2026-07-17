@@ -59,6 +59,7 @@ export default function ModuleHeaderForm({ moduleForm, setModuleForm, formErrors
           <img 
             src={moduleForm.image_url} 
             alt="Module Thumbnail" 
+            referrerPolicy="no-referrer"
             className="absolute inset-0 w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity" 
           />
         ) : (

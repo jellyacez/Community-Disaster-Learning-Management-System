@@ -9,6 +9,7 @@ export default function AssessmentEditor({
   currentSituationalData,
   setCurrentSituationalData,
   addQuizQuestionToStep,
+  addSituationalScenarioToStep,
   situationalImage,
   setSituationalImage,
   formErrors = {},
@@ -62,6 +63,7 @@ export default function AssessmentEditor({
           setCurrentFlowStep={setCurrentFlowStep}
           currentSituationalData={currentSituationalData}
           setCurrentSituationalData={setCurrentSituationalData}
+          addSituationalScenarioToStep={addSituationalScenarioToStep}
           situationalImage={situationalImage}
           setSituationalImage={setSituationalImage}
           formErrors={formErrors}

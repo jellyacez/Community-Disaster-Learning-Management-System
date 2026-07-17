@@ -18,6 +18,7 @@ const ModuleCard = memo(function ModuleCard({
   module,
   enrolled = false,
   isPreview = false,
+  isAdminView = false,
   onPreviewClick,
   onEnrollSuccess,
 }) {
@@ -73,6 +74,7 @@ const ModuleCard = memo(function ModuleCard({
             loading="lazy"
             src={resolveImageUrl(module.image_url)}
             alt={module.title}
+            referrerPolicy="no-referrer"
             className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 absolute inset-0"
           />
         ) : (
@@ -140,6 +142,13 @@ const ModuleCard = memo(function ModuleCard({
               }`}
             >
               {isCompleted ? "Review Module" : "Continue"}
+            </button>
+          ) : isAdminView ? (
+            <button
+              onClick={(e) => { e.stopPropagation(); toast("Module management/editing is under development.", { icon: "🚧" }) }}
+              className="flex-1 rounded-xl px-2 sm:px-4 py-2.5 text-xs sm:text-sm font-bold text-white transition flex items-center justify-center gap-1 sm:gap-2 truncate bg-gray-900 hover:bg-black cursor-pointer"
+            >
+              Manage
             </button>
           ) : (
             <button

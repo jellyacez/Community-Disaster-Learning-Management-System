@@ -21,7 +21,8 @@ export default function StepBuilder({
   setCurrentQuizQuestion, 
   currentSituationalData,
   setCurrentSituationalData,
-  addQuizQuestionToStep, 
+  addQuizQuestionToStep,
+  addSituationalScenarioToStep,
   situationalImage, 
   setSituationalImage, 
   addStepToFlow,
@@ -133,6 +134,7 @@ export default function StepBuilder({
                currentSituationalData={currentSituationalData}
                setCurrentSituationalData={setCurrentSituationalData}
                addQuizQuestionToStep={addQuizQuestionToStep}
+               addSituationalScenarioToStep={addSituationalScenarioToStep}
                situationalImage={situationalImage}
                setSituationalImage={setSituationalImage}
                hasFinalAssessmentInLevel={stagedFlows.some(f => f.levelOrder === activeLevelOrder && f.is_final_assessment && f.id !== currentFlowStep.id)}

@@ -66,6 +66,7 @@ export default function ModuleDetailsPage() {
             <img 
               src={module.image_url} 
               alt={module.modname} 
+              referrerPolicy="no-referrer"
               className="w-full h-full object-cover"
             />
           ) : (

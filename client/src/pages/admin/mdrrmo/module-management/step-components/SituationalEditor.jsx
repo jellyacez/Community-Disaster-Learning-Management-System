@@ -1,3 +1,4 @@
+import { useState } from "react";
 import toast from "react-hot-toast";
 import PriorityActionEditor from "./PriorityActionEditor";
 import HazardIdentificationEditor from "./HazardIdentificationEditor";
@@ -147,6 +148,7 @@ export default function SituationalEditor({
           currentSituationalData={currentSituationalData}
           setCurrentSituationalData={setCurrentSituationalData}
           formErrors={formErrors}
+          addSituationalScenarioToStep={addSituationalScenarioToStep}
         />
       )}
 
@@ -155,19 +157,11 @@ export default function SituationalEditor({
           currentSituationalData={currentSituationalData}
           setCurrentSituationalData={setCurrentSituationalData}
           formErrors={formErrors}
+          addSituationalScenarioToStep={addSituationalScenarioToStep}
         />
       )}
 
-      <div className="pt-4 border-t border-slate-100 flex justify-end">
-        <button
-          type="button"
-          onClick={() => addSituationalScenarioToStep(formErrors)}
-          className="flex items-center gap-2 px-4 py-2 bg-slate-800 rounded-lg text-xs font-bold text-white shadow-sm hover:bg-slate-900 transition-colors uppercase tracking-wide"
-        >
-          <HugeiconsIcon icon={PlusSignIcon} className="w-4 h-4" />
-          Add Scenario to Step
-        </button>
-      </div>
+
 
       <ConfirmationModal
         isOpen={!!scenarioToDelete}

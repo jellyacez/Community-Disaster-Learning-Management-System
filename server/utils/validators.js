@@ -17,6 +17,35 @@ exports.validateModuleCreation = (payload) => {
     return { isValid: false, error: "Module description is required." };
   }
 
+  const validateUrl = (urlString, fieldName, requireImageExtension = false) => {
+    if (!urlString || typeof urlString !== 'string' || urlString.trim() === '') return null;
+    try {
+      const url = new URL(urlString);
+      if (url.protocol !== 'http:' && url.protocol !== 'https:') {
+        return `${fieldName} must be a valid HTTP or HTTPS link.`;
+      }
+      
+      if (requireImageExtension) {
+        const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg'];
+        const pathname = url.pathname.toLowerCase();
+        const hasValidExtension = imageExtensions.some(ext => pathname.endsWith(ext));
+        
+        if (!hasValidExtension) {
+           return `${fieldName} must point directly to an image file (.jpg, .png, .webp, etc).`;
+        }
+      }
+      return null;
+    } catch (e) {
+      return `${fieldName} format is invalid.`;
+    }
+  };
+
+  const imageError = validateUrl(payload.image_url, "Thumbnail URL", true);
+  if (imageError) return { isValid: false, error: imageError };
+
+  const videoError = validateUrl(payload.video_url, "Video URL", false);
+  if (videoError) return { isValid: false, error: videoError };
+
   if (!Array.isArray(payload.levels) || payload.levels.length === 0) {
     return { isValid: false, error: "At least one level is required." };
   }
