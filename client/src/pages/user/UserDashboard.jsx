@@ -47,16 +47,18 @@ export default function UserDashboard() {
 
   // Defensively handle React Query HMR cache poisoning 
   // (where the old { success, data } object might still be cached)
-  const displayData = dashboardData?.enrolledModules 
+  const rawData = dashboardData?.enrolledModules 
     ? dashboardData 
     : dashboardData?.data?.enrolledModules 
       ? dashboardData.data 
-      : {
-          totalModules: 0,
-          announcements: [],
-          enrolledModules: [],
-          completionRate: 0,
-        };
+      : {};
+
+  const displayData = {
+    totalModules: rawData.totalModules || 0,
+    announcements: rawData.announcements || [],
+    enrolledModules: rawData.enrolledModules || [],
+    completionRate: rawData.completionRate || 0,
+  };
 
   useEffect(() => {
     if (location.state?.showWelcome || location.state?.fromLogin) {
