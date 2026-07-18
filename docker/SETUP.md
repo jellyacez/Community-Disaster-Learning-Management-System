@@ -8,9 +8,9 @@ This guide walks you through running the **Community Disaster Learning Managemen
 
 Before you begin, install the following on your machine:
 
-| Tool | Download Link | Notes |
-|------|--------------|-------|
-| **Git** | https://git-scm.com/downloads | For cloning the repo |
+| Tool               | Download Link                                  | Notes                            |
+| ------------------ | ---------------------------------------------- | -------------------------------- |
+| **Git**            | https://git-scm.com/downloads                  | For cloning the repo             |
 | **Docker Desktop** | https://www.docker.com/products/docker-desktop | Includes Docker & Docker Compose |
 
 > **After installing Docker Desktop**, launch the app and wait until the whale icon in your taskbar shows **"Docker Desktop is running"** before proceeding.
@@ -22,7 +22,7 @@ Before you begin, install the following on your machine:
 Open a terminal (PowerShell, Command Prompt, or Git Bash) and run:
 
 ```bash
-git clone https://github.com/YOUR_ORG/Community-Disaster-Learning-Management-System.git
+git clone https://github.com/jellyacez/Community-Disaster-Learning-Management-System.git
 cd Community-Disaster-Learning-Management-System
 ```
 
@@ -43,15 +43,15 @@ copy docker\env\server.env.example server\.env
 
 Then open `server/.env` in any text editor and fill in **these required fields**:
 
-| Variable | What to put |
-|----------|------------|
-| `DB_PASSWORD` | A password you choose for your local database (e.g. `mypassword123`) |
-| `JWT_SECRET` | A long random string — generate one with the command below |
-| `BETTER_AUTH_SECRETS` | Ask the project lead to share the current secrets |
-| `EMAIL_USER` | A Gmail address to send emails from |
-| `EMAIL_APP_PASSWORD` | The Gmail App Password for that account |
-| `GOOGLE_CLIENT_ID` | Ask the project lead for the Google OAuth credentials |
-| `GOOGLE_CLIENT_SECRET` | Ask the project lead for the Google OAuth credentials |
+| Variable               | What to put                                                          |
+| ---------------------- | -------------------------------------------------------------------- |
+| `DB_PASSWORD`          | A password you choose for your local database (e.g. `mypassword123`) |
+| `JWT_SECRET`           | A long random string — generate one with the command below           |
+| `BETTER_AUTH_SECRETS`  | Ask the project lead to share the current secrets                    |
+| `EMAIL_USER`           | A Gmail address to send emails from                                  |
+| `EMAIL_APP_PASSWORD`   | The Gmail App Password for that account                              |
+| `GOOGLE_CLIENT_ID`     | Ask the project lead for the Google OAuth credentials                |
+| `GOOGLE_CLIENT_SECRET` | Ask the project lead for the Google OAuth credentials                |
 
 **Generating a JWT_SECRET** (run this in your terminal):
 
@@ -83,6 +83,7 @@ docker compose up --build
 ```
 
 This will automatically:
+
 1. Pull the PostgreSQL 16 image
 2. Build the Express server image
 3. Build the React/Vite client image and serve it via nginx
@@ -102,11 +103,11 @@ lms_client  | ... nginx started ...
 
 ## 🌐 Step 4 — Open the App
 
-| Service | URL |
-|---------|-----|
-| **Frontend (App)** | http://localhost |
-| **Backend API** | http://localhost:5000 |
-| **Database** | `localhost:5432` (connect via pgAdmin or any DB client) |
+| Service            | URL                                                     |
+| ------------------ | ------------------------------------------------------- |
+| **Frontend (App)** | http://localhost                                        |
+| **Backend API**    | http://localhost:5000                                   |
+| **Database**       | `localhost:5432` (connect via pgAdmin or any DB client) |
 
 Open your browser and go to **http://localhost** to use the app.
 
@@ -155,6 +156,7 @@ docker exec lms_server node scripts/migrate.js
 ## 🐛 Troubleshooting
 
 ### ❌ "Port already in use"
+
 Another app is occupying port 80, 5000, or 5432.
 
 - **Port 5432**: You may have PostgreSQL installed locally. Open **Services** (`services.msc`) and stop any `postgresql-*` service.
@@ -162,12 +164,15 @@ Another app is occupying port 80, 5000, or 5432.
 - **Port 5000**: Kill any running Node.js process using that port.
 
 ### ❌ "Missing critical environment variables" error
+
 The server refuses to start if `server/.env` is missing required keys. Double-check you completed **Step 2a** and that the file is saved correctly.
 
 ### ❌ "Cannot connect to the Docker daemon"
+
 Docker Desktop is not running. Launch it from your Start Menu and wait for it to fully start, then retry.
 
 ### ❌ Changes not reflected after `git pull`
+
 Always pass `--build` when restarting after pulling updates:
 
 ```bash
@@ -196,4 +201,4 @@ docker-compose.yml          ← Starts all 3 services together
 
 ---
 
-*Last updated: July 2026*
+_Last updated: July 2026_

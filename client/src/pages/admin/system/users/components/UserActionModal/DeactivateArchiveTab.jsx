@@ -5,15 +5,21 @@ export default function DeactivateArchiveTab({ user, onSave }) {
 
   const handleBanSubmit = (e) => {
     e.preventDefault();
-    if (!user.banned) {
-      onSave({ type: "ban", userId: user.id, data: { reason: banReason } });
-    } else {
-      onSave({ type: "unban", userId: user.id });
+    const actionName = user.banned ? "reactivate" : "deactivate";
+    if (window.confirm(`Are you sure you want to ${actionName} this account?`)) {
+      if (!user.banned) {
+        onSave({ type: "ban", userId: user.id, data: { reason: banReason } });
+      } else {
+        onSave({ type: "unban", userId: user.id });
+      }
     }
   };
 
   const handleArchive = async () => {
-    await onSave({ type: "archive", userId: user.id, data: { archived: !user.archived } });
+    const actionName = user.archived ? "restore" : "archive";
+    if (window.confirm(`Are you sure you want to ${actionName} this account?`)) {
+      await onSave({ type: "archive", userId: user.id, data: { archived: !user.archived } });
+    }
   };
 
   return (

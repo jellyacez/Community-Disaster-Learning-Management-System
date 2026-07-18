@@ -33,8 +33,7 @@ export default function RegisterPersonnelForm({ userForm, setUserForm, handleUse
             onChange={(e) => setUserForm({ ...userForm, role: e.target.value })} 
             className="w-full p-2.5 bg-gray-50 border border-gray-200 text-gray-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all"
           >
-            <option value="MDRRMO Officer">MDRRMO Communications Officer</option>
-            <option value="System Admin">System Administrator</option>
+            <option value="barangay_admin">Barangay Admin</option>
           </select>
         </div>
         <button 

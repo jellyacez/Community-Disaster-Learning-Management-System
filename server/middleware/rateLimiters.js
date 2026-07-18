@@ -47,8 +47,20 @@ const adminDataLimiter = rateLimit({
   message: { error: "Too many requests to admin data endpoints, please try again later." },
 });
 
+const adminWriteLimiter = rateLimit({
+  store: new PostgresStore(dbConfig, "admin_write_"),
+  windowMs: 15 * 60 * 1000,
+  max: 20,
+  keyGenerator: (req) => {
+    if (req.user?.id) return String(req.user.id);
+    return `anon_${ipKeyGenerator(req.ip)}`;
+  },
+  message: { error: "Too many destructive requests, please try again later." },
+});
+
 module.exports = {
   authRateLimiter,
   globalLimiter,
   adminDataLimiter,
+  adminWriteLimiter,
 };

@@ -14,12 +14,15 @@ const ROLE_PERMISSIONS = {
     'view_users'
   ],
   mdrrmo_admin: [
+    'provision_admins',
     'view_system_stats',
     'view_activity_logs',
     'manage_modules',
     'view_users'
   ],
   barangay_admin: [
+    'ban_users',
+    'archive_users',
     'view_system_stats',
     'view_users'
   ]

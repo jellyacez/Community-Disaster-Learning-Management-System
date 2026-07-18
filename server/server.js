@@ -98,11 +98,9 @@ const userDashboardRoutes = require("./routes/users/userDashboardRoutes");
 const moduleRoutes = require("./routes/modules/moduleRoutes");
 const publicRoutes = require("./routes/publicRoutes");
 
-const levelCreationRoute = require("./routes/modules/levelCreationRoute");
-const levelQuestionAndChoicesRoutes = require("./routes/modules/levelQuestionAndChoicesRoutes");
+
 const levelResultRoutes = require("./routes/modules/levelResultRoutes");
-const moduleCompleteRoutes = require("./routes/modules/moduleCompleteRoutes");
-const moduleStepsRoutes = require("./routes/modules/moduleStepsRoutes");
+
 const mediaUploadRoutes = require("./routes/modules/mediaUploadRoutes");
 const apiSecurityMiddleware = require("./middleware/apiSecurityMiddleware");
 
@@ -116,11 +114,9 @@ app.use("/api/modules", apiSecurityMiddleware, moduleRoutes);
 // Static routes must go before dynamic param routes (/:id) to prevent shadowing
 app.use("/api/modules", apiSecurityMiddleware, mediaUploadRoutes);
 
-app.use("/api/modules", apiSecurityMiddleware, levelCreationRoute);
-app.use("/api/modules", apiSecurityMiddleware, levelQuestionAndChoicesRoutes);
+
 app.use("/api/modules", apiSecurityMiddleware, levelResultRoutes);
-app.use("/api/modules", apiSecurityMiddleware, moduleCompleteRoutes);
-app.use("/api/modules", apiSecurityMiddleware, moduleStepsRoutes);
+
 
 // 404 Catch-All Route
 app.use((req, res) => {
@@ -130,7 +126,12 @@ app.use((req, res) => {
 // Global Error Handler
 // eslint-disable-next-line no-unused-vars
 app.use((err, req, res, next) => {
-  console.error(err.stack);
+  require("./utils/logger").logError('global_unhandled_error', {
+    message: err.message,
+    stack: err.stack,
+    route: req.originalUrl,
+    method: req.method
+  });
   res.status(err.status || 500).json({
     error: "Internal Server Error",
     message: process.env.NODE_ENV === "development" ? err.message : "Something went wrong"

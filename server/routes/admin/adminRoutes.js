@@ -16,7 +16,7 @@ const ipBlocklistController = require("../../controllers/admin/ipBlocklistContro
 const infrastructureController = require("../../controllers/admin/infrastructureController");
 const alertController = require("../../controllers/admin/alertController");
 const moduleController = require("../../controllers/modules/moduleController");
-const { adminDataLimiter } = require("../../middleware/rateLimiters");
+const { adminDataLimiter, adminWriteLimiter } = require("../../middleware/rateLimiters");
 
 // Existing routes
 
@@ -38,7 +38,7 @@ router.get("/alerts/active", requireRole(ADMIN_ROLES), alertController.getActive
 // @route   POST /api/admin/users/provision
 // @desc    Provision a new Admin Account
 // @access  Private (system_admin only)
-router.post("/users/provision", requireRole(ADMIN_ROLES), requirePermission('provision_admins'), userManagementController.provisionAdmin);
+router.post("/users/provision", requireRole(ADMIN_ROLES), adminWriteLimiter, requirePermission('provision_admins'), userManagementController.provisionAdmin);
 
 // @route   PUT /api/admin/users/:id
 // @desc    Update a user
@@ -69,27 +69,27 @@ router.get("/activity-log/export", requireRole(ADMIN_ROLES), requirePermission('
 // @route   PATCH /api/admin/users/:id/role
 // @desc    Update a user's role
 // @access  Private (system_admin only)
-router.patch("/users/:id/role", requireRole(ADMIN_ROLES), requirePermission('update_user_roles'), userManagementController.updateUserRole);
+router.patch("/users/:id/role", requireRole(ADMIN_ROLES), adminWriteLimiter, requirePermission('update_user_roles'), userManagementController.updateUserRole);
 
 // @route   PATCH /api/admin/users/:id/ban
 // @desc    Ban a user
 // @access  Private (system_admin only)
-router.patch("/users/:id/ban", requireRole(ADMIN_ROLES), requirePermission('ban_users'), userManagementController.banUser);
+router.patch("/users/:id/ban", requireRole(ADMIN_ROLES), adminWriteLimiter, requirePermission('ban_users'), userManagementController.banUser);
 
 // @route   PATCH /api/admin/users/:id/unban
 // @desc    Unban a user
 // @access  Private (system_admin only)
-router.patch("/users/:id/unban", requireRole(ADMIN_ROLES), requirePermission('ban_users'), userManagementController.unbanUser);
+router.patch("/users/:id/unban", requireRole(ADMIN_ROLES), adminWriteLimiter, requirePermission('ban_users'), userManagementController.unbanUser);
 
 // @route   PATCH /api/admin/users/:id/archive
 // @desc    Archive or unarchive a user
 // @access  Private (system_admin only)
-router.patch("/users/:id/archive", requireRole(ADMIN_ROLES), requirePermission('archive_users'), userManagementController.archiveUser);
+router.patch("/users/:id/archive", requireRole(ADMIN_ROLES), adminWriteLimiter, requirePermission('archive_users'), userManagementController.archiveUser);
 
 // @route   PATCH /api/admin/users/bulk-archive
 // @desc    Bulk archive users
 // @access  Private (system_admin only)
-router.patch("/users/bulk-archive", requireRole(ADMIN_ROLES), requirePermission('archive_users'), userManagementController.bulkArchiveUsers);
+router.patch("/users/bulk-archive", requireRole(ADMIN_ROLES), adminWriteLimiter, requirePermission('archive_users'), userManagementController.bulkArchiveUsers);
 
 // @route   GET /api/admin/analytics/traffic
 // @desc    Get 24h traffic analytics

@@ -35,20 +35,8 @@ export default function UserDirectoryTable({ users, isLoading, meta, setPage, ha
                     </span>
                   </td>
                   <td className="py-3 text-right space-x-2">
-                    <button 
-                      type="button" 
-                      onClick={() => handleAccountAction(u.id || u._id, "archived system account record")} 
-                      className="px-3 py-1.5 text-xs border border-slate-200 text-gray-700 hover:bg-slate-50 font-semibold rounded-lg transition-colors shadow-sm"
-                    >
-                      Archive
-                    </button>
-                    <button 
-                      type="button" 
-                      onClick={() => handleAccountAction(u.id || u._id, "banned and terminated authorization credentials")} 
-                      className="px-3 py-1.5 text-xs border border-red-200 text-red-600 hover:bg-red-600 hover:text-white font-semibold rounded-lg transition-colors shadow-sm"
-                    >
-                      Ban
-                    </button>
+                    {/* MDRRMO Admins do not have ban/archive permissions. Actions hidden. */}
+                    <span className="text-gray-400 text-xs italic">No actions available</span>
                   </td>
                 </tr>
               ))

@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import toast from "react-hot-toast";
 
 import ResidentRegistrySkeleton from "./ResidentRegistrySkeleton";
 import { BACOLOR_BARANGAYS } from "../../../../constants/locations";
@@ -11,6 +12,7 @@ const fetchResidents = async () => {
 };
 
 export default function ResidentRegistry() {
+  const queryClient = useQueryClient();
   const [selectedSector, setSelectedSector] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -18,6 +20,20 @@ export default function ResidentRegistry() {
     queryKey: ["adminResidents"],
     queryFn: fetchResidents,
     retry: 1
+  });
+
+  const mutation = useMutation({
+    mutationFn: async ({ action, userId }) => {
+      if (action === "archive") return apiClient.patch(`/admin/users/${userId}/archive`);
+      if (action === "ban") return apiClient.patch(`/admin/users/${userId}/ban`);
+    },
+    onSuccess: (_, variables) => {
+      toast.success(`Resident ${variables.action === "ban" ? "banned" : "archived"} successfully.`);
+      queryClient.invalidateQueries({ queryKey: ["adminResidents"] });
+    },
+    onError: (err) => {
+      toast.error(err?.response?.data?.error || "Action failed.");
+    }
   });
 
   const filteredResidents = useMemo(() => {
@@ -29,7 +45,13 @@ export default function ResidentRegistry() {
   }, [residents, selectedSector, searchQuery]);
 
   const handleVerifyCertificate = (residentName) => {
-    alert(`Auditing Certification Database Ledger:\nRecord for ${residentName} is verified, authentic, and matches server records.`);
+    toast.success(`Auditing Certification Database Ledger:\nRecord for ${residentName} is verified, authentic, and matches server records.`);
+  };
+
+  const handleAccountAction = async (userId, action) => {
+    if (window.confirm(`Are you sure you want to ${action} this resident? This action cannot be easily undone.`)) {
+      await mutation.mutateAsync({ action, userId });
+    }
   };
 
   if (isLoading) {
@@ -97,12 +119,14 @@ export default function ResidentRegistry() {
                   <td className="py-3 text-center font-bold text-gray-700">{r.modulesCompleted || 0} Modules Completed</td>
                   <td className="py-3 text-center">
                     <span className={`px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider ${
+                      r.status === "banned" ? "bg-red-50 text-red-600 border border-red-200" :
+                      r.status === "archived" ? "bg-slate-50 text-slate-600 border border-slate-200" :
                       r.status === "Ready" ? "bg-emerald-50 text-emerald-600 border border-emerald-200" : "bg-amber-50 text-amber-600 border border-amber-200"
                     }`}>
                       {r.status || "Pending"}
                     </span>
                   </td>
-                  <td className="py-3 text-right">
+                  <td className="py-3 text-right space-x-2">
                     {r.status === "Ready" && (
                       <button 
                         type="button" 
@@ -112,6 +136,20 @@ export default function ResidentRegistry() {
                         Audit QR Code
                       </button>
                     )}
+                    <button 
+                      type="button" 
+                      onClick={() => handleAccountAction(r.id || r._id, "archive")} 
+                      className="px-3 py-1.5 text-xs border border-slate-200 text-gray-700 hover:bg-slate-50 font-semibold rounded-lg transition-colors shadow-sm"
+                    >
+                      Archive
+                    </button>
+                    <button 
+                      type="button" 
+                      onClick={() => handleAccountAction(r.id || r._id, "ban")} 
+                      className="px-3 py-1.5 text-xs border border-red-200 text-red-600 hover:bg-red-600 hover:text-white font-semibold rounded-lg transition-colors shadow-sm"
+                    >
+                      Ban
+                    </button>
                   </td>
                 </tr>
               ))

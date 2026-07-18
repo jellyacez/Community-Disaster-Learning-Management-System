@@ -18,6 +18,7 @@ docker-compose.override.yml
 # Build outputs
 /client/dist/
 /server/build/
+/server/uploads/
 
 # Logs
 /logs
