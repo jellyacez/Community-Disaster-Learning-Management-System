@@ -57,23 +57,57 @@ class ModuleService {
              lastLearningStepId = step_id;
           }
 
-          // 4. Insert Quiz Questions and Choices
+          // 4. BATCH Insert Quiz Questions and Choices
           if (step.quizQuestions && step.quizQuestions.length > 0) {
+            // Prepare Question Arrays
+            const qTexts = [];
+            const qPoints = [];
+            const qImages = [];
+            
             for (const q of step.quizQuestions) {
-              const qRes = await client.query(
-                `INSERT INTO public.questions (mod_id, step_id, question_text, points, image_url)
-                 VALUES ($1, $2, $3, $4, $5) RETURNING question_id`,
-                [mod_id, step_id, q.questionText, 10, q.imageURL || '']
-              );
-              const question_id = qRes.rows[0].question_id;
+              qTexts.push(q.questionText);
+              qPoints.push(10);
+              qImages.push(q.imageURL || '');
+            }
 
+            // Insert all questions for this step
+            const qRes = await client.query(
+              `INSERT INTO public.questions (mod_id, step_id, question_text, points, image_url)
+               SELECT $1, $2, t, p, i
+               FROM unnest($3::text[], $4::int[], $5::text[]) WITH ORDINALITY AS u(t, p, i, ord)
+               ORDER BY ord
+               RETURNING question_id`,
+              [mod_id, step_id, qTexts, qPoints, qImages]
+            );
+
+            // Prepare Choice Arrays
+            const cQuestionIds = [];
+            const cTexts = [];
+            const cIsCorrects = [];
+            const cRationales = [];
+            const cSequenceOrders = [];
+
+            // Map the returned question_ids back to the choices
+            step.quizQuestions.forEach((q, idx) => {
+              const question_id = qRes.rows[idx].question_id;
               for (const opt of q.options) {
-                await client.query(
-                  `INSERT INTO public.choices (question_id, choice_text, is_correct, rationale, sequence_order)
-                   VALUES ($1, $2, $3, $4, $5)`,
-                  [question_id, opt.text, opt.isCorrect, cleanRichText(opt.rationale || ""), opt.sequence_order || null]
-                );
+                cQuestionIds.push(question_id);
+                cTexts.push(opt.text);
+                cIsCorrects.push(opt.isCorrect);
+                cRationales.push(cleanRichText(opt.rationale || ""));
+                cSequenceOrders.push(opt.sequence_order || null);
               }
+            });
+
+            if (cQuestionIds.length > 0) {
+              // Insert all choices for this step
+              await client.query(
+                `INSERT INTO public.choices (question_id, choice_text, is_correct, rationale, sequence_order)
+                 SELECT q_id, c_text, c_corr, c_rat, c_seq
+                 FROM unnest($1::int[], $2::text[], $3::boolean[], $4::text[], $5::int[]) WITH ORDINALITY AS u(q_id, c_text, c_corr, c_rat, c_seq, ord)
+                 ORDER BY ord`,
+                [cQuestionIds, cTexts, cIsCorrects, cRationales, cSequenceOrders]
+              );
             }
           }
         }
@@ -99,21 +133,16 @@ class ModuleService {
         md.level, 
         md.duration, 
         md.image_url,
-        EXISTS (
-          SELECT 1 FROM public.module_activity um 
-          WHERE um.mod_id = md.mod_id AND um.user_id = $1
-        ) AS is_enrolled,
-        (
-          SELECT um.progress FROM public.module_activity um 
-          WHERE um.mod_id = md.mod_id AND um.user_id = $1
-          LIMIT 1
-        ) AS progress,
-        (
-          SELECT um.modstatus FROM public.module_activity um 
-          WHERE um.mod_id = md.mod_id AND um.user_id = $1
-          LIMIT 1
-        ) AS status
+        (um.mod_id IS NOT NULL) AS is_enrolled,
+        um.progress,
+        um.modstatus AS status
        FROM public.module_data md
+       LEFT JOIN (
+         SELECT DISTINCT ON (mod_id) mod_id, progress, modstatus
+         FROM public.module_activity
+         WHERE user_id = $1
+         ORDER BY mod_id, modact_id DESC
+       ) um ON um.mod_id = md.mod_id
        ORDER BY md.mod_id DESC`,
       [user_id]
     );
@@ -442,9 +471,10 @@ class ModuleService {
     const total = parseInt(countResult.rows[0].count, 10);
 
     const result = await pool.query(
-      `SELECT mod_id, modname, modcat, description, level, duration, image_url, created_at, updated_at
+      `SELECT mod_id, modname, modcat, description, level, duration, image_url, moddateadd AS created_at, moddateremove AS updated_at,
+       (SELECT COUNT(*) FROM public.module_steps ms JOIN public.levels l ON ms.level_id = l.level_id WHERE l.mod_id = public.module_data.mod_id) AS step_count
        FROM public.module_data ${where}
-       ORDER BY created_at DESC LIMIT $${idx} OFFSET $${idx + 1}`,
+       ORDER BY moddateadd DESC LIMIT $${idx} OFFSET $${idx + 1}`,
       [...values, limit, offset]
     );
 
