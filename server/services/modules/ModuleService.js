@@ -144,6 +144,116 @@ class ModuleService {
     );
   }
 
+  async getEnrollmentData(user_id, mod_id) {
+    const existing = await pool.query(
+      `SELECT * FROM public.module_activity WHERE user_id = $1 AND mod_id = $2`,
+      [user_id, mod_id]
+    );
+    return existing.rowCount > 0 ? existing.rows[0] : null;
+  }
+
+  async createStep(levelId, stepOrder, stepTitle, stepContent, mediaUrl, stepType) {
+    const safeContent = cleanRichText(stepContent);
+    const result = await pool.query(
+        `INSERT INTO public.module_steps (level_id, step_order, step_title, step_content, media_url, step_type)
+             VALUES ($1, $2, $3, $4, $5, $6)
+             RETURNING *`,
+        [levelId, stepOrder, stepTitle, safeContent, mediaUrl, stepType]
+    );
+    return result.rows[0];
+  }
+
+  async createQuestion(moduleId, questionText, points, imageURL, stepId = null) {
+    const sanitizedQuestionText = cleanRichText(questionText);
+    const result = await pool.query(
+        `INSERT INTO public.questions (mod_id, question_text, points, image_url, step_id)
+         VALUES ($1, $2, $3, $4, $5)
+         RETURNING *`,
+        [moduleId, sanitizedQuestionText, points, imageURL, stepId]
+    );
+    return result.rows[0];
+  }
+
+  async createChoice(questionId, choiceText, isCorrect, rationale = null) {
+    const sanitizedChoiceText = cleanRichText(choiceText);
+    const sanitizedRationale = rationale ? cleanRichText(rationale) : null;
+    const result = await pool.query(
+        `INSERT INTO public.choices (question_id, choice_text, is_correct, rationale)
+         VALUES ($1, $2, $3, $4)
+         RETURNING *`,
+        [questionId, sanitizedChoiceText, isCorrect, sanitizedRationale]
+    );
+    return result.rows[0];
+  }
+
+  async calculateAndSaveResult(moduleId, userId, answers) {
+    if (!answers || !Array.isArray(answers)) {
+        throw new Error("Answers array is required");
+    }
+
+    const questionsResult = await pool.query(
+        `SELECT question_id, points FROM public.questions WHERE mod_id = $1`,
+        [moduleId]
+    );
+    const questions = questionsResult.rows;
+    const totalPoints = questions.reduce((sum, q) => sum + (q.points || 1), 0);
+
+    const correctChoicesResult = await pool.query(
+        `SELECT c.question_id, c.choice_id 
+         FROM public.choices c 
+         JOIN public.questions q ON c.question_id = q.question_id 
+         WHERE q.mod_id = $1 AND c.is_correct = true`,
+        [moduleId]
+    );
+
+    const correctMap = {};
+    correctChoicesResult.rows.forEach(row => {
+        correctMap[row.question_id] = row.choice_id;
+    });
+
+    const pointsMap = {};
+    questions.forEach(q => {
+        pointsMap[q.question_id] = q.points || 1;
+    });
+
+    let score = 0;
+    answers.forEach(ans => {
+        if (correctMap[ans.questionId] === ans.choiceId) {
+            score += pointsMap[ans.questionId] || 1;
+        }
+    });
+
+    const passed = totalPoints > 0 ? (score / totalPoints) >= 0.75 : true;
+
+    const result = await pool.query(
+        `INSERT INTO public.results (mod_id, user_id, score, total_points, passed)
+         VALUES ($1, $2, $3, $4, $5)
+         RETURNING *`,
+        [moduleId, userId, score, totalPoints, passed]
+    );
+
+    return result.rows[0];
+  }
+
+  async createLevel(moduleId, levelOrder, levelTitle, levelDescription) {
+    const safeDescription = cleanRichText(levelDescription);
+    const result = await pool.query(`
+        INSERT INTO public.levels (mod_id, level_order, level_title, level_description)
+        VALUES ($1, $2, $3, $4) 
+        ON CONFLICT (mod_id, level_order) 
+        DO UPDATE SET 
+            level_title = EXCLUDED.level_title,
+            level_description = EXCLUDED.level_description
+        RETURNING *
+    `, [moduleId, levelOrder, levelTitle, safeDescription]);
+
+    if (!result.rows || result.rows.length === 0) {
+        throw new Error("Database failed to return the created level row.");
+    }
+        
+    return result.rows[0];
+  }
+
   async getModuleViewerData(user_id, mod_id) {
     const moduleResult = await pool.query(
       "SELECT mod_id as id, modname as title, modcat as category FROM module_data WHERE mod_id = $1",

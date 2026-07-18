@@ -73,11 +73,8 @@ exports.enrollInModule = async (req, res) => {
         .json({ success: false, message: "Invalid module ID format." });
     }
 
-    const moduleCheck = await pool.query(
-      "SELECT mod_id FROM public.module_data WHERE mod_id = $1",
-      [parsedModId],
-    );
-    if (moduleCheck.rowCount === 0) {
+    const moduleCheck = await ModuleService.getModuleById(parsedModId);
+    if (!moduleCheck) {
       return res
         .status(404)
         .json({ success: false, message: "Target training module not found." });
@@ -91,11 +88,7 @@ exports.enrollInModule = async (req, res) => {
       await ModuleService.enrollUserInModule(user_id, parsedModId);
     }
 
-    const existing = await pool.query(
-      `SELECT * FROM public.module_activity WHERE user_id = $1 AND mod_id = $2`,
-      [user_id, parsedModId],
-    );
-    const enrollmentData = existing.rows[0];
+    const enrollmentData = await ModuleService.getEnrollmentData(user_id, parsedModId);
 
     return res.status(200).json({
       success: true,

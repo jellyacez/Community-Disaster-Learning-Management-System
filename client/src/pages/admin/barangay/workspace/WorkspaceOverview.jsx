@@ -7,7 +7,7 @@ import apiClient from "../../../../lib/apiClient";
 
 const fetchResidents = async () => {
   const res = await apiClient.get("/admin/residents");
-  return res.data;
+  return res.data.data || [];
 };
 
 export default function WorkspaceOverview() {

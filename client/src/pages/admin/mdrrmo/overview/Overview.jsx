@@ -7,8 +7,8 @@ import { SkeletonTableRow } from "../../../../components/ui/Skeleton.jsx";
 // Contract-first API fetchers
 const fetchModules = async () => {
   const res = await apiClient.get("admin/modules");
-
-  return res.data.map(mod =>({
+  const data = res.data.data || [];
+  return data.map(mod =>({
     id: mod.mod_id,
     title:mod.modname,
     status:mod.modcat,
@@ -17,15 +17,14 @@ const fetchModules = async () => {
 };
 
 const fetchUsers = async () => {
-  const res = await apiClient.get("admin/users");
-
-  return res.data;
+  const res = await apiClient.get("admin/residents");
+  return res.data.data || [];
 };
 
 const fetchLogs = async () => {
-  const res = await apiClient.get("admin/logs");
-
-  return res.data.map(log => ({
+  const res = await apiClient.get("admin/activity-log");
+  const data = res.data.data || [];
+  return data.map(log => ({
     id: log.act_id,
     source: `User ID: ${log.user_id}`,
     timestamp: new Date(log.act_date).toLocaleDateString(),
