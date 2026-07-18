@@ -58,7 +58,7 @@ router.get('/status', async (req, res) => {
     const maintenance = result.rows.length > 0 && result.rows[0].value === 'true';
     
     if (maintenance) {
-      return res.status(503).json({ success: false, maintenance: true });
+      return res.status(503).json({ success: false, error: 'MAINTENANCE_MODE', maintenance: true });
     }
     
     return res.status(200).json({ success: true, maintenance: false });

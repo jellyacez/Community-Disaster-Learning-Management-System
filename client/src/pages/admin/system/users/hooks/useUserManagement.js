@@ -24,7 +24,7 @@ export const useUserManagement = () => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setSelectedUserIds(new Set());
     setPage(1);
-  }, [page, limit, debouncedSearch, roleFilter, statusFilter, barangayFilter, setSelectedUserIds]);
+  }, [limit, debouncedSearch, roleFilter, statusFilter, barangayFilter, setSelectedUserIds]);
 
   // Stable callback reference prevents re-rendering all memoized rows
   const handleManageClick = useCallback((user, tabIndex = 0) => {

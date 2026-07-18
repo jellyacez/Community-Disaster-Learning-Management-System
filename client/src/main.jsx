@@ -1,7 +1,8 @@
 import { StrictMode } from "react";
 import ReactDOM from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClient, QueryClientProvider, QueryCache } from "@tanstack/react-query";
+import toast from "react-hot-toast";
 import App from "./App";
 import "../src/styles/index.css";
 
@@ -20,6 +21,15 @@ if ('serviceWorker' in navigator) {
 }
 
 const queryClient = new QueryClient({
+  queryCache: new QueryCache({
+    onError: (error) => {
+      // Global fallback error handler for all Queries.
+      // We don't want to double-toast if the interceptor already handles it (e.g. 401, 503)
+      if (error?.response?.status !== 401 && error?.response?.status !== 503) {
+        toast.error(`Error: ${error.message}`);
+      }
+    },
+  }),
   defaultOptions: {
     queries: {
       staleTime: 1000 * 60, // 60s default cache time

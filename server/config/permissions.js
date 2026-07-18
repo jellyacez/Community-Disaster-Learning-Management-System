@@ -27,6 +27,8 @@ const ROLE_PERMISSIONS = {
 
 const MFA_REQUIRED_ROLES = ["system_admin", "mdrrmo_admin", "barangay_admin"];
 const UNSCOPED_ACCESS_ROLES = ["system_admin", "mdrrmo_admin"];
+
+// Keep in sync with client/src/constants/roles.js ADMIN_ROLES
 const ADMIN_ROLES = ["system_admin", "mdrrmo_admin", "barangay_admin"];
 
 module.exports = { 

@@ -51,9 +51,9 @@ class UserService {
       values.push(`%${search}%`);
       idx++;
     }
-    if (role) {
+    if (roleFilter) {
       conditions.push(`role = $${idx}`);
-      values.push(role);
+      values.push(roleFilter);
       idx++;
     }
 

@@ -42,7 +42,7 @@ exports.getAllUsers = async (req, res) => {
     const status = req.query.status || "";
     const barangay = req.query.barangay || "";
 
-    const result = await UserService.getAllUsers(page, limit, search, role, status, barangay);
+    const result = await UserService.getAllUsers(page, limit, search, role, status, barangay, req.user);
     res.json(result);
   } catch (err) {
     console.error(err.message);

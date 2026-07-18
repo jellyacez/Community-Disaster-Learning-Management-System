@@ -10,6 +10,7 @@ import { authClient } from "../../lib/auth-client";
 import apiClient from "../../lib/apiClient";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Alert01Icon } from "@hugeicons/core-free-icons";
+import { ADMIN_ROLES } from "../../constants/roles";
 
 export default function ProtectedRoute({ allowedRoles = [] }) {
   const { data: session, isPending } = authClient.useSession();
@@ -17,8 +18,10 @@ export default function ProtectedRoute({ allowedRoles = [] }) {
   const location = useLocation();
   const [isMaintenanceChecked, setIsMaintenanceChecked] = useState(false);
 
+  const isAdmin = session?.user?.role && ADMIN_ROLES.includes(session.user.role);
+
   useEffect(() => {
-    if (session && !isPending && session.user?.role === "resident") {
+    if (session && !isPending && !isAdmin) {
       apiClient
         .get("/public/status")
         .then(() => setIsMaintenanceChecked(true))
@@ -31,14 +34,14 @@ export default function ProtectedRoute({ allowedRoles = [] }) {
           }
         });
     } else if (session && !isPending) {
-      // Bypass check for admin roles
+      // Bypass check for explicitly defined admin roles
       setTimeout(() => setIsMaintenanceChecked(true), 0);
     }
-  }, [session, isPending, setIsMaintenanceChecked]);
+  }, [session, isPending, setIsMaintenanceChecked, isAdmin]);
 
   if (
     isPending ||
-    (session && session.user?.role === "resident" && !isMaintenanceChecked)
+    (session && !isAdmin && !isMaintenanceChecked)
   ) {
     return (
       <div
@@ -91,10 +94,9 @@ export default function ProtectedRoute({ allowedRoles = [] }) {
       );
     }
 
-    const adminRoles = ["system_admin", "mdrrmo_admin", "barangay_admin"];
     const mfaBypass = import.meta.env.VITE_DISABLE_MFA === "true";
     if (
-      adminRoles.includes(userRole) &&
+      ADMIN_ROLES.includes(userRole) &&
       !session.user.twoFactorEnabled &&
       !mfaBypass
     ) {
