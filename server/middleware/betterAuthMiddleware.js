@@ -1,5 +1,6 @@
 const { auth } = require("../utils/auth");
 const pool = require("../config/db");
+const { logError } = require("../utils/logger");
 
 // @desc    Protects routes, verifies sessions, and enforces MFA for admin roles
 // @access  Private
@@ -13,7 +14,7 @@ const betterAuthMiddleware = async (req, res, next) => {
       return res.status(403).json({ error: "FORBIDDEN", message: "This account has been archived. Please contact an administrator." });
     }
     const adminRoles = ["system_admin", "mdrrmo_admin", "barangay_admin"];
-    const mfaBypass = process.env.DISABLE_MFA === "true";
+    const mfaBypass = process.env.DISABLE_MFA === "true" && ["development", "test", "staging"].includes(process.env.NODE_ENV);
     if (adminRoles.includes(session.user.role) && !session.user.twoFactorEnabled && !mfaBypass) {
       return res.status(403).json({ error: "MFA_REQUIRED", message: "Multi-Factor Authentication is mandatory for this role." });
     }
@@ -29,7 +30,13 @@ const betterAuthMiddleware = async (req, res, next) => {
     `, [session.user.id]).catch(err => console.error("Online tracking err:", err.message));
 
     next();
-  } catch {
+  } catch (error) {
+    logError('auth_middleware_failure', {
+      route: req.originalUrl,
+      method: req.method,
+      message: error.message,
+      stack: error.stack
+    });
     res.status(500).json({ error: "Server Error" });
   }
 };

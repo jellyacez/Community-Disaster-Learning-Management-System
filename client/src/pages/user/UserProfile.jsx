@@ -20,11 +20,19 @@ export default function UserProfile() {
     queryKey: ['userDashboard'],
     queryFn: async () => {
       const response = await apiClient.get('/user/dashboard');
+      // Return raw response.data to handle both old and new backend shapes gracefully
       return response.data;
     }
   });
 
-  const enrolledModules = useMemo(() => dashboardData?.enrolledModules || [], [dashboardData?.enrolledModules]);
+  const enrolledModules = useMemo(() => {
+    // Defensively handle React Query HMR cache poisoning
+    return dashboardData?.enrolledModules 
+      ? dashboardData.enrolledModules 
+      : dashboardData?.data?.enrolledModules 
+        ? dashboardData.data.enrolledModules 
+        : [];
+  }, [dashboardData]);
 
   // Derived state memoization to prevent expensive calculations on re-renders
   const { totalCompleted, totalHours, activeModules } = useMemo(() => {

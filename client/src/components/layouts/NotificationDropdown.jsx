@@ -31,11 +31,17 @@ export default function NotificationDropdown() {
     queryKey: ["userDashboard"],
     queryFn: async () => {
       const response = await apiClient.get("/user/dashboard");
+      // Return raw response.data to handle both old and new backend shapes gracefully
       return response.data;
     },
   });
 
-  const announcements = dashboardData?.announcements || [];
+  // Defensively handle React Query HMR cache poisoning
+  const announcements = dashboardData?.announcements 
+    ? dashboardData.announcements 
+    : dashboardData?.data?.announcements 
+      ? dashboardData.data.announcements 
+      : [];
   const recentAnnouncements = announcements.slice(0, 3);
   
   // A notification is "new" if the newest announcement ID doesn't match what is stored in DB settings

@@ -10,8 +10,20 @@ const activityLogController = require("../../controllers/admin/activityLogContro
 const ipBlocklistController = require("../../controllers/admin/ipBlocklistController");
 const infrastructureController = require("../../controllers/admin/infrastructureController");
 const alertController = require("../../controllers/admin/alertController");
+const moduleController = require("../../controllers/modules/moduleController");
+const { adminDataLimiter } = require("../../middleware/rateLimiters");
 
 // Existing routes
+
+// @route   GET /api/admin/residents
+// @desc    Get all residents with pagination and scoping
+// @access  Private (admin/system_admin only)
+router.get("/residents", adminMiddleware, adminDataLimiter, requirePermission('view_user_profiles'), userManagementController.getResidents);
+
+// @route   GET /api/admin/modules
+// @desc    Get all modules with pagination and scoping
+// @access  Private (admin/system_admin only)
+router.get("/modules", adminMiddleware, adminDataLimiter, requirePermission('view_modules'), moduleController.getAllModules);
 
 // @route   GET /api/admin/alerts/active
 // @desc    Get all active critical system alerts

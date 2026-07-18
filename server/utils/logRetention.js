@@ -14,7 +14,8 @@ const startLogRetentionCron = () => {
     try {
       // 1. delete old activity logs
       const dbRes = await pool.query(
-        `DELETE FROM activity_log WHERE act_date < NOW() - INTERVAL '${RETENTION_DAYS} days'`
+        `DELETE FROM activity_log WHERE act_date < NOW() - INTERVAL '1 day' * $1`,
+        [RETENTION_DAYS]
       );
       console.log(`[CRON] Database: Deleted ${dbRes.rowCount} old activity log rows.`);
     } catch (dbErr) {

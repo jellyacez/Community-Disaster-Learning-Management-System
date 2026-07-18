@@ -16,11 +16,35 @@ class UserService {
     ]);
   }
 
-  async getAllUsers(page = 1, limit = 10, search = "", role = "", status = "", barangay = "") {
+  async getAllUsers(page = 1, limit = 10, search = "", roleFilter = "", status = "", barangayFilter = "", adminContext = null) {
+    if (!adminContext || !adminContext.role) {
+      throw new Error("SECURITY_FAULT: Missing or invalid adminContext. Cannot safely return users.");
+    }
+    const allowedUnscopedRoles = ["system_admin", "mdrrmo_admin"];
+
+    limit = Math.min(Math.max(parseInt(limit) || 10, 1), 100);
     const offset = (page - 1) * limit;
     const conditions = [];
     const values = [];
     let idx = 1;
+
+    // Structural enforcement of barangay scoping
+    if (adminContext.role === 'barangay_admin') {
+      if (!adminContext.barangay) {
+        throw new Error("SECURITY_FAULT: barangay_admin context missing barangay identifier for scoping.");
+      }
+      conditions.push(`barangay = $${idx}`);
+      values.push(adminContext.barangay);
+      idx++;
+    } else if (allowedUnscopedRoles.includes(adminContext.role)) {
+      if (barangayFilter) {
+        conditions.push(`barangay = $${idx}`);
+        values.push(barangayFilter);
+        idx++;
+      }
+    } else {
+      throw new Error(`SECURITY_FAULT: Unauthorized role '${adminContext.role}' attempted to access user records.`);
+    }
 
     if (search) {
       conditions.push(`(name ILIKE $${idx} OR email ILIKE $${idx})`);
@@ -32,11 +56,7 @@ class UserService {
       values.push(role);
       idx++;
     }
-    if (barangay) {
-      conditions.push(`barangay = $${idx}`);
-      values.push(barangay);
-      idx++;
-    }
+
     if (status === "active") {
       conditions.push(`(archived = false OR archived IS NULL) AND (banned = false OR banned IS NULL)`);
     } else if (status === "banned") {

@@ -18,6 +18,7 @@ export default function UserEnrolledModules() {
     queryKey: ['userDashboard'],
     queryFn: async () => {
       const response = await apiClient.get('/user/dashboard');
+      // Return raw response.data to handle both old and new backend shapes gracefully
       return response.data;
     }
   });
@@ -27,7 +28,13 @@ export default function UserEnrolledModules() {
 
   // FIX: Normalize database columns into standard object properties expected by ModuleCard
   const enrolledModules = useMemo(() => {
-    const rawModules = dashboardData?.enrolledModules || [];
+    // Defensively handle React Query HMR cache poisoning
+    const rawModules = dashboardData?.enrolledModules 
+      ? dashboardData.enrolledModules 
+      : dashboardData?.data?.enrolledModules 
+        ? dashboardData.data.enrolledModules 
+        : [];
+
     return rawModules.map(mod => ({
       ...mod,
       id: mod.id || mod.mod_id,                        // Maps mod_id safely to id
@@ -39,7 +46,7 @@ export default function UserEnrolledModules() {
       progress: parseInt(mod.progress || 0),
       status: mod.status || "Not Started"
     }));
-  }, [dashboardData?.enrolledModules]);
+  }, [dashboardData]);
   
   const inProgressModules = useMemo(() => 
     enrolledModules.filter((m) => m.status !== "Completed" && m.progress < 100),

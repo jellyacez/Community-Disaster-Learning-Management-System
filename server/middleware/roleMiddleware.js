@@ -1,5 +1,6 @@
 const { auth } = require("../utils/auth");
 const pool = require("../config/db");
+const { logError } = require("../utils/logger");
 
 // @desc    Dynamic middleware to restrict routes based on an array of allowed roles
 // @access  Private
@@ -30,7 +31,13 @@ const requiredRole = (allowedRoles) => {
       `, [session.user.id]).catch(err => console.error("Role online tracking err:", err.message));
 
       next();
-    } catch {
+    } catch (error) {
+      logError('role_middleware_failure', {
+        route: req.originalUrl,
+        method: req.method,
+        message: error.message,
+        stack: error.stack
+      });
       return res.status(500).json({ error: "Internal Server Error" });
     }
   };

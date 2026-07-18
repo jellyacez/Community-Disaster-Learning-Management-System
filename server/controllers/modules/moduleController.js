@@ -1,7 +1,7 @@
 const { validateModuleCreation } = require("../../utils/validators");
 const ModuleService = require("../../services/modules/ModuleService");
-const logger = require('../../utils/logger');
-const pool = require("../../config/db")
+const logger = require("../../utils/logger");
+const pool = require("../../config/db");
 // @desc    Creates a new module and all its nested levels and steps in a transaction
 // @access  Private (admin only)
 exports.createModule = async (req, res) => {
@@ -18,13 +18,14 @@ exports.createModule = async (req, res) => {
     return res.status(201).json({
       success: true,
       message: "Module structure created successfully.",
-      data: { mod_id }
+      data: { mod_id },
     });
   } catch (error) {
     console.error("Transaction Error creating module structure:", error);
     return res.status(500).json({
       success: false,
-      message: "Transaction failed. Database changes rolled back. " + error.message,
+      message:
+        "Transaction failed. Database changes rolled back. " + error.message,
     });
   }
 };
@@ -51,12 +52,15 @@ exports.getAvailableModules = async (req, res) => {
 // @access  Private
 exports.enrollInModule = async (req, res) => {
   const { id: mod_id } = req.params;
-  
+
   // 1. Double check how your betterAuthMiddleware injects user parameters (e.g., req.user vs req.session.user)
-  const user_id = req.user?.id || req.user?.userId; 
+  const user_id = req.user?.id || req.user?.userId;
 
   if (!user_id) {
-    return res.status(401).json({ success: false, message: "Unauthorized: User identifier missing." });
+    return res.status(401).json({
+      success: false,
+      message: "Unauthorized: User identifier missing.",
+    });
   }
 
   try {
@@ -64,37 +68,50 @@ exports.enrollInModule = async (req, res) => {
     // and stack trace leaks from malformed params like "../etc" or "abc")
     const parsedModId = parseInt(mod_id, 10);
     if (isNaN(parsedModId) || parsedModId <= 0) {
-      return res.status(400).json({ success: false, message: "Invalid module ID format." });
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid module ID format." });
     }
 
     const moduleCheck = await pool.query(
-      "SELECT mod_id FROM public.module_data WHERE mod_id = $1", 
-      [parsedModId]
+      "SELECT mod_id FROM public.module_data WHERE mod_id = $1",
+      [parsedModId],
     );
     if (moduleCheck.rowCount === 0) {
-      return res.status(404).json({ success: false, message: "Target training module not found." });
+      return res
+        .status(404)
+        .json({ success: false, message: "Target training module not found." });
     }
     // 2. Ensure your linking table exists in your database with matching columns
-    const isEnrolled = await ModuleService.checkUserEnrollment(user_id, parsedModId);
+    const isEnrolled = await ModuleService.checkUserEnrollment(
+      user_id,
+      parsedModId,
+    );
     if (!isEnrolled) {
       await ModuleService.enrollUserInModule(user_id, parsedModId);
     }
-    
+
     const existing = await pool.query(
       `SELECT * FROM public.module_activity WHERE user_id = $1 AND mod_id = $2`,
-      [user_id, parsedModId]
+      [user_id, parsedModId],
     );
     const enrollmentData = existing.rows[0];
 
-    return res.status(200).json({ 
-      success: true, 
-      message: "Successfully enrolled in module.", 
-      data: enrollmentData
+    return res.status(200).json({
+      success: true,
+      message: "Successfully enrolled in module.",
+      data: enrollmentData,
     });
   } catch (error) {
     // This logs the exact database error inside your backend terminal!
-    console.error("Database error during enrollment execution pipeline:", error); 
-    return res.status(500).json({ success: false, message: "Internal server error completing enrollment." });
+    console.error(
+      "Database error during enrollment execution pipeline:",
+      error,
+    );
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error completing enrollment.",
+    });
   }
 };
 // --- End of enrollInModule ---
@@ -105,24 +122,41 @@ exports.getModuleViewerData = async (req, res) => {
   const { id: mod_id } = req.params;
   const user_id = req.user?.id;
 
+  const parsedModId = parseInt(mod_id, 10);
+  if (isNaN(parsedModId) || parsedModId <= 0) {
+    return res
+      .status(400)
+      .json({ success: false, message: "Invalid module ID format." });
+  }
+
   try {
-    const isEnrolled = await ModuleService.checkUserEnrollment(user_id, mod_id);
+    const isEnrolled = await ModuleService.checkUserEnrollment(
+      user_id,
+      parsedModId,
+    );
     if (!isEnrolled) {
-      return res.status(403).json({ success: false, message: "You are not enrolled in this module." });
+      return res.status(403).json({
+        success: false,
+        message: "You are not enrolled in this module.",
+      });
     }
 
-    const data = await ModuleService.getModuleViewerData(user_id, mod_id);
+    const data = await ModuleService.getModuleViewerData(user_id, parsedModId);
     if (!data) {
-      return res.status(404).json({ success: false, message: "Module not found." });
+      return res
+        .status(404)
+        .json({ success: false, message: "Module not found." });
     }
 
     return res.status(200).json({
       success: true,
-      data
+      data,
     });
   } catch (error) {
     console.error("Error fetching module viewer data:", error);
-    return res.status(500).json({ success: false, message: "Internal server error" });
+    return res
+      .status(500)
+      .json({ success: false, message: "Internal server error" });
   }
 };
 // --- End of getModuleViewerData ---
@@ -132,76 +166,102 @@ exports.getModuleViewerData = async (req, res) => {
 exports.getStepAssessment = async (req, res) => {
   const { stepId } = req.params;
 
+  const parsedStepId = parseInt(stepId, 10);
+  if (isNaN(parsedStepId) || parsedStepId <= 0) {
+    return res
+      .status(400)
+      .json({ success: false, message: "Invalid step ID format." });
+  }
+
   try {
-    const data = await ModuleService.getStepAssessment(stepId);
+    const data = await ModuleService.getStepAssessment(parsedStepId);
     if (!data) {
-      return res.status(404).json({ success: false, message: "Step not found." });
+      return res
+        .status(404)
+        .json({ success: false, message: "Step not found." });
     }
 
     return res.status(200).json({
       success: true,
-      data
+      data,
     });
   } catch (error) {
     console.error("Error fetching step assessment data:", error);
-    return res.status(500).json({ success: false, message: "Internal server error" });
+    return res
+      .status(500)
+      .json({ success: false, message: "Internal server error" });
   }
 };
-
 
 // @desc    Gets detailed module, level, and step properties (hierarchical view)
 // @access  Private
 exports.getModuleSyllabusDetails = async (req, res) => {
   const { id: mod_id } = req.params;
 
+  const parsedModId = parseInt(mod_id, 10);
+  if (isNaN(parsedModId) || parsedModId <= 0) {
+    return res
+      .status(400)
+      .json({ success: false, message: "Invalid module ID format." });
+  }
+
   try {
-    // 1. Fetch parent module details
-    const moduleRes = await pool.query(
-      `SELECT mod_id, modname, modcat, description, level, duration, image_url 
-       FROM public.module_data 
-       WHERE mod_id = $1`,
-      [mod_id]
-    );
+    const details = await ModuleService.getModuleSyllabusDetails(parsedModId);
 
-    if (moduleRes.rowCount === 0) {
-      return res.status(404).json({ success: false, message: "Module not found." });
+    if (!details) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Module not found." });
     }
-
-    // 2. Fetch levels assigned to this module, including threshold settings
-    const levelsRes = await pool.query(
-      `SELECT level_id, level_order, level_title, level_description, passing_threshold, is_locked_by_default
-       FROM public.levels 
-       WHERE mod_id = $1 
-       ORDER BY level_order ASC`,
-      [mod_id]
-    );
-
-    // 3. Fetch steps and relate them to levels
-    const stepsRes = await pool.query(
-      `SELECT ms.step_id, ms.level_id, ms.step_order, ms.step_title, ms.step_type, ms.is_final_assessment, ms.loop_back_step_id
-       FROM public.module_steps ms
-       JOIN public.levels l ON ms.level_id = l.level_id
-       WHERE l.mod_id = $1
-       ORDER BY ms.step_order ASC`,
-      [mod_id]
-    );
-
-    // Group steps neatly into their corresponding level objects
-    const structuredLevels = levelsRes.rows.map(lvl => {
-      return {
-        ...lvl,
-        steps: stepsRes.rows.filter(step => step.level_id === lvl.level_id)
-      };
-    });
 
     return res.status(200).json({
       success: true,
-      module: moduleRes.rows[0],
-      levels: structuredLevels
+      module: details.module,
+      levels: details.levels,
     });
-
   } catch (error) {
     console.error("Error fetching complete syllabus details:", error);
-    return res.status(500).json({ success: false, message: "Internal server error assembling details view." });
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error assembling details view.",
+    });
+  }
+};
+// --- End of getModuleSyllabusDetails ---
+
+// @desc    Get all modules with pagination and optional filters
+// @access  Private (admin/system_admin only)
+exports.getAllModules = async (req, res) => {
+  try {
+    const {
+      page = 1,
+      limit = 10,
+      search = "",
+      category = "",
+      level = "",
+    } = req.query;
+
+    // Pass the full user context to the service for structural scoping enforcement
+    const adminContext = req.user;
+
+    const modulesData = await ModuleService.getAllModules(
+      page,
+      limit,
+      search,
+      category,
+      level,
+      adminContext,
+    );
+
+    res.status(200).json({
+      success: true,
+      data: modulesData.data,
+      meta: modulesData.meta,
+    });
+  } catch (error) {
+    console.error("Error fetching modules:", error);
+    res
+      .status(500)
+      .json({ success: false, error: { message: "Failed to fetch modules" } });
   }
 };

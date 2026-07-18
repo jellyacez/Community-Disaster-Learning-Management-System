@@ -32,7 +32,20 @@ const globalLimiter = rateLimit({
   message: { error: "Too many requests from this IP, please try again later." },
 });
 
+const adminDataLimiter = rateLimit({
+  store: new PostgresStore(dbConfig, "admin_data_"),
+  windowMs: 15 * 60 * 1000,
+  max: 60,
+  keyGenerator: (req) => {
+    // Key by the authenticated user's ID to prevent token abuse,
+    // rather than IP, to protect shared NATs and track compromised accounts.
+    return req.user?.id ? String(req.user.id) : req.ip;
+  },
+  message: { error: "Too many requests to admin data endpoints, please try again later." },
+});
+
 module.exports = {
   authRateLimiter,
   globalLimiter,
+  adminDataLimiter,
 };

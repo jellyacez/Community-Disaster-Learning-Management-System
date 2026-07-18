@@ -36,6 +36,7 @@ export default function UserDashboard() {
     queryKey: ["userDashboard"],
     queryFn: async () => {
       const response = await apiClient.get('/user/dashboard');
+      // Return raw response.data to handle both old and new backend shapes gracefully
       return response.data;
     },
     onError: (err) => {
@@ -44,12 +45,18 @@ export default function UserDashboard() {
     },
   });
 
-  const displayData = dashboardData || {
-    totalModules: 0,
-    announcements: [],
-    enrolledModules: [],
-    completionRate: 0,
-  };
+  // Defensively handle React Query HMR cache poisoning 
+  // (where the old { success, data } object might still be cached)
+  const displayData = dashboardData?.enrolledModules 
+    ? dashboardData 
+    : dashboardData?.data?.enrolledModules 
+      ? dashboardData.data 
+      : {
+          totalModules: 0,
+          announcements: [],
+          enrolledModules: [],
+          completionRate: 0,
+        };
 
   useEffect(() => {
     if (location.state?.showWelcome || location.state?.fromLogin) {

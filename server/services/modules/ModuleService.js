@@ -239,6 +239,115 @@ class ModuleService {
 
     return questions;
   }
+  async getModuleSyllabusDetails(mod_id) {
+    // 1. Fetch parent module details
+    const moduleRes = await pool.query(
+      `SELECT mod_id, modname, modcat, description, level, duration, image_url 
+       FROM public.module_data 
+       WHERE mod_id = $1`,
+      [mod_id]
+    );
+
+    if (moduleRes.rowCount === 0) {
+      return null;
+    }
+
+    // 2. Fetch levels assigned to this module, including threshold settings
+    const levelsRes = await pool.query(
+      `SELECT level_id, level_order, level_title, level_description, passing_threshold, is_locked_by_default
+       FROM public.levels 
+       WHERE mod_id = $1 
+       ORDER BY level_order ASC`,
+      [mod_id]
+    );
+
+    // 3. Fetch steps and relate them to levels
+    const stepsRes = await pool.query(
+      `SELECT ms.step_id, ms.level_id, ms.step_order, ms.step_title, ms.step_type, ms.is_final_assessment, ms.loop_back_step_id
+       FROM public.module_steps ms
+       JOIN public.levels l ON ms.level_id = l.level_id
+       WHERE l.mod_id = $1
+       ORDER BY ms.step_order ASC`,
+      [mod_id]
+    );
+
+    // Group steps neatly into their corresponding level objects
+    const structuredLevels = levelsRes.rows.map(lvl => {
+      return {
+        ...lvl,
+        steps: stepsRes.rows.filter(step => step.level_id === lvl.level_id)
+      };
+    });
+
+    return {
+      module: moduleRes.rows[0],
+      levels: structuredLevels
+    };
+  }
+  async getAllModules(page = 1, limit = 10, search = "", category = "", level = "", adminContext = null) {
+    if (!adminContext || !adminContext.role) {
+      throw new Error("SECURITY_FAULT: Missing or invalid adminContext. Cannot safely return modules.");
+    }
+    const allowedUnscopedRoles = ["system_admin", "mdrrmo_admin"];
+
+    limit = Math.min(Math.max(parseInt(limit) || 10, 1), 100);
+    const offset = (page - 1) * limit;
+    const conditions = [];
+    const values = [];
+    let idx = 1;
+
+    // Structural enforcement of barangay scoping
+    if (adminContext.role === 'barangay_admin') {
+      if (!adminContext.barangay) {
+        throw new Error("SECURITY_FAULT: barangay_admin context missing barangay identifier for scoping.");
+      }
+      conditions.push(`barangay_id = $${idx}`);
+      values.push(adminContext.barangay);
+      idx++;
+    } else if (!allowedUnscopedRoles.includes(adminContext.role)) {
+      throw new Error(`SECURITY_FAULT: Unauthorized role '${adminContext.role}' attempted to access module records.`);
+    }
+
+    if (search) {
+      conditions.push(`modname ILIKE $${idx}`);
+      values.push(`%${search}%`);
+      idx++;
+    }
+
+    if (category) {
+      conditions.push(`modcat = $${idx}`);
+      values.push(category);
+      idx++;
+    }
+    
+    if (level) {
+      conditions.push(`level = $${idx}`);
+      values.push(level);
+      idx++;
+    }
+
+    const where = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
+
+    const countResult = await pool.query(`SELECT COUNT(*) FROM public.module_data ${where}`, values);
+    const total = parseInt(countResult.rows[0].count, 10);
+
+    const result = await pool.query(
+      `SELECT mod_id, modname, modcat, description, level, duration, image_url, created_at, updated_at
+       FROM public.module_data ${where}
+       ORDER BY created_at DESC LIMIT $${idx} OFFSET $${idx + 1}`,
+      [...values, limit, offset]
+    );
+
+    return {
+      data: result.rows,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
+  }
 }
 
 module.exports = new ModuleService();

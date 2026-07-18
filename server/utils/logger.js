@@ -24,3 +24,20 @@ exports.logActivity = async (userId, action) => {
     console.error(`[ActivityLogger Error] Failed to log action '${action}' for user ${userId}:`, err.message);
   }
 };
+
+/**
+ * Structured error logger designed for non-DB dependent logging,
+ * primarily for authentication or system-level middleware failures.
+ * 
+ * @param {string} event - The type of event (e.g., 'auth_middleware_failure').
+ * @param {object} context - Additional context (route, method, message, timestamp, etc.).
+ */
+exports.logError = (event, context = {}) => {
+  const logEntry = {
+    event,
+    timestamp: new Date().toISOString(),
+    ...context
+  };
+  // Unconditionally log to console.error in a structured format
+  console.error(JSON.stringify(logEntry));
+};
