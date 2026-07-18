@@ -1,12 +1,17 @@
 const express = require("express");
 const router = express.Router();
-const { betterAuthMiddleware } = require("../../middleware/betterAuthMiddleware");
-const adminMiddleware = require("../../middleware/adminMiddleware");
+const { authenticate } = require("../../middleware/authenticate");
+
+// Apply authentication to all routes
+router.use(authenticate);
+
+const requireRole = require("../../middleware/requireRole");
+const { ADMIN_ROLES } = require("../../config/permissions");
 const { stepCreation } = require("../../controllers/modules/moduleStepsController");
 
 const requirePermission = require("../../middleware/requirePermission");
 
-router.post("/steps/:levelId", betterAuthMiddleware, adminMiddleware, requirePermission('manage_modules'), async (req, res) => {
+router.post("/steps/:levelId", requireRole(ADMIN_ROLES), requirePermission('manage_modules'), async (req, res) => {
 
     const { levelId } = req.params;
     const { stepOrder, stepTitle, stepContent, mediaUrl, stepType } = req.body;

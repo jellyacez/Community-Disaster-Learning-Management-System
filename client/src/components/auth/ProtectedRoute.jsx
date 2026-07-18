@@ -20,10 +20,15 @@ export default function ProtectedRoute({ allowedRoles = [] }) {
   useEffect(() => {
     if (session && !isPending && session.user?.role === "resident") {
       apiClient
-        .get("/user/dashboard")
+        .get("/public/status")
         .then(() => setIsMaintenanceChecked(true))
-        .catch(() => {
-          // Block render on 503
+        .catch((err) => {
+          // Block render on 503 MAINTENANCE_MODE
+          if (err.response && err.response.status === 503) {
+            // Let the global interceptor handle the redirect
+          } else {
+             setIsMaintenanceChecked(true);
+          }
         });
     } else if (session && !isPending) {
       // Bypass check for admin roles

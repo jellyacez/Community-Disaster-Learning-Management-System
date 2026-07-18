@@ -44,15 +44,19 @@ export function useModuleViewer(moduleId) {
   // User selects a step/level from the Map or Sidebar.
   const activeStep = useMemo(() => allSteps.find(s => s.id === activeStepId), [allSteps, activeStepId]);
 
-  // Preload assessments
-  const assessmentStepIds = useMemo(() => allSteps.map(s => s.id), [allSteps]);
+  // Preload assessments lazily
+  const isAssessmentStepType = (type) => {
+    return ['quiz', 'situational', 'priority_action', 'hazard_identification', 'action_sequence'].includes(type);
+  };
+
   const assessmentQueries = useQueries({
-    queries: assessmentStepIds.map(stepId => ({
-      queryKey: ['stepAssessment', stepId],
+    queries: allSteps.map(step => ({
+      queryKey: ['stepAssessment', step.id],
       queryFn: async () => {
-        const res = await apiClient.get(`/modules/steps/${stepId}/assessment`);
-        return { stepId, questions: res.data.data };
+        const res = await apiClient.get(`/modules/steps/${step.id}/assessment`);
+        return { stepId: step.id, questions: res.data.data };
       },
+      enabled: step.id === activeStepId && isAssessmentStepType(step.type),
       staleTime: Infinity, 
     }))
   });
@@ -61,7 +65,7 @@ export function useModuleViewer(moduleId) {
     const query = assessmentQueries.find(q => String(q.data?.stepId) === String(stepId));
     return {
       questions: query?.data?.questions || [],
-      isLoading: query?.isLoading || false
+      isLoading: query?.isLoading || (query?.isFetching && query?.status === 'pending')
     };
   };
 

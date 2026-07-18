@@ -3,11 +3,11 @@ import { useQuery } from "@tanstack/react-query";
 
 import ResidentRegistrySkeleton from "./ResidentRegistrySkeleton";
 import { BACOLOR_BARANGAYS } from "../../../../constants/locations";
+import apiClient from "../../../../lib/apiClient";
 
 const fetchResidents = async () => {
-  const res = await fetch("/api/admin/residents");
-  if (!res.ok) throw new Error("Failed to fetch residents");
-  return res.json();
+  const res = await apiClient.get("/admin/residents");
+  return res.data;
 };
 
 export default function ResidentRegistry() {

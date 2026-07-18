@@ -1,9 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
+import apiClient from "../../../../lib/apiClient";
 
 const fetchModules = async () => {
-  const res = await fetch("/api/admin/modules");
-  if (!res.ok) throw new Error("Failed to fetch modules");
-  return res.json();
+  const res = await apiClient.get("/admin/modules");
+  return res.data;
 };
 
 export default function ActiveSyllabus() {

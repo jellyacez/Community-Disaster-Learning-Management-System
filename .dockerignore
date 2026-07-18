@@ -1,0 +1,35 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Root .dockerignore
+# Applies to BOTH service builds since the build context is the repo root.
+# Excludes files that should never be sent to the Docker daemon.
+# ─────────────────────────────────────────────────────────────────────────────
+
+# Dependencies (each stage installs its own inside the image)
+**/node_modules
+
+# Secrets — never bake into an image
+**/.env
+**/.env.*
+# ...but example templates are fine to include
+!**/.env.example
+!docker/env/
+
+# Build outputs (client build happens inside Docker)
+**/dist
+
+# Runtime-generated directories
+**/logs
+**/tmp
+**/uploads
+
+# Log files
+**/*.log
+
+# Version control & editor config
+.git
+.gitignore
+**/.vscode
+**/.idea
+
+# Docs
+README.md

@@ -3,12 +3,17 @@ node_modules/
 /.pnp
 .pnp.js
 
-# Environment Variables
+# Environment Variables — never commit actual secrets
 .env
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
+# Allow the example/template files so teammates can copy them
+!.env.example
+
+# Docker
+docker-compose.override.yml
 
 # Build outputs
 /client/dist/

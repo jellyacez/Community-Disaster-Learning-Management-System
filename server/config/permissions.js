@@ -25,4 +25,13 @@ const ROLE_PERMISSIONS = {
   ]
 };
 
-module.exports = { ROLE_PERMISSIONS };
+const MFA_REQUIRED_ROLES = ["system_admin", "mdrrmo_admin", "barangay_admin"];
+const UNSCOPED_ACCESS_ROLES = ["system_admin", "mdrrmo_admin"];
+const ADMIN_ROLES = ["system_admin", "mdrrmo_admin", "barangay_admin"];
+
+module.exports = { 
+  ROLE_PERMISSIONS, 
+  MFA_REQUIRED_ROLES, 
+  UNSCOPED_ACCESS_ROLES,
+  ADMIN_ROLES
+};

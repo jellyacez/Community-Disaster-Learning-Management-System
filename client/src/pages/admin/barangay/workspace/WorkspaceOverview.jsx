@@ -3,11 +3,11 @@ import { useQuery } from "@tanstack/react-query";
 
 import WorkspaceOverviewSkeleton from "./WorkspaceOverviewSkeleton";
 import ResidentInspectorPanel from "../../shared/ResidentInspectorPanel";
+import apiClient from "../../../../lib/apiClient";
 
 const fetchResidents = async () => {
-  const res = await fetch("/api/admin/residents");
-  if (!res.ok) throw new Error("Failed to fetch residents");
-  return res.json();
+  const res = await apiClient.get("/admin/residents");
+  return res.data;
 };
 
 export default function WorkspaceOverview() {

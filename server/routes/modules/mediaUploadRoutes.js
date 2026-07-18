@@ -1,11 +1,15 @@
 const express = require("express");
 const router = express.Router();
-const { betterAuthMiddleware } = require("../../middleware/betterAuthMiddleware");
-const adminMiddleware = require("../../middleware/adminMiddleware");
+const { authenticate } = require("../../middleware/authenticate");
+
+// Apply authentication to all routes
+router.use(authenticate);
+const requireRole = require("../../middleware/requireRole");
+const { ADMIN_ROLES } = require("../../config/permissions");
 const requirePermission = require("../../middleware/requirePermission");
 const uploadMiddleware = require("../../middleware/uploadMiddleware");
 
-router.post("/upload-media", betterAuthMiddleware, adminMiddleware, requirePermission('manage_modules'), uploadMiddleware, (req, res) => {
+router.post("/upload-media", requireRole(ADMIN_ROLES), requirePermission('manage_modules'), uploadMiddleware, (req, res) => {
     if (!req.file) {
         return res.status(400).json({ success: false, message: "No file uploaded." });
     }

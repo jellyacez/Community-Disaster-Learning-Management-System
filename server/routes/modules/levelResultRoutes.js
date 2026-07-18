@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const { betterAuthMiddleware } = require("../../middleware/betterAuthMiddleware");
+const { authenticate } = require("../../middleware/authenticate");
 const { levelResult } = require("../../controllers/modules/moduleResultController");
 
 // NOTE: This route is intentionally accessible to all authenticated users (residents submit their own quiz results).
@@ -8,7 +8,7 @@ const { levelResult } = require("../../controllers/modules/moduleResultControlle
 // preventing users from submitting results on behalf of other users.
 // TODO: calculate score on server side
 // so users can't cheat by sending fake scores
-router.post("/:moduleId/results", betterAuthMiddleware, async (req, res) => {
+router.post("/:moduleId/results", authenticate, async (req, res) => {
     const { moduleId } = req.params;
 
    

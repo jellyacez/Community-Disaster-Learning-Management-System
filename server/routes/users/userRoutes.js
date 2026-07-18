@@ -2,53 +2,54 @@ const express = require("express");
 const router = express.Router();
 const userController = require("../../controllers/users/userController");
 const announcementController = require("../../controllers/users/announcementController");
-const adminMiddleware = require("../../middleware/adminMiddleware");
-const { betterAuthMiddleware } = require("../../middleware/betterAuthMiddleware");
+const requireRole = require("../../middleware/requireRole");
+const { ADMIN_ROLES } = require("../../config/permissions");
+const { authenticate } = require("../../middleware/authenticate");
 const requirePermission = require("../../middleware/requirePermission");
 
 // @route   GET /api/users/me/provider
 // @desc    Get current user's auth providers
 // @access  Private
-router.get("/me/provider", betterAuthMiddleware, userController.getProviders);
+router.get("/me/provider", authenticate, userController.getProviders);
 
 // @route   POST /api/users/onboarding
 // @desc    Complete user profile after Google OAuth
 // @access  Private
-router.post("/onboarding", betterAuthMiddleware, userController.onboarding);
+router.post("/onboarding", authenticate, userController.onboarding);
 
 // @route   GET /api/users/announcements
 // @desc    Get paginated announcements
 // @access  Private
-router.get("/announcements", betterAuthMiddleware, announcementController.getPaginatedAnnouncements);
+router.get("/announcements", authenticate, announcementController.getPaginatedAnnouncements);
 
 // @route   GET /api/users
 // @desc    Get all users (for admin dashboard)
 // @access  Private (admin only)
-router.get("/", adminMiddleware, requirePermission('view_users'), userController.getAllUsers);
+router.get("/", authenticate, requireRole(ADMIN_ROLES), requirePermission('view_users'), userController.getAllUsers);
 
 // @route   DELETE /api/users/me
 // @desc    Hard delete the current user's account (Right to Be Forgotten)
 // @access  Private
-router.delete("/me", betterAuthMiddleware, userController.deleteAccount);
+router.delete("/me", authenticate, userController.deleteAccount);
 
 // @route   GET /api/users/certificate-data
 // @desc    Get current user's certificate control number
 // @access  Private
-router.get("/certificate-data", betterAuthMiddleware, userController.getCertificateData);
+router.get("/certificate-data", authenticate, userController.getCertificateData);
 
 // @route   GET /api/users/me/export
 // @desc    Export current user's data
 // @access  Private
-router.get("/me/export", betterAuthMiddleware, userController.exportUserData);
+router.get("/me/export", authenticate, userController.exportUserData);
 
 // @route   GET /api/users/me/settings
 // @desc    Get user's notification settings
 // @access  Private
-router.get("/me/settings", betterAuthMiddleware, userController.getUserSettings);
+router.get("/me/settings", authenticate, userController.getUserSettings);
 
 // @route   PUT /api/users/me/settings
 // @desc    Update user's notification settings
 // @access  Private
-router.put("/me/settings", betterAuthMiddleware, userController.updateUserSettings);
+router.put("/me/settings", authenticate, userController.updateUserSettings);
 
 module.exports = router;

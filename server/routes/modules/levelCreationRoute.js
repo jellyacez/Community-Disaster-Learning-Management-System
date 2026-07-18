@@ -1,16 +1,17 @@
 const express = require("express");
 const router = express.Router();
 const {
-  betterAuthMiddleware,
-} = require("../../middleware/betterAuthMiddleware");
-const adminMiddleware = require("../../middleware/adminMiddleware");
+  authenticate,
+} = require("../../middleware/authenticate");
+const requireRole = require("../../middleware/requireRole");
+const { ADMIN_ROLES } = require("../../config/permissions");
 const { levelCreation } = require("../../controllers/modules/levelcontroller");
 const requirePermission = require("../../middleware/requirePermission");
 
 router.post(
   "/:moduleId",
-  betterAuthMiddleware,
-  adminMiddleware,
+  authenticate,
+  requireRole(ADMIN_ROLES),
   requirePermission('manage_modules'),
   async (req, res) => {
     const { moduleId } = req.params;

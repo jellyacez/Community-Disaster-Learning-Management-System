@@ -1,9 +1,9 @@
 const express = require("express");
 const router = express.Router();
 const pool = require("../../config/db");
-const { betterAuthMiddleware } = require("../../middleware/betterAuthMiddleware");
+const { authenticate } = require("../../middleware/authenticate");
 const { completeQuery } = require("../../controllers/modules/moduleCompleteController")
-router.post("/:moduleId/steps/:stepId/complete", betterAuthMiddleware, async (req, res) => {
+router.post("/:moduleId/steps/:stepId/complete", authenticate, async (req, res) => {
     const { moduleId, stepId } = req.params;
     const userId = req.user?.id;
 

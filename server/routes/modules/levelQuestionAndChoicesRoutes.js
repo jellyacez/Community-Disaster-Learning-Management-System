@@ -1,11 +1,16 @@
 const express = require("express");
 const router = express.Router();
-const { betterAuthMiddleware } = require("../../middleware/betterAuthMiddleware");
-const adminMiddleware = require("../../middleware/adminMiddleware");
+const { authenticate } = require("../../middleware/authenticate");
+
+// Apply authentication to all routes
+router.use(authenticate);
+
+const requireRole = require("../../middleware/requireRole");
+const { ADMIN_ROLES } = require("../../config/permissions");
 const { questionCreation, choicesCreation } = require("../../controllers/modules/moduleQuestionAndChoices");
 const requirePermission = require("../../middleware/requirePermission");
 
-router.post("/:moduleId/questions", betterAuthMiddleware, adminMiddleware, requirePermission('manage_modules'), async (req, res) => {
+router.post("/:moduleId/questions", requireRole(ADMIN_ROLES), requirePermission('manage_modules'), async (req, res) => {
    
     const { moduleId } = req.params;  
     const { questionText, points, imageURL, stepId } = req.body;
@@ -38,7 +43,7 @@ router.post("/:moduleId/questions", betterAuthMiddleware, adminMiddleware, requi
 });
 
 
-router.post("/:questionId/choices", betterAuthMiddleware, adminMiddleware, requirePermission('manage_modules'), async (req, res) => {
+router.post("/:questionId/choices", requireRole(ADMIN_ROLES), requirePermission('manage_modules'), async (req, res) => {
  
     const { questionId } = req.params;
     const { choiceText, isCorrect, rationale } = req.body;

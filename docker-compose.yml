@@ -1,0 +1,69 @@
+services:
+  # ──────────────────────────────────────────────
+  # PostgreSQL Database
+  # ──────────────────────────────────────────────
+  db:
+    image: postgres:16-alpine
+    container_name: lms_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_DATABASE}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_DATABASE}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ──────────────────────────────────────────────
+  # Express Backend (API)
+  # Build context is the repo root so the Dockerfile
+  # can reference server/ paths directly.
+  # ──────────────────────────────────────────────
+  server:
+    build:
+      context: .
+      dockerfile: docker/server/Dockerfile
+    container_name: lms_server
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file:
+      - ./server/.env
+    environment:
+      # Override DB_HOST to point to the Docker network alias instead of localhost
+      DB_HOST: db
+      NODE_ENV: development
+    ports:
+      - "5000:5000"
+    volumes:
+      # Persist uploaded files outside the container
+      - server_uploads:/app/uploads
+      - server_logs:/app/logs
+
+  # ──────────────────────────────────────────────
+  # React / Vite Frontend
+  # Build context is the repo root so the Dockerfile
+  # can reference client/ paths directly.
+  # ──────────────────────────────────────────────
+  client:
+    build:
+      context: .
+      dockerfile: docker/client/Dockerfile
+    container_name: lms_client
+    restart: unless-stopped
+    depends_on:
+      - server
+    ports:
+      - "80:80"
+
+volumes:
+  postgres_data:
+  server_uploads:
+  server_logs:
