@@ -11,7 +11,7 @@
             It is intentionally REMOVED here so the production build is not weakened.
             If you see CSP errors in dev, this is expected and safe to ignore.
     -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data: https: blob:; font-src 'self' data: https:; style-src 'self' 'unsafe-inline' https:; script-src 'self'; connect-src 'self' http://localhost:* ws://localhost:* https:; frame-src 'self' blob:; object-src 'self' blob:;" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data: https: blob:; font-src 'self' data: https:; style-src 'self' 'unsafe-inline' https:; script-src 'self' 'wasm-unsafe-eval'; connect-src 'self' data: http://localhost:* ws://localhost:* https:; frame-src 'self' blob:; object-src 'self' blob:;" />
     <meta name="description" content="Community Disaster Learning Management System - Empowering residents with disaster preparedness training and real-time announcements." />
     <title>Bacolor LMS</title>
   </head>

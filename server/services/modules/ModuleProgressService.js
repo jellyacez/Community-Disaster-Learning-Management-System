@@ -312,6 +312,7 @@ class ModuleProgressService {
       SELECT 
         u.name AS learner_name,
         m.modname AS module_title,
+        m.description AS module_description,
         c.completion_date,
         c.expires_at,
         CASE 

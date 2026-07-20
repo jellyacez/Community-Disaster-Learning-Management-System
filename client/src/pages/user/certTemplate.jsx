@@ -105,10 +105,9 @@ export default function CertificateTemplate() {
                   <Text style={styles.nameSubLine}>Authorized Resident</Text>
                   <Text style={styles.description}>
                     has successfully satisfied all academic and practical requirements of the Community Disaster 
-                    Learning Management System. The aforementioned resident has demonstrated comprehensive 
-                    knowledge and tactical readiness in Disaster Risk Reduction and Management (DRRM) 
-                    protocols, strictly adhering to PRC and NDRRMC standards for Flooding, Earthquake, 
-                    and Fire Safety scenarios.
+                    Learning Management System by completing the <Text style={{ fontWeight: "bold" }}>{certData.module_title}</Text> training module.
+                    {"\n\n"}
+                    {(certData.module_description?.replace(/<[^>]*>?/gm, '') || "").trim() || "The aforementioned resident has demonstrated comprehensive knowledge and tactical readiness in Disaster Risk Reduction and Management (DRRM) protocols."}
                   </Text>
                   <Text style={styles.dateText}>Conferred this {dateIssued}.</Text>
 
