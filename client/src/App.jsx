@@ -41,6 +41,7 @@ const SystemSecurity = lazy(
 );
 
 const UserDashboard = lazy(() => import("./pages/user/UserDashboard"));
+const UserCertificates = lazy(() => import("./pages/user/UserCertificates"));
 const UserAnnouncements = lazy(() => import("./pages/user/UserAnnouncements"));
 const UserModuleCatalog = lazy(() => import("./pages/user/UserModuleCatalog"));
 const UserEnrolledModules = lazy(
@@ -182,10 +183,12 @@ export default function App() {
               />
               <Route path="/user/modules" element={<UserModuleCatalog />} />
               <Route path="/user/enrolled" element={<UserEnrolledModules />} />
+              <Route path="/user/certificates" element={<UserCertificates />} />
               <Route path="/user/profile" element={<UserProfile />} />
               <Route path="/user/settings" element={<UserSettings />} />
               <Route path="/user/modules/:id/details" element={<ModuleDetailsPage />} />
-              <Route path="/user/certTemplate" element={<CertificatePDF />} />
+              <Route path="/user/certificates/view" element={<CertificatePDF />} />
+              <Route path="/user/certTemplate" element={<Navigate to="/user/certificates/view" replace />} />
             </Route>
           </Route>
 

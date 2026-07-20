@@ -12,6 +12,7 @@ import {
   ArrowRight01Icon,
   Shield01Icon,
   Cancel01Icon,
+  Certificate02Icon,
 } from "@hugeicons/core-free-icons";
 import { useLocation, useNavigate } from "react-router-dom";
 import { authClient } from "../../lib/auth-client";
@@ -91,6 +92,17 @@ export default function UserSidebar({
       ),
     },
     {
+      path: "/user/certificates",
+      label: "My Certificates",
+      icon: (
+        <HugeiconsIcon
+          aria-hidden="true"
+          icon={Certificate02Icon}
+          className="w-5 h-5"
+        />
+      ),
+    },
+    {
       path: "/user/profile",
       label: "User Profile",
       icon: (
@@ -162,17 +174,14 @@ export default function UserSidebar({
             className="hidden lg:block absolute left-4 right-4 top-5 h-12 rounded-xl bg-red-600 shadow-md transition-transform duration-300 ease-out z-0"
             style={{
               transform: `translateY(${
-                navItems.findIndex((item) => location.pathname === item.path) *
-                56
+                navItems.findIndex((item) => location.pathname === item.path || location.pathname.startsWith(item.path + '/')) * 56
               }px)`,
-              opacity: navItems.some((item) => location.pathname === item.path)
-                ? 1
-                : 0,
+              opacity: navItems.some((item) => location.pathname === item.path || location.pathname.startsWith(item.path + '/')) ? 1 : 0,
             }}
           />
 
           {navItems.map((item) => {
-            const active = location.pathname === item.path;
+            const active = location.pathname === item.path || location.pathname.startsWith(item.path + '/');
 
             return (
               <button

@@ -16,6 +16,7 @@ export default function UserNavbar({
     '/user/announcements': 'Announcements',
     '/user/modules': 'Module Catalog',
     '/user/enrolled': 'Enrolled Modules',
+    '/user/certificates': 'My Certificates',
     '/user/profile': 'User Profile',
     '/user/settings': 'Settings',
   };

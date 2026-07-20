@@ -40,11 +40,13 @@ const adminDataLimiter = rateLimit({
     // Key by the authenticated user's ID to prevent token abuse,
     // rather than IP, to protect shared NATs and track compromised accounts.
     if (req.user?.id) return String(req.user.id);
-    
+
     // Fallback for missing user context. Use library's native IP normalizer to prevent IPv6 bypass.
     return `anon_${ipKeyGenerator(req.ip)}`;
   },
-  message: { error: "Too many requests to admin data endpoints, please try again later." },
+  message: {
+    error: "Too many requests to admin data endpoints, please try again later.",
+  },
 });
 
 const adminWriteLimiter = rateLimit({
@@ -65,7 +67,9 @@ const certificateVerifyLimiter = rateLimit({
   keyGenerator: (req) => {
     return `anon_${ipKeyGenerator(req.ip)}`; // Verification is unauthenticated
   },
-  message: { error: "Too many requests to this endpoint, please try again later." },
+  message: {
+    error: "Too many requests to this endpoint, please try again later.",
+  },
 });
 
 module.exports = {

@@ -1,4 +1,4 @@
-import { useOutletContext, useSearchParams } from "react-router-dom"; 
+import { useOutletContext, useSearchParams, Link } from "react-router-dom"; 
 import { useQuery } from "@tanstack/react-query";
 import apiClient from "../../lib/apiClient";
 import { PDFViewer, PDFDownloadLink, Document, Page, Text, View, StyleSheet, Image } from "@react-pdf/renderer";
@@ -127,6 +127,11 @@ export default function CertificateTemplate() {
 
   return (
     <div className="flex flex-col h-full w-full bg-white p-6 rounded-lg shadow-sm">
+      <div className="mb-4">
+        <Link to="/user/certificates" className="inline-flex items-center text-sm font-bold text-gray-500 hover:text-red-600 transition-colors mb-2">
+          ← Back to Certificates
+        </Link>
+      </div>
       <div className="flex justify-between items-center mb-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-800 mb-1">{residentName}'s Certification</h1>

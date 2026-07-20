@@ -1,5 +1,5 @@
 import { useState } from "react";
-import ConfirmationModal from "../../../../../../components/ui/modals/ConfirmationModal.jsx";
+import ConfirmationModal from "../../../../../components/ui/modals/ConfirmationModal.jsx";
 
 export default function BulkActionBar({ selectedCount, onArchive, onCancel, isPending }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
