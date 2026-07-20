@@ -1,4 +1,4 @@
-import { useOutletContext } from "react-router-dom"; 
+import { useOutletContext, useSearchParams } from "react-router-dom"; 
 import { useQuery } from "@tanstack/react-query";
 import apiClient from "../../lib/apiClient";
 import { PDFViewer, Document, Page, Text, View, StyleSheet, Image } from "@react-pdf/renderer";
@@ -33,27 +33,37 @@ const styles = StyleSheet.create({
 
 export default function CertificateTemplate() {
   const { currentUser } = useOutletContext();
+  const [searchParams] = useSearchParams();
+  const token = searchParams.get("token");
   const residentName = currentUser?.name || "Resident"; 
 
-  const { data: certData } = useQuery({
-    queryKey: ["certificateData"],
+  const { data: certData, isLoading, isError } = useQuery({
+    queryKey: ["certificateData", token],
     queryFn: async () => {
-      const response = await apiClient.get('/users/certificate-data');
-      return response.data;
-    }
+      if (!token) return null;
+      const response = await apiClient.get(`/users/certificates/${token}`);
+      return response.data.data;
+    },
+    enabled: !!token
   });
 
+  if (!token) {
+    return <div className="p-8 text-center text-red-500 font-bold">Error: No certificate token provided.</div>;
+  }
 
+  if (isLoading) {
+    return <div className="p-8 text-center text-gray-500 font-bold">Loading certificate...</div>;
+  }
 
-  // Construct the ID
-  const dbControlNumber = certData?.certControl_no || "0000";
-  const certId = `DRRM-BAC-2026-${dbControlNumber}`;
+  if (isError || !certData) {
+    return <div className="p-8 text-center text-red-500 font-bold">Error: Could not load certificate. It may be revoked or invalid.</div>;
+  }
 
-  // Use a reliable QR Code API instead of fighting Vite packages
-  const verificationUrl = `https://bacolor-lms.edu.ph/verify?id=${certId}`;
+  const certId = certData.cert_rec;
+  const verificationUrl = `${window.location.origin}/verify?token=${token}`;
   const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(verificationUrl)}`;
 
-  const dateIssued = new Date().toLocaleDateString('en-US', {
+  const dateIssued = new Date(certData.completion_date).toLocaleDateString('en-US', {
     year: 'numeric', month: 'long', day: 'numeric'
   });
 

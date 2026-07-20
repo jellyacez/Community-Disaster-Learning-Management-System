@@ -1,7 +1,5 @@
 const { validateModuleCreation } = require("../../utils/validators");
 const ModuleService = require("../../services/modules/ModuleService");
-const logger = require("../../utils/logger");
-const pool = require("../../config/db");
 // @desc    Creates a new module and all its nested levels and steps in a transaction
 // @access  Private (admin only)
 exports.createModule = async (req, res) => {
@@ -88,7 +86,10 @@ exports.enrollInModule = async (req, res) => {
       await ModuleService.enrollUserInModule(user_id, parsedModId);
     }
 
-    const enrollmentData = await ModuleService.getEnrollmentData(user_id, parsedModId);
+    const enrollmentData = await ModuleService.getEnrollmentData(
+      user_id,
+      parsedModId,
+    );
 
     return res.status(200).json({
       success: true,

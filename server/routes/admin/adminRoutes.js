@@ -16,6 +16,7 @@ const ipBlocklistController = require("../../controllers/admin/ipBlocklistContro
 const infrastructureController = require("../../controllers/admin/infrastructureController");
 const alertController = require("../../controllers/admin/alertController");
 const moduleController = require("../../controllers/modules/moduleController");
+const certificateManagementController = require("../../controllers/admin/certificateManagement");
 const { adminDataLimiter, adminWriteLimiter } = require("../../middleware/rateLimiters");
 
 // Existing routes
@@ -29,6 +30,16 @@ router.get("/residents", requireRole(ADMIN_ROLES), adminDataLimiter, requirePerm
 // @desc    Get all modules with pagination and scoping
 // @access  Private (admin/system_admin only)
 router.get("/modules", requireRole(ADMIN_ROLES), adminDataLimiter, requirePermission('manage_modules'), moduleController.getAllModules);
+
+// @route   GET /api/admin/certificates
+// @desc    Get all certificates with pagination and scoping
+// @access  Private (admin only)
+router.get("/certificates", requireRole(ADMIN_ROLES), adminDataLimiter, requirePermission('view_users'), certificateManagementController.getAllCertificates);
+
+// @route   PATCH /api/admin/certificates/:certId/revoke
+// @desc    Revoke a certificate
+// @access  Private (admin only)
+router.patch("/certificates/:certId/revoke", requireRole(ADMIN_ROLES), adminWriteLimiter, requirePermission('revoke_certificates'), certificateManagementController.revokeCertificate);
 
 // @route   GET /api/admin/alerts/active
 // @desc    Get all active critical system alerts

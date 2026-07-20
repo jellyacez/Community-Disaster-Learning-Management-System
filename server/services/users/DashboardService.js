@@ -59,11 +59,26 @@ class DashboardService {
       completionRate = Math.round(totalProgress / enrolledModules.length);
     }
 
+    const certificatesQuery = await pool.query(
+      `SELECT c.cert_rec, c.verification_token, c.completion_date, c.expires_at, c.module_id, m.modname as module_title,
+        CASE 
+          WHEN c.status = 'revoked' THEN 'revoked'
+          WHEN c.expires_at < NOW() THEN 'expired'
+          ELSE c.status 
+        END as status
+       FROM certificates c
+       JOIN module_data m ON c.module_id = m.mod_id
+       WHERE c.user_id = $1`,
+      [userId]
+    );
+    const certificates = certificatesQuery.rows;
+
     return {
       totalModules,
       announcements,
       enrolledModules,
       completionRate,
+      certificates,
     };
   }
 }

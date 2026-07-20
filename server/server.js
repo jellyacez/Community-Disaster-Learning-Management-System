@@ -25,12 +25,14 @@ const { toNodeHandler } = require("better-auth/node");
 const { auth } = require("./utils/auth");
 const { authRateLimiter, globalLimiter } = require("./middleware/rateLimiters");
 const { startLogRetentionCron } = require("./utils/logRetention");
+const { startCertificateExpiryCron } = require("./utils/certificateExpiryCron");
 const { startAlertMonitor } = require("./services/alertMonitorService");
 
 const app = express();
 
 // Start background cron jobs
 startLogRetentionCron();
+startCertificateExpiryCron();
 startAlertMonitor();
 
 if (process.env.NODE_ENV === "production") {
@@ -97,7 +99,7 @@ const userRoutes = require("./routes/users/userRoutes");
 const userDashboardRoutes = require("./routes/users/userDashboardRoutes");
 const moduleRoutes = require("./routes/modules/moduleRoutes");
 const publicRoutes = require("./routes/publicRoutes");
-
+const certificatesRoutes = require("./routes/certificatesRoutes");
 
 const levelResultRoutes = require("./routes/modules/levelResultRoutes");
 
@@ -106,6 +108,7 @@ const apiSecurityMiddleware = require("./middleware/apiSecurityMiddleware");
 
 // API Routes (Business logic protected by security middleware)
 app.use("/api/public", publicRoutes);
+app.use("/api/certificates", certificatesRoutes); // Public verification endpoint
 app.use("/api/admin", apiSecurityMiddleware, adminRoutes);
 app.use("/api/users", apiSecurityMiddleware, userRoutes);
 app.use("/api/user/dashboard", apiSecurityMiddleware, userDashboardRoutes);

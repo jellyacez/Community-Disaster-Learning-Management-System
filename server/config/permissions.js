@@ -11,20 +11,23 @@ const ROLE_PERMISSIONS = {
     'manage_system_settings',
     'manage_security',
     'manage_modules',
-    'view_users'
+    'view_users',
+    'revoke_certificates'
   ],
   mdrrmo_admin: [
     'provision_admins',
     'view_system_stats',
     'view_activity_logs',
     'manage_modules',
-    'view_users'
+    'view_users',
+    'revoke_certificates'
   ],
   barangay_admin: [
     'ban_users',
     'archive_users',
     'view_system_stats',
-    'view_users'
+    'view_users',
+    'revoke_certificates'
   ]
 };
 

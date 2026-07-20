@@ -194,36 +194,73 @@ class ModuleProgressService {
       const modact_id = updateResult.rows[0]?.modact_id;
 
       // Handle Completion logic & Certificates
+      let verificationToken = null;
       if (moduleCompleted) {
         const modResult = await client.query(`SELECT modname FROM module_data WHERE mod_id = $1`, [mod_id]);
         const modTitle = modResult.rows.length > 0 ? modResult.rows[0].modname : 'Unknown Module';
 
         logger.logActivity(user_id, `Completed module: ${modTitle}`);
 
+        // We still check here as an early return, but we will also use ON CONFLICT DO NOTHING below
         const certCheck = await client.query(
-          `SELECT cert_id FROM certificates WHERE user_id = $1 AND module_id = $2`, 
+          `SELECT cert_id, verification_token FROM certificates WHERE user_id = $1 AND module_id = $2`, 
           [user_id, mod_id]
         );
 
         if (certCheck.rowCount === 0) {
+          // Fix 3: Get the correct result_id, prioritizing final assessments and higher levels
           const resultIdCheck = await client.query(
-            `SELECT result_id FROM results WHERE user_id = $1 AND mod_id = $2 ORDER BY result_id DESC LIMIT 1`, 
+            `SELECT r.result_id 
+             FROM results r
+             JOIN module_steps ms ON r.step_id = ms.step_id
+             JOIN levels l ON ms.level_id = l.level_id
+             WHERE r.user_id = $1 AND r.mod_id = $2
+             ORDER BY 
+                 ms.is_final_assessment DESC, 
+                 l.level_order DESC, 
+                 r.result_id DESC
+             LIMIT 1`, 
             [user_id, mod_id]
           );
-          const result_id = resultIdCheck.rows.length > 0 ? resultIdCheck.rows[0].result_id : 0;
+          
+          const result_id = resultIdCheck.rows.length > 0 ? resultIdCheck.rows[0].result_id : null;
           
           const cert_rec = `CERT-${Date.now().toString(36).toUpperCase()}-${Math.floor(Math.random() * 1000)}`;
+          const crypto = require("crypto");
+          const token = crypto.randomUUID();
+          const { RECERTIFICATION_INTERVAL_YEARS } = require("../../config/constants");
 
           const certInsert = await client.query(
-            `INSERT INTO certificates (user_id, modact_id, result_id, cert_rec, module_id, completion_date) 
-             VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP) RETURNING cert_id`,
-            [user_id, modact_id, result_id, cert_rec, mod_id]
+            `INSERT INTO certificates (
+               user_id, modact_id, result_id, cert_rec, module_id, 
+               completion_date, verification_token, expires_at, status
+             ) 
+             VALUES (
+               $1, $2, $3, $4, $5, 
+               CURRENT_TIMESTAMP, $6, CURRENT_TIMESTAMP + (INTERVAL '1 year' * $7), 'active'
+             ) 
+             ON CONFLICT (user_id, module_id) DO NOTHING 
+             RETURNING cert_id, verification_token`,
+            [user_id, modact_id, result_id, cert_rec, mod_id, token, RECERTIFICATION_INTERVAL_YEARS]
           );
           
           if (certInsert.rowCount > 0) {
             const certId = certInsert.rows[0].cert_id;
+            verificationToken = certInsert.rows[0].verification_token;
             logger.logActivity(user_id, `Earned certificate: ${modTitle} (ID: CERT-${certId})`);
+          } else {
+             // Lost the race, fetch the token that the other request just inserted
+             const raceCheck = await client.query(
+               `SELECT verification_token FROM certificates WHERE user_id = $1 AND module_id = $2`, 
+               [user_id, mod_id]
+             );
+             if (raceCheck.rowCount > 0) {
+                verificationToken = raceCheck.rows[0].verification_token;
+             }
           }
+        } else {
+          // Certificate already existed before this transaction began
+          verificationToken = certCheck.rows[0].verification_token;
         }
       }
 
@@ -234,7 +271,8 @@ class ModuleProgressService {
         quizGraded,
         score,
         totalPoints,
-        moduleCompleted
+        moduleCompleted,
+        ...(verificationToken && { verificationToken })
       };
     } catch (txError) {
       await client.query("ROLLBACK");
@@ -267,6 +305,176 @@ class ModuleProgressService {
     }
     
     return progressQuery.rows[0];
+  }
+
+  async verifyCertificateByToken(token) {
+    const query = `
+      SELECT 
+        u.name AS learner_name,
+        m.modname AS module_title,
+        c.completion_date,
+        c.expires_at,
+        CASE 
+          WHEN c.status = 'revoked' THEN 'revoked'
+          WHEN c.expires_at < NOW() THEN 'expired'
+          ELSE c.status 
+        END as status
+      FROM public.certificates c
+      JOIN public."user" u ON c.user_id = u.id
+      JOIN public.module_data m ON c.module_id = m.mod_id
+      WHERE c.verification_token = $1
+    `;
+    
+    const result = await pool.query(query, [token]);
+    return result.rowCount > 0 ? result.rows[0] : null;
+  }
+
+  async getAllCertificates(page = 1, limit = 10, search = "", statusFilter = "", adminContext = null) {
+    if (!adminContext || !adminContext.role) {
+      throw new Error("SECURITY_FAULT: Missing or invalid adminContext. Cannot safely return certificates.");
+    }
+
+    const { UNSCOPED_ACCESS_ROLES } = require("../../config/permissions");
+    limit = Math.min(Math.max(parseInt(limit) || 10, 1), 100);
+    const offset = (page - 1) * limit;
+    
+    const conditions = [];
+    const values = [];
+    let idx = 1;
+
+    // Structural enforcement of barangay scoping
+    if (adminContext.role === 'barangay_admin') {
+      if (!adminContext.barangay) {
+        throw new Error("SECURITY_FAULT: barangay_admin context missing barangay identifier for scoping.");
+      }
+      conditions.push(`u.barangay = $${idx}`);
+      values.push(adminContext.barangay);
+      idx++;
+    } else if (!UNSCOPED_ACCESS_ROLES.includes(adminContext.role)) {
+      throw new Error(`SECURITY_FAULT: Unauthorized role '${adminContext.role}' attempted to access certificate records.`);
+    }
+
+    if (search) {
+      conditions.push(`(u.name ILIKE $${idx} OR m.modname ILIKE $${idx} OR c.cert_rec ILIKE $${idx})`);
+      values.push(`%${search}%`);
+      idx++;
+    }
+
+    if (statusFilter) {
+      if (statusFilter === 'expired') {
+        conditions.push(`c.expires_at < NOW() AND c.status != 'revoked'`);
+      } else if (statusFilter === 'active') {
+        conditions.push(`c.expires_at >= NOW() AND c.status = 'active'`);
+      } else {
+        conditions.push(`c.status = $${idx}`);
+        values.push(statusFilter);
+        idx++;
+      }
+    }
+
+    const where = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
+
+    const countQuery = `
+      SELECT COUNT(*) 
+      FROM public.certificates c
+      JOIN public."user" u ON c.user_id = u.id
+      JOIN public.module_data m ON c.module_id = m.mod_id
+      ${where}
+    `;
+    
+    const countResult = await pool.query(countQuery, values);
+    const total = parseInt(countResult.rows[0].count, 10);
+
+    const dataQuery = `
+      SELECT 
+        c.cert_id,
+        c.cert_rec,
+        c.completion_date,
+        c.expires_at,
+        c.verification_token,
+        c.revocation_reason,
+        c.revoked_at,
+        c.revoked_by,
+        CASE 
+          WHEN c.status = 'revoked' THEN 'revoked'
+          WHEN c.expires_at < NOW() THEN 'expired'
+          ELSE c.status 
+        END as status,
+        u.name AS learner_name,
+        u.email AS learner_email,
+        u.barangay AS learner_barangay,
+        m.modname AS module_title
+      FROM public.certificates c
+      JOIN public."user" u ON c.user_id = u.id
+      JOIN public.module_data m ON c.module_id = m.mod_id
+      ${where}
+      ORDER BY c.completion_date DESC
+      LIMIT $${idx} OFFSET $${idx + 1}
+    `;
+
+    const result = await pool.query(dataQuery, [...values, limit, offset]);
+
+    return {
+      data: result.rows,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit)
+      }
+    };
+  }
+
+  async revokeCertificate(certId, reason, adminContext, adminUserId) {
+    if (!adminContext || !adminContext.role) {
+      throw new Error("SECURITY_FAULT: Missing or invalid adminContext. Cannot safely revoke certificate.");
+    }
+    
+    if (!reason || reason.trim().length === 0) {
+      throw new Error("VALIDATION_ERROR: A reason is required to revoke a certificate.");
+    }
+
+    const { UNSCOPED_ACCESS_ROLES } = require("../../config/permissions");
+    
+    // First fetch the cert to check scope
+    const certQuery = await pool.query(
+      `SELECT c.cert_id, c.cert_rec, u.barangay, u.id as learner_id
+       FROM certificates c 
+       JOIN public."user" u ON c.user_id = u.id 
+       WHERE c.cert_id = $1`,
+      [certId]
+    );
+
+    if (certQuery.rowCount === 0) {
+      throw new Error("NOT_FOUND: Certificate not found.");
+    }
+
+    const cert = certQuery.rows[0];
+
+    // Structural scoping check
+    if (adminContext.role === 'barangay_admin') {
+      if (!adminContext.barangay || cert.barangay !== adminContext.barangay) {
+        throw new Error("SECURITY_FAULT: Out-of-scope target. Cannot revoke certificate for a resident outside your barangay.");
+      }
+    } else if (!UNSCOPED_ACCESS_ROLES.includes(adminContext.role)) {
+      throw new Error(`SECURITY_FAULT: Unauthorized role '${adminContext.role}' attempted to revoke certificate.`);
+    }
+
+    // Perform revocation (soft delete)
+    await pool.query(
+      `UPDATE certificates 
+       SET status = 'revoked',
+           revocation_reason = $2,
+           revoked_at = NOW(),
+           revoked_by = $3
+       WHERE cert_id = $1`,
+      [certId, reason, adminUserId]
+    );
+
+    // Log the deliberate action using logActivity per instructions
+    logger.logActivity(adminUserId, `Revoked certificate ${cert.cert_rec} for user ${cert.learner_id}. Reason: ${reason}`);
+    
+    return true;
   }
 }
 

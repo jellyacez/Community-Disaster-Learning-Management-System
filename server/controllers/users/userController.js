@@ -67,15 +67,18 @@ exports.deleteAccount = async (req, res) => {
 };
 // --- End of deleteAccount ---
 
-// @desc    Retrieves the certificate control number for the current user
+// @desc    Retrieves a specific certificate for the logged in user
 // @access  Private
 exports.getCertificateData = async (req, res) => {
   try {
-    const certControl_no = await UserService.getCertificateData(req.user.id);
-    res.json({ certControl_no });
+    const { token } = req.params;
+    if (!token) return res.status(400).json({ error: "Token required" });
+    
+    const certData = await UserService.getCertificateData(req.user.id, token);
+    res.json({ data: certData });
   } catch (err) {
     if (err.message === "NOT_FOUND") {
-      return res.status(404).json({ error: "User not found" });
+      return res.status(404).json({ error: "Certificate not found" });
     }
     console.error("Error fetching certificate data:", err.message);
     res.status(500).json({ error: "Server Error" });

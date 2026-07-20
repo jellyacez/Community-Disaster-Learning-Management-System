@@ -101,6 +101,8 @@ const AdminLayout = lazy(() => import("./components/layouts/AdminLayout"));
 import ScrollToTop from "./components/ScrollToTop";
 import GlobalBroadcastBanner from "./components/ui/GlobalBroadcastBanner";
 
+const VerifyCertificate = lazy(() => import("./pages/public/VerifyCertificate"));
+
 export default function App() {
   return (
     <ErrorBoundary>
@@ -147,6 +149,7 @@ export default function App() {
         <Routes>
           {/* PUBLIC ROUTES */}
           <Route path="/" element={<LandingPage />} />
+          <Route path="/verify" element={<VerifyCertificate />} />
           <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/signin" element={<SignInPage />} />

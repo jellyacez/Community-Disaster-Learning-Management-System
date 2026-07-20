@@ -58,9 +58,20 @@ const adminWriteLimiter = rateLimit({
   message: { error: "Too many destructive requests, please try again later." },
 });
 
+const certificateVerifyLimiter = rateLimit({
+  store: new PostgresStore(dbConfig, "cert_verify_"),
+  windowMs: 15 * 60 * 1000,
+  max: 50, // Dedicated low-volume limiter
+  keyGenerator: (req) => {
+    return `anon_${ipKeyGenerator(req.ip)}`; // Verification is unauthenticated
+  },
+  message: { error: "Too many requests to this endpoint, please try again later." },
+});
+
 module.exports = {
   authRateLimiter,
   globalLimiter,
   adminDataLimiter,
   adminWriteLimiter,
+  certificateVerifyLimiter,
 };

@@ -32,10 +32,10 @@ router.get("/", authenticate, requireRole(ADMIN_ROLES), requirePermission('view_
 // @access  Private
 router.delete("/me", authenticate, userController.deleteAccount);
 
-// @route   GET /api/users/certificate-data
-// @desc    Get current user's certificate control number
+// @route   GET /api/users/certificates/:token
+// @desc    Get certificate data for the current user
 // @access  Private
-router.get("/certificate-data", authenticate, userController.getCertificateData);
+router.get("/certificates/:token", authenticate, userController.getCertificateData);
 
 // @route   GET /api/users/me/export
 // @desc    Export current user's data

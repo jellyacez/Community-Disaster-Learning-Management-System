@@ -41,3 +41,19 @@ exports.logError = (event, context = {}) => {
   // Unconditionally log to console.error in a structured format
   console.error(JSON.stringify(logEntry));
 };
+
+/**
+ * Structured info logger designed for system-level operational events
+ * (e.g., cron job successes, background tasks).
+ * 
+ * @param {string} event - The type of event (e.g., 'certificate_expiry_cron_success').
+ * @param {object} context - Additional context.
+ */
+exports.logInfo = (event, context = {}) => {
+  const logEntry = {
+    event,
+    timestamp: new Date().toISOString(),
+    ...context
+  };
+  console.info(JSON.stringify(logEntry));
+};

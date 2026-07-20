@@ -131,19 +131,20 @@ class UserService {
     }
   }
 
-  async getCertificateData(userId) {
+  async getCertificateData(userId, token) {
     const query = `
-      SELECT "certControl_no" 
-      FROM "user" 
-      WHERE id = $1
+      SELECT c.cert_rec, c.verification_token, c.completion_date, c.expires_at, m.modname as module_title
+      FROM certificates c
+      JOIN module_data m ON c.module_id = m.mod_id
+      WHERE c.user_id = $1 AND c.verification_token = $2 AND c.status != 'revoked'
     `;
-    const { rows } = await pool.query(query, [userId]);
+    const { rows } = await pool.query(query, [userId, token]);
     
     if (rows.length === 0) {
       throw new Error("NOT_FOUND");
     }
     
-    return rows[0].certControl_no;
+    return rows[0];
   }
 
   async exportUserData(userId) {

@@ -1,6 +1,7 @@
 import React from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Alert01Icon, RefreshIcon } from "@hugeicons/core-free-icons";
+import { useNavigate } from "react-router-dom";
 
 class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -26,15 +27,19 @@ class ErrorBoundary extends React.Component {
         <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
           <div className="bg-white max-w-md w-full rounded-3xl shadow-xl border border-red-100 p-8 text-center animate-in fade-in zoom-in duration-300">
             <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-6 border-4 border-red-100">
-              <HugeiconsIcon icon={Alert01Icon} className="w-8 h-8 text-red-500" />
+              <HugeiconsIcon
+                icon={Alert01Icon}
+                className="w-8 h-8 text-red-500"
+              />
             </div>
-            
+
             <h1 className="text-2xl font-black text-gray-900 mb-2">
               Something went wrong.
             </h1>
-            
+
             <p className="text-sm text-gray-500 mb-8 max-w-sm mx-auto">
-              We encountered an unexpected issue while loading this section. Please refresh the page to try again, or return to the dashboard.
+              We encountered an unexpected issue while loading this section.
+              Please refresh the page to try again, or return to the dashboard.
             </p>
 
             <div className="flex flex-col gap-3">
@@ -46,7 +51,10 @@ class ErrorBoundary extends React.Component {
                 Reload Application
               </button>
               <button
-                onClick={() => window.location.href = '/'}
+                onClick={() => {
+                  this.setState({ hasError: false });
+                  this.props.navigate("/");
+                }}
                 className="w-full flex justify-center items-center gap-2 py-3 px-4 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 rounded-xl font-bold transition-all"
               >
                 Return to Dashboard
@@ -61,4 +69,7 @@ class ErrorBoundary extends React.Component {
   }
 }
 
-export default ErrorBoundary;
+export default function ErrorBoundaryWrapper(props) {
+  const navigate = useNavigate();
+  return <ErrorBoundary {...props} navigate={navigate} />;
+}
