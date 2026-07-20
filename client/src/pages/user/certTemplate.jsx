@@ -1,7 +1,7 @@
 import { useOutletContext, useSearchParams } from "react-router-dom"; 
 import { useQuery } from "@tanstack/react-query";
 import apiClient from "../../lib/apiClient";
-import { PDFViewer, Document, Page, Text, View, StyleSheet, Image } from "@react-pdf/renderer";
+import { PDFViewer, PDFDownloadLink, Document, Page, Text, View, StyleSheet, Image } from "@react-pdf/renderer";
 
 const styles = StyleSheet.create({
   page: { flexDirection: "column", backgroundColor: "#fcfbf8", padding: 30 },
@@ -70,6 +70,61 @@ export default function CertificateTemplate() {
   const barangayAdminName = "Hon. Juan Dela Cruz"; 
   const systemAdminName = "System Administrator";
 
+  const MyDocument = (
+    <Document>
+       <Page size="A4" orientation="landscape" style={styles.page}>
+        <View style={styles.outerBorder}>
+          <View style={styles.innerBorder}>
+            
+            {/* Fetches the QR image instantly from the web */}
+            <Image style={styles.qrCode} src={qrImageUrl} />
+
+            <Text style={styles.certNumber}>Control No. {certId}</Text>
+            
+            <Text style={styles.headerText}>Republic of the Philippines</Text>
+            <Text style={styles.headerSub}>
+              Municipality of Bacolor, Pampanga{"\n"}
+              Municipal Disaster Risk Reduction and Management Office
+            </Text>
+            <Text style={styles.title}>CERTIFICATE</Text>
+            <Text style={styles.subtitle}>OF COMPLETION</Text>
+            <Text style={styles.certifyText}>This is to officially certify that</Text>
+            <View style={styles.nameContainer}>
+              <Text style={styles.name}>{residentName}</Text>
+            </View>
+            <Text style={styles.nameSubLine}>Authorized Resident</Text>
+            <Text style={styles.description}>
+              has successfully satisfied all academic and practical requirements of the Community Disaster 
+              Learning Management System by completing the <Text style={{ fontWeight: "bold" }}>{certData.module_title}</Text> training module.
+              {"\n\n"}
+              {(certData.module_description?.replace(/<br\s*\/?>/gi, '\n').replace(/<\/(p|div)>/gi, '\n\n').replace(/<[^>]*>?/gm, '').replace(/\n\s*\n\s*\n/g, '\n\n').trim() || "The aforementioned resident has demonstrated comprehensive knowledge and tactical readiness in Disaster Risk Reduction and Management (DRRM) protocols.")}
+            </Text>
+            <Text style={styles.dateText}>Conferred this {dateIssued}.</Text>
+
+            <View style={styles.bottomRow}>
+              <View style={styles.sigBlock}>
+                <Text style={styles.sigName}>{barangayAdminName}</Text>
+                <View style={styles.sigLine}>
+                  <Text style={styles.sigTitle}>Barangay Administrator</Text>
+                </View>
+              </View>
+              <View style={styles.sealPlaceholder}>
+                <Text style={styles.sealText}>Official{"\n"}MDRRMO{"\n"}Seal</Text>
+              </View>
+              <View style={styles.sigBlock}>
+                <Text style={styles.sigName}>{systemAdminName}</Text>
+                <View style={styles.sigLine}>
+                  <Text style={styles.sigTitle}>Platform Verification</Text>
+                </View>
+              </View>
+            </View>
+
+          </View>
+        </View>
+      </Page>
+    </Document>
+  );
+
   return (
     <div className="flex flex-col h-full w-full bg-white p-6 rounded-lg shadow-sm">
       <div className="flex justify-between items-center mb-4">
@@ -77,62 +132,18 @@ export default function CertificateTemplate() {
           <h1 className="text-2xl font-bold text-gray-800 mb-1">{residentName}'s Certification</h1>
           <p className="text-gray-500 text-sm">View and download your official completion certificate below.</p>
         </div>
+        <PDFDownloadLink 
+          document={MyDocument} 
+          fileName={`Certificate-${residentName.replace(/\s+/g, '')}-${certData.module_title.replace(/\s+/g, '')}.pdf`}
+          className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg transition-colors shadow-sm text-sm whitespace-nowrap"
+        >
+          {({ loading, error }) => (error ? 'Error — try again' : loading ? 'Preparing Document...' : 'Download PDF')}
+        </PDFDownloadLink>
       </div>
       
-      <div className="w-full mt-4 border-2 border-gray-200 rounded-xl overflow-hidden shadow-inner">
-        <PDFViewer style={{ width: "100%", height: "800px", border: "none", display: "block" }} showToolbar={false}>
-          <Document>
-             <Page size="A4" orientation="landscape" style={styles.page}>
-              <View style={styles.outerBorder}>
-                <View style={styles.innerBorder}>
-                  
-                  {/* Fetches the QR image instantly from the web */}
-                  <Image style={styles.qrCode} src={qrImageUrl} />
-
-                  <Text style={styles.certNumber}>Control No. {certId}</Text>
-                  
-                  <Text style={styles.headerText}>Republic of the Philippines</Text>
-                  <Text style={styles.headerSub}>
-                    Municipality of Bacolor, Pampanga{"\n"}
-                    Municipal Disaster Risk Reduction and Management Office
-                  </Text>
-                  <Text style={styles.title}>CERTIFICATE</Text>
-                  <Text style={styles.subtitle}>OF COMPLETION</Text>
-                  <Text style={styles.certifyText}>This is to officially certify that</Text>
-                  <View style={styles.nameContainer}>
-                    <Text style={styles.name}>{residentName}</Text>
-                  </View>
-                  <Text style={styles.nameSubLine}>Authorized Resident</Text>
-                  <Text style={styles.description}>
-                    has successfully satisfied all academic and practical requirements of the Community Disaster 
-                    Learning Management System by completing the <Text style={{ fontWeight: "bold" }}>{certData.module_title}</Text> training module.
-                    {"\n\n"}
-                    {(certData.module_description?.replace(/<[^>]*>?/gm, '') || "").trim() || "The aforementioned resident has demonstrated comprehensive knowledge and tactical readiness in Disaster Risk Reduction and Management (DRRM) protocols."}
-                  </Text>
-                  <Text style={styles.dateText}>Conferred this {dateIssued}.</Text>
-
-                  <View style={styles.bottomRow}>
-                    <View style={styles.sigBlock}>
-                      <Text style={styles.sigName}>{barangayAdminName}</Text>
-                      <View style={styles.sigLine}>
-                        <Text style={styles.sigTitle}>Barangay Administrator</Text>
-                      </View>
-                    </View>
-                    <View style={styles.sealPlaceholder}>
-                      <Text style={styles.sealText}>Official{"\n"}MDRRMO{"\n"}Seal</Text>
-                    </View>
-                    <View style={styles.sigBlock}>
-                      <Text style={styles.sigName}>{systemAdminName}</Text>
-                      <View style={styles.sigLine}>
-                        <Text style={styles.sigTitle}>Platform Verification</Text>
-                      </View>
-                    </View>
-                  </View>
-
-                </View>
-              </View>
-            </Page>
-          </Document>
+      <div className="w-full mt-4 border-2 border-gray-200 rounded-xl overflow-hidden shadow-inner flex items-center justify-center bg-gray-50" style={{ height: "65vh", minHeight: "400px" }}>
+        <PDFViewer style={{ width: "100%", height: "100%", border: "none" }} showToolbar={false}>
+          {MyDocument}
         </PDFViewer>
       </div>
     </div>
