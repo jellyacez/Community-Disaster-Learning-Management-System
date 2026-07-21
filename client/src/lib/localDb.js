@@ -3,7 +3,6 @@ import Dexie from 'dexie';
 export const localDb = new Dexie("LMS_OfflineDB");
 
 localDb.version(1).stores({
-    // Only index primary keys and foreign keys used for lookups
     activity_log: "++act_id, user_id",
     certificates: "++cert_id, user_id, module_id",
     module_activity: "modact_id, user_id, mod_id, modstatus, progress",
@@ -12,6 +11,9 @@ localDb.version(1).stores({
     module_steps: "step_id, level_id",
     choices: "choice_id, question_id",
     
-    //Offline sync tracking
+    // FIX: Added ++id as primary key, and composite indexes for fast filtering
+    user_step_progress: "++id, [user_id+step_id], mod_id",
+    results: "++id, [user_id+mod_id], passed",
+
     sync_queue: "++sync_id, action_type, status" 
 });
