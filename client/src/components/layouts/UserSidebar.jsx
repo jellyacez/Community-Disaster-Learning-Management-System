@@ -13,6 +13,7 @@ import {
   Shield01Icon,
   Cancel01Icon,
   Certificate02Icon,
+  Message01Icon,
 } from "@hugeicons/core-free-icons";
 import { useLocation, useNavigate } from "react-router-dom";
 import { authClient } from "../../lib/auth-client";
@@ -44,6 +45,14 @@ const navItems = [
     label: "My Certificates",
     icon: <HugeiconsIcon aria-hidden="true" icon={Certificate02Icon} className="w-5 h-5" />,
   },
+{
+      path: "/user/feedback",
+      label: "Feedback",
+      icon: (
+        <HugeiconsIcon
+          aria-hidden="true" icon={Message01Icon} className="w-5 h-5" />
+      ),
+    },
   {
     path: "/user/profile",
     label: "User Profile",

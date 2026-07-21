@@ -39,7 +39,7 @@ const SystemHealth = lazy(
 const SystemSecurity = lazy(
   () => import("./pages/admin/system/security/SystemSecurity"),
 );
-
+const UserFeedback = lazy(() => import("./pages/user/UserFeedback"));
 const UserDashboard = lazy(() => import("./pages/user/UserDashboard"));
 const UserCertificates = lazy(() => import("./pages/user/UserCertificates"));
 const UserAnnouncements = lazy(() => import("./pages/user/UserAnnouncements"));
@@ -179,11 +179,12 @@ export default function App() {
               <Route path="/userDashboard" element={<UserDashboard />} />
               <Route
                 path="/user/announcements"
-                element={<UserAnnouncements />}
+                element={<UserAnnouncements />}     
               />
               <Route path="/user/modules" element={<UserModuleCatalog />} />
               <Route path="/user/enrolled" element={<UserEnrolledModules />} />
               <Route path="/user/certificates" element={<UserCertificates />} />
+              <Route path="/user/feedback" element={<UserFeedback />} />
               <Route path="/user/profile" element={<UserProfile />} />
               <Route path="/user/settings" element={<UserSettings />} />
               <Route path="/user/modules/:id/details" element={<ModuleDetailsPage />} />
