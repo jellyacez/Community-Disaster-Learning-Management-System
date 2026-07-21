@@ -1,14 +1,10 @@
 // --- START: UserDashboard.jsx ---
 import { useState, useEffect, useCallback } from "react";
-import { useOutletContext, useLocation, useNavigate, Link } from "react-router-dom";
+import { useOutletContext, useLocation, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import apiClient from "../../lib/apiClient";
 import { authClient } from "../../lib/auth-client";
 
-import { HugeiconsIcon } from "@hugeicons/react";
-import {
-  CheckmarkBadge01Icon,
-} from "@hugeicons/core-free-icons";
 import WelcomeModal from "../../components/ui/modals/WelcomeModal.jsx";
 import WelcomeBanner from "../../components/ui/dashboard/WelcomeBanner.jsx";
 import DashboardStats from "../../components/ui/dashboard/DashboardStats.jsx";
@@ -29,13 +25,10 @@ export default function UserDashboard() {
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
   const { data: session } = authClient.useSession();
 
-  const {
-    data: dashboardData,
-    isLoading: loading,
-  } = useQuery({
+  const { data: dashboardData, isLoading: loading } = useQuery({
     queryKey: ["userDashboard"],
     queryFn: async () => {
-      const response = await apiClient.get('/user/dashboard');
+      const response = await apiClient.get("/user/dashboard");
       // Return raw response.data to handle both old and new backend shapes gracefully
       return response.data;
     },
@@ -45,12 +38,12 @@ export default function UserDashboard() {
     },
   });
 
-  // Defensively handle React Query HMR cache poisoning 
+  // Defensively handle React Query HMR cache poisoning
   // (where the old { success, data } object might still be cached)
-  const rawData = dashboardData?.enrolledModules 
-    ? dashboardData 
-    : dashboardData?.data?.enrolledModules 
-      ? dashboardData.data 
+  const rawData = dashboardData?.enrolledModules
+    ? dashboardData
+    : dashboardData?.data?.enrolledModules
+      ? dashboardData.data
       : {};
 
   const displayData = {
@@ -69,7 +62,8 @@ export default function UserDashboard() {
     }
 
     if (session?.user?.createdAt) {
-      const accountAgeMs = Date.now() - new Date(session.user.createdAt).getTime();
+      const accountAgeMs =
+        Date.now() - new Date(session.user.createdAt).getTime();
       const isNewAccount = accountAgeMs < 60000;
       const hasSeenWelcome = sessionStorage.getItem("hasSeenWelcome");
 
@@ -110,20 +104,20 @@ export default function UserDashboard() {
         <DashboardStats displayData={displayData} loading={loading} />
 
         <section className="grid gap-6 lg:grid-cols-3">
-          <DashboardEnrolledList 
-            displayData={displayData} 
-            loading={loading} 
-            navigate={navigate} 
-            handleResume={handleResume} 
+          <DashboardEnrolledList
+            displayData={displayData}
+            loading={loading}
+            navigate={navigate}
+            handleResume={handleResume}
           />
 
           <div className="space-y-6 sticky top-24 self-start">
-            <DashboardAnnouncementsList 
-              displayData={displayData} 
-              loading={loading} 
-              navigate={navigate} 
+            <DashboardAnnouncementsList
+              displayData={displayData}
+              loading={loading}
+              navigate={navigate}
             />
-            
+
             <DashboardEmergencyContacts />
           </div>
         </section>

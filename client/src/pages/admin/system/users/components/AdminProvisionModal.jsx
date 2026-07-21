@@ -82,21 +82,15 @@ export default function AdminProvisionModal({ onClose }) {
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-5 overflow-y-auto">
-          <AdminBasicInfoFields 
-            formData={formData} 
-            setFormData={setFormData} 
-          />
+          <AdminBasicInfoFields formData={formData} setFormData={setFormData} />
 
-          <AdminRoleSelection 
-            formData={formData} 
-            setFormData={setFormData} 
-          />
+          <AdminRoleSelection formData={formData} setFormData={setFormData} />
 
-          <AdminPasswordStrategy 
-            formData={formData} 
-            setFormData={setFormData} 
-            showAutoGenerate={showAutoGenerate} 
-            setShowAutoGenerate={setShowAutoGenerate} 
+          <AdminPasswordStrategy
+            formData={formData}
+            setFormData={setFormData}
+            showAutoGenerate={showAutoGenerate}
+            setShowAutoGenerate={setShowAutoGenerate}
           />
 
           {/* Actions */}
