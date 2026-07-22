@@ -75,6 +75,7 @@ export function useModuleViewer(moduleId) {
 
   // Step completion mutation
   const completeStepMutation = useMutation({
+    networkMode: 'always',
     mutationFn: async ({ stepId, answers }) => {
       if (!userId) {
         throw new Error("User session is not fully loaded. Please wait a moment and try again.");
@@ -95,8 +96,11 @@ export function useModuleViewer(moduleId) {
         const response = await apiClient.post(endpoint, { answers });
         return response.data;
       } catch (error) {
-        // Handle actual network failures only, NOT 503 or other HTTP statuses
-        if (error.message?.includes('Network Error')) {
+        // Handle actual network failures (!error.response) OR the Service Worker's synthetic offline 503 response
+        const isNetworkFailure = !error.response;
+        const isServiceWorkerOffline = error.response?.status === 503 && error.response?.data?.error === 'Network Error / Offline';
+        
+        if (isNetworkFailure || isServiceWorkerOffline) {
           await enqueueWrite({
             endpoint,
             method: 'POST',
