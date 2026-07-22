@@ -3,10 +3,14 @@ import { useQuery, useQueries, useMutation, useQueryClient } from "@tanstack/rea
 import { useNavigate } from "react-router-dom";
 import apiClient from "../lib/apiClient";
 import toast from "react-hot-toast";
+import { enqueueWrite } from "../lib/OfflineQueue";
+import { authClient } from "../lib/auth-client";
 
 export function useModuleViewer(moduleId) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { data: session } = authClient.useSession();
+  const userId = session?.user?.id;
 
   const [activeStepId, setActiveStepId] = useState(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -72,10 +76,54 @@ export function useModuleViewer(moduleId) {
   // Step completion mutation
   const completeStepMutation = useMutation({
     mutationFn: async ({ stepId, answers }) => {
-      const response = await apiClient.post(`/modules/${moduleId}/steps/${stepId}/complete`, { answers });
-      return response.data;
+      if (!userId) {
+        throw new Error("User session is not fully loaded. Please wait a moment and try again.");
+      }
+      const endpoint = `/modules/${moduleId}/steps/${stepId}/complete`;
+      
+      if (!navigator.onLine) {
+        await enqueueWrite({
+          endpoint,
+          method: 'POST',
+          payload: { answers },
+          user_id: userId
+        });
+        return { queuedOffline: true, message: "You are offline. Progress saved locally and will sync when reconnected." };
+      }
+
+      try {
+        const response = await apiClient.post(endpoint, { answers });
+        return response.data;
+      } catch (error) {
+        // Handle actual network failures only, NOT 503 or other HTTP statuses
+        if (error.message?.includes('Network Error')) {
+          await enqueueWrite({
+            endpoint,
+            method: 'POST',
+            payload: { answers },
+            user_id: userId
+          });
+          return { queuedOffline: true, message: "Connection lost. Progress saved locally and will sync when reconnected." };
+        }
+        throw error;
+      }
     },
     onSuccess: (responseData) => {
+      if (responseData.queuedOffline) {
+        toast.success(responseData.message, { icon: '📦', duration: 4000 });
+        if (activeStep) {
+          const currentIndex = allSteps.findIndex(s => s.id === activeStep.id);
+          const nextStep = allSteps[currentIndex + 1];
+          if (nextStep) {
+              setActiveStepId(nextStep.id);
+          } else {
+              toast.success("You have reached the end of the module offline.");
+              navigate("/userDashboard");
+          }
+        }
+        return;
+      }
+
       queryClient.invalidateQueries(['moduleViewer', moduleId]);
       queryClient.invalidateQueries(['userDashboard']);
       
