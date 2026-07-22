@@ -16,14 +16,23 @@ const EnrolledModuleCard = memo(function EnrolledModuleCard({ module, onResume }
     <div className="rounded-2xl border border-gray-200 p-4 hover:border-red-200 hover:shadow-md transition-all duration-300 cursor-pointer bg-white group flex flex-col sm:flex-row gap-5">
       {/* Thumbnail */}
       <div className="hidden sm:block w-28 h-full shrink-0 overflow-hidden rounded-xl bg-gray-100 relative min-h-[130px]">
-        <img 
-          loading="lazy"
-          src={module.image_url || "https://placehold.co/600x400/f3f4f6/9ca3af?text=No+Image+Available"} 
-          alt={module.title} 
-          referrerPolicy="no-referrer"
-          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 absolute inset-0"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+        {module.image_url ? (
+          <img 
+            loading="lazy"
+            src={module.image_url} 
+            alt={module.title} 
+            referrerPolicy="no-referrer"
+            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 absolute inset-0"
+          />
+        ) : (
+          <div className="w-full h-full absolute inset-0 flex flex-col items-center justify-center transition-transform duration-700 group-hover:scale-110 text-gray-400">
+            <HugeiconsIcon icon={getCategoryIcon(module.category)} className="w-10 h-10 mb-1.5 opacity-40" />
+            <span className="text-[9px] font-bold uppercase tracking-widest opacity-50">
+              No Cover
+            </span>
+          </div>
+        )}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
       </div>
 
       <div className="flex-1 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
