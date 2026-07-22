@@ -17,6 +17,7 @@ db.version(1).stores({
  * @param {string} [payload.user_id] User ID (optional, defaults to anonymous)
  */
 export const enqueueWrite = async (payload) => {
+  console.log("ENQUEUE WRITE CALLED!", payload);
   return await db.writeQueue.add({
     endpoint: payload.endpoint,
     method: payload.method,
