@@ -106,3 +106,102 @@ self.addEventListener('activate', (event) => {
     })
   );
 });
+
+self.addEventListener('sync', (event) => {
+  if (event.tag === 'sync-write-queue') {
+    event.waitUntil(replayWriteQueue());
+  }
+});
+
+async function replayWriteQueue() {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open("BacolorLMSOfflineDB");
+    
+    request.onerror = (event) => {
+      console.error("SW: Failed to open IndexedDB", event.target.error);
+      reject(event.target.error);
+    };
+    
+    request.onsuccess = async (event) => {
+      const db = event.target.result;
+      
+      if (!db.objectStoreNames.contains('writeQueue')) {
+        db.close();
+        return resolve();
+      }
+
+      const tx = db.transaction(['writeQueue'], 'readwrite');
+      const store = tx.objectStore('writeQueue');
+      const getAllReq = store.getAll();
+
+      getAllReq.onsuccess = async () => {
+        const items = getAllReq.result.filter(item => item.status === 'pending');
+        
+        for (const item of items) {
+          try {
+            const res = await fetch('http://localhost:5000/api' + item.endpoint, {
+              method: item.method,
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify(item.payload),
+              credentials: 'include'
+            });
+
+            if (res.ok) {
+              await new Promise((resDel, rejDel) => {
+                const delTx = db.transaction(['writeQueue'], 'readwrite');
+                const delReq = delTx.objectStore('writeQueue').delete(item.id);
+                delReq.onsuccess = () => resDel();
+                delReq.onerror = () => rejDel();
+              });
+            } else if (res.status === 401) {
+              console.error("SW: Replay failed with 401 Unauthorized. Session likely expired.");
+              await markItemFailed(db, item);
+            } else {
+              await incrementRetryOrFail(db, item);
+            }
+          } catch (err) {
+            await incrementRetryOrFail(db, item);
+          }
+        }
+        db.close();
+        resolve();
+      };
+      
+      getAllReq.onerror = () => {
+        db.close();
+        reject();
+      };
+    };
+  });
+}
+
+function incrementRetryOrFail(db, item) {
+  return new Promise((resolve) => {
+    const tx = db.transaction(['writeQueue'], 'readwrite');
+    const store = tx.objectStore('writeQueue');
+    item.retry_count = (item.retry_count || 0) + 1;
+    if (item.retry_count >= 3) {
+      item.status = 'failed';
+    }
+    const putReq = store.put(item);
+    putReq.onsuccess = () => resolve();
+    putReq.onerror = () => resolve();
+  });
+}
+
+function markItemFailed(db, item) {
+  return new Promise((resolve) => {
+    const tx = db.transaction(['writeQueue'], 'readwrite');
+    const store = tx.objectStore('writeQueue');
+    item.status = 'failed';
+    const putReq = store.put(item);
+    putReq.onsuccess = () => resolve();
+    putReq.onerror = () => resolve();
+  });
+}
+// Force a console log to prove SW is executing
+self.addEventListener('sync', (event) => {
+  console.log("SW: SYNC EVENT FIRED FOR TAG: " + event.tag);
+});

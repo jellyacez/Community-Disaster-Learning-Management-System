@@ -89,6 +89,14 @@ export function useModuleViewer(moduleId) {
           payload: { answers },
           user_id: userId
         });
+        try {
+          if ('serviceWorker' in navigator && 'SyncManager' in window) {
+            const registration = await navigator.serviceWorker.ready;
+            await registration.sync.register('sync-write-queue');
+          }
+        } catch (err) {
+          console.log("Background sync registration failed or unsupported:", err);
+        }
         return { queuedOffline: true, message: "You are offline. Progress saved locally and will sync when reconnected." };
       }
 
@@ -107,6 +115,14 @@ export function useModuleViewer(moduleId) {
             payload: { answers },
             user_id: userId
           });
+          try {
+            if ('serviceWorker' in navigator && 'SyncManager' in window) {
+              const registration = await navigator.serviceWorker.ready;
+              await registration.sync.register('sync-write-queue');
+            }
+          } catch (err) {
+            console.log("Background sync registration failed or unsupported:", err);
+          }
           return { queuedOffline: true, message: "Connection lost. Progress saved locally and will sync when reconnected." };
         }
         throw error;
