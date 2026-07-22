@@ -66,7 +66,12 @@ export default function UserModuleCatalog() {
             <h1 className="text-3xl font-extrabold text-gray-900">Module Catalog</h1>
             <p className="mt-1 text-sm text-gray-600">Explore training modules and enroll when ready.</p>
           </div>
-          <SearchBar value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Search modules..." />
+          <SearchBar
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search modules..."
+            containerClassName="relative w-full md:w-72"
+          />
         </div>
 
         {isLoading ? (

@@ -92,6 +92,7 @@ export default function UserEnrolledModules() {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Search your enrolled modules..."
+              containerClassName="relative w-full md:w-72"
             />
           )}
         </div>
