@@ -3,6 +3,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { authClient } from "../../../lib/auth-client";
 import toast from "react-hot-toast";
 import { compressImage } from "../../../utils/imageUtils";
+import { saveOfflineAvatarChange } from "../../../lib/LocalSave/progressService";
 
 export default function ProfileAvatar({ currentUser, userInitials }) {
   const queryClient = useQueryClient();
@@ -21,17 +22,36 @@ export default function ProfileAvatar({ currentUser, userInitials }) {
     try {
       const compressedBase64 = await compressImage(file, 150, 0.7);
 
+
+      if (!navigator.onLine) {
+        await saveOfflineAvatarChange(currentUser.id, compressedBase64);
+        toast.success("Offline: Profile picture saved locally.");
+
+        // Force TanStack Query to refresh the UI with the local Dexie data
+        queryClient.invalidateQueries({ queryKey: ["userDashboard"] });
+        return;
+      }
+
+      // 3. Online Execution: Send to backend
       const { error } = await authClient.updateUser({
         image: compressedBase64
       });
 
       if (error) {
-        toast.error(error.message || "Failed to update profile picture.");
+        // Fallback in case of mid-upload network drop
+        if (error.message?.includes('network') || error.code === 'ERR_NETWORK') {
+          await saveOfflineAvatarChange(currentUser.id, compressedBase64);
+          toast.success("Network dropped. Saved locally instead.");
+          queryClient.invalidateQueries({ queryKey: ["userDashboard"] });
+        } else {
+          toast.error(error.message || "Failed to update profile picture.");
+        }
       } else {
-        toast.success("Profile picture updated!");
+        toast.success("Profile picture updated successfully!");
         queryClient.invalidateQueries({ queryKey: ["userDashboard"] });
         queryClient.invalidateQueries({ queryKey: ["session"] });
       }
+
     } catch (err) {
       toast.error(err.message || "Failed to process image.");
     } finally {

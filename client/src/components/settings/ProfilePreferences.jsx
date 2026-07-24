@@ -2,7 +2,9 @@ import { useState, useEffect } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { UserCircle02Icon, Mail01Icon } from "@hugeicons/core-free-icons";
 import { authClient } from "../../lib/auth-client";
+import { saveOfflineUserName } from "../../lib/LocalSave/progressService";
 import toast from "react-hot-toast";
+
 
 export default function ProfilePreferences({ currentUser }) {
   const [name, setName] = useState("");
@@ -23,6 +25,12 @@ export default function ProfilePreferences({ currentUser }) {
     }
 
     setIsUpdating(true);
+
+    if (!navigator.onLine) {
+      await saveOfflineUserName(currentUser.id, name);
+      toast.success("Profile Updated Locally!");
+    }
+
     const { error } = await authClient.updateUser({ name });
     setIsUpdating(false);
 
@@ -85,7 +93,7 @@ export default function ProfilePreferences({ currentUser }) {
       <div className="flex flex-col md:flex-row gap-8 md:gap-16">
         <div className="md:w-1/3 shrink-0"></div>
         <div className="md:w-2/3 max-w-md flex justify-end">
-          <button 
+          <button
             onClick={handleUpdateProfile}
             disabled={isUpdating}
             className={`flex items-center justify-center rounded-xl px-6 py-2.5 text-sm font-bold text-white transition-colors active:scale-95 ${

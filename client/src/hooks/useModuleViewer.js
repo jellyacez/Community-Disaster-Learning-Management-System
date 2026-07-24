@@ -3,9 +3,8 @@ import { useQuery, useQueries, useMutation, useQueryClient } from "@tanstack/rea
 import { useNavigate } from "react-router-dom";
 import apiClient from "../lib/apiClient";
 import toast from "react-hot-toast";
-import { enqueueWrite } from "../lib/OfflineQueue";
 import { authClient } from "../lib/auth-client";
-
+import { saveOfflineStepProgress, saveOfflineResult, recalculateModuleProgress } from '../lib/LocalSave/progressService';
 export function useModuleViewer(moduleId) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -32,7 +31,7 @@ export function useModuleViewer(moduleId) {
   const enhancedLevels = useMemo(() => {
     const levels = data?.levels || [];
     const passedLevelIds = data?.passedLevelIds || [];
-    
+
     return levels.map((lvl, index) => {
        const previousLvl = index > 0 ? levels[index - 1] : null;
        const isUnlocked = lvl.level_order === 1 || !lvl.is_locked_by_default || (previousLvl && passedLevelIds.includes(previousLvl.id));
@@ -61,7 +60,7 @@ export function useModuleViewer(moduleId) {
         return { stepId: step.id, questions: res.data.data };
       },
       enabled: step.id === activeStepId && isAssessmentStepType(step.type),
-      staleTime: Infinity, 
+      staleTime: Infinity,
     }))
   });
 
@@ -75,78 +74,74 @@ export function useModuleViewer(moduleId) {
 
   // Step completion mutation
   const completeStepMutation = useMutation({
-    networkMode: 'always',
-    mutationFn: async ({ stepId, answers }) => {
-      if (!userId) {
-        throw new Error("User session is not fully loaded. Please wait a moment and try again.");
-      }
-      const endpoint = `/modules/${moduleId}/steps/${stepId}/complete`;
-      
-      if (!navigator.onLine) {
-        await enqueueWrite({
-          endpoint,
-          method: 'POST',
-          payload: { answers },
-          user_id: userId
-        });
-        try {
-          if ('serviceWorker' in navigator && 'SyncManager' in window) {
-            const registration = await navigator.serviceWorker.ready;
-            await registration.sync.register('sync-write-queue');
-          }
-        } catch (err) {
-          console.log("Background sync registration failed or unsupported:", err);
+      networkMode: 'always',
+      mutationFn: async ({ stepId, answers }) => {
+        if (!userId) {
+          throw new Error("User session is not fully loaded. Please wait a moment and try again.");
         }
-        return { queuedOffline: true, message: "You are offline. Progress saved locally and will sync when reconnected." };
-      }
 
-      try {
-        const response = await apiClient.post(endpoint, { answers });
-        return response.data;
-      } catch (error) {
-        // Handle actual network failures (!error.response) OR the Service Worker's synthetic offline 503 response
-        const isNetworkFailure = !error.response;
-        const isServiceWorkerOffline = error.response?.status === 503 && error.response?.data?.error === 'Network Error / Offline';
-        
-        if (isNetworkFailure || isServiceWorkerOffline) {
-          await enqueueWrite({
-            endpoint,
-            method: 'POST',
-            payload: { answers },
-            user_id: userId
-          });
-          try {
-            if ('serviceWorker' in navigator && 'SyncManager' in window) {
-              const registration = await navigator.serviceWorker.ready;
-              await registration.sync.register('sync-write-queue');
-            }
-          } catch (err) {
-            console.log("Background sync registration failed or unsupported:", err);
-          }
-          return { queuedOffline: true, message: "Connection lost. Progress saved locally and will sync when reconnected." };
-        }
-        throw error;
-      }
-    },
-    onSuccess: (responseData) => {
-      if (responseData.queuedOffline) {
-        toast.success(responseData.message, { icon: '📦', duration: 4000 });
-        if (activeStep) {
-          const currentIndex = allSteps.findIndex(s => s.id === activeStep.id);
-          const nextStep = allSteps[currentIndex + 1];
-          if (nextStep) {
-              setActiveStepId(nextStep.id);
+        const endpoint = `/modules/${moduleId}/steps/${stepId}/complete`;
+        const isQuiz = answers && Array.isArray(answers);
+
+        // 1. OFFLINE HANDLING
+        if (!navigator.onLine) {
+
+          if (isQuiz) {
+
+            await saveOfflineResult(moduleId, userId, true, answers);
+            await recalculateModuleProgress(moduleId, userId);
           } else {
-              toast.success("You have reached the end of the module offline.");
-              navigate("/userDashboard");
+            await saveOfflineStepProgress(moduleId, stepId, userId);
           }
+
+          return { queuedOffline: true, message: "You are offline. Progress saved locally and will sync when reconnected." };
         }
-        return;
-      }
+
+        // 2. ONLINE HANDLING
+        try {
+          const response = await apiClient.post(endpoint, { answers });
+          return response.data;
+        } catch (error) {
+          const isNetworkFailure = !error.response;
+          const isServiceWorkerOffline = error.response?.status === 503 && error.response?.data?.error === 'Network Error / Offline';
+
+          if (isNetworkFailure || isServiceWorkerOffline) {
+
+            if (isQuiz) {
+              await saveOfflineResult(moduleId, userId, true, answers);
+              await recalculateModuleProgress(moduleId, userId);
+            } else {
+              await saveOfflineStepProgress(moduleId, stepId, userId);
+            }
+            return { queuedOffline: true, message: "Connection lost. Progress saved locally and will sync when reconnected." };
+          }
+          throw error;
+        }
+      },
+      onSuccess: (responseData) => {
+
+        if (responseData.queuedOffline) {
+          toast.success(responseData.message, { icon: '📦', duration: 4000 });
+
+          queryClient.invalidateQueries(['moduleViewer', moduleId]);
+          queryClient.invalidateQueries(['userDashboard']);
+
+          if (activeStep) {
+            const currentIndex = allSteps.findIndex(s => s.id === activeStep.id);
+            const nextStep = allSteps[currentIndex + 1];
+            if (nextStep) {
+                setActiveStepId(nextStep.id);
+            } else {
+                toast.success("You have reached the end of the module offline.");
+                navigate("/userDashboard");
+            }
+          }
+          return;
+        }
 
       queryClient.invalidateQueries(['moduleViewer', moduleId]);
       queryClient.invalidateQueries(['userDashboard']);
-      
+
       if (responseData.passed === false) {
           setLoopBackData({
               message: responseData.message,
@@ -193,7 +188,7 @@ export function useModuleViewer(moduleId) {
     const currentIndex = allSteps.findIndex(s => s.id === step.id);
     const previousStep = allSteps[currentIndex - 1];
     const isNextAvailable = !previousStep || completedStepIds.includes(previousStep.id);
-    
+
     const parentLevel = enhancedLevels.find(l => l.id === step.level_id);
 
     if (parentLevel?.isUnlocked && (isCompleted || isNextAvailable)) {
@@ -206,7 +201,7 @@ export function useModuleViewer(moduleId) {
 
   const handleCompleteAndContinue = (answers = null) => {
     if (!activeStep || completeStepMutation.isPending) return;
-    
+
     // Only send answers if they were provided (e.g. from quiz)
     completeStepMutation.mutate({ stepId: activeStep.id, answers });
   };

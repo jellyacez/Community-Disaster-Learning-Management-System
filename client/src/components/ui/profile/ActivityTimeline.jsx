@@ -5,7 +5,7 @@ import { Activity01Icon } from "@hugeicons/core-free-icons";
 export default function ActivityTimeline({ enrolledModules }) {
   const activities = useMemo(() => {
     if (!enrolledModules || enrolledModules.length === 0) return [];
-    
+
     let logs = [];
     // Map enrolled modules to state-based activity logic
     enrolledModules.forEach(m => {
@@ -17,7 +17,7 @@ export default function ActivityTimeline({ enrolledModules }) {
         logs.push({ title: `Enrolled in ${m.title}`, status: 'Status: Enrolled', color: 'bg-gray-400' });
       }
     });
-    
+
     // Sort logic conceptually puts completed items at top
     logs.sort((a, b) => {
       if (a.status === 'Status: Completed' && b.status !== 'Status: Completed') return -1;
@@ -31,12 +31,12 @@ export default function ActivityTimeline({ enrolledModules }) {
   return (
     <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm h-full flex flex-col">
       <h2 className="text-xl font-bold text-gray-900 mb-6">Recent Activity</h2>
-      
+
       {activities.length > 0 ? (
         <div className="relative border-l-2 border-gray-100 ml-3 space-y-8 flex-1">
           {activities.map((act, idx) => (
             <article key={idx} className="relative pl-6">
-              <span className={`absolute -left-[9px] top-1 h-4 w-4 rounded-full ring-4 ring-white ${act.color}`}></span>
+              <span className={`absolute-left-[9px] top-1 h-4 w-4 rounded-full ring-4 ring-white ${act.color}`}></span>
               <p className="text-sm font-semibold text-gray-900">{act.title}</p>
               <p className="text-xs text-gray-500 font-medium mt-0.5">{act.status}</p>
             </article>

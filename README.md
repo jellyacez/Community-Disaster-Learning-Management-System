@@ -53,6 +53,8 @@ A progressive, multi-level web application designed to train and certify residen
 - `@react-pdf/renderer` (4.5.1)
 - `node-cron` (3.0.3)
 - `nodemon` (3.1.14) - _dev_
+- `dexi` (4.4.4)
+-  `dexie-react-hooks`: (4.4.0)
 
 ### Client Dependencies
 

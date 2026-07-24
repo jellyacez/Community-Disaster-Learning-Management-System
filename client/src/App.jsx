@@ -2,7 +2,7 @@ import { lazy, Suspense } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 import ErrorBoundary from "./components/ErrorBoundary";
-
+import useNetworkSync from "./hooks/useNetworkSync";
 const LandingPage = lazy(() => import("./pages/public/LandingPage"));
 const PrivacyPolicyPage = lazy(() => import("./pages/public/PrivacyPolicyPage"));
 const RegisterPage = lazy(() => import("./pages/auth/RegisterPage"));
@@ -105,8 +105,11 @@ import GlobalBroadcastBanner from "./components/ui/GlobalBroadcastBanner";
 const VerifyCertificate = lazy(() => import("./pages/public/VerifyCertificate"));
 
 export default function App() {
+     useNetworkSync();
   return (
-    <ErrorBoundary>
+
+
+  <ErrorBoundary>
       <ScrollToTop />
       <GlobalBroadcastBanner />
       <Toaster
@@ -179,7 +182,7 @@ export default function App() {
               <Route path="/userDashboard" element={<UserDashboard />} />
               <Route
                 path="/user/announcements"
-                element={<UserAnnouncements />}     
+                element={<UserAnnouncements />}
               />
               <Route path="/user/modules" element={<UserModuleCatalog />} />
               <Route path="/user/enrolled" element={<UserEnrolledModules />} />

@@ -10,7 +10,7 @@ db.version(1).stores({
 
 /**
  * Enqueue a failed write request
- * @param {Object} payload 
+ * @param {Object} payload
  * @param {string} payload.endpoint API path
  * @param {string} payload.method POST/PUT
  * @param {Object} payload.payload The request body
@@ -30,7 +30,7 @@ export const enqueueWrite = async (payload) => {
 
 /**
  * Remove an item from the queue
- * @param {number} id 
+ * @param {number} id
  */
 export const dequeueWrite = async (id) => {
   return await db.writeQueue.delete(id);

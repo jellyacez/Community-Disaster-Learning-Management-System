@@ -2,9 +2,14 @@ import { useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import apiClient from "../../../lib/apiClient";
+import { saveOfflineNotification } from "../../../lib/LocalSave/progressService";
+import { authClient } from "../../../lib/auth-client";
 
 export function useNotificationPreferences() {
   const queryClient = useQueryClient();
+
+  const { data: session } = authClient.useSession();
+  const userId = session?.user?.id;
 
   const { data: settings, isLoading } = useQuery({
     queryKey: ["userSettings"],
@@ -18,9 +23,25 @@ export function useNotificationPreferences() {
 
   const mutation = useMutation({
     mutationFn: async (newSettings) => {
-      const response = await apiClient.put("/users/me/settings", newSettings);
-      return response.data.settings;
+
+      if (!userId) throw new Error("User not authenticated");
+
+      if (!navigator.onLine) {
+        await saveOfflineNotification(userId, newSettings);
+        return newSettings;
+      }
+
+      try {
+        const response = await apiClient.put("/users/me/settings", newSettings);
+        return response.data.settings;
+      } catch (error) {
+        if (!error.response || error.code === "ERR_NETWORK") {
+          await saveOfflineNotification(userId, newSettings);
+          return newSettings
+        } throw error;
+      }
     },
+
     onMutate: async (newSettings) => {
       // Optimistic update
       await queryClient.cancelQueries({ queryKey: ["userSettings"] });
@@ -43,6 +64,7 @@ export function useNotificationPreferences() {
       [key]: value,
     });
   }, [mutation, settings]);
+
 
   return {
     settings,

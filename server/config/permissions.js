@@ -22,6 +22,15 @@ const ROLE_PERMISSIONS = {
     'view_users',
     'revoke_certificates'
   ],
+  head_mdrrmo_admin: [
+    'approve_modules',
+    'provision_admins',
+    'view_system_stats',
+    'view_activity_logs',
+    'manage_modules',
+    'view_users',
+    'revoke_certificates'
+  ],
   barangay_admin: [
     'ban_users',
     'archive_users',
@@ -37,9 +46,9 @@ const UNSCOPED_ACCESS_ROLES = ["system_admin", "mdrrmo_admin"];
 // Keep in sync with client/src/constants/roles.js ADMIN_ROLES
 const ADMIN_ROLES = ["system_admin", "mdrrmo_admin", "barangay_admin"];
 
-module.exports = { 
-  ROLE_PERMISSIONS, 
-  MFA_REQUIRED_ROLES, 
+module.exports = {
+  ROLE_PERMISSIONS,
+  MFA_REQUIRED_ROLES,
   UNSCOPED_ACCESS_ROLES,
   ADMIN_ROLES
 };
