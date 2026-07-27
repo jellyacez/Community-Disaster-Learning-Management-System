@@ -16,6 +16,7 @@ const ipBlocklistController = require("../../controllers/admin/ipBlocklistContro
 const infrastructureController = require("../../controllers/admin/infrastructureController");
 const alertController = require("../../controllers/admin/alertController");
 const moduleController = require("../../controllers/modules/moduleController");
+const mdrrmoOverviewController = require("../../controllers/admin/mdrrmoOverviewController");
 const certificateManagementController = require("../../controllers/admin/certificateManagement");
 const { adminDataLimiter, adminWriteLimiter } = require("../../middleware/rateLimiters");
 
@@ -154,5 +155,29 @@ router.get("/health", requireRole(ADMIN_ROLES), requirePermission('view_system_s
 // @access  Private (system_admin only)
 router.get("/infrastructure/backup", requireRole(ADMIN_ROLES), requirePermission('manage_security'), infrastructureController.downloadDatabaseBackup);
 router.get("/infrastructure/logs", requireRole(ADMIN_ROLES), requirePermission('manage_security'), infrastructureController.downloadServerLogs);
+
+// ==========================================
+// MDRRMO Admin Dashboards (also accessible by System Admin)
+// ==========================================
+
+// @route   GET /api/admin/mdrrmo/metrics
+// @desc    Get MDRRMO dashboard metrics
+// @access  Private (mdrrmo_admin, system_admin)
+router.get("/mdrrmo/metrics", requireRole(ADMIN_ROLES), adminDataLimiter, mdrrmoOverviewController.getMetrics);
+
+// @route   GET /api/admin/mdrrmo/module-distribution
+// @desc    Get module distribution by category
+// @access  Private (mdrrmo_admin, system_admin)
+router.get("/mdrrmo/module-distribution", requireRole(ADMIN_ROLES), adminDataLimiter, mdrrmoOverviewController.getModuleDistribution);
+
+// @route   GET /api/admin/mdrrmo/enrollment-trend
+// @desc    Get 7-day enrollment trend
+// @access  Private (mdrrmo_admin, system_admin)
+router.get("/mdrrmo/enrollment-trend", requireRole(ADMIN_ROLES), adminDataLimiter, mdrrmoOverviewController.getEnrollmentTrend);
+
+// @route   GET /api/admin/mdrrmo/recent-activity
+// @desc    Get recent activity logs
+// @access  Private (mdrrmo_admin, system_admin)
+router.get("/mdrrmo/recent-activity", requireRole(ADMIN_ROLES), adminDataLimiter, mdrrmoOverviewController.getRecentActivity);
 
 module.exports = router;

@@ -6,7 +6,7 @@ export function useModuleForm() {
     title: "", 
     description: "", 
     level: "Level 1",
-    category: "General Safety / Protocols",
+    category: "General",
     duration: "15 mins",
     image_url: ""
   });

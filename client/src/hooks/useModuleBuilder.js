@@ -50,7 +50,7 @@ export function useModuleBuilder() {
 
   const resetForm = () => {
     setEditingModuleId(null);
-    setModuleForm({ title: "", category: "General Safety / Protocols", level: "Level 1", duration: "15 mins", description: "", image_url: "" });
+    setModuleForm({ title: "", category: "General", level: "Level 1", duration: "15 mins", description: "", image_url: "" });
     setStagedLevels([{ levelOrder: 1, levelTitle: "", levelDescription: "", passing_threshold: 80, is_locked_by_default: false }]);
     setActiveLevelOrder(1);
     setStagedFlows([]);

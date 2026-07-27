@@ -17,23 +17,23 @@ import {
 const CustomTooltip = ({ active, payload }) => {
   if (active && payload && payload.length) {
     return (
-      <div className="bg-white/80 backdrop-blur-md border border-white/50 shadow-xl rounded-xl p-3 px-4">
+      <div className="bg-white/90 backdrop-blur-md border border-gray-100 shadow-xl rounded-xl p-3 px-4">
         <p className="text-sm font-bold text-gray-900">{payload[0].name}</p>
-        <p className="text-xs font-semibold text-gray-600 mt-1">Count: {payload[0].value}</p>
+        <p className="text-xs font-semibold text-gray-600 mt-1">Modules: {payload[0].value}</p>
       </div>
     );
   }
   return null;
 };
 
-const TrafficTooltip = ({ active, payload, label }) => {
+const TrendTooltip = ({ active, payload, label }) => {
   if (active && payload && payload.length) {
     return (
-      <div className="bg-gray-900/90 backdrop-blur-md shadow-xl rounded-xl p-3 px-4 border border-gray-700/50">
-        <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest">{label}</p>
+      <div className="bg-red-900/90 backdrop-blur-md shadow-xl rounded-xl p-3 px-4 border border-red-800/50">
+        <p className="text-xs font-semibold text-red-200 uppercase tracking-widest">{label}</p>
         <p className="text-sm font-bold text-white mt-1">
           <span className="text-red-400 mr-2">●</span>
-          {payload[0].value} Active Users
+          {payload[0].value} Enrollments
         </p>
       </div>
     );
@@ -41,44 +41,59 @@ const TrafficTooltip = ({ active, payload, label }) => {
   return null;
 };
 
-export default function SystemCharts({ stats }) {
-  const { data: trafficData } = useQuery({
-    queryKey: ["trafficAnalytics"],
+export default function MdrrmoCharts() {
+  const { data: distributionData, isLoading: distLoading } = useQuery({
+    queryKey: ["mdrrmoModuleDistribution"],
     queryFn: async () => {
-      const res = await apiClient.get("/admin/analytics/traffic");
+      const res = await apiClient.get("/admin/mdrrmo/module-distribution");
       return res.data.data;
     },
     refetchInterval: 60000,
   });
 
-  if (!stats) return null;
+  const { data: trendData, isLoading: trendLoading } = useQuery({
+    queryKey: ["mdrrmoEnrollmentTrend"],
+    queryFn: async () => {
+      const res = await apiClient.get("/admin/mdrrmo/enrollment-trend");
+      return res.data.data;
+    },
+    refetchInterval: 60000,
+  });
 
-  // Premium Gradient Palette
-  const pieData = [
-    { name: "Residents", value: Number(stats.resident_users || 0), gradientId: "gradResident", color1: "#cbd5e1", color2: "#94a3b8", dotColor: "#94a3b8" }, 
-    { name: "Barangay Admins", value: Number(stats.barangay_admin_users || 0), gradientId: "gradBrgy", color1: "#2dd4bf", color2: "#0f766e", dotColor: "#14b8a6" }, 
-    { name: "Mdrrmo Admins", value: Number(stats.mdrrmo_admin_users || 0), gradientId: "gradMdrrmo", color1: "#60a5fa", color2: "#1d4ed8", dotColor: "#3b82f6" }, 
-    { name: "System Admins", value: Number(stats.system_admin_users || 0), gradientId: "gradSys", color1: "#c084fc", color2: "#7e22ce", dotColor: "#a855f7" }, 
+  // Red/Orange/Amber gradient theme for MDRRMO branding
+  const pieColors = [
+    { gradientId: "gradCat1", color1: "#fca5a5", color2: "#ef4444", dotColor: "#ef4444" },
+    { gradientId: "gradCat2", color1: "#fdba74", color2: "#f97316", dotColor: "#f97316" },
+    { gradientId: "gradCat3", color1: "#fcd34d", color2: "#f59e0b", dotColor: "#f59e0b" },
+    { gradientId: "gradCat4", color1: "#f87171", color2: "#dc2626", dotColor: "#dc2626" },
+    { gradientId: "gradCat5", color1: "#fb923c", color2: "#ea580c", dotColor: "#ea580c" },
   ];
 
-  const filteredPieData = pieData.filter(item => item.value > 0);
+  const pieData = (distributionData || []).map((item, idx) => ({
+    ...item,
+    ...pieColors[idx % pieColors.length]
+  }));
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full h-full">
-      {/* User Distribution */}
+      {/* Module Distribution */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-[0_2px_12px_-3px_rgba(0,0,0,0.06)] p-6 flex flex-col h-full min-h-[350px] transition-all hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)]">
-        <h2 className="text-base font-bold text-gray-900 mb-6">User Distribution</h2>
+        <h2 className="text-base font-bold text-gray-900 mb-6">Module Distribution</h2>
         
-        {filteredPieData.length === 0 ? (
+        {distLoading ? (
+          <div className="flex-1 flex items-center justify-center">
+             <div className="w-8 h-8 border-4 border-red-500 border-t-transparent rounded-full animate-spin" />
+          </div>
+        ) : !pieData || pieData.length === 0 ? (
           <div className="flex-1 flex items-center justify-center text-sm text-gray-400">
-            No user data available.
+            No module data available.
           </div>
         ) : (
           <div className="flex-1 min-h-[250px]">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <defs>
-                  {filteredPieData.map((entry, index) => (
+                  {pieData.map((entry, index) => (
                     <linearGradient key={`grad-${index}`} id={entry.gradientId} x1="0" y1="0" x2="1" y2="1">
                       <stop offset="0%" stopColor={entry.color1} />
                       <stop offset="100%" stopColor={entry.color2} />
@@ -86,7 +101,7 @@ export default function SystemCharts({ stats }) {
                   ))}
                 </defs>
                 <Pie
-                  data={filteredPieData}
+                  data={pieData}
                   cx="50%"
                   cy="50%"
                   innerRadius={55}
@@ -99,7 +114,7 @@ export default function SystemCharts({ stats }) {
                   animationDuration={1200}
                   animationEasing="ease-out"
                 >
-                  {filteredPieData.map((entry, index) => (
+                  {pieData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={`url(#${entry.gradientId})`} className="hover:opacity-80 transition-opacity duration-300 outline-none" />
                   ))}
                 </Pie>
@@ -111,7 +126,7 @@ export default function SystemCharts({ stats }) {
                     return (
                       <div className="grid grid-cols-2 gap-y-3 gap-x-4 px-2 mt-6">
                         {payload.map((entry, index) => {
-                          const dataItem = filteredPieData[index];
+                          const dataItem = pieData[index];
                           return (
                             <div key={`item-${index}`} className="flex items-center gap-2 group cursor-default">
                               <div 
@@ -119,7 +134,7 @@ export default function SystemCharts({ stats }) {
                                 style={{ backgroundColor: dataItem.dotColor }} 
                               />
                               <span className="text-xs font-semibold text-gray-600 truncate group-hover:text-gray-900 transition-colors">
-                                {dataItem.value} {dataItem.name.split(' ')[0]}
+                                {dataItem.value} {dataItem.name}
                               </span>
                             </div>
                           );
@@ -134,50 +149,56 @@ export default function SystemCharts({ stats }) {
         )}
       </div>
 
-      {/* Traffic Chart */}
+      {/* Enrollment Trend */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-[0_2px_12px_-3px_rgba(0,0,0,0.06)] p-6 flex flex-col h-full min-h-[350px] transition-all hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)]">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-base font-bold text-gray-900">Active Users Trend</h2>
-          <span className="text-[10px] font-bold uppercase tracking-widest text-red-600 bg-red-50 px-2 py-1 rounded-full animate-pulse">Live 24h</span>
+          <h2 className="text-base font-bold text-gray-900">Enrollment Trend</h2>
+          <span className="text-[10px] font-bold uppercase tracking-widest text-red-600 bg-red-50 px-2 py-1 rounded-full animate-pulse">7 Days</span>
         </div>
         
-        {!trafficData || trafficData.length === 0 ? (
+        {trendLoading ? (
+          <div className="flex-1 flex items-center justify-center">
+             <div className="w-8 h-8 border-4 border-red-500 border-t-transparent rounded-full animate-spin" />
+          </div>
+        ) : !trendData || trendData.length === 0 ? (
           <div className="flex-1 flex items-center justify-center text-sm text-gray-400">
-            No traffic data available.
+            No enrollment data available.
           </div>
         ) : (
           <div className="flex-1 min-h-[250px]">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={trafficData} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
+              <AreaChart data={trendData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                 <defs>
-                  <linearGradient id="colorTraffic" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#ef4444" stopOpacity={0.4}/>
-                    <stop offset="70%" stopColor="#fca5a5" stopOpacity={0.1}/>
-                    <stop offset="100%" stopColor="#fef2f2" stopOpacity={0}/>
+                  <linearGradient id="colorEnrollments" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#ef4444" stopOpacity={0.3}/>
+                    <stop offset="95%" stopColor="#ef4444" stopOpacity={0}/>
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="4 4" vertical={false} stroke="#f3f4f6" />
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                 <XAxis 
-                  dataKey="time" 
-                  tick={{fontSize: 10, fill: '#9ca3af', fontWeight: 600}} 
-                  tickLine={false} 
-                  axisLine={false} 
-                  minTickGap={40} 
-                  tickFormatter={(val) => typeof val === 'string' ? val.replace(/^0/, '').replace(/:\d{2}/, '') : val}
+                  dataKey="name" 
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fontSize: 12, fill: '#94a3b8', fontWeight: 600 }}
+                  dy={10}
                 />
-                <YAxis tick={{fontSize: 10, fill: '#9ca3af', fontWeight: 600}} tickLine={false} axisLine={false} />
-                <Tooltip content={<TrafficTooltip />} cursor={{ stroke: '#fca5a5', strokeWidth: 2, strokeDasharray: '4 4' }} />
+                <YAxis 
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fontSize: 12, fill: '#94a3b8', fontWeight: 600 }}
+                />
+                <Tooltip content={<TrendTooltip />} cursor={{ stroke: '#ef4444', strokeWidth: 1, strokeDasharray: '4 4' }} />
                 <Area 
                   type="monotone" 
-                  dataKey="activeUsers" 
+                  dataKey="enrollments" 
                   stroke="#ef4444" 
-                  strokeWidth={4} 
+                  strokeWidth={3}
                   fillOpacity={1} 
-                  fill="url(#colorTraffic)"
-                  animationBegin={400}
+                  fill="url(#colorEnrollments)" 
+                  animationBegin={200}
                   animationDuration={1500}
                   animationEasing="ease-out"
-                  activeDot={{ r: 6, fill: "#fff", stroke: "#ef4444", strokeWidth: 3, shadow: "0 0 10px rgba(239, 68, 68, 0.5)" }}
+                  activeDot={{ r: 6, strokeWidth: 0, fill: '#ef4444' }}
                 />
               </AreaChart>
             </ResponsiveContainer>

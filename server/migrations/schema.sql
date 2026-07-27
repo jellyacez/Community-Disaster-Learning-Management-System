@@ -2,12 +2,12 @@
 -- PostgreSQL database dump
 --
 
-\restrict rGzPShKQRj3EfRj9Rser4yD2dgDexrxOtLtQfH60rsmvON9b7FOylS2zYDmZ9j1
+\restrict OkLENE7HUBqRtbi6Fz77D5xTKYVrseHkNKyZENx55g1DMeDg2bbLznxBSZWqhbF
 
 -- Dumped from database version 18.4
 -- Dumped by pg_dump version 18.4
 
--- Started on 2026-07-20 17:14:26
+-- Started on 2026-07-27 17:55:36
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -40,13 +40,29 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp" WITH SCHEMA public;
 
 
 --
--- TOC entry 5257 (class 0 OID 0)
+-- TOC entry 5262 (class 0 OID 0)
 -- Dependencies: 2
--- Name: EXTENSION "uuid-ossp"; Type: COMMENT; Schema: -; Owner:
+-- Name: EXTENSION "uuid-ossp"; Type: COMMENT; Schema: -; Owner: 
 --
 
 COMMENT ON EXTENSION "uuid-ossp" IS 'generate universally unique identifiers (UUIDs)';
 
+
+--
+-- TOC entry 973 (class 1247 OID 25274)
+-- Name: user_role; Type: TYPE; Schema: public; Owner: postgres
+--
+
+CREATE TYPE public.user_role AS ENUM (
+    'resident',
+    'head_mdrrmo_admin',
+    'mdrrmo_admin',
+    'barangay_admin',
+    'system_admin'
+);
+
+
+ALTER TYPE public.user_role OWNER TO postgres;
 
 --
 -- TOC entry 281 (class 1255 OID 25218)
@@ -56,11 +72,11 @@ COMMENT ON EXTENSION "uuid-ossp" IS 'generate universally unique identifiers (UU
 CREATE FUNCTION rate_limit.agg_decrement(key_ text, prefix text, reference_time timestamp with time zone DEFAULT now()) RETURNS void
     LANGUAGE plpgsql
     AS $_$
-    DECLARE
+    DECLARE 
         in_session_id uuid;
         session_type text = 'aggregated';
     BEGIN
-
+    
 	select id
     FROM rate_limit.session_select($2, session_type)
     WHERE expires_at > $3
@@ -92,18 +108,18 @@ CREATE FUNCTION rate_limit.agg_increment(key_ text, prefix text, window_ms doubl
     BEGIN
 
 	Lock table rate_limit.sessions;
-
+	    
     SELECT id, expires_at
     FROM rate_limit.session_select($2, session_type)
     WHERE expires_at > $4
     INTO in_session_id, in_session_expiration;
-
+  
     IF in_session_id is null THEN
         in_session_expiration = to_timestamp(extract (epoch from $4)+ $3/1000.0);
         SELECT id, in_session_expiration
         FROM rate_limit.session_reset(
             $2, session_type, in_session_expiration
-        )
+        ) 
         INTO in_session_id;
     END IF;
 
@@ -113,11 +129,11 @@ CREATE FUNCTION rate_limit.agg_increment(key_ text, prefix text, window_ms doubl
     ON CONFLICT ON CONSTRAINT unique_session_key DO UPDATE
     SET count = records_aggregated.count + 1
     RETURNING count INTO record_count;
-
+   
    	ret:= (record_count, in_session_expiration);
 
     RETURN ret;
-    END;
+    END; 
 $_$;
 
 
@@ -131,11 +147,11 @@ ALTER FUNCTION rate_limit.agg_increment(key_ text, prefix text, window_ms double
 CREATE FUNCTION rate_limit.agg_reset_key(key_ text, prefix text, reference_time timestamp with time zone DEFAULT now()) RETURNS void
     LANGUAGE plpgsql
     AS $_$
-    DECLARE
+    DECLARE 
         in_session_id uuid;
         session_type text = 'aggregated';
     BEGIN
-
+    
     SELECT id
     FROM rate_limit.session_select($2, session_type)
     WHERE expires_at > $3
@@ -157,11 +173,11 @@ ALTER FUNCTION rate_limit.agg_reset_key(key_ text, prefix text, reference_time t
 CREATE FUNCTION rate_limit.agg_reset_session(prefix text, reference_time timestamp with time zone DEFAULT now()) RETURNS void
     LANGUAGE plpgsql
     AS $_$
-    DECLARE
+    DECLARE 
         in_session_id uuid;
         session_type text = 'aggregated';
     BEGIN
-
+    
     SELECT id
     FROM rate_limit.session_select($1, session_type)
     WHERE expires_at > $2
@@ -183,22 +199,22 @@ ALTER FUNCTION rate_limit.agg_reset_session(prefix text, reference_time timestam
 CREATE FUNCTION rate_limit.ind_decrement(key_ text, prefix text, reference_time timestamp with time zone DEFAULT now()) RETURNS void
     LANGUAGE plpgsql
     AS $_$
-    DECLARE
+    DECLARE 
         in_session_id uuid;
         session_type text = 'individual';
     BEGIN
-
+    
     SELECT id
     FROM rate_limit.session_select($2, session_type)
     WHERE expires_at > $3
     INTO in_session_id;
 
-    WITH
+    WITH 
     rows_to_delete AS (
         SELECT id FROM rate_limit.individual_records
         WHERE key = $1 and session_id = in_session_id ORDER BY event_time LIMIT 1
         )
-    DELETE FROM rate_limit.individual_records
+    DELETE FROM rate_limit.individual_records 
     USING rows_to_delete WHERE individual_records.id = rows_to_delete.id;
     END;
 $_$;
@@ -223,31 +239,31 @@ CREATE FUNCTION rate_limit.ind_increment(key_ text, prefix text, window_ms doubl
     BEGIN
 
     LOCK TABLE rate_limit.sessions;
-
+    
     SELECT id, expires_at
     FROM rate_limit.session_select($2, session_type)
     WHERE expires_at > $4
     INTO in_session_id, in_session_expiration;
-
+  
     IF in_session_id is null THEN
         in_session_expiration = to_timestamp(extract (epoch from $4)+ $3/1000.0);
         SELECT id, in_session_expiration
         FROM rate_limit.session_reset(
             $2, session_type, in_session_expiration
-        )
+        ) 
         INTO in_session_id;
     END IF;
 
 
     INSERT INTO rate_limit.individual_records(key, session_id) VALUES ($1, in_session_id);
-
+    
     SELECT count(id)::int AS count FROM rate_limit.individual_records WHERE key = $1 AND session_id = in_session_id
     INTO record_count;
-
+   
    	ret:= (record_count, in_session_expiration);
 
     RETURN ret;
-    END;
+    END; 
 $_$;
 
 
@@ -261,11 +277,11 @@ ALTER FUNCTION rate_limit.ind_increment(key_ text, prefix text, window_ms double
 CREATE FUNCTION rate_limit.ind_reset_key(key_ text, prefix text, reference_time timestamp with time zone DEFAULT now()) RETURNS void
     LANGUAGE plpgsql
     AS $_$
-    DECLARE
+    DECLARE 
         in_session_id uuid;
         session_type text = 'individual';
     BEGIN
-
+    
     SELECT id
     FROM rate_limit.session_select($2, session_type)
     WHERE expires_at > $3
@@ -287,11 +303,11 @@ ALTER FUNCTION rate_limit.ind_reset_key(key_ text, prefix text, reference_time t
 CREATE FUNCTION rate_limit.ind_reset_session(prefix text, reference_time timestamp with time zone DEFAULT now()) RETURNS void
     LANGUAGE plpgsql
     AS $_$
-    DECLARE
+    DECLARE 
         in_session_id uuid;
         session_type text = 'individual';
     BEGIN
-
+    
     SELECT id
     FROM rate_limit.session_select($1, session_type)
     WHERE expires_at > $2
@@ -313,11 +329,11 @@ ALTER FUNCTION rate_limit.ind_reset_session(prefix text, reference_time timestam
 CREATE FUNCTION rate_limit.session_reset(name_ text, type_ text, expires_at_ timestamp with time zone) RETURNS TABLE(id uuid, name_ text, type_ text)
     LANGUAGE sql
     AS $_$
-    DELETE FROM rate_limit.sessions
+    DELETE FROM rate_limit.sessions 
     WHERE name_ = $1 AND type_ = $2;
 
-    INSERT INTO rate_limit.sessions(name_, type_, expires_at)
-    SELECT $1, $2, $3
+    INSERT INTO rate_limit.sessions(name_, type_, expires_at) 
+    SELECT $1, $2, $3 
     RETURNING id, name_, type_;
 $_$;
 
@@ -462,7 +478,7 @@ CREATE SEQUENCE public.blocked_ips_id_seq
 ALTER SEQUENCE public.blocked_ips_id_seq OWNER TO postgres;
 
 --
--- TOC entry 5258 (class 0 OID 0)
+-- TOC entry 5263 (class 0 OID 0)
 -- Dependencies: 253
 -- Name: blocked_ips_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
 --
@@ -639,7 +655,8 @@ CREATE TABLE public.module_data (
     level character varying(50),
     duration character varying(50),
     video_url character varying(500),
-    image_url character varying(500) DEFAULT NULL::character varying
+    image_url character varying(500) DEFAULT NULL::character varying,
+    CONSTRAINT valid_modcat CHECK (((modcat)::text = ANY ((ARRAY['Flood'::character varying, 'Earthquake'::character varying, 'Fire'::character varying, 'General'::character varying])::text[])))
 );
 
 
@@ -827,7 +844,7 @@ CREATE TABLE public."user" (
     "createdAt" timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
     "updatedAt" timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
     barangay text NOT NULL,
-    role text,
+    role public.user_role DEFAULT 'resident'::public.user_role,
     banned boolean,
     "banReason" text,
     "banExpires" timestamp with time zone,
@@ -934,7 +951,7 @@ CREATE TABLE rate_limit.sessions (
 ALTER TABLE rate_limit.sessions OWNER TO postgres;
 
 --
--- TOC entry 5003 (class 2604 OID 25229)
+-- TOC entry 5007 (class 2604 OID 25229)
 -- Name: blocked_ips id; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
@@ -942,7 +959,7 @@ ALTER TABLE ONLY public.blocked_ips ALTER COLUMN id SET DEFAULT nextval('public.
 
 
 --
--- TOC entry 5019 (class 2606 OID 16533)
+-- TOC entry 5024 (class 2606 OID 16533)
 -- Name: account account_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -951,7 +968,7 @@ ALTER TABLE ONLY public.account
 
 
 --
--- TOC entry 5039 (class 2606 OID 16742)
+-- TOC entry 5044 (class 2606 OID 16742)
 -- Name: activity_log activity_log_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -960,7 +977,7 @@ ALTER TABLE ONLY public.activity_log
 
 
 --
--- TOC entry 5044 (class 2606 OID 16762)
+-- TOC entry 5049 (class 2606 OID 16762)
 -- Name: announcements announcements_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -969,7 +986,7 @@ ALTER TABLE ONLY public.announcements
 
 
 --
--- TOC entry 5082 (class 2606 OID 25238)
+-- TOC entry 5087 (class 2606 OID 25238)
 -- Name: blocked_ips blocked_ips_ip_address_key; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -978,7 +995,7 @@ ALTER TABLE ONLY public.blocked_ips
 
 
 --
--- TOC entry 5084 (class 2606 OID 25236)
+-- TOC entry 5089 (class 2606 OID 25236)
 -- Name: blocked_ips blocked_ips_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -987,7 +1004,7 @@ ALTER TABLE ONLY public.blocked_ips
 
 
 --
--- TOC entry 5033 (class 2606 OID 16692)
+-- TOC entry 5038 (class 2606 OID 16692)
 -- Name: certificates certificates_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -996,7 +1013,7 @@ ALTER TABLE ONLY public.certificates
 
 
 --
--- TOC entry 5048 (class 2606 OID 16798)
+-- TOC entry 5053 (class 2606 OID 16798)
 -- Name: choices choices_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1005,7 +1022,7 @@ ALTER TABLE ONLY public.choices
 
 
 --
--- TOC entry 5060 (class 2606 OID 16983)
+-- TOC entry 5065 (class 2606 OID 16983)
 -- Name: levels levels_mod_id_level_order_key; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1014,7 +1031,7 @@ ALTER TABLE ONLY public.levels
 
 
 --
--- TOC entry 5062 (class 2606 OID 16981)
+-- TOC entry 5067 (class 2606 OID 16981)
 -- Name: levels levels_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1023,7 +1040,7 @@ ALTER TABLE ONLY public.levels
 
 
 --
--- TOC entry 5070 (class 2606 OID 25149)
+-- TOC entry 5075 (class 2606 OID 25149)
 -- Name: migrations migrations_name_key; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1032,7 +1049,7 @@ ALTER TABLE ONLY public.migrations
 
 
 --
--- TOC entry 5072 (class 2606 OID 25147)
+-- TOC entry 5077 (class 2606 OID 25147)
 -- Name: migrations migrations_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1041,7 +1058,7 @@ ALTER TABLE ONLY public.migrations
 
 
 --
--- TOC entry 5031 (class 2606 OID 16669)
+-- TOC entry 5036 (class 2606 OID 16669)
 -- Name: module_activity module_activity_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1050,7 +1067,7 @@ ALTER TABLE ONLY public.module_activity
 
 
 --
--- TOC entry 5026 (class 2606 OID 16655)
+-- TOC entry 5031 (class 2606 OID 16655)
 -- Name: module_data module_data_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1059,7 +1076,7 @@ ALTER TABLE ONLY public.module_data
 
 
 --
--- TOC entry 5064 (class 2606 OID 17002)
+-- TOC entry 5069 (class 2606 OID 17002)
 -- Name: module_steps module_steps_level_id_step_order_key; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1068,7 +1085,7 @@ ALTER TABLE ONLY public.module_steps
 
 
 --
--- TOC entry 5066 (class 2606 OID 17000)
+-- TOC entry 5071 (class 2606 OID 17000)
 -- Name: module_steps module_steps_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1077,7 +1094,7 @@ ALTER TABLE ONLY public.module_steps
 
 
 --
--- TOC entry 5046 (class 2606 OID 16780)
+-- TOC entry 5051 (class 2606 OID 16780)
 -- Name: questions questions_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1086,7 +1103,7 @@ ALTER TABLE ONLY public.questions
 
 
 --
--- TOC entry 5050 (class 2606 OID 16818)
+-- TOC entry 5055 (class 2606 OID 16818)
 -- Name: results results_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1095,7 +1112,7 @@ ALTER TABLE ONLY public.results
 
 
 --
--- TOC entry 5014 (class 2606 OID 16512)
+-- TOC entry 5019 (class 2606 OID 16512)
 -- Name: session session_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1104,7 +1121,7 @@ ALTER TABLE ONLY public.session
 
 
 --
--- TOC entry 5016 (class 2606 OID 16514)
+-- TOC entry 5021 (class 2606 OID 16514)
 -- Name: session session_token_key; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1113,7 +1130,7 @@ ALTER TABLE ONLY public.session
 
 
 --
--- TOC entry 5068 (class 2606 OID 25129)
+-- TOC entry 5073 (class 2606 OID 25129)
 -- Name: system_settings system_settings_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1122,7 +1139,7 @@ ALTER TABLE ONLY public.system_settings
 
 
 --
--- TOC entry 5052 (class 2606 OID 16839)
+-- TOC entry 5057 (class 2606 OID 16839)
 -- Name: twoFactor twoFactor_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1131,7 +1148,7 @@ ALTER TABLE ONLY public."twoFactor"
 
 
 --
--- TOC entry 5056 (class 2606 OID 16895)
+-- TOC entry 5061 (class 2606 OID 16895)
 -- Name: user_step_progress unique_user_step; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1140,7 +1157,7 @@ ALTER TABLE ONLY public.user_step_progress
 
 
 --
--- TOC entry 5035 (class 2606 OID 25261)
+-- TOC entry 5040 (class 2606 OID 25261)
 -- Name: certificates uq_certificates_user_module; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1149,7 +1166,7 @@ ALTER TABLE ONLY public.certificates
 
 
 --
--- TOC entry 5037 (class 2606 OID 25257)
+-- TOC entry 5042 (class 2606 OID 25257)
 -- Name: certificates uq_certificates_verification_token; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1158,7 +1175,7 @@ ALTER TABLE ONLY public.certificates
 
 
 --
--- TOC entry 5010 (class 2606 OID 16498)
+-- TOC entry 5015 (class 2606 OID 16498)
 -- Name: user user_email_key; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1167,7 +1184,7 @@ ALTER TABLE ONLY public."user"
 
 
 --
--- TOC entry 5012 (class 2606 OID 16496)
+-- TOC entry 5017 (class 2606 OID 16496)
 -- Name: user user_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1176,7 +1193,7 @@ ALTER TABLE ONLY public."user"
 
 
 --
--- TOC entry 5058 (class 2606 OID 16893)
+-- TOC entry 5063 (class 2606 OID 16893)
 -- Name: user_step_progress user_step_progress_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1185,7 +1202,7 @@ ALTER TABLE ONLY public.user_step_progress
 
 
 --
--- TOC entry 5023 (class 2606 OID 16553)
+-- TOC entry 5028 (class 2606 OID 16553)
 -- Name: verification verification_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1194,7 +1211,7 @@ ALTER TABLE ONLY public.verification
 
 
 --
--- TOC entry 5080 (class 2606 OID 25197)
+-- TOC entry 5085 (class 2606 OID 25197)
 -- Name: individual_records individual_records_pkey; Type: CONSTRAINT; Schema: rate_limit; Owner: postgres
 --
 
@@ -1203,7 +1220,7 @@ ALTER TABLE ONLY rate_limit.individual_records
 
 
 --
--- TOC entry 5074 (class 2606 OID 25173)
+-- TOC entry 5079 (class 2606 OID 25173)
 -- Name: sessions sessions_name__key; Type: CONSTRAINT; Schema: rate_limit; Owner: postgres
 --
 
@@ -1212,7 +1229,7 @@ ALTER TABLE ONLY rate_limit.sessions
 
 
 --
--- TOC entry 5076 (class 2606 OID 25171)
+-- TOC entry 5081 (class 2606 OID 25171)
 -- Name: sessions sessions_pkey; Type: CONSTRAINT; Schema: rate_limit; Owner: postgres
 --
 
@@ -1221,7 +1238,7 @@ ALTER TABLE ONLY rate_limit.sessions
 
 
 --
--- TOC entry 5078 (class 2606 OID 25216)
+-- TOC entry 5083 (class 2606 OID 25216)
 -- Name: records_aggregated unique_session_key; Type: CONSTRAINT; Schema: rate_limit; Owner: postgres
 --
 
@@ -1230,7 +1247,7 @@ ALTER TABLE ONLY rate_limit.records_aggregated
 
 
 --
--- TOC entry 5020 (class 1259 OID 16555)
+-- TOC entry 5025 (class 1259 OID 16555)
 -- Name: account_userId_idx; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -1238,7 +1255,7 @@ CREATE INDEX "account_userId_idx" ON public.account USING btree ("userId");
 
 
 --
--- TOC entry 5040 (class 1259 OID 25239)
+-- TOC entry 5045 (class 1259 OID 25239)
 -- Name: idx_activity_log_act_date; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -1246,7 +1263,7 @@ CREATE INDEX idx_activity_log_act_date ON public.activity_log USING btree (act_d
 
 
 --
--- TOC entry 5041 (class 1259 OID 25240)
+-- TOC entry 5046 (class 1259 OID 25240)
 -- Name: idx_activity_log_user_date; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -1254,7 +1271,7 @@ CREATE INDEX idx_activity_log_user_date ON public.activity_log USING btree (user
 
 
 --
--- TOC entry 5042 (class 1259 OID 25130)
+-- TOC entry 5047 (class 1259 OID 25130)
 -- Name: idx_activity_log_user_id; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -1262,7 +1279,7 @@ CREATE INDEX idx_activity_log_user_id ON public.activity_log USING btree (user_i
 
 
 --
--- TOC entry 5027 (class 1259 OID 16921)
+-- TOC entry 5032 (class 1259 OID 16921)
 -- Name: idx_module_activity_mod; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -1270,7 +1287,7 @@ CREATE INDEX idx_module_activity_mod ON public.module_activity USING btree (mod_
 
 
 --
--- TOC entry 5028 (class 1259 OID 25138)
+-- TOC entry 5033 (class 1259 OID 25138)
 -- Name: idx_module_activity_status; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -1278,7 +1295,7 @@ CREATE INDEX idx_module_activity_status ON public.module_activity USING btree (m
 
 
 --
--- TOC entry 5029 (class 1259 OID 16920)
+-- TOC entry 5034 (class 1259 OID 16920)
 -- Name: idx_module_activity_user; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -1286,7 +1303,7 @@ CREATE INDEX idx_module_activity_user ON public.module_activity USING btree (use
 
 
 --
--- TOC entry 5024 (class 1259 OID 16922)
+-- TOC entry 5029 (class 1259 OID 16922)
 -- Name: idx_module_data_cat; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -1294,7 +1311,7 @@ CREATE INDEX idx_module_data_cat ON public.module_data USING btree (modcat);
 
 
 --
--- TOC entry 5005 (class 1259 OID 25136)
+-- TOC entry 5010 (class 1259 OID 25136)
 -- Name: idx_user_archived; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -1302,7 +1319,7 @@ CREATE INDEX idx_user_archived ON public."user" USING btree (archived);
 
 
 --
--- TOC entry 5006 (class 1259 OID 25137)
+-- TOC entry 5011 (class 1259 OID 25137)
 -- Name: idx_user_banned; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -1310,7 +1327,7 @@ CREATE INDEX idx_user_banned ON public."user" USING btree (banned);
 
 
 --
--- TOC entry 5007 (class 1259 OID 25134)
+-- TOC entry 5012 (class 1259 OID 25134)
 -- Name: idx_user_last_active; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -1318,7 +1335,7 @@ CREATE INDEX idx_user_last_active ON public."user" USING btree (last_active);
 
 
 --
--- TOC entry 5008 (class 1259 OID 25135)
+-- TOC entry 5013 (class 1259 OID 25285)
 -- Name: idx_user_role; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -1326,7 +1343,7 @@ CREATE INDEX idx_user_role ON public."user" USING btree (role);
 
 
 --
--- TOC entry 5017 (class 1259 OID 16554)
+-- TOC entry 5022 (class 1259 OID 16554)
 -- Name: session_userId_idx; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -1334,7 +1351,7 @@ CREATE INDEX "session_userId_idx" ON public.session USING btree ("userId");
 
 
 --
--- TOC entry 5053 (class 1259 OID 16845)
+-- TOC entry 5058 (class 1259 OID 16845)
 -- Name: twoFactor_secret_idx; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -1342,7 +1359,7 @@ CREATE INDEX "twoFactor_secret_idx" ON public."twoFactor" USING btree (secret);
 
 
 --
--- TOC entry 5054 (class 1259 OID 16846)
+-- TOC entry 5059 (class 1259 OID 16846)
 -- Name: twoFactor_userId_idx; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -1350,7 +1367,7 @@ CREATE INDEX "twoFactor_userId_idx" ON public."twoFactor" USING btree ("userId")
 
 
 --
--- TOC entry 5021 (class 1259 OID 16556)
+-- TOC entry 5026 (class 1259 OID 16556)
 -- Name: verification_identifier_idx; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -1358,7 +1375,7 @@ CREATE INDEX verification_identifier_idx ON public.verification USING btree (ide
 
 
 --
--- TOC entry 5086 (class 2606 OID 16534)
+-- TOC entry 5091 (class 2606 OID 16534)
 -- Name: account account_userId_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1367,7 +1384,7 @@ ALTER TABLE ONLY public.account
 
 
 --
--- TOC entry 5093 (class 2606 OID 16763)
+-- TOC entry 5098 (class 2606 OID 16763)
 -- Name: announcements fk_author; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1376,7 +1393,7 @@ ALTER TABLE ONLY public.announcements
 
 
 --
--- TOC entry 5089 (class 2606 OID 25262)
+-- TOC entry 5094 (class 2606 OID 25262)
 -- Name: certificates fk_certificates_revoked_by; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1385,7 +1402,7 @@ ALTER TABLE ONLY public.certificates
 
 
 --
--- TOC entry 5101 (class 2606 OID 16984)
+-- TOC entry 5106 (class 2606 OID 16984)
 -- Name: levels fk_level_module; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1394,7 +1411,7 @@ ALTER TABLE ONLY public.levels
 
 
 --
--- TOC entry 5102 (class 2606 OID 17003)
+-- TOC entry 5107 (class 2606 OID 17003)
 -- Name: module_steps fk_level_steps; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1403,7 +1420,7 @@ ALTER TABLE ONLY public.module_steps
 
 
 --
--- TOC entry 5090 (class 2606 OID 16698)
+-- TOC entry 5095 (class 2606 OID 16698)
 -- Name: certificates fk_modact; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1412,7 +1429,7 @@ ALTER TABLE ONLY public.certificates
 
 
 --
--- TOC entry 5087 (class 2606 OID 16675)
+-- TOC entry 5092 (class 2606 OID 16675)
 -- Name: module_activity fk_module; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1421,7 +1438,7 @@ ALTER TABLE ONLY public.module_activity
 
 
 --
--- TOC entry 5094 (class 2606 OID 16781)
+-- TOC entry 5099 (class 2606 OID 16781)
 -- Name: questions fk_module; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1430,7 +1447,7 @@ ALTER TABLE ONLY public.questions
 
 
 --
--- TOC entry 5095 (class 2606 OID 16799)
+-- TOC entry 5100 (class 2606 OID 16799)
 -- Name: choices fk_question; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1439,7 +1456,7 @@ ALTER TABLE ONLY public.choices
 
 
 --
--- TOC entry 5096 (class 2606 OID 16819)
+-- TOC entry 5101 (class 2606 OID 16819)
 -- Name: results fk_quiz_module; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1448,7 +1465,7 @@ ALTER TABLE ONLY public.results
 
 
 --
--- TOC entry 5097 (class 2606 OID 16824)
+-- TOC entry 5102 (class 2606 OID 16824)
 -- Name: results fk_quiz_user; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1457,7 +1474,7 @@ ALTER TABLE ONLY public.results
 
 
 --
--- TOC entry 5092 (class 2606 OID 16743)
+-- TOC entry 5097 (class 2606 OID 16743)
 -- Name: activity_log fk_user; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1466,7 +1483,7 @@ ALTER TABLE ONLY public.activity_log
 
 
 --
--- TOC entry 5091 (class 2606 OID 16693)
+-- TOC entry 5096 (class 2606 OID 16693)
 -- Name: certificates fk_user; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1475,7 +1492,7 @@ ALTER TABLE ONLY public.certificates
 
 
 --
--- TOC entry 5088 (class 2606 OID 16670)
+-- TOC entry 5093 (class 2606 OID 16670)
 -- Name: module_activity fk_user; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1484,7 +1501,7 @@ ALTER TABLE ONLY public.module_activity
 
 
 --
--- TOC entry 5099 (class 2606 OID 16896)
+-- TOC entry 5104 (class 2606 OID 16896)
 -- Name: user_step_progress fk_user; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1492,20 +1509,8 @@ ALTER TABLE ONLY public.user_step_progress
     ADD CONSTRAINT fk_user FOREIGN KEY (user_id) REFERENCES public."user"(id) ON DELETE CASCADE;
 
 
-    CREATE TYPE user_role AS ENUM ('resident', 'head_mdrrmo_admin', 'mdrrmo_admin', 'barangay_admin', 'system_admin');
-
-    SELECT DISTINCT role FROM public."user" WHERE role IS NOT NULL AND role NOT IN ('resident', 'head_mdrrmo_admin', 'mdrrmo_admin', 'barangay_admin', 'system_admin');
-
-    ALTER TABLE public."user"
-    ALTER COLUMN role TYPE user_role
-    USING role::user_role;
-
-    ALTER TABLE public."user"
-    ALTER COLUMN role SET DEFAULT 'resident';
-
-
 --
--- TOC entry 5085 (class 2606 OID 16515)
+-- TOC entry 5090 (class 2606 OID 16515)
 -- Name: session session_userId_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1514,7 +1519,7 @@ ALTER TABLE ONLY public.session
 
 
 --
--- TOC entry 5098 (class 2606 OID 16840)
+-- TOC entry 5103 (class 2606 OID 16840)
 -- Name: twoFactor twoFactor_userId_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1523,7 +1528,7 @@ ALTER TABLE ONLY public."twoFactor"
 
 
 --
--- TOC entry 5100 (class 2606 OID 17013)
+-- TOC entry 5105 (class 2606 OID 17013)
 -- Name: user_step_progress user_step_progress_step_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1532,7 +1537,7 @@ ALTER TABLE ONLY public.user_step_progress
 
 
 --
--- TOC entry 5104 (class 2606 OID 25198)
+-- TOC entry 5109 (class 2606 OID 25198)
 -- Name: individual_records individual_records_session_id_fkey; Type: FK CONSTRAINT; Schema: rate_limit; Owner: postgres
 --
 
@@ -1541,7 +1546,7 @@ ALTER TABLE ONLY rate_limit.individual_records
 
 
 --
--- TOC entry 5103 (class 2606 OID 25183)
+-- TOC entry 5108 (class 2606 OID 25183)
 -- Name: records_aggregated records_aggregated_session_id_fkey; Type: FK CONSTRAINT; Schema: rate_limit; Owner: postgres
 --
 
@@ -1549,10 +1554,11 @@ ALTER TABLE ONLY rate_limit.records_aggregated
     ADD CONSTRAINT records_aggregated_session_id_fkey FOREIGN KEY (session_id) REFERENCES rate_limit.sessions(id) ON DELETE CASCADE;
 
 
--- Completed on 2026-07-20 17:14:26
+-- Completed on 2026-07-27 17:55:36
 
 --
 -- PostgreSQL database dump complete
 --
 
-\unrestrict rGzPShKQRj3EfRj9Rser4yD2dgDexrxOtLtQfH60rsmvON9b7FOylS2zYDmZ9j1
+\unrestrict OkLENE7HUBqRtbi6Fz77D5xTKYVrseHkNKyZENx55g1DMeDg2bbLznxBSZWqhbF
+

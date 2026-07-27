@@ -13,7 +13,7 @@ exports.getSystemStats = async (req, res) => {
           COUNT(*) FILTER (WHERE last_active >= NOW() - INTERVAL '5 minutes') AS online_users,
           COUNT(*) FILTER (WHERE role = 'resident') AS resident_users,
           COUNT(*) FILTER (WHERE role = 'barangay_admin') AS barangay_admin_users,
-          COUNT(*) FILTER (WHERE role = 'mdrrmo_admin') AS mdrrmo_admin_users,
+          COUNT(*) FILTER (WHERE role IN ('mdrrmo_admin', 'head_mdrrmo_admin')) AS mdrrmo_admin_users,
           COUNT(*) FILTER (WHERE role = 'system_admin') AS system_admin_users,
           COUNT(*) FILTER (WHERE banned = true) AS banned_users,
           COUNT(*) FILTER (WHERE archived = true) AS archived_users

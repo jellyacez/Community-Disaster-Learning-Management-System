@@ -1,0 +1,118 @@
+const pool = require("../../config/db");
+
+// @desc    Get MDRRMO dashboard metrics
+// @access  Private (mdrrmo_admin, system_admin)
+exports.getMetrics = async (req, res) => {
+  try {
+    const stats = await pool.query(`
+      SELECT
+        (SELECT COUNT(*) FROM "user" WHERE role = 'resident' AND archived = false AND (banned IS NULL OR banned = false)) AS registered_responders,
+        (SELECT COUNT(*) FROM module_data WHERE moddateremove IS NULL) AS active_modules,
+        (SELECT COUNT(*) FROM certificates WHERE status = 'active') AS certificates_issued
+    `);
+
+    const data = {
+      registered_responders: parseInt(stats.rows[0].registered_responders, 10) || 0,
+      active_modules: parseInt(stats.rows[0].active_modules, 10) || 0,
+      certificates_issued: parseInt(stats.rows[0].certificates_issued, 10) || 0
+    };
+
+    res.json({ success: true, data });
+  } catch (err) {
+    console.error("MDRRMO Metrics Error:", err);
+    res.status(500).json({ success: false, error: 'Server Error' });
+  }
+};
+
+// @desc    Get module distribution by category
+// @access  Private (mdrrmo_admin, system_admin)
+exports.getModuleDistribution = async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT 
+        COALESCE(NULLIF(TRIM(modcat), ''), 'Uncategorized') as category,
+        COUNT(*) as count
+      FROM module_data 
+      WHERE moddateremove IS NULL
+      GROUP BY category
+      ORDER BY count DESC
+    `);
+    
+    const data = result.rows.map(row => ({
+      name: row.category,
+      value: parseInt(row.count, 10) || 0
+    }));
+
+    res.json({ success: true, data });
+  } catch (err) {
+    console.error("MDRRMO Module Distribution Error:", err);
+    res.status(500).json({ success: false, error: 'Server Error' });
+  }
+};
+
+// @desc    Get 7-day enrollment trend
+// @access  Private (mdrrmo_admin, system_admin)
+exports.getEnrollmentTrend = async (req, res) => {
+  try {
+    const query = `
+      WITH days AS (
+        SELECT generate_series(
+          date_trunc('day', NOW() - INTERVAL '6 days'),
+          date_trunc('day', NOW()),
+          '1 day'::interval
+        ) AS day
+      )
+      SELECT 
+        d.day,
+        COUNT(ma.modact_id) AS enrollments
+      FROM days d
+      LEFT JOIN module_activity ma ON date_trunc('day', ma.started_at) = d.day
+      GROUP BY d.day
+      ORDER BY d.day ASC;
+    `;
+
+    const result = await pool.query(query);
+
+    const data = result.rows.map(row => {
+      const d = new Date(row.day);
+      const dayStr = d.toLocaleDateString('en-US', { weekday: 'short' });
+      return {
+        name: dayStr,
+        enrollments: parseInt(row.enrollments, 10) || 0
+      };
+    });
+
+    res.json({ success: true, data });
+  } catch (err) {
+    console.error("MDRRMO Enrollment Trend Error:", err);
+    res.status(500).json({ success: false, error: 'Server Error' });
+  }
+};
+
+// @desc    Get recent activity logs
+// @access  Private (mdrrmo_admin, system_admin)
+exports.getRecentActivity = async (req, res) => {
+  try {
+    // Just fetch the 5 most recent global activity log entries, tailored for MDRRMO view
+    const result = await pool.query(`
+      SELECT al.act_id, al.user_id, u.name AS user_name,
+             al.act_date, al.act_log
+      FROM activity_log al
+      LEFT JOIN "user" u ON al.user_id = u.id
+      ORDER BY al.act_date DESC
+      LIMIT 10
+    `);
+
+    const data = result.rows.map(row => ({
+      id: row.act_id,
+      source: row.user_name ? `User: ${row.user_name}` : `User ID: ${row.user_id}`,
+      timestamp: new Date(row.act_date).toLocaleString(),
+      log: row.act_log
+    }));
+
+    res.json({ success: true, data });
+  } catch (err) {
+    console.error("MDRRMO Recent Activity Error:", err);
+    res.status(500).json({ success: false, error: 'Server Error' });
+  }
+};

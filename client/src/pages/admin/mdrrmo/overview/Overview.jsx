@@ -1,107 +1,114 @@
 import { useQuery } from "@tanstack/react-query";
-import { HugeiconsIcon } from "@hugeicons/react";
-import { Alert01Icon } from "@hugeicons/core-free-icons";
 import apiClient from "../../../../lib/apiClient";
+import useDocumentTitle from "../../../../hooks/useDocumentTitle";
 import { SkeletonTableRow } from "../../../../components/ui/Skeleton.jsx";
+import { FolderAddIcon, UserGroupIcon, Certificate01Icon } from "@hugeicons/core-free-icons";
 
-// Contract-first API fetchers
-const fetchModules = async () => {
-  const res = await apiClient.get("admin/modules");
-  const data = res.data.data || [];
-  return data.map(mod =>({
-    id: mod.mod_id,
-    title:mod.modname,
-    status:mod.modcat,
-    step_count: parseInt(mod.step_count,10) || 0
-  }));
-};
-
-const fetchUsers = async () => {
-  const res = await apiClient.get("admin/residents");
-  return res.data.data || [];
-};
-
-const fetchLogs = async () => {
-  const res = await apiClient.get("admin/activity-log");
-  const data = res.data.data || [];
-  return data.map(log => ({
-    id: log.act_id,
-    source: `User ID: ${log.user_id}`,
-    timestamp: new Date(log.act_date).toLocaleDateString(),
-    log: log.act_log
-  }));
-};
+import StatCard from "../../system/overview/components/StatCard";
+import MdrrmoAlertBanner from "./components/MdrrmoAlertBanner";
+import MdrrmoCharts from "./components/MdrrmoCharts";
+import MdrrmoQuickActions from "./components/MdrrmoQuickActions";
+import MdrrmoRecentActivity from "./components/MdrrmoRecentActivity";
 
 export default function Overview() {
-  // Utilizing React Query for state management, loading, and error handling
-  const { data: modules = [], isLoading: isLoadingModules, isError: isErrorModules,error: errorModules } = useQuery({
+  useDocumentTitle("MDRRMO Overview | Admin Console");
+
+  const { data: metricsData, isLoading: metricsLoading, isError: metricsError, error } = useQuery({
+    queryKey: ["mdrrmoMetrics"],
+    queryFn: async () => {
+      const res = await apiClient.get("/admin/mdrrmo/metrics");
+      return res.data.data;
+    },
+    refetchInterval: 30000,
+    retry: 1
+  });
+
+  const { data: modules = [], isLoading: isLoadingModules } = useQuery({
     queryKey: ["adminModules"],
-    queryFn: fetchModules,
+    queryFn: async () => {
+      const res = await apiClient.get("admin/modules");
+      const data = res.data.data || [];
+      return data.map(mod =>({
+        id: mod.mod_id,
+        title:mod.modname,
+        status:mod.modcat,
+        step_count: parseInt(mod.step_count,10) || 0
+      }));
+    },
     retry: 1
   });
 
-  const { data: users = [], isLoading: isLoadingUsers } = useQuery({
-    queryKey: ["adminUsers"],
-    queryFn: fetchUsers,
-    retry: 1
-  });
-
-  const { data: systemLogs = [], isLoading: isLoadingLogs } = useQuery({
-    queryKey: ["adminLogs"],
-    queryFn: fetchLogs,
-    retry: 1
-  });
-
-
-  if (isErrorModules) {
+  if (metricsError) {
     return (
       <div className="p-6 bg-red-50 text-red-600 rounded-xl border border-red-100 space-y-2">
         <p className="font-bold">Error loading overview data.</p>
         <p className="text-xs bg-red-100 p-2 rounded font-mono">
-          {errorModules?.response?.data?.message || errorModules?.message || "Unknown Connection Failure"}
+          {error?.response?.data?.message || error?.message || "Unknown Connection Failure"}
         </p>
         <p className="text-sm">Please inspect your Node.js backend terminal for details.</p>
       </div>
     );
   }
 
+  const m = metricsData || {};
+
   return (
     <div className="space-y-6 animate-in fade-in duration-150">
-      {/* Top Stats Row */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm w-full">
-          <p className="text-xs text-gray-400 uppercase font-bold tracking-wider">Total Active Modules</p>
-          {isLoadingModules ? (
-            <div className="h-10 bg-gray-200 rounded w-16 mt-2 animate-pulse"></div>
-          ) : (
-            <p className="text-4xl font-black mt-2 font-mono text-gray-800">{modules.length}</p>
-          )}
-        </div>
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm w-full">
-          <p className="text-xs text-gray-400 uppercase font-bold tracking-wider">Registered Responders</p>
-          {isLoadingUsers ? (
-            <div className="h-10 bg-gray-200 rounded w-16 mt-2 animate-pulse"></div>
-          ) : (
-            <p className="text-4xl font-black mt-2 font-mono text-gray-800">{users.length}</p>
-          )}
-        </div>
-        <div className="p-6 rounded-2xl shadow-sm w-full flex items-center justify-between border-l-4 border-emerald-500 bg-emerald-50">
-          <div>
-            <p className="text-xs text-emerald-700 uppercase font-bold tracking-wider">System Status</p>
-            <p className="text-xl font-black text-emerald-800 font-mono mt-1">NORMAL / READY</p>
-          </div>
-          <div className="w-12 h-12 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-600">
-            <HugeiconsIcon icon={Alert01Icon} className="w-6 h-6" />
-          </div>
+      <MdrrmoAlertBanner />
+
+      <div>
+        <h2 className="text-sm font-bold uppercase tracking-widest text-gray-500 mb-3">
+          Platform Overview
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <StatCard
+            icon={FolderAddIcon}
+            label="Total Active Modules"
+            value={m.active_modules}
+            sub="Currently published"
+            color="red"
+            loading={metricsLoading}
+          />
+          <StatCard
+            icon={UserGroupIcon}
+            label="Registered Responders"
+            value={m.registered_responders}
+            sub="Total resident accounts"
+            color="amber"
+            loading={metricsLoading}
+          />
+          <StatCard
+            icon={Certificate01Icon}
+            label="Certificates Issued"
+            value={m.certificates_issued}
+            sub="Total verified certificates"
+            color="green"
+            loading={metricsLoading}
+          />
         </div>
       </div>
 
-      {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-        
-        {/* Modules Table */}
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm lg:col-span-2 w-full">
-          <h3 className="text-xs font-bold uppercase tracking-wide mb-4 text-gray-400 border-b border-gray-100 pb-2 font-mono">
+      <div className="grid lg:grid-cols-3 gap-6">
+        {/* Left Side: Charts */}
+        <div className="lg:col-span-2">
+          <MdrrmoCharts />
+        </div>
+
+        {/* Right Side: Quick Actions */}
+        <div className="lg:col-span-1 h-full">
+          <MdrrmoQuickActions />
+        </div>
+      </div>
+
+      <div className="grid lg:grid-cols-3 gap-6 items-start">
+        {/* Left Side: Recent Activity Feed */}
+        <div className="lg:col-span-1 h-full">
+          <MdrrmoRecentActivity />
+        </div>
+
+        {/* Right Side: Active Master Modules Table */}
+        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-[0_2px_12px_-3px_rgba(0,0,0,0.06)] lg:col-span-2 w-full h-full">
+          <h3 className="text-base font-bold text-gray-900 mb-6">
             Active Master Modules
           </h3>
           <div className="overflow-x-auto">
@@ -121,7 +128,7 @@ export default function Overview() {
                     <td colSpan="3" className="py-6 text-center text-gray-400 italic">No modules available</td>
                   </tr>
                 ) : (
-                  modules.map((mod) => (
+                  modules.slice(0, 5).map((mod) => (
                     <tr key={mod.id || mod._id} className="hover:bg-gray-50/50 transition-colors">
                       <td className="py-3 font-semibold max-w-[160px] truncate text-gray-800">{mod.title}</td>
                       <td className="py-3 text-center font-mono text-gray-500 font-bold">{mod.step_count} Steps</td>
@@ -139,36 +146,6 @@ export default function Overview() {
             </table>
           </div>
         </div>
-
-        {/* System Logs */}
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm w-full space-y-3">
-          <h3 className="text-xs font-bold uppercase tracking-wide text-gray-400 border-b border-gray-100 pb-2 font-mono">
-            Security Web Audit Logs
-          </h3>
-          <div className="space-y-2 max-h-[300px] overflow-y-auto pr-1">
-            {isLoadingLogs ? (
-              [1, 2, 3, 4].map((i) => (
-                <div key={i} className="p-3 bg-gray-50 border border-gray-200/80 rounded-xl text-xs flex flex-col gap-2 shadow-sm animate-pulse">
-                   <div className="h-3 bg-gray-200 rounded w-1/3"></div>
-                   <div className="h-4 bg-gray-200 rounded w-full"></div>
-                </div>
-              ))
-            ) : systemLogs.length === 0 ? (
-              <p className="text-xs text-gray-400 italic text-center py-4">No audit logs found</p>
-            ) : (
-              systemLogs.map((log) => (
-                <div key={log.id || log._id} className="p-3 bg-gray-50 border border-gray-200/80 rounded-xl text-xs flex flex-col gap-1">
-                  <div className="flex justify-between font-mono text-[10px] text-gray-400">
-                    <span className="font-bold text-gray-600">{log.source}</span>
-                    <span>{log.timestamp}</span>
-                  </div>
-                  <span className="text-gray-700 font-medium leading-relaxed">{log.log}</span>
-                </div>
-              ))
-            )}
-          </div>
-        </div>
-        
       </div>
     </div>
   );

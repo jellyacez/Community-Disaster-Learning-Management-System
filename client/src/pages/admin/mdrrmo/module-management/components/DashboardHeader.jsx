@@ -57,10 +57,10 @@ export default function DashboardHeader({
             className="w-full py-2.5 px-4 bg-gray-50 hover:bg-gray-100 border border-transparent rounded-xl text-sm font-bold text-gray-700 outline-none focus:bg-white focus:border-red-200 focus:ring-4 focus:ring-red-500/10 cursor-pointer transition-all appearance-none"
           >
             <option value="All">All Categories</option>
-            <option value="Flooding">Flooding</option>
-            <option value="Earthquakes">Earthquakes</option>
+            <option value="Flood">Flood</option>
+            <option value="Earthquake">Earthquake</option>
             <option value="Fire">Fire</option>
-            <option value="General Safety">General Safety</option>
+            <option value="General">General / All Hazards</option>
           </select>
         </div>
         

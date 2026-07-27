@@ -23,17 +23,7 @@ export default function PlatformOverviewGrid({ stats, loading }) {
           label="Total Users"
           value={s.total_users}
           href="/admin/system/users"
-          sub={
-            <span className="flex items-center gap-1.5 text-emerald-700 font-medium">
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-              </span>
-              {s.online_users > 100
-                ? `${Math.round((s.online_users / (s.total_users || 1)) * 100)}% online`
-                : `${s.online_users ?? 0} online now`}
-            </span>
-          }
+          sub="All registered accounts"
           color="blue"
           loading={loading}
         />
@@ -49,18 +39,10 @@ export default function PlatformOverviewGrid({ stats, loading }) {
         />
         <StatCard
           icon={FolderAddIcon}
-          label="Total Modules"
+          label="All Published Modules"
           value={s.total_modules}
-          sub="Published content"
+          sub="Platform-wide content"
           color="purple"
-          loading={loading}
-        />
-        <StatCard
-          icon={Note01Icon}
-          label="Enrollments"
-          value={s.total_enrollments}
-          sub="All-time"
-          color="amber"
           loading={loading}
         />
         <StatCard
@@ -69,6 +51,14 @@ export default function PlatformOverviewGrid({ stats, loading }) {
           value={s.total_certificates}
           sub="Issued to users"
           color="green"
+          loading={loading}
+        />
+        <StatCard
+          icon={Note01Icon}
+          label="Enrollments"
+          value={s.total_enrollments}
+          sub="All-time"
+          color="amber"
           loading={loading}
         />
         <StatCard
