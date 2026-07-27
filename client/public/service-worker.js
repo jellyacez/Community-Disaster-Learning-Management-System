@@ -139,7 +139,7 @@ async function replayWriteQueue() {
         
         for (const item of items) {
           try {
-            const res = await fetch('http://localhost:5000/api' + item.endpoint, {
+            const res = await fetch('/api' + item.endpoint, {
               method: item.method,
               headers: {
                 'Content-Type': 'application/json'
@@ -201,7 +201,3 @@ function markItemFailed(db, item) {
     putReq.onerror = () => resolve();
   });
 }
-// Force a console log to prove SW is executing
-self.addEventListener('sync', (event) => {
-  console.log("SW: SYNC EVENT FIRED FOR TAG: " + event.tag);
-});
