@@ -52,14 +52,34 @@ export default function MdrrmoRecentActivity() {
           </div>
         ) : (
           <div className="space-y-5 relative before:absolute before:inset-y-0 before:left-4 before:w-px before:bg-gray-100">
-            {data.slice(0, 5).map((log) => (
+            {data.slice(0, 5).map((log) => {
+              const text = (log.log || "").toLowerCase();
+              let iconNode = <HugeiconsIcon icon={UserIcon} className="w-4 h-4 text-gray-500" />;
+              if (text.includes("cert") || text.includes("issue")) iconNode = <HugeiconsIcon icon={Certificate01Icon} className="w-4 h-4 text-amber-500" />;
+              else if (text.includes("module") || text.includes("content")) iconNode = <HugeiconsIcon icon={Note01Icon} className="w-4 h-4 text-purple-500" />;
+              else if (text.includes("logged in") || text.includes("login")) iconNode = <HugeiconsIcon icon={UserIcon} className="w-4 h-4 text-emerald-500" />;
+              else if (text.includes("logged out") || text.includes("logout")) iconNode = <HugeiconsIcon icon={UserIcon} className="w-4 h-4 text-gray-400" />;
+
+              // Parse timestamp to relative
+              const date = new Date(log.timestamp);
+              const diffMs = new Date() - date;
+              const diffMins = Math.floor(diffMs / 60000);
+              const diffHrs = Math.floor(diffMins / 60);
+              const diffDays = Math.floor(diffHrs / 24);
+              
+              let timeStr = "just now";
+              if (diffMins > 0 && diffMins < 60) timeStr = `${diffMins} minutes ago`;
+              else if (diffHrs > 0 && diffHrs < 24) timeStr = `${diffHrs} hours ago`;
+              else if (diffDays > 0) timeStr = `${diffDays} days ago`;
+
+              return (
               <div key={log.id} className="flex gap-4 relative">
                 <div className="w-8 h-8 rounded-full bg-white border border-gray-100 shadow-sm flex items-center justify-center shrink-0 z-10">
-                  {getLogIcon(log.log)}
+                  {iconNode}
                 </div>
                 <div className="flex-1 min-w-0 pt-1.5">
-                  <p className="text-sm font-medium text-gray-900 truncate">
-                    {log.log}
+                  <p className="text-sm text-gray-900 truncate">
+                    <span className="font-bold">{log.user_name}</span> {log.log.replace(/^User .*? /, '').replace(log.user_name, '').trim()}
                   </p>
                   <div className="flex items-center gap-2 mt-1">
                     <span className="text-[11px] font-semibold text-gray-500 truncate max-w-[120px]">
@@ -67,12 +87,12 @@ export default function MdrrmoRecentActivity() {
                     </span>
                     <span className="w-1 h-1 rounded-full bg-gray-300" />
                     <span className="text-[10px] text-gray-400 whitespace-nowrap">
-                      {log.timestamp}
+                      {timeStr}
                     </span>
                   </div>
                 </div>
               </div>
-            ))}
+            )})}
           </div>
         )}
       </div>

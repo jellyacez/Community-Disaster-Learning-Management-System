@@ -1,17 +1,20 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { Link } from "react-router-dom";
 import apiClient from "../../../../lib/apiClient";
 import useDocumentTitle from "../../../../hooks/useDocumentTitle";
-import { SkeletonTableRow } from "../../../../components/ui/Skeleton.jsx";
-import { FolderAddIcon, UserGroupIcon, Certificate01Icon } from "@hugeicons/core-free-icons";
-
+import { FolderAddIcon, UserGroupIcon, Certificate01Icon, Task01Icon, Download02Icon } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import StatCard from "../../system/overview/components/StatCard";
-import MdrrmoAlertBanner from "./components/MdrrmoAlertBanner";
-import MdrrmoCharts from "./components/MdrrmoCharts";
-import MdrrmoQuickActions from "./components/MdrrmoQuickActions";
+import MdrrmoStatusBar from "./components/MdrrmoStatusBar";
+import { MdrrmoModuleDistributionChart, MdrrmoEnrollmentTrendChart } from "./components/MdrrmoCharts";
+import ActiveModulesTable from "./components/ActiveModulesTable";
 import MdrrmoRecentActivity from "./components/MdrrmoRecentActivity";
 
 export default function Overview() {
   useDocumentTitle("MDRRMO Overview | Admin Console");
+  const [selectedCategory, setSelectedCategory] = useState(null);
+  const [statusFilter, setStatusFilter] = useState(null);
 
   const { data: metricsData, isLoading: metricsLoading, isError: metricsError, error } = useQuery({
     queryKey: ["mdrrmoMetrics"],
@@ -26,12 +29,13 @@ export default function Overview() {
   const { data: modules = [], isLoading: isLoadingModules } = useQuery({
     queryKey: ["adminModules"],
     queryFn: async () => {
-      const res = await apiClient.get("admin/modules");
+      const res = await apiClient.get("admin/modules?limit=1000");
       const data = res.data.data || [];
       return data.map(mod =>({
         id: mod.mod_id,
-        title:mod.modname,
-        status:mod.modcat,
+        title: mod.modname,
+        category: mod.modcat,
+        status: mod.status,
         step_count: parseInt(mod.step_count,10) || 0
       }));
     },
@@ -53,14 +57,31 @@ export default function Overview() {
   const m = metricsData || {};
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-150">
-      <MdrrmoAlertBanner />
+    <div className="space-y-6 animate-in fade-in duration-150 pb-10">
+      
+      {/* Header Row */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-gray-100 shadow-[0_2px_12px_-3px_rgba(0,0,0,0.06)]">
+        <div>
+          <h1 className="text-[22px] font-bold text-gray-900 tracking-tight">Municipal Disaster Risk Reduction and Management Office</h1>
+          <p className="text-[14px] text-gray-500 font-medium mt-1">Staff & Responder Training Hub</p>
+        </div>
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+          <MdrrmoStatusBar />
+          <div className="flex items-center gap-4">
+          <button className="h-10 px-4 bg-white border border-gray-200 text-gray-700 text-[12px] font-bold tracking-wide uppercase rounded flex items-center gap-2 hover:bg-gray-50 transition-colors">
+            <HugeiconsIcon icon={Download02Icon} className="w-4 h-4 text-red-600" />
+            Export Report
+          </button>
+          <Link to="/admin/mdrrmo/modules" className="h-10 px-4 bg-red-600 text-white text-[12px] font-bold tracking-wide uppercase rounded flex items-center gap-2 hover:bg-red-700 transition-colors shadow-sm">
+            + Create Module
+          </Link>
+        </div>
+        </div>
+      </div>
 
+      {/* Metrics Row (4 Columns) */}
       <div>
-        <h2 className="text-sm font-bold uppercase tracking-widest text-gray-500 mb-3">
-          Platform Overview
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <StatCard
             icon={FolderAddIcon}
             label="Total Active Modules"
@@ -68,13 +89,31 @@ export default function Overview() {
             sub="Currently published"
             color="red"
             loading={metricsLoading}
+            onClick={() => {
+              setStatusFilter(statusFilter === 'published' ? null : 'published');
+              setSelectedCategory(null);
+            }}
+            isActive={statusFilter === 'published'}
+          />
+          <StatCard
+            icon={Task01Icon}
+            label="Pending Reviews"
+            value={m.pending_reviews}
+            sub="Modules awaiting approval"
+            color="amber"
+            loading={metricsLoading}
+            onClick={() => {
+              setStatusFilter(statusFilter === 'pending_review' ? null : 'pending_review');
+              setSelectedCategory(null);
+            }}
+            isActive={statusFilter === 'pending_review'}
           />
           <StatCard
             icon={UserGroupIcon}
             label="Registered Responders"
             value={m.registered_responders}
             sub="Total resident accounts"
-            color="amber"
+            color="blue"
             loading={metricsLoading}
           />
           <StatCard
@@ -88,65 +127,37 @@ export default function Overview() {
         </div>
       </div>
 
-      <div className="grid lg:grid-cols-3 gap-6">
-        {/* Left Side: Charts */}
-        <div className="lg:col-span-2">
-          <MdrrmoCharts />
-        </div>
-
-        {/* Right Side: Quick Actions */}
-        <div className="lg:col-span-1 h-full">
-          <MdrrmoQuickActions />
-        </div>
-      </div>
-
-      <div className="grid lg:grid-cols-3 gap-6 items-start">
-        {/* Left Side: Recent Activity Feed */}
-        <div className="lg:col-span-1 h-full">
+      {/* 2x2 Grid Layout */}
+      {/* Row 2: Recent Activity & Trend */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-1">
           <MdrrmoRecentActivity />
         </div>
-
-        {/* Right Side: Active Master Modules Table */}
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-[0_2px_12px_-3px_rgba(0,0,0,0.06)] lg:col-span-2 w-full h-full">
-          <h3 className="text-base font-bold text-gray-900 mb-6">
-            Active Master Modules
-          </h3>
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="text-xs text-gray-400 border-b border-gray-100">
-                  <th className="pb-3 font-semibold uppercase tracking-wider">Module Topic</th>
-                  <th className="pb-3 font-semibold uppercase tracking-wider text-center">Steps Inside</th>
-                  <th className="pb-3 font-semibold uppercase tracking-wider text-center">Visibility</th>
-                </tr>
-              </thead>
-              <tbody className="text-sm divide-y divide-gray-50">
-                {isLoadingModules ? (
-                  [1, 2, 3].map((i) => <SkeletonTableRow key={i} columns={3} />)
-                ) : modules.length === 0 ? (
-                  <tr>
-                    <td colSpan="3" className="py-6 text-center text-gray-400 italic">No modules available</td>
-                  </tr>
-                ) : (
-                  modules.slice(0, 5).map((mod) => (
-                    <tr key={mod.id || mod._id} className="hover:bg-gray-50/50 transition-colors">
-                      <td className="py-3 font-semibold max-w-[160px] truncate text-gray-800">{mod.title}</td>
-                      <td className="py-3 text-center font-mono text-gray-500 font-bold">{mod.step_count} Steps</td>
-                      <td className="py-3 text-center">
-                        <span className={`px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider ${
-                          mod.status === "Private" ? "bg-amber-50 text-amber-600 border border-amber-200" : "bg-emerald-50 text-emerald-600 border border-emerald-200"
-                        }`}>
-                          {mod.status || "Public"}
-                        </span>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+        <div className="lg:col-span-2">
+          <MdrrmoEnrollmentTrendChart />
         </div>
       </div>
+
+      {/* Row 3: Module Distribution & Active Modules Table */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-1">
+          <MdrrmoModuleDistributionChart 
+            selectedCategory={selectedCategory}
+            onCategoryClick={(cat) => {
+              setSelectedCategory(cat);
+              setStatusFilter(null);
+            }}
+          />
+        </div>
+        <div className="lg:col-span-2">
+          <ActiveModulesTable 
+            modules={modules}
+            selectedCategory={selectedCategory}
+            statusFilter={statusFilter}
+          />
+        </div>
+      </div>
+
     </div>
   );
 }

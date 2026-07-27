@@ -4,13 +4,16 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import { Menu01Icon } from "@hugeicons/core-free-icons";
 import AdminSidebar from "./AdminSidebar";
 import CriticalAlertBanner from "./CriticalAlertBanner";
+import { authClient } from "../../lib/auth-client";
 
 export default function AdminLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { data: session } = authClient.useSession();
+  const isSystemAdmin = session?.user?.role === 'system_admin';
 
   return (
     <div className="flex flex-col h-screen bg-gray-50 overflow-hidden">
-      <CriticalAlertBanner />
+      {isSystemAdmin && <CriticalAlertBanner />}
       
       <div className="flex flex-1 min-h-0 overflow-hidden">
         <AdminSidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />

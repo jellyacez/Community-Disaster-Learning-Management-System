@@ -471,7 +471,7 @@ class ModuleService {
     const total = parseInt(countResult.rows[0].count, 10);
 
     const result = await pool.query(
-      `SELECT mod_id, modname, modcat, description, level, duration, image_url, moddateadd AS created_at, moddateremove AS updated_at,
+      `SELECT mod_id, modname, modcat, description, level, duration, image_url, moddateadd AS created_at, moddateremove AS updated_at, status,
        (SELECT COUNT(*) FROM public.module_steps ms JOIN public.levels l ON ms.level_id = l.level_id WHERE l.mod_id = public.module_data.mod_id) AS step_count
        FROM public.module_data ${where}
        ORDER BY moddateadd DESC LIMIT $${idx} OFFSET $${idx + 1}`,
@@ -487,6 +487,16 @@ class ModuleService {
         totalPages: Math.ceil(total / limit),
       },
     };
+  }
+  async updateModuleStatus(mod_id, status, rejection_reason = null) {
+    const query = `
+      UPDATE public.module_data
+      SET status = $1, rejection_reason = $2
+      WHERE mod_id = $3
+      RETURNING *
+    `;
+    const result = await pool.query(query, [status, rejection_reason, mod_id]);
+    return result.rows[0];
   }
 }
 

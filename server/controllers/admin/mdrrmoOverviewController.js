@@ -7,13 +7,15 @@ exports.getMetrics = async (req, res) => {
     const stats = await pool.query(`
       SELECT
         (SELECT COUNT(*) FROM "user" WHERE role = 'resident' AND archived = false AND (banned IS NULL OR banned = false)) AS registered_responders,
-        (SELECT COUNT(*) FROM module_data WHERE moddateremove IS NULL) AS active_modules,
+        (SELECT COUNT(*) FROM module_data WHERE moddateremove IS NULL AND status = 'published') AS active_modules,
+        (SELECT COUNT(*) FROM module_data WHERE moddateremove IS NULL AND status = 'pending_review') AS pending_reviews,
         (SELECT COUNT(*) FROM certificates WHERE status = 'active') AS certificates_issued
     `);
 
     const data = {
       registered_responders: parseInt(stats.rows[0].registered_responders, 10) || 0,
       active_modules: parseInt(stats.rows[0].active_modules, 10) || 0,
+      pending_reviews: parseInt(stats.rows[0].pending_reviews, 10) || 0,
       certificates_issued: parseInt(stats.rows[0].certificates_issued, 10) || 0
     };
 
@@ -33,7 +35,7 @@ exports.getModuleDistribution = async (req, res) => {
         COALESCE(NULLIF(TRIM(modcat), ''), 'Uncategorized') as category,
         COUNT(*) as count
       FROM module_data 
-      WHERE moddateremove IS NULL
+      WHERE moddateremove IS NULL AND status = 'published'
       GROUP BY category
       ORDER BY count DESC
     `);
@@ -105,8 +107,9 @@ exports.getRecentActivity = async (req, res) => {
 
     const data = result.rows.map(row => ({
       id: row.act_id,
+      user_name: row.user_name || 'System',
       source: row.user_name ? `User: ${row.user_name}` : `User ID: ${row.user_id}`,
-      timestamp: new Date(row.act_date).toLocaleString(),
+      timestamp: row.act_date, // Send ISO date to let frontend parse relatively
       log: row.act_log
     }));
 

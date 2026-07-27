@@ -21,6 +21,10 @@ const requirePermission = require("../../middleware/requirePermission");
 router.post("/", requireRole(ADMIN_ROLES), requirePermission('manage_modules'), moduleController.createModule);
 
 
+// @route   PUT /api/modules/:id/status
+// @desc    Approve/Reject or change module status
+// @access  Private (head_mdrrmo_admin)
+router.put("/:id/status", requireRole(['head_mdrrmo_admin']), requirePermission('approve_modules'), moduleController.updateModuleStatus);
 
 router.get("/:id/details", moduleController.getModuleSyllabusDetails);
 // @route   GET /api/modules/available

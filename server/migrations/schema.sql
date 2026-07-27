@@ -656,7 +656,10 @@ CREATE TABLE public.module_data (
     duration character varying(50),
     video_url character varying(500),
     image_url character varying(500) DEFAULT NULL::character varying,
-    CONSTRAINT valid_modcat CHECK (((modcat)::text = ANY ((ARRAY['Flood'::character varying, 'Earthquake'::character varying, 'Fire'::character varying, 'General'::character varying])::text[])))
+    status character varying(20) DEFAULT 'draft'::character varying NOT NULL,
+    rejection_reason text,
+    CONSTRAINT valid_modcat CHECK (((modcat)::text = ANY ((ARRAY['Flood'::character varying, 'Earthquake'::character varying, 'Fire'::character varying, 'General'::character varying])::text[]))),
+    CONSTRAINT valid_status CHECK (((status)::text = ANY ((ARRAY['draft'::character varying, 'pending_review'::character varying, 'published'::character varying, 'rejected'::character varying])::text[])))
 );
 
 

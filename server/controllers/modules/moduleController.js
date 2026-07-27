@@ -259,3 +259,26 @@ exports.getAllModules = async (req, res) => {
       .json({ success: false, error: { message: "Failed to fetch modules" } });
   }
 };
+// @desc    Update module status (e.g. approve/reject)
+// @access  Private (head_mdrrmo_admin)
+exports.updateModuleStatus = async (req, res) => {
+  const { id } = req.params;
+  const { status, rejection_reason } = req.body;
+  
+  if (!['draft', 'pending_review', 'published', 'rejected'].includes(status)) {
+    return res.status(400).json({ success: false, message: 'Invalid status' });
+  }
+
+  try {
+    const parsedModId = parseInt(id, 10);
+    if (isNaN(parsedModId) || parsedModId <= 0) {
+      return res.status(400).json({ success: false, message: "Invalid module ID format." });
+    }
+
+    await ModuleService.updateModuleStatus(parsedModId, status, rejection_reason);
+    res.json({ success: true, message: 'Status updated successfully' });
+  } catch (error) {
+    console.error("Update Module Status Error:", error);
+    res.status(500).json({ success: false, error: 'Server Error' });
+  }
+};
