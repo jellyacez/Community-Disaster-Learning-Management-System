@@ -1,9 +1,22 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import toast from "react-hot-toast";
 import { authClient } from "../../lib/auth-client";
 
 export default function GoogleSignInButton({ clearGlobalError }) {
   const [isLoading, setIsLoading] = useState(false);
+
+  // Fix for bfcache (browser back button): 
+  // If user clicks "Sign in with Google", gets redirected, and hits back, 
+  // the page is restored from cache and would be stuck in 'isLoading = true'.
+  useEffect(() => {
+    const handlePageShow = (event) => {
+      if (event.persisted) {
+        setIsLoading(false);
+      }
+    };
+    window.addEventListener("pageshow", handlePageShow);
+    return () => window.removeEventListener("pageshow", handlePageShow);
+  }, []);
 
   const handleGoogleSignIn = async () => {
     if (isLoading) return;
