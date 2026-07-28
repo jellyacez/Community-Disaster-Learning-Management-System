@@ -1,8 +1,15 @@
+import { useState } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { Alert02Icon } from "@hugeicons/core-free-icons";
+import { Alert02Icon, Cancel01Icon } from "@hugeicons/core-free-icons";
 
 export default function SystemAlertBanner({ healthData }) {
-  if (!healthData) return null;
+  // We use local component state for dismissal. This ensures the alert stays 
+  // dismissed during the current local session/view to avoid constant nagging,
+  // but will correctly resurface on a full page refresh if the underlying 
+  // system memory condition is still critical.
+  const [dismissed, setDismissed] = useState(false);
+
+  if (!healthData || dismissed) return null;
 
   const isDisconnected = healthData.db_status !== "connected";
   
@@ -27,7 +34,7 @@ export default function SystemAlertBanner({ healthData }) {
         <HugeiconsIcon icon={Alert02Icon} className="w-6 h-6 relative z-10" />
       </div>
       
-      <div className="relative z-10">
+      <div className="relative z-10 flex-1">
         <h3 className="text-base font-extrabold text-red-900 tracking-tight">Critical System Alert</h3>
         <div className="mt-1.5 text-sm font-medium text-red-800 flex flex-col gap-2">
           {isDisconnected && (
@@ -44,6 +51,14 @@ export default function SystemAlertBanner({ healthData }) {
           )}
         </div>
       </div>
+      
+      <button 
+        onClick={() => setDismissed(true)} 
+        className="relative z-10 shrink-0 p-1.5 rounded-lg text-red-500 hover:bg-red-100 hover:text-red-700 transition-colors"
+        title="Dismiss alert"
+      >
+        <HugeiconsIcon icon={Cancel01Icon} className="w-5 h-5" />
+      </button>
     </div>
   );
 }

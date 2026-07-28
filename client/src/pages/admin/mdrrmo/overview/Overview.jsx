@@ -66,7 +66,7 @@ export default function Overview() {
           <p className="text-[14px] text-gray-500 font-medium mt-1">Staff & Responder Training Hub</p>
         </div>
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-          <MdrrmoStatusBar />
+          <MdrrmoStatusBar isError={metricsError} />
           <div className="flex items-center gap-4">
           <button className="h-10 px-4 bg-white border border-gray-200 text-gray-700 text-[12px] font-bold tracking-wide uppercase rounded flex items-center gap-2 hover:bg-gray-50 transition-colors">
             <HugeiconsIcon icon={Download02Icon} className="w-4 h-4 text-red-600" />

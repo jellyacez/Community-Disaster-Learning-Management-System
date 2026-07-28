@@ -51,23 +51,26 @@ export function MdrrmoModuleDistributionChart({ onCategoryClick, selectedCategor
     refetchInterval: 60000,
   });
 
-  const pieColors = [
-    { gradientId: "gradCat1", color1: "#fca5a5", color2: "#ef4444", dotColor: "#ef4444" },
-    { gradientId: "gradCat2", color1: "#fdba74", color2: "#f97316", dotColor: "#f97316" },
-    { gradientId: "gradCat3", color1: "#fcd34d", color2: "#f59e0b", dotColor: "#f59e0b" },
-    { gradientId: "gradCat4", color1: "#f87171", color2: "#dc2626", dotColor: "#dc2626" },
-    { gradientId: "gradCat5", color1: "#fb923c", color2: "#ea580c", dotColor: "#ea580c" },
-  ];
+  const getCategoryColor = (name) => {
+    const n = (name || "").toLowerCase();
+    if (n.includes('flood')) return { gradientId: `gradFlood`, color1: "#93c5fd", color2: "#3b82f6", dotColor: "#3b82f6" }; // Blue
+    if (n.includes('fire')) return { gradientId: `gradFire`, color1: "#fca5a5", color2: "#ef4444", dotColor: "#ef4444" }; // Red
+    if (n.includes('earthquake')) return { gradientId: `gradEarthquake`, color1: "#fcd34d", color2: "#d97706", dotColor: "#d97706" }; // Amber/Brown
+    return { gradientId: `gradGen${name.replace(/[^a-zA-Z0-9]/g, '')}`, color1: "#d1d5db", color2: "#6b7280", dotColor: "#6b7280" }; // Gray for General/others
+  };
 
-  const pieData = (distributionData || []).map((item, idx) => ({
+  const pieData = (distributionData || []).map((item) => ({
     ...item,
-    ...pieColors[idx % pieColors.length]
+    ...getCategoryColor(item.name)
   }));
 
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-[0_2px_12px_-3px_rgba(0,0,0,0.06)] p-6 flex flex-col h-full min-h-[350px] transition-all hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)]">
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-[22px] font-bold text-gray-900">Module Distribution</h2>
+        <div>
+          <h2 className="text-[22px] font-bold text-gray-900">Module Distribution</h2>
+          <p className="text-[13px] text-gray-500 font-medium mt-1">Published content only</p>
+        </div>
         {selectedCategory && (
           <button onClick={() => onCategoryClick(null)} className="text-xs text-red-600 font-semibold hover:underline">
             Clear Filter

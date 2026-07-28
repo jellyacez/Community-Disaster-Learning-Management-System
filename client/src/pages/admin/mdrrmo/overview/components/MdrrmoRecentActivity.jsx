@@ -78,7 +78,10 @@ export default function MdrrmoRecentActivity() {
                   {iconNode}
                 </div>
                 <div className="flex-1 min-w-0 pt-1.5">
-                  <p className="text-sm text-gray-900 truncate">
+                  <p 
+                    className="text-sm text-gray-900 truncate" 
+                    title={log.log}
+                  >
                     <span className="font-bold">{log.user_name}</span> {log.log.replace(/^User .*? /, '').replace(log.user_name, '').trim()}
                   </p>
                   <div className="flex items-center gap-2 mt-1">
