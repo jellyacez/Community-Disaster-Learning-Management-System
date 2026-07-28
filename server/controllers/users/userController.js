@@ -17,7 +17,7 @@ exports.getProviders = async (req, res) => {
 // @access  Private
 exports.onboarding = async (req, res) => {
   const { name, barangay } = req.body;
-  
+
   try {
     await UserService.onboarding(req.user.id, name, barangay);
     res.json({ success: true, message: "Profile updated successfully!" });
@@ -42,7 +42,15 @@ exports.getAllUsers = async (req, res) => {
     const status = req.query.status || "";
     const barangay = req.query.barangay || "";
 
-    const result = await UserService.getAllUsers(page, limit, search, role, status, barangay, req.user);
+    const result = await UserService.getAllUsers(
+      page,
+      limit,
+      search,
+      role,
+      status,
+      barangay,
+      req.user,
+    );
     res.json(result);
   } catch (err) {
     console.error(err.message);
@@ -56,7 +64,10 @@ exports.getAllUsers = async (req, res) => {
 exports.deleteAccount = async (req, res) => {
   try {
     await UserService.deleteAccount(req.user.id);
-    res.json({ success: true, message: "Account and associated data permanently deleted." });
+    res.json({
+      success: true,
+      message: "Account and associated data permanently deleted.",
+    });
   } catch (err) {
     if (err.message === "NOT_FOUND") {
       return res.status(404).json({ error: "User not found" });
@@ -73,7 +84,7 @@ exports.getCertificateData = async (req, res) => {
   try {
     const { token } = req.params;
     if (!token) return res.status(400).json({ error: "Token required" });
-    
+
     const certData = await UserService.getCertificateData(req.user.id, token);
     res.json({ data: certData });
   } catch (err) {
@@ -91,9 +102,12 @@ exports.getCertificateData = async (req, res) => {
 exports.exportUserData = async (req, res) => {
   try {
     const exportData = await UserService.exportUserData(req.user.id);
-    const date = new Date().toISOString().split('T')[0];
-    res.setHeader('Content-Disposition', `attachment; filename=BacolorLMS_Data_Export_${date}.json`);
-    res.setHeader('Content-Type', 'application/json');
+    const date = new Date().toISOString().split("T")[0];
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename=BacolorLMS_Data_Export_${date}.json`,
+    );
+    res.setHeader("Content-Type", "application/json");
     res.send(JSON.stringify(exportData, null, 2));
   } catch (err) {
     if (err.message === "NOT_FOUND") {
@@ -123,7 +137,10 @@ exports.getUserSettings = async (req, res) => {
 
 exports.updateUserSettings = async (req, res) => {
   try {
-    const settings = await UserService.updateUserSettings(req.user.id, req.body);
+    const settings = await UserService.updateUserSettings(
+      req.user.id,
+      req.body,
+    );
     res.json({ success: true, settings });
   } catch (err) {
     console.error("Error updating settings:", err.message);
