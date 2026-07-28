@@ -19,7 +19,7 @@
     "@acpr/rate-limit-postgresql": "1.4.1",
     "@aws-sdk/client-s3": "^3.1085.0",
     "@react-pdf/renderer": "4.5.1",
-    "better-auth": "1.6.15",
+    "better-auth": "^1.6.25",
     "cors": "2.8.6",
     "dotenv": "17.4.2",
     "express": "5.2.1",

@@ -9,14 +9,16 @@ exports.getMetrics = async (req, res) => {
         (SELECT COUNT(*) FROM "user" WHERE role = 'resident' AND archived = false AND (banned IS NULL OR banned = false)) AS registered_responders,
         (SELECT COUNT(*) FROM module_data WHERE moddateremove IS NULL AND status = 'published') AS active_modules,
         (SELECT COUNT(*) FROM module_data WHERE moddateremove IS NULL AND status = 'pending_review') AS pending_reviews,
-        (SELECT COUNT(*) FROM certificates WHERE status = 'active') AS certificates_issued
+        (SELECT COUNT(*) FROM certificates WHERE status = 'active') AS certificates_issued,
+        (SELECT COUNT(*) FROM module_activity) AS total_enrollments
     `);
 
     const data = {
       registered_responders: parseInt(stats.rows[0].registered_responders, 10) || 0,
       active_modules: parseInt(stats.rows[0].active_modules, 10) || 0,
       pending_reviews: parseInt(stats.rows[0].pending_reviews, 10) || 0,
-      certificates_issued: parseInt(stats.rows[0].certificates_issued, 10) || 0
+      certificates_issued: parseInt(stats.rows[0].certificates_issued, 10) || 0,
+      total_enrollments: parseInt(stats.rows[0].total_enrollments, 10) || 0
     };
 
     res.json({ success: true, data });

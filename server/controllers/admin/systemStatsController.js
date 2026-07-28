@@ -1,5 +1,6 @@
 const pool = require("../../config/db");
 const os = require("os");
+const fs = require("fs");
 
 // @desc    Get system-wide statistics
 // @access  Private (system_admin only)
@@ -22,12 +23,12 @@ exports.getSystemStats = async (req, res) => {
       pool.query(`
         SELECT
           (SELECT COUNT(*) FROM activity_log) AS total_log_entries
-      `)
+      `),
     ]);
 
     const data = {
       ...userStats.rows[0],
-      ...otherStats.rows[0]
+      ...otherStats.rows[0],
     };
 
     // Postgres COUNT returns strings, parse them to match previous behavior exactly if needed
@@ -40,7 +41,7 @@ exports.getSystemStats = async (req, res) => {
     res.json({ success: true, data });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ success: false, error: 'Server Error' });
+    res.status(500).json({ success: false, error: "Server Error" });
   }
 };
 
@@ -68,19 +69,22 @@ exports.getTrafficAnalytics = async (req, res) => {
     const result = await pool.query(query);
 
     // Format for Recharts (e.g. "10:00 AM")
-    const data = result.rows.map(row => {
+    const data = result.rows.map((row) => {
       const d = new Date(row.hour);
-      const timeStr = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      const timeStr = d.toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      });
       return {
         time: timeStr,
-        activeUsers: parseInt(row.active_users, 10) || 0
+        activeUsers: parseInt(row.active_users, 10) || 0,
       };
     });
 
     res.json({ success: true, data });
   } catch (err) {
     console.error("Traffic Analytics Error:", err);
-    res.status(500).json({ success: false, error: 'Server Error' });
+    res.status(500).json({ success: false, error: "Server Error" });
   }
 };
 
@@ -89,26 +93,29 @@ exports.getTrafficAnalytics = async (req, res) => {
 exports.getHealthStatus = async (req, res) => {
   try {
     const start = Date.now();
-    await pool.query('SELECT 1');
+    await pool.query("SELECT 1");
     const latency = Date.now() - start;
 
     // Memory calculations
     const totalMemBytes = os.totalmem();
     const freeMemBytes = os.freemem();
     const usedMemBytes = totalMemBytes - freeMemBytes;
-    
+
     // CPU Simulation for Windows
     const platform = os.platform();
     let cpuLoadPercent = 0;
-    
-    if (platform === 'win32') {
+
+    if (platform === "win32") {
       // Simulates a realistic server idling load between 12% and 18%
       cpuLoadPercent = parseFloat((12 + Math.random() * 6).toFixed(1));
     } else {
       // On linux/mac, loadavg returns an array [1min, 5min, 15min]
       const cpus = os.cpus().length;
       const load = os.loadavg()[0];
-      cpuLoadPercent = Math.min(100, parseFloat(((load / cpus) * 100).toFixed(1)));
+      cpuLoadPercent = Math.min(
+        100,
+        parseFloat(((load / cpus) * 100).toFixed(1)),
+      );
     }
 
     // Try to get real disk usage using Node.js fs.statfsSync (available in modern Node versions)
@@ -129,17 +136,22 @@ exports.getHealthStatus = async (req, res) => {
     res.json({
       success: true,
       data: {
-        db_status: 'connected',
+        db_status: "connected",
         db_latency_ms: latency,
         uptime_seconds: Math.floor(process.uptime()),
         memory_usage_mb: Math.round(usedMemBytes / 1024 / 1024),
         memory_total_mb: Math.round(totalMemBytes / 1024 / 1024),
         memory_usage_percent: Math.round((usedMemBytes / totalMemBytes) * 100),
         cpu_load_percent: cpuLoadPercent,
-        disk_usage_percent: diskUsagePercent
-      }
+        disk_usage_percent: diskUsagePercent,
+      },
     });
   } catch {
-    res.status(500).json({ success: false, data: { db_status: 'disconnected', db_latency_ms: null } });
+    res
+      .status(500)
+      .json({
+        success: false,
+        data: { db_status: "disconnected", db_latency_ms: null },
+      });
   }
 };

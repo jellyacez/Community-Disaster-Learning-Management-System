@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import apiClient from "../../../../lib/apiClient";
 import useDocumentTitle from "../../../../hooks/useDocumentTitle";
-import { FolderAddIcon, UserGroupIcon, Certificate01Icon, Task01Icon, Download02Icon } from "@hugeicons/core-free-icons";
+import { FolderAddIcon, UserGroupIcon, Certificate01Icon, Task01Icon, Download02Icon, BookOpen01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import StatCard from "../../system/overview/components/StatCard";
 import MdrrmoStatusBar from "./components/MdrrmoStatusBar";
@@ -79,9 +79,9 @@ export default function Overview() {
         </div>
       </div>
 
-      {/* Metrics Row (4 Columns) */}
+      {/* Metrics Row (5 Columns) */}
       <div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
           <StatCard
             icon={FolderAddIcon}
             label="Total Active Modules"
@@ -122,6 +122,14 @@ export default function Overview() {
             value={m.certificates_issued}
             sub="Total verified certificates"
             color="green"
+            loading={metricsLoading}
+          />
+          <StatCard
+            icon={BookOpen01Icon}
+            label="Total Enrollments"
+            value={m.total_enrollments}
+            sub="Across all modules"
+            color="purple"
             loading={metricsLoading}
           />
         </div>
