@@ -103,6 +103,12 @@ exports.getRecentActivity = async (req, res) => {
              al.act_date, al.act_log
       FROM activity_log al
       LEFT JOIN "user" u ON al.user_id = u.id
+      WHERE al.act_log ILIKE '%certificate%'
+         OR al.act_log ILIKE '%module%'
+         OR al.act_log ILIKE '%register%'
+         OR al.act_log ILIKE '%approv%'
+         OR al.act_log ILIKE '%reject%'
+         OR al.act_log ILIKE '%submit%'
       ORDER BY al.act_date DESC
       LIMIT 10
     `);

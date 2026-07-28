@@ -9,7 +9,7 @@ export default function ActiveModulesTable({ modules = [], selectedCategory, sta
   const isHeadAdmin = session?.user?.role === "head_mdrrmo_admin";
 
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 5;
+  const itemsPerPage = 10;
 
   let filtered = modules;
   if (selectedCategory) {
