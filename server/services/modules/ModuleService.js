@@ -135,7 +135,7 @@ class ModuleService {
         md.image_url,
         (um.mod_id IS NOT NULL) AS is_enrolled,
         um.progress,
-        um.modstatus AS status
+        um.modstatus AS enrollment_status
        FROM public.module_data md
        LEFT JOIN (
          SELECT DISTINCT ON (mod_id) mod_id, progress, modstatus
@@ -143,6 +143,7 @@ class ModuleService {
          WHERE user_id = $1
          ORDER BY mod_id, modact_id DESC
        ) um ON um.mod_id = md.mod_id
+       WHERE md.moddateremove IS NULL AND md.status = 'published'
        ORDER BY md.mod_id DESC`,
       [user_id]
     );

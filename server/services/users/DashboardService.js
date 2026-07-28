@@ -38,7 +38,7 @@ class DashboardService {
         md.level, 
         md.duration, 
         md.description,
-        ma.modstatus as status,
+        ma.modstatus as enrollment_status,
         COALESCE(ma.progress, 0) as progress 
       FROM module_activity ma
       JOIN module_data md ON ma.mod_id = md.mod_id

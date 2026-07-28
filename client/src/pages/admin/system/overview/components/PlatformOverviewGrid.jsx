@@ -17,7 +17,7 @@ export default function PlatformOverviewGrid({ stats, loading }) {
       <h2 className="text-sm font-bold uppercase tracking-widest text-gray-500 mb-3">
         Platform Overview
       </h2>
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
         <StatCard
           icon={UserGroupIcon}
           label="Total Users"
@@ -37,30 +37,7 @@ export default function PlatformOverviewGrid({ stats, loading }) {
           color="red"
           loading={loading}
         />
-        <StatCard
-          icon={FolderAddIcon}
-          label="All Published Modules"
-          value={s.total_modules}
-          sub="Platform-wide content"
-          color="purple"
-          loading={loading}
-        />
-        <StatCard
-          icon={Certificate01Icon}
-          label="Certificates"
-          value={s.total_certificates}
-          sub="Issued to users"
-          color="green"
-          loading={loading}
-        />
-        <StatCard
-          icon={Note01Icon}
-          label="Enrollments"
-          value={s.total_enrollments}
-          sub="All-time"
-          color="amber"
-          loading={loading}
-        />
+
         <StatCard
           icon={Clock01Icon}
           label="Active Sessions"

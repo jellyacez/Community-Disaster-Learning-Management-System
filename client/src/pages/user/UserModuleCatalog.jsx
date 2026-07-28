@@ -29,7 +29,7 @@ export default function UserModuleCatalog() {
       duration: mod.duration || "Varies",
       image_url: mod.image_url || null,
       progress: parseInt(mod.progress || 0),
-      status: mod.status || "Not Started",
+      status: mod.enrollment_status || "Not Started",
       is_enrolled: mod.is_enrolled || false
     }));
   }, [rawModules]);

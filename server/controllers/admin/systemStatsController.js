@@ -21,10 +21,6 @@ exports.getSystemStats = async (req, res) => {
       `),
       pool.query(`
         SELECT
-          (SELECT COUNT(*) FROM module_data) AS total_modules,
-          (SELECT COUNT(*) FROM module_activity) AS total_enrollments,
-          (SELECT COUNT(*) FROM module_activity WHERE modstatus = 'Completed') AS total_completions,
-          (SELECT COUNT(*) FROM certificates) AS total_certificates,
           (SELECT COUNT(*) FROM activity_log) AS total_log_entries
       `)
     ]);

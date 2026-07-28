@@ -44,7 +44,7 @@ export default function UserEnrolledModules() {
       duration: mod.duration || "Varies",
       image_url: mod.image_url || null,
       progress: parseInt(mod.progress || 0),
-      status: mod.status || "Not Started"
+      status: mod.enrollment_status || "Not Started"
     }));
   }, [dashboardData]);
   
