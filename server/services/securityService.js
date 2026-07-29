@@ -6,6 +6,7 @@ const {
   getPasswordRecoveredEmail,
 } = require("../utils/emailTemplates");
 const { getOrgSettings } = require("../utils/settings");
+const alertMonitorService = require("./alertMonitorService");
 
 const redactEmail = (email) => {
   if (!email || typeof email !== "string") return "[REDACTED]";
@@ -57,6 +58,11 @@ const handlePasswordResetRecovery = async (userEmail) => {
     }
   } catch (err) {
     console.error("Password reset recovery error:", err);
+    alertMonitorService.setAlert("SECURITY_SERVICE_ERROR", {
+      type: "danger",
+      title: "Password Reset Failure",
+      message: "A password reset recovery process failed to complete securely. Old sessions may not have been revoked.",
+    });
   }
 };
 

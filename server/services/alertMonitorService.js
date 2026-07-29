@@ -90,6 +90,12 @@ function startAlertMonitor() {
       }
     } catch (err) {
       console.error("Failed to run Brute Force check:", err);
+      setAlert("MONITOR_ERROR", {
+        type: "danger",
+        title: "Security Monitor Offline",
+        message:
+          "The brute-force detection service encountered a database error and is not actively monitoring.",
+      });
     }
 
     // 4. Intentional Administrative Overrides

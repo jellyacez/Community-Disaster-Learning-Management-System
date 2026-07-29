@@ -3,6 +3,7 @@ const pool = require("../config/db");
 const securityService = require("../services/securityService");
 const { CONSENT_VERSION } = require("../config/constants");
 const { logActivity, logError } = require("./logger");
+const alertMonitorService = require("../services/alertMonitorService");
 
 const securityHooksPlugin = () => {
   return {
@@ -31,6 +32,9 @@ const securityHooksPlugin = () => {
               } catch (err) {
                 if (err instanceof APIError) throw err;
                 console.error("Error checking archive status:", err);
+                throw new APIError("INTERNAL_SERVER_ERROR", {
+                  message: "Unable to verify account status. Please try again later."
+                });
               }
             }
             return {};
@@ -382,6 +386,11 @@ const securityHooksPlugin = () => {
                 );
               } catch (e) {
                 console.error("Error setting twoFactorEnabled to true:", e);
+                alertMonitorService.setAlert("2FA_STATE_DESYNC", {
+                  type: "danger",
+                  title: "2FA State Desynchronization",
+                  message: `Database failed to enable 2FA for user ${userId} despite successful verification.`
+                });
               }
             }
             return {};
@@ -405,6 +414,11 @@ const securityHooksPlugin = () => {
                 );
               } catch (e) {
                 console.error("Error setting twoFactorEnabled to false:", e);
+                alertMonitorService.setAlert("2FA_STATE_DESYNC", {
+                  type: "danger",
+                  title: "2FA State Desynchronization",
+                  message: `Database failed to disable 2FA for user ${userId} despite successful verification.`
+                });
               }
             }
             return {};
