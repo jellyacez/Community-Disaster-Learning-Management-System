@@ -26,6 +26,8 @@ export default function DeactivateArchiveTab({ user, onSave }) {
       await onSave({ type: "unban", userId: user.id });
     } else if (actionName === "archive" || actionName === "restore") {
       await onSave({ type: "archive", userId: user.id, data: { archived: actionName === "archive" } });
+    } else if (actionName === "hard_delete") {
+      await onSave({ type: "hard_delete", userId: user.id, data: { confirm: true } });
     }
   };
 
@@ -92,17 +94,46 @@ export default function DeactivateArchiveTab({ user, onSave }) {
             {user.archived ? "Restore Account" : "Archive Account"}
           </button>
         </div>
+
+        {/* Hard Delete */}
+        <div className="p-5 rounded-2xl border border-red-200 bg-red-50 space-y-3">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-bold text-red-900">
+                Permanently Delete Account
+              </p>
+              <p className="text-xs mt-0.5 text-red-700">
+                This action is irreversible. It will purge all data for this user.
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => setModalConfig({ isOpen: true, action: "hard_delete" })}
+            className="w-full rounded-xl py-2.5 text-sm font-bold transition-colors bg-red-600 text-white hover:bg-red-700"
+          >
+            Permanently Delete
+          </button>
+        </div>
       </div>
       
       <ConfirmationModal
         isOpen={modalConfig.isOpen}
         onClose={() => setModalConfig({ isOpen: false, action: null })}
         onConfirm={confirmAction}
-        title={`Confirm ${modalConfig.action?.charAt(0).toUpperCase()}${modalConfig.action?.slice(1)}`}
-        description={`Are you sure you want to ${modalConfig.action} this account?`}
-        confirmText={`Yes, ${modalConfig.action}`}
+        title={`Confirm ${
+          modalConfig.action === 'hard_delete' 
+            ? 'Permanent Deletion' 
+            : modalConfig.action?.charAt(0).toUpperCase() + modalConfig.action?.slice(1)
+        }`}
+        description={
+          modalConfig.action === 'hard_delete'
+            ? `Are you sure you want to permanently delete this account? This action cannot be undone and will purge all data.`
+            : `Are you sure you want to ${modalConfig.action} this account?`
+        }
+        confirmText={`Yes, ${modalConfig.action === 'hard_delete' ? 'Delete' : modalConfig.action}`}
         cancelText="Cancel"
-        type={modalConfig.action === 'deactivate' || modalConfig.action === 'archive' ? 'danger' : 'warning'}
+        type={modalConfig.action === 'deactivate' || modalConfig.action === 'archive' || modalConfig.action === 'hard_delete' ? 'danger' : 'warning'}
       />
     </>
   );

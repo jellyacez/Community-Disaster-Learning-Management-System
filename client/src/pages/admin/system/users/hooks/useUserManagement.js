@@ -72,6 +72,8 @@ export const useUserManagement = () => {
           return apiClient.patch(`/admin/users/${userId}/archive`, payload);
         case "bulk_archive":
           return apiClient.patch(`/admin/users/bulk-archive`, payload);
+        case "hard_delete":
+          return apiClient.delete(`/admin/users/${userId}`, { data: payload });
         default:
           throw new Error("Unknown action type");
       }
@@ -128,6 +130,7 @@ export const useUserManagement = () => {
         unban: "Ban removed.",
         archive: "Account status updated.",
         bulk_archive: "Bulk action completed successfully.",
+        hard_delete: "User permanently deleted.",
       };
       toast.success(messages[variables.type] || "Done.");
       queryClient.invalidateQueries({ queryKey: ["systemStats"] });

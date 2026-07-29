@@ -57,6 +57,11 @@ router.post("/users/provision", requireRole(ADMIN_ROLES), adminWriteLimiter, req
 // @access  Private (admin only)
 router.put("/users/:id", requireRole(ADMIN_ROLES), requirePermission('update_user_details'), userManagementController.updateUser);
 
+// @route   DELETE /api/admin/users/:id
+// @desc    Admin-initiated hard delete of a user
+// @access  Private (system_admin only)
+router.delete("/users/:id", requireRole(ADMIN_ROLES), requirePermission('manage_security'), userManagementController.deleteAccount);
+
 // @route   PUT /api/admin/users/:id/password
 // @desc    Reset user password (admin only)
 // @access  Private (admin only)

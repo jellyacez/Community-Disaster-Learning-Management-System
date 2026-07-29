@@ -1,6 +1,8 @@
 const { APIError } = require("better-auth/api");
 const pool = require("../config/db");
 const securityService = require("../services/securityService");
+const { CONSENT_VERSION } = require("../config/constants");
+const { logActivity, logError } = require("./logger");
 
 const securityHooksPlugin = () => {
   return {
@@ -110,6 +112,58 @@ const securityHooksPlugin = () => {
         },
       ],
       after: [
+        {
+          matcher(context) {
+            return context.path?.includes("sign-up") || false;
+          },
+          handler: async (ctx) => {
+            if (ctx.context?.returned instanceof APIError) return {};
+            
+            // Extract user from context or response body
+            let user = ctx.context?.newSession?.user || ctx.context?.user;
+            let userId = user?.id;
+
+            if (!user) {
+              try {
+                let responseData = null;
+                if (ctx.response && typeof ctx.response.clone === "function") {
+                  const clone = ctx.response.clone();
+                  responseData = await clone.json();
+                } else if (ctx.responseBody) {
+                  responseData = typeof ctx.responseBody === "string" ? JSON.parse(ctx.responseBody) : ctx.responseBody;
+                }
+                if (responseData?.user) {
+                  user = responseData.user;
+                  userId = user.id;
+                }
+              } catch (e) {
+                console.error("Non-critical error extracting user on sign-up:", e.message);
+              }
+            }
+
+            if (userId) {
+              try {
+                // Track consent in the database
+                await pool.query(
+                  `UPDATE "user" 
+                   SET consent_given_at = CURRENT_TIMESTAMP, 
+                       consent_version = $1 
+                   WHERE id = $2`,
+                  [CONSENT_VERSION, userId]
+                );
+                
+                logActivity(userId, `Account created with explicit data privacy consent (${CONSENT_VERSION})`);
+              } catch (err) {
+                logError('consent_stamp_failure', {
+                  userId: userId,
+                  message: err.message,
+                  stack: err.stack
+                });
+              }
+            }
+            return {};
+          },
+        },
         {
           matcher(context) {
             return (

@@ -5,6 +5,7 @@ const { updateUserRole } = require("./roleManagement");
 const { banUser, unbanUser } = require("./banManagement");
 const { archiveUser, bulkArchiveUsers } = require("./archiveManagement");
 const { getResidents } = require("./getResidents");
+const { deleteAccount } = require("./deleteAccount");
 
 module.exports = {
   updateUser,
@@ -16,4 +17,5 @@ module.exports = {
   archiveUser,
   bulkArchiveUsers,
   getResidents,
+  deleteAccount,
 };
