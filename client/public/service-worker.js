@@ -39,6 +39,24 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // Network-first for Navigation requests (index.html) to ensure fresh app code loads
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request)
+        .then((response) => {
+          const responseToCache = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, responseToCache));
+          return response;
+        })
+        .catch(async () => {
+          const cached = await caches.match(event.request) || await caches.match('/');
+          if (cached) return cached;
+          return new Response("You are offline.", { status: 503, headers: { 'Content-Type': 'text/html' } });
+        })
+    );
+    return;
+  }
+
   // Network-first for API requests
   if (requestUrl.pathname.startsWith('/api/')) {
     event.respondWith(
@@ -93,6 +111,8 @@ self.addEventListener('fetch', (event) => {
 });
 
 self.addEventListener('activate', (event) => {
+  event.waitUntil(self.clients.claim());
+  
   const cacheWhitelist = [CACHE_NAME];
   event.waitUntil(
     caches.keys().then((cacheNames) => {

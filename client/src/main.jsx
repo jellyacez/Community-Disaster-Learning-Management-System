@@ -6,18 +6,28 @@ import toast from "react-hot-toast";
 import App from "./App";
 import "../src/styles/index.css";
 
-// Register PWA Service Worker
+// Register PWA Service Worker only in production
 if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/service-worker.js').then(
-      (registration) => {
-        console.log('ServiceWorker registration successful with scope: ', registration.scope);
-      },
-      (err) => {
-        console.log('ServiceWorker registration failed: ', err);
+  if (import.meta.env.PROD) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/service-worker.js').then(
+        (registration) => {
+          console.log('ServiceWorker registration successful with scope: ', registration.scope);
+        },
+        (err) => {
+          console.log('ServiceWorker registration failed: ', err);
+        }
+      );
+    });
+  } else {
+    // In development, actively unregister any existing service workers to prevent stale caching
+    navigator.serviceWorker.getRegistrations().then((registrations) => {
+      for (let registration of registrations) {
+        registration.unregister();
+        console.log('ServiceWorker unregistered in development mode.');
       }
-    );
-  });
+    });
+  }
 }
 
 const queryClient = new QueryClient({
