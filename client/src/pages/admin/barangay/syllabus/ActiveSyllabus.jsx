@@ -8,7 +8,7 @@ const fetchModules = async () => {
 
 export default function ActiveSyllabus() {
   const { data: modules = [], isLoading, isError } = useQuery({
-    queryKey: ["adminModules"],
+    queryKey: ["adminModules", "activeSyllabus"],
     queryFn: fetchModules,
     retry: 1
   });

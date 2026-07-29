@@ -8,13 +8,24 @@ import { useModuleBuilder } from "../../../../hooks/useModuleBuilder";
 import useDebounce from "../../../../hooks/useDebounce";
 
 const fetchModules = async () => {
-  const res = await apiClient.get("/modules/available"); 
-  return res.data;
+  const res = await apiClient.get("/admin/modules?limit=1000"); 
+  const data = res.data.data || [];
+  return data.map((mod) => ({
+    id: mod.mod_id,
+    title: mod.modname,
+    category: mod.modcat,
+    status: mod.status,
+    step_count: parseInt(mod.step_count, 10) || 0,
+    description: mod.description || "",
+    level: mod.level || "Level 1",
+    duration: mod.duration || "Varies",
+    image_url: mod.image_url || null,
+  }));
 };
 
 export default function ModuleManagement() {
   const { data: rawModules = [], isLoading, isError, refetch } = useQuery({
-    queryKey: ["adminModules"],
+    queryKey: ["adminModules", "management"],
     queryFn: fetchModules,
     retry: 1
   });

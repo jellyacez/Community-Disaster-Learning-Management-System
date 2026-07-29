@@ -147,6 +147,7 @@ class ModuleService {
        ORDER BY md.mod_id DESC`,
       [user_id]
     );
+
     return result.rows;
   }
 

@@ -43,7 +43,7 @@ export default function Overview() {
   });
 
   const { data: modules = [], isLoading: isLoadingModules } = useQuery({
-    queryKey: ["adminModules"],
+    queryKey: ["adminModules", "overview"],
     queryFn: async () => {
       const res = await apiClient.get("admin/modules?limit=1000");
       const data = res.data.data || [];
@@ -53,6 +53,10 @@ export default function Overview() {
         category: mod.modcat,
         status: mod.status,
         step_count: parseInt(mod.step_count, 10) || 0,
+        description: mod.description || "",
+        level: mod.level || "Level 1",
+        duration: mod.duration || "Varies",
+        image_url: mod.image_url || null,
       }));
     },
     retry: 1,

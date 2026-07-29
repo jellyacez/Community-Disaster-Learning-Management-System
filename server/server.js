@@ -100,6 +100,11 @@ const maintenanceMiddleware = require("./middleware/maintenanceMiddleware");
 app.use(maintenanceMiddleware);
 
 const customAuthRoutes = require("./routes/auth/authRoutes");
+const apiCacheMiddleware = require("./middleware/apiCacheMiddleware");
+
+// Apply no-store caching globally to all API routes to prevent 304 ghost caching
+app.use("/api", apiCacheMiddleware);
+
 app.use("/api/auth", authRateLimiter);
 app.use("/api/auth", customAuthRoutes);
 app.use("/api/auth", toNodeHandler(auth));
@@ -110,6 +115,7 @@ const userRoutes = require("./routes/users/userRoutes");
 const userDashboardRoutes = require("./routes/users/userDashboardRoutes");
 const moduleRoutes = require("./routes/modules/moduleRoutes");
 const publicRoutes = require("./routes/publicRoutes");
+
 const certificatesRoutes = require("./routes/certificatesRoutes");
 
 const levelResultRoutes = require("./routes/modules/levelResultRoutes");
@@ -155,5 +161,7 @@ app.use((err, req, res, next) => {
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log(
+    `[BOOT] Server is running on port ${PORT} at ${new Date().toISOString()}`,
+  );
 });
