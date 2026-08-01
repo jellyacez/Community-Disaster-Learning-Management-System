@@ -6,11 +6,12 @@ const requireRole = require("../../middleware/requireRole");
 const { ADMIN_ROLES } = require("../../config/permissions");
 const { authenticate } = require("../../middleware/authenticate");
 const requirePermission = require("../../middleware/requirePermission");
-
+const feedbackHistory = require("../../controllers/users/feedbackController");
 // @route   GET /api/users/me/provider
 // @desc    Get current user's auth providers
 // @access  Private
 router.get("/me/provider", authenticate, userController.getProviders);
+
 
 // @route   POST /api/users/onboarding
 // @desc    Complete user profile after Google OAuth
@@ -21,6 +22,7 @@ router.post("/onboarding", authenticate, userController.onboarding);
 // @desc    Get paginated announcements
 // @access  Private
 router.get("/announcements", authenticate, announcementController.getPaginatedAnnouncements);
+
 
 // @route   GET /api/users
 // @desc    Get all users (for admin dashboard)

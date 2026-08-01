@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import useDocumentTitle from "../../hooks/useDocumentTitle";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
@@ -13,9 +14,17 @@ import {
   CancelCircleIcon,
 } from "@hugeicons/core-free-icons";
 import toast from "react-hot-toast";
+import apiClient from "../../lib/apiClient";
+import { authClient } from "../../lib/auth-client";
+import { localDb } from "../../lib/localDb"; // For offline queueing
 
 export default function UserFeedback() {
   useDocumentTitle("Feedback | Bacolor LMS");
+  const queryClient = useQueryClient();
+
+  // Get current learner session
+  const { data: session } = authClient.useSession();
+  const userId = session?.user?.id;
 
   const [formData, setFormData] = useState({
     recipient: "barangay",
@@ -25,7 +34,56 @@ export default function UserFeedback() {
   });
 
   const [activeTab, setActiveTab] = useState("all");
-  const [submissions, setSubmissions] = useState([]);
+
+  // 1. FETCH LIVE FEEDBACK HISTORY
+  const { data: submissions = [], isLoading } = useQuery({
+    queryKey: ["userFeedbacks", userId],
+    queryFn: async () => {
+      const response = await apiClient.get("/feedbacks/my-submissions");
+      return response.data.data || [];
+    },
+    enabled: !!userId,
+  });
+
+  // 2. SUBMIT FEEDBACK MUTATION
+  const submitMutation = useMutation({
+    mutationFn: async (payload) => {
+      if (!userId) throw new Error("You must be logged in to send a message.");
+
+      // OFFLINE GUARD: Queue in localDb if disconnected
+      if (!navigator.onLine) {
+        await localDb.transaction("rw", localDb.sync_queue, async () => {
+          await localDb.sync_queue.add({
+            action_type: "SUBMIT_FEEDBACK",
+            status: "pending",
+            payload: { ...payload, user_id: userId },
+          });
+        });
+        return { queuedOffline: true };
+      }
+
+      const response = await apiClient.post("/feedbacks", payload);
+      return response.data;
+    },
+    onSuccess: (data) => {
+      if (data?.queuedOffline) {
+        toast.success("Offline: Message queued and will send when connected.");
+      } else {
+        toast.success("Your message has been submitted.");
+      }
+      queryClient.invalidateQueries(["userFeedbacks", userId]);
+      setFormData({
+        recipient: "barangay",
+        type: "feedback",
+        subject: "",
+        message: "",
+      });
+      setActiveTab("all");
+    },
+    onError: (err) => {
+      toast.error(err.response?.data?.message || "Failed to submit message.");
+    },
+  });
 
   const recipientInfo = useMemo(() => {
     if (formData.recipient === "mdrrmo") {
@@ -43,55 +101,33 @@ export default function UserFeedback() {
       title: "Barangay",
       description:
         "For local community concerns, localized reports, barangay-level follow-ups, and resident assistance.",
-        color: "text-emerald-600",
-        bg: "bg-emerald-50",
-        border: "border-emerald-100",
+      color: "text-emerald-600",
+      bg: "bg-emerald-50",
+      border: "border-emerald-100",
     };
   }, [formData.recipient]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-
     if (!formData.subject.trim()) {
       toast.error("Please enter a subject.");
       return;
     }
-
     if (!formData.message.trim()) {
       toast.error("Please enter your message.");
       return;
     }
 
-    const newSubmission = {
-      id: Date.now(),
+    submitMutation.mutate({
       recipient: formData.recipient,
       type: formData.type,
       subject: formData.subject,
       message: formData.message,
-      status: "Pending",
-      createdAt: new Date().toLocaleString(),
-      reply: null,
-    };
-
-    setSubmissions((prev) => [newSubmission, ...prev]);
-    setActiveTab("all");
-
-    toast.success("Your message has been submitted.");
-
-    setFormData({
-      recipient: "barangay",
-      type: "feedback",
-      subject: "",
-      message: "",
     });
   };
 
@@ -140,7 +176,7 @@ export default function UserFeedback() {
     );
   }, [activeTab, submissions]);
 
-  const tabs = [
+  const tabs = useMemo(() => [
     { key: "all", label: "All", count: submissions.length },
     {
       key: "pending",
@@ -157,7 +193,7 @@ export default function UserFeedback() {
       label: "Closed",
       count: submissions.filter((item) => item.status === "Closed").length,
     },
-  ];
+  ], [submissions]);
 
   return (
     <div className="animate-in fade-in duration-300">
@@ -178,10 +214,7 @@ export default function UserFeedback() {
         <div className="grid gap-4 lg:grid-cols-3">
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
             <div className="flex items-center gap-2 mb-3">
-              <HugeiconsIcon
-                icon={Building01Icon}
-                className="w-5 h-5 text-red-600"
-              />
+              <HugeiconsIcon icon={Building01Icon} className="w-5 h-5 text-red-600" />
               <h2 className="font-black text-gray-900">Communication Target</h2>
             </div>
             <p className="text-sm text-gray-600 leading-relaxed">
@@ -192,10 +225,7 @@ export default function UserFeedback() {
 
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
             <div className="flex items-center gap-2 mb-3">
-              <HugeiconsIcon
-                icon={Alert01Icon}
-                className="w-5 h-5 text-amber-500"
-              />
+              <HugeiconsIcon icon={Alert01Icon} className="w-5 h-5 text-amber-500" />
               <h2 className="font-black text-gray-900">Types of Messages</h2>
             </div>
             <p className="text-sm text-gray-600 leading-relaxed">
@@ -206,10 +236,7 @@ export default function UserFeedback() {
 
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
             <div className="flex items-center gap-2 mb-3">
-              <HugeiconsIcon
-                icon={Call02Icon}
-                className="w-5 h-5 text-emerald-600"
-              />
+              <HugeiconsIcon icon={Call02Icon} className="w-5 h-5 text-emerald-600" />
               <h2 className="font-black text-gray-900">Support Reminder</h2>
             </div>
             <p className="text-sm text-gray-600 leading-relaxed">
@@ -225,17 +252,11 @@ export default function UserFeedback() {
           {/* Form */}
           <div className="xl:col-span-2 bg-white rounded-3xl border border-gray-100 shadow-sm p-6">
             <div className="flex items-center gap-2 mb-2">
-              <HugeiconsIcon
-                icon={Message01Icon}
-                className="w-5 h-5 text-red-600"
-              />
-              <h2 className="text-xl font-black text-gray-900">
-                Send a Message
-              </h2>
+              <HugeiconsIcon icon={Message01Icon} className="w-5 h-5 text-red-600" />
+              <h2 className="text-xl font-black text-gray-900">Send a Message</h2>
             </div>
             <p className="text-sm text-gray-500 mb-6">
-              Complete the form below to send your message to the selected
-              office.
+              Complete the form below to send your message to the selected office.
             </p>
 
             <form onSubmit={handleSubmit} className="space-y-5">
@@ -359,10 +380,11 @@ export default function UserFeedback() {
               <div className="pt-2">
                 <button
                   type="submit"
-                  className="inline-flex items-center gap-2 px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-2xl transition-all duration-300"
+                  disabled={submitMutation.isPending}
+                  className="inline-flex items-center gap-2 px-6 py-3 bg-red-600 hover:bg-red-700 disabled:bg-red-400 text-white font-bold rounded-2xl transition-all duration-300"
                 >
                   <HugeiconsIcon icon={SentIcon} className="w-4 h-4" />
-                  Submit Message
+                  {submitMutation.isPending ? "Submitting..." : "Submit Message"}
                 </button>
               </div>
             </form>
@@ -392,9 +414,8 @@ export default function UserFeedback() {
                 <li className="flex gap-2">
                   <span className="mt-1 h-2 w-2 rounded-full bg-red-500" />
                   <span>
-                    This communication center is currently a frontend
-                    placeholder and can later be connected to live backend
-                    records.
+                    Submitted reports and feedback are safely archived in your
+                    official account history.
                   </span>
                 </li>
               </ul>
@@ -402,10 +423,7 @@ export default function UserFeedback() {
 
             <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6">
               <div className="flex items-center gap-2 mb-2">
-                <HugeiconsIcon
-                  icon={Search01Icon}
-                  className="w-5 h-5 text-gray-500"
-                />
+                <HugeiconsIcon icon={Search01Icon} className="w-5 h-5 text-gray-500" />
                 <h2 className="text-xl font-black text-gray-900">
                   Submission Summary
                 </h2>
@@ -424,10 +442,7 @@ export default function UserFeedback() {
                     Pending
                   </p>
                   <p className="text-2xl font-black text-amber-600 mt-1">
-                    {
-                      submissions.filter((item) => item.status === "Pending")
-                        .length
-                    }
+                    {submissions.filter((item) => item.status === "Pending").length}
                   </p>
                 </div>
                 <div className="rounded-2xl bg-gray-50 border border-gray-100 p-4">
@@ -435,10 +450,7 @@ export default function UserFeedback() {
                     Replied
                   </p>
                   <p className="text-2xl font-black text-blue-600 mt-1">
-                    {
-                      submissions.filter((item) => item.status === "Replied")
-                        .length
-                    }
+                    {submissions.filter((item) => item.status === "Replied").length}
                   </p>
                 </div>
                 <div className="rounded-2xl bg-gray-50 border border-gray-100 p-4">
@@ -446,10 +458,7 @@ export default function UserFeedback() {
                     Closed
                   </p>
                   <p className="text-2xl font-black text-gray-700 mt-1">
-                    {
-                      submissions.filter((item) => item.status === "Closed")
-                        .length
-                    }
+                    {submissions.filter((item) => item.status === "Closed").length}
                   </p>
                 </div>
               </div>
@@ -487,7 +496,11 @@ export default function UserFeedback() {
             </div>
           </div>
 
-          {submissions.length === 0 ? (
+          {isLoading ? (
+            <div className="py-12 text-center text-gray-400 font-bold">
+              Loading communication history...
+            </div>
+          ) : submissions.length === 0 ? (
             <div className="rounded-3xl border border-dashed border-gray-200 bg-gray-50 p-10 text-center">
               <HugeiconsIcon
                 icon={Message01Icon}
@@ -501,8 +514,8 @@ export default function UserFeedback() {
                 inquiries yet.
               </p>
               <p className="text-sm text-gray-400">
-                Your submitted messages will appear here once you send your
-                first communication.
+                Your submitted messages will appear here once you send your first
+                communication.
               </p>
             </div>
           ) : filteredSubmissions.length === 0 ? (
@@ -522,7 +535,7 @@ export default function UserFeedback() {
 
                 return (
                   <div
-                    key={item.id}
+                    key={item.feedback_id || item.id}
                     className="rounded-3xl border border-gray-100 bg-gray-50/70 p-5"
                   >
                     <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
@@ -545,10 +558,7 @@ export default function UserFeedback() {
                               item.status
                             )}`}
                           >
-                            <HugeiconsIcon
-                              icon={StatusIcon}
-                              className="w-3.5 h-3.5"
-                            />
+                            <HugeiconsIcon icon={StatusIcon} className="w-3.5 h-3.5" />
                             {item.status}
                           </span>
                         </div>
@@ -558,7 +568,7 @@ export default function UserFeedback() {
                         </h3>
 
                         <p className="text-xs text-gray-400 mt-1 mb-3">
-                          Submitted: {item.createdAt}
+                          Submitted: {new Date(item.created_at || item.createdAt).toLocaleString()}
                         </p>
 
                         <div className="rounded-2xl bg-white border border-gray-100 p-4">
@@ -573,7 +583,7 @@ export default function UserFeedback() {
                         {item.reply && (
                           <div className="rounded-2xl bg-blue-50 border border-blue-100 p-4 mt-4">
                             <p className="text-xs font-bold uppercase tracking-wide text-blue-700 mb-2">
-                              Office Response
+                              Office Response ({new Date(item.replied_at).toLocaleDateString()})
                             </p>
                             <p className="text-sm text-gray-700 whitespace-pre-line leading-relaxed">
                               {item.reply}

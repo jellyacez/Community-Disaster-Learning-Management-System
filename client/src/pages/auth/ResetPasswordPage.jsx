@@ -8,10 +8,9 @@ import useDocumentTitle from "../../hooks/useDocumentTitle";
 import toast from "react-hot-toast";
 import AuthLayout from "../../components/layouts/AuthLayout";
 import PasswordInput from "../../components/ui/inputs/PasswordInput";
-
 export default function ResetPasswordPage() {
   useDocumentTitle("Reset Password | Bacolor LMS");
-  
+
   const [searchParams] = useSearchParams();
   const token = searchParams.get("token");
   const navigate = useNavigate();
@@ -27,6 +26,11 @@ export default function ResetPasswordPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (!navigator.onLine) {
+      setErrorMsg("Currently Offline, Password resets require an active internet connection.");
+      return;
+    }
     if (!token) {
       setErrorMsg("Invalid or missing reset token.");
       return;
@@ -50,17 +54,21 @@ export default function ResetPasswordPage() {
     });
 
     if (error) {
-      setErrorMsg(error.message || "Failed to reset password. The link might be expired.");
-      setStatus("error");
-    } else {
-      toast.success("Password reset successful. Please log in with your new credentials.", { duration: 5000 });
-      navigate("/signin", { replace: true });
-    }
-  };
-
+            // Handle network drops that occur mid-request
+            if (error.code === "ERR_NETWORK" || error.message?.toLowerCase().includes("network")) {
+              setErrorMsg("Network connection lost during reset. Please check your internet and try again.");
+            } else {
+              setErrorMsg(error.message || "Failed to reset password. The link might be expired.");
+            }
+            setStatus("error");
+          } else {
+            toast.success("Password reset successful. Please log in with your new credentials.", { duration: 5000 });
+            navigate("/signin", { replace: true });
+          }
+  }
   if (!token) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-100 to-red-50 flex items-center justify-center px-4 py-10">
+      <div className="min-h-screen `bg-linear-to-br from-gray-100 to-red-50 flex items-center justify-center px-4 py-10">
         <div className="w-full max-w-md bg-white rounded-2xl shadow-xl border border-gray-100 p-8 text-center">
           <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-red-100 text-red-600">
             <HugeiconsIcon aria-hidden="true" icon={Alert01Icon} className="w-8 h-8" />
