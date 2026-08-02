@@ -141,7 +141,7 @@ exports.getSectorOverview = async (req, res) => {
         COUNT(DISTINCT c.cert_id) AS certificates_issued,
         -- Approximate completion rate: completed steps / total expected steps across enrolled modules
         COALESCE(
-          (SUM(CASE WHEN u.role = 'resident' AND ma.modstatus = 'completed' THEN 1 ELSE 0 END)::float / 
+          (COUNT(DISTINCT CASE WHEN u.role = 'resident' AND ma.modstatus = 'completed' THEN ma.modact_id END)::float / 
            NULLIF(COUNT(DISTINCT CASE WHEN u.role = 'resident' AND ma.modact_id IS NOT NULL THEN ma.modact_id END), 0)
           ) * 100, 0
         ) AS avg_completion_rate
