@@ -392,7 +392,7 @@ ALTER TABLE public.account OWNER TO postgres;
 
 CREATE TABLE public.activity_log (
     act_id integer NOT NULL,
-    user_id text NOT NULL,
+    user_id text,
     act_date timestamp with time zone NOT NULL,
     act_log character varying(500) NOT NULL
 );
@@ -493,7 +493,7 @@ ALTER SEQUENCE public.blocked_ips_id_seq OWNED BY public.blocked_ips.id;
 
 CREATE TABLE public.certificates (
     cert_id integer NOT NULL,
-    user_id text NOT NULL,
+    user_id text,
     modact_id integer NOT NULL,
     result_id integer,
     cert_rec character varying(100) NOT NULL,

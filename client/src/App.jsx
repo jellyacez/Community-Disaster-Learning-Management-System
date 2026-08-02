@@ -66,8 +66,11 @@ const MdrrmoAdminDashboard = lazy(
 const MdrrmoOverview = lazy(
   () => import("./pages/admin/mdrrmo/overview/Overview"),
 );
-const MdrrmoBarangayManagement = lazy(
-  () => import("./pages/admin/mdrrmo/barangay-management/BarangayManagement"),
+const MdrrmoSectorOverview = lazy(
+  () => import("./pages/admin/mdrrmo/sector-overview/SectorOverview"),
+);
+const MdrrmoActivityLog = lazy(
+  () => import("./pages/admin/mdrrmo/logs/ActivityLog"),
 );
 const MdrrmoModuleManagement = lazy(
   () => import("./pages/admin/mdrrmo/module-management/ModuleManagement"),
@@ -219,8 +222,12 @@ export default function App() {
                   <Route index element={<Navigate to="dashboard" replace />} />
                   <Route path="dashboard" element={<MdrrmoOverview />} />
                   <Route
-                    path="barangay-management"
-                    element={<MdrrmoBarangayManagement />}
+                    path="sector-overview"
+                    element={<MdrrmoSectorOverview />}
+                  />
+                  <Route
+                    path="logs"
+                    element={<MdrrmoActivityLog />}
                   />
                   <Route path="modules" element={<MdrrmoModuleManagement />} />
                   <Route path="users" element={<MdrrmoUserManagement />} />

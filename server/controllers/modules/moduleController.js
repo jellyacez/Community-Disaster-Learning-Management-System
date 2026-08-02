@@ -13,6 +13,11 @@ exports.createModule = async (req, res) => {
 
   try {
     const mod_id = await ModuleService.createModuleTransaction(req.body);
+    
+    // Log module creation to activity_log
+    const { logActivity } = require("../../utils/logger");
+    await logActivity(req.user.id, `Created new module: ${req.body.moduleName}`);
+
     return res.status(201).json({
       success: true,
       message: "Module structure created successfully.",

@@ -94,11 +94,11 @@ class UserService {
       await client.query('BEGIN');
       
       // 1. fetch user data for anonymization
-      const userRes = await client.query('SELECT name, barangay FROM "user" WHERE id = $1', [userId]);
+      const userRes = await client.query('SELECT name, role, barangay FROM "user" WHERE id = $1', [userId]);
       if (userRes.rows.length === 0) {
         throw new Error("NOT_FOUND");
       }
-      const { barangay } = userRes.rows[0];
+      const { role, barangay } = userRes.rows[0];
       
       // 2. anonymize certificates
       await client.query(`
@@ -109,8 +109,18 @@ class UserService {
         WHERE user_id = $2
       `, [barangay, userId]);
       
-      // 3. Hard Delete tied records (assuming these tables exist and use user_id)
-      await client.query('DELETE FROM activity_log WHERE user_id = $1', [userId]).catch(() => {});
+      // 3. Handle activity_log retention for governance audits
+      if (['barangay_admin', 'mdrrmo_admin', 'head_mdrrmo_admin', 'system_admin'].includes(role)) {
+        await client.query(`
+          UPDATE activity_log 
+          SET user_id = NULL, 
+              act_log = act_log || ' (Performed by Deleted Admin)' 
+          WHERE user_id = $1
+        `, [userId]).catch(() => {});
+      } else {
+        await client.query('DELETE FROM activity_log WHERE user_id = $1', [userId]).catch(() => {});
+      }
+      
       await client.query('DELETE FROM module_activity WHERE user_id = $1', [userId]).catch(() => {});
       await client.query('DELETE FROM user_step_progress WHERE user_id = $1', [userId]).catch(() => {});
       await client.query('DELETE FROM results WHERE user_id = $1', [userId]).catch(() => {});

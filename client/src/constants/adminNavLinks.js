@@ -35,7 +35,14 @@ export const ROLE_BASED_LINKS = {
       category: "Dashboard & Monitoring",
       items: [
         { name: "Main Overview", path: "/admin/mdrrmo/dashboard", icon: DashboardSquare01Icon },
-        { name: "Audited Sector Data", path: "/admin/mdrrmo/barangay-management", icon: Database01Icon },
+        { 
+          name: "Audited Sector Data", 
+          icon: Database01Icon,
+          subItems: [
+            { name: "Sector Overview", path: "/admin/mdrrmo/sector-overview" },
+            { name: "Activity & Monitoring Logs", path: "/admin/mdrrmo/logs" }
+          ]
+        }
       ]
     },
     {

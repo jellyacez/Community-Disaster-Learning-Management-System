@@ -4,7 +4,7 @@ import toast from "react-hot-toast";
 import { authClient } from "../../lib/auth-client";
 import LogoutModal from "../ui/modals/LogoutModal";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { Cancel01Icon, Logout01Icon, ArrowRight01Icon } from "@hugeicons/core-free-icons";
+import { Cancel01Icon, Logout01Icon, ArrowRight01Icon, ArrowDown01Icon } from "@hugeicons/core-free-icons";
 import { ROLE_BASED_LINKS } from "../../constants/adminNavLinks";
 import useDocumentTitle from "../../hooks/useDocumentTitle";
 
@@ -12,6 +12,8 @@ export default function AdminSidebar({ sidebarOpen, setSidebarOpen }) {
   const { data: session } = authClient.useSession();
   const location = useLocation();
   const navigate = useNavigate();
+
+  const [expandedMenus, setExpandedMenus] = useState({});
 
   const userRole = session?.user?.role || "resident";
   const navLinks = ROLE_BASED_LINKS[userRole] || [];
@@ -87,32 +89,82 @@ export default function AdminSidebar({ sidebarOpen, setSidebarOpen }) {
               </div>
               <div className="flex flex-col gap-1">
                 {group.items.map((link) => {
-                  const isActive = location.pathname === link.path || location.pathname.startsWith(`${link.path}/`);
+                  const hasSubItems = link.subItems && link.subItems.length > 0;
+                  const isExpanded = !!expandedMenus[link.name];
+                  
+                  // For a flat link, it is active if it matches exactly or is a subpath.
+                  // For a parent link, it is active if any of its subItems match.
+                  const isActive = hasSubItems
+                    ? link.subItems.some(sub => location.pathname === sub.path || location.pathname.startsWith(`${sub.path}/`))
+                    : (location.pathname === link.path || (link.path && location.pathname.startsWith(`${link.path}/`)));
+
+                  const handleItemClick = () => {
+                    if (hasSubItems) {
+                      setExpandedMenus(prev => ({
+                        ...prev,
+                        [link.name]: !prev[link.name]
+                      }));
+                    } else {
+                      navigate(link.path);
+                      setSidebarOpen(false);
+                    }
+                  };
 
                   return (
-                    <button
-                      key={link.path}
-                      onClick={() => {
-                        navigate(link.path);
-                        setSidebarOpen(false);
-                      }}
-                      className={`group relative flex w-full h-[44px] items-center justify-between rounded-xl px-4 text-left transition-colors duration-200 z-10 cursor-pointer ${
-                        isActive 
-                          ? "bg-red-50 text-red-700 border-l-4 border-red-600 shadow-sm" 
-                          : "text-gray-700 hover:bg-gray-100"
-                      }`}
-                    >
-                      <span className="relative z-10 flex items-center gap-3 font-semibold">
-                        <HugeiconsIcon icon={link.icon} className={`w-5 h-5 ${isActive ? "text-red-600" : "text-gray-400 group-hover:text-gray-600"}`} />
-                        {link.name}
-                      </span>
-                      <HugeiconsIcon
-                        icon={ArrowRight01Icon}
-                        className={`relative z-10 w-4 h-4 ${
-                          isActive ? "text-red-600" : "text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity"
+                    <div key={link.name || link.path} className="flex flex-col">
+                      <button
+                        onClick={handleItemClick}
+                        className={`group relative flex w-full h-[44px] items-center justify-between rounded-xl px-4 text-left transition-colors duration-200 z-10 cursor-pointer ${
+                          isActive 
+                            ? "bg-red-50 text-red-700 border-l-4 border-red-600 shadow-sm" 
+                            : "text-gray-700 hover:bg-gray-100"
                         }`}
-                      />
-                    </button>
+                      >
+                        <span className="relative z-10 flex items-center gap-3 font-semibold">
+                          <HugeiconsIcon icon={link.icon} className={`w-5 h-5 ${isActive ? "text-red-600" : "text-gray-400 group-hover:text-gray-600"}`} />
+                          {link.name}
+                        </span>
+                        
+                        {hasSubItems ? (
+                          <HugeiconsIcon
+                            icon={isExpanded ? ArrowDown01Icon : ArrowRight01Icon}
+                            className={`relative z-10 w-4 h-4 ${isActive ? "text-red-600" : "text-gray-500"}`}
+                          />
+                        ) : (
+                          <HugeiconsIcon
+                            icon={ArrowRight01Icon}
+                            className={`relative z-10 w-4 h-4 ${
+                              isActive ? "text-red-600" : "text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity"
+                            }`}
+                          />
+                        )}
+                      </button>
+
+                      {/* SubItems rendering */}
+                      {hasSubItems && isExpanded && (
+                        <div className="mt-1 flex flex-col gap-1 ml-4 pl-4 border-l border-gray-200">
+                          {link.subItems.map((subLink) => {
+                            const isSubActive = location.pathname === subLink.path || location.pathname.startsWith(`${subLink.path}/`);
+                            return (
+                              <button
+                                key={subLink.path}
+                                onClick={() => {
+                                  navigate(subLink.path);
+                                  setSidebarOpen(false);
+                                }}
+                                className={`w-full text-left px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                                  isSubActive
+                                    ? "bg-red-50 text-red-700 font-semibold"
+                                    : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                                }`}
+                              >
+                                {subLink.name}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
                   );
                 })}
               </div>
@@ -139,3 +191,4 @@ export default function AdminSidebar({ sidebarOpen, setSidebarOpen }) {
     </>
   );
 }
+

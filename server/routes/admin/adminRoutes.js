@@ -185,4 +185,14 @@ router.get("/mdrrmo/enrollment-trend", requireRole(ADMIN_ROLES), adminDataLimite
 // @access  Private (mdrrmo_admin, system_admin)
 router.get("/mdrrmo/recent-activity", requireRole(ADMIN_ROLES), adminDataLimiter, mdrrmoOverviewController.getRecentActivity);
 
+// @route   GET /api/admin/mdrrmo/activity-log
+// @desc    Get paginated MDRRMO activity log (excludes system admin actions)
+// @access  Private (mdrrmo_admin, system_admin)
+router.get("/mdrrmo/activity-log", requireRole(ADMIN_ROLES), adminDataLimiter, activityLogController.getMdrrmoActivityLog);
+
+// @route   GET /api/admin/mdrrmo/activity-log/export
+// @desc    Export MDRRMO activity log to CSV (excludes system admin actions)
+// @access  Private (mdrrmo_admin, system_admin)
+router.get("/mdrrmo/activity-log/export", requireRole(ADMIN_ROLES), adminDataLimiter, activityLogController.exportMdrrmoActivityLog);
+
 module.exports = router;
