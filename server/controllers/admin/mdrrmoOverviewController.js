@@ -127,3 +127,47 @@ exports.getRecentActivity = async (req, res) => {
     res.status(500).json({ success: false, error: 'Server Error' });
   }
 };
+
+
+// @desc    Get aggregate data per barangay for Sector Overview
+// @access  Private (mdrrmo_admin, head_mdrrmo_admin, system_admin)
+exports.getSectorOverview = async (req, res) => {
+  try {
+    const query = `
+      SELECT 
+        COALESCE(b.name, 'Unassigned') AS barangay_name,
+        COUNT(DISTINCT CASE WHEN u.role = 'resident' THEN u.id END) AS resident_count,
+        COUNT(DISTINCT CASE WHEN u.role = 'barangay_admin' THEN u.id END) AS active_admins,
+        COUNT(DISTINCT c.cert_id) AS certificates_issued,
+        -- Approximate completion rate: completed steps / total expected steps across enrolled modules
+        COALESCE(
+          (SUM(CASE WHEN u.role = 'resident' AND ma.modstatus = 'completed' THEN 1 ELSE 0 END)::float / 
+           NULLIF(COUNT(DISTINCT CASE WHEN u.role = 'resident' AND ma.modact_id IS NOT NULL THEN ma.modact_id END), 0)
+          ) * 100, 0
+        ) AS avg_completion_rate
+      FROM "user" u
+      LEFT JOIN barangays b ON u.barangay_id = b.id
+      LEFT JOIN certificates c ON u.id = c.user_id
+      LEFT JOIN module_activity ma ON u.id = ma.user_id
+      WHERE u.archived = false AND (u.banned IS NULL OR u.banned = false)
+      GROUP BY b.id, b.name
+      ORDER BY 
+        CASE WHEN b.name IS NULL THEN 1 ELSE 0 END, 
+        b.name ASC;
+    `;
+    const result = await pool.query(query);
+
+    const formattedData = result.rows.map(row => ({
+      barangay: row.barangay_name,
+      resident_count: parseInt(row.resident_count, 10) || 0,
+      active_admins: parseInt(row.active_admins, 10) || 0,
+      certificates_issued: parseInt(row.certificates_issued, 10) || 0,
+      avg_completion_rate: Math.round(parseFloat(row.avg_completion_rate) || 0)
+    }));
+
+    res.json({ success: true, data: formattedData });
+  } catch (error) {
+    console.error("Error fetching sector overview data:", error);
+    res.status(500).json({ success: false, error: 'Server Error' });
+  }
+};

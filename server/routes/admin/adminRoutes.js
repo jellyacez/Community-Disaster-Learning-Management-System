@@ -195,4 +195,9 @@ router.get("/mdrrmo/activity-log", requireRole(ADMIN_ROLES), adminDataLimiter, a
 // @access  Private (mdrrmo_admin, system_admin)
 router.get("/mdrrmo/activity-log/export", requireRole(ADMIN_ROLES), adminDataLimiter, activityLogController.exportMdrrmoActivityLog);
 
+
+// @route   GET /api/admin/mdrrmo/sector-overview
+// @desc    Get aggregate data per barangay for Sector Overview
+router.get("/mdrrmo/sector-overview", requireRole(ADMIN_ROLES), adminDataLimiter, mdrrmoOverviewController.getSectorOverview);
+
 module.exports = router;

@@ -9,9 +9,11 @@ class UserService {
   async onboarding(userId, name, barangay) {
     if (!name || !barangay) throw new Error("MISSING_DATA");
 
-    await pool.query(`UPDATE "user" SET name = $1, barangay = $2 WHERE id = $3`, [
+    const bRes = await pool.query('SELECT id FROM barangays WHERE name = $1', [barangay]);
+    const barangayId = bRes.rows.length > 0 ? bRes.rows[0].id : null;
+    await pool.query(`UPDATE "user" SET name = $1, barangay_id = $2 WHERE id = $3`, [
       name,
-      barangay,
+      barangayId,
       userId,
     ]);
   }
@@ -33,12 +35,12 @@ class UserService {
       if (!adminContext.barangay) {
         throw new Error("SECURITY_FAULT: barangay_admin context missing barangay identifier for scoping.");
       }
-      conditions.push(`barangay = $${idx}`);
+      conditions.push(`barangay_id = (SELECT id FROM barangays WHERE name = ${idx})`);
       values.push(adminContext.barangay);
       idx++;
     } else if (allowedUnscopedRoles.includes(adminContext.role)) {
       if (barangayFilter) {
-        conditions.push(`barangay = $${idx}`);
+        conditions.push(`barangay_id = (SELECT id FROM barangays WHERE name = ${idx})`);
         values.push(barangayFilter);
         idx++;
       }
@@ -71,9 +73,10 @@ class UserService {
     const total = parseInt(countResult.rows[0].count);
 
     const result = await pool.query(
-      `SELECT id, name, email, "emailVerified", image, role, "banned", "banReason", "banExpires", "createdAt", "updatedAt", "twoFactorEnabled", barangay, archived
-       FROM "user" ${where}
-       ORDER BY "createdAt" DESC LIMIT $${idx} OFFSET $${idx + 1}`,
+      `SELECT u.id, u.name, u.email, u."emailVerified", u.image, u.role, u."banned", u."banReason", u."banExpires", u."createdAt", u."updatedAt", u."twoFactorEnabled", b.name AS barangay, u.archived
+         FROM "user" u 
+         LEFT JOIN barangays b ON u.barangay_id = b.id ${where.replace(/barangay_id/g, 'u.barangay_id')}
+         ORDER BY u."createdAt" DESC LIMIT $${idx} OFFSET $${idx + 1}`,
       [...values, limit, offset]
     );
 
@@ -94,7 +97,7 @@ class UserService {
       await client.query('BEGIN');
       
       // 1. fetch user data for anonymization
-      const userRes = await client.query('SELECT name, role, barangay FROM "user" WHERE id = $1', [userId]);
+      const userRes = await client.query('SELECT u.name, u.role, b.name AS barangay FROM "user" u LEFT JOIN barangays b ON u.barangay_id = b.id WHERE u.id = $1', [userId]);
       if (userRes.rows.length === 0) {
         throw new Error("NOT_FOUND");
       }
@@ -158,7 +161,7 @@ class UserService {
   }
 
   async exportUserData(userId) {
-    const userRes = await pool.query('SELECT name, email, role, barangay, "createdAt", "updatedAt" FROM "user" WHERE id = $1', [userId]);
+    const userRes = await pool.query('SELECT u.name, u.email, u.role, b.name AS barangay, u."createdAt", u."updatedAt" FROM "user" u LEFT JOIN barangays b ON u.barangay_id = b.id WHERE u.id = $1', [userId]);
     
     if (userRes.rows.length === 0) {
       throw new Error("NOT_FOUND");
