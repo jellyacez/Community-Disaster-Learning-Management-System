@@ -1,8 +1,9 @@
+import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import useDocumentTitle from "../../../../hooks/useDocumentTitle";
 import apiClient from "../../../../lib/apiClient";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { UserMultipleIcon, UserShield01Icon, Certificate01Icon, ChartHistogramIcon } from "@hugeicons/core-free-icons";
+import { ArrowUp01Icon, ArrowDown01Icon } from "@hugeicons/core-free-icons";
 
 const fetchSectorOverview = async () => {
   const res = await apiClient.get("/admin/mdrrmo/sector-overview");
@@ -12,6 +13,8 @@ const fetchSectorOverview = async () => {
 export default function SectorOverview() {
   useDocumentTitle("Sector Overview | Admin Console");
 
+  const [sortConfig, setSortConfig] = useState({ key: 'barangay', direction: 'asc' });
+
   const { data: sectorData = [], isLoading, isError } = useQuery({
     queryKey: ["sectorOverview"],
     queryFn: fetchSectorOverview,
@@ -19,6 +22,41 @@ export default function SectorOverview() {
   });
 
   const totalResidents = sectorData.reduce((acc, curr) => acc + curr.resident_count, 0);
+
+  const sortedData = useMemo(() => {
+    let sortableData = [...sectorData];
+    if (sortConfig.key) {
+      sortableData.sort((a, b) => {
+        // Keep Unassigned at the bottom regardless of sort
+        if (a.barangay === 'Unassigned') return 1;
+        if (b.barangay === 'Unassigned') return -1;
+        
+        if (a[sortConfig.key] < b[sortConfig.key]) {
+          return sortConfig.direction === 'asc' ? -1 : 1;
+        }
+        if (a[sortConfig.key] > b[sortConfig.key]) {
+          return sortConfig.direction === 'asc' ? 1 : -1;
+        }
+        return 0;
+      });
+    }
+    return sortableData;
+  }, [sectorData, sortConfig]);
+
+  const requestSort = (key) => {
+    let direction = 'asc';
+    if (sortConfig.key === key && sortConfig.direction === 'asc') {
+      direction = 'desc';
+    }
+    setSortConfig({ key, direction });
+  };
+
+  const renderSortIcon = (columnKey) => {
+    if (sortConfig.key !== columnKey) return null;
+    return sortConfig.direction === 'asc' 
+      ? <HugeiconsIcon icon={ArrowUp01Icon} className="w-3 h-3 ml-1 inline text-blue-600" />
+      : <HugeiconsIcon icon={ArrowDown01Icon} className="w-3 h-3 ml-1 inline text-blue-600" />;
+  };
 
   if (isLoading) {
     return (
@@ -44,60 +82,86 @@ export default function SectorOverview() {
         <p className="text-sm font-medium text-gray-500 mt-1">Total Residents Across All Barangays: {totalResidents}</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        {sectorData.map((sector, index) => (
-          <div key={index} className="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
-            {sector.barangay === 'Unassigned' && (
-              <div className="absolute top-0 right-0 bg-yellow-100 text-yellow-800 text-[10px] font-bold px-3 py-1 rounded-bl-xl z-10">
-                NEEDS REVIEW
-              </div>
-            )}
-            
-            <h3 className="text-xl font-bold text-gray-900 mb-6 truncate pr-16">{sector.barangay}</h3>
-            
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center text-blue-600">
-                    <HugeiconsIcon icon={UserMultipleIcon} className="w-4 h-4" />
+      <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="bg-gray-50/50 border-b border-gray-100 text-sm font-semibold text-gray-600">
+                <th 
+                  className="px-6 py-4 cursor-pointer hover:bg-gray-50 transition-colors"
+                  onClick={() => requestSort('barangay')}
+                >
+                  Barangay {renderSortIcon('barangay')}
+                </th>
+                <th 
+                  className="px-6 py-4 cursor-pointer hover:bg-gray-50 transition-colors"
+                  onClick={() => requestSort('resident_count')}
+                >
+                  Residents {renderSortIcon('resident_count')}
+                </th>
+                <th 
+                  className="px-6 py-4 cursor-pointer hover:bg-gray-50 transition-colors"
+                  onClick={() => requestSort('certificates_issued')}
+                >
+                  Certificates {renderSortIcon('certificates_issued')}
+                </th>
+                <th 
+                  className="px-6 py-4 cursor-pointer hover:bg-gray-50 transition-colors"
+                  onClick={() => requestSort('avg_completion_rate')}
+                >
+                  <div>
+                    Completion Rate {renderSortIcon('avg_completion_rate')}
+                    <div className="text-[10px] text-gray-400 font-normal mt-0.5">completed vs. enrolled</div>
                   </div>
-                  <span className="text-sm font-semibold text-gray-600">Residents</span>
-                </div>
-                <span className="text-lg font-black text-gray-900">{sector.resident_count}</span>
-              </div>
-
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-600">
-                    <HugeiconsIcon icon={Certificate01Icon} className="w-4 h-4" />
-                  </div>
-                  <span className="text-sm font-semibold text-gray-600">Certificates</span>
-                </div>
-                <span className="text-lg font-black text-gray-900">{sector.certificates_issued}</span>
-              </div>
-
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-purple-50 flex items-center justify-center text-purple-600">
-                    <HugeiconsIcon icon={ChartHistogramIcon} className="w-4 h-4" />
-                  </div>
-                  <span className="text-sm font-semibold text-gray-600">Completion</span>
-                </div>
-                <span className="text-lg font-black text-gray-900">{sector.avg_completion_rate}%</span>
-              </div>
-
-              <div className="flex items-center justify-between pt-4 border-t border-gray-50">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-orange-50 flex items-center justify-center text-orange-600">
-                    <HugeiconsIcon icon={UserShield01Icon} className="w-4 h-4" />
-                  </div>
-                  <span className="text-sm font-semibold text-gray-600">Active Admins</span>
-                </div>
-                <span className="text-lg font-black text-gray-900">{sector.active_admins}</span>
-              </div>
-            </div>
-          </div>
-        ))}
+                </th>
+                <th 
+                  className="px-6 py-4 cursor-pointer hover:bg-gray-50 transition-colors"
+                  onClick={() => requestSort('active_admins')}
+                >
+                  Active Admins {renderSortIcon('active_admins')}
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-50">
+              {sortedData.map((sector, index) => {
+                const isUnassigned = sector.barangay === 'Unassigned';
+                return (
+                  <tr 
+                    key={index} 
+                    className={`transition-colors ${isUnassigned ? 'bg-yellow-50/30 hover:bg-yellow-50/50' : 'hover:bg-gray-50/50'}`}
+                  >
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-2">
+                        <span className={`font-bold ${isUnassigned ? 'text-yellow-800' : 'text-gray-900'}`}>
+                          {sector.barangay}
+                        </span>
+                        {isUnassigned && (
+                          <span className="bg-yellow-100 text-yellow-800 text-[10px] font-bold px-2 py-0.5 rounded-md border border-yellow-200">
+                            NEEDS REVIEW
+                          </span>
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 text-gray-700 font-medium">{sector.resident_count}</td>
+                    <td className="px-6 py-4 text-gray-700 font-medium">{sector.certificates_issued}</td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-2">
+                        <span className="text-gray-700 font-medium">{sector.avg_completion_rate}%</span>
+                        <div className="w-24 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                          <div 
+                            className="h-full bg-blue-500 rounded-full" 
+                            style={{ width: `${sector.avg_completion_rate}%` }}
+                          />
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 text-gray-700 font-medium">{sector.active_admins}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );

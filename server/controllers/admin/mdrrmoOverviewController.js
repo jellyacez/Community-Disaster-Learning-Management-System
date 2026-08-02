@@ -134,27 +134,48 @@ exports.getRecentActivity = async (req, res) => {
 exports.getSectorOverview = async (req, res) => {
   try {
     const query = `
-      SELECT 
-        COALESCE(b.name, 'Unassigned') AS barangay_name,
-        COUNT(DISTINCT CASE WHEN u.role = 'resident' THEN u.id END) AS resident_count,
-        COUNT(DISTINCT CASE WHEN u.role = 'barangay_admin' THEN u.id END) AS active_admins,
-        COUNT(DISTINCT c.cert_id) AS certificates_issued,
-        -- Approximate completion rate: completed steps / total expected steps across enrolled modules
-        COALESCE(
-          (COUNT(DISTINCT CASE WHEN u.role = 'resident' AND ma.modstatus = 'completed' THEN ma.modact_id END)::float / 
-           NULLIF(COUNT(DISTINCT CASE WHEN u.role = 'resident' AND ma.modact_id IS NOT NULL THEN ma.modact_id END), 0)
-          ) * 100, 0
-        ) AS avg_completion_rate
-      FROM "user" u
-      LEFT JOIN barangays b ON u.barangay_id = b.id
-      LEFT JOIN certificates c ON u.id = c.user_id
-      LEFT JOIN module_activity ma ON u.id = ma.user_id
-      WHERE u.archived = false AND (u.banned IS NULL OR u.banned = false)
-      GROUP BY b.id, b.name
-      ORDER BY 
-        CASE WHEN b.name IS NULL THEN 1 ELSE 0 END, 
-        b.name ASC;
-    `;
+        WITH unassigned_stats AS (
+          SELECT 
+            'Unassigned' AS barangay_name,
+            COUNT(DISTINCT CASE WHEN u.role = 'resident' THEN u.id END) AS resident_count,
+            COUNT(DISTINCT CASE WHEN u.role = 'barangay_admin' THEN u.id END) AS active_admins,
+            COUNT(DISTINCT c.cert_id) AS certificates_issued,
+            COALESCE(
+              (COUNT(DISTINCT CASE WHEN u.role = 'resident' AND ma.modstatus = 'completed' THEN ma.modact_id END)::float / 
+               NULLIF(COUNT(DISTINCT CASE WHEN u.role = 'resident' AND ma.modact_id IS NOT NULL THEN ma.modact_id END), 0)
+              ) * 100, 0
+            ) AS avg_completion_rate
+          FROM "user" u
+          LEFT JOIN certificates c ON u.id = c.user_id
+          LEFT JOIN module_activity ma ON u.id = ma.user_id
+          WHERE u.barangay_id IS NULL AND u.archived = false AND (u.banned IS NULL OR u.banned = false)
+        ),
+        barangay_stats AS (
+          SELECT 
+            b.name AS barangay_name,
+            COUNT(DISTINCT CASE WHEN u.role = 'resident' THEN u.id END) AS resident_count,
+            COUNT(DISTINCT CASE WHEN u.role = 'barangay_admin' THEN u.id END) AS active_admins,
+            COUNT(DISTINCT c.cert_id) AS certificates_issued,
+            COALESCE(
+              (COUNT(DISTINCT CASE WHEN u.role = 'resident' AND ma.modstatus = 'completed' THEN ma.modact_id END)::float / 
+               NULLIF(COUNT(DISTINCT CASE WHEN u.role = 'resident' AND ma.modact_id IS NOT NULL THEN ma.modact_id END), 0)
+              ) * 100, 0
+            ) AS avg_completion_rate
+          FROM barangays b
+          LEFT JOIN "user" u ON u.barangay_id = b.id AND u.archived = false AND (u.banned IS NULL OR u.banned = false)
+          LEFT JOIN certificates c ON u.id = c.user_id
+          LEFT JOIN module_activity ma ON u.id = ma.user_id
+          GROUP BY b.id, b.name
+        )
+        SELECT * FROM (
+          SELECT * FROM barangay_stats
+          UNION ALL
+          SELECT * FROM unassigned_stats
+        ) combined_results
+        ORDER BY 
+          CASE WHEN barangay_name = 'Unassigned' THEN 1 ELSE 0 END, 
+          barangay_name ASC;
+      `;
     const result = await pool.query(query);
 
     const formattedData = result.rows.map(row => ({
