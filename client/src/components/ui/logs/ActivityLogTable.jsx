@@ -1,12 +1,7 @@
-import { HugeiconsIcon } from "@hugeicons/react";
+﻿import { HugeiconsIcon } from "@hugeicons/react";
 import { Note01Icon, Folder01Icon } from "@hugeicons/core-free-icons";
-
-const ROLE_COLORS = {
-  system_admin: "bg-purple-100 text-purple-800",
-  mdrrmo_admin: "bg-blue-100 text-blue-800",
-  barangay_admin: "bg-teal-100 text-teal-800",
-  resident: "bg-gray-100 text-gray-600",
-};
+import RoleBadge from "./RoleBadge";
+import { getActionColor } from "./logUtils";
 
 function SkeletonRow() {
   return (
@@ -69,16 +64,14 @@ export default function ActivityLogTable({ logs, isLoading, meta, setPage, limit
                       </div>
                       <div>
                         <p className="text-sm font-bold text-gray-900">{log.user_name || "Unknown"}</p>
-                        <p className="text-xs text-gray-400 font-mono mt-0.5">{log.user_id?.slice(0, 8)}…</p>
+                        <p className="text-xs text-gray-400 font-mono mt-0.5" title={log.user_id}>{log.user_id?.slice(0, 8)}…</p>
                       </div>
                     </div>
                   </td>
                   <td className="px-6 py-4">
-                    <span className={`text-xs font-bold px-3 py-1.5 rounded-full ${ROLE_COLORS[log.user_role] || "bg-gray-100 text-gray-600"}`}>
-                      {log.user_role || "—"}
-                    </span>
+                    <RoleBadge role={log.user_role} />
                   </td>
-                  <td className="px-6 py-4 text-sm font-medium text-gray-700 leading-snug">
+                  <td className={`px-6 py-4 text-sm font-medium leading-snug ${getActionColor(log.act_log)}`}>
                     {log.act_log}
                   </td>
                 </tr>

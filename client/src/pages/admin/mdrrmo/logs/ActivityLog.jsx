@@ -5,8 +5,8 @@ import useDocumentTitle from "../../../../hooks/useDocumentTitle";
 import useDebounce from "../../../../hooks/useDebounce";
 import toast from "react-hot-toast";
 
-import ActivityLogFilters from "./components/ActivityLogFilters";
-import ActivityLogTable from "./components/ActivityLogTable";
+import ActivityLogFilters from "../../../../components/ui/logs/ActivityLogFilters";
+import ActivityLogTable from "../../../../components/ui/logs/ActivityLogTable";
 
 export default function ActivityLog() {
   useDocumentTitle("Activity & Monitoring Logs | Admin Console");
@@ -62,8 +62,30 @@ export default function ActivityLog() {
     );
   };
 
+  const roleOptions = [
+    { value: "non_resident", label: "Admins Only (Default)" },
+    { value: "", label: "All Roles" },
+    { value: "head_mdrrmo_admin", label: "Head MDRRMO Admin" },
+    { value: "mdrrmo_admin", label: "MDRRMO Admin" },
+    { value: "barangay_admin", label: "Barangay Admin" },
+    { value: "resident", label: "Resident" },
+  ];
+
+  const actionOptions = [
+    { value: "", label: "All Actions" },
+    { value: "auth", label: "Authentication" },
+    { value: "module", label: "Curriculum & Modules" },
+    { value: "role", label: "Account Updates" },
+    { value: "export", label: "Exports" },
+  ];
+
   return (
-    <div className="space-y-4">
+    <div className="max-w-7xl mx-auto animate-in fade-in duration-150 pb-12 p-6 md:p-12 space-y-4">
+      <div className="mb-8">
+        <h1 className="text-3xl font-black text-gray-900 tracking-tight">Activity & Monitoring Logs</h1>
+        <p className="text-sm font-medium text-gray-500 mt-1">MDRRMO and barangay-level activity tracking</p>
+      </div>
+      
       <ActivityLogFilters
         search={search}
         setSearch={setSearch}
@@ -73,6 +95,8 @@ export default function ActivityLog() {
         setActionFilter={setActionFilter}
         totalEntries={meta.total}
         onExport={handleExportLogs}
+        roleOptions={roleOptions}
+        actionOptions={actionOptions}
       />
 
       <ActivityLogTable 

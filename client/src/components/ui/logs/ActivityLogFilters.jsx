@@ -1,4 +1,4 @@
-import { HugeiconsIcon } from "@hugeicons/react";
+﻿import { HugeiconsIcon } from "@hugeicons/react";
 import { Search01Icon, Download01Icon } from "@hugeicons/core-free-icons";
 
 export default function ActivityLogFilters({
@@ -10,6 +10,8 @@ export default function ActivityLogFilters({
   setActionFilter,
   totalEntries,
   onExport,
+  roleOptions,
+  actionOptions,
 }) {
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 flex flex-col sm:flex-row gap-3 items-stretch sm:items-center flex-wrap">
@@ -30,12 +32,9 @@ export default function ActivityLogFilters({
         onChange={(e) => setRoleFilter(e.target.value)}
         className="px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-900/10 min-w-[140px]"
       >
-        <option value="non_resident">Admins Only (Default)</option>
-        <option value="">All Roles</option>
-        <option value="system_admin">System Admin</option>
-        <option value="mdrrmo_admin">MDRRMO Admin</option>
-        <option value="barangay_admin">Barangay Admin</option>
-        <option value="resident">Resident</option>
+        {roleOptions.map((opt, i) => (
+          <option key={i} value={opt.value}>{opt.label}</option>
+        ))}
       </select>
       
       <select
@@ -43,13 +42,9 @@ export default function ActivityLogFilters({
         onChange={(e) => setActionFilter(e.target.value)}
         className="px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-900/10 min-w-[160px]"
       >
-        <option value="">All Actions</option>
-        <option value="auth">Authentication</option>
-        <option value="provision">Provisioning</option>
-        <option value="role">Roles & Updates</option>
-        <option value="ban">Bans & Archiving</option>
-        <option value="settings">System Settings</option>
-        <option value="security">Security & Infra</option>
+        {actionOptions.map((opt, i) => (
+          <option key={i} value={opt.value}>{opt.label}</option>
+        ))}
       </select>
       
       <span className="self-center text-xs text-gray-500 font-mono whitespace-nowrap ml-auto">

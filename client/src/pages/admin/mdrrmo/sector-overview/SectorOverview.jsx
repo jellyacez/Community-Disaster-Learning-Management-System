@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import useDocumentTitle from "../../../../hooks/useDocumentTitle";
 import apiClient from "../../../../lib/apiClient";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { ArrowUp01Icon, ArrowDown01Icon } from "@hugeicons/core-free-icons";
+import { ArrowUp01Icon, ArrowDown01Icon, Search01Icon } from "@hugeicons/core-free-icons";
 
 const fetchSectorOverview = async () => {
   const res = await apiClient.get("/admin/mdrrmo/sector-overview");
@@ -14,6 +14,7 @@ export default function SectorOverview() {
   useDocumentTitle("Sector Overview | Admin Console");
 
   const [sortConfig, setSortConfig] = useState({ key: 'barangay', direction: 'asc' });
+  const [searchQuery, setSearchQuery] = useState("");
 
   const { data: sectorData = [], isLoading, isError } = useQuery({
     queryKey: ["sectorOverview"],
@@ -24,7 +25,14 @@ export default function SectorOverview() {
   const totalResidents = sectorData.reduce((acc, curr) => acc + curr.resident_count, 0);
 
   const sortedData = useMemo(() => {
-    let sortableData = [...sectorData];
+    let filteredData = sectorData;
+    if (searchQuery.trim()) {
+      filteredData = filteredData.filter(d => 
+        d.barangay.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
+    
+    let sortableData = [...filteredData];
     if (sortConfig.key) {
       sortableData.sort((a, b) => {
         // Keep Unassigned at the bottom regardless of sort
@@ -41,7 +49,7 @@ export default function SectorOverview() {
       });
     }
     return sortableData;
-  }, [sectorData, sortConfig]);
+  }, [sectorData, sortConfig, searchQuery]);
 
   const requestSort = (key) => {
     let direction = 'asc';
@@ -77,9 +85,21 @@ export default function SectorOverview() {
 
   return (
     <div className="max-w-7xl mx-auto animate-in fade-in duration-150 pb-12 p-6 md:p-12">
-      <div className="mb-8">
-        <h1 className="text-3xl font-black text-gray-900 tracking-tight">Audited Sector Data</h1>
-        <p className="text-sm font-medium text-gray-500 mt-1">Total Residents Across All Barangays: {totalResidents}</p>
+      <div className="mb-8 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-black text-gray-900 tracking-tight">Audited Sector Data</h1>
+          <p className="text-sm font-medium text-gray-500 mt-1">Total Residents Across All Barangays: {totalResidents}</p>
+        </div>
+        <div className="relative w-full sm:w-72">
+          <HugeiconsIcon icon={Search01Icon} className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <input
+            type="text"
+            placeholder="Search barangay..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-9 pr-4 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10"
+          />
+        </div>
       </div>
 
       <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
@@ -103,7 +123,7 @@ export default function SectorOverview() {
                   className="px-6 py-4 cursor-pointer hover:bg-gray-50 transition-colors"
                   onClick={() => requestSort('certificates_issued')}
                 >
-                  Certificates {renderSortIcon('certificates_issued')}
+                  Certificates Issued {renderSortIcon('certificates_issued')}
                 </th>
                 <th 
                   className="px-6 py-4 cursor-pointer hover:bg-gray-50 transition-colors"
@@ -111,7 +131,7 @@ export default function SectorOverview() {
                 >
                   <div>
                     Completion Rate {renderSortIcon('avg_completion_rate')}
-                    <div className="text-[10px] text-gray-400 font-normal mt-0.5">completed vs. enrolled</div>
+                    <div className="text-[10px] text-gray-400 font-normal mt-0.5">% of started modules finished (not measured against total available content)</div>
                   </div>
                 </th>
                 <th 
@@ -147,7 +167,7 @@ export default function SectorOverview() {
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-2">
                         <span className="text-gray-700 font-medium">{sector.avg_completion_rate}%</span>
-                        <div className="w-24 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                        <div className="w-24 h-1.5 bg-gray-200 rounded-full overflow-hidden">
                           <div 
                             className="h-full bg-blue-500 rounded-full" 
                             style={{ width: `${sector.avg_completion_rate}%` }}
