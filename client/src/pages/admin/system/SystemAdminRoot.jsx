@@ -1,30 +1,34 @@
-import { Outlet } from "react-router-dom";
+import { Outlet, useLocation } from "react-router-dom";
 import useDocumentTitle from "../../../hooks/useDocumentTitle";
 
 export default function SystemAdminRoot() {
   useDocumentTitle("System Administration | DRRM Portal");
+  const location = useLocation();
+  const isDashboard = location.pathname === "/admin/system" || location.pathname === "/admin/system/";
 
   return (
     <div className="w-full h-full font-sans">
       <div className="max-w-7xl mx-auto space-y-6">
 
-        {/* Main Header */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden p-6 md:px-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
-              System Administration Console
-            </h1>
-            <p className="text-sm text-gray-500 mt-1">
-              Platform-wide control, user management, and infrastructure oversight
-            </p>
+        {/* Main Header - Only show on dashboard index */}
+        {isDashboard && (
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden p-6 md:px-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
+                System Administration Console
+              </h1>
+              <p className="text-sm text-gray-500 mt-1">
+                Platform-wide control, user management, and infrastructure oversight
+              </p>
+            </div>
+            <div className="flex items-center gap-3">
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-sm animate-pulse" />
+              <span className="text-xs font-bold uppercase tracking-wider text-gray-500 font-mono">
+                System Online
+              </span>
+            </div>
           </div>
-          <div className="flex items-center gap-3">
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-sm animate-pulse" />
-            <span className="text-xs font-bold uppercase tracking-wider text-gray-500 font-mono">
-              System Online
-            </span>
-          </div>
-        </div>
+        )}
 
         {/* Render Active Sub-page */}
         <div className="min-h-[600px] animate-in fade-in duration-200">

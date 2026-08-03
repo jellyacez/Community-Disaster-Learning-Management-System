@@ -55,7 +55,7 @@ exports.getActivityLog = async (req, res) => {
         paramIndex += 4;
       } else if (action === 'security') {
         conditions.push(`(al.act_log ILIKE $${paramIndex} OR al.act_log ILIKE $${paramIndex+1} OR al.act_log ILIKE $${paramIndex+2})`);
-        params.push('%IP%', '%force logout%', '%backup%');
+        params.push('%IP address%', '%force logout%', '%backup%');
         paramIndex += 3;
       } else {
         conditions.push(`al.act_log ILIKE $${paramIndex}`);

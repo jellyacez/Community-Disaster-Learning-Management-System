@@ -84,7 +84,7 @@ export default function SectorOverview() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto animate-in fade-in duration-150 pb-12 p-6 md:p-12">
+    <div className="max-w-7xl mx-auto animate-in fade-in duration-150 px-6 md:px-12 pt-2 md:pt-2 pb-12">
       <div className="mb-8 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div>
           <h1 className="text-3xl font-black text-gray-900 tracking-tight">Audited Sector Data</h1>

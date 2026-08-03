@@ -18,7 +18,13 @@ export default function UserManagement() {
   const { state, actions } = useUserManagement();
 
   return (
-    <div className="space-y-4">
+    <div className="max-w-7xl mx-auto animate-in fade-in duration-150 px-6 md:px-12 pt-2 md:pt-2 pb-12 space-y-4">
+      <div className="mb-8">
+        <h1 className="text-3xl font-black text-gray-900 tracking-tight">User Management</h1>
+        <p className="text-sm font-medium text-gray-500 mt-1">
+          Platform-wide control, access provisioning, and user administration
+        </p>
+      </div>
       <UserFilters
         search={state.search}
         setSearch={actions.setSearch}

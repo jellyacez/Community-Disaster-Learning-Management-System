@@ -80,7 +80,7 @@ export default function ActivityLog() {
   ];
 
   return (
-    <div className="max-w-7xl mx-auto animate-in fade-in duration-150 pb-12 p-6 md:p-12 space-y-4">
+    <div className="max-w-7xl mx-auto animate-in fade-in duration-150 px-6 md:px-12 pt-2 md:pt-2 pb-12 space-y-4">
       <div className="mb-8">
         <h1 className="text-3xl font-black text-gray-900 tracking-tight">Activity & Monitoring Logs</h1>
         <p className="text-sm font-medium text-gray-500 mt-1">MDRRMO and barangay-level activity tracking</p>

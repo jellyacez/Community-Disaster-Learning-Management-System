@@ -63,7 +63,7 @@ export default function ModuleManagement() {
 
   return (
     <>
-      <div className="max-w-7xl mx-auto animate-in fade-in duration-150 pb-12 p-6 md:p-12">
+      <div className="max-w-7xl mx-auto animate-in fade-in duration-150 px-6 md:px-12 pt-2 md:pt-2 pb-12">
         <DashboardHeader 
           searchQuery={searchQuery}
           setSearchQuery={setSearchQuery}
