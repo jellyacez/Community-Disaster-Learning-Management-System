@@ -136,10 +136,12 @@ exports.getSectorOverview = async (req, res) => {
     const query = `
         WITH unassigned_stats AS (
           SELECT 
+            NULL::integer AS barangay_id,
             'Unassigned' AS barangay_name,
             COUNT(DISTINCT CASE WHEN u.role = 'resident' THEN u.id END) AS resident_count,
             COUNT(DISTINCT CASE WHEN u.role = 'barangay_admin' THEN u.id END) AS active_admins,
             COUNT(DISTINCT c.cert_id) AS certificates_issued,
+            COUNT(DISTINCT CASE WHEN u.role = 'resident' AND c.status = 'active' THEN u.id END) AS certified_responders,
             COALESCE(
               (COUNT(DISTINCT CASE WHEN u.role = 'resident' AND ma.modstatus = 'completed' THEN ma.modact_id END)::float / 
                NULLIF(COUNT(DISTINCT CASE WHEN u.role = 'resident' AND ma.modact_id IS NOT NULL THEN ma.modact_id END), 0)
@@ -152,10 +154,12 @@ exports.getSectorOverview = async (req, res) => {
         ),
         barangay_stats AS (
           SELECT 
+            b.id AS barangay_id,
             b.name AS barangay_name,
             COUNT(DISTINCT CASE WHEN u.role = 'resident' THEN u.id END) AS resident_count,
             COUNT(DISTINCT CASE WHEN u.role = 'barangay_admin' THEN u.id END) AS active_admins,
             COUNT(DISTINCT c.cert_id) AS certificates_issued,
+            COUNT(DISTINCT CASE WHEN u.role = 'resident' AND c.status = 'active' THEN u.id END) AS certified_responders,
             COALESCE(
               (COUNT(DISTINCT CASE WHEN u.role = 'resident' AND ma.modstatus = 'completed' THEN ma.modact_id END)::float / 
                NULLIF(COUNT(DISTINCT CASE WHEN u.role = 'resident' AND ma.modact_id IS NOT NULL THEN ma.modact_id END), 0)
@@ -179,16 +183,62 @@ exports.getSectorOverview = async (req, res) => {
     const result = await pool.query(query);
 
     const formattedData = result.rows.map(row => ({
+      id: row.barangay_id,
       barangay: row.barangay_name,
       resident_count: parseInt(row.resident_count, 10) || 0,
       active_admins: parseInt(row.active_admins, 10) || 0,
       certificates_issued: parseInt(row.certificates_issued, 10) || 0,
+      certified_responders: parseInt(row.certified_responders, 10) || 0,
       avg_completion_rate: Math.round(parseFloat(row.avg_completion_rate) || 0)
     }));
 
     res.json({ success: true, data: formattedData });
   } catch (error) {
     console.error("Error fetching sector overview data:", error);
+    res.status(500).json({ success: false, error: 'Server Error' });
+  }
+};
+
+// @desc    Get category breakdown for certificates (Sector Overview deep dive)
+// @access  Private (mdrrmo_admin, head_mdrrmo_admin, system_admin)
+exports.getSectorOverviewCategoryBreakdown = async (req, res) => {
+  try {
+    const barangayId = req.query.barangay_id;
+    
+    let query = `
+      SELECT 
+        COALESCE(NULLIF(TRIM(md.modcat), ''), 'Uncategorized') AS category,
+        COUNT(DISTINCT c.cert_id) AS certificate_count
+      FROM certificates c
+      JOIN "user" u ON c.user_id = u.id
+      JOIN module_data md ON c.module_id = md.mod_id
+      WHERE u.role = 'resident' 
+        AND c.status = 'active'
+        AND u.archived = false AND (u.banned IS NULL OR u.banned = false)
+    `;
+    const params = [];
+
+    if (barangayId) {
+      if (barangayId === 'unassigned') {
+        query += ` AND u.barangay_id IS NULL`;
+      } else {
+        query += ` AND u.barangay_id = $1`;
+        params.push(barangayId);
+      }
+    }
+
+    query += ` GROUP BY category ORDER BY certificate_count DESC`;
+
+    const result = await pool.query(query, params);
+
+    const data = result.rows.map(row => ({
+      name: row.category,
+      value: parseInt(row.certificate_count, 10) || 0
+    }));
+
+    res.json({ success: true, data });
+  } catch (error) {
+    console.error("Error fetching sector category breakdown:", error);
     res.status(500).json({ success: false, error: 'Server Error' });
   }
 };

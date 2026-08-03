@@ -200,4 +200,8 @@ router.get("/mdrrmo/activity-log/export", requireRole(ADMIN_ROLES), adminDataLim
 // @desc    Get aggregate data per barangay for Sector Overview
 router.get("/mdrrmo/sector-overview", requireRole(ADMIN_ROLES), adminDataLimiter, mdrrmoOverviewController.getSectorOverview);
 
+// @route   GET /api/admin/mdrrmo/sector-overview/category-breakdown
+// @desc    Get category breakdown for certificates per barangay
+router.get("/mdrrmo/sector-overview/category-breakdown", requireRole(ADMIN_ROLES), adminDataLimiter, mdrrmoOverviewController.getSectorOverviewCategoryBreakdown);
+
 module.exports = router;
