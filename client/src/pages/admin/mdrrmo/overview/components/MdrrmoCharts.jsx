@@ -48,7 +48,7 @@ export function MdrrmoModuleDistributionChart({ onCategoryClick, selectedCategor
       const res = await apiClient.get("/admin/mdrrmo/module-distribution");
       return res.data.data;
     },
-    refetchInterval: 60000,
+    refetchInterval: 15000,
   });
 
   const getCategoryColor = (name) => {
@@ -170,7 +170,7 @@ export function MdrrmoEnrollmentTrendChart() {
       const res = await apiClient.get("/admin/mdrrmo/enrollment-trend");
       return res.data.data;
     },
-    refetchInterval: 60000,
+    refetchInterval: 15000,
   });
 
   return (

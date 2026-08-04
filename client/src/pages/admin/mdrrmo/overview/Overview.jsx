@@ -38,7 +38,7 @@ export default function Overview() {
       const res = await apiClient.get("/admin/mdrrmo/metrics");
       return res.data.data;
     },
-    refetchInterval: 30000,
+    refetchInterval: 15000,
     retry: 1,
   });
 
@@ -59,6 +59,7 @@ export default function Overview() {
         image_url: mod.image_url || null,
       }));
     },
+    refetchInterval: 15000,
     retry: 1,
   });
 

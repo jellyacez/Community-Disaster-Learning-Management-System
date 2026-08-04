@@ -55,6 +55,10 @@ export default function UserDashboard() {
   };
 
   useEffect(() => {
+    // Wait for the user to finish onboarding before showing WelcomeModal.
+    // If they don't have a barangay_id, OnboardingModal is active.
+    if (!currentUser || !currentUser.barangay_id) return;
+
     if (location.state?.showWelcome || location.state?.fromLogin) {
       setTimeout(() => setShowWelcomeModal(true), 0);
       sessionStorage.setItem("hasSeenWelcome", "true");
@@ -64,7 +68,7 @@ export default function UserDashboard() {
     if (session?.user?.createdAt) {
       const accountAgeMs =
         Date.now() - new Date(session.user.createdAt).getTime();
-      const isNewAccount = accountAgeMs < 60000;
+      const isNewAccount = accountAgeMs < 600000; // 10 minutes
       const hasSeenWelcome = sessionStorage.getItem("hasSeenWelcome");
 
       if (isNewAccount && !hasSeenWelcome) {
@@ -72,7 +76,7 @@ export default function UserDashboard() {
         sessionStorage.setItem("hasSeenWelcome", "true");
       }
     }
-  }, [location, navigate, session]);
+  }, [location, navigate, session, currentUser]);
 
   const handleResume = useCallback(
     (moduleId) => {

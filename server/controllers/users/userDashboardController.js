@@ -11,8 +11,6 @@ exports.getDashboardData = async (req, res) => {
 
     const dashboardData = await DashboardService.getDashboardData(userId);
 
-    console.log(`[BACKEND COLD START DEBUG] Sending ${dashboardData.enrolledModules.length} enrolled modules. First module description:`, dashboardData.enrolledModules[0]?.description ? 'PRESENT (' + dashboardData.enrolledModules[0].description.length + ' chars)' : 'MISSING');
-
     res.status(200).json({
       success: true,
       data: dashboardData

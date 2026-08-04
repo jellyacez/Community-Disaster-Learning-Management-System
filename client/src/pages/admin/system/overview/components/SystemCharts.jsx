@@ -48,7 +48,7 @@ export default function SystemCharts({ stats }) {
       const res = await apiClient.get("/admin/analytics/traffic");
       return res.data.data;
     },
-    refetchInterval: 60000,
+    refetchInterval: 15000,
   });
 
   if (!stats) return null;

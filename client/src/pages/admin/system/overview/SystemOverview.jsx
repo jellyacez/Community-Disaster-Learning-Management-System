@@ -30,7 +30,7 @@ export default function SystemOverview() {
       const res = await apiClient.get("/admin/stats");
       return res.data.data;
     },
-    refetchInterval: 30000,
+    refetchInterval: 15000,
   });
 
   const { data: healthData, isLoading: healthLoading } = useQuery({
@@ -48,8 +48,8 @@ export default function SystemOverview() {
       const res = await apiClient.get("/admin/settings");
       return res.data.data;
     },
-    // Keep settings data fresh every 60s
-    refetchInterval: 60000,
+    // Keep settings data fresh every 15s
+    refetchInterval: 15000,
   });
 
   const s = statsData || {};
