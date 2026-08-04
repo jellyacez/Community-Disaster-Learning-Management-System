@@ -30,6 +30,8 @@ export default function UserLayout() {
       "User",
     email: session?.user?.email || "No email available",
     barangay: session?.user?.barangay || "No barangay set",
+    barangay_id: session?.user?.barangay_id,
+    barangay_legacy_text: session?.user?.barangay_legacy_text,
     role: formatRole(session?.user?.role),
     image: session?.user?.image,
     

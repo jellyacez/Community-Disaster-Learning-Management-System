@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { CheckmarkBadge01Icon } from "@hugeicons/core-free-icons";
+import { CheckmarkBadge01Icon, ArrowDown01Icon } from "@hugeicons/core-free-icons";
 import toast from "react-hot-toast";
 import { BACOLOR_BARANGAYS } from "../../../constants/locations";
 import { useQueryClient } from "@tanstack/react-query";
@@ -11,9 +11,11 @@ export default function OnboardingModal({ currentUser }) {
   const queryClient = useQueryClient();
   const [onboardingName, setOnboardingName] = useState(currentUser?.name || "");
   const [onboardingBarangay, setOnboardingBarangay] = useState("");
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isSubmittingOnboarding, setIsSubmittingOnboarding] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
 
-  if (!currentUser || (currentUser.name && currentUser.barangay !== "Unassigned")) return null;
+  if (isSuccess || !currentUser || (currentUser.name && currentUser.barangay_id)) return null;
 
   const handleOnboardingSubmit = async (e) => {
     e.preventDefault();
@@ -31,6 +33,7 @@ export default function OnboardingModal({ currentUser }) {
       await apiClient.post('/users/onboarding', { name: onboardingName, barangay: onboardingBarangay });
 
       toast.success("Profile completed successfully!");
+      setIsSuccess(true);
       queryClient.invalidateQueries({ queryKey: ["userDashboard"] });
       queryClient.invalidateQueries({ queryKey: ["session"] });
     } catch (err) {
@@ -44,9 +47,8 @@ export default function OnboardingModal({ currentUser }) {
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="bg-white rounded-3xl shadow-2xl p-8 max-w-md w-full relative overflow-hidden"
+        className="bg-white rounded-3xl shadow-2xl p-8 max-w-md w-full relative border-t-[8px] border-red-600"
       >
-        <div className="absolute top-0 left-0 w-full h-2 bg-red-600"></div>
         
         <div className="h-16 w-16 bg-red-50 rounded-2xl flex items-center justify-center mb-6">
           <HugeiconsIcon aria-hidden="true" icon={CheckmarkBadge01Icon} className="w-8 h-8 text-red-600" />
@@ -73,22 +75,48 @@ export default function OnboardingModal({ currentUser }) {
             />
           </div>
 
-          <div>
+          <div className="relative">
             <label htmlFor="onboardingBarangay" className="block text-sm font-bold text-gray-700 mb-2">
               Which Barangay do you live in?
             </label>
-            <select
-              id="onboardingBarangay"
-              name="onboardingBarangay"
-              value={onboardingBarangay}
-              onChange={(e) => setOnboardingBarangay(e.target.value)}
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-red-500 outline-none transition"
-            >
-              <option value="" disabled>Select your Barangay</option>
-              {BACOLOR_BARANGAYS.map((brgy) => (
-                <option key={brgy} value={brgy}>{brgy}</option>
-              ))}
-            </select>
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-left focus:ring-2 focus:ring-red-500 outline-none transition flex items-center justify-between"
+              >
+                <span className={onboardingBarangay ? "text-gray-900" : "text-gray-400"}>
+                  {onboardingBarangay || "Select your Barangay"}
+                </span>
+                <HugeiconsIcon icon={ArrowDown01Icon} className={`w-5 h-5 text-gray-400 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
+              </button>
+
+              <AnimatePresence>
+                {isDropdownOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 10 }}
+                    transition={{ duration: 0.15 }}
+                    className="absolute bottom-full mb-2 z-50 w-full bg-white border border-gray-200 rounded-xl shadow-2xl overflow-hidden max-h-52 overflow-y-auto"
+                  >
+                    {BACOLOR_BARANGAYS.map((brgy) => (
+                      <button
+                        key={brgy}
+                        type="button"
+                        onClick={() => {
+                          setOnboardingBarangay(brgy);
+                          setIsDropdownOpen(false);
+                        }}
+                        className={`w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors ${onboardingBarangay === brgy ? 'bg-red-50 text-red-700 font-semibold' : 'text-gray-700'}`}
+                      >
+                        {brgy}
+                      </button>
+                    ))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
           </div>
 
           <button

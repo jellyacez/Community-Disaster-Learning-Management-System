@@ -192,7 +192,76 @@ exports.getSectorOverview = async (req, res) => {
       avg_completion_rate: Math.round(parseFloat(row.avg_completion_rate) || 0)
     }));
 
-    res.json({ success: true, data: formattedData });
+    // Execute trend query comparing current active residents to exactly 30 days ago
+    const trendQuery = `
+      WITH current_stats AS (
+        SELECT 
+          COUNT(DISTINCT c.user_id) FILTER (WHERE c.status = 'active') as certified_responders,
+          COUNT(DISTINCT u.barangay_id) FILTER (WHERE u.role = 'resident') as covered_barangays,
+          (SELECT COUNT(*) FROM (
+             SELECT b.id, 
+                    COALESCE((COUNT(DISTINCT CASE WHEN ma.modstatus ILIKE 'completed' THEN ma.modact_id END)::float / NULLIF(COUNT(DISTINCT ma.modact_id), 0)) * 100, 0) as rate
+             FROM barangays b
+             JOIN "user" u ON u.barangay_id = b.id AND u.role = 'resident' AND u.archived = false AND (u.banned IS NULL OR u.banned = false)
+             LEFT JOIN module_activity ma ON u.id = ma.user_id
+             GROUP BY b.id
+          ) sub WHERE rate = 0) as below_threshold
+        FROM "user" u
+        LEFT JOIN certificates c ON u.id = c.user_id
+        WHERE u.role = 'resident' AND u.archived = false AND (u.banned IS NULL OR u.banned = false)
+      ),
+      past_stats AS (
+        SELECT 
+          COUNT(DISTINCT c.user_id) FILTER (WHERE c.status = 'active' AND c.completion_date <= NOW() - INTERVAL '30 days') as certified_responders,
+          COUNT(DISTINCT u.barangay_id) FILTER (WHERE u.role = 'resident' AND u."createdAt" <= NOW() - INTERVAL '30 days') as covered_barangays,
+          (SELECT COUNT(*) FROM (
+             SELECT b.id, 
+                    COALESCE((COUNT(DISTINCT CASE WHEN ma.modstatus ILIKE 'completed' AND ma.completed_at <= NOW() - INTERVAL '30 days' THEN ma.modact_id END)::float / 
+                              NULLIF(COUNT(DISTINCT CASE WHEN ma.started_at <= NOW() - INTERVAL '30 days' THEN ma.modact_id END), 0)) * 100, 0) as rate
+             FROM barangays b
+             JOIN "user" u ON u.barangay_id = b.id AND u.role = 'resident' AND u.archived = false AND (u.banned IS NULL OR u.banned = false) AND u."createdAt" <= NOW() - INTERVAL '30 days'
+             LEFT JOIN module_activity ma ON u.id = ma.user_id
+             GROUP BY b.id
+          ) sub WHERE rate = 0) as below_threshold
+        FROM "user" u
+        LEFT JOIN certificates c ON u.id = c.user_id
+        WHERE u.role = 'resident' AND u.archived = false AND (u.banned IS NULL OR u.banned = false)
+      )
+      SELECT 
+        c.certified_responders - p.certified_responders AS cert_delta,
+        c.covered_barangays - p.covered_barangays AS covered_delta,
+        c.below_threshold - p.below_threshold AS threshold_delta
+      FROM current_stats c, past_stats p;
+    `;
+    const trendResult = await pool.query(trendQuery);
+    const deltas = trendResult.rows[0];
+
+    const certDelta = parseInt(deltas.cert_delta) || 0;
+    const coveredDelta = parseInt(deltas.covered_delta) || 0;
+    const thresholdDelta = parseInt(deltas.threshold_delta) || 0;
+
+    const trends = {
+      certifiedResponders: {
+        delta: certDelta,
+        direction: certDelta > 0 ? 'up' : (certDelta < 0 ? 'down' : 'flat'),
+        text: certDelta > 0 ? `+${certDelta} this month` : (certDelta < 0 ? `${certDelta} this month` : "Unchanged from last month"),
+        color: certDelta > 0 ? 'green' : (certDelta < 0 ? 'red' : 'gray')
+      },
+      coveredBarangays: {
+        delta: coveredDelta,
+        direction: coveredDelta > 0 ? 'up' : (coveredDelta < 0 ? 'down' : 'flat'),
+        text: coveredDelta > 0 ? `+${coveredDelta} this month` : (coveredDelta < 0 ? `${coveredDelta} this month` : "Unchanged from last month"),
+        color: coveredDelta > 0 ? 'green' : (coveredDelta < 0 ? 'red' : 'gray')
+      },
+      belowThreshold: {
+        delta: thresholdDelta,
+        direction: thresholdDelta > 0 ? 'up' : (thresholdDelta < 0 ? 'down' : 'flat'),
+        text: thresholdDelta > 0 ? `+${thresholdDelta} since last month` : (thresholdDelta < 0 ? `${Math.abs(thresholdDelta)} fewer this month` : "Unchanged from last month"),
+        color: thresholdDelta > 0 ? 'red' : (thresholdDelta < 0 ? 'green' : 'gray') // INVERTED COLOR: up = red, down = green
+      }
+    };
+
+    res.json({ success: true, data: formattedData, trends });
   } catch (error) {
     console.error("Error fetching sector overview data:", error);
     res.status(500).json({ success: false, error: 'Server Error' });
@@ -211,7 +280,7 @@ exports.getSectorOverviewCategoryBreakdown = async (req, res) => {
         COUNT(DISTINCT c.cert_id) AS certificate_count
       FROM certificates c
       JOIN "user" u ON c.user_id = u.id
-      JOIN module_data md ON c.module_id = md.mod_id
+      LEFT JOIN module_data md ON c.module_id = md.mod_id
       WHERE u.role = 'resident' 
         AND c.status = 'active'
         AND u.archived = false AND (u.banned IS NULL OR u.banned = false)

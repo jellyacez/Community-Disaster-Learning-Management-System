@@ -2,6 +2,15 @@ const pool = require("../../config/db");
 
 class DashboardService {
   async getDashboardData(userId) {
+    const userQuery = await pool.query(
+      `SELECT u.name, u.email, u.role, u.barangay_legacy_text, b.name as barangay_name 
+       FROM "user" u 
+       LEFT JOIN barangays b ON u.barangay_id = b.id 
+       WHERE u.id = $1`,
+      [userId]
+    );
+    const userDetails = userQuery.rows[0];
+
     const modulesCountQuery = await pool.query(
       "SELECT COUNT(*) FROM module_data",
     );
@@ -79,6 +88,7 @@ class DashboardService {
       enrolledModules,
       completionRate,
       certificates,
+      userDetails,
     };
   }
 }

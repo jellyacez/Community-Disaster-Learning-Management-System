@@ -58,6 +58,16 @@ export default function UserProfile() {
     return { totalCompleted: completed, totalHours: Math.round(hours * 10) / 10, activeModules: active };
   }, [enrolledModules]);
 
+  const enrichedUser = useMemo(() => {
+    if (!dashboardData) return currentUser;
+    const userDetails = dashboardData.userDetails || dashboardData.data?.userDetails;
+    if (!userDetails) return currentUser;
+
+    return {
+      ...currentUser,
+      barangay: userDetails.barangay_name || userDetails.barangay_legacy_text || currentUser.barangay,
+    };
+  }, [dashboardData, currentUser]);
 
   return (
     <div className="animate-in fade-in duration-300">
@@ -72,8 +82,8 @@ export default function UserProfile() {
         </div>
 
         <div className="grid gap-6 lg:grid-cols-3">
-          <ProfileAvatar currentUser={currentUser} userInitials={userInitials} />
-          <AccountDetails currentUser={currentUser} />
+          <ProfileAvatar currentUser={enrichedUser} userInitials={userInitials} />
+          <AccountDetails currentUser={enrichedUser} />
         </div>
 
         {/* Gamification & Learning Metrics Section */}
