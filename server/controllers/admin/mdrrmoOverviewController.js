@@ -143,7 +143,7 @@ exports.getSectorOverview = async (req, res) => {
             COUNT(DISTINCT c.cert_id) AS certificates_issued,
             COUNT(DISTINCT CASE WHEN u.role = 'resident' AND c.status = 'active' THEN u.id END) AS certified_responders,
             COALESCE(
-              (COUNT(DISTINCT CASE WHEN u.role = 'resident' AND ma.modstatus = 'completed' THEN ma.modact_id END)::float / 
+              (COUNT(DISTINCT CASE WHEN u.role = 'resident' AND ma.modstatus ILIKE 'completed' THEN ma.modact_id END)::float / 
                NULLIF(COUNT(DISTINCT CASE WHEN u.role = 'resident' AND ma.modact_id IS NOT NULL THEN ma.modact_id END), 0)
               ) * 100, 0
             ) AS avg_completion_rate
@@ -161,7 +161,7 @@ exports.getSectorOverview = async (req, res) => {
             COUNT(DISTINCT c.cert_id) AS certificates_issued,
             COUNT(DISTINCT CASE WHEN u.role = 'resident' AND c.status = 'active' THEN u.id END) AS certified_responders,
             COALESCE(
-              (COUNT(DISTINCT CASE WHEN u.role = 'resident' AND ma.modstatus = 'completed' THEN ma.modact_id END)::float / 
+              (COUNT(DISTINCT CASE WHEN u.role = 'resident' AND ma.modstatus ILIKE 'completed' THEN ma.modact_id END)::float / 
                NULLIF(COUNT(DISTINCT CASE WHEN u.role = 'resident' AND ma.modact_id IS NOT NULL THEN ma.modact_id END), 0)
               ) * 100, 0
             ) AS avg_completion_rate

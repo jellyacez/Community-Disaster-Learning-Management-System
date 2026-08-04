@@ -165,21 +165,9 @@ export default function SectorOverview() {
 
   return (
     <div className="max-w-7xl mx-auto animate-in fade-in duration-150 px-6 md:px-12 pt-2 md:pt-2 pb-12">
-      <div className="mb-8 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-black text-gray-900 tracking-tight">Sector Overview</h1>
-          <p className="text-sm font-medium text-gray-500 mt-1">Total Residents Across All Barangays: {totalResidents}</p>
-        </div>
-        <div className="relative w-full sm:w-72">
-          <HugeiconsIcon icon={Search01Icon} className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-          <input
-            type="text"
-            placeholder="Search barangay..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10"
-          />
-        </div>
+      <div className="mb-8">
+        <h1 className="text-3xl font-black text-gray-900 tracking-tight">Sector Overview</h1>
+        <p className="text-sm font-medium text-gray-500 mt-1">Total Residents Across All Barangays: {totalResidents}</p>
       </div>
 
       {/* Tier 1: KPI Banner */}
@@ -191,6 +179,7 @@ export default function SectorOverview() {
             value={kpiData.mostActiveName}
             sub="Highest completion rate"
             color="green"
+            isNumeric={false}
             loading={isLoading}
           />
           <StatCard
@@ -215,6 +204,7 @@ export default function SectorOverview() {
             value={kpiData.coveredBarangays + " / 21"}
             sub="Sectors with registered users"
             color="purple"
+            isNumeric={false}
             loading={isLoading}
           />
         </div>
@@ -320,9 +310,23 @@ export default function SectorOverview() {
 
       {/* Tier 3: Auditable Ledger */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-        <div className="p-4 border-b border-gray-100 bg-gray-50/50 flex justify-between items-center">
-          <h3 className="font-bold text-gray-700">Auditable Ledger</h3>
-          <span className="text-xs text-gray-500 font-medium">Click a row to deep-dive</span>
+        <div className="p-4 border-b border-gray-100 bg-gray-50/50 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+          <div>
+            <h3 className="font-bold text-gray-700">Auditable Ledger</h3>
+            <span className="text-xs text-gray-500 font-medium">
+              {searchQuery.trim() ? `Showing ${sortedData.length} of ${sectorData.length} sectors` : "Click a row to deep-dive"}
+            </span>
+          </div>
+          <div className="relative w-full sm:w-72">
+            <HugeiconsIcon icon={Search01Icon} className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Filter table by barangay..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-9 pr-4 py-2 border border-gray-200 bg-white rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10 transition-shadow"
+            />
+          </div>
         </div>
         <div className="overflow-x-auto max-h-[400px] overflow-y-auto">
           <table className="w-full text-left border-collapse relative">
@@ -361,11 +365,18 @@ export default function SectorOverview() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
-              {sortedData.map((sector, index) => {
-                const isUnassigned = sector.barangay === 'Unassigned';
-                const isSelected = selectedBarangayId === (isUnassigned ? "unassigned" : sector.id);
-                
-                return (
+              {sortedData.length === 0 ? (
+                <tr>
+                  <td colSpan="5" className="px-6 py-12 text-center text-gray-500">
+                    No barangays found matching "<span className="font-semibold text-gray-900">{searchQuery}</span>"
+                  </td>
+                </tr>
+              ) : (
+                sortedData.map((sector, index) => {
+                  const isUnassigned = sector.barangay === 'Unassigned';
+                  const isSelected = selectedBarangayId === (isUnassigned ? "unassigned" : sector.id);
+                  
+                  return (
                   <tr 
                     key={index} 
                     onClick={() => handleRowClick(isUnassigned ? "unassigned" : sector.id)}
@@ -403,11 +414,13 @@ export default function SectorOverview() {
                     <td className="px-6 py-3 text-gray-700 font-medium">{sector.active_admins}</td>
                   </tr>
                 );
-              })}
+              })
+              )}
             </tbody>
           </table>
         </div>
       </div>
     </div>
+
   );
 }
