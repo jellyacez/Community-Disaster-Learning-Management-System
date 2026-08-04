@@ -12,11 +12,29 @@ export default function DashboardHeader({
   handleOpenWizard
 }) {
   return (
-    <div className="flex flex-col gap-6 mb-8">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+    <div className="mb-8">
+      <nav className="flex text-sm text-gray-500 mb-2" aria-label="Breadcrumb">
+        <ol className="inline-flex items-center space-x-1 md:space-x-2">
+          <li className="inline-flex items-center">Dashboard</li>
+          <li>
+            <div className="flex items-center">
+              <span className="mx-2 text-gray-400">&gt;</span>
+              <span>Curriculum & Content</span>
+            </div>
+          </li>
+          <li>
+            <div className="flex items-center">
+              <span className="mx-2 text-gray-400">&gt;</span>
+              <span className="text-gray-900 font-semibold">Training Modules</span>
+            </div>
+          </li>
+        </ol>
+      </nav>
+
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
         <div>
-          <h1 className="text-3xl font-black text-gray-900 tracking-tight">Module Management</h1>
-          <p className="text-sm font-medium text-gray-500 mt-1">Create, edit, and publish training modules</p>
+          <h1 className="text-3xl font-black text-gray-900 tracking-tight">Training Modules</h1>
+          <p className="text-sm font-medium text-gray-500 mt-1">Create, edit, and manage training curriculum</p>
         </div>
         <button 
           onClick={handleOpenWizard}

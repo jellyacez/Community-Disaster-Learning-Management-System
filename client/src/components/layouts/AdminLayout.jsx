@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Outlet } from "react-router-dom";
+import { useState, useEffect, useRef } from "react";
+import { Outlet, useLocation } from "react-router-dom";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Menu01Icon } from "@hugeicons/core-free-icons";
 import AdminSidebar from "./AdminSidebar";
@@ -10,6 +10,15 @@ export default function AdminLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { data: session } = authClient.useSession();
   const isSystemAdmin = session?.user?.role === 'system_admin';
+  
+  const { pathname } = useLocation();
+  const mainContentRef = useRef(null);
+
+  useEffect(() => {
+    if (mainContentRef.current) {
+      mainContentRef.current.scrollTo(0, 0);
+    }
+  }, [pathname]);
 
   return (
     <div className="flex flex-col h-screen bg-gray-50 overflow-hidden">
@@ -33,7 +42,7 @@ export default function AdminLayout() {
             <div className="w-6" /> {/* Spacer for centering */}
           </header>
 
-          <div className="flex-1 overflow-y-auto bg-gray-50 p-4 lg:p-8">
+          <div ref={mainContentRef} className="flex-1 overflow-y-auto bg-gray-50 p-4 lg:p-8">
             <Outlet />
           </div>
         </main>
