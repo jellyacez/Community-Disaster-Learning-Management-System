@@ -715,7 +715,7 @@ export default function SectorOverview() {
           </div>
         )}
 
-        <div className="overflow-x-auto max-h-[400px] overflow-y-auto rounded-b-2xl">
+        <div className="overflow-x-auto h-[400px] overflow-y-auto rounded-b-2xl">
           <table className="w-full text-left border-collapse relative">
             <thead className="sticky top-0 z-10 bg-gray-50 shadow-[0_1px_0_rgba(0,0,0,0.05)]">
               <tr className="text-sm font-semibold text-gray-600">
