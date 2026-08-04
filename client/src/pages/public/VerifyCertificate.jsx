@@ -32,7 +32,7 @@ export default function VerifyCertificate() {
         const response = await apiClient.get(
           `/certificates/verify/${submittedToken}`,
         );
-        return response.data;
+        return response.data.data;
       } catch (err) {
         if (err.response && err.response.status === 404) {
           throw new Error("NOT_FOUND");
@@ -140,17 +140,17 @@ export default function VerifyCertificate() {
 
       let statusColor = "bg-green-100 text-green-800 border-green-200";
       let statusIcon = (
-        <CheckmarkBadge01Icon className="w-6 h-6 text-green-600" />
+        <HugeiconsIcon icon={CheckmarkBadge01Icon} className="w-6 h-6 text-green-600" />
       );
       let statusText = "Valid & Active";
 
       if (status === "expired") {
         statusColor = "bg-orange-100 text-orange-800 border-orange-200";
-        statusIcon = <Alert02Icon className="w-6 h-6 text-orange-600" />;
+        statusIcon = <HugeiconsIcon icon={Alert02Icon} className="w-6 h-6 text-orange-600" />;
         statusText = "Expired";
       } else if (status === "revoked") {
         statusColor = "bg-red-100 text-red-800 border-red-200";
-        statusIcon = <Cancel01Icon className="w-6 h-6 text-red-600" />;
+        statusIcon = <HugeiconsIcon icon={Cancel01Icon} className="w-6 h-6 text-red-600" />;
         statusText = "Revoked";
       }
 
