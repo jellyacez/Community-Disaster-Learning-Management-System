@@ -14,6 +14,12 @@ const logger = require("./logger");
 function startCertificateExpiryCron() {
   // Run once every day at 1:00 AM
   cron.schedule("0 1 * * *", async () => {
+    // Always emit a heartbeat so we can confirm the cron is running in production logs,
+    // even on days when no certificates have expired.
+    logger.logInfo("certificate_expiry_cron_start", {
+      message: "Certificate expiry cron starting."
+    });
+
     try {
       const result = await pool.query(`
         UPDATE certificates 
@@ -21,13 +27,12 @@ function startCertificateExpiryCron() {
         WHERE expires_at < NOW() AND status = 'active'
       `);
 
-      if (result.rowCount > 0) {
-        logger.logInfo('certificate_expiry_cron_success', {
-          message: `Successfully expired ${result.rowCount} certificates.`
-        });
-      }
+      logger.logInfo("certificate_expiry_cron_complete", {
+        message: `Certificate expiry cron finished. Certificates marked expired: ${result.rowCount}.`,
+        expired_count: result.rowCount
+      });
     } catch (err) {
-      logger.logError('certificate_expiry_cron_error', {
+      logger.logError("certificate_expiry_cron_error", {
         message: "Failed to run certificate expiry cron job.",
         error: err.message,
         stack: err.stack
@@ -35,7 +40,9 @@ function startCertificateExpiryCron() {
     }
   });
 
-  console.log("Certificate expiry cron job scheduled (Runs daily at 1:00 AM).");
+  logger.logInfo("certificate_expiry_cron_scheduled", {
+    message: "Certificate expiry cron scheduled (runs daily at 1:00 AM)."
+  });
 }
 
 module.exports = { startCertificateExpiryCron };

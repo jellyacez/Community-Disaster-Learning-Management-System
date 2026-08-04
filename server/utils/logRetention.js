@@ -2,6 +2,7 @@ const cron = require("node-cron");
 const fs = require("fs");
 const path = require("path");
 const pool = require("../config/db");
+const logger = require("./logger");
 
 const LOGS_DIR = path.join(__dirname, "../logs");
 const RETENTION_DAYS = 90;
@@ -9,26 +10,33 @@ const RETENTION_DAYS = 90;
 const startLogRetentionCron = () => {
   // Run every day at 3:00 AM PHT (Local Server Time)
   cron.schedule("0 3 * * *", async () => {
-    console.log("[CRON] Starting daily log retention cleanup...");
+    logger.logInfo("log_retention_cron_start", {
+      message: `Starting daily log retention cleanup (retention window: ${RETENTION_DAYS} days).`
+    });
+
+    let dbRowsDeleted = 0;
+    let filesDeleted = 0;
 
     try {
-      // 1. delete old activity logs
+      // 1. Delete old activity log rows from the database
       const dbRes = await pool.query(
         `DELETE FROM activity_log WHERE act_date < NOW() - INTERVAL '1 day' * $1`,
         [RETENTION_DAYS]
       );
-      console.log(`[CRON] Database: Deleted ${dbRes.rowCount} old activity log rows.`);
+      dbRowsDeleted = dbRes.rowCount;
     } catch (dbErr) {
-      console.error("[CRON] Failed to purge database activity logs:", dbErr);
+      logger.logError("log_retention_cron_db_error", {
+        message: "Failed to purge database activity logs.",
+        error: dbErr.message,
+        stack: dbErr.stack
+      });
     }
 
     try {
-      // 2. delete old log files
+      // 2. Delete old physical log files from server/logs/
       if (fs.existsSync(LOGS_DIR)) {
         const files = fs.readdirSync(LOGS_DIR);
-        const now = Date.now();
-        const cutoffTime = now - RETENTION_DAYS * 24 * 60 * 60 * 1000;
-        let deletedFiles = 0;
+        const cutoffTime = Date.now() - RETENTION_DAYS * 24 * 60 * 60 * 1000;
 
         for (const file of files) {
           if (file.endsWith(".log")) {
@@ -36,17 +44,29 @@ const startLogRetentionCron = () => {
             const stats = fs.statSync(filePath);
             if (stats.mtimeMs < cutoffTime) {
               fs.unlinkSync(filePath);
-              deletedFiles++;
+              filesDeleted++;
             }
           }
         }
-        console.log(`[CRON] File System: Deleted ${deletedFiles} old physical log files.`);
       }
     } catch (fsErr) {
-      console.error("[CRON] Failed to purge physical log files:", fsErr);
+      logger.logError("log_retention_cron_fs_error", {
+        message: "Failed to purge physical log files.",
+        error: fsErr.message,
+        stack: fsErr.stack
+      });
     }
 
-    console.log("[CRON] Log retention cleanup complete.");
+    // Always emit a completion heartbeat regardless of whether anything was deleted
+    logger.logInfo("log_retention_cron_complete", {
+      message: "Daily log retention cleanup finished.",
+      db_rows_deleted: dbRowsDeleted,
+      log_files_deleted: filesDeleted
+    });
+  });
+
+  logger.logInfo("log_retention_cron_scheduled", {
+    message: "Log retention cron scheduled (runs daily at 3:00 AM)."
   });
 };
 

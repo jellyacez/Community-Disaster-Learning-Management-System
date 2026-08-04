@@ -298,14 +298,16 @@ const securityHooksPlugin = () => {
               }
             }
 
-            // Fallback for OAuth redirects: extract session token from Set-Cookie header
+            // Fallback for OAuth redirects: extract session token from Set-Cookie header.
+            // The regex intentionally handles __Secure- and __Host- cookie prefixes that
+            // browsers enforce on HTTPS (e.g. __Secure-better-auth.session_token), so this
+            // doesn't silently break when deployed behind a TLS terminator or in production.
             if (!userId && ctx.response?.headers) {
               try {
                 const setCookie = ctx.response.headers.get("set-cookie");
                 if (setCookie) {
-                  // Better auth usually uses better-auth.session_token
                   const match = setCookie.match(
-                    /better-auth\.session_token=([^;]+)/,
+                    /(?:__Secure-|__Host-)?better-auth\.session_token=([^;]+)/,
                   );
                   if (match) {
                     const token = match[1];
