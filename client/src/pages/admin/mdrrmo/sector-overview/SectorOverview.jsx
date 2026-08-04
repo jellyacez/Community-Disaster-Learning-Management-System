@@ -52,11 +52,16 @@ export default function SectorOverview() {
   const [filters, setFilters] = useState({
     minResidents: '',
     minCompletion: '',
+    maxCompletion: '',
     status: 'All'
   });
   const [selectedBarangayId, setSelectedBarangayId] = useState(null);
 
-  const activeFiltersCount = (filters.minResidents !== '' ? 1 : 0) + (filters.minCompletion !== '' ? 1 : 0) + (filters.status !== 'All' ? 1 : 0);
+  const activeFiltersCount = 
+    (filters.minResidents !== '' ? 1 : 0) + 
+    (filters.minCompletion !== '' ? 1 : 0) + 
+    (filters.maxCompletion !== '' ? 1 : 0) + 
+    (filters.status !== 'All' ? 1 : 0);
 
   const { data: sectorResponse, isLoading, isError, dataUpdatedAt } = useQuery({
     queryKey: ["sectorOverview"],
@@ -95,7 +100,8 @@ export default function SectorOverview() {
       totalCertified, 
       coveredBarangays, 
       belowThreshold, 
-      mostActiveName: mostActive && mostActive.avg_completion_rate > 0 ? mostActive.barangay : "None" 
+      mostActiveName: mostActive && mostActive.avg_completion_rate > 0 ? mostActive.barangay : "None",
+      mostActiveRate: mostActive && mostActive.avg_completion_rate > 0 ? mostActive.avg_completion_rate : 0
     };
   }, [sectorData]);
 
@@ -132,6 +138,10 @@ export default function SectorOverview() {
     
     if (filters.minCompletion !== '') {
       filteredData = filteredData.filter(d => d.avg_completion_rate >= Number(filters.minCompletion));
+    }
+
+    if (filters.maxCompletion !== '') {
+      filteredData = filteredData.filter(d => d.avg_completion_rate <= Number(filters.maxCompletion));
     }
 
     if (filters.status === 'Covered') {
@@ -181,22 +191,40 @@ export default function SectorOverview() {
     if (kpiData.belowThreshold > 0) {
       list.push({
         type: 'warning',
-        text: `${kpiData.belowThreshold} barangays have 0% completion rate. Targeted outreach is recommended.`,
+        badge: 'ACTION REQUIRED',
+        title: `${kpiData.belowThreshold} Barangays at 0% Completion`,
+        text: 'Targeted outreach is recommended for inactive sectors.',
         icon: Alert01Icon,
         color: 'text-amber-700',
         bg: 'bg-amber-50',
-        border: 'border-amber-100'
+        border: 'border-amber-200',
+        iconBg: 'bg-amber-100',
+        filterable: true,
+        onClick: () => {
+          setSearchQuery("");
+          setFilters({ minResidents: '', minCompletion: '', maxCompletion: '0', status: 'All' });
+          setTimeout(() => document.getElementById('auditable-ledger')?.scrollIntoView({ behavior: 'smooth' }), 50);
+        }
       });
     }
 
     if (top5.length > 0 && top5[0].avg_completion_rate >= 50) {
       list.push({
         type: 'success',
-        text: `${top5[0].barangay} leads with ${top5[0].avg_completion_rate}% completion. Consider them for pilot programs.`,
+        badge: 'TOP PERFORMER',
+        title: `${top5[0].barangay} leads with ${top5[0].avg_completion_rate}% completion`,
+        text: 'Consider them for pilot programs.',
         icon: StarAward01Icon,
         color: 'text-emerald-700',
         bg: 'bg-emerald-50',
-        border: 'border-emerald-100'
+        border: 'border-emerald-200',
+        iconBg: 'bg-emerald-100',
+        filterable: true,
+        onClick: () => {
+          setSearchQuery(top5[0].barangay);
+          setFilters({ minResidents: '', minCompletion: '', maxCompletion: '', status: 'All' });
+          setTimeout(() => document.getElementById('auditable-ledger')?.scrollIntoView({ behavior: 'smooth' }), 50);
+        }
       });
     }
 
@@ -204,11 +232,20 @@ export default function SectorOverview() {
     if (noResidents > 0) {
       list.push({
         type: 'info',
-        text: `${noResidents} barangays have no registered residents on the platform yet.`,
+        badge: 'COVERAGE GAP',
+        title: `${noResidents} Barangays Unregistered`,
+        text: 'No residents have registered on the platform yet.',
         icon: UserGroupIcon,
         color: 'text-blue-700',
         bg: 'bg-blue-50',
-        border: 'border-blue-100'
+        border: 'border-blue-200',
+        iconBg: 'bg-blue-100',
+        filterable: true,
+        onClick: () => {
+          setSearchQuery("");
+          setFilters({ minResidents: '', minCompletion: '', maxCompletion: '', status: 'Zero Coverage' });
+          setTimeout(() => document.getElementById('auditable-ledger')?.scrollIntoView({ behavior: 'smooth' }), 50);
+        }
       });
     }
 
@@ -285,13 +322,38 @@ export default function SectorOverview() {
       {insights.length > 0 && (
         <div className="mb-6 grid grid-cols-1 md:grid-cols-3 gap-4">
           {insights.map((insight, idx) => (
-            <div key={idx} className={`p-4 rounded-xl border ${insight.bg} ${insight.border} flex gap-3 items-start`}>
-              <div className={`mt-0.5 ${insight.color}`}>
-                <HugeiconsIcon icon={insight.icon} className="w-5 h-5" />
+            <div 
+              key={idx} 
+              onClick={insight.onClick}
+              className={`p-5 rounded-2xl border ${insight.bg} ${insight.border} flex flex-col justify-between transition-all duration-200 ${insight.filterable ? 'cursor-pointer hover:scale-[1.01] hover:shadow-md' : ''}`}
+            >
+              <div>
+                {/* Badge and Icon */}
+                <div className="flex items-center gap-3 mb-3">
+                  <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${insight.iconBg} ${insight.color}`}>
+                    <HugeiconsIcon icon={insight.icon} className="w-5 h-5" />
+                  </div>
+                  <span className={`text-[10px] font-extrabold tracking-widest uppercase ${insight.color}`}>
+                    {insight.badge}
+                  </span>
+                </div>
+                
+                {/* Content */}
+                <h3 className="text-gray-900 font-bold text-base leading-tight mb-1.5">
+                  {insight.title}
+                </h3>
+                <p className="text-xs font-medium text-gray-600/80 leading-relaxed">
+                  {insight.text}
+                </p>
               </div>
-              <p className={`text-sm font-medium leading-snug ${insight.color}`}>
-                {insight.text}
-              </p>
+
+              {/* Action Link */}
+              {insight.filterable && (
+                <div className={`mt-4 pt-4 border-t ${insight.border} text-xs font-extrabold ${insight.color} flex items-center gap-1 group`}>
+                  Filter Table 
+                  <span className="group-hover:translate-x-1 transition-transform">→</span>
+                </div>
+              )}
             </div>
           ))}
         </div>
@@ -302,11 +364,12 @@ export default function SectorOverview() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
           <StatCard
             icon={StarAward01Icon}
-            label="Most Active Sector"
-            value={kpiData.mostActiveName}
-            sub="Highest completion rate"
+            label="Top Completion Rate"
+            value={kpiData.mostActiveRate}
+            suffix="%"
+            sub={`${kpiData.mostActiveName} — Highest performing barangay`}
             color="green"
-            isNumeric={false}
+            isNumeric={true}
             loading={isLoading}
           />
           <StatCard
@@ -501,7 +564,7 @@ export default function SectorOverview() {
       </div>
 
       {/* Tier 3: Auditable Ledger */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm">
+      <div id="auditable-ledger" className="bg-white rounded-2xl border border-gray-100 shadow-sm scroll-mt-24">
         <div className="p-4 border-b border-gray-100 bg-gray-50/50 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 rounded-t-2xl">
           <div>
             <h3 className="font-bold text-gray-700">Auditable Ledger</h3>
@@ -538,7 +601,7 @@ export default function SectorOverview() {
                   <h4 className="font-bold text-gray-900">Filters</h4>
                   {activeFiltersCount > 0 && (
                     <button 
-                      onClick={() => setFilters({ minResidents: '', minCompletion: '', status: 'All' })}
+                      onClick={() => setFilters({ minResidents: '', minCompletion: '', maxCompletion: '', status: 'All' })}
                       className="text-xs text-blue-600 font-medium hover:text-blue-700"
                     >
                       Clear All
@@ -565,8 +628,13 @@ export default function SectorOverview() {
                     <input 
                       type="number"
                       placeholder="e.g. 50"
+                      min="0"
                       value={filters.minResidents}
-                      onChange={(e) => setFilters(f => ({ ...f, minResidents: e.target.value }))}
+                      onChange={(e) => {
+                        let v = e.target.value;
+                        if (v !== "") v = Math.max(0, Number(v));
+                        setFilters(f => ({ ...f, minResidents: v }));
+                      }}
                       className="w-full p-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20"
                     />
                   </div>
@@ -576,9 +644,31 @@ export default function SectorOverview() {
                     <input 
                       type="number"
                       placeholder="e.g. 75"
+                      min="0"
                       max="100"
                       value={filters.minCompletion}
-                      onChange={(e) => setFilters(f => ({ ...f, minCompletion: e.target.value }))}
+                      onChange={(e) => {
+                        let v = e.target.value;
+                        if (v !== "") v = Math.max(0, Math.min(100, Number(v)));
+                        setFilters(f => ({ ...f, minCompletion: v }));
+                      }}
+                      className="w-full p-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-700 mb-1">Max. Completion Rate (%)</label>
+                    <input 
+                      type="number"
+                      placeholder="e.g. 100"
+                      min="0"
+                      max="100"
+                      value={filters.maxCompletion}
+                      onChange={(e) => {
+                        let v = e.target.value;
+                        if (v !== "") v = Math.max(0, Math.min(100, Number(v)));
+                        setFilters(f => ({ ...f, maxCompletion: v }));
+                      }}
                       className="w-full p-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20"
                     />
                   </div>
@@ -587,6 +677,44 @@ export default function SectorOverview() {
             )}
           </div>
         </div>
+        
+        {/* Active Filter Chips */}
+        {activeFiltersCount > 0 && (
+          <div className="px-4 py-2 border-b border-gray-100 bg-white flex flex-wrap items-center gap-2">
+            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mr-1">Active Filters:</span>
+            {filters.status !== 'All' && (
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200">
+                Status: {filters.status}
+                <button onClick={() => setFilters(f => ({ ...f, status: 'All' }))} className="hover:text-blue-900">&times;</button>
+              </span>
+            )}
+            {filters.minResidents !== '' && (
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200">
+                Min Residents: {filters.minResidents}
+                <button onClick={() => setFilters(f => ({ ...f, minResidents: '' }))} className="hover:text-blue-900">&times;</button>
+              </span>
+            )}
+            {filters.minCompletion !== '' && (
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200">
+                Min Completion: {filters.minCompletion}%
+                <button onClick={() => setFilters(f => ({ ...f, minCompletion: '' }))} className="hover:text-blue-900">&times;</button>
+              </span>
+            )}
+            {filters.maxCompletion !== '' && (
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200">
+                Max Completion: {filters.maxCompletion}%
+                <button onClick={() => setFilters(f => ({ ...f, maxCompletion: '' }))} className="hover:text-blue-900">&times;</button>
+              </span>
+            )}
+            <button 
+              onClick={() => setFilters({ minResidents: '', minCompletion: '', maxCompletion: '', status: 'All' })}
+              className="text-[11px] font-bold text-gray-500 hover:text-gray-900 ml-1 transition-colors"
+            >
+              Clear All
+            </button>
+          </div>
+        )}
+
         <div className="overflow-x-auto max-h-[400px] overflow-y-auto rounded-b-2xl">
           <table className="w-full text-left border-collapse relative">
             <thead className="sticky top-0 z-10 bg-gray-50 shadow-[0_1px_0_rgba(0,0,0,0.05)]">

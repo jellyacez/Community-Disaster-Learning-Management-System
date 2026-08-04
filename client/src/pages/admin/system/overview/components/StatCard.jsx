@@ -1,7 +1,7 @@
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Link } from "react-router-dom";
 
-export default function StatCard({ icon, label, value, sub, color = "gray", loading, href, trendText, trend, zeroText, isNumeric = true, onClick, isActive }) {
+export default function StatCard({ icon, label, value, suffix, sub, color = "gray", loading, href, trendText, trend, zeroText, isNumeric = true, onClick, isActive }) {
   const iconColorMap = {
     gray: "bg-gray-100 text-gray-700 border-gray-200",
     blue: "bg-blue-100 text-blue-700 border-blue-200",
@@ -58,7 +58,7 @@ export default function StatCard({ icon, label, value, sub, color = "gray", load
       ) : (
         <div className="mt-auto flex flex-col gap-2">
           <p className={`text-4xl lg:text-[40px] font-extrabold tracking-tight leading-none ${isZero ? "text-gray-300" : "text-gray-900"} ${isNumeric ? "tabular-nums" : ""}`}>
-            {isNumeric ? Number(value ?? 0).toLocaleString() : value}
+            {isNumeric ? Number(value ?? 0).toLocaleString() : value}{suffix && suffix}
           </p>
           <div>
             <p className="text-[18px] font-semibold text-gray-900 leading-snug">{label}</p>

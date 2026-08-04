@@ -35,7 +35,7 @@ const globalLimiter = rateLimit({
 const adminDataLimiter = rateLimit({
   store: new PostgresStore(dbConfig, "admin_data_"),
   windowMs: 15 * 60 * 1000,
-  max: 60,
+  max: process.env.NODE_ENV === 'development' ? 1000 : 200,
   keyGenerator: (req) => {
     // Key by the authenticated user's ID to prevent token abuse,
     // rather than IP, to protect shared NATs and track compromised accounts.
