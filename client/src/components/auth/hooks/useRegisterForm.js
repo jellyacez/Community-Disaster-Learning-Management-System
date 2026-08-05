@@ -107,7 +107,7 @@ export const useRegisterForm = () => {
       email: formData.email,
       password: formData.password,
       name: formData.fullName,
-      barangay: formData.barangay,
+      barangay_legacy_text: formData.barangay,
     });
     
     if (error) {

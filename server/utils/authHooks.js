@@ -269,14 +269,32 @@ const securityHooksPlugin = () => {
 
             if (userId) {
               try {
-                // Track consent in the database
-                await pool.query(
-                  `UPDATE "user" 
-                   SET consent_given_at = CURRENT_TIMESTAMP, 
-                       consent_version = $1 
-                   WHERE id = $2`,
-                  [CONSENT_VERSION, userId]
-                );
+                // Determine if we have a barangay to map
+                const bName = user.barangay_legacy_text;
+                let bIdQuery = "";
+                
+                if (bName && bName !== "Unassigned") {
+                  bIdQuery = `, barangay_id = (SELECT id FROM barangays WHERE name = $3 LIMIT 1)`;
+                }
+
+                // Track consent in the database and map the barangay_id
+                if (bIdQuery) {
+                  await pool.query(
+                    `UPDATE "user" 
+                     SET consent_given_at = CURRENT_TIMESTAMP, 
+                         consent_version = $1${bIdQuery}
+                     WHERE id = $2`,
+                    [CONSENT_VERSION, userId, bName]
+                  );
+                } else {
+                  await pool.query(
+                    `UPDATE "user" 
+                     SET consent_given_at = CURRENT_TIMESTAMP, 
+                         consent_version = $1 
+                     WHERE id = $2`,
+                    [CONSENT_VERSION, userId]
+                  );
+                }
                 
                 logActivity(userId, `Account created with explicit data privacy consent (${CONSENT_VERSION})`);
               } catch (err) {
