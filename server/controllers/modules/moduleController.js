@@ -1,5 +1,7 @@
 const { validateModuleCreation } = require("../../utils/validators");
 const ModuleService = require("../../services/modules/ModuleService");
+const { logActivity, logError } = require("../../utils/logger");
+
 // @desc    Creates a new module and all its nested levels and steps in a transaction
 // @access  Private (admin only)
 exports.createModule = async (req, res) => {
@@ -15,7 +17,6 @@ exports.createModule = async (req, res) => {
     const mod_id = await ModuleService.createModuleTransaction(req.body);
     
     // Log module creation to activity_log
-    const { logActivity } = require("../../utils/logger");
     await logActivity(req.user.id, `Created new module: ${req.body.moduleName}`);
 
     return res.status(201).json({
@@ -95,6 +96,8 @@ exports.enrollInModule = async (req, res) => {
       user_id,
       parsedModId,
     );
+
+    await logActivity(user_id, `Enrolled in module ID ${parsedModId}: "${moduleCheck.modname || moduleCheck.title || parsedModId}"`);
 
     return res.status(200).json({
       success: true,
@@ -280,10 +283,25 @@ exports.updateModuleStatus = async (req, res) => {
       return res.status(400).json({ success: false, message: "Invalid module ID format." });
     }
 
+    // Fetch current status before update so we can log the transition.
+    const current = await ModuleService.getModuleById(parsedModId);
+    if (!current) {
+      return res.status(404).json({ success: false, message: "Module not found." });
+    }
+    const previousStatus = current.status ?? "unknown";
+
     await ModuleService.updateModuleStatus(parsedModId, status, rejection_reason);
-    res.json({ success: true, message: 'Status updated successfully' });
+
+    await logActivity(
+      req.user.id,
+      `Updated module ID ${parsedModId} ("${current.modname || parsedModId}") status: ${previousStatus} → ${status}${
+        status === "rejected" && rejection_reason ? ` | Reason: ${rejection_reason}` : ""
+      }`,
+    );
+
+    res.json({ success: true, message: "Status updated successfully" });
   } catch (error) {
-    console.error("Update Module Status Error:", error);
-    res.status(500).json({ success: false, error: 'Server Error' });
+    logError("update_module_status_error", { message: error.message, stack: error.stack, moduleId: id });
+    res.status(500).json({ success: false, message: "Failed to update module status." });
   }
 };

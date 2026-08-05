@@ -8,7 +8,7 @@ exports.getProviders = async (req, res) => {
     res.json({ providers });
   } catch (err) {
     console.error(err.message);
-    res.status(500).send("Server Error");
+    res.status(500).json({ success: false, message: "Failed to retrieve providers." });
   }
 };
 // --- End of getProviders ---
@@ -23,10 +23,10 @@ exports.onboarding = async (req, res) => {
     res.json({ success: true, message: "Profile updated successfully!" });
   } catch (err) {
     if (err.message === "MISSING_DATA") {
-      return res.status(400).json({ error: "Name and Barangay are required" });
+      return res.status(400).json({ success: false, message: "Name and Barangay are required." });
     }
     console.error("Onboarding error:", err.message);
-    res.status(500).json({ error: "Server Error" });
+    res.status(500).json({ success: false, message: "Failed to complete onboarding." });
   }
 };
 // --- End of onboarding ---
@@ -54,7 +54,7 @@ exports.getAllUsers = async (req, res) => {
     res.json(result);
   } catch (err) {
     console.error(err.message);
-    res.status(500).send("Server Error");
+    res.status(500).json({ success: false, message: "Failed to retrieve users." });
   }
 };
 // --- End of getAllUsers ---
@@ -70,10 +70,10 @@ exports.deleteAccount = async (req, res) => {
     });
   } catch (err) {
     if (err.message === "NOT_FOUND") {
-      return res.status(404).json({ error: "User not found" });
+      return res.status(404).json({ success: false, message: "User not found." });
     }
     console.error("Account deletion error:", err.message);
-    res.status(500).json({ error: "Server Error during deletion pipeline" });
+    res.status(500).json({ success: false, message: "Failed to delete account." });
   }
 };
 // --- End of deleteAccount ---
@@ -83,16 +83,16 @@ exports.deleteAccount = async (req, res) => {
 exports.getCertificateData = async (req, res) => {
   try {
     const { token } = req.params;
-    if (!token) return res.status(400).json({ error: "Token required" });
+    if (!token) return res.status(400).json({ success: false, message: "Token required." });
 
     const certData = await UserService.getCertificateData(req.user.id, token);
     res.json({ data: certData });
   } catch (err) {
     if (err.message === "NOT_FOUND") {
-      return res.status(404).json({ error: "Certificate not found" });
+      return res.status(404).json({ success: false, message: "Certificate not found." });
     }
     console.error("Error fetching certificate data:", err.message);
-    res.status(500).json({ error: "Server Error" });
+    res.status(500).json({ success: false, message: "Failed to retrieve certificate." });
   }
 };
 // --- End of getCertificateData ---
@@ -111,10 +111,10 @@ exports.exportUserData = async (req, res) => {
     res.send(JSON.stringify(exportData, null, 2));
   } catch (err) {
     if (err.message === "NOT_FOUND") {
-      return res.status(404).json({ error: "User not found" });
+      return res.status(404).json({ success: false, message: "User not found." });
     }
     console.error("Export error:", err.message);
-    res.status(500).json({ error: "Failed to export data" });
+    res.status(500).json({ success: false, message: "Failed to export data." });
   }
 };
 // --- End of exportUserData ---
@@ -127,10 +127,10 @@ exports.getUserSettings = async (req, res) => {
     res.json(settings);
   } catch (err) {
     if (err.message === "NOT_FOUND") {
-      return res.status(404).json({ error: "User not found" });
+      return res.status(404).json({ success: false, message: "User not found." });
     }
     console.error("Error fetching settings:", err.message);
-    res.status(500).json({ error: "Server Error" });
+    res.status(500).json({ success: false, message: "Failed to retrieve settings." });
   }
 };
 // --- End of getUserSettings ---
@@ -144,7 +144,7 @@ exports.updateUserSettings = async (req, res) => {
     res.json({ success: true, settings });
   } catch (err) {
     console.error("Error updating settings:", err.message);
-    res.status(500).json({ error: "Server Error" });
+    res.status(500).json({ success: false, message: "Failed to update settings." });
   }
 };
 // --- End of updateUserSettings ---

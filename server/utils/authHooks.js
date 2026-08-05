@@ -5,6 +5,18 @@ const { CONSENT_VERSION } = require("../config/constants");
 const { logActivity, logError } = require("./logger");
 const alertMonitorService = require("../services/alertMonitorService");
 
+// Maximum concurrent active sessions per role.
+// When a new sign-in would exceed the limit, the oldest session(s) are
+// evicted automatically so the user is never blocked.
+const SESSION_LIMITS = {
+  resident: 5,
+  barangay_admin: 3,
+  mdrrmo_admin: 3,
+  head_mdrrmo_admin: 2,
+  system_admin: 2,
+};
+const DEFAULT_SESSION_LIMIT = 3;
+
 const securityHooksPlugin = () => {
   return {
     id: "security-hooks",
@@ -116,6 +128,116 @@ const securityHooksPlugin = () => {
         },
       ],
       after: [
+        {
+          // Enforce concurrent session cap for ALL sign-in methods (email + OAuth).
+          // Runs after the new session is already created, so the new session is
+          // always the most recent by createdAt. Evicting by ASC order therefore
+          // always removes old sessions, never the one just issued.
+          matcher(context) {
+            return (
+              context.path?.includes("sign-in") ||
+              context.path?.includes("callback/") ||
+              false
+            );
+          },
+          handler: async (ctx) => {
+            if (ctx.context?.returned instanceof APIError) return {};
+
+            // Extract userId — try context first, then response body, then
+            // the Set-Cookie session token as a last resort (needed for OAuth
+            // redirects where the response body may be empty).
+            let userId =
+              ctx.context?.session?.user?.id ||
+              ctx.context?.user?.id ||
+              ctx.context?.newSession?.user?.id;
+
+            if (!userId) {
+              try {
+                if (
+                  ctx.response &&
+                  typeof ctx.response.clone === "function" &&
+                  ctx.response.status < 300
+                ) {
+                  const clone = ctx.response.clone();
+                  const data = await clone.json();
+                  userId = data?.user?.id;
+                }
+              } catch (e) { /* non-critical */ }
+            }
+
+            if (!userId) {
+              try {
+                const setCookie = ctx.response?.headers?.get("set-cookie");
+                if (setCookie) {
+                  const match = setCookie.match(
+                    /(?:__Secure-|__Host-)?better-auth\.session_token=([^;]+)/,
+                  );
+                  if (match) {
+                    const sessionRes = await pool.query(
+                      `SELECT "userId" FROM session WHERE token = $1`,
+                      [match[1]],
+                    );
+                    if (sessionRes.rows.length > 0) {
+                      userId = sessionRes.rows[0].userId;
+                    }
+                  }
+                }
+              } catch (e) { /* non-critical */ }
+            }
+
+            if (!userId) return {};
+
+            try {
+              const userRes = await pool.query(
+                `SELECT role FROM "user" WHERE id = $1`,
+                [userId],
+              );
+              if (userRes.rows.length === 0) return {};
+
+              const { role } = userRes.rows[0];
+              const limit = SESSION_LIMITS[role] ?? DEFAULT_SESSION_LIMIT;
+
+              // Count ALL active sessions including the one just created.
+              const countRes = await pool.query(
+                `SELECT COUNT(*) FROM session
+                 WHERE "userId" = $1 AND "expiresAt" > NOW()`,
+                [userId],
+              );
+              const totalActive = parseInt(countRes.rows[0]?.count ?? "0", 10);
+
+              if (totalActive > limit) {
+                const evictCount = totalActive - limit;
+                // The new session has the highest createdAt, so ORDER BY ASC
+                // naturally protects it and removes the truly stale ones.
+                await pool.query(
+                  `DELETE FROM session
+                   WHERE id IN (
+                     SELECT id FROM session
+                     WHERE "userId" = $1 AND "expiresAt" > NOW()
+                     ORDER BY "createdAt" ASC
+                     LIMIT $2
+                   )`,
+                  [userId, evictCount],
+                );
+                // Log separately so a logging failure doesn't obscure a
+                // successful eviction in the error trail.
+                try {
+                  logActivity(
+                    userId,
+                    `Session limit enforced (${limit} for role '${role}'): ${evictCount} oldest session(s) evicted.`,
+                  );
+                } catch (_) { /* non-critical */ }
+              }
+            } catch (err) {
+              // Non-fatal — a failure here must never block a legitimate sign-in.
+              logError("session_limit_enforcement_error", {
+                message: err.message,
+                stack: err.stack,
+              });
+            }
+            return {};
+          },
+        },
         {
           matcher(context) {
             return context.path?.includes("sign-up") || false;
