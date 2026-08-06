@@ -23,16 +23,16 @@ exports.deleteAccount = async (req, res) => {
 
   try {
     // Fetch user details for logging before they are deleted
-    const userRes = await pool.query('SELECT email, barangay FROM "user" WHERE id = $1', [id]);
+    const userRes = await pool.query('SELECT u.email, b.name AS barangay_name FROM "user" u LEFT JOIN barangays b ON u.barangay_id = b.id WHERE u.id = $1', [id]);
     if (userRes.rows.length === 0) {
       return res.status(404).json({ success: false, message: 'User not found.' });
     }
-    const { email, barangay } = userRes.rows[0];
+    const { email, barangay_name } = userRes.rows[0];
 
     // Call the existing pipeline
     await UserService.deleteAccount(id);
 
-    logActivity(req.user.id, `Permanently deleted user ${email} from ${barangay}`);
+    logActivity(req.user.id, `Permanently deleted user ${email} from ${barangay_name || 'No Barangay'}`);
 
     res.json({ success: true, message: 'User permanently deleted.' });
   } catch (err) {
