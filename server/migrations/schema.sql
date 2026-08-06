@@ -883,7 +883,7 @@ CREATE TABLE public."user" (
     settings jsonb DEFAULT '{"reminders": true, "announcements": true}'::jsonb,
     consent_given_at timestamp with time zone,
     consent_version text,
-    barangay_id integer NOT NULL
+    barangay_id integer
 );
 
 
@@ -1576,6 +1576,61 @@ ALTER TABLE ONLY rate_limit.individual_records
 
 ALTER TABLE ONLY rate_limit.records_aggregated
     ADD CONSTRAINT records_aggregated_session_id_fkey FOREIGN KEY (session_id) REFERENCES rate_limit.sessions(id) ON DELETE CASCADE;
+
+
+--
+-- Seed: barangays of Bacolor, Pampanga
+--
+
+INSERT INTO public.barangays (name) VALUES
+  ('Balas'),
+  ('Cabalantian'),
+  ('Cabambangan'),
+  ('Cabetican'),
+  ('Calibutbut'),
+  ('Concepcion'),
+  ('Dolores'),
+  ('Duat'),
+  ('Macabacle'),
+  ('Magliman'),
+  ('Maliwalu'),
+  ('Mesalipit'),
+  ('Parulog'),
+  ('Potrero'),
+  ('San Antonio'),
+  ('San Isidro'),
+  ('San Vicente'),
+  ('Santa Barbara'),
+  ('Santa Ines'),
+  ('Talba'),
+  ('Tinajero')
+ON CONFLICT (name) DO NOTHING;
+
+
+--
+-- Seed: @acpr/rate-limit-postgresql migration tracking rows
+--
+-- WHY: schema.sql already contains the fully-built rate_limit schema (tables,
+-- indexes, functions) from pg_dump. But @acpr/rate-limit-postgresql uses
+-- postgres-migrations internally to track which of its own migrations have been
+-- applied. When the migrations table is empty (fresh setup), it tries to re-run
+-- its init migration and crashes with "relation already exists".
+-- Pre-seeding these rows tells it everything has already been applied.
+--
+-- Hash formula: SHA1(fileName + fileContents) — matches postgres-migrations source.
+-- If you ever upgrade @acpr/rate-limit-postgresql, recompute these hashes.
+--
+
+INSERT INTO public.migrations (id, name, hash) VALUES
+  (0, 'create-migrations-table',   'e18db593bcde2aca2a408c4d1100f6abba2195df'),
+  (1, 'init',                      '208eb8a4ca26ba263dee8cf9ecaa67d62457ff66'),
+  (2, 'add-db-functions-agg',      '317e301e29395196eb085666baa6460895bb735e'),
+  (3, 'add-db-functions-ind',      '6ad38534d3f44e57259031b0a544051b66accab9'),
+  (4, 'add-db-functions-sessions', '020ef3175794fe0fcacc951f94f9eee1a7a269a6'),
+  (5, 'hotfix-update-constraints', '575425e72a16d6a483c08b2d45e47d1bc014bedc'),
+  (6, 'move-session-to-db-agg',    'b8b8483e1c452db0d9611520aa91b780d2519605'),
+  (7, 'move-session-to-db-ind',    '2fb7791420cba1696b4d9d53f6d50a1af02af666')
+ON CONFLICT (id) DO NOTHING;
 
 
 --

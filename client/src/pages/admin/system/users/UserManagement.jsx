@@ -50,15 +50,18 @@ export default function UserManagement() {
 
       <BulkActionBar
         selectedCount={state.selectedUserIds.size}
-        onArchive={() =>
-          actions.handleSave({
-            type: "bulk_archive",
-            data: {
-              userIds: Array.from(state.selectedUserIds),
-              archived: true,
-            },
-          })
-        }
+        onArchive={() => {
+          const count = state.selectedUserIds.size;
+          if (window.confirm(`Are you sure you want to archive ${count} selected user${count !== 1 ? 's' : ''}?`)) {
+            actions.handleSave({
+              type: "bulk_archive",
+              data: {
+                userIds: Array.from(state.selectedUserIds),
+                archived: true,
+              },
+            });
+          }
+        }}
         onCancel={() => actions.setSelectedUserIds(new Set())}
         isPending={
           state.isMutationPending && state.mutationType === "bulk_archive"

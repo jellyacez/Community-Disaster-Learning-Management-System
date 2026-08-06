@@ -57,6 +57,17 @@ const adminWriteLimiter = rateLimit({
     if (req.user?.id) return String(req.user.id);
     return `anon_${ipKeyGenerator(req.ip)}`;
   },
+  message: { error: "Too many admin requests, please try again later." },
+});
+
+const destructiveActionLimiter = rateLimit({
+  store: new PostgresStore(dbConfig, "destructive_action_"),
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  keyGenerator: (req) => {
+    if (req.user?.id) return String(req.user.id);
+    return `anon_${ipKeyGenerator(req.ip)}`;
+  },
   message: { error: "Too many destructive requests, please try again later." },
 });
 
@@ -77,5 +88,6 @@ module.exports = {
   globalLimiter,
   adminDataLimiter,
   adminWriteLimiter,
+  destructiveActionLimiter,
   certificateVerifyLimiter,
 };

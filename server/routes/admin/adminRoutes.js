@@ -18,7 +18,7 @@ const alertController = require("../../controllers/admin/alertController");
 const moduleController = require("../../controllers/modules/moduleController");
 const mdrrmoOverviewController = require("../../controllers/admin/mdrrmoOverviewController");
 const certificateManagementController = require("../../controllers/admin/certificateManagement");
-const { adminDataLimiter, adminWriteLimiter } = require("../../middleware/rateLimiters");
+const { adminDataLimiter, adminWriteLimiter, destructiveActionLimiter } = require("../../middleware/rateLimiters");
 
 // Existing routes
 
@@ -91,22 +91,22 @@ router.patch("/users/:id/role", requireRole(ADMIN_ROLES), adminWriteLimiter, req
 // @route   PATCH /api/admin/users/:id/ban
 // @desc    Ban a user
 // @access  Private (system_admin only)
-router.patch("/users/:id/ban", requireRole(ADMIN_ROLES), adminWriteLimiter, requirePermission('ban_users'), userManagementController.banUser);
+router.patch("/users/:id/ban", requireRole(ADMIN_ROLES), destructiveActionLimiter, requirePermission('ban_users'), userManagementController.banUser);
 
 // @route   PATCH /api/admin/users/:id/unban
 // @desc    Unban a user
 // @access  Private (system_admin only)
-router.patch("/users/:id/unban", requireRole(ADMIN_ROLES), adminWriteLimiter, requirePermission('ban_users'), userManagementController.unbanUser);
+router.patch("/users/:id/unban", requireRole(ADMIN_ROLES), destructiveActionLimiter, requirePermission('ban_users'), userManagementController.unbanUser);
 
 // @route   PATCH /api/admin/users/:id/archive
 // @desc    Archive or unarchive a user
 // @access  Private (system_admin only)
-router.patch("/users/:id/archive", requireRole(ADMIN_ROLES), adminWriteLimiter, requirePermission('archive_users'), userManagementController.archiveUser);
+router.patch("/users/:id/archive", requireRole(ADMIN_ROLES), destructiveActionLimiter, requirePermission('archive_users'), userManagementController.archiveUser);
 
 // @route   PATCH /api/admin/users/bulk-archive
 // @desc    Bulk archive users
 // @access  Private (system_admin only)
-router.patch("/users/bulk-archive", requireRole(ADMIN_ROLES), adminWriteLimiter, requirePermission('archive_users'), userManagementController.bulkArchiveUsers);
+router.patch("/users/bulk-archive", requireRole(ADMIN_ROLES), destructiveActionLimiter, requirePermission('archive_users'), userManagementController.bulkArchiveUsers);
 
 // @route   GET /api/admin/analytics/traffic
 // @desc    Get 24h traffic analytics

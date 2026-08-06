@@ -11,14 +11,18 @@ exports.archiveUser = async (req, res) => {
     let query = `UPDATE "user" SET archived = $1 WHERE id = $2`;
     let values = [archived, id];
     
-    if (!UNSCOPED_ACCESS_ROLES.includes(req.user.role)) {
-      if (req.user.role === 'barangay_admin') {
-        query += ` AND barangay_id = $3`;
-        values.push(req.user.barangay_id);
-      } else {
-        return res.status(403).json({ success: false, message: 'Unauthorized to archive users' });
+    const adminContext = req.user;
+    
+    if (adminContext.role === 'barangay_admin') {
+      if (!adminContext.barangay_id) {
+        throw new Error("SECURITY_FAULT: barangay_admin context missing barangay identifier for scoping.");
       }
+      query += ` AND barangay_id = $3`;
+      values.push(adminContext.barangay_id);
+    } else if (!UNSCOPED_ACCESS_ROLES.includes(adminContext.role)) {
+      throw new Error(`SECURITY_FAULT: Unauthorized role '${adminContext.role}' attempted to archive users.`);
     }
+
     
     query += ` RETURNING email`;
     const result = await pool.query(query, values);
@@ -33,11 +37,15 @@ exports.archiveUser = async (req, res) => {
     }
     
     if (result.rows.length > 0) {
-      logActivity(req.user.id, `${archived ? 'Archived' : 'Restored'} user ${result.rows[0].email}`);
+      const scopeStr = adminContext.role === 'barangay_admin' ? `Barangay ${adminContext.barangay_id}` : 'Unscoped';
+      logActivity(req.user.id, `${archived ? 'Archived' : 'Restored'} user ${result.rows[0].email} (ID: ${id}) [Scope: ${scopeStr}]`);
     }
 
     res.json({ success: true, message: archived ? 'User archived' : 'User restored' });
   } catch (err) {
+    if (err.message && err.message.startsWith('SECURITY_FAULT')) {
+      return res.status(403).json({ success: false, message: err.message });
+    }
     logError('archive_user_failure', {
       userId: req.user?.id,
       targetId: id,
@@ -55,8 +63,8 @@ exports.bulkArchiveUsers = async (req, res) => {
   if (!Array.isArray(userIds) || userIds.length === 0) {
     return res.status(400).json({ success: false, message: 'No users selected' });
   }
-  if (userIds.length > 100) {
-    return res.status(400).json({ success: false, message: 'Cannot process more than 100 users at once' });
+  if (userIds.length > 50) {
+    return res.status(400).json({ success: false, message: 'Cannot process more than 50 users at once' });
   }
   
   const isArchived = archived === true || archived === "true";
@@ -64,13 +72,16 @@ exports.bulkArchiveUsers = async (req, res) => {
     let query = `UPDATE "user" SET archived = $1 WHERE id = ANY($2)`;
     let values = [isArchived, userIds];
     
-    if (!UNSCOPED_ACCESS_ROLES.includes(req.user.role)) {
-      if (req.user.role === 'barangay_admin') {
-        query += ` AND barangay_id = $3`;
-        values.push(req.user.barangay_id);
-      } else {
-        return res.status(403).json({ success: false, message: 'Unauthorized to bulk archive users' });
+    const adminContext = req.user;
+    
+    if (adminContext.role === 'barangay_admin') {
+      if (!adminContext.barangay_id) {
+        throw new Error("SECURITY_FAULT: barangay_admin context missing barangay identifier for scoping.");
       }
+      query += ` AND barangay_id = $3`;
+      values.push(adminContext.barangay_id);
+    } else if (!UNSCOPED_ACCESS_ROLES.includes(adminContext.role)) {
+      throw new Error(`SECURITY_FAULT: Unauthorized role '${adminContext.role}' attempted to bulk archive users.`);
     }
     
     const result = await pool.query(query, values);
@@ -84,10 +95,15 @@ exports.bulkArchiveUsers = async (req, res) => {
       await pool.query(`DELETE FROM "session" WHERE "userId" = ANY($1)`, [userIds]);
     }
 
-    logActivity(req.user.id, `Bulk ${isArchived ? 'archived' : 'restored'} ${userIds.length} users`);
+    const scopeStr = adminContext.role === 'barangay_admin' ? `Barangay ${adminContext.barangay_id}` : 'Unscoped';
+    const idsStr = userIds.length > 10 ? `${userIds.slice(0, 10).join(', ')}... (+${userIds.length - 10} more)` : userIds.join(', ');
+    logActivity(req.user.id, `Bulk ${isArchived ? 'archived' : 'restored'} ${userIds.length} users (IDs: ${idsStr}) [Scope: ${scopeStr}]`);
 
     res.json({ success: true, message: `${userIds.length} users ${isArchived ? 'archived' : 'restored'}` });
   } catch (err) {
+    if (err.message && err.message.startsWith('SECURITY_FAULT')) {
+      return res.status(403).json({ success: false, message: err.message });
+    }
     logError('bulk_archive_failure', {
       userId: req.user?.id,
       targetIds: userIds,
