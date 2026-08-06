@@ -14,18 +14,18 @@ exports.provisionAdmin = async (req, res) => {
   if (!name || !email || !role) {
     return res
       .status(400)
-      .json({ error: "Name, email, and role are required." });
+      .json({ success: false, message: "Name, email, and role are required." });
   }
 
   const validRoles = ["barangay_admin", "mdrrmo_admin"];
   if (!validRoles.includes(role)) {
-    return res.status(400).json({ error: "Invalid admin role specified." });
+    return res.status(400).json({ success: false, message: "Invalid admin role specified." });
   }
 
   if (role === "barangay_admin" && !barangay) {
     return res
       .status(400)
-      .json({ error: "Barangay is required for Barangay Admins." });
+      .json({ success: false, message: "Barangay is required for Barangay Admins." });
   }
 
   // Auto-generate password if not provided
@@ -44,7 +44,7 @@ exports.provisionAdmin = async (req, res) => {
     if (existingUser.rows.length > 0) {
       return res
         .status(400)
-        .json({ error: "A user with this email already exists." });
+        .json({ success: false, message: "A user with this email already exists." });
     }
 
     // Let Better Auth handle user and account creation
@@ -99,8 +99,8 @@ exports.provisionAdmin = async (req, res) => {
           `Attempted to provision admin account (${email} - ${role}) but email delivery failed. Account creation rolled back.`,
         );
         return res.status(500).json({
-          error:
-            "Account provisioning failed: could not deliver credentials via email. Please check the email configuration and try again.",
+          success: false,
+          message: "Account provisioning failed: could not deliver credentials via email. Please check the email configuration and try again.",
         });
       }
     }
@@ -131,22 +131,16 @@ exports.provisionAdmin = async (req, res) => {
     ) {
       return res
         .status(409)
-        .json({
-          error: "A user with this email already exists in the auth system.",
-        });
+        .json({ success: false, message: "A user with this email already exists in the auth system." });
     }
 
     if (authStatus === 400 || authMessage.toLowerCase().includes("invalid")) {
-      return res
-        .status(400)
-        .json({ error: `Invalid provisioning data: ${authMessage}` });
+      return res.status(400).json({ success: false, message: `Invalid provisioning data: ${authMessage}` });
     }
 
     res
       .status(500)
-      .json({
-        error:
-          "Failed to provision admin account. Check server logs for details.",
-      });
+      .json({ success: false, message: "Failed to provision admin account. Check server logs for details." });
   }
 };
+

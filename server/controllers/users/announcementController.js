@@ -52,6 +52,7 @@ exports.getPaginatedAnnouncements = async (req, res) => {
     });
   } catch (error) {
     console.error("Error fetching paginated announcements:", error);
-    res.status(500).json({ error: "Failed to fetch announcements" });
+    res.status(500).json({ success: false, message: "Failed to fetch announcements." });
   }
 };
+

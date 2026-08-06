@@ -93,7 +93,7 @@ exports.getActivityLog = async (req, res) => {
     });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ success: false, error: 'Server Error' });
+    res.status(500).json({ success: false, message: 'Server Error' });
   }
 };
 
@@ -138,7 +138,7 @@ exports.exportActivityLog = async (req, res) => {
     return res.send(csvContent);
   } catch (err) {
     console.error("Export logs error:", err);
-    res.status(500).json({ success: false, error: 'Server Error' });
+    res.status(500).json({ success: false, message: 'Server Error' });
   }
 };
 
@@ -221,7 +221,7 @@ exports.getMdrrmoActivityLog = async (req, res) => {
     });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ success: false, error: 'Server Error' });
+    res.status(500).json({ success: false, message: 'Server Error' });
   }
 };
 
@@ -267,6 +267,7 @@ exports.exportMdrrmoActivityLog = async (req, res) => {
     return res.send(csvContent);
   } catch (err) {
     console.error("Export logs error:", err);
-    res.status(500).json({ success: false, error: 'Server Error' });
+    res.status(500).json({ success: false, message: 'Server Error' });
   }
 };
+

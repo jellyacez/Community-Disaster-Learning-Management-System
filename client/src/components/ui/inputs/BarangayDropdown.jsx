@@ -1,14 +1,24 @@
 import { useState, useMemo, memo } from "react";
-import { BACOLOR_BARANGAYS } from "../../../constants/locations";
+import { useQuery } from "@tanstack/react-query";
+import apiClient from "../../../lib/apiClient";
 
 const BarangayDropdown = memo(function BarangayDropdown({ value, onChange, onBlur, error }) {
   const [showBarangayList, setShowBarangayList] = useState(false);
 
+  const { data: barangays = [], isLoading } = useQuery({
+    queryKey: ["barangays"],
+    queryFn: async () => {
+      const res = await apiClient.get("/public/barangays");
+      return res.data;
+    },
+    select: (data) => data.map(b => b.name)
+  });
+
   const filteredBarangays = useMemo(() => {
-    return BACOLOR_BARANGAYS.filter((b) =>
+    return barangays.filter((b) =>
       b.toLowerCase().includes(value.toLowerCase())
     );
-  }, [value]);
+  }, [value, barangays]);
 
   const getInputClass = () => {
     const baseClass = "w-full px-4 py-3 rounded-xl border outline-none transition-colors";
@@ -53,13 +63,16 @@ const BarangayDropdown = memo(function BarangayDropdown({ value, onChange, onBlu
 
       {showBarangayList && (
         <ul id="barangay-listbox" role="listbox" className="absolute z-10 w-full bg-white border border-gray-200 rounded-xl mt-1 max-h-48 overflow-y-auto shadow-lg">
-          {filteredBarangays.length > 0 ? (
+          {isLoading ? (
+            <li className="px-4 py-2 text-gray-500 text-sm">Loading barangays...</li>
+          ) : filteredBarangays.length > 0 ? (
             filteredBarangays.map((b) => (
               <li
                 key={b}
                 role="option"
                 aria-selected={b === value}
-                onClick={() => {
+                onMouseDown={(e) => {
+                  e.preventDefault(); // Prevent input from losing focus immediately
                   onChange({ target: { name: "barangay", value: b } });
                   setShowBarangayList(false);
                 }}

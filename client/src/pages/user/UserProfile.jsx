@@ -65,7 +65,7 @@ export default function UserProfile() {
 
     return {
       ...currentUser,
-      barangay: userDetails.barangay_name || userDetails.barangay_legacy_text || currentUser.barangay,
+      barangay: userDetails.barangay_name,
     };
   }, [dashboardData, currentUser]);
 

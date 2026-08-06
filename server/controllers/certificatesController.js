@@ -6,7 +6,7 @@ const verifyCertificate = async (req, res) => {
   const { token } = req.params;
 
   // 1. Identical generic response for malformed and not-found
-  const notFoundResponse = { success: false, error: "Certificate not found." };
+  const notFoundResponse = { success: false, message: "`Certificate not found." };
 
   if (!token || !isUUID(token)) {
     return res.status(404).json(notFoundResponse);
@@ -39,10 +39,11 @@ const verifyCertificate = async (req, res) => {
       message: err.message, 
       stack: err.stack 
     });
-    return res.status(500).json({ success: false, error: "Server error during verification." });
+    return res.status(500).json({ success: false, message: "`Server error during verification." });
   }
 };
 
 module.exports = {
   verifyCertificate
 };
+

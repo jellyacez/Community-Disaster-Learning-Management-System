@@ -41,7 +41,7 @@ exports.getSystemStats = async (req, res) => {
     res.json({ success: true, data });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ success: false, error: "Server Error" });
+    res.status(500).json({ success: false, message: "`Server Error" });
   }
 };
 
@@ -84,7 +84,7 @@ exports.getTrafficAnalytics = async (req, res) => {
     res.json({ success: true, data });
   } catch (err) {
     console.error("Traffic Analytics Error:", err);
-    res.status(500).json({ success: false, error: "Server Error" });
+    res.status(500).json({ success: false, message: "`Server Error" });
   }
 };
 
@@ -155,3 +155,4 @@ exports.getHealthStatus = async (req, res) => {
       });
   }
 };
+

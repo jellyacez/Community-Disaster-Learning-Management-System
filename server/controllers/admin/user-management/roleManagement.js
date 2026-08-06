@@ -7,7 +7,7 @@ exports.updateUserRole = async (req, res) => {
   const { role } = req.body;
   const validRoles = ['resident', 'barangay_admin', 'mdrrmo_admin', 'system_admin'];
   if (!role || !validRoles.includes(role)) {
-    return res.status(400).json({ success: false, error: 'Invalid role' });
+    return res.status(400).json({ success: false, message: 'Invalid role' });
   }
   try {
     // We update the DB directly instead of using auth.api.setRole because 
@@ -16,7 +16,7 @@ exports.updateUserRole = async (req, res) => {
     // The endpoint is fully secured by our adminMiddleware.
     const result = await pool.query('UPDATE "user" SET role = $1 WHERE id = $2 RETURNING id, email', [role, id]);
     if (result.rowCount === 0) {
-      return res.status(404).json({ success: false, error: 'User not found' });
+      return res.status(404).json({ success: false, message: 'User not found' });
     }
     
     require('../../../utils/logger').logActivity(req.user.id, `Updated role to ${role} for user ${result.rows[0].email}`);
@@ -24,6 +24,7 @@ exports.updateUserRole = async (req, res) => {
     res.json({ success: true, message: 'Role updated successfully' });
   } catch (err) {
     console.error("Role Update Error:", err);
-    res.status(500).json({ success: false, error: 'Failed to update role' });
+    res.status(500).json({ success: false, message: 'Failed to update role' });
   }
 };
+

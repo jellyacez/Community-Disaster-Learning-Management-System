@@ -4,7 +4,7 @@ exports.getFeedbacks = async (req, res) => {
   try {
 
     const userId = req.user?.id || req.session?.user?.id;
-    if (!userId) return res.status(401).json({ error: "Unauthorized" });
+    if (!userId) return res.status(401).json({ success: false, message: "Unauthorized." });
 
     const query = `
       SELECT * FROM public.feedbacks
@@ -14,14 +14,14 @@ exports.getFeedbacks = async (req, res) => {
     const { rows } = await pool.query(query, [userId]);
     res.json({ data: rows });
   } catch (err) {
-    res.status(500).json({ error: "Failed to fetch feedback history.", err });
+    res.status(500).json({ success: false, message: "Failed to fetch feedback history." });
   }
 };
 
 exports.submitFeedback = async (req, res) => {
   try {
     const userId = req.user?.id || req.session?.user?.id;
-    if (!userId) return res.status(401).json({ error: "Unauthorized" });
+    if (!userId) return res.status(401).json({ success: false, message: "Unauthorized." });
 
     const { recipient, type, subject, message } = req.body;
     const query = `
@@ -38,6 +38,7 @@ exports.submitFeedback = async (req, res) => {
     ]);
     res.status(201).json({ success: true, data: rows[0] });
   } catch (err) {
-    res.status(500).json({ error: "Failed to submit feedback.", err });
+    res.status(500).json({ success: false, message: "Failed to submit feedback." });
   }
 };
+

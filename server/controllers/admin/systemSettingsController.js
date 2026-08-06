@@ -8,7 +8,7 @@ exports.getSystemSettings = async (req, res) => {
     res.status(200).json({ success: true, data: settings });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ success: false, error: { message: 'Server Error' } });
+    res.status(500).json({ success: false, message: "Failed to retrieve system settings." });
   }
 };
 
@@ -27,20 +27,20 @@ exports.updateSystemBranding = async (req, res) => {
       if (!isUrl) {
         const base64Match = system_logo.match(/^data:image\/(png|jpeg|webp|svg\+xml);base64,(.+)$/);
         if (!base64Match) {
-          return res.status(400).json({ success: false, error: { message: 'Invalid logo format. Must be a valid HTTPS URL or a Base64 image (PNG, JPG, WEBP, SVG).' } });
+          return res.status(400).json({ success: false, message: 'Invalid logo format. Must be a valid HTTPS URL or a Base64 image (PNG, JPG, WEBP, SVG).' });
         }
         
         // Size Validation: Calculate byte size (max 2MB)
         const base64Data = base64Match[2];
         const sizeInBytes = (base64Data.length * 3) / 4 - (base64Data.endsWith("==") ? 2 : (base64Data.endsWith("=") ? 1 : 0));
         if (sizeInBytes > 2 * 1024 * 1024) {
-          return res.status(400).json({ success: false, error: { message: 'Logo image is too large. Maximum size is 2MB.' } });
+          return res.status(400).json({ success: false, message: 'Logo image is too large. Maximum size is 2MB.' });
         }
         isValidLogo = true;
       }
 
       if (!isValidLogo) {
-         return res.status(400).json({ success: false, error: { message: 'Invalid logo format.' } });
+         return res.status(400).json({ success: false, message: 'Invalid logo format.' });
       }
     }
     
@@ -50,7 +50,7 @@ exports.updateSystemBranding = async (req, res) => {
     res.status(200).json({ success: true, data: { message: 'System branding updated successfully' } });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ success: false, error: { message: 'Failed to update system branding' } });
+    res.status(500).json({ success: false, message: 'Failed to update system branding.' });
   }
 };
 
@@ -69,7 +69,7 @@ exports.setMaintenanceMode = async (req, res) => {
     });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ success: false, error: { message: 'Failed to toggle maintenance mode' } });
+    res.status(500).json({ success: false, message: 'Failed to toggle maintenance mode.' });
   }
 };
 
@@ -84,7 +84,7 @@ exports.updateBroadcast = async (req, res) => {
     res.status(200).json({ success: true, data: { message: 'Broadcast settings updated successfully' } });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ success: false, error: { message: 'Failed to update broadcast settings' } });
+    res.status(500).json({ success: false, message: 'Failed to update broadcast settings.' });
   }
 };
 
@@ -99,6 +99,7 @@ exports.updateOrganizationDetails = async (req, res) => {
     res.status(200).json({ success: true, data: { message: 'Organization details updated successfully' } });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ success: false, error: { message: 'Failed to update organization details' } });
+    res.status(500).json({ success: false, message: 'Failed to update organization details.' });
   }
 };
+

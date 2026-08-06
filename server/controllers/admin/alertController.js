@@ -6,6 +6,7 @@ exports.getActiveAlerts = (req, res) => {
     return res.status(200).json({ data: alerts });
   } catch (error) {
     console.error("Failed to fetch active alerts", error);
-    return res.status(500).json({ error: "Failed to fetch active alerts" });
+    return res.status(500).json({ success: false, message: "Failed to fetch active alerts." });
   }
 };
+

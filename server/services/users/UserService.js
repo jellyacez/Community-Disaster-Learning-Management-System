@@ -32,15 +32,15 @@ class UserService {
 
     // Structural enforcement of barangay scoping
     if (adminContext.role === 'barangay_admin') {
-      if (!adminContext.barangay) {
+      if (!adminContext.barangay_id) {
         throw new Error("SECURITY_FAULT: barangay_admin context missing barangay identifier for scoping.");
       }
-      conditions.push(`barangay_id = (SELECT id FROM barangays WHERE name = ${idx})`);
-      values.push(adminContext.barangay);
+      conditions.push(`barangay_id = $${idx}`);
+      values.push(adminContext.barangay_id);
       idx++;
     } else if (allowedUnscopedRoles.includes(adminContext.role)) {
       if (barangayFilter) {
-        conditions.push(`barangay_id = (SELECT id FROM barangays WHERE name = ${idx})`);
+        conditions.push(`barangay_id = (SELECT id FROM barangays WHERE name = $${idx})`);
         values.push(barangayFilter);
         idx++;
       }

@@ -10,7 +10,7 @@ exports.getBlockedIps = async (req, res) => {
     res.json({ success: true, data: result.rows });
   } catch (err) {
     console.error("Error fetching blocked IPs:", err);
-    res.status(500).json({ success: false, error: "Server Error" });
+    res.status(500).json({ success: false, message: "`Server Error" });
   }
 };
 
@@ -34,7 +34,7 @@ exports.forceLogoutAll = async (req, res) => {
     });
   } catch (err) {
     console.error("Error forcing logout all:", err);
-    res.status(500).json({ success: false, error: "Server Error" });
+    res.status(500).json({ success: false, message: "`Server Error" });
   }
 };
 
@@ -43,12 +43,12 @@ exports.forceLogoutAll = async (req, res) => {
 exports.addBlockedIp = async (req, res) => {
   const { ip_address, reason } = req.body;
   if (!ip_address) {
-    return res.status(400).json({ success: false, error: "IP address is required" });
+    return res.status(400).json({ success: false, message: "`IP address is required" });
   }
   
   const ipv4Regex = /^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
   if (!ipv4Regex.test(ip_address)) {
-    return res.status(400).json({ success: false, error: "Invalid IPv4 address format" });
+    return res.status(400).json({ success: false, message: "`Invalid IPv4 address format" });
   }
   
   try {
@@ -62,10 +62,10 @@ exports.addBlockedIp = async (req, res) => {
     res.status(201).json({ success: true, data: result.rows[0], message: "IP blocked successfully" });
   } catch (err) {
     if (err.code === '23505') { // unique violation
-      return res.status(400).json({ success: false, error: "IP address is already blocked" });
+      return res.status(400).json({ success: false, message: "`IP address is already blocked" });
     }
     console.error("Error adding blocked IP:", err);
-    res.status(500).json({ success: false, error: "Server Error" });
+    res.status(500).json({ success: false, message: "`Server Error" });
   }
 };
 
@@ -79,7 +79,7 @@ exports.removeBlockedIp = async (req, res) => {
       [id]
     );
     if (result.rowCount === 0) {
-      return res.status(404).json({ success: false, error: "Blocked IP not found" });
+      return res.status(404).json({ success: false, message: "`Blocked IP not found" });
     }
     
     require('../../utils/logger').logActivity(req.user.id, `Unblocked IP address: ${result.rows[0].ip_address}`);
@@ -87,6 +87,7 @@ exports.removeBlockedIp = async (req, res) => {
     res.json({ success: true, message: "IP unblocked successfully" });
   } catch (err) {
     console.error("Error removing blocked IP:", err);
-    res.status(500).json({ success: false, error: "Server Error" });
+    res.status(500).json({ success: false, message: "`Server Error" });
   }
 };
+

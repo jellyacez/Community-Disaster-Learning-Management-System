@@ -1,9 +1,12 @@
 import { useState, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { authClient } from "../../../lib/auth-client";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import apiClient from "../../../lib/apiClient";
 
 export const useRegisterForm = () => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   const [formData, setFormData] = useState({
     fullName: "",
@@ -20,6 +23,14 @@ export const useRegisterForm = () => {
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const isSubmittingRef = useRef(false);
+
+  const { data: barangays = [] } = useQuery({
+    queryKey: ["barangays"],
+    queryFn: async () => {
+      const res = await apiClient.get("/public/barangays");
+      return res.data;
+    }
+  });
 
   const validateField = useCallback((name, value, currentFormData = formData) => {
     let error = null;
@@ -103,11 +114,13 @@ export const useRegisterForm = () => {
     isSubmittingRef.current = true;
     setIsSubmitting(true);
 
+    const selectedBarangay = barangays.find(b => b.name === formData.barangay);
+
     const { error } = await authClient.signUp.email({
       email: formData.email,
       password: formData.password,
       name: formData.fullName,
-      barangay_legacy_text: formData.barangay,
+      barangay_id: selectedBarangay?.id,
     });
     
     if (error) {
@@ -119,6 +132,11 @@ export const useRegisterForm = () => {
       setIsSubmitting(false);
       setShowConsentModal(false);
     } else {
+      // Clear specific cached queries to prevent stale data (like userDashboard from a previous test user) 
+      // from appearing on the profile page right after registration.
+      queryClient.invalidateQueries({ queryKey: ["session"] });
+      queryClient.invalidateQueries({ queryKey: ["userDashboard"] });
+      
       isSubmittingRef.current = false;
       setIsSubmitting(false);
       setShowConsentModal(false);

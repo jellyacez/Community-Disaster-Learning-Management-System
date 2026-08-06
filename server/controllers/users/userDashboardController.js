@@ -6,7 +6,7 @@ exports.getDashboardData = async (req, res) => {
   try {
     const userId = req.user?.id;
     if (!userId) {
-      return res.status(401).json({ success: false, error: { message: "Unauthorized" } });
+      return res.status(401).json({ success: false, message: "Unauthorized." });
     }
 
     const dashboardData = await DashboardService.getDashboardData(userId);
@@ -17,7 +17,7 @@ exports.getDashboardData = async (req, res) => {
     });
   } catch (error) {
     console.error("Dashboard data fetch error:", error);
-    res.status(500).json({ success: false, error: { message: "Failed to fetch dashboard data" } });
+    res.status(500).json({ success: false, message: "Failed to fetch dashboard data." });
   }
 };
   

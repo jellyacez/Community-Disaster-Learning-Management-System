@@ -21,3 +21,4 @@ export const BACOLOR_BARANGAYS = [
   "Talba",
   "Tinajero",
 ];
+

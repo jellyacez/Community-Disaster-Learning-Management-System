@@ -64,15 +64,10 @@ const auth = betterAuth({
   },
   user: {
     additionalFields: {
-      barangay_legacy_text: {
-          type: "string",
-          required: false,
-          defaultValue: "Unassigned",
-        },
-        barangay_id: {
-          type: "number",
-          required: false,
-        },
+      barangay_id: {
+        type: "number",
+        required: false,
+      },
       role: {
         type: "string",
         required: false,

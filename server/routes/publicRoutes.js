@@ -68,4 +68,17 @@ router.get('/status', async (req, res) => {
   }
 });
 
+// @route   GET /api/public/barangays
+// @desc    Get list of all barangays
+// @access  Public
+router.get('/barangays', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT id, name FROM public.barangays ORDER BY name ASC');
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Error fetching barangays:', err);
+    res.status(500).json({ error: 'Server Error' });
+  }
+});
+
 module.exports = router;

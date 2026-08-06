@@ -10,7 +10,7 @@ exports.updateUser = async (req, res) => {
   // The old check accepted malformed emails like "a@", "@b", and "@@".
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!name || !email || !emailRegex.test(email)) {
-    return res.status(400).json({ error: "Valid name and email are required." });
+    return res.status(400).json({ success: false, message: "Valid name and email are required." });
   }
 
   try {
@@ -19,13 +19,14 @@ exports.updateUser = async (req, res) => {
       [name, email, archived, id],
     );
     if (result.rows.length === 0)
-      return res.status(404).json({ error: "User not found" });
+      return res.status(404).json({ success: false, message: "User not found." });
       
     require('../../../utils/logger').logActivity(req.user.id, `Updated details for user ${email}`);
     
     res.json(result.rows[0]);
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: "Server Error" });
+    res.status(500).json({ success: false, message: "Failed to update user details." });
   }
 };
+

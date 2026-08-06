@@ -24,7 +24,7 @@ exports.getMetrics = async (req, res) => {
     res.json({ success: true, data });
   } catch (err) {
     console.error("MDRRMO Metrics Error:", err);
-    res.status(500).json({ success: false, error: 'Server Error' });
+    res.status(500).json({ success: false, message: 'Server Error' });
   }
 };
 
@@ -50,7 +50,7 @@ exports.getModuleDistribution = async (req, res) => {
     res.json({ success: true, data });
   } catch (err) {
     console.error("MDRRMO Module Distribution Error:", err);
-    res.status(500).json({ success: false, error: 'Server Error' });
+    res.status(500).json({ success: false, message: 'Server Error' });
   }
 };
 
@@ -89,7 +89,7 @@ exports.getEnrollmentTrend = async (req, res) => {
     res.json({ success: true, data });
   } catch (err) {
     console.error("MDRRMO Enrollment Trend Error:", err);
-    res.status(500).json({ success: false, error: 'Server Error' });
+    res.status(500).json({ success: false, message: 'Server Error' });
   }
 };
 
@@ -124,7 +124,7 @@ exports.getRecentActivity = async (req, res) => {
     res.json({ success: true, data });
   } catch (err) {
     console.error("MDRRMO Recent Activity Error:", err);
-    res.status(500).json({ success: false, error: 'Server Error' });
+    res.status(500).json({ success: false, message: 'Server Error' });
   }
 };
 
@@ -264,7 +264,7 @@ exports.getSectorOverview = async (req, res) => {
     res.json({ success: true, data: formattedData, trends });
   } catch (error) {
     console.error("Error fetching sector overview data:", error);
-    res.status(500).json({ success: false, error: 'Server Error' });
+    res.status(500).json({ success: false, message: 'Server Error' });
   }
 };
 
@@ -308,6 +308,7 @@ exports.getSectorOverviewCategoryBreakdown = async (req, res) => {
     res.json({ success: true, data });
   } catch (error) {
     console.error("Error fetching sector category breakdown:", error);
-    res.status(500).json({ success: false, error: 'Server Error' });
+    res.status(500).json({ success: false, message: 'Server Error' });
   }
 };
+

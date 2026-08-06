@@ -8,7 +8,7 @@ const getAllCertificates = async (req, res) => {
     // Construct admin context from req.user
     const adminContext = {
       role: req.user.role,
-      barangay: req.user.barangay
+      barangay_id: req.user.barangay_id
     };
 
     const result = await ModuleProgressService.getAllCertificates(
@@ -34,7 +34,7 @@ const getAllCertificates = async (req, res) => {
       message: err.message, 
       stack: err.stack 
     });
-    return res.status(500).json({ success: false, error: "Server error fetching certificates." });
+    return res.status(500).json({ success: false, message: "`Server error fetching certificates." });
   }
 };
 
@@ -46,7 +46,7 @@ const revokeCertificate = async (req, res) => {
     // Construct admin context from req.user
     const adminContext = {
       role: req.user.role,
-      barangay: req.user.barangay
+      barangay_id: req.user.barangay_id
     };
 
     const adminUserId = req.user.id;
@@ -74,7 +74,7 @@ const revokeCertificate = async (req, res) => {
       message: err.message, 
       stack: err.stack 
     });
-    return res.status(500).json({ success: false, error: "Server error revoking certificate." });
+    return res.status(500).json({ success: false, message: "`Server error revoking certificate." });
   }
 };
 
@@ -82,3 +82,4 @@ module.exports = {
   getAllCertificates,
   revokeCertificate
 };
+

@@ -13,10 +13,10 @@ exports.archiveUser = async (req, res) => {
     
     if (!UNSCOPED_ACCESS_ROLES.includes(req.user.role)) {
       if (req.user.role === 'barangay_admin') {
-        query += ` AND barangay = $3`;
-        values.push(req.user.barangay);
+        query += ` AND barangay_id = $3`;
+        values.push(req.user.barangay_id);
       } else {
-        return res.status(403).json({ success: false, error: 'Unauthorized to archive users' });
+        return res.status(403).json({ success: false, message: 'Unauthorized to archive users' });
       }
     }
     
@@ -24,7 +24,7 @@ exports.archiveUser = async (req, res) => {
     const result = await pool.query(query, values);
     
     if (result.rowCount === 0) {
-      return res.status(404).json({ success: false, error: 'User not found or out of scope' });
+      return res.status(404).json({ success: false, message: 'User not found or out of scope' });
     }
     
     // Immediately revoke sessions if archived
@@ -44,7 +44,7 @@ exports.archiveUser = async (req, res) => {
       message: err.message,
       stack: err.stack
     });
-    res.status(500).json({ success: false, error: 'Failed to update archive status' });
+    res.status(500).json({ success: false, message: 'Failed to update archive status' });
   }
 };
 
@@ -53,10 +53,10 @@ exports.archiveUser = async (req, res) => {
 exports.bulkArchiveUsers = async (req, res) => {
   const { userIds, archived } = req.body;
   if (!Array.isArray(userIds) || userIds.length === 0) {
-    return res.status(400).json({ success: false, error: 'No users selected' });
+    return res.status(400).json({ success: false, message: 'No users selected' });
   }
   if (userIds.length > 100) {
-    return res.status(400).json({ success: false, error: 'Cannot process more than 100 users at once' });
+    return res.status(400).json({ success: false, message: 'Cannot process more than 100 users at once' });
   }
   
   const isArchived = archived === true || archived === "true";
@@ -66,17 +66,17 @@ exports.bulkArchiveUsers = async (req, res) => {
     
     if (!UNSCOPED_ACCESS_ROLES.includes(req.user.role)) {
       if (req.user.role === 'barangay_admin') {
-        query += ` AND barangay = $3`;
-        values.push(req.user.barangay);
+        query += ` AND barangay_id = $3`;
+        values.push(req.user.barangay_id);
       } else {
-        return res.status(403).json({ success: false, error: 'Unauthorized to bulk archive users' });
+        return res.status(403).json({ success: false, message: 'Unauthorized to bulk archive users' });
       }
     }
     
     const result = await pool.query(query, values);
     
     if (result.rowCount === 0) {
-      return res.status(404).json({ success: false, error: 'Users not found or out of scope' });
+      return res.status(404).json({ success: false, message: 'Users not found or out of scope' });
     }
     
     // Immediately revoke sessions for all archived users
@@ -94,6 +94,7 @@ exports.bulkArchiveUsers = async (req, res) => {
       message: err.message,
       stack: err.stack
     });
-    res.status(500).json({ success: false, error: 'Failed to bulk update users' });
+    res.status(500).json({ success: false, message: 'Failed to bulk update users' });
   }
 };
+

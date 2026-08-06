@@ -26,6 +26,7 @@ exports.getResidents = async (req, res) => {
     });
   } catch (error) {
     console.error("Error fetching residents:", error);
-    res.status(500).json({ success: false, error: { message: "Failed to fetch residents" } });
+    res.status(500).json({ success: false, message: "Failed to fetch residents." });
   }
 };
+

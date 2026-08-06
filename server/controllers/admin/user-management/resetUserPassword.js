@@ -22,7 +22,7 @@ exports.resetUserPassword = async (req, res) => {
   if (!/^(?=.*[A-Z])(?=.*[!@#$%^&*_=+\-/.]).{8,}$/.test(password)) {
     return res
       .status(400)
-      .json({ error: "Password does not meet complexity requirements." });
+      .json({ success: false, message: "Password does not meet complexity requirements." });
   }
 
   try {
@@ -32,7 +32,7 @@ exports.resetUserPassword = async (req, res) => {
       [id],
     );
     if (userResult.rows.length === 0) {
-      return res.status(404).json({ error: "User not found" });
+      return res.status(404).json({ success: false, message: "User not found." });
     }
     const user = userResult.rows[0];
 
@@ -50,8 +50,8 @@ exports.resetUserPassword = async (req, res) => {
       return res
         .status(400)
         .json({
-          error:
-            "Cannot reset password. User signed up via a social provider (e.g., Google) and has no password credential.",
+          success: false,
+          message: "Cannot reset password. User signed up via a social provider (e.g., Google) and has no password credential.",
         });
     }
 
@@ -83,8 +83,10 @@ exports.resetUserPassword = async (req, res) => {
     res
       .status(500)
       .json({
-        error:
+        success: false,
+        message:
           "An internal server error occurred while resetting the password.",
       });
   }
 };
+

@@ -3,8 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { CheckmarkBadge01Icon, ArrowDown01Icon } from "@hugeicons/core-free-icons";
 import toast from "react-hot-toast";
-import { BACOLOR_BARANGAYS } from "../../../constants/locations";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQueryClient, useQuery } from "@tanstack/react-query";
 import apiClient from "../../../lib/apiClient";
 
 export default function OnboardingModal({ currentUser }) {
@@ -14,6 +13,16 @@ export default function OnboardingModal({ currentUser }) {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isSubmittingOnboarding, setIsSubmittingOnboarding] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+
+  const { data: barangays = [], isLoading } = useQuery({
+    queryKey: ["barangays"],
+    queryFn: async () => {
+      const res = await apiClient.get("/public/barangays");
+      return res.data;
+    },
+    select: (data) => data.map(b => b.name),
+    enabled: !isSuccess && currentUser && (!currentUser.name || !currentUser.barangay_id)
+  });
 
   if (isSuccess || !currentUser || (currentUser.name && currentUser.barangay_id)) return null;
 
@@ -100,19 +109,23 @@ export default function OnboardingModal({ currentUser }) {
                     transition={{ duration: 0.15 }}
                     className="absolute bottom-full mb-2 z-50 w-full bg-white border border-gray-200 rounded-xl shadow-2xl overflow-hidden max-h-52 overflow-y-auto"
                   >
-                    {BACOLOR_BARANGAYS.map((brgy) => (
-                      <button
-                        key={brgy}
-                        type="button"
-                        onClick={() => {
-                          setOnboardingBarangay(brgy);
-                          setIsDropdownOpen(false);
-                        }}
-                        className={`w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors ${onboardingBarangay === brgy ? 'bg-red-50 text-red-700 font-semibold' : 'text-gray-700'}`}
-                      >
-                        {brgy}
-                      </button>
-                    ))}
+                    {isLoading ? (
+                      <div className="px-4 py-3 text-gray-500 text-sm">Loading barangays...</div>
+                    ) : (
+                      barangays.map((brgy) => (
+                        <button
+                          key={brgy}
+                          type="button"
+                          onClick={() => {
+                            setOnboardingBarangay(brgy);
+                            setIsDropdownOpen(false);
+                          }}
+                          className={`w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors ${onboardingBarangay === brgy ? 'bg-red-50 text-red-700 font-semibold' : 'text-gray-700'}`}
+                        >
+                          {brgy}
+                        </button>
+                      ))
+                    )}
                   </motion.div>
                 )}
               </AnimatePresence>

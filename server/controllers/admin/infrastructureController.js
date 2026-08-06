@@ -124,7 +124,7 @@ CREATE TABLE "user" (
     });
   } catch (err) {
     console.error("Backup route error:", err);
-    res.status(500).json({ success: false, error: "Server Error" });
+    res.status(500).json({ success: false, message: "`Server Error" });
   }
 };
 
@@ -179,6 +179,7 @@ The system is currently operating normally or file-based logging is disabled in 
     });
   } catch (err) {
     console.error("Logs route error:", err);
-    res.status(500).json({ success: false, error: "Server Error" });
+    res.status(500).json({ success: false, message: "`Server Error" });
   }
 };
+

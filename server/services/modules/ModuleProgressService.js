@@ -345,11 +345,11 @@ class ModuleProgressService {
 
     // Structural enforcement of barangay scoping
     if (adminContext.role === 'barangay_admin') {
-      if (!adminContext.barangay) {
+      if (!adminContext.barangay_id) {
         throw new Error("SECURITY_FAULT: barangay_admin context missing barangay identifier for scoping.");
       }
-      conditions.push(`u.barangay = $${idx}`);
-      values.push(adminContext.barangay);
+      conditions.push(`u.barangay_id = $${idx}`);
+      values.push(adminContext.barangay_id);
       idx++;
     } else if (!UNSCOPED_ACCESS_ROLES.includes(adminContext.role)) {
       throw new Error(`SECURITY_FAULT: Unauthorized role '${adminContext.role}' attempted to access certificate records.`);
@@ -438,11 +438,11 @@ class ModuleProgressService {
     const { UNSCOPED_ACCESS_ROLES } = require("../../config/permissions");
     
     // First fetch the cert to check scope
-    const certQuery = await pool.query(
-      `SELECT c.cert_id, c.cert_rec, u.barangay, u.id as learner_id
-       FROM certificates c 
-       JOIN public."user" u ON c.user_id = u.id 
-       WHERE c.cert_id = $1`,
+      const certQuery = await pool.query(
+      `SELECT c.cert_id, c.cert_rec, u.barangay_id as learner_barangay_id, u.id as learner_id
+       FROM certificates c
+       JOIN "user" u ON c.user_id = u.id
+       WHERE c.cert_id = $1 AND c.status = 'issued'`,
       [certId]
     );
 
@@ -454,7 +454,7 @@ class ModuleProgressService {
 
     // Structural scoping check
     if (adminContext.role === 'barangay_admin') {
-      if (!adminContext.barangay || cert.barangay !== adminContext.barangay) {
+      if (!adminContext.barangay_id || cert.learner_barangay_id !== adminContext.barangay_id) {
         throw new Error("SECURITY_FAULT: Out-of-scope target. Cannot revoke certificate for a resident outside your barangay.");
       }
     } else if (!UNSCOPED_ACCESS_ROLES.includes(adminContext.role)) {

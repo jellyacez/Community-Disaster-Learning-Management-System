@@ -40,14 +40,14 @@ exports.createModule = async (req, res) => {
 exports.getAvailableModules = async (req, res) => {
   const user_id = req.user?.id;
   if (!user_id) {
-    return res.status(401).json({ error: "Unauthorized" });
+    return res.status(401).json({ success: false, message: "Unauthorized." });
   }
   try {
     const availableModules = await ModuleService.getAvailableModules(user_id);
     res.json(availableModules);
   } catch (error) {
     console.error("Error fetching available modules:", error);
-    res.status(500).json({ error: "Server Error" });
+    res.status(500).json({ success: false, message: "Failed to fetch available modules." });
   }
 };
 // --- End of getAvailableModules ---
@@ -305,3 +305,4 @@ exports.updateModuleStatus = async (req, res) => {
     res.status(500).json({ success: false, message: "Failed to update module status." });
   }
 };
+

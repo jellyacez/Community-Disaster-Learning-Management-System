@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import toast from "react-hot-toast";
+import { useQueryClient } from "@tanstack/react-query";
 import { authClient } from "../../lib/auth-client";
 import apiClient from "../../lib/apiClient";
 import useDocumentTitle from "../../hooks/useDocumentTitle";
@@ -41,6 +42,7 @@ export default function SignInPage() {
     return cleared;
   };
 
+  const queryClient = useQueryClient();
   const { data: session, isPending } = authClient.useSession();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [showTwoFactor, setShowTwoFactor] = useState(false);
@@ -104,6 +106,8 @@ export default function SignInPage() {
   };
 
   const handleSuccess = () => {
+    queryClient.invalidateQueries({ queryKey: ["session"] });
+    queryClient.invalidateQueries({ queryKey: ["userDashboard"] });
     toast.success("Successfully logged in!");
   };
 

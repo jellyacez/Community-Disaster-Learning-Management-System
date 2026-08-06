@@ -15,10 +15,10 @@ exports.banUser = async (req, res) => {
     
     if (!UNSCOPED_ACCESS_ROLES.includes(req.user.role)) {
       if (req.user.role === 'barangay_admin') {
-        query += ` AND barangay = $4`;
-        values.push(req.user.barangay);
+        query += ` AND barangay_id = $4`;
+        values.push(req.user.barangay_id);
       } else {
-        return res.status(403).json({ success: false, error: 'Unauthorized to ban users' });
+        return res.status(403).json({ success: false, message: 'Unauthorized to ban users' });
       }
     }
     
@@ -26,7 +26,7 @@ exports.banUser = async (req, res) => {
     const result = await pool.query(query, values);
     
     if (result.rowCount === 0) {
-      return res.status(404).json({ success: false, error: 'User not found or out of scope' });
+      return res.status(404).json({ success: false, message: 'User not found or out of scope' });
     }
     
     // Immediately revoke sessions for banned user
@@ -41,7 +41,7 @@ exports.banUser = async (req, res) => {
       message: err.message,
       stack: err.stack
     });
-    res.status(500).json({ success: false, error: 'An internal server error occurred while banning the user.' });
+    res.status(500).json({ success: false, message: 'An internal server error occurred while banning the user.' });
   }
 };
 
@@ -55,10 +55,10 @@ exports.unbanUser = async (req, res) => {
     
     if (!UNSCOPED_ACCESS_ROLES.includes(req.user.role)) {
       if (req.user.role === 'barangay_admin') {
-        query += ` AND barangay = $2`;
-        values.push(req.user.barangay);
+        query += ` AND barangay_id = $2`;
+        values.push(req.user.barangay_id);
       } else {
-        return res.status(403).json({ success: false, error: 'Unauthorized to unban users' });
+        return res.status(403).json({ success: false, message: 'Unauthorized to unban users' });
       }
     }
     
@@ -66,7 +66,7 @@ exports.unbanUser = async (req, res) => {
     const result = await pool.query(query, values);
     
     if (result.rowCount === 0) {
-      return res.status(404).json({ success: false, error: 'User not found or out of scope' });
+      return res.status(404).json({ success: false, message: 'User not found or out of scope' });
     }
 
     logActivity(req.user.id, `Unbanned user ${result.rows[0].email}`);
@@ -78,6 +78,7 @@ exports.unbanUser = async (req, res) => {
       message: err.message,
       stack: err.stack
     });
-    res.status(500).json({ success: false, error: 'An internal server error occurred while unbanning the user.' });
+    res.status(500).json({ success: false, message: 'An internal server error occurred while unbanning the user.' });
   }
 };
+
