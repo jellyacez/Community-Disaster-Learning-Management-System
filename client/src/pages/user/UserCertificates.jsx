@@ -17,7 +17,7 @@ export default function UserCertificates() {
   const [infoDismissed, setInfoDismissed] = useState(false);
 
   const { data: rawData, isLoading, isError } = useQuery({
-    queryKey: ["userDashboardData"],
+    queryKey: ["userDashboard"],
     queryFn: async () => {
       const response = await apiClient.get("/user/dashboard");
       return response.data;

@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import { authClient } from "../../lib/auth-client";
 import LogoutModal from "../ui/modals/LogoutModal";
+import { useQueryClient } from "@tanstack/react-query";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Cancel01Icon, Logout01Icon, ArrowRight01Icon, ArrowDown01Icon } from "@hugeicons/core-free-icons";
 import { ROLE_BASED_LINKS } from "../../constants/adminNavLinks";
@@ -12,6 +13,7 @@ export default function AdminSidebar({ sidebarOpen, setSidebarOpen }) {
   const { data: session } = authClient.useSession();
   const location = useLocation();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   const [expandedMenus, setExpandedMenus] = useState({});
 
@@ -29,6 +31,7 @@ export default function AdminSidebar({ sidebarOpen, setSidebarOpen }) {
   const confirmLogout = async () => {
     try {
       sessionStorage.setItem("isLoggingOut", "true");
+      queryClient.clear();
       await authClient.signOut({
         fetchOptions: {
           onSuccess: () => {

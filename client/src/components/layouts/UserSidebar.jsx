@@ -18,6 +18,7 @@ import {
 import { useLocation, useNavigate } from "react-router-dom";
 import { authClient } from "../../lib/auth-client";
 import toast from "react-hot-toast";
+import { useQueryClient } from "@tanstack/react-query";
 
 const navItems = [
   {
@@ -72,6 +73,7 @@ export default function UserSidebar({
 }) {
   const location = useLocation();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   const itemRefs = useRef([]);
   const [pillStyle, setPillStyle] = useState({ transform: 'translateY(0px)', height: '48px', opacity: 0 });
@@ -81,6 +83,7 @@ export default function UserSidebar({
   const confirmLogout = async () => {
     try {
       sessionStorage.setItem("isLoggingOut", "true");
+      queryClient.clear();
       await authClient.signOut({
         fetchOptions: {
           onSuccess: () => {
