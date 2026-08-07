@@ -15,7 +15,7 @@ function shuffle(array) {
   return newArray;
 }
 
-export default function InteractiveQuiz({ stepType, questions = [], isLoading = false, onCompleteStep }) {
+export default function InteractiveQuiz({ stepType, questions = [], isLoading = false, onCompleteStep, isPreviewMode = false }) {
   const [currentQIndex, setCurrentQIndex] = useState(0);
   const [selectedChoiceIds, setSelectedChoiceIds] = useState([]);
   const [hasSubmitted, setHasSubmitted] = useState(false);
@@ -49,7 +49,7 @@ export default function InteractiveQuiz({ stepType, questions = [], isLoading = 
   // 2. THE VISIBILITY API (Tab-Switching Detection)
   useEffect(() => {
     const handleVisibilityChange = () => {
-      if (document.visibilityState === 'hidden' && !isLocked && !hasSubmitted && currentQ) {
+      if (document.visibilityState === 'hidden' && !isLocked && !hasSubmitted && currentQ && !isPreviewMode) {
         setTabSwitchWarnings(prev => prev + 1);
       }
     };
@@ -72,7 +72,7 @@ export default function InteractiveQuiz({ stepType, questions = [], isLoading = 
 
   // 3. STRICT COMPONENT-LEVEL TIMERS
   useEffect(() => {
-    if (!currentQ || hasSubmitted || isLocked) return;
+    if (!currentQ || hasSubmitted || isLocked || isPreviewMode) return;
     
     const timer = setInterval(() => {
       setTimeLeft(prev => {
@@ -147,14 +147,14 @@ export default function InteractiveQuiz({ stepType, questions = [], isLoading = 
 
   return (
     <div 
-      className="bg-gradient-to-br from-purple-50/50 via-white to-blue-50/50 border border-purple-100/50 rounded-2xl p-4 md:p-6 shadow-sm relative overflow-hidden select-none"
-      onCopy={handlePreventCopy}
-      onContextMenu={handlePreventCopy}
+      className={`bg-gradient-to-br from-purple-50/50 via-white to-blue-50/50 border border-purple-100/50 rounded-2xl p-4 md:p-6 shadow-sm relative overflow-hidden select-none ${isPreviewMode ? 'opacity-95' : ''}`}
+      onCopy={!isPreviewMode ? handlePreventCopy : undefined}
+      onContextMenu={!isPreviewMode ? handlePreventCopy : undefined}
     >
       <QuizHeader 
         currentQIndex={currentQIndex} 
         totalQuestions={shuffledQuestions.length} 
-        timeLeft={timeLeft} 
+        timeLeft={isPreviewMode ? null : timeLeft} 
       />
 
       {/* Question */}
@@ -170,13 +170,13 @@ export default function InteractiveQuiz({ stepType, questions = [], isLoading = 
             opt={opt} 
             isSelected={selectedChoiceIds.includes(opt.id)} 
             selectionOrder={actualStepType === 'action_sequence' && selectedChoiceIds.includes(opt.id) ? selectedChoiceIds.indexOf(opt.id) + 1 : 0}
-            hasSubmitted={hasSubmitted} 
-            onChoiceClick={handleChoiceClick} 
+            hasSubmitted={hasSubmitted || isPreviewMode} 
+            onChoiceClick={isPreviewMode ? () => {} : handleChoiceClick} 
           />
         ))}
       </div>
 
-      {isMultiSelect && !hasSubmitted && (
+      {isMultiSelect && !hasSubmitted && !isPreviewMode && (
         <div className="mt-6 flex justify-end">
           <button 
             onClick={() => submitAnswer(selectedChoiceIds)}
@@ -190,7 +190,7 @@ export default function InteractiveQuiz({ stepType, questions = [], isLoading = 
 
       {/* Footer Area with Black Next Button */}
       <div className="mt-8">
-        {(hasSubmitted || isLocked) && (
+        {(hasSubmitted || isLocked) && !isPreviewMode && (
           <QuizFeedback 
             hasSubmitted={hasSubmitted}
             selectedChoiceId={selectedChoiceIds.length > 0 ? selectedChoiceIds[0] : null}
@@ -200,12 +200,12 @@ export default function InteractiveQuiz({ stepType, questions = [], isLoading = 
           />
         )}
         
-        {hasSubmitted && !isLocked && (
+        {(hasSubmitted || isPreviewMode) && !isLocked && (
           <button 
             onClick={handleNextQuestion}
             className="w-full mt-4 px-6 py-4 bg-gray-900 hover:bg-black active:scale-[0.98] text-white rounded-2xl font-bold transition-all shadow-md flex items-center justify-center gap-2 text-[15px]"
           >
-            {currentQIndex < shuffledQuestions.length - 1 ? 'Next' : 'Complete Assessment'}
+            {currentQIndex < shuffledQuestions.length - 1 ? (isPreviewMode ? 'Next Question' : 'Next') : (isPreviewMode ? 'Complete Preview' : 'Complete Assessment')}
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
           </button>
         )}

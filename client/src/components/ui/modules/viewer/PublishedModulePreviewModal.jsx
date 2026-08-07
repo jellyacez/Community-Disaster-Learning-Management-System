@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueries } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import apiClient from "../../../../lib/apiClient";
 import ModuleViewerSidebar from "./ModuleViewerSidebar";
@@ -37,6 +37,30 @@ export default function PublishedModulePreviewModal({
   }, [levels]);
 
   const activeStep = allSteps.find((s) => s.id === activeStepId);
+
+  const isAssessmentStepType = (type) => {
+    return ['quiz', 'situational', 'priority_action', 'hazard_identification', 'action_sequence'].includes(type);
+  };
+
+  const assessmentQueries = useQueries({
+    queries: allSteps.map(step => ({
+      queryKey: ['stepAssessmentPreview', step.id],
+      queryFn: async () => {
+        const res = await apiClient.get(`/modules/steps/${step.id}/assessment`);
+        return { stepId: step.id, questions: res.data.data };
+      },
+      enabled: step.id === activeStepId && isAssessmentStepType(step.type) && isOpen,
+      staleTime: Infinity,
+    }))
+  });
+
+  const getAssessmentForStep = (stepId) => {
+    const query = assessmentQueries.find(q => String(q.data?.stepId) === String(stepId));
+    return {
+      questions: query?.data?.questions || [],
+      isLoading: query?.isLoading || (query?.isFetching && query?.status === 'pending')
+    };
+  };
 
   // Prevent background scrolling when modal is open
   useEffect(() => {
@@ -105,11 +129,6 @@ export default function PublishedModulePreviewModal({
     if (prevStep) setActiveStepId(prevStep.id);
   };
 
-  // Provide dummy assessment data so quizzes don't break/hang waiting for fetch
-  const getDummyAssessment = (stepId) => {
-    return { questions: [], isLoading: false };
-  };
-
   return (
     <div className="fixed inset-0 z-[100] flex bg-gray-50 overflow-hidden text-left">
       
@@ -167,7 +186,7 @@ export default function PublishedModulePreviewModal({
             handlePrevious={handlePreviousStep}
             handleCompleteAndContinue={handleNextStep}
             isCompleting={false}
-            getAssessmentForStep={getDummyAssessment}
+            getAssessmentForStep={getAssessmentForStep}
             loopBackData={null}
             acknowledgeLoopBack={() => {}}
             isPreviewMode={true}

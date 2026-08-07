@@ -8,7 +8,8 @@ export default function StepContent({
   isAssessment,
   assessmentData,
   completedStepIds,
-  handleCompleteAndContinue
+  handleCompleteAndContinue,
+  isPreviewMode = false
 }) {
   return (
     <div className="max-w-2xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500 bg-white p-5 md:p-8 rounded-[2rem] shadow-sm border border-gray-100">
@@ -57,7 +58,7 @@ export default function StepContent({
       {/* INTERACTIVE QUIZ COMPONENT */}
       {isAssessment && (
         <div className="mt-10">
-          {completedStepIds.includes(activeStep.id) ? (
+          {!isPreviewMode && completedStepIds.includes(activeStep.id) ? (
             <div className="bg-emerald-50 border border-emerald-100 rounded-3xl p-8 text-center flex flex-col items-center justify-center">
               <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mb-4">
                 <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
@@ -74,6 +75,7 @@ export default function StepContent({
               questions={assessmentData.questions}
               isLoading={assessmentData.isLoading}
               onCompleteStep={handleCompleteAndContinue}
+              isPreviewMode={isPreviewMode}
             />
           )}
         </div>

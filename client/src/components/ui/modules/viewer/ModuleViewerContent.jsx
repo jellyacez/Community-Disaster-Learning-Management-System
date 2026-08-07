@@ -46,6 +46,7 @@ export default function ModuleViewerContent({
             assessmentData={assessmentData}
             completedStepIds={completedStepIds}
             handleCompleteAndContinue={handleCompleteAndContinue}
+            isPreviewMode={isPreviewMode}
           />
         ) : (
           <CurriculumMap 
