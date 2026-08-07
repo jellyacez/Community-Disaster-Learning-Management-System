@@ -1,18 +1,23 @@
 import { useState, useMemo, memo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import apiClient from "../../../lib/apiClient";
-
+import { VALID_BARANGAY_NAMES } from "../../../constants/barangays";
 const BarangayDropdown = memo(function BarangayDropdown({ value, onChange, onBlur, error }) {
   const [showBarangayList, setShowBarangayList] = useState(false);
 
-  const { data: barangays = [], isLoading } = useQuery({
-    queryKey: ["barangays"],
-    queryFn: async () => {
-      const res = await apiClient.get("/public/barangays");
-      return res.data;
-    },
-    select: (data) => data.map(b => b.name)
-  });
+  const { data: barangays = VALID_BARANGAY_NAMES, isLoading } = useQuery({
+      queryKey: ["barangays"],
+      queryFn: async () => {
+        const res = await apiClient.get("/public/barangays");
+
+        return Array.isArray(res.data) ? res.data : res.data?.data || [];
+      },
+      select: (data) =>
+        data
+          .map((b) => (typeof b === "string" ? b : b?.name || b?.barangay_name))
+          .filter(Boolean),
+      placeholderData: VALID_BARANGAY_NAMES,
+    });
 
   const filteredBarangays = useMemo(() => {
     return barangays.filter((b) =>

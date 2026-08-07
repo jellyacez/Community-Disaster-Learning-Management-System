@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { authClient } from "../../../lib/auth-client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import apiClient from "../../../lib/apiClient";
-
+import { VALID_BARANGAY_NAMES } from "../../../constants/barangays";
 export const useRegisterForm = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -19,7 +19,7 @@ export const useRegisterForm = () => {
   const [showTermsModal, setShowTermsModal] = useState(false);
   const [showPrivacyModal, setShowPrivacyModal] = useState(false);
   const [showConsentModal, setShowConsentModal] = useState(false);
-  
+
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const isSubmittingRef = useRef(false);
@@ -55,11 +55,13 @@ export const useRegisterForm = () => {
           error = "Passwords do not match.";
         }
         break;
-      case "barangay":
-        if (!value) error = "Please select a barangay.";
-        break;
-      default:
-        break;
+        case "barangay":
+        if (!value) {
+          error = "Please select a barangay.";
+          } else if (!VALID_BARANGAY_NAMES.includes(value.trim())) {
+           error = "Plea  se select a valid barangay from the list.";
+        }
+      break;
     }
     return error;
   }, [formData]);
@@ -68,7 +70,7 @@ export const useRegisterForm = () => {
     const { name, value } = e.target;
     setFormData((prev) => {
       const newData = { ...prev, [name]: value };
-      
+
       // If there's already an error, run live validation so it clears immediately when fixed
       setErrors((prevErrors) => {
         if (prevErrors[name]) {
@@ -77,7 +79,7 @@ export const useRegisterForm = () => {
         }
         return prevErrors;
       });
-      
+
       return newData;
     });
   }, [validateField]);
@@ -91,7 +93,7 @@ export const useRegisterForm = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (isSubmittingRef.current) return;
-    
+
     setErrors({});
 
     let newErrors = {};
@@ -122,21 +124,21 @@ export const useRegisterForm = () => {
       name: formData.fullName,
       barangay_id: selectedBarangay?.id,
     });
-    
+
     if (error) {
       console.error("Registration failed:", error);
       setErrors({ form: error.message || "Registration failed. Please try again." });
-      
+
       await new Promise((resolve) => setTimeout(resolve, 1500));
       isSubmittingRef.current = false;
       setIsSubmitting(false);
       setShowConsentModal(false);
     } else {
-      // Clear specific cached queries to prevent stale data (like userDashboard from a previous test user) 
+      // Clear specific cached queries to prevent stale data (like userDashboard from a previous test user)
       // from appearing on the profile page right after registration.
       queryClient.invalidateQueries({ queryKey: ["session"] });
       queryClient.invalidateQueries({ queryKey: ["userDashboard"] });
-      
+
       isSubmittingRef.current = false;
       setIsSubmitting(false);
       setShowConsentModal(false);

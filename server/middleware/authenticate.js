@@ -29,9 +29,9 @@ const authenticate = async (req, res, next) => {
 
     // Fire-and-forget throttled update for Online Users tracking (runs for all authenticated users)
     pool.query(`
-      UPDATE "user" 
-      SET last_active = NOW() 
-      WHERE id = $1 
+      UPDATE "user"
+      SET last_active = NOW()
+      WHERE id = $1
       AND (last_active IS NULL OR last_active < NOW() - INTERVAL '1 minute')
     `, [session.user.id]).catch(err => {
       logError('online_tracking_failure', {
@@ -40,7 +40,7 @@ const authenticate = async (req, res, next) => {
         stack: err.stack
       });
     });
-
+console.log("[AUTH MIDDLEWARE DEBUG] req.user:", req.user);
     next();
   } catch (error) {
     logError('authentication_middleware_failure', {

@@ -39,6 +39,9 @@ const SystemHealth = lazy(
 const SystemSecurity = lazy(
   () => import("./pages/admin/system/security/SystemSecurity"),
 );
+const AdminFeedbackManager = lazy(
+  () => import("./pages/admin/feedback/AdminFeedbackManager")
+);
 const UserFeedback = lazy(() => import("./pages/user/UserFeedback"));
 const UserDashboard = lazy(() => import("./pages/user/UserDashboard"));
 const UserCertificates = lazy(() => import("./pages/user/UserCertificates"));
@@ -232,6 +235,7 @@ export default function App() {
                   <Route path="modules" element={<MdrrmoModuleManagement />} />
                   <Route path="users" element={<MdrrmoUserManagement />} />
                   <Route path="alerts" element={<LiveAlerts />} />
+                  <Route path="feedback" element={<AdminFeedbackManager />} />
                   <Route
                     path="overview"
                     element={<Navigate to="dashboard" replace />}
@@ -256,6 +260,7 @@ export default function App() {
                   <Route path="categories" element={<BarangayCategoryConfig />} />
                   <Route path="logs" element={<BarangaySystemLogs />} />
                   <Route path="syllabus" element={<BarangayActiveSyllabus />} />
+                  <Route path="feedback" element={<AdminFeedbackManager />} />
                   <Route
                     path="workspace"
                     element={<Navigate to="dashboard" replace />}

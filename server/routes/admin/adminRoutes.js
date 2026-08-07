@@ -7,7 +7,7 @@ const { authenticate } = require("../../middleware/authenticate");
 
 // All admin routes require authentication first
 router.use(authenticate);
-
+const adminFeedbacksController = require("../../controllers/admin/adminFeedbacks");
 const userManagementController = require("../../controllers/admin/user-management");
 const systemStatsController = require("../../controllers/admin/systemStatsController");
 const systemSettingsController = require("../../controllers/admin/systemSettingsController");
@@ -204,4 +204,21 @@ router.get("/mdrrmo/sector-overview", requireRole(ADMIN_ROLES), adminDataLimiter
 // @desc    Get category breakdown for certificates per barangay
 router.get("/mdrrmo/sector-overview/category-breakdown", requireRole(ADMIN_ROLES), adminDataLimiter, mdrrmoOverviewController.getSectorOverviewCategoryBreakdown);
 
+// ==========================================
+// Admin Feedback Management Routes
+// ==========================================
+
+// @route   GET /api/admin/mdrrmo/feedback
+// @desc    Get scoped feedback list (MDRRMO sees all/filtered, Barangay Admin sees own barangay)
+// @access  Private (mdrrmo_admin, barangay_admin, system_admin)
+router.get(
+  "/mdrrmo/feedback",requireRole(ADMIN_ROLES), adminDataLimiter, adminFeedbacksController.getAdminFeedbacks
+);
+
+// @route   PUT /api/admin/mdrrmo/feedback/:id/reply
+// @desc    Submit an official reply and update ticket status
+// @access  Private (mdrrmo_admin, barangay_admin, system_admin)
+router.put(
+  "/mdrrmo/feedback/:id/reply", requireRole(ADMIN_ROLES), adminWriteLimiter, adminFeedbacksController.replyToFeedback
+);
 module.exports = router;

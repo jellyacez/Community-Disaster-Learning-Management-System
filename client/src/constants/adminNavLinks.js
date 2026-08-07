@@ -1,6 +1,6 @@
-import { 
-  DashboardSquare01Icon, 
-  Settings01Icon, 
+import {
+  DashboardSquare01Icon,
+  Settings01Icon,
   UserGroupIcon,
   FolderAddIcon,
   Note01Icon,
@@ -8,7 +8,8 @@ import {
   Database01Icon,
   Notification01Icon,
   Shield01Icon,
-  Activity01Icon
+  Activity01Icon,
+  Message01Icon
 } from "@hugeicons/core-free-icons";
 
 export const ROLE_BASED_LINKS = {
@@ -34,14 +35,22 @@ export const ROLE_BASED_LINKS = {
     {
       category: "Dashboard & Monitoring",
       items: [
-        { name: "Main Overview", path: "/admin/mdrrmo/dashboard", icon: DashboardSquare01Icon },
-        { 
-          name: "Audited Sector Data", 
+        {
+          name: "Main Overview", path: "/admin/mdrrmo/dashboard",
+          icon: DashboardSquare01Icon
+        },
+        {
+          name: "Audited Sector Data",
           icon: Database01Icon,
           subItems: [
             { name: "Sector Overview", path: "/admin/mdrrmo/sector-overview" },
             { name: "Activity & Monitoring Logs", path: "/admin/mdrrmo/logs" }
           ]
+        },
+        {
+          name: "Resident Feedbacks",
+          path: "/admin/mdrrmo/feedback",
+          icon: Message01Icon,
         }
       ]
     },
@@ -72,6 +81,7 @@ export const ROLE_BASED_LINKS = {
       items: [
         { name: "Full Registry Log", path: "/admin/barangay/registry", icon: Database01Icon },
         { name: "Resident Management", path: "/admin/barangay/residents", icon: UserGroupIcon },
+        { name: "Resident Feedbacks", path: "/admin/barangay/feedback", icon: Message01Icon },
       ]
     },
     {

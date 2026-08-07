@@ -122,7 +122,11 @@ export default function UserFeedback() {
       toast.error("Please enter your message.");
       return;
     }
-
+    if (!navigator.onLine) {
+      toast.error("You are currently offline. Please connect to a network.");
+      return;
+    }
+    }
     submitMutation.mutate({
       recipient: formData.recipient,
       type: formData.type,

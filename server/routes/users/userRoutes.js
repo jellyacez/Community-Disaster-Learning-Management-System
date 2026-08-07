@@ -6,7 +6,7 @@ const requireRole = require("../../middleware/requireRole");
 const { ADMIN_ROLES } = require("../../config/permissions");
 const { authenticate } = require("../../middleware/authenticate");
 const requirePermission = require("../../middleware/requirePermission");
-const feedbackHistory = require("../../controllers/users/feedbackController");
+
 // @route   GET /api/users/me/provider
 // @desc    Get current user's auth providers
 // @access  Private
