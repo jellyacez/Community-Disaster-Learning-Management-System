@@ -29,6 +29,8 @@ export default function AdminMfaSetupPage() {
 
   const handleSignOut = async () => {
     sessionStorage.setItem("isLoggingOut", "true");
+    queryClient.cancelQueries();
+    queryClient.clear();
     await authClient.signOut();
     navigate("/", { replace: true });
   };

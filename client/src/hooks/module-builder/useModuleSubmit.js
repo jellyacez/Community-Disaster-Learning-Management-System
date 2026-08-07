@@ -23,13 +23,13 @@ export function useModuleSubmit({
     const hasEmptyLevelTitles = stagedLevels.some(lvl => !lvl.levelTitle.trim());
     if (hasEmptyLevelTitles) {
       toast.error("System Error: One or more curriculum levels are missing a valid title. Please verify inputs before publishing.");
-      return;
+      return false;
     }
 
     if (Object.keys(errors).length > 0) {
       setFormErrors(errors);
       toast.error("System Error: Module validation failed. Please review the highlighted fields before publishing.");
-      return;
+      return false;
     }
 
     const loadingToastId = toast.loading("Executing module publication process...");
@@ -150,9 +150,11 @@ export function useModuleSubmit({
       setStagedLevels([{ levelOrder: 1, levelTitle: "", levelDescription: "", passing_threshold: 80, is_locked_by_default: false }]);
       setActiveLevelOrder(1);
       setFormErrors({});
+      return true;
     } catch (error) {
       console.error("Critical error executing data synchronization processing:", error);
       toast.error(`Publication aborted: ${error.response?.data?.message || error.message}`, { id: loadingToastId });
+      return false;
     }
   };
 

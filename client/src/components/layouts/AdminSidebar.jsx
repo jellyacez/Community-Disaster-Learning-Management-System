@@ -31,6 +31,7 @@ export default function AdminSidebar({ sidebarOpen, setSidebarOpen }) {
   const confirmLogout = async () => {
     try {
       sessionStorage.setItem("isLoggingOut", "true");
+      queryClient.cancelQueries();
       queryClient.clear();
       await authClient.signOut({
         fetchOptions: {

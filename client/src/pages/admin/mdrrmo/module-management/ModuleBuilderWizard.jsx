@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import ModuleHeaderForm from "./ModuleHeaderForm";
 import LevelSelector from "./LevelBuilder";
 import SequenceCanvas from "./SequenceCanvas";
@@ -25,6 +26,7 @@ export default function ModuleBuilderWizard({
   const [wizardStep, setWizardStep] = useState(1);
   const [showResetModal, setShowResetModal] = useState(false);
   const [showExitModal, setShowExitModal] = useState(false);
+  const navigate = useNavigate();
 
   const {
     editingModuleId,
@@ -79,11 +81,16 @@ export default function ModuleBuilderWizard({
 
   const handleSubmitWrapper = async (e) => {
     e.preventDefault();
-    await handleModuleSubmit(e);
+    const success = await handleModuleSubmit(e);
+    if (!success) return; // validation failed or API error — stay in wizard
     if (refetchModules) {
       refetchModules();
     }
-    onClose(); // Close modal on successful submit
+    // Reset wizard state so reopening always starts fresh on Step 1
+    actions.resetForm();
+    setWizardStep(1);
+    onClose();
+    navigate("/admin/mdrrmo/modules");
   };
 
   return (
@@ -247,8 +254,12 @@ export default function ModuleBuilderWizard({
         isOpen={showExitModal}
         onClose={() => setShowExitModal(false)}
         onConfirm={() => {
+          // Also reset on exit so reopening doesn't show stale data
+          actions.resetForm();
+          setWizardStep(1);
           setShowExitModal(false);
-          onClose(); // This hides the modal, and state will reset on next open
+          onClose();
+          navigate("/admin/mdrrmo/modules");
         }}
         title="Exit Builder?"
         description="Are you sure you want to exit? Any unsaved progress will be lost."

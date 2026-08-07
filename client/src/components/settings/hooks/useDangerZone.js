@@ -3,12 +3,14 @@ import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import apiClient from "../../../lib/apiClient";
 import { authClient } from "../../../lib/auth-client";
+import { useQueryClient } from "@tanstack/react-query";
 
 export function useDangerZone() {
   const [isExporting, setIsExporting] = useState(false);
   const [isDeactivating, setIsDeactivating] = useState(false);
   const [showDeactivateModal, setShowDeactivateModal] = useState(false);
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   const handleExport = useCallback(async () => {
     setIsExporting(true);
@@ -35,6 +37,8 @@ export function useDangerZone() {
     setIsDeactivating(true);
     try {
       await apiClient.delete("/users/me");
+      queryClient.cancelQueries();
+      queryClient.clear();
       await authClient.signOut({
          fetchOptions: {
            onSuccess: () => {

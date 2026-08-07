@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { authClient } from "../../../lib/auth-client";
 import toast from "react-hot-toast";
@@ -7,6 +7,7 @@ import apiClient from "../../../lib/apiClient";
 
 export const useSystemAdmin = () => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
   const limit = 10;
 
@@ -28,6 +29,8 @@ export const useSystemAdmin = () => {
 
   const handleLogout = async () => {
     sessionStorage.setItem("isLoggingOut", "true");
+    queryClient.cancelQueries();
+    queryClient.clear();
     await authClient.signOut();
     navigate("/signin");
   };

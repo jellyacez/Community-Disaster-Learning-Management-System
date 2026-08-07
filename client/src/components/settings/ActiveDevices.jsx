@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { authClient } from "../../lib/auth-client";
 import toast from "react-hot-toast";
+import { useQueryClient } from "@tanstack/react-query";
 import ConfirmationModal from "../ui/modals/ConfirmationModal";
 import ActiveDeviceItem from "./ActiveDeviceItem";
 import { HugeiconsIcon } from "@hugeicons/react";
@@ -8,6 +9,7 @@ import { LaptopProgrammingIcon } from "@hugeicons/core-free-icons";
 
 export default function ActiveDevices() {
   const { data: activeSession } = authClient.useSession();
+  const queryClient = useQueryClient();
   const [sessions, setSessions] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -31,6 +33,8 @@ export default function ActiveDevices() {
       await authClient.revokeOtherSessions();
       sessionStorage.setItem("isLoggingOut", "true");
       sessionStorage.setItem("showLogoutModal", "true");
+      queryClient.cancelQueries();
+      queryClient.clear();
       await authClient.signOut();
       return;
     }
@@ -41,6 +45,7 @@ export default function ActiveDevices() {
     if (isCurrentSession) {
       sessionStorage.setItem("isLoggingOut", "true");
       sessionStorage.setItem("showLogoutModal", "true");
+      queryClient.clear();
       await authClient.signOut();
       return;
     }

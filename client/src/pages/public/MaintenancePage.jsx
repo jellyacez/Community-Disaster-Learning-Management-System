@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Settings02Icon, ArrowRight01Icon } from "@hugeicons/core-free-icons";
+import { useQueryClient } from "@tanstack/react-query";
 import apiClient from "../../lib/apiClient";
 import { authClient } from "../../lib/auth-client";
 import { useNavigate, Link } from "react-router-dom";
@@ -12,13 +13,16 @@ export default function MaintenancePage() {
   const navigate = useNavigate();
   const [isChecking, setIsChecking] = useState(false);
   const { data: session } = authClient.useSession();
+  const queryClient = useQueryClient();
 
   // Force logout if resident session exists
   useEffect(() => {
     if (session?.user && session.user.role === "resident") {
+      queryClient.cancelQueries();
+      queryClient.clear();
       authClient.signOut();
     }
-  }, [session]);
+  }, [session, queryClient]);
 
   // Verify if maintenance mode is disabled
   const checkStatus = async () => {
