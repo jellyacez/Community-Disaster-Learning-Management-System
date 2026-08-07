@@ -1,5 +1,6 @@
 const { validateModuleCreation } = require("../../utils/validators");
 const ModuleService = require("../../services/modules/ModuleService");
+const { ADMIN_ROLES } = require("../../config/permissions");
 const { logActivity, logError } = require("../../utils/logger");
 
 // @desc    Creates a new module and all its nested levels and steps in a transaction
@@ -132,11 +133,12 @@ exports.getModuleViewerData = async (req, res) => {
   }
 
   try {
+    const isAdmin = ADMIN_ROLES.includes(req.user?.role);
     const isEnrolled = await ModuleService.checkUserEnrollment(
       user_id,
       parsedModId,
     );
-    if (!isEnrolled) {
+    if (!isEnrolled && !isAdmin) {
       return res.status(403).json({
         success: false,
         message: "You are not enrolled in this module.",

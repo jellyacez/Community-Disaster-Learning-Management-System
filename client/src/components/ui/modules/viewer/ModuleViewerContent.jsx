@@ -13,7 +13,8 @@ export default function ModuleViewerContent({
   isCompleting,
   getAssessmentForStep,
   loopBackData,
-  acknowledgeLoopBack
+  acknowledgeLoopBack,
+  isPreviewMode = false
 }) {
   const assessmentData = activeStep ? getAssessmentForStep(activeStep.id) : { questions: [], isLoading: false };
   const isAssessment = assessmentData.questions?.length > 0 || activeStep?.type === "quiz" || activeStep?.type === "situational";
@@ -52,6 +53,7 @@ export default function ModuleViewerContent({
             completedStepIds={completedStepIds}
             handleStepClick={handleStepClick}
             getStepIcon={getStepIcon}
+            isPreviewMode={isPreviewMode}
           />
         )}
       </div>

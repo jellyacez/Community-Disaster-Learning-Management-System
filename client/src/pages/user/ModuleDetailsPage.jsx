@@ -1,8 +1,12 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import apiClient from "../../lib/apiClient";
+import { useState } from "react";
 import DOMPurify from "dompurify";
 import Spinner from "../../components/ui/Spinner";
+import { authClient } from "../../lib/auth-client";
+import { ADMIN_ROLES } from "../../constants/roles";
+import PublishedModulePreviewModal from "../../components/ui/modules/viewer/PublishedModulePreviewModal";
 
 const fetchModuleDetails = async (moduleId) => {
   const res = await apiClient.get(`modules/${moduleId}/details`);
@@ -12,6 +16,10 @@ const fetchModuleDetails = async (moduleId) => {
 export default function ModuleDetailsPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  
+  const { data: session } = authClient.useSession();
+  const isAdmin = session?.user?.role && ADMIN_ROLES.includes(session.user.role);
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ["moduleDetails", id],
@@ -116,12 +124,21 @@ export default function ModuleDetailsPage() {
           </div>
 
           <div className="flex items-center gap-3 pt-2">
-            <button 
-              onClick={() => navigate(`/user/modules/${module.mod_id || module.id}`)}
-              className="flex items-center gap-2 px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl text-sm shadow-md hover:shadow-lg transition-all"
-            >
-              <span className="text-xs">▶</span> {isCompleted ? "Review Module Content" : "Launch Learning Viewer"}
-            </button>
+            {isAdmin ? (
+              <button 
+                onClick={() => setIsPreviewOpen(true)}
+                className="flex items-center gap-2 px-6 py-3 bg-gray-900 hover:bg-black text-white font-bold rounded-xl text-sm shadow-md hover:shadow-lg transition-all"
+              >
+                <span className="text-xs">👁️</span> Preview Module (Read-Only)
+              </button>
+            ) : (
+              <button 
+                onClick={() => navigate(`/user/modules/${module.mod_id || module.id}`)}
+                className="flex items-center gap-2 px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl text-sm shadow-md hover:shadow-lg transition-all"
+              >
+                <span className="text-xs">▶</span> {isCompleted ? "Review Module Content" : "Launch Learning Viewer"}
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -235,6 +252,11 @@ export default function ModuleDetailsPage() {
         </div>
       </div>
 
+      <PublishedModulePreviewModal 
+        isOpen={isPreviewOpen} 
+        onClose={() => setIsPreviewOpen(false)} 
+        moduleId={module.mod_id || module.id} 
+      />
     </div>
   );
 }

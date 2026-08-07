@@ -29,66 +29,77 @@ export const useRegisterForm = () => {
     queryFn: async () => {
       const res = await apiClient.get("/public/barangays");
       return res.data;
-    }
+    },
   });
 
-  const validateField = useCallback((name, value, currentFormData = formData) => {
-    let error = null;
-    switch (name) {
-      case "fullName":
-        if (!value.trim()) error = "Full name is required.";
-        break;
-      case "email": {
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(value)) error = "Please enter a valid email address.";
-        break;
-      }
-      case "password": {
-        const passwordRegex = /^(?=.*[A-Z])(?=.*[!@#$%^&*_=+\-/.]).{8,}$/;
-        if (!passwordRegex.test(value)) {
-          error = "Must be 8+ characters and include an uppercase letter and a symbol.";
+  const validateField = useCallback(
+    (name, value, currentFormData = formData) => {
+      let error = null;
+      switch (name) {
+        case "fullName":
+          if (!value.trim()) error = "Full name is required.";
+          break;
+        case "email": {
+          const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+          if (!emailRegex.test(value))
+            error = "Please enter a valid email address.";
+          break;
         }
-        break;
-      }
-      case "confirmPassword":
-        if (value !== currentFormData.password) {
-          error = "Passwords do not match.";
+        case "password": {
+          const passwordRegex = /^(?=.*[A-Z])(?=.*[!@#$%^&*_=+\-/.]).{8,}$/;
+          if (!passwordRegex.test(value)) {
+            error =
+              "Must be 8+ characters and include an uppercase letter and a symbol.";
+          }
+          break;
         }
-        break;
+        case "confirmPassword":
+          if (value !== currentFormData.password) {
+            error = "Passwords do not match.";
+          }
+          break;
         case "barangay":
-        if (!value) {
-          error = "Please select a barangay.";
+          if (!value) {
+            error = "Please select a barangay.";
           } else if (!VALID_BARANGAY_NAMES.includes(value.trim())) {
-           error = "Plea  se select a valid barangay from the list.";
-        }
-      break;
-    }
-    return error;
-  }, [formData]);
+            error = "Plea  se select a valid barangay from the list.";
+          }
+          break;
+      }
+      return error;
+    },
+    [formData],
+  );
 
-  const handleChange = useCallback((e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => {
-      const newData = { ...prev, [name]: value };
+  const handleChange = useCallback(
+    (e) => {
+      const { name, value } = e.target;
+      setFormData((prev) => {
+        const newData = { ...prev, [name]: value };
 
-      // If there's already an error, run live validation so it clears immediately when fixed
-      setErrors((prevErrors) => {
-        if (prevErrors[name]) {
-          const newError = validateField(name, value, newData);
-          return { ...prevErrors, [name]: newError };
-        }
-        return prevErrors;
+        // If there's already an error, run live validation so it clears immediately when fixed
+        setErrors((prevErrors) => {
+          if (prevErrors[name]) {
+            const newError = validateField(name, value, newData);
+            return { ...prevErrors, [name]: newError };
+          }
+          return prevErrors;
+        });
+
+        return newData;
       });
+    },
+    [validateField],
+  );
 
-      return newData;
-    });
-  }, [validateField]);
-
-  const handleBlur = useCallback((e) => {
-    const { name, value } = e.target;
-    const error = validateField(name, value);
-    setErrors((prev) => ({ ...prev, [name]: error }));
-  }, [validateField]);
+  const handleBlur = useCallback(
+    (e) => {
+      const { name, value } = e.target;
+      const error = validateField(name, value);
+      setErrors((prev) => ({ ...prev, [name]: error }));
+    },
+    [validateField],
+  );
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -116,7 +127,9 @@ export const useRegisterForm = () => {
     isSubmittingRef.current = true;
     setIsSubmitting(true);
 
-    const selectedBarangay = barangays.find(b => b.name === formData.barangay);
+    const selectedBarangay = barangays.find(
+      (b) => b.name === formData.barangay,
+    );
 
     const { error } = await authClient.signUp.email({
       email: formData.email,
@@ -127,7 +140,9 @@ export const useRegisterForm = () => {
 
     if (error) {
       console.error("Registration failed:", error);
-      setErrors({ form: error.message || "Registration failed. Please try again." });
+      setErrors({
+        form: error.message || "Registration failed. Please try again.",
+      });
 
       await new Promise((resolve) => setTimeout(resolve, 1500));
       isSubmittingRef.current = false;
@@ -139,6 +154,10 @@ export const useRegisterForm = () => {
       queryClient.invalidateQueries({ queryKey: ["session"] });
       queryClient.invalidateQueries({ queryKey: ["userDashboard"] });
 
+      // Flag for UserDashboard: show WelcomeModal on first login after registration.
+      // sessionStorage is cleared when the browser tab closes, so it only fires once per session.
+      sessionStorage.setItem("newlyRegistered", "true");
+
       isSubmittingRef.current = false;
       setIsSubmitting(false);
       setShowConsentModal(false);
@@ -147,7 +166,8 @@ export const useRegisterForm = () => {
   };
 
   const getInputClass = (fieldName) => {
-    const baseClass = "w-full px-4 py-3 rounded-xl border outline-none transition-colors";
+    const baseClass =
+      "w-full px-4 py-3 rounded-xl border outline-none transition-colors";
     return `${baseClass} ${
       errors[fieldName]
         ? "border-red-500 focus:ring-2 focus:ring-red-500 bg-red-50 text-red-900"
@@ -162,7 +182,7 @@ export const useRegisterForm = () => {
       isSubmitting,
       showTermsModal,
       showPrivacyModal,
-      showConsentModal
+      showConsentModal,
     },
     actions: {
       handleChange,
@@ -172,7 +192,7 @@ export const useRegisterForm = () => {
       getInputClass,
       setShowTermsModal,
       setShowPrivacyModal,
-      setShowConsentModal
-    }
+      setShowConsentModal,
+    },
   };
 };

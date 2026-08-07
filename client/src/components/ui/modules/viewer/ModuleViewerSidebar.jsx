@@ -8,7 +8,8 @@ export default function ModuleViewerSidebar({
   isSidebarOpen,
   setIsSidebarOpen,
   handleStepClick,
-  navigate
+  navigate,
+  isPreviewMode = false
 }) {
   const getStepIcon = (type) => {
     switch(type) {
@@ -51,10 +52,10 @@ export default function ModuleViewerSidebar({
         {levels.map((lvl) => (
           <div key={lvl.id || lvl.levelOrder} className="space-y-2">
             <div className="flex items-center gap-2 px-2 pb-1 border-b border-gray-50">
-               <h3 className={`text-xs font-bold uppercase ${lvl.isUnlocked ? 'text-gray-700' : 'text-gray-400'}`}>
+               <h3 className={`text-xs font-bold uppercase ${(lvl.isUnlocked || isPreviewMode) ? 'text-gray-700' : 'text-gray-400'}`}>
                  Level {lvl.level_order}: {lvl.title}
                </h3>
-               {!lvl.isUnlocked && <LockIcon className="w-3 h-3 text-gray-400" />}
+               {!(lvl.isUnlocked || isPreviewMode) && <LockIcon className="w-3 h-3 text-gray-400" />}
             </div>
             
             <div className="space-y-1.5">
@@ -66,7 +67,7 @@ export default function ModuleViewerSidebar({
                 
                 // For the sidebar visual, we lock steps in unlocked levels if they haven't completed the previous step
                 const previousStepInLevel = idx > 0 ? lvl.steps[idx - 1] : null;
-                const isStepLocked = !lvl.isUnlocked || (previousStepInLevel && !completedStepIds.includes(previousStepInLevel.id) && !isCompleted);
+                const isStepLocked = isPreviewMode ? false : (!(lvl.isUnlocked || isPreviewMode) || (previousStepInLevel && !completedStepIds.includes(previousStepInLevel.id) && !isCompleted));
 
                 return (
                   <button

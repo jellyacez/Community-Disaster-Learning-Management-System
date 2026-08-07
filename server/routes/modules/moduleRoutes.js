@@ -10,7 +10,7 @@ const moduleProgressController = require("../../controllers/modules/moduleProgre
 
 //middlewares
 const requireRole = require("../../middleware/requireRole");
-const { ADMIN_ROLES } = require("../../config/permissions");
+const { ADMIN_ROLES, MODULE_VIEWER_ROLES } = require("../../config/permissions");
 
 
 const requirePermission = require("../../middleware/requirePermission");
@@ -26,7 +26,7 @@ router.post("/", requireRole(ADMIN_ROLES), requirePermission('manage_modules'), 
 // @access  Private (head_mdrrmo_admin)
 router.put("/:id/status", requireRole(['head_mdrrmo_admin']), requirePermission('approve_modules'), moduleController.updateModuleStatus);
 
-router.get("/:id/details", moduleController.getModuleSyllabusDetails);
+router.get("/:id/details", requireRole(MODULE_VIEWER_ROLES), moduleController.getModuleSyllabusDetails);
 // @route   GET /api/modules/available
 // @desc    Get all available modules for residents
 // @access  Private
@@ -40,7 +40,7 @@ router.post("/:id/enroll", moduleController.enrollInModule);
 // @route   GET /api/modules/:id/viewer
 // @desc    Get module data, steps, and progress for the viewer
 // @access  Private
-router.get("/:id/viewer", moduleController.getModuleViewerData);
+router.get("/:id/viewer", requireRole(MODULE_VIEWER_ROLES), moduleController.getModuleViewerData);
 
 // @route   GET /api/modules/steps/:stepId/assessment
 // @desc    Get questions and choices for a specific assessment step

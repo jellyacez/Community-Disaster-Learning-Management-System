@@ -3,6 +3,7 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 import ErrorBoundary from "./components/ErrorBoundary";
 import useNetworkSync from "./hooks/useNetworkSync";
+import { MODULE_VIEWER_ROLES } from "./constants/roles";
 const LandingPage = lazy(() => import("./pages/public/LandingPage"));
 const PrivacyPolicyPage = lazy(() => import("./pages/public/PrivacyPolicyPage"));
 const RegisterPage = lazy(() => import("./pages/auth/RegisterPage"));
@@ -192,15 +193,16 @@ export default function App() {
               />
               <Route path="/user/modules" element={<UserModuleCatalog />} />
               <Route path="/user/enrolled" element={<UserEnrolledModules />} />
+              <Route path="/user/modules/:id/details" element={<ModuleDetailsPage />} />
               <Route path="/user/certificates" element={<UserCertificates />} />
               <Route path="/user/feedback" element={<UserFeedback />} />
               <Route path="/user/profile" element={<UserProfile />} />
               <Route path="/user/settings" element={<UserSettings />} />
-              <Route path="/user/modules/:id/details" element={<ModuleDetailsPage />} />
               <Route path="/user/certificates/view" element={<CertificatePDF />} />
               <Route path="/user/certTemplate" element={<Navigate to="/user/certificates/view" replace />} />
             </Route>
           </Route>
+
 
           <Route element={<ProtectedRoute allowedRoles={["system_admin", "mdrrmo_admin", "barangay_admin"]} />}>
             <Route element={<AdminLayout />}>
@@ -217,6 +219,7 @@ export default function App() {
                   <Route path="settings" element={<SystemSettings />} />
                   <Route path="health" element={<SystemHealth />} />
                   <Route path="security" element={<SystemSecurity />} />
+                  <Route path="modules/:id/details" element={<ModuleDetailsPage />} />
                 </Route>
               </Route>
 
@@ -233,6 +236,7 @@ export default function App() {
                     element={<MdrrmoActivityLog />}
                   />
                   <Route path="modules" element={<MdrrmoModuleManagement />} />
+                  <Route path="modules/:id/details" element={<ModuleDetailsPage />} />
                   <Route path="users" element={<MdrrmoUserManagement />} />
                   <Route path="alerts" element={<LiveAlerts />} />
                   <Route path="feedback" element={<AdminFeedbackManager />} />

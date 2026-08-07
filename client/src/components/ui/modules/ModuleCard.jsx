@@ -1,6 +1,8 @@
 import { memo } from "react";
 import { useNavigate } from "react-router-dom";
 import { HugeiconsIcon } from "@hugeicons/react";
+import { authClient } from "../../../lib/auth-client";
+import { ADMIN_ROLES } from "../../../constants/roles";
 import {
   Activity01Icon,
   Alert01Icon,
@@ -28,6 +30,9 @@ const ModuleCard = memo(function ModuleCard({
 
   
   const navigate = useNavigate();
+  const { data: session } = authClient.useSession();
+  const userRole = session?.user?.role;
+  const isAdmin = userRole && ADMIN_ROLES.includes(userRole);
 
   const isCompleted =
     enrolled && (module.progress === 100 || module.status === "Completed");
@@ -59,8 +64,14 @@ const ModuleCard = memo(function ModuleCard({
     if (isPreview && onPreviewClick) return onPreviewClick();
     if (isPreview)
       return toast.error("Navigation is disabled in Live Preview Mode.");
-    // Matches the layout inner route path configuration in App.jsx
-    navigate(`/user/modules/${module.id}/details`);
+    
+    let basePath = "/user/modules";
+    if (isAdmin) {
+      if (userRole === "system_admin") basePath = "/admin/system/modules";
+      else basePath = "/admin/mdrrmo/modules";
+    }
+    
+    navigate(`${basePath}/${module.id}/details`);
   };
 
   const handleEnrollClick = (e) => {

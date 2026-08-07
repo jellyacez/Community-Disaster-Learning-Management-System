@@ -56,9 +56,17 @@ const ADMIN_ROLES = [
   "head_mdrrmo_admin",
 ];
 
+const MODULE_VIEWER_ROLES = [
+  "resident",
+  "system_admin",
+  "mdrrmo_admin",
+  "head_mdrrmo_admin",
+];
+
 module.exports = {
   ROLE_PERMISSIONS,
   MFA_REQUIRED_ROLES,
   UNSCOPED_ACCESS_ROLES,
   ADMIN_ROLES,
+  MODULE_VIEWER_ROLES,
 };

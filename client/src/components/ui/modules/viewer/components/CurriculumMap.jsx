@@ -4,7 +4,8 @@ export default function CurriculumMap({
   levels = [],
   completedStepIds = [],
   handleStepClick,
-  getStepIcon
+  getStepIcon,
+  isPreviewMode = false
 }) {
   return (
     <div className="max-w-5xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500 pb-16">
@@ -26,21 +27,21 @@ export default function CurriculumMap({
               <div key={lvl.id || lvl.level_order} className={`relative z-10 flex flex-col md:flex-row items-start md:items-center ${isEven ? 'md:flex-row-reverse' : ''} gap-8 md:gap-16`}>
                 
                 {/* Circle Node */}
-                <div className={`absolute left-10 md:left-1/2 -ml-6 md:ml-0 md:-translate-x-1/2 w-12 h-12 rounded-full border-[3px] flex items-center justify-center bg-white shadow-sm transition-colors ${lvl.isUnlocked ? 'border-red-600 text-red-600' : 'border-gray-300 text-gray-400'}`}>
-                  {lvl.isUnlocked ? <span className="font-black text-lg">{lvl.level_order}</span> : <LockIcon className="w-5 h-5" />}
+                <div className={`absolute left-10 md:left-1/2 -ml-6 md:ml-0 md:-translate-x-1/2 w-12 h-12 rounded-full border-[3px] flex items-center justify-center bg-white shadow-sm transition-colors ${(lvl.isUnlocked || isPreviewMode) ? 'border-red-600 text-red-600' : 'border-gray-300 text-gray-400'}`}>
+                  {(lvl.isUnlocked || isPreviewMode) ? <span className="font-black text-lg">{lvl.level_order}</span> : <LockIcon className="w-5 h-5" />}
                 </div>
 
                 {/* Card */}
                 <div className={`w-full md:w-1/2 pl-28 md:pl-0 ${isEven ? 'md:pr-20 text-left md:text-right' : 'md:pl-20 text-left'}`}>
-                  <div className={`p-6 md:p-8 rounded-[2rem] border transition-all duration-300 ${lvl.isUnlocked ? 'bg-white border-gray-200 hover:shadow-xl hover:border-red-200' : 'bg-gray-50/50 border-gray-200 opacity-70'}`}>
-                    <h3 className={`text-2xl font-black mb-3 tracking-tight ${lvl.isUnlocked ? 'text-gray-900' : 'text-gray-500'}`}>{lvl.title}</h3>
+                  <div className={`p-6 md:p-8 rounded-[2rem] border transition-all duration-300 ${(lvl.isUnlocked || isPreviewMode) ? 'bg-white border-gray-200 hover:shadow-xl hover:border-red-200' : 'bg-gray-50/50 border-gray-200 opacity-70'}`}>
+                    <h3 className={`text-2xl font-black mb-3 tracking-tight ${(lvl.isUnlocked || isPreviewMode) ? 'text-gray-900' : 'text-gray-500'}`}>{lvl.title}</h3>
                     {lvl.description && <p className="text-sm font-medium text-gray-500 mb-6 leading-relaxed">{lvl.description}</p>}
                     
                     <div className="space-y-3">
                       {(lvl.steps || []).map((step, sIdx) => {
                         const isCompleted = completedStepIds.includes(step.id);
                         const previousStepInLevel = sIdx > 0 ? lvl.steps[sIdx - 1] : null;
-                        const isStepLocked = !lvl.isUnlocked || (previousStepInLevel && !completedStepIds.includes(previousStepInLevel.id) && !isCompleted);
+                        const isStepLocked = isPreviewMode ? false : (!lvl.isUnlocked || (previousStepInLevel && !completedStepIds.includes(previousStepInLevel.id) && !isCompleted));
 
                         return (
                           <button 

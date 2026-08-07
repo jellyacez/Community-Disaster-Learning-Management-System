@@ -59,12 +59,23 @@ export default function UserDashboard() {
     // If they don't have a barangay_id, OnboardingModal is active.
     if (!currentUser || !currentUser.barangay_id) return;
 
+    // Case 1: Email/password registration — flag set in useRegisterForm on success.
+    const isNewlyRegistered = sessionStorage.getItem("newlyRegistered");
+    if (isNewlyRegistered) {
+      sessionStorage.removeItem("newlyRegistered");
+      sessionStorage.setItem("hasSeenWelcome", "true");
+      setTimeout(() => setShowWelcomeModal(true), 0);
+      return;
+    }
+
+    // Case 2: Explicit navigation state (e.g. passed from login page).
     if (location.state?.showWelcome || location.state?.fromLogin) {
       setTimeout(() => setShowWelcomeModal(true), 0);
       sessionStorage.setItem("hasSeenWelcome", "true");
       navigate(location.pathname, { replace: true, state: {} });
     }
 
+    // Case 3: New account fallback — e.g. Google OAuth, account < 10 minutes old.
     if (session?.user?.createdAt) {
       const accountAgeMs =
         Date.now() - new Date(session.user.createdAt).getTime();
