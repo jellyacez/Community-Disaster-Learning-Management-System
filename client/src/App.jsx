@@ -108,6 +108,7 @@ const UserLayout = lazy(() => import("./components/layouts/UserLayout"));
 const AdminLayout = lazy(() => import("./components/layouts/AdminLayout"));
 import ScrollToTop from "./components/ScrollToTop";
 import GlobalBroadcastBanner from "./components/ui/GlobalBroadcastBanner";
+import AdminModuleApprovals from "./pages/admin/mdrrmo/module-management/AdminApprovalModule";
 
 const VerifyCertificate = lazy(() => import("./pages/public/VerifyCertificate"));
 
@@ -170,6 +171,7 @@ export default function App() {
                 allowedRoles={[
                   "system_admin",
                   "mdrrmo_admin",
+                  "head_mdrrmo_admin",
                   "barangay_admin",
                 ]}
               />
@@ -204,7 +206,7 @@ export default function App() {
           </Route>
 
 
-          <Route element={<ProtectedRoute allowedRoles={["system_admin", "mdrrmo_admin", "barangay_admin"]} />}>
+          <Route element={<ProtectedRoute allowedRoles={["system_admin", "head_mdrrmo_admin", "mdrrmo_admin", "barangay_admin"]} />}>
             <Route element={<AdminLayout />}>
               <Route element={<ProtectedRoute allowedRoles={["system_admin"]} />}>
                 <Route
@@ -223,7 +225,9 @@ export default function App() {
                 </Route>
               </Route>
 
-              <Route element={<ProtectedRoute allowedRoles={["mdrrmo_admin"]} />}>
+
+
+              <Route element={<ProtectedRoute allowedRoles={["head_mdrrmo_admin", "mdrrmo_admin"]} />}>
                 <Route path="/admin/mdrrmo" element={<MdrrmoAdminDashboard />}>
                   <Route index element={<Navigate to="dashboard" replace />} />
                   <Route path="dashboard" element={<MdrrmoOverview />} />
@@ -237,6 +241,11 @@ export default function App() {
                   />
                   <Route path="modules" element={<MdrrmoModuleManagement />} />
                   <Route path="modules/:id/details" element={<ModuleDetailsPage />} />
+
+                      <Route element={<ProtectedRoute allowedRoles={["head_mdrrmo_admin"]} />}>
+                        <Route path="approvals" element={<AdminModuleApprovals />} />
+                      </Route>
+
                   <Route path="users" element={<MdrrmoUserManagement />} />
                   <Route path="alerts" element={<LiveAlerts />} />
                   <Route path="feedback" element={<AdminFeedbackManager />} />
@@ -246,6 +255,7 @@ export default function App() {
                   />
                 </Route>
               </Route>
+
 
               <Route
                 element={<ProtectedRoute allowedRoles={["barangay_admin"]} />}

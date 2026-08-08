@@ -110,6 +110,8 @@ export default function ProtectedRoute({ allowedRoles = [] }) {
       if (userRole === "system_admin") homePath = "/admin/dashboard";
       else if (userRole === "mdrrmo_admin")
         homePath = "/admin/mdrrmo/dashboard";
+        else if (userRole === "head_mdrrmo_admin")
+          homePath = "/admin/mdrrmo/dashboard";
       else if (userRole === "barangay_admin")
         homePath = "/admin/barangay/dashboard";
       else if (userRole === "resident" || userRole === "user")

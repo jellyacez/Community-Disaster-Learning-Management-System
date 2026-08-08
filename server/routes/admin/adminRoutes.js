@@ -19,6 +19,7 @@ const moduleController = require("../../controllers/modules/moduleController");
 const mdrrmoOverviewController = require("../../controllers/admin/mdrrmoOverviewController");
 const certificateManagementController = require("../../controllers/admin/certificateManagement");
 const { adminDataLimiter, adminWriteLimiter, destructiveActionLimiter } = require("../../middleware/rateLimiters");
+const ModuleService = require("../../services/modules/ModuleService");
 
 // Existing routes
 
@@ -221,4 +222,11 @@ router.get(
 router.put(
   "/mdrrmo/feedback/:id/reply", requireRole(ADMIN_ROLES), adminWriteLimiter, adminFeedbacksController.replyToFeedback
 );
+
+router.get(
+  "/mdrrmo/approvals", requireRole(ADMIN_ROLES), adminWriteLimiter, ModuleService.getPendingModulesReview
+);
+
+router.put(
+  "/mdrrmo/module/:id/review", requireRole(ADMIN_ROLES), adminWriteLimiter, moduleController.updateModuleStatus);
 module.exports = router;

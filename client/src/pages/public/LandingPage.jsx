@@ -30,7 +30,7 @@ export default function LandingPage() {
 
     if (session && !isPending) {
       const userRole = session.user?.role;
-      const isAdmin = ["system_admin", "mdrrmo_admin", "barangay_admin"].includes(userRole);
+      const isAdmin = ["system_admin","head_mdrrmo_admin" ,"mdrrmo_admin", "barangay_admin"].includes(userRole);
       const mfaBypass = import.meta.env.VITE_DISABLE_MFA === "true";
 
       if (isAdmin && !session.user.twoFactorEnabled && !mfaBypass) {

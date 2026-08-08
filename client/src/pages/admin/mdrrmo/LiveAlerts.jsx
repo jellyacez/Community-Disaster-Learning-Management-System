@@ -23,7 +23,7 @@ export default function LiveAlerts() {
           </div>
           <h2 className="text-2xl font-black text-gray-900">Module Under Construction</h2>
           <p className="mt-2 text-gray-500 max-w-md text-center">
-            The announcement broadcasting system is currently being developed. 
+            The announcement broadcasting system is currently being developed.
             Check back later to send system-wide educational notices to residents.
           </p>
         </div>

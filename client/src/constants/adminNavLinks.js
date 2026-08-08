@@ -69,6 +69,45 @@ export const ROLE_BASED_LINKS = {
       ]
     }
   ],
+  head_mdrrmo_admin: [
+    {
+      category: "Dashboard & Monitoring",
+      items: [
+        {
+          name: "Main Overview", path: "/admin/mdrrmo/dashboard",
+          icon: DashboardSquare01Icon
+        },
+        {
+          name: "Audited Sector Data",
+          icon: Database01Icon,
+          subItems: [
+            { name: "Sector Overview", path: "/admin/mdrrmo/sector-overview" },
+            { name: "Activity & Monitoring Logs", path: "/admin/mdrrmo/logs" }
+          ]
+        },
+        {
+          name: "Resident Feedbacks",
+          path: "/admin/mdrrmo/feedback",
+          icon: Message01Icon,
+        }
+      ]
+    },
+    {
+      category: "Curriculum & Content",
+      items: [
+        { name: "Training Modules", path: "/admin/mdrrmo/modules", icon: FolderAddIcon },
+        { name: "Approve Modules", path: "/admin/mdrrmo/approvals", icon: FolderAddIcon }
+      ]
+    },
+    {
+      category: "Administrative Operations",
+      items: [
+        { name: "Personnel Directory", path: "/admin/mdrrmo/users", icon: UserGroupIcon },
+        { name: "Disaster Reports", path: "/admin/mdrrmo/reports", icon: Note01Icon },
+        { name: "System Announcements", path: "/admin/mdrrmo/alerts", icon: Notification01Icon },
+      ]
+    }
+  ],
   barangay_admin: [
     {
       category: "Dashboard & Monitoring",

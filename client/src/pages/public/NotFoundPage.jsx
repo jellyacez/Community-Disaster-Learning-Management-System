@@ -7,13 +7,14 @@ import useDocumentTitle from "../../hooks/useDocumentTitle";
 
 export default function NotFoundPage() {
   useDocumentTitle("404 Not Found | Bacolor LMS");
-  
+
   const { data: session } = authClient.useSession();
   const role = session?.user?.role;
-  
+
   let homePath = "/";
   if (role === "system_admin") homePath = "/admin/dashboard";
   else if (role === "mdrrmo_admin") homePath = "/admin/mdrrmo/dashboard";
+  else if (role === "head_mdrrmo_admin") homePath = "/admin/mdrrmo/dashboard";
   else if (role === "barangay_admin") homePath = "/admin/barangay/dashboard";
   else if (role === "resident" || role === "user") homePath = "/userDashboard";
 

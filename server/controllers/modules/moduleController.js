@@ -16,7 +16,7 @@ exports.createModule = async (req, res) => {
 
   try {
     const mod_id = await ModuleService.createModuleTransaction(req.body);
-    
+
     // Log module creation to activity_log
     await logActivity(req.user.id, `Created new module: ${req.body.moduleName}`);
 
@@ -274,7 +274,7 @@ exports.getAllModules = async (req, res) => {
 exports.updateModuleStatus = async (req, res) => {
   const { id } = req.params;
   const { status, rejection_reason } = req.body;
-  
+
   if (!['draft', 'pending_review', 'published', 'rejected'].includes(status)) {
     return res.status(400).json({ success: false, message: 'Invalid status' });
   }
@@ -294,6 +294,19 @@ exports.updateModuleStatus = async (req, res) => {
 
     await ModuleService.updateModuleStatus(parsedModId, status, rejection_reason);
 
+    if (status === 'published' && previousStatus !== 'published') {
+          const pool = require("../../config/db");
+
+          const notificationMessage = `New Module Available: ${current.modname || parsedModId}`;
+          const notifyQuery = `
+            INSERT INTO public.user_notification (user_id, type, message)
+            SELECT id, 'new_module', $1
+            FROM public."user"
+          `;
+
+          await pool.query(notifyQuery, [notificationMessage]);
+        }
+
     await logActivity(
       req.user.id,
       `Updated module ID ${parsedModId} ("${current.modname || parsedModId}") status: ${previousStatus} → ${status}${
@@ -307,4 +320,3 @@ exports.updateModuleStatus = async (req, res) => {
     res.status(500).json({ success: false, message: "Failed to update module status." });
   }
 };
-

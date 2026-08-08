@@ -15,7 +15,7 @@ class ModuleService {
 
       // 1. Insert Module
       const moduleCreation = await client.query(
-        `INSERT INTO public.module_data (modname, modcat, description, level, duration, video_url, image_url) 
+        `INSERT INTO public.module_data (modname, modcat, description, level, duration, video_url, image_url)
          VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING mod_id`,
         [moduleName, moduleCategory, safeDescription, level, duration, video_url, image_url]
       );
@@ -37,7 +37,7 @@ class ModuleService {
 
         // 3. Insert Steps for this level
         let lastLearningStepId = null; // Track the most recent non-quiz step
-        
+
         for (const step of lvl.steps) {
           // Calculate loop_back_step_id if it's a quiz
           let loopBackId = null;
@@ -63,7 +63,7 @@ class ModuleService {
             const qTexts = [];
             const qPoints = [];
             const qImages = [];
-            
+
             for (const q of step.quizQuestions) {
               qTexts.push(q.questionText);
               qPoints.push(10);
@@ -125,13 +125,13 @@ class ModuleService {
 
   async getAvailableModules(user_id) {
     const result = await pool.query(
-     `SELECT 
-        md.mod_id AS id, 
-        md.modname AS title, 
-        md.modcat AS category, 
-        md.description, 
-        md.level, 
-        md.duration, 
+     `SELECT
+        md.mod_id AS id,
+        md.modname AS title,
+        md.modcat AS category,
+        md.description,
+        md.level,
+        md.duration,
         md.image_url,
         (um.mod_id IS NOT NULL) AS is_enrolled,
         um.progress,
@@ -159,6 +159,13 @@ class ModuleService {
     return moduleCheck.rowCount > 0 ? moduleCheck.rows[0] : null;
   }
 
+  async getPendingModulesReview() {
+    const result = await pool.query(
+          "SELECT * FROM module_data WHERE status = 'pending_review'"
+        );
+        return result.rows;
+  }
+
   async checkUserEnrollment(user_id, mod_id) {
     const enrollmentCheck = await pool.query(
       "SELECT 1 FROM module_activity WHERE user_id = $1 AND mod_id = $2 LIMIT 1",
@@ -169,7 +176,7 @@ class ModuleService {
 
   async enrollUserInModule(user_id, mod_id) {
     await pool.query(
-      `INSERT INTO module_activity (user_id, mod_id, modstatus, progress) 
+      `INSERT INTO module_activity (user_id, mod_id, modstatus, progress)
        VALUES ($1, $2, 'In Progress', 0)`,
       [user_id, mod_id]
     );
@@ -230,9 +237,9 @@ class ModuleService {
     const totalPoints = questions.reduce((sum, q) => sum + (q.points || 1), 0);
 
     const correctChoicesResult = await pool.query(
-        `SELECT c.question_id, c.choice_id 
-         FROM public.choices c 
-         JOIN public.questions q ON c.question_id = q.question_id 
+        `SELECT c.question_id, c.choice_id
+         FROM public.choices c
+         JOIN public.questions q ON c.question_id = q.question_id
          WHERE q.mod_id = $1 AND c.is_correct = true`,
         [moduleId]
     );
@@ -270,9 +277,9 @@ class ModuleService {
     const safeDescription = cleanRichText(levelDescription);
     const result = await pool.query(`
         INSERT INTO public.levels (mod_id, level_order, level_title, level_description)
-        VALUES ($1, $2, $3, $4) 
-        ON CONFLICT (mod_id, level_order) 
-        DO UPDATE SET 
+        VALUES ($1, $2, $3, $4)
+        ON CONFLICT (mod_id, level_order)
+        DO UPDATE SET
             level_title = EXCLUDED.level_title,
             level_description = EXCLUDED.level_description
         RETURNING *
@@ -281,7 +288,7 @@ class ModuleService {
     if (!result.rows || result.rows.length === 0) {
         throw new Error("Database failed to return the created level row.");
     }
-        
+
     return result.rows[0];
   }
 
@@ -309,7 +316,7 @@ class ModuleService {
 
     // Get completed step IDs
     const progressResult = await pool.query(
-      `SELECT usp.step_id 
+      `SELECT usp.step_id
        FROM user_step_progress usp
        JOIN module_steps ms ON usp.step_id = ms.step_id
        JOIN levels l ON ms.level_id = l.level_id
@@ -359,7 +366,7 @@ class ModuleService {
 
     if (questions.length > 0) {
       const questionIds = questions.map(q => q.question_id);
-      
+
       const choicesResult = await pool.query(
         "SELECT choice_id, question_id, choice_text, is_correct, rationale, sequence_order FROM choices WHERE question_id = ANY($1::int[]) ORDER BY choice_id ASC",
         [questionIds]
@@ -383,8 +390,8 @@ class ModuleService {
   async getModuleSyllabusDetails(mod_id) {
     // 1. Fetch parent module details
     const moduleRes = await pool.query(
-      `SELECT mod_id, modname, modcat, description, level, duration, image_url 
-       FROM public.module_data 
+      `SELECT mod_id, modname, modcat, description, level, duration, image_url
+       FROM public.module_data
        WHERE mod_id = $1`,
       [mod_id]
     );
@@ -396,8 +403,8 @@ class ModuleService {
     // 2. Fetch levels assigned to this module, including threshold settings
     const levelsRes = await pool.query(
       `SELECT level_id, level_order, level_title, level_description, passing_threshold, is_locked_by_default
-       FROM public.levels 
-       WHERE mod_id = $1 
+       FROM public.levels
+       WHERE mod_id = $1
        ORDER BY level_order ASC`,
       [mod_id]
     );
@@ -460,7 +467,7 @@ class ModuleService {
       values.push(category);
       idx++;
     }
-    
+
     if (level) {
       conditions.push(`level = $${idx}`);
       values.push(level);
