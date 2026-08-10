@@ -13,9 +13,6 @@ const requireRole = (allowedRoles) => {
       });
       return res.status(401).json({ error: "Unauthorized. Missing user context." });
     }
-    console.log("1. WHAT THE USER HAS:", req.user.role);
-        console.log("2. WHAT IS ALLOWED:", allowedRoles);
-        console.log("3. IS IT AN EXACT MATCH?", allowedRoles.includes(req.user.role));
     if (!allowedRoles.includes(req.user.role)) {
       return res.status(403).json({
         error: "Forbidden. You don't have permission to access this resource.",

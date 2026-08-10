@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
 import useDocumentTitle from "../../../../hooks/useDocumentTitle";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
@@ -17,6 +18,7 @@ import ConfirmationModal from "../../../../components/ui/modals/ConfirmationModa
 export default function AdminModuleApprovals() {
   useDocumentTitle("Module Approvals | Bacolor LMS Admin");
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
 
   const [activeTab, setActiveTab] = useState("pending_review");
   const [selectedModule, setSelectedModule] = useState(null);
@@ -187,11 +189,11 @@ export default function AdminModuleApprovals() {
 
                   <div className="flex items-center gap-2 text-xs font-bold text-gray-600 mb-4">
                     <HugeiconsIcon icon={UserCircleIcon} className="w-4 h-4 text-gray-400" />
-                    <span>Author: {moduleItem.author_name}</span>
+                    <span>Author: {moduleItem.author_name || "Unknown"}</span>
                   </div>
 
                   <p className="text-sm text-gray-600 line-clamp-3 mb-4">
-                    {moduleItem.description}
+                    {(moduleItem.description || "").replace(/<[^>]*>?/gm, '')}
                   </p>
                 </div>
 
@@ -199,7 +201,7 @@ export default function AdminModuleApprovals() {
                   <button
                     type="button"
                     // Route this to a read-only viewer for the admin to inspect the content
-                    onClick={() => window.open(`/admin/mdrrmo/modules/${moduleItem.id}/details`, "_blank")}
+                    onClick={() => navigate(`/admin/mdrrmo/modules/${moduleItem.id}/details`, { state: { fromApprovalDesk: true } })}
                     className="flex items-center justify-center gap-2 w-full px-4 py-2 rounded-xl bg-white border border-gray-200 text-gray-700 text-sm font-bold shadow-sm hover:bg-gray-50 transition-colors"
                   >
                     <HugeiconsIcon icon={EyeIcon} className="w-4 h-4" />

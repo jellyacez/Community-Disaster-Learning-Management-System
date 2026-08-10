@@ -1,4 +1,4 @@
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import apiClient from "../../lib/apiClient";
 import { useState } from "react";
@@ -16,6 +16,7 @@ const fetchModuleDetails = async (moduleId) => {
 export default function ModuleDetailsPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   
   const { data: session } = authClient.useSession();
@@ -26,6 +27,14 @@ export default function ModuleDetailsPage() {
     queryFn: () => fetchModuleDetails(id),
     retry: 1
   });
+
+  const handleBack = () => {
+    if (location.state?.fromApprovalDesk) {
+      navigate("/admin/mdrrmo/approvals");
+    } else {
+      navigate(-1);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -42,10 +51,10 @@ export default function ModuleDetailsPage() {
         <p className="font-bold">Error loading module syllabus details.</p>
         <p className="text-sm mt-1">Please check your connection or return to the catalog.</p>
         <button 
-          onClick={() => navigate("/user/catalog")}
+          onClick={handleBack}
           className="mt-4 px-4 py-2 bg-red-600 text-white text-xs font-bold rounded-lg"
         >
-          Back to Catalog
+          Go Back
         </button>
       </div>
     );
@@ -61,7 +70,7 @@ export default function ModuleDetailsPage() {
       
       {/* Back Navigation */}
       <button 
-        onClick={() => navigate(-1)}
+        onClick={handleBack}
         className="flex items-center gap-2 text-sm font-bold text-gray-500 hover:text-gray-900 transition-colors"
       >
         <span className="text-lg">←</span> Back

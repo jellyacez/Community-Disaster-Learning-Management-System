@@ -40,7 +40,6 @@ const authenticate = async (req, res, next) => {
         stack: err.stack
       });
     });
-console.log("[AUTH MIDDLEWARE DEBUG] req.user:", req.user);
     next();
   } catch (error) {
     logError('authentication_middleware_failure', {
