@@ -126,7 +126,6 @@ export default function UserFeedback() {
       toast.error("You are currently offline. Please connect to a network.");
       return;
     }
-    }
     submitMutation.mutate({
       recipient: formData.recipient,
       type: formData.type,

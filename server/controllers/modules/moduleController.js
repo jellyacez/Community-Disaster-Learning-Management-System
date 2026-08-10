@@ -320,3 +320,13 @@ exports.updateModuleStatus = async (req, res) => {
     res.status(500).json({ success: false, message: "Failed to update module status." });
   }
 };
+
+exports.getPendingModulesReview = async (req, res) => {
+  try {
+    const modules = await ModuleService.getPendingModulesReview();
+    res.json({ success: true, data: modules });
+  } catch (error) {
+    logError('get_pending_modules_error', { message: error.message, stack: error.stack });
+    res.status(500).json({ success: false, message: 'Failed to get pending modules.' });
+  }
+};

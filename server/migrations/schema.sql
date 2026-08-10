@@ -857,6 +857,10 @@ CREATE TABLE public."twoFactor" (
     verified boolean
 );
 
+ALTER TABLE "twoFactor" ADD column "failedVerificationCount" integer;
+
+alter table "twoFactor" ADD column "lockedUntil" timestamp with time zone;
+
 
 ALTER TABLE public."twoFactor" OWNER TO postgres;
 
@@ -1632,6 +1636,19 @@ INSERT INTO public.migrations (id, name, hash) VALUES
   (7, 'move-session-to-db-ind',    '2fb7791420cba1696b4d9d53f6d50a1af02af666')
 ON CONFLICT (id) DO NOTHING;
 
+
+CREATE TABLE public.user_notification (
+    notification_id SERIAL PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    type TEXT NOT NULL,
+    message TEXT NOT NULL,
+    is_read BOOL DEFAULT false,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_user_notification_id
+        FOREIGN KEY (user_id)
+        REFERENCES public."user"(id)
+        ON DELETE CASCADE
+);
 
 --
 -- PostgreSQL database dump complete

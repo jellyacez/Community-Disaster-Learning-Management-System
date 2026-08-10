@@ -1,5 +1,6 @@
 const pool = require("../../config/db");
 const { cleanRichText } = require("../../utils/sanitizeHtml");
+const { UNSCOPED_ACCESS_ROLES } = require("../../config/permissions");
 
 class ModuleService {
   /**
@@ -436,7 +437,6 @@ class ModuleService {
     if (!adminContext || !adminContext.role) {
       throw new Error("SECURITY_FAULT: Missing or invalid adminContext. Cannot safely return modules.");
     }
-    const allowedUnscopedRoles = ["system_admin", "mdrrmo_admin"];
 
     limit = Math.min(Math.max(parseInt(limit) || 10, 1), 100);
     const offset = (page - 1) * limit;
@@ -452,7 +452,7 @@ class ModuleService {
       conditions.push(`barangay_id = $${idx}`);
       values.push(adminContext.barangay_id);
       idx++;
-    } else if (!allowedUnscopedRoles.includes(adminContext.role)) {
+    } else if (!UNSCOPED_ACCESS_ROLES.includes(adminContext.role)) {
       throw new Error(`SECURITY_FAULT: Unauthorized role '${adminContext.role}' attempted to access module records.`);
     }
 

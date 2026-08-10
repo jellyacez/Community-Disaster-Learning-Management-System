@@ -61,6 +61,7 @@ app.use(
       directives: {
         defaultSrc: ["'self'"],
         scriptSrc: ["'self'", "'wasm-unsafe-eval'"],
+        workerSrc: ["'self'", "blob:"],
         connectSrc: ["'self'"],
         styleSrc: ["'self'", "'unsafe-inline'"],
         imgSrc: ["'self'", "data:", "https:"],

@@ -74,6 +74,7 @@ export default function SignInPage() {
 
       const roleRoutes = {
         system_admin: "/admin/dashboard",
+        head_mdrrmo_admin: "/admin/mdrrmo/dashboard",
         mdrrmo_admin: "/admin/mdrrmo/dashboard",
         barangay_admin: "/admin/barangay/dashboard",
         resident: "/userDashboard"

@@ -224,7 +224,7 @@ router.put(
 );
 
 router.get(
-  "/mdrrmo/approvals", requireRole(ADMIN_ROLES), adminWriteLimiter, ModuleService.getPendingModulesReview
+  "/mdrrmo/approvals", requireRole(ADMIN_ROLES), adminWriteLimiter, moduleController.getPendingModulesReview
 );
 
 router.put(

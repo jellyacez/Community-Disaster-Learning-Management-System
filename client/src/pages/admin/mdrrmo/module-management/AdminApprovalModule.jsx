@@ -24,7 +24,7 @@ export default function AdminModuleApprovals() {
   const { data: approvalRequests = [], isLoading } = useQuery({
     queryKey: ["moduleApprovals"],
     queryFn: async () => {
-      const response = await apiClient.get("/admin/approvals");
+      const response = await apiClient.get("/admin/mdrrmo/approvals");
       return response.data.data || [];
     },
   });
