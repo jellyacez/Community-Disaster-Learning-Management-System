@@ -152,7 +152,7 @@ export default function ModuleBuilderWizard({
               onClick={handleSubmitWrapper}
               className="px-6 py-2.5 text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl transition-colors flex items-center gap-2 shadow-sm"
             >
-              {editingModuleId ? "Publish Changes" : "Publish Learning Path"}
+              {editingModuleId ? "Submit Changes for Review" : "Submit for Review"}
             </button>
           )}
         </div>
@@ -261,9 +261,26 @@ export default function ModuleBuilderWizard({
           onClose();
           navigate("/admin/mdrrmo/modules");
         }}
+        alternateText="Save as Draft & Exit"
+        onAlternateAction={async () => {
+          const success = await handleModuleSubmit(
+            new Event("submit"),
+            "draft"
+          );
+          if (success) {
+            if (refetchModules) refetchModules();
+            actions.resetForm();
+            setWizardStep(1);
+            setShowExitModal(false);
+            onClose();
+            navigate("/admin/mdrrmo/modules");
+          } else {
+             setShowExitModal(false);
+          }
+        }}
         title="Exit Builder?"
-        description="Are you sure you want to exit? Any unsaved progress will be lost."
-        confirmText="Yes, Exit Builder"
+        description="Are you sure you want to exit? Any unsaved progress will be lost. You can choose to save your progress as a draft instead."
+        confirmText="Discard & Exit"
         type="danger"
       />
     </div>

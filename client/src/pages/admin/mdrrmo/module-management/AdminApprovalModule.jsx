@@ -12,14 +12,17 @@ import {
 } from "@hugeicons/core-free-icons";
 import toast from "react-hot-toast";
 import apiClient from "../../../../lib/apiClient";
+import ConfirmationModal from "../../../../components/ui/modals/ConfirmationModal";
 
 export default function AdminModuleApprovals() {
   useDocumentTitle("Module Approvals | Bacolor LMS Admin");
   const queryClient = useQueryClient();
 
-  const [activeTab, setActiveTab] = useState("pending");
+  const [activeTab, setActiveTab] = useState("pending_review");
   const [selectedModule, setSelectedModule] = useState(null);
   const [rejectReason, setRejectReason] = useState("");
+  const [rejectError, setRejectError] = useState("");
+  const [confirmModal, setConfirmModal] = useState({ isOpen: false, moduleId: null });
 
   const { data: approvalRequests = [], isLoading } = useQuery({
     queryKey: ["moduleApprovals"],
@@ -34,7 +37,7 @@ export default function AdminModuleApprovals() {
         // Map frontend 'action' to your backend 'status' enums
         const targetStatus = action === "approve" ? "published" : "rejected";
 
-        const response = await apiClient.put(`/admin/modules/${moduleId}/review`, {
+        const response = await apiClient.put(`/admin/mdrrmo/module/${moduleId}/review`, {
           status: targetStatus,
           rejection_reason: remarks,
         });
@@ -47,8 +50,10 @@ export default function AdminModuleApprovals() {
           : "Module rejected and returned to author."
       );
       queryClient.invalidateQueries({ queryKey: ["moduleApprovals"] });
+      queryClient.invalidateQueries({ queryKey: ["adminModules"] });
       setSelectedModule(null);
       setRejectReason("");
+      setRejectError("");
     },
     onError: (err) => {
       toast.error(err.response?.data?.message || "Failed to process the review.");
@@ -56,17 +61,23 @@ export default function AdminModuleApprovals() {
   });
 
   const handleApprove = (moduleId) => {
-    if (window.confirm("Are you sure you want to approve and publish this module?")) {
-      actionMutation.mutate({ moduleId, action: "approve" });
+    setConfirmModal({ isOpen: true, moduleId });
+  };
+
+  const confirmApproval = () => {
+    if (confirmModal.moduleId) {
+      actionMutation.mutate({ moduleId: confirmModal.moduleId, action: "approve" });
     }
+    setConfirmModal({ isOpen: false, moduleId: null });
   };
 
   const handleRejectSubmit = (e) => {
     e.preventDefault();
     if (!rejectReason.trim()) {
-      toast.error("Please provide a reason for rejection.");
+      setRejectError("A reason is required to reject a module.");
       return;
     }
+    setRejectError("");
     actionMutation.mutate({
       moduleId: selectedModule.id,
       action: "reject",
@@ -83,14 +94,14 @@ export default function AdminModuleApprovals() {
   const tabs = useMemo(
     () => [
       {
-        key: "pending",
+        key: "pending_review",
         label: "Pending Review",
-        count: approvalRequests.filter((m) => m.status === "pending").length,
+        count: approvalRequests.filter((m) => m.status === "pending_review").length,
       },
       {
-        key: "approved",
+        key: "published",
         label: "Approved",
-        count: approvalRequests.filter((m) => m.status === "approved").length,
+        count: approvalRequests.filter((m) => m.status === "published").length,
       },
       {
         key: "rejected",
@@ -188,14 +199,14 @@ export default function AdminModuleApprovals() {
                   <button
                     type="button"
                     // Route this to a read-only viewer for the admin to inspect the content
-                    onClick={() => window.open(`/admin/modules/preview/${moduleItem.id}`, "_blank")}
+                    onClick={() => window.open(`/admin/mdrrmo/modules/${moduleItem.id}/details`, "_blank")}
                     className="flex items-center justify-center gap-2 w-full px-4 py-2 rounded-xl bg-white border border-gray-200 text-gray-700 text-sm font-bold shadow-sm hover:bg-gray-50 transition-colors"
                   >
                     <HugeiconsIcon icon={EyeIcon} className="w-4 h-4" />
                     Preview Content
                   </button>
 
-                  {activeTab === "pending" && (
+                  {activeTab === "pending_review" && (
                     <div className="grid grid-cols-2 gap-2 mt-2">
                       <button
                         type="button"
@@ -242,17 +253,27 @@ export default function AdminModuleApprovals() {
                 <textarea
                   rows={4}
                   value={rejectReason}
-                  onChange={(e) => setRejectReason(e.target.value)}
+                  onChange={(e) => {
+                    setRejectReason(e.target.value);
+                    if (e.target.value.trim()) setRejectError("");
+                  }}
                   placeholder="Explain what needs to be fixed before approval..."
-                  className="w-full px-4 py-3 border border-gray-200 rounded-2xl text-sm resize-none focus:outline-none focus:ring-2 focus:ring-red-500"
-                  required
+                  className={`w-full px-4 py-3 border rounded-2xl text-sm resize-none focus:outline-none focus:ring-2 ${
+                    rejectError ? "border-red-500 focus:ring-red-500 bg-red-50" : "border-gray-200 focus:ring-emerald-500"
+                  }`}
                 />
+                {rejectError && (
+                  <p className="mt-1 text-xs font-bold text-red-500">{rejectError}</p>
+                )}
               </div>
 
               <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-100">
                 <button
                   type="button"
-                  onClick={() => setSelectedModule(null)}
+                  onClick={() => {
+                    setSelectedModule(null);
+                    setRejectReason("");
+                  }}
                   className="px-5 py-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-sm"
                 >
                   Cancel
@@ -262,13 +283,23 @@ export default function AdminModuleApprovals() {
                   disabled={actionMutation.isPending}
                   className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 disabled:bg-red-400 text-white font-bold text-sm shadow-sm transition-colors"
                 >
-                  Confirm Rejection
+                  {actionMutation.isPending ? "Processing..." : "Confirm Rejection"}
                 </button>
               </div>
             </form>
           </div>
         </div>
       )}
+
+      <ConfirmationModal
+        isOpen={confirmModal.isOpen}
+        onClose={() => setConfirmModal({ isOpen: false, moduleId: null })}
+        onConfirm={confirmApproval}
+        title="Approve Module"
+        description="Are you sure you want to approve and publish this module? It will become visible to residents."
+        confirmText="Approve & Publish"
+        type="success"
+      />
     </div>
   );
 }

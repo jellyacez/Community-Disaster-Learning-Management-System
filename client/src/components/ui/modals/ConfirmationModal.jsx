@@ -10,6 +10,8 @@ const ConfirmationModal = memo(function ConfirmationModal({
   description, 
   confirmText = "Confirm", 
   cancelText = "Cancel",
+  alternateText,
+  onAlternateAction,
   type = "warning", // "warning" | "success" | "danger"
   isLoading = false
 }) {
@@ -74,6 +76,17 @@ const ConfirmationModal = memo(function ConfirmationModal({
               {isLoading ? "Processing..." : confirmText}
             </button>
           </div>
+          {alternateText && onAlternateAction && (
+            <div className="w-full mt-3">
+              <button
+                onClick={onAlternateAction}
+                disabled={isLoading}
+                className="w-full rounded-xl border-2 border-emerald-500 bg-white px-4 py-2.5 text-sm font-bold text-emerald-600 hover:bg-emerald-50 focus:outline-none focus:ring-2 focus:ring-emerald-200 disabled:opacity-50 transition-colors"
+              >
+                {alternateText}
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>

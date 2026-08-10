@@ -20,6 +20,8 @@ const fetchModules = async () => {
     level: mod.level || "Level 1",
     duration: mod.duration || "Varies",
     image_url: mod.image_url || null,
+    rejection_reason: mod.rejection_reason || null,
+    author_id: mod.author_id || null,
   }));
 };
 
@@ -41,6 +43,7 @@ export default function ModuleManagement() {
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
   const [filterCategory, setFilterCategory] = useState("All");
   const [filterLevel, setFilterLevel] = useState("All");
+  const [filterStatus, setFilterStatus] = useState("All"); // All, Published, Drafts, Pending Review
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 6;
 
@@ -49,9 +52,15 @@ export default function ModuleManagement() {
       const matchesSearch = mod.title.toLowerCase().includes(debouncedSearchQuery.toLowerCase());
       const matchesCat = filterCategory === "All" || mod.category === filterCategory;
       const matchesLevel = filterLevel === "All" || mod.level === filterLevel;
-      return matchesSearch && matchesCat && matchesLevel;
+      
+      let matchesStatus = true;
+      if (filterStatus === "Published") matchesStatus = mod.status === "published";
+      if (filterStatus === "Drafts") matchesStatus = mod.status === "draft";
+      if (filterStatus === "Pending Review") matchesStatus = mod.status === "pending_review";
+
+      return matchesSearch && matchesCat && matchesLevel && matchesStatus;
     });
-  }, [rawModules, debouncedSearchQuery, filterCategory, filterLevel]);
+  }, [rawModules, debouncedSearchQuery, filterCategory, filterLevel, filterStatus]);
 
   const totalPages = Math.ceil(filteredModules.length / itemsPerPage);
   const paginatedModules = filteredModules.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
@@ -72,6 +81,8 @@ export default function ModuleManagement() {
           setFilterCategory={setFilterCategory}
           filterLevel={filterLevel}
           setFilterLevel={setFilterLevel}
+          filterStatus={filterStatus}
+          setFilterStatus={setFilterStatus}
           handleOpenWizard={handleOpenWizard}
         />
 

@@ -7,7 +7,7 @@ class ModuleService {
    * Creates a new module, including its levels, steps, questions, and choices.
    * Runs inside a single database transaction.
    */
-  async createModuleTransaction({ moduleName, moduleCategory, description, level, duration, video_url, image_url, levels }) {
+  async createModuleTransaction({ moduleName, moduleCategory, description, level, duration, video_url, image_url, levels, status, author_id }) {
     const safeDescription = cleanRichText(description);
     const client = await pool.connect();
 
@@ -16,9 +16,9 @@ class ModuleService {
 
       // 1. Insert Module
       const moduleCreation = await client.query(
-        `INSERT INTO public.module_data (modname, modcat, description, level, duration, video_url, image_url)
-         VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING mod_id`,
-        [moduleName, moduleCategory, safeDescription, level, duration, video_url, image_url]
+        `INSERT INTO public.module_data (modname, modcat, description, level, duration, video_url, image_url, status, author_id)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING mod_id`,
+        [moduleName, moduleCategory, safeDescription, level, duration, video_url, image_url, status || 'draft', author_id || null]
       );
       const mod_id = moduleCreation.rows[0].mod_id;
 
@@ -154,17 +154,28 @@ class ModuleService {
 
   async getModuleById(mod_id) {
     const moduleCheck = await pool.query(
-      "SELECT mod_id, modname FROM module_data WHERE mod_id = $1",
+      "SELECT mod_id, modname, status, author_id, rejection_reason FROM module_data WHERE mod_id = $1",
       [mod_id]
     );
     return moduleCheck.rowCount > 0 ? moduleCheck.rows[0] : null;
   }
 
   async getPendingModulesReview() {
-    const result = await pool.query(
-          "SELECT * FROM module_data WHERE status = 'pending_review'"
-        );
-        return result.rows;
+    const result = await pool.query(`
+      SELECT 
+        m.mod_id AS id, 
+        m.modname AS title, 
+        m.modcat AS category, 
+        m.description, 
+        m.moddateadd AS submitted_at, 
+        m.status,
+        u.name AS author_name 
+      FROM module_data m 
+      LEFT JOIN "user" u ON m.author_id = u.id 
+      WHERE m.status != 'draft'
+      ORDER BY m.moddateadd DESC
+    `);
+    return result.rows;
   }
 
   async checkUserEnrollment(user_id, mod_id) {
@@ -480,7 +491,7 @@ class ModuleService {
     const total = parseInt(countResult.rows[0].count, 10);
 
     const result = await pool.query(
-      `SELECT mod_id, modname, modcat, description, level, duration, image_url, moddateadd AS created_at, moddateremove AS updated_at, status,
+      `SELECT mod_id, modname, modcat, description, level, duration, image_url, moddateadd AS created_at, moddateremove AS updated_at, status, rejection_reason, author_id,
        (SELECT COUNT(*) FROM public.module_steps ms JOIN public.levels l ON ms.level_id = l.level_id WHERE l.mod_id = public.module_data.mod_id) AS step_count
        FROM public.module_data ${where}
        ORDER BY moddateadd DESC LIMIT $${idx} OFFSET $${idx + 1}`,

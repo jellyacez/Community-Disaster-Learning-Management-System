@@ -143,6 +143,28 @@ const ModuleCard = memo(function ModuleCard({
                 ✔️ Completed
               </span>
             )}
+            {isAdminView && (
+              <>
+                {module.status === "draft" && module.rejection_reason ? (
+                  <span className="flex items-center gap-1 rounded-full bg-red-100 px-2.5 py-1 text-xs font-bold text-red-700 border border-red-200 shrink-0">
+                    <HugeiconsIcon icon={Alert01Icon} className="w-3.5 h-3.5" />
+                    Rejected - needs revision
+                  </span>
+                ) : module.status === "draft" ? (
+                  <span className="flex items-center gap-1 rounded-full bg-gray-100 px-2.5 py-1 text-xs font-bold text-gray-700 border border-gray-200 shrink-0">
+                    Draft
+                  </span>
+                ) : module.status === "pending_review" ? (
+                  <span className="flex items-center gap-1 rounded-full bg-blue-50 px-2.5 py-1 text-xs font-bold text-blue-700 border border-blue-100 shrink-0">
+                    Pending Review
+                  </span>
+                ) : module.status === "published" ? (
+                  <span className="flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-bold text-emerald-700 border border-emerald-100 shrink-0">
+                    Published
+                  </span>
+                ) : null}
+              </>
+            )}
           </div>
 
           <h2 className="text-xl font-bold text-gray-900 group-hover:text-red-700 transition-colors truncate">

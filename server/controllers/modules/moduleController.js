@@ -15,7 +15,8 @@ exports.createModule = async (req, res) => {
   }
 
   try {
-    const mod_id = await ModuleService.createModuleTransaction(req.body);
+    const payload = { ...req.body, author_id: req.user.id };
+    const mod_id = await ModuleService.createModuleTransaction(payload);
 
     // Log module creation to activity_log
     await logActivity(req.user.id, `Created new module: ${req.body.moduleName}`);
@@ -270,6 +271,8 @@ exports.getAllModules = async (req, res) => {
   }
 };
 // @desc    Update module status (e.g. approve/reject)
+
+// @desc    Update module status (e.g. approve/reject)
 // @access  Private (head_mdrrmo_admin)
 exports.updateModuleStatus = async (req, res) => {
   const { id } = req.params;
@@ -278,6 +281,9 @@ exports.updateModuleStatus = async (req, res) => {
   if (!['draft', 'pending_review', 'published', 'rejected'].includes(status)) {
     return res.status(400).json({ success: false, message: 'Invalid status' });
   }
+
+  // Map 'rejected' state to 'draft' status with a reason
+  const finalStatus = status === 'rejected' ? 'draft' : status;
 
   try {
     const parsedModId = parseInt(id, 10);
@@ -292,24 +298,33 @@ exports.updateModuleStatus = async (req, res) => {
     }
     const previousStatus = current.status ?? "unknown";
 
-    await ModuleService.updateModuleStatus(parsedModId, status, rejection_reason);
+    await ModuleService.updateModuleStatus(parsedModId, finalStatus, rejection_reason);
 
-    if (status === 'published' && previousStatus !== 'published') {
-          const pool = require("../../config/db");
+    const pool = require("../../config/db");
 
-          const notificationMessage = `New Module Available: ${current.modname || parsedModId}`;
-          const notifyQuery = `
-            INSERT INTO public.user_notification (user_id, type, message)
-            SELECT id, 'new_module', $1
-            FROM public."user"
-          `;
 
-          await pool.query(notifyQuery, [notificationMessage]);
-        }
+    // New: Notify the creator if it was approved or rejected
+    if (current.author_id) {
+      if (finalStatus === 'published' && previousStatus !== 'published') {
+        await pool.query(
+          `INSERT INTO public.user_notification (user_id, type, message) VALUES ($1, 'module_approved', $2)`,
+          [current.author_id, `Your module "${current.modname}" has been approved and published.`]
+        );
+      } else if (status === 'rejected') {
+        await pool.query(
+          `INSERT INTO public.user_notification (user_id, type, message) VALUES ($1, 'module_rejected', $2)`,
+          [current.author_id, `Your module "${current.modname}" was returned for revision. Reason: ${rejection_reason || 'See draft for details'}`]
+        );
+      }
+    } else {
+      if (finalStatus === 'published' || status === 'rejected') {
+        console.warn(`[Notification skipped] Module ${parsedModId} has no author_id. Could not notify creator of status change to ${status}.`);
+      }
+    }
 
     await logActivity(
       req.user.id,
-      `Updated module ID ${parsedModId} ("${current.modname || parsedModId}") status: ${previousStatus} → ${status}${
+      `Updated module ID ${parsedModId} ("${current.modname || parsedModId}") status: ${previousStatus} → ${finalStatus}${
         status === "rejected" && rejection_reason ? ` | Reason: ${rejection_reason}` : ""
       }`,
     );

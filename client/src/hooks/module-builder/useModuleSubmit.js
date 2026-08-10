@@ -12,8 +12,8 @@ export function useModuleSubmit({
   setActiveLevelOrder,
   setFormErrors
 }) {
-  const handleModuleSubmit = async (e) => {
-    e.preventDefault();
+  const handleModuleSubmit = async (e, targetStatus = "pending_review") => {
+    if (e && e.preventDefault) e.preventDefault();
     
     const errors = {};
     if (!moduleForm.title.trim()) errors.title = "A module topic title is required.";
@@ -138,7 +138,8 @@ export function useModuleSubmit({
         duration: moduleForm.duration,
         image_url: moduleForm.image_url,
         video_url: "",
-        levels: levelsPayload
+        levels: levelsPayload,
+        status: targetStatus
       };
 
       await apiClient.post("modules", modulePayload);

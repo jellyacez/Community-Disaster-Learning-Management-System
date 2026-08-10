@@ -9,6 +9,8 @@ export default function DashboardHeader({
   setFilterCategory,
   filterLevel,
   setFilterLevel,
+  filterStatus,
+  setFilterStatus,
   handleOpenWizard
 }) {
   return (
@@ -46,7 +48,7 @@ export default function DashboardHeader({
       </div>
 
       {/* Search & Filters Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 bg-white p-4 rounded-2xl border border-gray-200 shadow-sm items-end">
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-4 bg-white p-4 rounded-2xl border border-gray-200 shadow-sm items-end">
         <div className="md:col-span-2 relative">
           <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest flex items-center gap-1.5 px-1 mb-1.5">
             <HugeiconsIcon icon={Search01Icon} className="w-3 h-3" />
@@ -96,6 +98,23 @@ export default function DashboardHeader({
             <option value="Level 1">Beginner</option>
             <option value="Level 2">Intermediate</option>
             <option value="Level 3">Advanced</option>
+          </select>
+        </div>
+        
+        <div className="md:col-span-1">
+          <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest flex items-center gap-1.5 px-1 mb-1.5">
+            <HugeiconsIcon icon={StarIcon} className="w-3 h-3" />
+            Status
+          </label>
+          <select 
+            value={filterStatus} 
+            onChange={(e) => { setFilterStatus(e.target.value); setCurrentPage(1); }}
+            className="w-full py-2.5 px-4 bg-gray-50 hover:bg-gray-100 border border-transparent rounded-xl text-sm font-bold text-gray-700 outline-none focus:bg-white focus:border-red-200 focus:ring-4 focus:ring-red-500/10 cursor-pointer transition-all appearance-none"
+          >
+            <option value="All">All Statuses</option>
+            <option value="Published">Published</option>
+            <option value="Drafts">Drafts</option>
+            <option value="Pending Review">Pending Review</option>
           </select>
         </div>
       </div>
