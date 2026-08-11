@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import toast from "react-hot-toast";
 import apiClient from "../../../../lib/apiClient";
 import RichTextEditor from "../../../../components/ui/RichTextEditor";
@@ -15,6 +15,38 @@ import {
 
 export default function ModuleHeaderForm({ moduleForm, setModuleForm, formErrors = {}, setFormErrors }) {
   const [isUploading, setIsUploading] = useState(false);
+
+  const parseDurationToMinutes = (val) => {
+    if (val === null || val === undefined || val === '') return '';
+    const str = String(val).toLowerCase().trim();
+    if (!str) return '';
+    
+    if (/^\d+$/.test(str)) return str;
+    
+    const match = str.match(/([\d.]+)/);
+    if (!match) return '';
+    
+    let num = parseFloat(match[1]);
+    if (isNaN(num)) return '';
+    
+    if (str.includes('hour') || str.includes('hr')) {
+      num = Math.round(num * 60);
+    }
+    
+    return num.toString();
+  };
+
+  const [localDuration, setLocalDuration] = useState(() => parseDurationToMinutes(moduleForm.duration));
+
+  useEffect(() => {
+    setLocalDuration(parseDurationToMinutes(moduleForm.duration));
+  }, [moduleForm.duration]);
+
+  const handleDurationChange = (e) => {
+    const val = e.target.value;
+    setLocalDuration(val);
+    handleFieldChange('duration', val ? `${val} mins` : '');
+  };
   
   const handleFieldChange = (field, value) => {
     setModuleForm({ ...moduleForm, [field]: value });
@@ -109,7 +141,7 @@ export default function ModuleHeaderForm({ moduleForm, setModuleForm, formErrors
           <div className="flex flex-col gap-1.5">
             <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest flex items-center gap-2">
               <HugeiconsIcon icon={GridIcon} className="w-3.5 h-3.5" />
-              Category
+              Category <span className="text-red-500">*</span>
             </label>
             <select 
               value={moduleForm.category} 
@@ -126,25 +158,26 @@ export default function ModuleHeaderForm({ moduleForm, setModuleForm, formErrors
           <div className="flex flex-col gap-1.5">
             <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest flex items-center gap-2">
               <HugeiconsIcon icon={Time01Icon} className="w-3.5 h-3.5" />
-              Est. Duration
+              Est. Duration <span className="text-red-500">*</span>
             </label>
-            <select 
-              value={moduleForm.duration} 
-              onChange={(e) => handleFieldChange('duration', e.target.value)} 
-              className="w-full py-2 px-3 bg-gray-50 hover:bg-gray-100 border border-transparent focus:border-red-200 focus:bg-white focus:ring-4 focus:ring-red-500/10 text-gray-900 rounded-lg text-xs font-bold transition-all outline-none cursor-pointer appearance-none"
-            >
-              <option value="15 mins">15 mins</option>
-              <option value="30 mins">30 mins</option>
-              <option value="45 mins">45 mins</option>
-              <option value="1 hour">1 hour</option>
-              <option value="1.5 hours+">1.5 hours+</option>
-            </select>
+            <div className="relative">
+              <input 
+                type="number" 
+                min="1"
+                placeholder="0"
+                value={localDuration} 
+                onChange={handleDurationChange} 
+                className={`w-full py-2 pl-3 pr-12 bg-gray-50 hover:bg-gray-100 border focus:bg-white focus:ring-4 focus:ring-red-500/10 text-gray-900 rounded-lg text-xs font-bold transition-all outline-none ${formErrors.duration ? 'border-red-500 ring-2 ring-red-500/10' : 'border-transparent focus:border-red-200'}`}
+              />
+              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-gray-400 pointer-events-none">mins</span>
+            </div>
+            {formErrors.duration && <p className="text-red-500 text-xs mt-1 font-bold">{formErrors.duration}</p>}
           </div>
 
           <div className="flex flex-col gap-1.5">
             <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest flex items-center gap-2">
               <HugeiconsIcon icon={StarIcon} className="w-3.5 h-3.5" />
-              Level
+              Level <span className="text-red-500">*</span>
             </label>
             <select 
               value={moduleForm.level} 
@@ -161,7 +194,7 @@ export default function ModuleHeaderForm({ moduleForm, setModuleForm, formErrors
         <div className="w-full pt-2">
            <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2 flex items-center gap-2">
               <HugeiconsIcon icon={File01Icon} className="w-3.5 h-3.5" />
-              Description / Summary
+              Description / Summary <span className="text-red-500">*</span>
            </label>
            <div className={`rounded-xl overflow-hidden border transition-all ${formErrors.description ? 'border-red-500 ring-2 ring-red-500/10' : 'border-gray-200 focus-within:border-gray-300'}`}>
               <RichTextEditor 

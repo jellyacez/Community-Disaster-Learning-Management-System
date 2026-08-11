@@ -1,8 +1,7 @@
 export default function PriorityActionEditor({
   currentSituationalData,
   setCurrentSituationalData,
-  formErrors,
-  addSituationalScenarioToStep
+  formErrors
 }) {
   const correctIdx = currentSituationalData.correctAnswerIndex != null ? Number(currentSituationalData.correctAnswerIndex) : 0;
 
@@ -60,13 +59,6 @@ export default function PriorityActionEditor({
           <option value={2}>Option 3 is correct</option>
           <option value={3}>Option 4 is correct</option>
         </select>
-        <button
-          type="button"
-          onClick={() => addSituationalScenarioToStep(formErrors)}
-          className="px-4 py-2 bg-slate-800 rounded-lg text-xs font-bold text-white shadow-sm hover:bg-slate-900 transition-colors uppercase tracking-wide"
-        >
-          + Add Scenario to Step
-        </button>
       </div>
     </div>
   );

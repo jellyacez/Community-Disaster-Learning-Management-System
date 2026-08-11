@@ -82,10 +82,13 @@ export default function ModuleBuilderWizard({
   const handleNextStep = () => {
     // Basic validation before allowing next step
     if (wizardStep === 1) {
-      if (!moduleForm.title || !moduleForm.description) {
+      if (!moduleForm.title || !moduleForm.description || !moduleForm.category || !moduleForm.duration || !moduleForm.level) {
         setFormErrors({
           title: !moduleForm.title ? "Title is required" : "",
           description: !moduleForm.description ? "Description is required" : "",
+          category: !moduleForm.category ? "Category is required" : "",
+          duration: !moduleForm.duration ? "Duration is required" : "",
+          level: !moduleForm.level ? "Level is required" : "",
         });
         return;
       }

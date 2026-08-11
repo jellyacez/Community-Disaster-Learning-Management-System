@@ -1,6 +1,14 @@
 import { useState } from "react";
 import toast from "react-hot-toast";
 
+const generateId = () => {
+  try {
+    return crypto.randomUUID();
+  } catch (e) {
+    return Date.now().toString(36) + Math.random().toString(36).substring(2);
+  }
+};
+
 export function useStepStager(activeLevelOrder, setFormErrors) {
   const [stagedFlows, setStagedFlows] = useState([]);
   const [currentFlowStep, setCurrentFlowStep] = useState({
@@ -136,7 +144,7 @@ export function useStepStager(activeLevelOrder, setFormErrors) {
       }
       setEditingStepId(null);
     } else {
-      stepWithMeta.id = crypto.randomUUID();
+      stepWithMeta.id = generateId();
       setStagedFlows([...stagedFlows, stepWithMeta]);
     }
 
@@ -207,71 +215,76 @@ export function useStepStager(activeLevelOrder, setFormErrors) {
   };
 
   const addSituationalScenarioToStep = () => {
-    const errors = {};
-    if (!currentSituationalData.scenarioDescription.trim()) {
-      errors.scenarioDescription =
-        "A scenario description is required to proceed.";
-    }
+    try {
+      const errors = {};
+      if (!currentSituationalData.scenarioDescription?.trim()) {
+        errors.scenarioDescription =
+          "A scenario description is required to proceed.";
+      }
 
-    if (currentSituationalData.interactionType === "priority_action") {
-      if (currentSituationalData.options.some((opt) => !opt.text.trim()))
-        errors.situationalOptions = "All four options must be populated.";
-      if (currentSituationalData.options.some((opt) => !opt.rationale.trim()))
-        errors.situationalOptions = "Rationale is required for all options.";
-    } else if (
-      currentSituationalData.interactionType === "hazard_identification"
-    ) {
-      if (currentSituationalData.hazards.length === 0)
-        errors.situationalHazards = "At least one hazard must be defined.";
-      if (
-        currentSituationalData.hazards.some(
-          (h) => !h.text.trim() || !h.rationale.trim(),
+      if (currentSituationalData.interactionType === "priority_action") {
+        if (currentSituationalData.options?.some((opt) => !opt.text?.trim()))
+          errors.situationalOptions = "All four options must be populated.";
+        if (currentSituationalData.options?.some((opt) => !opt.rationale?.trim()))
+          errors.situationalOptions = "Rationale is required for all options.";
+      } else if (
+        currentSituationalData.interactionType === "hazard_identification"
+      ) {
+        if (!currentSituationalData.hazards || currentSituationalData.hazards.length === 0)
+          errors.situationalHazards = "At least one hazard must be defined.";
+        if (
+          currentSituationalData.hazards?.some(
+            (h) => !h.text?.trim() || !h.rationale?.trim(),
+          )
         )
-      )
-        errors.situationalHazards = "All hazards must have text and rationale.";
-    } else if (currentSituationalData.interactionType === "action_sequence") {
-      if (currentSituationalData.sequenceSteps.length < 2)
-        errors.situationalSequence =
-          "At least two sequence steps must be defined.";
-      if (currentSituationalData.sequenceSteps.some((s) => !s.text.trim()))
-        errors.situationalSequence = "All sequence steps must have text.";
+          errors.situationalHazards = "All hazards must have text and rationale.";
+      } else if (currentSituationalData.interactionType === "action_sequence") {
+        if (!currentSituationalData.sequenceSteps || currentSituationalData.sequenceSteps.length < 2)
+          errors.situationalSequence =
+            "At least two sequence steps must be defined.";
+        if (currentSituationalData.sequenceSteps?.some((s) => !s.text?.trim()))
+          errors.situationalSequence = "All sequence steps must have text.";
+      }
+
+      if (Object.keys(errors).length > 0) {
+        setFormErrors(errors);
+        toast.error("Please fill all required scenario fields before adding.");
+        return;
+      }
+
+      const newScenario = {
+        id: generateId(),
+        ...currentSituationalData,
+      };
+
+      setCurrentFlowStep({
+        ...currentFlowStep,
+        situationalScenarios: [
+          ...(currentFlowStep.situationalScenarios || []),
+          newScenario,
+        ],
+      });
+
+      // Reset situational editor form
+      setCurrentSituationalData({
+        scenarioDescription: "",
+        interactionType: "priority_action",
+        options: [
+          { text: "", rationale: "" },
+          { text: "", rationale: "" },
+          { text: "", rationale: "" },
+          { text: "", rationale: "" },
+        ],
+        correctAnswerIndex: 0,
+        hazards: [{ text: "", rationale: "", isRequired: true }],
+        sequenceSteps: [{ text: "", order: 1 }],
+      });
+      setFormErrors({});
+      toast.success("Situational scenario added to step!");
+    } catch (error) {
+      console.error("Failed to add scenario:", error);
+      toast.error(`System Error: Failed to add scenario. ${error.message}`);
     }
-
-    if (Object.keys(errors).length > 0) {
-      setFormErrors(errors);
-      toast.error("Please fill all required scenario fields before adding.");
-      return;
-    }
-
-    const newScenario = {
-      id: crypto.randomUUID(),
-      ...currentSituationalData,
-    };
-
-    setCurrentFlowStep({
-      ...currentFlowStep,
-      situationalScenarios: [
-        ...currentFlowStep.situationalScenarios,
-        newScenario,
-      ],
-    });
-
-    // Reset situational editor form
-    setCurrentSituationalData({
-      scenarioDescription: "",
-      interactionType: "priority_action",
-      options: [
-        { text: "", rationale: "" },
-        { text: "", rationale: "" },
-        { text: "", rationale: "" },
-        { text: "", rationale: "" },
-      ],
-      correctAnswerIndex: 0,
-      hazards: [{ text: "", rationale: "", isRequired: true }],
-      sequenceSteps: [{ text: "", order: 1 }],
-    });
-    setFormErrors({});
-    toast.success("Situational scenario added to step!");
   };
 
   return {

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import ConfirmationModal from "../../../../../components/ui/modals/ConfirmationModal";
 
 export default function QuizEditor({
@@ -11,6 +11,26 @@ export default function QuizEditor({
   setFormErrors,
 }) {
   const [questionToDelete, setQuestionToDelete] = useState(null);
+  const [isQuestionOpen, setIsQuestionOpen] = useState(true);
+  const [isOptionsOpen, setIsOptionsOpen] = useState(true);
+  const [isConfigOpen, setIsConfigOpen] = useState(true);
+
+  useEffect(() => {
+    if (formErrors.questionText || formErrors.options) {
+      const timer = setTimeout(() => {
+        const targetId = formErrors.questionText ? "quiz-question-anchor" : "quiz-options-anchor";
+        const errorEl = document.getElementById(targetId);
+        if (errorEl) {
+          // If the section is closed, we should force it open to show the error
+          if (formErrors.questionText) setIsQuestionOpen(true);
+          if (formErrors.options) setIsOptionsOpen(true);
+          
+          errorEl.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+      }, 50);
+      return () => clearTimeout(timer);
+    }
+  }, [formErrors.questionText, formErrors.options]);
 
   const handleQuestionChange = (field, value) => {
     setCurrentQuizQuestion({ ...currentQuizQuestion, [field]: value });
@@ -69,88 +89,130 @@ export default function QuizEditor({
           {formErrors.stepQuiz}
         </p>
       )}
-      <div>
-        <input
-          type="text"
-          placeholder="Write quiz question text block..."
-          value={currentQuizQuestion.questionText}
-          onChange={(e) => handleQuestionChange("questionText", e.target.value)}
-          className={`w-full p-3.5 bg-white border ${formErrors.questionText ? "border-red-500 ring-2 ring-red-500/10" : "border-slate-300"} rounded-xl text-sm font-semibold text-slate-800 focus:outline-none focus:border-red-500 focus:ring-4 focus:ring-red-500/10 shadow-sm transition-all`}
-        />
-        {formErrors.questionText && (
-          <p className="text-red-500 text-xs mt-1.5 font-bold">
-            {formErrors.questionText}
-          </p>
-        )}
-      </div>
-      <div className="grid grid-cols-1 gap-3">
-        {currentQuizQuestion.options.map((opt, oIdx) => (
-          <div
-            key={oIdx}
-            className={`p-4 rounded-xl text-sm transition-all ${
-              currentQuizQuestion.correctAnswerIndex === oIdx
-                ? "border-2 border-emerald-500 bg-emerald-50 shadow-sm"
-                : formErrors.options
-                  ? "border border-red-500 bg-white"
-                  : "border border-slate-200 bg-slate-50 hover:bg-slate-100/50"
-            }`}
-          >
-            <label
-              className={`block text-xs font-bold uppercase tracking-wide mb-2 ${
-                currentQuizQuestion.correctAnswerIndex === oIdx
-                  ? "text-emerald-700"
-                  : "text-slate-500"
-              }`}
-            >
-              Choice Answer Option {oIdx + 1}{" "}
-              {currentQuizQuestion.correctAnswerIndex === oIdx &&
-                "(Correct Answer)"}
-            </label>
-
-            <input
-              type="text"
-              placeholder="Enter answer choice"
-              value={opt.text}
-              onChange={(e) => handleOptionChange(oIdx, "text", e.target.value)}
-              className={`w-full p-2.5 bg-white border ${currentQuizQuestion.correctAnswerIndex === oIdx ? "border-emerald-300" : "border-slate-300"} rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500/20 text-sm font-medium placeholder:text-slate-400 mb-2 transition-colors`}
-            />
-            <textarea
-              rows="2"
-              placeholder={`Rationale / Formative Feedback (Shown if selected)`}
-              value={opt.rationale}
-              onChange={(e) =>
-                handleOptionChange(oIdx, "rationale", e.target.value)
-              }
-              className={`w-full p-2.5 bg-white border ${currentQuizQuestion.correctAnswerIndex === oIdx ? "border-emerald-200" : "border-slate-200"} rounded-lg focus:outline-none text-xs resize-none placeholder:text-slate-400`}
-            />
-          </div>
-        ))}
-        {formErrors.options && (
-          <p className="text-red-500 text-xs mt-1 font-medium">
-            {formErrors.options}
-          </p>
-        )}
-      </div>
-      <div className="flex items-center justify-between gap-4 pt-3 border-t border-slate-100">
-        <select
-          value={currentQuizQuestion.correctAnswerIndex}
-          onChange={(e) =>
-            handleQuestionChange("correctAnswerIndex", parseInt(e.target.value))
-          }
-          className="p-2 border border-slate-300 rounded-lg bg-white text-xs font-bold text-slate-700 outline-none cursor-pointer focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
+      
+      {/* Question Text Accordion */}
+      <div className="border border-slate-200 rounded-xl bg-white overflow-hidden shadow-sm">
+        <button 
+          type="button" 
+          onClick={() => setIsQuestionOpen(!isQuestionOpen)}
+          className="w-full flex items-center justify-between p-4 bg-slate-50 hover:bg-slate-100 transition-colors text-left"
         >
-          <option value={0}>Option 1 is correct</option>
-          <option value={1}>Option 2 is correct</option>
-          <option value={2}>Option 3 is correct</option>
-          <option value={3}>Option 4 is correct</option>
-        </select>
-        <button
-          type="button"
-          onClick={addQuizQuestionToStep}
-          className="px-4 py-2 bg-slate-800 rounded-lg text-xs font-bold text-white shadow-sm hover:bg-slate-900 transition-colors uppercase tracking-wide"
-        >
-          + Commit Question
+          <span className="text-xs font-bold text-slate-700 uppercase tracking-wide">1. Question Text</span>
+          <span className="text-slate-400 font-bold">{isQuestionOpen ? '−' : '+'}</span>
         </button>
+        {isQuestionOpen && (
+          <div className="p-4 border-t border-slate-200">
+            <input
+              id="quiz-question-anchor"
+              type="text"
+              placeholder="Write quiz question text block..."
+              value={currentQuizQuestion.questionText}
+              onChange={(e) => handleQuestionChange("questionText", e.target.value)}
+              className={`w-full p-3.5 bg-white border ${formErrors.questionText ? "border-red-500 ring-2 ring-red-500/10" : "border-slate-300"} rounded-xl text-sm font-semibold text-slate-800 focus:outline-none focus:border-red-500 focus:ring-4 focus:ring-red-500/10 shadow-sm transition-all`}
+            />
+            {formErrors.questionText && (
+              <p className="text-red-500 text-xs mt-1.5 font-bold">
+                {formErrors.questionText}
+              </p>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Choice Options Accordion */}
+      <div className="border border-slate-200 rounded-xl bg-white overflow-hidden shadow-sm">
+        <button 
+          type="button" 
+          onClick={() => setIsOptionsOpen(!isOptionsOpen)}
+          className="w-full flex items-center justify-between p-4 bg-slate-50 hover:bg-slate-100 transition-colors text-left"
+        >
+          <span className="text-xs font-bold text-slate-700 uppercase tracking-wide">2. Choice Options</span>
+          <span className="text-slate-400 font-bold">{isOptionsOpen ? '−' : '+'}</span>
+        </button>
+        {isOptionsOpen && (
+          <div className="p-4 border-t border-slate-200" id="quiz-options-anchor">
+            <div className="grid grid-cols-1 gap-3">
+              {currentQuizQuestion.options.map((opt, oIdx) => (
+                <div
+                  key={oIdx}
+                  className={`p-4 rounded-xl text-sm transition-all ${
+                    currentQuizQuestion.correctAnswerIndex === oIdx
+                      ? "border-2 border-emerald-500 bg-emerald-50 shadow-sm"
+                      : formErrors.options
+                        ? "border border-red-500 bg-white"
+                        : "border border-slate-200 bg-slate-50 hover:bg-slate-100/50"
+                  }`}
+                >
+                  <label
+                    className={`flex items-center gap-2 cursor-pointer block text-xs font-bold uppercase tracking-wide mb-2 ${
+                      currentQuizQuestion.correctAnswerIndex === oIdx
+                        ? "text-emerald-700"
+                        : "text-slate-500"
+                    }`}
+                  >
+                    <input 
+                      type="radio" 
+                      name={`correctAnswer-${currentQuizQuestion?.id || 'new'}`}
+                      checked={currentQuizQuestion.correctAnswerIndex === oIdx} 
+                      onChange={() => handleQuestionChange("correctAnswerIndex", oIdx)} 
+                      className="w-4 h-4 text-emerald-600 focus:ring-emerald-500"
+                    />
+                    Choice Answer Option {oIdx + 1}{" "}
+                    {currentQuizQuestion.correctAnswerIndex === oIdx &&
+                      "(Correct Answer)"}
+                  </label>
+
+                  <input
+                    type="text"
+                    placeholder="Enter answer choice"
+                    value={opt.text}
+                    onChange={(e) => handleOptionChange(oIdx, "text", e.target.value)}
+                    className={`w-full p-2.5 bg-white border ${currentQuizQuestion.correctAnswerIndex === oIdx ? "border-emerald-300" : "border-slate-300"} rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500/20 text-sm font-medium placeholder:text-slate-400 mb-2 transition-colors`}
+                  />
+                  <textarea
+                    rows="2"
+                    placeholder={`Rationale / Formative Feedback (Shown if selected)`}
+                    value={opt.rationale}
+                    onChange={(e) =>
+                      handleOptionChange(oIdx, "rationale", e.target.value)
+                    }
+                    className={`w-full p-2.5 bg-white border ${currentQuizQuestion.correctAnswerIndex === oIdx ? "border-emerald-200" : "border-slate-200"} rounded-lg focus:outline-none text-xs resize-none placeholder:text-slate-400`}
+                  />
+                </div>
+              ))}
+              {formErrors.options && (
+                <p className="text-red-500 text-xs mt-1 font-medium">
+                  {formErrors.options}
+                </p>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Assessment Config Accordion */}
+      <div className="border border-slate-200 rounded-xl bg-white overflow-hidden shadow-sm">
+        <button 
+          type="button" 
+          onClick={() => setIsConfigOpen(!isConfigOpen)}
+          className="w-full flex items-center justify-between p-4 bg-slate-50 hover:bg-slate-100 transition-colors text-left"
+        >
+          <span className="text-xs font-bold text-slate-700 uppercase tracking-wide">3. Assessment Config</span>
+          <span className="text-slate-400 font-bold">{isConfigOpen ? '−' : '+'}</span>
+        </button>
+        {isConfigOpen && (
+          <div className="p-4 border-t border-slate-200">
+            <div className="flex items-center justify-end gap-4">
+              <button
+                type="button"
+                onClick={addQuizQuestionToStep}
+                className="px-4 py-2 bg-slate-800 rounded-lg text-xs font-bold text-white shadow-sm hover:bg-slate-900 transition-colors uppercase tracking-wide"
+              >
+                + Commit Question
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Render saved questions for this step */}

@@ -13,6 +13,14 @@ exports.validateModuleCreation = (payload) => {
     return { isValid: false, error: "Module category is required." };
   }
 
+  if (typeof payload.level !== 'string' || payload.level.trim() === '') {
+    return { isValid: false, error: "Module level is required." };
+  }
+
+  if (typeof payload.duration !== 'string' || payload.duration.trim() === '') {
+    return { isValid: false, error: "Module duration is required." };
+  }
+
   if (typeof payload.description !== 'string' || payload.description.trim() === '' || payload.description === '<p></p>') {
     return { isValid: false, error: "Module description is required." };
   }
