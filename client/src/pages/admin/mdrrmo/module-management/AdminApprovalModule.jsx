@@ -88,9 +88,12 @@ export default function AdminModuleApprovals() {
   };
 
   const filteredModules = useMemo(() => {
-    return approvalRequests.filter(
-      (mod) => mod.status.toLowerCase() === activeTab.toLowerCase()
-    );
+    return approvalRequests.filter((mod) => {
+      if (activeTab === "rejected") {
+        return mod.status === "draft" && mod.rejection_reason;
+      }
+      return mod.status.toLowerCase() === activeTab.toLowerCase();
+    });
   }, [activeTab, approvalRequests]);
 
   const tabs = useMemo(
@@ -108,7 +111,7 @@ export default function AdminModuleApprovals() {
       {
         key: "rejected",
         label: "Rejected",
-        count: approvalRequests.filter((m) => m.status === "rejected").length,
+        count: approvalRequests.filter((m) => m.status === "draft" && m.rejection_reason).length,
       },
     ],
     [approvalRequests]
@@ -195,6 +198,13 @@ export default function AdminModuleApprovals() {
                   <p className="text-sm text-gray-600 line-clamp-3 mb-4">
                     {(moduleItem.description || "").replace(/<[^>]*>?/gm, '')}
                   </p>
+
+                  {activeTab === "rejected" && moduleItem.rejection_reason && (
+                    <div className="mt-2 p-3 bg-red-50 border border-red-100 rounded-xl">
+                      <p className="text-[11px] font-bold text-red-800 uppercase tracking-wider mb-1">Reason for Rejection</p>
+                      <p className="text-xs text-red-600 italic">"{moduleItem.rejection_reason}"</p>
+                    </div>
+                  )}
                 </div>
 
                 <div className="flex flex-col gap-2 pt-4 border-t border-gray-200/60">
