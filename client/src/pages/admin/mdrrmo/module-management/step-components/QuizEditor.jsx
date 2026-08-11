@@ -1,5 +1,10 @@
 import { useState, useEffect } from "react";
+import { flushSync } from "react-dom";
 import ConfirmationModal from "../../../../../components/ui/modals/ConfirmationModal";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { Task01Icon, ArrowUp01Icon, ArrowDown01Icon, Delete01Icon } from "@hugeicons/core-free-icons";
+
+import { scrollToFirstError } from "../../../../../utils/scrollUtils";
 
 export default function QuizEditor({
   currentFlowStep,
@@ -18,19 +23,30 @@ export default function QuizEditor({
   useEffect(() => {
     if (formErrors.questionText || formErrors.options) {
       const timer = setTimeout(() => {
-        const targetId = formErrors.questionText ? "quiz-question-anchor" : "quiz-options-anchor";
-        const errorEl = document.getElementById(targetId);
-        if (errorEl) {
-          // If the section is closed, we should force it open to show the error
+        flushSync(() => {
           if (formErrors.questionText) setIsQuestionOpen(true);
           if (formErrors.options) setIsOptionsOpen(true);
+        });
+        
+        // Wait for next tick to ensure DOM is painted before we measure rects
+        setTimeout(() => {
+          const activeErrorIds = [];
+          if (formErrors.questionText) activeErrorIds.push("quiz-question-anchor");
           
-          errorEl.scrollIntoView({ behavior: "smooth", block: "center" });
-        }
-      }, 50);
+          if (formErrors.options) {
+            currentQuizQuestion.options.forEach((opt, idx) => {
+              if (!opt.text.trim() || !opt.rationale.trim()) {
+                activeErrorIds.push(`quiz-option-${idx}-anchor`);
+              }
+            });
+          }
+          
+          scrollToFirstError("step-builder-scroll-container", activeErrorIds);
+        }, 50);
+      }, 10);
       return () => clearTimeout(timer);
     }
-  }, [formErrors.questionText, formErrors.options]);
+  }, [formErrors._scrollTrigger]);
 
   const handleQuestionChange = (field, value) => {
     setCurrentQuizQuestion({ ...currentQuizQuestion, [field]: value });
@@ -63,6 +79,19 @@ export default function QuizEditor({
       (_, i) => i !== index,
     );
     setCurrentFlowStep({ ...currentFlowStep, quizQuestions: updatedQuestions });
+  };
+
+  const moveQuizQuestion = (index, direction) => {
+    if (direction === "up" && index === 0) return;
+    if (direction === "down" && index === currentFlowStep.quizQuestions.length - 1) return;
+    
+    const newQuestions = [...currentFlowStep.quizQuestions];
+    const swapIndex = direction === "up" ? index - 1 : index + 1;
+    const temp = newQuestions[index];
+    newQuestions[index] = newQuestions[swapIndex];
+    newQuestions[swapIndex] = temp;
+    
+    setCurrentFlowStep({ ...currentFlowStep, quizQuestions: newQuestions });
   };
 
   const handleDeleteQuestion = (index) => {
@@ -135,6 +164,7 @@ export default function QuizEditor({
               {currentQuizQuestion.options.map((opt, oIdx) => (
                 <div
                   key={oIdx}
+                  id={`quiz-option-${oIdx}-anchor`}
                   className={`p-4 rounded-xl text-sm transition-all ${
                     currentQuizQuestion.correctAnswerIndex === oIdx
                       ? "border-2 border-emerald-500 bg-emerald-50 shadow-sm"
@@ -225,12 +255,37 @@ export default function QuizEditor({
             {currentFlowStep.quizQuestions.map((q, idx) => (
               <div
                 key={idx}
-                className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 bg-white border border-emerald-100 rounded-lg shadow-sm"
+                className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 bg-white border border-emerald-100 rounded-lg shadow-sm group"
               >
-                <p className="text-xs font-semibold text-slate-700 flex-1 break-words">
-                  {idx + 1}. {q.questionText}
-                </p>
+                <div className="flex items-center gap-2 flex-1 min-w-0">
+                  <span className="flex shrink-0 items-center justify-center w-6 h-6 rounded bg-emerald-50 text-emerald-600">
+                    <HugeiconsIcon icon={Task01Icon} className="w-3.5 h-3.5" />
+                  </span>
+                  <p className="text-xs font-semibold text-slate-700 truncate" title={`${idx + 1}. ${q.questionText}`}>
+                    {idx + 1}. {q.questionText}
+                  </p>
+                </div>
                 <div className="flex items-center gap-2 shrink-0">
+                  <div className="flex items-center gap-0.5 mr-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button 
+                      type="button" 
+                      onClick={() => moveQuizQuestion(idx, "up")} 
+                      disabled={idx === 0} 
+                      className="p-1 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded disabled:opacity-30 transition-colors"
+                      title="Move Up"
+                    >
+                        <HugeiconsIcon icon={ArrowUp01Icon} className="w-4 h-4" />
+                    </button>
+                    <button 
+                      type="button" 
+                      onClick={() => moveQuizQuestion(idx, "down")} 
+                      disabled={idx === currentFlowStep.quizQuestions.length - 1} 
+                      className="p-1 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded disabled:opacity-30 transition-colors"
+                      title="Move Down"
+                    >
+                        <HugeiconsIcon icon={ArrowDown01Icon} className="w-4 h-4" />
+                    </button>
+                  </div>
                   <button
                     type="button"
                     onClick={() => handleEditQuestion(idx)}
@@ -241,9 +296,10 @@ export default function QuizEditor({
                   <button
                     type="button"
                     onClick={() => handleDeleteQuestion(idx)}
-                    className="px-2.5 py-1 text-[10px] font-bold text-red-600 bg-red-50 hover:bg-red-100 border border-red-200 rounded uppercase tracking-wide transition-colors"
+                    className="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+                    title="Delete Question"
                   >
-                    Delete
+                    <HugeiconsIcon icon={Delete01Icon} className="w-4 h-4" />
                   </button>
                 </div>
               </div>

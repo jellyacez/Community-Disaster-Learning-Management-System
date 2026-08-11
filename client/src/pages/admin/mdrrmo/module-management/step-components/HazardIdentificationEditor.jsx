@@ -51,7 +51,10 @@ export default function HazardIdentificationEditor({
 
       <div className="space-y-3">
         {hazardsList.map((hazard, hIdx) => (
-          <div key={hIdx} className={`p-4 rounded-xl text-sm transition-all border ${
+          <div 
+            key={hIdx} 
+            id={`situational-hazard-${hIdx}-anchor`}
+            className={`p-4 rounded-xl text-sm transition-all border ${
             formErrors.situationalHazards ? "border-red-500 bg-white" : "border-slate-200 bg-slate-50 hover:bg-slate-100/50"
           }`}>
             <div className="flex items-center justify-between mb-3">

@@ -214,6 +214,7 @@ export default function ModuleBuilderWizard({
                     triggerFlowSequencePreview={() => setShowPreviewModal(true)}
                     handleEditStep={handleEditStep}
                     formError={formErrors.flows}
+                    moduleStatus={moduleForm.status}
                   />
                   {formErrors.flows && stagedFlows.filter(flow => flow.levelOrder === activeLevelOrder).length > 0 && (
                     <div id="sequence-error-anchor" className="animate-in fade-in slide-in-from-top-2 mt-4 p-4 bg-red-50 border border-red-200 rounded-xl flex items-start gap-3">

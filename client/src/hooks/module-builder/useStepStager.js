@@ -97,7 +97,7 @@ export function useStepStager(activeLevelOrder, setFormErrors) {
     }
 
     if (Object.keys(errors).length > 0) {
-      setFormErrors(errors);
+      setFormErrors({ ...errors, _scrollTrigger: Date.now() });
       toast.error(
         "System Error: Validation failed. Please ensure all required fields are populated.",
       );
@@ -136,16 +136,19 @@ export function useStepStager(activeLevelOrder, setFormErrors) {
 
     if (editingStepId) {
       stepWithMeta.id = editingStepId;
-      const index = stagedFlows.findIndex((s) => s.id === editingStepId);
-      if (index !== -1) {
-        const newFlows = [...stagedFlows];
-        newFlows[index] = stepWithMeta;
-        setStagedFlows(newFlows);
-      }
+      setStagedFlows((prev) => {
+        const index = prev.findIndex((s) => s.id === editingStepId);
+        if (index !== -1) {
+          const newFlows = [...prev];
+          newFlows[index] = stepWithMeta;
+          return newFlows;
+        }
+        return prev;
+      });
       setEditingStepId(null);
     } else {
       stepWithMeta.id = generateId();
-      setStagedFlows([...stagedFlows, stepWithMeta]);
+      setStagedFlows((prev) => [...prev, stepWithMeta]);
     }
 
     setWrittenMaterialFile(null);
@@ -189,7 +192,7 @@ export function useStepStager(activeLevelOrder, setFormErrors) {
         "Rationale / Formative Feedback is required for all options to ensure pedagogical effectiveness.";
 
     if (Object.keys(errors).length > 0) {
-      setFormErrors({ ...formErrors, ...errors });
+      setFormErrors({ ...formErrors, ...errors, _scrollTrigger: Date.now() });
       return;
     }
 
@@ -247,7 +250,7 @@ export function useStepStager(activeLevelOrder, setFormErrors) {
       }
 
       if (Object.keys(errors).length > 0) {
-        setFormErrors(errors);
+        setFormErrors({ ...errors, _scrollTrigger: Date.now() });
         toast.error("Please fill all required scenario fields before adding.");
         return;
       }

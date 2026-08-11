@@ -19,7 +19,10 @@ export default function PriorityActionEditor({
     <div className="space-y-4 pt-2 animate-in fade-in slide-in-from-bottom-2 duration-300">
       <div className="grid grid-cols-1 gap-3">
         {currentSituationalData.options.map((opt, oIdx) => (
-          <div key={oIdx} className={`p-4 rounded-xl text-sm transition-all ${
+          <div 
+            key={oIdx} 
+            id={`situational-option-${oIdx}-anchor`}
+            className={`p-4 rounded-xl text-sm transition-all ${
               correctIdx === oIdx 
                 ? "border-2 border-emerald-500 bg-emerald-50 shadow-sm" 
                 : formErrors.situationalOptions ? "border border-red-500 bg-white" : "border border-slate-200 bg-slate-50 hover:bg-slate-100/50"

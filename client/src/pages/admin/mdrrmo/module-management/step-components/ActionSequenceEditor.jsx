@@ -68,7 +68,10 @@ export default function ActionSequenceEditor({
 
       <div className="space-y-3">
         {stepsList.map((step, sIdx) => (
-          <div key={sIdx} className={`flex items-start gap-3 p-3 rounded-xl transition-all border ${
+          <div 
+            key={sIdx} 
+            id={`situational-sequence-${sIdx}-anchor`}
+            className={`flex items-start gap-3 p-3 rounded-xl transition-all border ${
             formErrors.situationalSequence ? "border-red-500 bg-white" : "border-slate-200 bg-slate-50 hover:bg-slate-100/50"
           }`}>
             <div className="pt-1">

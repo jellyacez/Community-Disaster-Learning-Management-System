@@ -1,6 +1,9 @@
 import RichTextEditor from "../../../../../components/ui/RichTextEditor";
+import { flushSync } from "react-dom";
 import toast from "react-hot-toast";
 import { useState, useEffect } from "react";
+
+import { scrollToFirstError } from "../../../../../utils/scrollUtils";
 
 export default function LearningContentEditor({
   currentFlowStep,
@@ -15,15 +18,16 @@ export default function LearningContentEditor({
   useEffect(() => {
     if (formErrors.stepContent) {
       const timer = setTimeout(() => {
-        const errorEl = document.getElementById("learning-content-anchor");
-        if (errorEl) {
+        flushSync(() => {
           setIsInstructionsOpen(true);
-          errorEl.scrollIntoView({ behavior: "smooth", block: "center" });
-        }
-      }, 50);
+        });
+        setTimeout(() => {
+          scrollToFirstError("step-builder-scroll-container", ["learning-content-anchor"]);
+        }, 50);
+      }, 10);
       return () => clearTimeout(timer);
     }
-  }, [formErrors.stepContent]);
+  }, [formErrors._scrollTrigger]);
 
   return (
     <div className="space-y-4 pt-2">

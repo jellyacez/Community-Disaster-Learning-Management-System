@@ -44,6 +44,7 @@ export default function ModuleManagement() {
   const [filterCategory, setFilterCategory] = useState("All");
   const [filterLevel, setFilterLevel] = useState("All");
   const [filterStatus, setFilterStatus] = useState("All"); // All, Published, Drafts, Pending Review
+  const [sortOption, setSortOption] = useState("Needs revision first");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 6;
 
@@ -59,8 +60,20 @@ export default function ModuleManagement() {
       if (filterStatus === "Pending Review") matchesStatus = mod.status === "pending_review";
 
       return matchesSearch && matchesCat && matchesLevel && matchesStatus;
+    }).sort((a, b) => {
+      // Sort logic
+      const aIsRejected = a.status === 'draft' && !!a.rejection_reason;
+      const bIsRejected = b.status === 'draft' && !!b.rejection_reason;
+
+      if (sortOption === "Needs revision first") {
+        if (aIsRejected && !bIsRejected) return -1;
+        if (!aIsRejected && bIsRejected) return 1;
+      }
+      
+      // Default secondary sort (e.g., ID or date if we had one; assuming larger ID is newer)
+      return (b.id || 0) - (a.id || 0);
     });
-  }, [rawModules, debouncedSearchQuery, filterCategory, filterLevel, filterStatus]);
+  }, [rawModules, debouncedSearchQuery, filterCategory, filterLevel, filterStatus, sortOption]);
 
   const totalPages = Math.ceil(filteredModules.length / itemsPerPage);
   const paginatedModules = filteredModules.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
@@ -83,6 +96,8 @@ export default function ModuleManagement() {
           setFilterLevel={setFilterLevel}
           filterStatus={filterStatus}
           setFilterStatus={setFilterStatus}
+          sortOption={sortOption}
+          setSortOption={setSortOption}
           handleOpenWizard={handleOpenWizard}
         />
 

@@ -82,14 +82,16 @@ const ModuleCard = memo(function ModuleCard({
     handleEnroll();
   };
 
+  const isRejected = isAdminView && module.status === "draft" && module.rejection_reason;
+
   return (
     <div
       onClick={handleViewDetails}
-      className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm hover:shadow-md transition-shadow duration-300 flex flex-col sm:flex-row items-stretch gap-5 group overflow-hidden cursor-pointer hover:border-gray-300"
+      className={`rounded-2xl border bg-white p-5 shadow-sm hover:shadow-md transition-shadow duration-300 flex flex-col sm:flex-row items-stretch gap-5 group overflow-hidden cursor-pointer hover:border-gray-300 ${isRejected ? 'border-l-4 border-l-red-500 border-y-gray-200 border-r-gray-200' : 'border-gray-200'}`}
     >
       {/* Thumbnail */}
-      <div className="hidden sm:flex w-32 sm:w-40 md:w-48 shrink-0 overflow-hidden rounded-xl bg-slate-50 border border-slate-100 relative items-center justify-center text-slate-400">
-        {module.image_url ? (
+      {module.image_url ? (
+        <div className={`hidden sm:flex shrink-0 overflow-hidden rounded-xl bg-slate-50 border border-slate-100 relative items-center justify-center text-slate-400 ${isAdminView ? 'w-20 md:w-24 flex-col' : 'w-32 sm:w-40 md:w-48'}`}>
           <img
             loading="lazy"
             src={resolveImageUrl(module.image_url)}
@@ -97,27 +99,28 @@ const ModuleCard = memo(function ModuleCard({
             referrerPolicy="no-referrer"
             className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 absolute inset-0"
           />
-        ) : (
-          <div className="w-full h-full absolute inset-0 flex flex-col items-center justify-center transition-transform duration-700 group-hover:scale-110">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="w-10 h-10 mb-1.5 opacity-40"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.5"
-            >
-              <rect width="18" height="18" x="3" y="3" rx="2" ry="2" />
-              <circle cx="9" cy="9" r="2" />
-              <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
-            </svg>
-            <span className="text-[9px] font-bold uppercase tracking-widest opacity-50">
-              No Cover
-            </span>
-          </div>
-        )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
-      </div>
+          <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
+        </div>
+      ) : (
+        <div className={`hidden sm:flex shrink-0 overflow-hidden rounded-xl bg-slate-50 border border-slate-100 relative flex-col items-center justify-center text-slate-400 transition-transform duration-700 group-hover:scale-105 ${isAdminView ? 'w-20 md:w-24' : 'w-32 sm:w-40 md:w-48'}`}>
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className={isAdminView ? "w-7 h-7 mb-1.5 opacity-40" : "w-10 h-10 mb-1.5 opacity-40"}
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.5"
+          >
+            <rect width="18" height="18" x="3" y="3" rx="2" ry="2" />
+            <circle cx="9" cy="9" r="2" />
+            <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
+          </svg>
+          <span className={`${isAdminView ? 'text-[8px]' : 'text-[9px]'} font-bold uppercase tracking-widest opacity-50`}>
+            No Cover
+          </span>
+        </div>
+      )}
+
 
       {/* Content */}
       <div className="flex-1 flex flex-col justify-between min-w-0">
@@ -135,9 +138,17 @@ const ModuleCard = memo(function ModuleCard({
             <span className="rounded-full bg-gray-100 px-2.5 py-1 text-xs font-bold text-gray-700 border border-gray-200">
               {module.level}
             </span>
-            <span className="rounded-full bg-amber-50 px-2.5 py-1 text-xs font-bold text-amber-700 border border-amber-100 shrink-0">
+            <span 
+              className="rounded-full bg-amber-50 px-2.5 py-1 text-xs font-bold text-amber-700 border border-amber-100 shrink-0 cursor-help"
+              title={module.duration === "Varies" ? "Duration depends on learner pacing and situational choices" : ""}
+            >
               {module.duration}
             </span>
+            {module.step_count > 0 && (
+              <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-700 border border-slate-200 shrink-0">
+                {module.step_count} Steps
+              </span>
+            )}
             {isCompleted && (
               <span className="flex items-center gap-1 rounded-full bg-green-50 px-2.5 py-1 text-xs font-bold text-green-700 border border-green-100 shrink-0">
                 ✔️ Completed
@@ -170,6 +181,15 @@ const ModuleCard = memo(function ModuleCard({
           <h2 className="text-xl font-bold text-gray-900 group-hover:text-red-700 transition-colors truncate">
             {module.title}
           </h2>
+          {isRejected && (
+            <div className="mt-1.5 p-2 bg-red-50 border border-red-100 rounded-lg flex items-start gap-2">
+              <HugeiconsIcon icon={Alert01Icon} className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
+              <p className="text-xs font-medium text-red-800 line-clamp-2" title={module.rejection_reason}>
+                <span className="font-bold uppercase tracking-widest text-[9px] mr-1 opacity-80">Note:</span>
+                {module.rejection_reason}
+              </p>
+            </div>
+          )}
           <div
             className="mt-2 text-sm leading-relaxed text-gray-600 line-clamp-2 flex-1 prose-sm max-w-none"
             dangerouslySetInnerHTML={{
@@ -212,37 +232,45 @@ const ModuleCard = memo(function ModuleCard({
               {isCompleted ? "Review Module" : "Continue"}
             </button>
           ) : isAdminView ? (
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                toast("Module management/editing is under development.", {
-                  icon: "🚧",
-                });
-              }}
-              className="flex-1 rounded-xl px-2 sm:px-4 py-2.5 text-xs sm:text-sm font-bold text-white transition flex items-center justify-center gap-1 sm:gap-2 truncate bg-gray-900 hover:bg-black cursor-pointer"
-            >
-              Manage
-            </button>
+            <>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  // No toast, just native browser title for non-obtrusive tooltip
+                }}
+                title="Module management/editing is under development."
+                className={`flex-[1.5] rounded-xl px-2 sm:px-4 py-2.5 text-xs sm:text-sm font-bold text-white transition flex items-center justify-center gap-1 sm:gap-2 truncate cursor-pointer ${isRejected ? 'bg-red-600 hover:bg-red-700' : 'bg-gray-900 hover:bg-black'}`}
+              >
+                Manage
+              </button>
+              <button
+                onClick={handleViewDetails}
+                className="flex-1 rounded-xl border border-gray-200 px-2 sm:px-4 py-2.5 text-xs sm:text-sm font-bold text-gray-700 hover:bg-gray-50 transition cursor-pointer truncate"
+              >
+                View Details
+              </button>
+            </>
           ) : (
-            <button
-              onClick={handleEnrollClick}
-              disabled={isEnrolling}
-              className={`flex-1 rounded-xl px-2 sm:px-4 py-2.5 text-xs sm:text-sm font-bold text-white transition flex items-center justify-center gap-1 sm:gap-2 truncate ${
-                isEnrolling
-                  ? "bg-gray-400 cursor-not-allowed"
-                  : "bg-gray-900 hover:bg-black cursor-pointer"
-              }`}
-            >
-              {isEnrolling ? "Enrolling..." : "Enroll Now"}
-            </button>
+            <>
+              <button
+                onClick={handleViewDetails}
+                className="flex-1 rounded-xl border border-gray-200 px-2 sm:px-4 py-2.5 text-xs sm:text-sm font-bold text-gray-700 hover:bg-gray-50 transition cursor-pointer truncate"
+              >
+                View Details
+              </button>
+              <button
+                onClick={handleEnrollClick}
+                disabled={isEnrolling}
+                className={`flex-1 rounded-xl px-2 sm:px-4 py-2.5 text-xs sm:text-sm font-bold text-white transition flex items-center justify-center gap-1 sm:gap-2 truncate ${
+                  isEnrolling
+                    ? "bg-gray-400 cursor-not-allowed"
+                    : "bg-gray-900 hover:bg-black cursor-pointer"
+                }`}
+              >
+                {isEnrolling ? "Enrolling..." : "Enroll Now"}
+              </button>
+            </>
           )}
-
-          <button
-            onClick={handleViewDetails}
-            className="flex-1 rounded-xl border border-gray-200 px-2 sm:px-4 py-2.5 text-xs sm:text-sm font-bold text-gray-700 hover:bg-gray-50 transition cursor-pointer truncate"
-          >
-            View Details
-          </button>
         </div>
       </div>
     </div>

@@ -65,7 +65,7 @@ export default function StepBuilder({
          </div>
       </div>
       
-      <div className="p-6 space-y-6 overflow-y-auto flex-1">
+      <div id="step-builder-scroll-container" className="p-6 space-y-6 overflow-y-auto flex-1 relative scroll-smooth">
         <div>
           <label className="block text-xs font-bold text-gray-600 uppercase tracking-wide mb-2">
             Step Title Name

@@ -11,6 +11,8 @@ export default function DashboardHeader({
   setFilterLevel,
   filterStatus,
   setFilterStatus,
+  sortOption,
+  setSortOption,
   handleOpenWizard
 }) {
   return (
@@ -48,7 +50,7 @@ export default function DashboardHeader({
       </div>
 
       {/* Search & Filters Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-4 bg-white p-4 rounded-2xl border border-gray-200 shadow-sm items-end">
+      <div className="grid grid-cols-1 md:grid-cols-6 gap-4 bg-white p-4 rounded-2xl border border-gray-200 shadow-sm items-end">
         <div className="md:col-span-2 relative">
           <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest flex items-center gap-1.5 px-1 mb-1.5">
             <HugeiconsIcon icon={Search01Icon} className="w-3 h-3" />
@@ -115,6 +117,21 @@ export default function DashboardHeader({
             <option value="Published">Published</option>
             <option value="Drafts">Drafts</option>
             <option value="Pending Review">Pending Review</option>
+          </select>
+        </div>
+
+        <div className="md:col-span-1">
+          <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest flex items-center gap-1.5 px-1 mb-1.5">
+            <HugeiconsIcon icon={GridIcon} className="w-3 h-3" />
+            Sort By
+          </label>
+          <select 
+            value={sortOption} 
+            onChange={(e) => { setSortOption(e.target.value); setCurrentPage(1); }}
+            className="w-full py-2.5 px-4 bg-gray-50 hover:bg-gray-100 border border-transparent rounded-xl text-sm font-bold text-gray-700 outline-none focus:bg-white focus:border-red-200 focus:ring-4 focus:ring-red-500/10 cursor-pointer transition-all appearance-none"
+          >
+            <option value="Needs revision first">Needs Revision First</option>
+            <option value="Recently edited">Recently Edited</option>
           </select>
         </div>
       </div>

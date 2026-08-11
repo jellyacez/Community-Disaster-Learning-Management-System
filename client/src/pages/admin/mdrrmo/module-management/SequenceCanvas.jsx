@@ -14,7 +14,8 @@ export default function SequenceCanvas({
   activeLevelOrder, 
   triggerFlowSequencePreview,
   handleEditStep,
-  formError
+  formError,
+  moduleStatus
 }) {
   const [draggedItemIndex, setDraggedItemIndex] = useState(null);
   const [stepToDelete, setStepToDelete] = useState(null);
@@ -125,6 +126,7 @@ export default function SequenceCanvas({
                 moveFlowStep={moveFlowStep}
                 handleEditStep={handleEditStep}
                 setStepToDelete={setStepToDelete}
+                moduleStatus={moduleStatus}
               />
             ))}
             
