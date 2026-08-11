@@ -16,14 +16,20 @@ export function useModuleSubmit({
     if (e && e.preventDefault) e.preventDefault();
     
     const errors = {};
+    
     if (!moduleForm.title.trim()) errors.title = "A module topic title is required.";
     if (!moduleForm.description.trim() || moduleForm.description === "<p></p>") errors.description = "A short description or summary is required for the module overview.";
-    if (stagedFlows.length === 0) errors.flows = "A module must contain at least one instructional or assessment step before publishing.";
     
-    const hasEmptyLevelTitles = stagedLevels.some(lvl => !lvl.levelTitle.trim());
-    if (hasEmptyLevelTitles) {
-      toast.error("System Error: One or more curriculum levels are missing a valid title. Please verify inputs before publishing.");
-      return false;
+    const emptyTitleLevel = stagedLevels.find(lvl => !lvl.levelTitle.trim());
+    if (emptyTitleLevel) {
+      errors.levelTitle = "One or more curriculum levels are missing a valid title.";
+      setActiveLevelOrder(emptyTitleLevel.levelOrder);
+    } else {
+      const emptyStepsLevel = stagedLevels.find(lvl => !stagedFlows.some(flow => flow.levelOrder === lvl.levelOrder));
+      if (emptyStepsLevel) {
+        errors.flows = `Level ${emptyStepsLevel.levelOrder} must contain at least one instructional or assessment step before publishing.`;
+        setActiveLevelOrder(emptyStepsLevel.levelOrder);
+      }
     }
 
     if (Object.keys(errors).length > 0) {

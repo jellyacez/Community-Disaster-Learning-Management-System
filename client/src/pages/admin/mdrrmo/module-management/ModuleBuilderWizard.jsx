@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import ModuleHeaderForm from "./ModuleHeaderForm";
 import LevelSelector from "./LevelBuilder";
@@ -63,6 +63,20 @@ export default function ModuleBuilderWizard({
     handleEditStep,
   } = actions;
 
+  useEffect(() => {
+    if (formErrors.flows || formErrors.levelTitle) {
+      // Use a small timeout inside the effect to ensure React has fully painted the new tab
+      const timer = setTimeout(() => {
+        const targetId = formErrors.levelTitle ? "level-title-error-anchor" : "sequence-error-anchor";
+        const errorEl = document.getElementById(targetId);
+        if (errorEl) {
+          errorEl.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+      }, 50);
+      return () => clearTimeout(timer);
+    }
+  }, [formErrors.flows, formErrors.levelTitle, activeLevelOrder]);
+
   if (!isOpen) return null;
 
   const handleNextStep = () => {
@@ -82,7 +96,8 @@ export default function ModuleBuilderWizard({
   const handleSubmitWrapper = async (e) => {
     e.preventDefault();
     const success = await handleModuleSubmit(e);
-    if (!success) return; // validation failed or API error — stay in wizard
+    if (!success) return; 
+    
     if (refetchModules) {
       refetchModules();
     }
@@ -184,6 +199,7 @@ export default function ModuleBuilderWizard({
                 setActiveLevelOrder={setActiveLevelOrder}
                 stagedFlows={stagedFlows}
                 setStagedFlows={setStagedFlows}
+                formErrors={formErrors}
               />
 
               <div className="grid grid-cols-1 xl:grid-cols-12 gap-8 items-start">
@@ -194,11 +210,20 @@ export default function ModuleBuilderWizard({
                     activeLevelOrder={activeLevelOrder}
                     triggerFlowSequencePreview={() => setShowPreviewModal(true)}
                     handleEditStep={handleEditStep}
+                    formError={formErrors.flows}
                   />
-                  {formErrors.flows && (
-                    <p className="text-red-500 text-xs font-bold px-2 mt-2">
-                      {formErrors.flows}
-                    </p>
+                  {formErrors.flows && stagedFlows.filter(flow => flow.levelOrder === activeLevelOrder).length > 0 && (
+                    <div id="sequence-error-anchor" className="animate-in fade-in slide-in-from-top-2 mt-4 p-4 bg-red-50 border border-red-200 rounded-xl flex items-start gap-3">
+                      <div className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center shrink-0">
+                         <HugeiconsIcon icon={Cancel01Icon} className="w-5 h-5 text-red-600" />
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-bold text-red-800">Validation Error</h4>
+                        <p className="text-red-600 text-sm mt-0.5">
+                          {formErrors.flows}
+                        </p>
+                      </div>
+                    </div>
                   )}
                 </div>
                 <div className="xl:col-span-4 sticky top-0">

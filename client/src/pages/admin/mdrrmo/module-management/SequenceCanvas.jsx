@@ -13,7 +13,8 @@ export default function SequenceCanvas({
   setStagedFlows, 
   activeLevelOrder, 
   triggerFlowSequencePreview,
-  handleEditStep 
+  handleEditStep,
+  formError
 }) {
   const [draggedItemIndex, setDraggedItemIndex] = useState(null);
   const [stepToDelete, setStepToDelete] = useState(null);
@@ -99,12 +100,14 @@ export default function SequenceCanvas({
         {localizedFlows.length === 0 ? (
           <>
             <div className="h-16 border-l-2 border-dashed border-gray-300"></div>
-            <div className="text-center py-12 px-8 bg-white border-2 border-dashed border-gray-200 rounded-3xl max-w-2xl w-full mx-auto">
-              <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
-                <HugeiconsIcon icon={Folder01Icon} className="w-8 h-8 text-red-500" />
+            <div id="sequence-error-anchor" className={`text-center py-12 px-8 border-2 border-dashed rounded-3xl max-w-2xl w-full mx-auto transition-colors ${formError ? 'bg-red-50 border-red-300' : 'bg-white border-gray-200'}`}>
+              <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 ${formError ? 'bg-red-100' : 'bg-red-50'}`}>
+                <HugeiconsIcon icon={Folder01Icon} className={`w-8 h-8 ${formError ? 'text-red-600' : 'text-red-500'}`} />
               </div>
-              <h3 className="text-lg font-bold text-gray-900 mb-2">No Content Yet</h3>
-              <p className="text-gray-500 max-w-sm mx-auto text-sm">Use the builder panel on the right to start adding learning materials, quizzes, and situational assessments.</p>
+              <h3 className={`text-lg font-bold mb-2 ${formError ? 'text-red-800' : 'text-gray-900'}`}>No Content Yet</h3>
+              <p className={`max-w-sm mx-auto text-sm ${formError ? 'text-red-600 font-medium' : 'text-gray-500'}`}>
+                {formError || "Use the builder panel on the right to start adding learning materials, quizzes, and situational assessments."}
+              </p>
             </div>
           </>
         ) : (

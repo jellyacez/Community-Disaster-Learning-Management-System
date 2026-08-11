@@ -69,14 +69,12 @@ const MenuBar = ({ editor }) => {
   );
 };
 
-const extensions = [
-  StarterKit,
-  Underline,
-];
-
 export default function RichTextEditor({ value, onChange, placeholder, className = "" }) {
   const editor = useEditor({
-    extensions,
+    extensions: [
+      StarterKit.configure(),
+      Underline.configure(),
+    ],
     content: value,
     editorProps: {
       attributes: {

@@ -8,6 +8,7 @@ export default function LevelSelector({
   setActiveLevelOrder,
   stagedFlows = [],
   setStagedFlows,
+  formErrors = {},
 }) {
   const [levelToDelete, setLevelToDelete] = useState(null);
 
@@ -132,6 +133,7 @@ export default function LevelSelector({
                 Level Container Custom Title
               </label>
               <input
+                id="level-title-error-anchor"
                 type="text"
                 value={activeLevelData.levelTitle}
                 onChange={(e) =>
@@ -142,8 +144,9 @@ export default function LevelSelector({
                   )
                 }
                 placeholder="e.g. Phase 1: Basic Awareness"
-                className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-medium text-slate-900 focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 transition-all placeholder:text-slate-400"
+                className={`w-full px-4 py-3 bg-white border ${formErrors.levelTitle ? 'border-red-500 ring-1 ring-red-500' : 'border-slate-200'} rounded-xl text-sm font-medium text-slate-900 focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 transition-all placeholder:text-slate-400`}
               />
+              {formErrors.levelTitle && <p className="text-red-500 text-xs mt-1.5 font-bold">{formErrors.levelTitle}</p>}
             </div>
 
             <div>

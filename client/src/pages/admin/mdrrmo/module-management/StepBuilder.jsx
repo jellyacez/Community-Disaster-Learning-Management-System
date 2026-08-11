@@ -47,10 +47,6 @@ export default function StepBuilder({
   };
 
   const handleSaveClick = () => {
-    if (!currentFlowStep.title.trim()) {
-      return toast.error("Please enter a title for the step before saving.");
-    }
-    
     const success = addStepToFlow(); // Execute the save pipeline
     if (success) {
       toast.success(`Saved step "${currentFlowStep.title}" into Level ${activeLevelOrder}!`);

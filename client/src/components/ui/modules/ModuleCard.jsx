@@ -173,12 +173,7 @@ const ModuleCard = memo(function ModuleCard({
           <div
             className="mt-2 text-sm leading-relaxed text-gray-600 line-clamp-2 flex-1 prose-sm max-w-none"
             dangerouslySetInnerHTML={{
-              __html: (() => {
-                const desc = module.description || "";
-                const sanitized = DOMPurify.sanitize(desc);
-                console.log(`[ModuleCard DEBUG] Module: ${module.title}, Description length: ${desc.length}, Sanitize output length: ${sanitized.length}, DOMPurify is defined: ${!!DOMPurify}`);
-                return sanitized;
-              })(),
+              __html: DOMPurify.sanitize(module.description || ""),
             }}
           />
         </div>
