@@ -35,6 +35,7 @@ export default function AdminFeedbackManager() {
   const [selectedTicket, setSelectedTicket] = useState(null);
   const [replyText, setReplyText] = useState("");
   const [targetStatus, setTargetStatus] = useState("Replied");
+  const [ticketToClose, setTicketToClose] = useState(null);
 
   // 2. FETCH FEEDBACKS
     const { data: submissions = [], isLoading } = useQuery({
@@ -49,6 +50,7 @@ export default function AdminFeedbackManager() {
         return response.data.data || [];
       },
       enabled: !!adminId,
+      refetchInterval: 30000, // Poll every 30s for incoming resident feedback
     });
 
 
@@ -58,7 +60,6 @@ export default function AdminFeedbackManager() {
         const response = await apiClient.put(`/admin/mdrrmo/feedback/${feedbackId}/reply`, {
           reply,
           status,
-          replied_by: adminId,
         });
         return response.data;
       },
@@ -72,6 +73,26 @@ export default function AdminFeedbackManager() {
         toast.error(err.response?.data?.message || "Failed to submit reply.");
       },
     });
+
+    const closeMutation = useMutation({
+      mutationFn: async (feedbackId) => {
+        const response = await apiClient.put(`/admin/mdrrmo/feedback/${feedbackId}/close`);
+        return response.data;
+      },
+      onSuccess: () => {
+        toast.success("Ticket closed successfully.");
+        queryClient.invalidateQueries({ queryKey: ["adminFeedbacks"] });
+        setTicketToClose(null);
+      },
+      onError: (err) => {
+        toast.error(err.response?.data?.error || "Failed to close ticket.");
+      },
+    });
+
+    const handleConfirmClose = () => {
+      if (!ticketToClose) return;
+      closeMutation.mutate(ticketToClose.feedback_id || ticketToClose.id);
+    };
 
   const handleOpenReplyModal = (ticket) => {
     setSelectedTicket(ticket);
@@ -128,6 +149,21 @@ export default function AdminFeedbackManager() {
       default:
         return Clock01Icon;
     }
+  };
+
+  const formatMessageTimestamp = (currentDateString, previousDateString, index) => {
+    const current = new Date(currentDateString);
+    const timeString = current.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    
+    if (index === 0 || !previousDateString) {
+      return `${current.toLocaleDateString()} at ${timeString}`;
+    }
+    
+    const prev = new Date(previousDateString);
+    if (current.toDateString() === prev.toDateString()) {
+      return timeString; // Same day, just time
+    }
+    return `${current.toLocaleDateString()} at ${timeString}`; // Crossed a day boundary
   };
 
   const filteredSubmissions = useMemo(() => {
@@ -279,36 +315,49 @@ export default function AdminFeedbackManager() {
                       </div>
 
                       {/* Message Thread */}
-                      <div className="space-y-3 mt-4">
-                        {item.thread?.map((msg) => (
+                      <div className="space-y-3 mt-4 flex flex-col">
+                        {item.thread?.map((msg, idx) => (
                           <div 
                             key={msg.id} 
-                            className={`rounded-2xl border p-4 ${
-                              msg.sender_type === "admin" 
-                                ? "bg-blue-50/80 border-blue-100 ml-8" 
-                                : "bg-white border-gray-100 mr-8"
+                            className={`flex w-full ${
+                              msg.sender_type === "admin" ? "justify-end" : "justify-start"
                             }`}
                           >
-                            <div className="flex justify-between items-center mb-1">
-                              <p className={`text-xs font-bold uppercase tracking-wide ${
-                                msg.sender_type === "admin" ? "text-blue-700" : "text-gray-400"
-                              }`}>
-                                {msg.sender_type === "admin" ? "Official Response" : "Resident Message"}
+                            <div className={`rounded-2xl border p-4 max-w-[85%] sm:max-w-[75%] ${
+                              msg.sender_type === "admin" 
+                                ? "bg-blue-50/80 border-blue-100" 
+                                : "bg-white border-gray-100"
+                            }`}>
+                              <div className="flex justify-between items-center mb-1 gap-4">
+                                <p className={`text-xs font-bold uppercase tracking-wide ${
+                                  msg.sender_type === "admin" ? "text-blue-700" : "text-gray-400"
+                                }`}>
+                                  {msg.sender_type === "admin" ? "Official Response" : "Resident Message"}
+                                </p>
+                                <span className="text-[10px] text-gray-400 font-semibold whitespace-nowrap">
+                                  {formatMessageTimestamp(msg.created_at, item.thread[idx - 1]?.created_at, idx)}
+                                </span>
+                              </div>
+                              <p className="text-sm text-gray-700 whitespace-pre-line leading-relaxed">
+                                {msg.message}
                               </p>
-                              <span className="text-[10px] text-gray-400 font-semibold">
-                                {new Date(msg.created_at).toLocaleString()}
-                              </span>
                             </div>
-                            <p className="text-sm text-gray-700 whitespace-pre-line leading-relaxed">
-                              {msg.message}
-                            </p>
                           </div>
                         ))}
                       </div>
                     </div>
 
-                    {/* Action Button */}
-                    <div className="lg:self-center">
+                    {/* Action Buttons */}
+                    <div className="lg:self-center flex flex-col sm:flex-row gap-2">
+                      {item.status !== "Closed" && (
+                        <button
+                          onClick={() => setTicketToClose(item)}
+                          className="w-full sm:w-auto px-4 py-2 bg-gray-100 text-gray-700 hover:bg-gray-200 text-sm font-bold rounded-xl transition-colors flex justify-center items-center gap-2 border border-gray-200"
+                        >
+                          <HugeiconsIcon icon={CancelCircleIcon} className="w-4 h-4" />
+                          Close Thread
+                        </button>
+                      )}
                       <button
                         onClick={() => handleOpenReplyModal(item)}
                         className="w-full sm:w-auto px-4 py-2 bg-slate-800 text-white text-sm font-bold rounded-xl hover:bg-slate-700 transition-colors flex justify-center items-center gap-2"
@@ -383,6 +432,36 @@ export default function AdminFeedbackManager() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* CLOSE CONFIRMATION MODAL */}
+      {ticketToClose && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm animate-in fade-in">
+          <div className="w-full max-w-sm bg-white rounded-3xl border border-gray-100 shadow-2xl p-6 text-center">
+            <div className="mx-auto w-12 h-12 rounded-full bg-red-100 flex items-center justify-center mb-4">
+              <HugeiconsIcon icon={CancelCircleIcon} className="w-6 h-6 text-red-600" />
+            </div>
+            <h3 className="text-xl font-black text-gray-900 mb-2">Close this ticket?</h3>
+            <p className="text-sm text-gray-500 mb-6">
+              The resident will no longer be able to reply to this thread. This action cannot be undone.
+            </p>
+            <div className="flex items-center justify-center gap-3">
+              <button
+                onClick={() => setTicketToClose(null)}
+                className="px-4 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-sm"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmClose}
+                disabled={closeMutation.isPending}
+                className="px-4 py-2 rounded-xl bg-red-600 hover:bg-red-700 disabled:bg-red-400 text-white font-bold text-sm"
+              >
+                {closeMutation.isPending ? "Closing..." : "Close Ticket"}
+              </button>
+            </div>
           </div>
         </div>
       )}

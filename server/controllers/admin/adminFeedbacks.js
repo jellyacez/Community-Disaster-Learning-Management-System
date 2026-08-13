@@ -133,3 +133,47 @@ exports.replyToFeedback = async (req, res) => {
     res.status(500).json({ success: false, error: "Failed to submit response." });
   }
 };
+
+// @desc    Close a feedback ticket
+// @route   PUT /api/admin/mdrrmo/feedback/:id/close
+exports.closeFeedbackThread = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const adminId = req.user?.id || req.session?.user?.id;
+
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+
+      const checkQuery = "SELECT status FROM public.feedbacks WHERE id = $1 FOR UPDATE";
+      const checkRes = await client.query(checkQuery, [id]);
+      
+      if (checkRes.rowCount === 0) {
+        await client.query('ROLLBACK');
+        return res.status(404).json({ success: false, error: "Feedback record not found." });
+      }
+
+      if (checkRes.rows[0].status === 'Closed') {
+        await client.query('ROLLBACK');
+        return res.status(400).json({ success: false, error: "Ticket is already closed." });
+      }
+
+      const updateQuery = "UPDATE public.feedbacks SET status = 'Closed' WHERE id = $1 RETURNING *";
+      const { rows } = await client.query(updateQuery, [id]);
+
+      const insertQuery = "INSERT INTO public.feedback_messages (feedback_id, sender_type, sender_id, message) VALUES ($1, 'admin', $2, 'Ticket closed by admin.') RETURNING *";
+      await client.query(insertQuery, [id, adminId]);
+
+      await client.query('COMMIT');
+      res.json({ success: true, data: rows[0] });
+    } catch (err) {
+      await client.query('ROLLBACK');
+      throw err;
+    } finally {
+      client.release();
+    }
+  } catch (err) {
+    res.status(500).json({ success: false, error: "Failed to close ticket." });
+  }
+};
+

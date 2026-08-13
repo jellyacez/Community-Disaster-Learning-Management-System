@@ -196,6 +196,21 @@ export default function UserFeedback() {
     }
   };
 
+  const formatMessageTimestamp = (currentDateString, previousDateString, index) => {
+    const current = new Date(currentDateString);
+    const timeString = current.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    
+    if (index === 0 || !previousDateString) {
+      return `${current.toLocaleDateString()} at ${timeString}`;
+    }
+    
+    const prev = new Date(previousDateString);
+    if (current.toDateString() === prev.toDateString()) {
+      return timeString; // Same day, just time
+    }
+    return `${current.toLocaleDateString()} at ${timeString}`; // Crossed a day boundary
+  };
+
   const filteredSubmissions = useMemo(() => {
     if (activeTab === "all") return submissions;
     return submissions.filter(
@@ -519,27 +534,31 @@ export default function UserFeedback() {
                         </p>
 
                         {/* Message Thread */}
-                        <div className="space-y-4 mt-4">
-                          {item.thread?.map((msg) => (
+                        <div className="space-y-4 mt-4 flex flex-col">
+                          {item.thread?.map((msg, idx) => (
                             <div 
                               key={msg.id} 
-                              className={`rounded-2xl border p-4 ${
-                                msg.sender_type === "resident" 
-                                  ? "bg-white border-gray-100 mr-8"
-                                  : "bg-blue-50 border-blue-100 ml-8"
+                              className={`flex w-full ${
+                                msg.sender_type === "resident" ? "justify-end" : "justify-start"
                               }`}
                             >
-                              <p className={`text-xs font-bold uppercase tracking-wide mb-2 flex items-center justify-between ${
-                                msg.sender_type === "resident" ? "text-gray-400" : "text-blue-700"
+                              <div className={`rounded-2xl border p-4 max-w-[85%] sm:max-w-[75%] ${
+                                msg.sender_type === "resident" 
+                                  ? "bg-white border-gray-100"
+                                  : "bg-blue-50 border-blue-100"
                               }`}>
-                                <span>{msg.sender_type === "resident" ? "Your Message" : "Office Response"}</span>
-                                <span className="font-semibold text-[10px] text-gray-400 normal-case">
-                                  {new Date(msg.created_at).toLocaleString()}
-                                </span>
-                              </p>
-                              <p className="text-sm text-gray-700 whitespace-pre-line leading-relaxed">
-                                {msg.message}
-                              </p>
+                                <p className={`text-xs font-bold uppercase tracking-wide mb-2 flex flex-wrap items-center justify-between gap-4 ${
+                                  msg.sender_type === "resident" ? "text-gray-400" : "text-blue-700"
+                                }`}>
+                                  <span>{msg.sender_type === "resident" ? "Your Message" : "Office Response"}</span>
+                                  <span className="font-semibold text-[10px] text-gray-400 normal-case whitespace-nowrap">
+                                    {formatMessageTimestamp(msg.created_at, item.thread[idx - 1]?.created_at, idx)}
+                                  </span>
+                                </p>
+                                <p className="text-sm text-gray-700 whitespace-pre-line leading-relaxed">
+                                  {msg.message}
+                                </p>
+                              </div>
                             </div>
                           ))}
                         </div>

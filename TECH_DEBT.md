@@ -26,3 +26,9 @@
 - **Location:** `client/src/pages/admin/feedback/AdminFeedbackManager.jsx`
 - **Issue:** The ticket queue maps directly over the array of feedbacks with no client-side or server-side search, sort, or pagination.
 - **Why Deferred:** The current ticket volume is very low (e.g., 1 ticket), so this is not a blocking issue. However, once ticket volume grows, it will need to be refactored to support proper pagination and sorting (preferably server-side).
+
+### Resolved: Dead Columns in `feedbacks` Table
+
+- **Location:** `public.feedbacks` table.
+- **Issue:** The columns `reply`, `replied_by`, and `replied_at` were dead and fully stale. The feedback system was migrated to a threaded architecture (`feedback_messages` child table).
+- **Resolution:** Dropped via `server/migrations/04_drop_dead_feedback_columns.sql`. Verified no active column references in `controllers/`, `services/`, or `routes/` before dropping — all `reply` hits in application code were confirmed to be `req.body.reply` (message text routed to `feedback_messages`), not column reads/writes on `feedbacks`.

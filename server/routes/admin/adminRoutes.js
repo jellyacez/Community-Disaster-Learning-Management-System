@@ -223,6 +223,13 @@ router.put(
   "/mdrrmo/feedback/:id/reply", requireRole(ADMIN_ROLES), adminWriteLimiter, adminFeedbacksController.replyToFeedback
 );
 
+// @route   PUT /api/admin/mdrrmo/feedback/:id/close
+// @desc    Close a feedback ticket
+// @access  Private (mdrrmo_admin, barangay_admin, system_admin)
+router.put(
+  "/mdrrmo/feedback/:id/close", requireRole(ADMIN_ROLES), adminWriteLimiter, adminFeedbacksController.closeFeedbackThread
+);
+
 router.get(
   "/mdrrmo/approvals", requireRole(ADMIN_ROLES), adminWriteLimiter, moduleController.getPendingModulesReview
 );
