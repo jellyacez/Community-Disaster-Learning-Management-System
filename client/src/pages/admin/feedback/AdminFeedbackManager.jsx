@@ -75,7 +75,7 @@ export default function AdminFeedbackManager() {
 
   const handleOpenReplyModal = (ticket) => {
     setSelectedTicket(ticket);
-    setReplyText(ticket.reply || "");
+    setReplyText("");
     setTargetStatus(ticket.status === "Pending" ? "Replied" : ticket.status);
   };
 
@@ -195,41 +195,7 @@ export default function AdminFeedbackManager() {
         )}
       </div>
 
-      {/* Analytics Summary */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-          <p className="text-xs font-bold uppercase tracking-wide text-gray-400">
-            Total Submissions
-          </p>
-          <p className="text-2xl font-black text-gray-900 mt-1">
-            {submissions.length}
-          </p>
-        </div>
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-          <p className="text-xs font-bold uppercase tracking-wide text-gray-400">
-            Pending Review
-          </p>
-          <p className="text-2xl font-black text-amber-600 mt-1">
-            {submissions.filter((item) => item.status === "Pending").length}
-          </p>
-        </div>
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-          <p className="text-xs font-bold uppercase tracking-wide text-gray-400">
-            Replied
-          </p>
-          <p className="text-2xl font-black text-blue-600 mt-1">
-            {submissions.filter((item) => item.status === "Replied").length}
-          </p>
-        </div>
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-          <p className="text-xs font-bold uppercase tracking-wide text-gray-400">
-            Closed Tickets
-          </p>
-          <p className="text-2xl font-black text-gray-700 mt-1">
-            {submissions.filter((item) => item.status === "Closed").length}
-          </p>
-        </div>
-      </div>
+      {/* Analytics Summary removed as per user request (duplicate of filter tabs) */}
 
       {/* Main Inbox */}
       <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6">
@@ -312,37 +278,43 @@ export default function AdminFeedbackManager() {
                         <span className="text-gray-400">• Routed to: {item.recipient === "mdrrmo" ? "MDRRMO" : "Barangay"}</span>
                       </div>
 
-                      {/* Resident Message Body */}
-                      <div className="rounded-2xl bg-white border border-gray-100 p-4">
-                        <p className="text-xs font-bold uppercase tracking-wide text-gray-400 mb-1">
-                          Resident Message
-                        </p>
-                        <p className="text-sm text-gray-700 whitespace-pre-line leading-relaxed">
-                          {item.message}
-                        </p>
+                      {/* Message Thread */}
+                      <div className="space-y-3 mt-4">
+                        {item.thread?.map((msg) => (
+                          <div 
+                            key={msg.id} 
+                            className={`rounded-2xl border p-4 ${
+                              msg.sender_type === "admin" 
+                                ? "bg-blue-50/80 border-blue-100 ml-8" 
+                                : "bg-white border-gray-100 mr-8"
+                            }`}
+                          >
+                            <div className="flex justify-between items-center mb-1">
+                              <p className={`text-xs font-bold uppercase tracking-wide ${
+                                msg.sender_type === "admin" ? "text-blue-700" : "text-gray-400"
+                              }`}>
+                                {msg.sender_type === "admin" ? "Official Response" : "Resident Message"}
+                              </p>
+                              <span className="text-[10px] text-gray-400 font-semibold">
+                                {new Date(msg.created_at).toLocaleString()}
+                              </span>
+                            </div>
+                            <p className="text-sm text-gray-700 whitespace-pre-line leading-relaxed">
+                              {msg.message}
+                            </p>
+                          </div>
+                        ))}
                       </div>
-
-                      {/* Existing Admin Reply */}
-                      {item.reply && (
-                        <div className="rounded-2xl bg-blue-50/80 border border-blue-100 p-4 mt-3">
-                          <p className="text-xs font-bold uppercase tracking-wide text-blue-700 mb-1">
-                            Official Response ({new Date(item.replied_at).toLocaleDateString()})
-                          </p>
-                          <p className="text-sm text-gray-700 whitespace-pre-line leading-relaxed">
-                            {item.reply}
-                          </p>
-                        </div>
-                      )}
                     </div>
 
                     {/* Action Button */}
                     <div className="lg:self-center">
                       <button
-                        type="button"
                         onClick={() => handleOpenReplyModal(item)}
-                        className="w-full lg:w-auto px-5 py-2.5 rounded-xl bg-gray-900 hover:bg-gray-800 text-white text-sm font-bold shadow-sm transition-colors"
+                        className="w-full sm:w-auto px-4 py-2 bg-slate-800 text-white text-sm font-bold rounded-xl hover:bg-slate-700 transition-colors flex justify-center items-center gap-2"
                       >
-                        {item.reply ? "Edit Reply" : "Reply & Resolve"}
+                        <HugeiconsIcon icon={MailReply01Icon} className="w-4 h-4" />
+                        Reply
                       </button>
                     </div>
                   </div>

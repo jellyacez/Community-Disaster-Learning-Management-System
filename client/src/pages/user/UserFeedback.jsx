@@ -34,6 +34,30 @@ export default function UserFeedback() {
   });
 
   const [activeTab, setActiveTab] = useState("all");
+  const [replyInputs, setReplyInputs] = useState({});
+
+  const handleReplyChange = (id, val) => setReplyInputs((prev) => ({ ...prev, [id]: val }));
+
+  const userReplyMutation = useMutation({
+    mutationFn: async ({ id, reply }) => {
+      const response = await apiClient.put(`/feedbacks/${id}/reply`, { reply });
+      return response.data;
+    },
+    onSuccess: () => {
+      toast.success("Reply sent successfully.");
+      queryClient.invalidateQueries(["userFeedbacks", userId]);
+      setReplyInputs({});
+    },
+    onError: (err) => {
+      toast.error(err.response?.data?.message || "Failed to send reply.");
+    },
+  });
+
+  const handleSubmitUserReply = (id) => {
+    const txt = replyInputs[id];
+    if (!txt?.trim()) return toast.error("Please enter a reply.");
+    userReplyMutation.mutate({ id, reply: txt });
+  };
 
   // 1. FETCH LIVE FEEDBACK HISTORY
   const { data: submissions = [], isLoading } = useQuery({
@@ -213,43 +237,6 @@ export default function UserFeedback() {
           </p>
         </div>
 
-        {/* Top info cards */}
-        <div className="grid gap-4 lg:grid-cols-3">
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-            <div className="flex items-center gap-2 mb-3">
-              <HugeiconsIcon icon={Building01Icon} className="w-5 h-5 text-red-600" />
-              <h2 className="font-black text-gray-900">Communication Target</h2>
-            </div>
-            <p className="text-sm text-gray-600 leading-relaxed">
-              Choose whether your message should go to your local barangay or to
-              the MDRRMO for broader municipal concerns.
-            </p>
-          </div>
-
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-            <div className="flex items-center gap-2 mb-3">
-              <HugeiconsIcon icon={Alert01Icon} className="w-5 h-5 text-amber-500" />
-              <h2 className="font-black text-gray-900">Types of Messages</h2>
-            </div>
-            <p className="text-sm text-gray-600 leading-relaxed">
-              You can submit feedback, inquiries, concerns, or local incident
-              reports as part of your learner support and communication flow.
-            </p>
-          </div>
-
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-            <div className="flex items-center gap-2 mb-3">
-              <HugeiconsIcon icon={Call02Icon} className="w-5 h-5 text-emerald-600" />
-              <h2 className="font-black text-gray-900">Support Reminder</h2>
-            </div>
-            <p className="text-sm text-gray-600 leading-relaxed">
-              For urgent emergencies, contact the proper hotline or local
-              response team directly. This form is intended for platform
-              communication and non-emergency concerns.
-            </p>
-          </div>
-        </div>
-
         {/* Main area */}
         <div className="grid gap-6 xl:grid-cols-3">
           {/* Form */}
@@ -422,51 +409,8 @@ export default function UserFeedback() {
                   </span>
                 </li>
               </ul>
-            </div>
-
-            <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6">
-              <div className="flex items-center gap-2 mb-2">
-                <HugeiconsIcon icon={Search01Icon} className="w-5 h-5 text-gray-500" />
-                <h2 className="text-xl font-black text-gray-900">
-                  Submission Summary
-                </h2>
-              </div>
-              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-1 mt-4">
-                <div className="rounded-2xl bg-gray-50 border border-gray-100 p-4">
-                  <p className="text-xs font-bold uppercase tracking-wide text-gray-400">
-                    Total Messages
-                  </p>
-                  <p className="text-2xl font-black text-gray-900 mt-1">
-                    {submissions.length}
-                  </p>
-                </div>
-                <div className="rounded-2xl bg-gray-50 border border-gray-100 p-4">
-                  <p className="text-xs font-bold uppercase tracking-wide text-gray-400">
-                    Pending
-                  </p>
-                  <p className="text-2xl font-black text-amber-600 mt-1">
-                    {submissions.filter((item) => item.status === "Pending").length}
-                  </p>
-                </div>
-                <div className="rounded-2xl bg-gray-50 border border-gray-100 p-4">
-                  <p className="text-xs font-bold uppercase tracking-wide text-gray-400">
-                    Replied
-                  </p>
-                  <p className="text-2xl font-black text-blue-600 mt-1">
-                    {submissions.filter((item) => item.status === "Replied").length}
-                  </p>
-                </div>
-                <div className="rounded-2xl bg-gray-50 border border-gray-100 p-4">
-                  <p className="text-xs font-bold uppercase tracking-wide text-gray-400">
-                    Closed
-                  </p>
-                  <p className="text-2xl font-black text-gray-700 mt-1">
-                    {submissions.filter((item) => item.status === "Closed").length}
-                  </p>
-                </div>
-              </div>
-            </div>
           </div>
+        </div>
         </div>
 
         {/* Message history */}
@@ -574,23 +518,52 @@ export default function UserFeedback() {
                           Submitted: {new Date(item.created_at || item.createdAt).toLocaleString()}
                         </p>
 
-                        <div className="rounded-2xl bg-white border border-gray-100 p-4">
-                          <p className="text-xs font-bold uppercase tracking-wide text-gray-400 mb-2">
-                            Your Message
-                          </p>
-                          <p className="text-sm text-gray-700 whitespace-pre-line leading-relaxed">
-                            {item.message}
-                          </p>
+                        {/* Message Thread */}
+                        <div className="space-y-4 mt-4">
+                          {item.thread?.map((msg) => (
+                            <div 
+                              key={msg.id} 
+                              className={`rounded-2xl border p-4 ${
+                                msg.sender_type === "resident" 
+                                  ? "bg-white border-gray-100 mr-8"
+                                  : "bg-blue-50 border-blue-100 ml-8"
+                              }`}
+                            >
+                              <p className={`text-xs font-bold uppercase tracking-wide mb-2 flex items-center justify-between ${
+                                msg.sender_type === "resident" ? "text-gray-400" : "text-blue-700"
+                              }`}>
+                                <span>{msg.sender_type === "resident" ? "Your Message" : "Office Response"}</span>
+                                <span className="font-semibold text-[10px] text-gray-400 normal-case">
+                                  {new Date(msg.created_at).toLocaleString()}
+                                </span>
+                              </p>
+                              <p className="text-sm text-gray-700 whitespace-pre-line leading-relaxed">
+                                {msg.message}
+                              </p>
+                            </div>
+                          ))}
                         </div>
 
-                        {item.reply && (
-                          <div className="rounded-2xl bg-blue-50 border border-blue-100 p-4 mt-4">
-                            <p className="text-xs font-bold uppercase tracking-wide text-blue-700 mb-2">
-                              Office Response ({new Date(item.replied_at).toLocaleDateString()})
-                            </p>
-                            <p className="text-sm text-gray-700 whitespace-pre-line leading-relaxed">
-                              {item.reply}
-                            </p>
+                        {/* Reply Input */}
+                        {item.status !== "Closed" && item.thread?.some((m) => m.sender_type === "admin") && (
+                          <div className="mt-4 pt-4 border-t border-gray-100">
+                            <textarea
+                              rows={3}
+                              placeholder="Write your follow-up reply..."
+                              value={replyInputs[item.id] || ""}
+                              onChange={(e) => handleReplyChange(item.id, e.target.value)}
+                              className="w-full px-4 py-3 border border-gray-200 rounded-2xl text-sm resize-none focus:outline-none focus:ring-2 focus:ring-red-500 mb-2"
+                            />
+                            <div className="flex justify-end">
+                              <button
+                                onClick={() => handleSubmitUserReply(item.id)}
+                                disabled={userReplyMutation.isPending}
+                                className="px-5 py-2 bg-slate-800 text-white text-sm font-bold rounded-xl hover:bg-slate-700 transition-colors disabled:bg-slate-400 flex items-center gap-2"
+                              >
+                                <HugeiconsIcon icon={SentIcon} className="w-4 h-4" />
+                                {userReplyMutation.isPending ? "Sending..." : "Send Reply"}
+                              </button>
+                            </div>
                           </div>
                         )}
                       </div>

@@ -20,3 +20,9 @@
   - Standardized `UserCertificates.jsx` to use `["userDashboard"]`.
   - **Note:** 401 Unauthorized responses and session expiries naturally mitigated this via `window.location.href = '/signin'`, which forces a hard refresh and destroys the memory cache. The vulnerability was localized entirely to manual, successful `authClient.signOut()` triggers.
 - **Verification:** Manually confirmed clean across four scenarios: resident-to-resident account switch, admin-to-admin account switch, in-flight request race (throttled network, logout mid-fetch), and remote session revocation via `ActiveDevices`. No stale or cross-user data observed in any case.
+
+### `AdminFeedbackManager.jsx` Missing Data Grid Features
+
+- **Location:** `client/src/pages/admin/feedback/AdminFeedbackManager.jsx`
+- **Issue:** The ticket queue maps directly over the array of feedbacks with no client-side or server-side search, sort, or pagination.
+- **Why Deferred:** The current ticket volume is very low (e.g., 1 ticket), so this is not a blocking issue. However, once ticket volume grows, it will need to be refactored to support proper pagination and sorting (preferably server-side).

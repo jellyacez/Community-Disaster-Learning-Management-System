@@ -13,4 +13,9 @@ router.get("/my-submissions", authenticate, feedbackController.getFeedbacks);
 // @access  Private
 router.post("/", authenticate, feedbackController.submitFeedback);
 
+// @route   PUT /api/feedbacks/:id/reply
+// @desc    Reply to an existing feedback ticket
+// @access  Private
+router.put("/:id/reply", authenticate, feedbackController.userReplyToFeedback);
+
 module.exports = router;
