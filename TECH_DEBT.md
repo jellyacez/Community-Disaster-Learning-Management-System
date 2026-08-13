@@ -1,15 +1,22 @@
 # Technical Debt
 
-- **TanStack Query Cache Collisions**: Multiple components sharing a TanStack Query cache key with independent mapping logic in queryFn has caused two separate silent-data-corruption bugs. Prefer `select` for view-specific shaping (as now used for barangays) over shape-changing `queryFn`s, especially for any query key touched by more than one component.
+### Resolved: TanStack Query Cache Collisions
 
-### `BACOLOR_BARANGAYS` Static Admin Filters
+- **Issue:** Multiple components sharing a TanStack Query cache key with independent mapping logic in `queryFn` caused two separate silent-data-corruption bugs.
+- **Resolution:** All `"adminModules"` consumers now use properly namespaced sub-keys (`["adminModules", "management"]`, `["adminModules", "activeSyllabus"]`, `["adminModules", "overview"]`). `AdminApprovalModule` intentionally invalidates the root `["adminModules"]` key as a broadcast, which is correct. No remaining broad-key collisions exist in the codebase. Prefer `select` for view-specific shaping over shape-changing `queryFn`s for any key touched by more than one component.
 
-- **Location:** `client/src/constants/locations.js` (used in `ResidentRegistry.jsx`, `BarangayFilters.jsx`, `UserFilters.jsx`)
-- **Issue:** The admin dashboard filtering components still use a hardcoded string array to populate dropdowns, and send string names to the backend rather than `barangay_id`. The backend (`UserService.js`, called by `getResidents.js`) relies on a subquery (`SELECT id FROM barangays WHERE name = $1`) to map the string back to the ID.
-- **Risk:** High brittleness. If a barangay name in the database diverges from the hardcoded string by a single character (or if new ones are added), the filters silently break.
-- **Why Deferred:** Requires a multi-layer refactor (wiring up `useBarangays` query in 3 frontend components, changing component state from strings to integers, and refactoring `UserService.js` and `getResidents.js` to filter by `barangay_id` directly). Given these are behind-auth admin filters, the risk of data corruption is low, but this should be unified with the Registration/Profile pattern (dynamic fetch + ID) in a future sweep. Note: `mdrrmoOverviewController.js` is already correctly using `barangay_id` for filtering, so it does not need to be refactored on the backend.
+---
 
-### Resolved Security Findings: Cross-Session SPA Cache Persistence
+### Resolved: `BACOLOR_BARANGAYS` Static Admin Filters
+
+- **Previous location:** `client/src/constants/locations.js` (used in `ResidentRegistry.jsx`, `BarangayFilters.jsx`, `UserFilters.jsx`)
+- **Issue:** Admin filtering components used a hardcoded flat string array. The backend mapped string names back to IDs via a subquery (`SELECT id FROM barangays WHERE name = $1`), creating brittleness if barangay names drifted.
+- **Resolution:** All three components migrated to import `BARANGAY_LIST` from `client/src/constants/barangays.js` (the canonical `{id, name}` object array). `option` keys now use `b.id` and `value` continues to use `b.name` (matching the existing backend string-match logic, which has not changed). `locations.js` is now fully orphaned with zero imports — safe to delete in a future cleanup pass.
+- **Note:** The deeper backend refactor (passing `barangay_id` integer directly instead of a name string) was not pursued — the backend `UserService.js` subquery approach still works and the risk of name drift is now eliminated on the frontend since `BARANGAY_LIST` and the `barangays` DB table are kept in sync.
+
+---
+
+### Resolved: Cross-Session SPA Cache Persistence
 
 - **Issue:** Due to the nature of SPA routing (`navigate`), explicit client-side logouts did not trigger a hard browser refresh, meaning the TanStack `queryClient` persisted in the browser's heap memory across authentication boundaries. If User A logged out and User B logged in without a hard refresh, User B was served User A's cached data (e.g., certificates, dashboard metrics, admin lists) before background refetches fired.
 - **Root Cause:**
@@ -21,11 +28,15 @@
   - **Note:** 401 Unauthorized responses and session expiries naturally mitigated this via `window.location.href = '/signin'`, which forces a hard refresh and destroys the memory cache. The vulnerability was localized entirely to manual, successful `authClient.signOut()` triggers.
 - **Verification:** Manually confirmed clean across four scenarios: resident-to-resident account switch, admin-to-admin account switch, in-flight request race (throttled network, logout mid-fetch), and remote session revocation via `ActiveDevices`. No stale or cross-user data observed in any case.
 
-### `AdminFeedbackManager.jsx` Missing Data Grid Features
+---
+
+### Open: `AdminFeedbackManager.jsx` Missing Data Grid Features
 
 - **Location:** `client/src/pages/admin/feedback/AdminFeedbackManager.jsx`
 - **Issue:** The ticket queue maps directly over the array of feedbacks with no client-side or server-side search, sort, or pagination.
-- **Why Deferred:** The current ticket volume is very low (e.g., 1 ticket), so this is not a blocking issue. However, once ticket volume grows, it will need to be refactored to support proper pagination and sorting (preferably server-side).
+- **Why Deferred:** The current ticket volume is very low, so this is not a blocking issue. However, once ticket volume grows, it will need to be refactored to support proper pagination and sorting (preferably server-side).
+
+---
 
 ### Resolved: Dead Columns in `feedbacks` Table
 
