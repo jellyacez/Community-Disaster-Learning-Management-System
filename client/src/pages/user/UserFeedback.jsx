@@ -277,9 +277,8 @@ export default function UserFeedback() {
         </div>
 
         {/* Main area */}
-        <div className="grid gap-6 xl:grid-cols-3">
-          {/* Form */}
-          <div className="xl:col-span-2 bg-white rounded-3xl border border-gray-100 shadow-sm p-6">
+        {/* Form */}
+        <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6">
             <div className="flex items-center gap-2 mb-2">
               <HugeiconsIcon icon={Message01Icon} className="w-5 h-5 text-red-600" />
               <h2 className="text-xl font-black text-gray-900">Send a Message</h2>
@@ -418,39 +417,6 @@ export default function UserFeedback() {
               </div>
             </form>
           </div>
-
-          {/* Sidebar panel */}
-          <div className="space-y-6">
-            <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6">
-              <h2 className="text-xl font-black text-gray-900 mb-2">
-                Communication Notes
-              </h2>
-              <ul className="space-y-3 text-sm text-gray-600 leading-relaxed">
-                <li className="flex gap-2">
-                  <span className="mt-1 h-2 w-2 rounded-full bg-red-500" />
-                  <span>
-                    Use <strong>Barangay</strong> for local concerns and nearby
-                    community issues.
-                  </span>
-                </li>
-                <li className="flex gap-2">
-                  <span className="mt-1 h-2 w-2 rounded-full bg-red-500" />
-                  <span>
-                    Use <strong>MDRRMO</strong> for larger disaster management
-                    concerns or municipal-level questions.
-                  </span>
-                </li>
-                <li className="flex gap-2">
-                  <span className="mt-1 h-2 w-2 rounded-full bg-red-500" />
-                  <span>
-                    Submitted reports and feedback are safely archived in your
-                    official account history.
-                  </span>
-                </li>
-              </ul>
-          </div>
-        </div>
-        </div>
 
         {/* Message history */}
         <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6">
