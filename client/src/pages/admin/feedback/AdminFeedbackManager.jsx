@@ -259,8 +259,27 @@ export default function AdminFeedbackManager() {
   return (
     <div className="animate-in fade-in duration-300 space-y-6">
       {/* Header */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-8">
         <div>
+          <nav className="flex text-sm text-gray-500 mb-2" aria-label="Breadcrumb">
+            <ol className="inline-flex items-center space-x-1 md:space-x-2">
+              <li className="inline-flex items-center">Dashboard</li>
+              <li>
+                <div className="flex items-center">
+                  <span className="mx-2 text-gray-400">&gt;</span>
+                  <span>Dashboard & Monitoring</span>
+                </div>
+              </li>
+              <li>
+                <div className="flex items-center">
+                  <span className="mx-2 text-gray-400">&gt;</span>
+                  <span className="text-gray-900 font-semibold">
+                    {isMdrrmoOrSystem ? "Resident Feedbacks" : "Resident Feedbacks"}
+                  </span>
+                </div>
+              </li>
+            </ol>
+          </nav>
           <h1 className="text-3xl font-extrabold text-gray-900">
             {isMdrrmoOrSystem ? "MDRRMO Municipal Feedback Desk" : "Barangay Feedback Desk"}
           </h1>
