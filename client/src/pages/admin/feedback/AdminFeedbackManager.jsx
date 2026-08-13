@@ -10,6 +10,9 @@ import {
   SentIcon,
   UserCircleIcon,
   FilterIcon,
+  Search01Icon,
+  ArrowDown01Icon,
+  ArrowUp01Icon,
 } from "@hugeicons/core-free-icons";
 import toast from "react-hot-toast";
 import apiClient from "../../../lib/apiClient";
@@ -36,6 +39,22 @@ export default function AdminFeedbackManager() {
   const [replyText, setReplyText] = useState("");
   const [targetStatus, setTargetStatus] = useState("Replied");
   const [ticketToClose, setTicketToClose] = useState(null);
+
+  // Data grid controls
+  const [searchQuery, setSearchQuery] = useState("");
+  const [sortOrder, setSortOrder] = useState("newest"); // "newest" | "oldest" | "status"
+  const [currentPage, setCurrentPage] = useState(1);
+  const PAGE_SIZE = 10;
+  const [expandedIds, setExpandedIds] = useState(new Set());
+
+  const toggleExpand = (id) => {
+    setExpandedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
 
   // 2. FETCH FEEDBACKS
     const { data: submissions = [], isLoading } = useQuery({
@@ -167,11 +186,48 @@ export default function AdminFeedbackManager() {
   };
 
   const filteredSubmissions = useMemo(() => {
-    if (activeTab === "all") return submissions;
-    return submissions.filter(
-      (item) => item.status.toLowerCase() === activeTab.toLowerCase()
-    );
-  }, [activeTab, submissions]);
+    let result = submissions;
+
+    // 1. Tab filter
+    if (activeTab !== "all") {
+      result = result.filter(
+        (item) => item.status.toLowerCase() === activeTab.toLowerCase()
+      );
+    }
+
+    // 2. Search filter (subject, resident name, type)
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      result = result.filter(
+        (item) =>
+          item.subject?.toLowerCase().includes(q) ||
+          item.resident_name?.toLowerCase().includes(q) ||
+          item.type?.toLowerCase().includes(q)
+      );
+    }
+
+    // 3. Sort
+    result = [...result].sort((a, b) => {
+      if (sortOrder === "oldest") {
+        return new Date(a.created_at || a.createdAt) - new Date(b.created_at || b.createdAt);
+      }
+      if (sortOrder === "status") {
+        const order = { Pending: 0, Replied: 1, Closed: 2 };
+        return (order[a.status] ?? 3) - (order[b.status] ?? 3);
+      }
+      // "newest" default
+      return new Date(b.created_at || b.createdAt) - new Date(a.created_at || a.createdAt);
+    });
+
+    return result;
+  }, [activeTab, submissions, searchQuery, sortOrder]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredSubmissions.length / PAGE_SIZE));
+
+  const paginatedSubmissions = useMemo(() => {
+    const start = (currentPage - 1) * PAGE_SIZE;
+    return filteredSubmissions.slice(start, start + PAGE_SIZE);
+  }, [filteredSubmissions, currentPage, PAGE_SIZE]);
 
   const tabs = useMemo(
     () => [
@@ -194,6 +250,11 @@ export default function AdminFeedbackManager() {
     ],
     [submissions]
   );
+
+  // Reset to page 1 whenever filters change
+  const handleTabChange = (key) => { setActiveTab(key); setCurrentPage(1); };
+  const handleSearchChange = (e) => { setSearchQuery(e.target.value); setCurrentPage(1); };
+  const handleSortChange = (e) => { setSortOrder(e.target.value); setCurrentPage(1); };
 
   return (
     <div className="animate-in fade-in duration-300 space-y-6">
@@ -235,7 +296,7 @@ export default function AdminFeedbackManager() {
 
       {/* Main Inbox */}
       <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6">
-        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between mb-6">
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between mb-4">
           <h2 className="text-xl font-black text-gray-900">
             Incoming Communication Queue
           </h2>
@@ -244,7 +305,7 @@ export default function AdminFeedbackManager() {
               <button
                 key={tab.key}
                 type="button"
-                onClick={() => setActiveTab(tab.key)}
+                onClick={() => handleTabChange(tab.key)}
                 className={`px-4 py-2 rounded-xl text-sm font-bold transition-colors ${
                   activeTab === tab.key
                     ? "bg-red-600 text-white"
@@ -256,6 +317,39 @@ export default function AdminFeedbackManager() {
             ))}
           </div>
         </div>
+
+        {/* Search + Sort controls */}
+        <div className="flex flex-col sm:flex-row gap-3 mb-5">
+          <div className="relative flex-1">
+            <HugeiconsIcon icon={Search01Icon} className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search by subject, resident name, or type..."
+              value={searchQuery}
+              onChange={handleSearchChange}
+              className="w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-red-500 bg-gray-50"
+            />
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-bold text-gray-500 uppercase">Sort:</span>
+            <select
+              value={sortOrder}
+              onChange={handleSortChange}
+              className="px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-red-500 bg-gray-50 font-medium text-gray-700"
+            >
+              <option value="newest">Newest First</option>
+              <option value="oldest">Oldest First</option>
+              <option value="status">By Status (Pending → Replied → Closed)</option>
+            </select>
+          </div>
+        </div>
+
+        {/* Result count */}
+        {!isLoading && (
+          <p className="text-xs text-gray-400 font-semibold mb-3">
+            Showing {filteredSubmissions.length === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1}–{Math.min(currentPage * PAGE_SIZE, filteredSubmissions.length)} of {filteredSubmissions.length} ticket{filteredSubmissions.length !== 1 ? "s" : ""}
+          </p>
+        )}
 
         {isLoading ? (
           <div className="py-12 text-center text-gray-400 font-bold">
@@ -275,57 +369,85 @@ export default function AdminFeedbackManager() {
             </p>
           </div>
         ) : (
-          <div className="space-y-4">
-            {filteredSubmissions.map((item) => {
+          <div className="space-y-3">
+            {paginatedSubmissions.map((item) => {
               const StatusIcon = getStatusIcon(item.status);
+              const ticketId = item.feedback_id || item.id;
+              const isExpanded = expandedIds.has(ticketId);
+              const lastMsg = item.thread?.[item.thread.length - 1];
+
               return (
                 <div
-                  key={item.feedback_id || item.id}
-                  className="rounded-3xl border border-gray-100 bg-gray-50/60 p-5 transition-hover hover:border-gray-200"
+                  key={ticketId}
+                  className="rounded-2xl border border-gray-100 bg-gray-50/60 overflow-hidden"
                 >
-                  <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                    <div className="flex-1">
-                      {/* Badge bar */}
-                      <div className="flex flex-wrap items-center gap-2 mb-2">
-                        <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${getTypeBadgeClasses(item.type)}`}>
-                          {item.type}
-                        </span>
-                        <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold ${getStatusBadgeClasses(item.status)}`}>
-                          <HugeiconsIcon icon={StatusIcon} className="w-3.5 h-3.5" />
-                          {item.status}
-                        </span>
-                        <span className="text-xs font-semibold text-gray-400">
-                          • Submitted: {new Date(item.created_at || item.createdAt).toLocaleString()}
-                        </span>
-                      </div>
+                  {/* Summary row — always visible */}
+                  <button
+                    type="button"
+                    onClick={() => toggleExpand(ticketId)}
+                    className="w-full text-left px-5 py-4 flex items-center gap-3 hover:bg-gray-100/60 transition-colors"
+                  >
+                    {/* Badges */}
+                    <div className="flex items-center gap-2 shrink-0">
+                      <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${getTypeBadgeClasses(item.type)}`}>
+                        {item.type}
+                      </span>
+                      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold ${getStatusBadgeClasses(item.status)}`}>
+                        <HugeiconsIcon icon={StatusIcon} className="w-3 h-3" />
+                        {item.status}
+                      </span>
+                    </div>
 
-                      {/* User Info & Subject */}
-                      <h3 className="text-lg font-black text-gray-900">
-                        {item.subject}
-                      </h3>
-                      <div className="flex flex-wrap items-center gap-2 text-xs font-bold text-gray-600 mt-1 mb-3">
+                    {/* Subject + resident preview */}
+                    <div className="flex-1 min-w-0">
+                      <p className="font-bold text-gray-900 text-sm truncate">{item.subject}</p>
+                      <p className="text-xs text-gray-400 truncate mt-0.5">
+                        {item.resident_name || item.user_id}
+                        {(item.barangay_name || item.barangay) && ` · Bgry. ${item.barangay_name || item.barangay}`}
+                        {!isExpanded && lastMsg && ` · ${lastMsg.sender_type === "admin" ? "You: " : "Resident: "}${lastMsg.message}`}
+                      </p>
+                    </div>
+
+                    {/* Date + chevron */}
+                    <div className="flex items-center gap-2 shrink-0 text-gray-400">
+                      <span className="text-xs hidden sm:block">
+                        {new Date(item.created_at || item.createdAt).toLocaleDateString()}
+                      </span>
+                      <HugeiconsIcon
+                        icon={isExpanded ? ArrowUp01Icon : ArrowDown01Icon}
+                        className="w-4 h-4"
+                      />
+                    </div>
+                  </button>
+
+                  {/* Expanded content */}
+                  {isExpanded && (
+                    <div className="px-5 pb-5 border-t border-gray-100">
+                      {/* Metadata row */}
+                      <div className="flex flex-wrap items-center gap-2 text-xs font-bold text-gray-500 pt-3 mb-4">
                         <HugeiconsIcon icon={UserCircleIcon} className="w-4 h-4 text-gray-400" />
-                        <span>Resident: {item.resident_name || item.user_id}</span>
+                        <span>{item.resident_name || item.user_id}</span>
                         {(item.barangay_name || item.barangay) && (
-                          <span className="bg-gray-200 text-gray-800 px-2 py-0.5 rounded-md">
+                          <span className="bg-gray-200 text-gray-700 px-2 py-0.5 rounded-md">
                             Barangay {item.barangay_name || item.barangay}
                           </span>
                         )}
-                        <span className="text-gray-400">• Routed to: {item.recipient === "mdrrmo" ? "MDRRMO" : "Barangay"}</span>
+                        <span className="text-gray-400">· Routed to: {item.recipient === "mdrrmo" ? "MDRRMO" : "Barangay"}</span>
+                        <span className="text-gray-400">· {new Date(item.created_at || item.createdAt).toLocaleString()}</span>
                       </div>
 
                       {/* Message Thread */}
-                      <div className="space-y-3 mt-4 flex flex-col">
+                      <div className="space-y-3 flex flex-col">
                         {item.thread?.map((msg, idx) => (
-                          <div 
-                            key={msg.id} 
+                          <div
+                            key={msg.id}
                             className={`flex w-full ${
                               msg.sender_type === "admin" ? "justify-end" : "justify-start"
                             }`}
                           >
                             <div className={`rounded-2xl border p-4 max-w-[85%] sm:max-w-[75%] ${
-                              msg.sender_type === "admin" 
-                                ? "bg-blue-50/80 border-blue-100" 
+                              msg.sender_type === "admin"
+                                ? "bg-blue-50/80 border-blue-100"
                                 : "bg-white border-gray-100"
                             }`}>
                               <div className="flex justify-between items-center mb-1 gap-4">
@@ -345,31 +467,56 @@ export default function AdminFeedbackManager() {
                           </div>
                         ))}
                       </div>
-                    </div>
 
-                    {/* Action Buttons */}
-                    <div className="lg:self-center flex flex-col sm:flex-row gap-2">
-                      {item.status !== "Closed" && (
+                      {/* Action Buttons */}
+                      <div className="flex flex-col sm:flex-row gap-2 mt-4 pt-4 border-t border-gray-100 justify-end">
+                        {item.status !== "Closed" && (
+                          <button
+                            onClick={() => setTicketToClose(item)}
+                            className="px-4 py-2 bg-gray-100 text-gray-700 hover:bg-gray-200 text-sm font-bold rounded-xl transition-colors flex items-center gap-2 border border-gray-200"
+                          >
+                            <HugeiconsIcon icon={CancelCircleIcon} className="w-4 h-4" />
+                            Close Thread
+                          </button>
+                        )}
                         <button
-                          onClick={() => setTicketToClose(item)}
-                          className="w-full sm:w-auto px-4 py-2 bg-gray-100 text-gray-700 hover:bg-gray-200 text-sm font-bold rounded-xl transition-colors flex justify-center items-center gap-2 border border-gray-200"
+                          onClick={() => handleOpenReplyModal(item)}
+                          className="px-4 py-2 bg-slate-800 text-white text-sm font-bold rounded-xl hover:bg-slate-700 transition-colors flex items-center gap-2"
                         >
-                          <HugeiconsIcon icon={CancelCircleIcon} className="w-4 h-4" />
-                          Close Thread
+                          <HugeiconsIcon icon={MailReply01Icon} className="w-4 h-4" />
+                          Reply
                         </button>
-                      )}
-                      <button
-                        onClick={() => handleOpenReplyModal(item)}
-                        className="w-full sm:w-auto px-4 py-2 bg-slate-800 text-white text-sm font-bold rounded-xl hover:bg-slate-700 transition-colors flex justify-center items-center gap-2"
-                      >
-                        <HugeiconsIcon icon={MailReply01Icon} className="w-4 h-4" />
-                        Reply
-                      </button>
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </div>
               );
             })}
+          </div>
+        )}
+
+        {/* Pagination */}
+        {!isLoading && totalPages > 1 && (
+          <div className="flex items-center justify-between mt-5 pt-4 border-t border-gray-100">
+            <button
+              type="button"
+              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+              className="px-4 py-2 rounded-xl text-sm font-bold bg-gray-100 text-gray-700 hover:bg-gray-200 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            >
+              ← Previous
+            </button>
+            <span className="text-sm font-semibold text-gray-500">
+              Page {currentPage} of {totalPages}
+            </span>
+            <button
+              type="button"
+              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+              className="px-4 py-2 rounded-xl text-sm font-bold bg-gray-100 text-gray-700 hover:bg-gray-200 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            >
+              Next →
+            </button>
           </div>
         )}
       </div>

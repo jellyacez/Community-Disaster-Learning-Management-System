@@ -12,6 +12,8 @@ import {
   Clock01Icon,
   MailReply01Icon,
   CancelCircleIcon,
+  ArrowDown01Icon,
+  ArrowUp01Icon,
 } from "@hugeicons/core-free-icons";
 import toast from "react-hot-toast";
 import apiClient from "../../lib/apiClient";
@@ -35,6 +37,17 @@ export default function UserFeedback() {
 
   const [activeTab, setActiveTab] = useState("all");
   const [replyInputs, setReplyInputs] = useState({});
+  const [expandedIds, setExpandedIds] = useState(new Set());
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const toggleExpand = (id) => {
+    setExpandedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
 
   const handleReplyChange = (id, val) => setReplyInputs((prev) => ({ ...prev, [id]: val }));
 
@@ -212,11 +225,22 @@ export default function UserFeedback() {
   };
 
   const filteredSubmissions = useMemo(() => {
-    if (activeTab === "all") return submissions;
-    return submissions.filter(
-      (item) => item.status.toLowerCase() === activeTab.toLowerCase()
-    );
-  }, [activeTab, submissions]);
+    let result = submissions;
+    if (activeTab !== "all") {
+      result = result.filter(
+        (item) => item.status.toLowerCase() === activeTab.toLowerCase()
+      );
+    }
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      result = result.filter(
+        (item) =>
+          item.subject?.toLowerCase().includes(q) ||
+          item.type?.toLowerCase().includes(q)
+      );
+    }
+    return result;
+  }, [activeTab, submissions, searchQuery]);
 
   const tabs = useMemo(() => [
     { key: "all", label: "All", count: submissions.length },
@@ -445,7 +469,7 @@ export default function UserFeedback() {
                 <button
                   key={tab.key}
                   type="button"
-                  onClick={() => setActiveTab(tab.key)}
+                  onClick={() => { setActiveTab(tab.key); }}
                   className={`px-4 py-2 rounded-xl text-sm font-bold transition-colors ${
                     activeTab === tab.key
                       ? "bg-red-600 text-white"
@@ -456,6 +480,18 @@ export default function UserFeedback() {
                 </button>
               ))}
             </div>
+          </div>
+
+          {/* Search */}
+          <div className="relative mb-4">
+            <HugeiconsIcon icon={Search01Icon} className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search by subject or type..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-red-500 bg-gray-50"
+            />
           </div>
 
           {isLoading ? (
@@ -491,59 +527,78 @@ export default function UserFeedback() {
               </p>
             </div>
           ) : (
-            <div className="space-y-5">
+            <div className="space-y-3">
               {filteredSubmissions.map((item) => {
                 const StatusIcon = getStatusIcon(item.status);
+                const ticketId = item.feedback_id || item.id;
+                const isExpanded = expandedIds.has(ticketId);
+                const lastMsg = item.thread?.[item.thread.length - 1];
+                const hasUnread = item.thread?.some((m) => m.sender_type === "admin");
 
                 return (
                   <div
-                    key={item.feedback_id || item.id}
-                    className="rounded-3xl border border-gray-100 bg-gray-50/70 p-5"
+                    key={ticketId}
+                    className="rounded-2xl border border-gray-100 bg-gray-50/70 overflow-hidden transition-all"
                   >
-                    <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                      <div className="flex-1">
-                        <div className="flex flex-wrap items-center gap-2 mb-3">
-                          <span
-                            className={`px-2.5 py-1 rounded-full text-xs font-bold ${getTypeBadgeClasses(
-                              item.type
-                            )}`}
-                          >
-                            {item.type}
-                          </span>
+                    {/* Summary row — always visible, clickable to toggle */}
+                    <button
+                      type="button"
+                      onClick={() => toggleExpand(ticketId)}
+                      className="w-full text-left px-5 py-4 flex items-center gap-3 hover:bg-gray-100/60 transition-colors"
+                    >
+                      {/* Status + type badges */}
+                      <div className="flex items-center gap-2 shrink-0">
+                        <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${getTypeBadgeClasses(item.type)}`}>
+                          {item.type}
+                        </span>
+                        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold ${getStatusBadgeClasses(item.status)}`}>
+                          <HugeiconsIcon icon={StatusIcon} className="w-3 h-3" />
+                          {item.status}
+                        </span>
+                      </div>
 
-                          <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-gray-200 text-gray-700">
-                            {item.recipient === "mdrrmo" ? "MDRRMO" : "Barangay"}
-                          </span>
+                      {/* Subject + preview */}
+                      <div className="flex-1 min-w-0">
+                        <p className="font-bold text-gray-900 text-sm truncate">{item.subject}</p>
+                        {!isExpanded && lastMsg && (
+                          <p className="text-xs text-gray-400 truncate mt-0.5">
+                            {lastMsg.sender_type === "admin" ? "Office: " : "You: "}{lastMsg.message}
+                          </p>
+                        )}
+                      </div>
 
-                          <span
-                            className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold ${getStatusBadgeClasses(
-                              item.status
-                            )}`}
-                          >
-                            <HugeiconsIcon icon={StatusIcon} className="w-3.5 h-3.5" />
-                            {item.status}
-                          </span>
-                        </div>
+                      {/* Date + chevron */}
+                      <div className="flex items-center gap-2 shrink-0 text-gray-400">
+                        <span className="text-xs hidden sm:block">
+                          {new Date(item.created_at || item.createdAt).toLocaleDateString()}
+                        </span>
+                        <HugeiconsIcon
+                          icon={isExpanded ? ArrowUp01Icon : ArrowDown01Icon}
+                          className="w-4 h-4"
+                        />
+                      </div>
+                    </button>
 
-                        <h3 className="text-lg font-black text-gray-900">
-                          {item.subject}
-                        </h3>
-
-                        <p className="text-xs text-gray-400 mt-1 mb-3">
+                    {/* Expanded thread */}
+                    {isExpanded && (
+                      <div className="px-5 pb-5 border-t border-gray-100">
+                        <p className="text-xs text-gray-400 pt-3 mb-4">
                           Submitted: {new Date(item.created_at || item.createdAt).toLocaleString()}
+                          {" · "}
+                          {item.recipient === "mdrrmo" ? "MDRRMO" : "Barangay"}
                         </p>
 
                         {/* Message Thread */}
-                        <div className="space-y-4 mt-4 flex flex-col">
+                        <div className="space-y-4 flex flex-col">
                           {item.thread?.map((msg, idx) => (
-                            <div 
-                              key={msg.id} 
+                            <div
+                              key={msg.id}
                               className={`flex w-full ${
                                 msg.sender_type === "resident" ? "justify-end" : "justify-start"
                               }`}
                             >
                               <div className={`rounded-2xl border p-4 max-w-[85%] sm:max-w-[75%] ${
-                                msg.sender_type === "resident" 
+                                msg.sender_type === "resident"
                                   ? "bg-white border-gray-100"
                                   : "bg-blue-50 border-blue-100"
                               }`}>
@@ -586,7 +641,7 @@ export default function UserFeedback() {
                           </div>
                         )}
                       </div>
-                    </div>
+                    )}
                   </div>
                 );
               })}

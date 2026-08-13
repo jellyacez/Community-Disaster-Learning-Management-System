@@ -30,11 +30,11 @@
 
 ---
 
-### Open: `AdminFeedbackManager.jsx` Missing Data Grid Features
+### Resolved: `AdminFeedbackManager.jsx` Missing Data Grid Features
 
 - **Location:** `client/src/pages/admin/feedback/AdminFeedbackManager.jsx`
-- **Issue:** The ticket queue maps directly over the array of feedbacks with no client-side or server-side search, sort, or pagination.
-- **Why Deferred:** The current ticket volume is very low, so this is not a blocking issue. However, once ticket volume grows, it will need to be refactored to support proper pagination and sorting (preferably server-side).
+- **Issue:** The ticket queue mapped directly over the array of feedbacks with no client-side or server-side search, sort, or pagination.
+- **Resolution:** Implemented client-side search (by subject, resident name, type), sort (newest/oldest/by status), and pagination (10 tickets per page). All three controls are combined in a single `useMemo` pipeline. Tab filters continue to function alongside search/sort and all reset the page to 1 on change. A "Showing X–Y of Z tickets" count row is displayed above the list. Pagination footer appears only when there is more than one page. Server-side pagination remains the correct long-term approach if ticket volume grows significantly.
 
 ---
 
