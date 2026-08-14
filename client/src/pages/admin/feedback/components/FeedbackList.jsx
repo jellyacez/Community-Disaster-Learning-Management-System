@@ -13,8 +13,8 @@ export default function FeedbackList({
   setCurrentPage,
   expandedIds,
   toggleExpand,
-  handleOpenReplyModal,
-  setTicketToClose,
+  replyMutation,
+  closeMutation,
 }) {
   return (
     <>
@@ -50,8 +50,8 @@ export default function FeedbackList({
               item={item}
               isExpanded={expandedIds.has(item.feedback_id || item.id)}
               toggleExpand={toggleExpand}
-              handleOpenReplyModal={handleOpenReplyModal}
-              setTicketToClose={setTicketToClose}
+              replyMutation={replyMutation}
+              closeMutation={closeMutation}
             />
           ))}
         </div>

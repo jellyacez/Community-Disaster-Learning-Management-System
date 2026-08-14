@@ -3,8 +3,8 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import { Message01Icon, SentIcon } from "@hugeicons/core-free-icons";
 import { useFeedbackSubmit } from "../hooks/useFeedbackSubmit";
 
-export default function FeedbackForm({ userId, setActiveTab }) {
-  const { formData, handleChange, handleSubmit, submitMutation } = useFeedbackSubmit(userId, setActiveTab);
+export default function FeedbackForm({ userId, setActiveTab, onDone }) {
+  const { formData, handleChange, handleSubmit, submitMutation } = useFeedbackSubmit(userId, setActiveTab, onDone);
 
   const recipientInfo = useMemo(() => {
     if (formData.recipient === "mdrrmo") {

@@ -7,26 +7,26 @@ import {
 export const getTypeBadgeClasses = (type) => {
   switch (type) {
     case "report":
-      return "bg-red-100 text-red-700";
+      return "bg-red-100 text-red-800";
     case "concern":
-      return "bg-amber-100 text-amber-700";
+      return "bg-amber-100 text-amber-800";
     case "inquiry":
-      return "bg-blue-100 text-blue-700";
+      return "bg-blue-100 text-blue-800";
     case "feedback":
     default:
-      return "bg-emerald-100 text-emerald-700";
+      return "bg-green-100 text-green-800";
   }
 };
 
 export const getStatusBadgeClasses = (status) => {
   switch (status) {
     case "Closed":
-      return "bg-gray-200 text-gray-700";
+      return "bg-gray-200 text-gray-800";
     case "Replied":
-      return "bg-blue-100 text-blue-700";
+      return "bg-green-100 text-green-800";
     case "Pending":
     default:
-      return "bg-amber-100 text-amber-700";
+      return "bg-amber-100 text-amber-800";
   }
 };
 

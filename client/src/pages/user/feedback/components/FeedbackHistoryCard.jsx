@@ -21,14 +21,13 @@ export default function FeedbackHistoryCard({
   const lastMsg = item.thread?.[item.thread.length - 1];
 
   return (
-    <div className="rounded-2xl border border-gray-100 bg-gray-50/70 overflow-hidden transition-all">
-      {/* Summary row — always visible, clickable to toggle */}
+    <div className={`rounded-2xl border border-gray-100 bg-gray-50/70 overflow-hidden transition-all ${isExpanded ? "border-b-2 border-gray-200 pb-6 mb-6" : ""}`}>
+      {/* Summary row */}
       <button
         type="button"
         onClick={() => toggleExpand(ticketId)}
         className="w-full text-left px-5 py-4 flex items-center gap-3 hover:bg-gray-100/60 transition-colors"
       >
-        {/* Status + type badges */}
         <div className="flex items-center gap-2 shrink-0">
           <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${getTypeBadgeClasses(item.type)}`}>
             {item.type}
@@ -39,70 +38,82 @@ export default function FeedbackHistoryCard({
           </span>
         </div>
 
-        {/* Subject + preview */}
         <div className="flex-1 min-w-0">
-          <p className="font-bold text-gray-900 text-sm truncate">{item.subject}</p>
+          <p className="font-semibold text-gray-900 text-sm truncate">{item.subject}</p>
           {!isExpanded && lastMsg && (
-            <p className="text-xs text-gray-400 truncate mt-0.5">
+            <p className="text-sm text-gray-500 truncate mt-0.5">
               {lastMsg.sender_type === "admin" ? "Office: " : "You: "}{lastMsg.message}
             </p>
           )}
         </div>
 
-        {/* Date + chevron */}
         <div className="flex items-center gap-2 shrink-0 text-gray-400">
           <span className="text-xs hidden sm:block">
             {new Date(item.created_at || item.createdAt).toLocaleDateString()}
           </span>
-          <HugeiconsIcon
-            icon={isExpanded ? ArrowUp01Icon : ArrowDown01Icon}
-            className="w-4 h-4"
-          />
+          <HugeiconsIcon icon={isExpanded ? ArrowUp01Icon : ArrowDown01Icon} className="w-4 h-4" />
         </div>
       </button>
 
       {/* Expanded thread */}
       {isExpanded && (
-        <div className="px-5 pb-5 border-t border-gray-100">
-          <p className="text-xs text-gray-400 pt-3 mb-4">
-            Submitted: {new Date(item.created_at || item.createdAt).toLocaleString()}
-            {" · "}
-            {item.recipient === "mdrrmo" ? "MDRRMO" : "Barangay"}
-          </p>
+        <div className="border-t border-gray-100">
+          {/* Metadata header — flush left */}
+          <div className="px-5 pt-3">
+            <p className="text-xs text-gray-400">
+              Submitted: {new Date(item.created_at || item.createdAt).toLocaleString()}
+              {" · "}
+              Routed to: {item.recipient === "mdrrmo" ? "MDRRMO" : "Barangay"}
+            </p>
+            <hr className="my-3 border-gray-100" />
+          </div>
 
-          {/* Message Thread */}
-          <div className="space-y-4 flex flex-col">
-            {item.thread?.map((msg, idx) => (
-              <div
-                key={msg.id}
-                className={`flex w-full ${
-                  msg.sender_type === "resident" ? "justify-end" : "justify-start"
-                }`}
-              >
-                <div className={`rounded-2xl border p-4 max-w-[85%] sm:max-w-[75%] ${
-                  msg.sender_type === "resident"
-                    ? "bg-white border-gray-100"
-                    : "bg-blue-50 border-blue-100"
-                }`}>
-                  <p className={`text-xs font-bold uppercase tracking-wide mb-2 flex flex-wrap items-center justify-between gap-4 ${
-                    msg.sender_type === "resident" ? "text-gray-400" : "text-blue-700"
-                  }`}>
-                    <span>{msg.sender_type === "resident" ? "Your Message" : "Office Response"}</span>
-                    <span className="font-semibold text-[10px] text-gray-400 normal-case whitespace-nowrap">
-                      {formatMessageTimestamp(msg.created_at, item.thread[idx - 1]?.created_at, idx)}
-                    </span>
-                  </p>
-                  <p className="text-sm text-gray-700 whitespace-pre-line leading-relaxed">
-                    {msg.message}
-                  </p>
+          {/* Message Thread — grouped consecutive messages */}
+          <div className="px-5 flex flex-col gap-1">
+            {item.thread?.map((msg, idx) => {
+              const isResident = msg.sender_type === "resident";
+              const prevMsg = item.thread[idx - 1];
+              const isFirstInGroup = !prevMsg || prevMsg.sender_type !== msg.sender_type;
+
+              return (
+                <div
+                  key={msg.id || idx}
+                  className={`flex flex-col ${isResident ? "items-end" : "items-start"} ${isFirstInGroup && idx > 0 ? "mt-3" : ""}`}
+                >
+                  {/* Metadata: only for first in a consecutive group */}
+                  {isFirstInGroup && (
+                    <div className={`flex items-center gap-2 mb-1 ${isResident ? "flex-row-reverse" : "flex-row"}`}>
+                      <span className={`text-xs font-bold uppercase tracking-wide ${isResident ? "text-gray-400" : "text-blue-700"}`}>
+                        {isResident ? "You" : "Office Response"}
+                      </span>
+                      <span className="text-[10px] text-gray-400 font-medium whitespace-nowrap">
+                        {formatMessageTimestamp(msg.created_at, prevMsg?.created_at, idx)}
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Bubble — only wraps the message text */}
+                  <div
+                    className={`w-fit max-w-[80%] rounded-2xl border px-4 py-2.5 ${
+                      isResident
+                        ? "bg-white border-gray-200"
+                        : "bg-blue-50 border-blue-100"
+                    }`}
+                  >
+                    <p className={`text-sm whitespace-pre-line leading-relaxed ${
+                      isResident ? "text-gray-700" : "text-blue-900"
+                    }`}>
+                      {msg.message}
+                    </p>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           {/* Reply Input */}
           {item.status !== "Closed" && item.thread?.some((m) => m.sender_type === "admin") && (
-            <div className="mt-4 pt-4 border-t border-gray-100">
+            <div className="px-5 mt-4 pt-4 border-t border-gray-100">
               <textarea
                 rows={3}
                 placeholder="Write your follow-up reply..."
@@ -122,6 +133,8 @@ export default function FeedbackHistoryCard({
               </div>
             </div>
           )}
+
+          {item.status === "Closed" && <div className="pb-2" />}
         </div>
       )}
     </div>

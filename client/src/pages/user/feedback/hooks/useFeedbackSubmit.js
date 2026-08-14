@@ -4,7 +4,7 @@ import toast from "react-hot-toast";
 import apiClient from "../../../../lib/apiClient";
 import { localDb } from "../../../../lib/localDb"; // For offline queueing
 
-export function useFeedbackSubmit(userId, setActiveTab) {
+export function useFeedbackSubmit(userId, setActiveTab, onDone) {
   const queryClient = useQueryClient();
 
   const [formData, setFormData] = useState({
@@ -56,6 +56,7 @@ export function useFeedbackSubmit(userId, setActiveTab) {
         message: "",
       });
       if (setActiveTab) setActiveTab("all");
+      if (onDone) onDone();
     },
     onError: (err) => {
       toast.error(err.response?.data?.message || "Failed to submit message.");

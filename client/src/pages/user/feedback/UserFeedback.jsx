@@ -13,16 +13,20 @@ export default function UserFeedback() {
   const userId = session?.user?.id;
 
   const [activeTab, setActiveTab] = useState("all");
+  const [showForm, setShowForm] = useState(false);
 
   return (
     <div className="animate-in fade-in duration-300">
       <div className="space-y-6">
-        <FeedbackHeader />
-        
-        <FeedbackForm 
-          userId={userId} 
-          setActiveTab={setActiveTab} 
-        />
+        <FeedbackHeader onNewTicket={() => setShowForm((v) => !v)} showForm={showForm} />
+
+        {showForm && (
+          <FeedbackForm
+            userId={userId}
+            setActiveTab={setActiveTab}
+            onDone={() => setShowForm(false)}
+          />
+        )}
         
         <FeedbackHistory 
           userId={userId} 

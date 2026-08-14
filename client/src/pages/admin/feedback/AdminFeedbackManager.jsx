@@ -10,8 +10,6 @@ import { useFeedbackFilters } from "./hooks/useFeedbackFilters";
 import FeedbackHeader from "./components/FeedbackHeader";
 import FeedbackFilters from "./components/FeedbackFilters";
 import FeedbackList from "./components/FeedbackList";
-import ReplyModal from "./components/ReplyModal";
-import CloseConfirmModal from "./components/CloseConfirmModal";
 
 export default function AdminFeedbackManager() {
   useDocumentTitle("Feedback Management | Bacolor LMS Admin");
@@ -23,9 +21,7 @@ export default function AdminFeedbackManager() {
   const isMdrrmoOrSystem =
     adminRole.includes("mdrrmo") || adminRole === "system_admin";
 
-  // State for modals/expansion
-  const [selectedTicket, setSelectedTicket] = useState(null);
-  const [ticketToClose, setTicketToClose] = useState(null);
+  // Expansion state
   const [expandedIds, setExpandedIds] = useState(new Set());
 
   const toggleExpand = (id) => {
@@ -37,17 +33,7 @@ export default function AdminFeedbackManager() {
     });
   };
 
-  const handleOpenReplyModal = (ticket) => {
-    setSelectedTicket(ticket);
-  };
-
   // 2. Custom hooks
-  // Filters state needs to be lifted slightly so we can pass selectedBarangayFilter to fetch hook
-  // Wait, useFeedbackFilters uses submissions. But useAdminFeedbacks uses selectedBarangayFilter!
-  // To avoid circular dependencies between hooks, we can keep selectedBarangayFilter here OR
-  // pass the setter. Let's keep it simple: we can extract selectedBarangayFilter here or initialize filters,
-  // then pass filter down. Actually, our extracted hook `useFeedbackFilters` returns selectedBarangayFilter.
-  // But wait, in the original code, selectedBarangayFilter was a simple useState, let's keep it here.
   const [selectedBarangayFilter, setSelectedBarangayFilter] = useState("all");
 
   const {
@@ -105,23 +91,10 @@ export default function AdminFeedbackManager() {
           setCurrentPage={setCurrentPage}
           expandedIds={expandedIds}
           toggleExpand={toggleExpand}
-          handleOpenReplyModal={handleOpenReplyModal}
-          setTicketToClose={setTicketToClose}
+          replyMutation={replyMutation}
+          closeMutation={closeMutation}
         />
       </div>
-
-      {/* Modals */}
-      <ReplyModal
-        selectedTicket={selectedTicket}
-        setSelectedTicket={setSelectedTicket}
-        replyMutation={replyMutation}
-      />
-
-      <CloseConfirmModal
-        ticketToClose={ticketToClose}
-        setTicketToClose={setTicketToClose}
-        closeMutation={closeMutation}
-      />
     </div>
   );
 }
