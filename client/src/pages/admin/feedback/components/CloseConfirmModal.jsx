@@ -9,7 +9,11 @@ export default function CloseConfirmModal({
   if (!ticketToClose) return null;
 
   const handleConfirmClose = () => {
-    closeMutation.mutate(ticketToClose.feedback_id || ticketToClose.id);
+    closeMutation.mutate(ticketToClose.feedback_id || ticketToClose.id, {
+      onSuccess: () => {
+        setTicketToClose(null);
+      }
+    });
   };
 
   return (

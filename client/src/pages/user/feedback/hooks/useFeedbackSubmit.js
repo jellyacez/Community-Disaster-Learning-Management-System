@@ -20,6 +20,7 @@ export function useFeedbackSubmit(userId, setActiveTab) {
   };
 
   const submitMutation = useMutation({
+    networkMode: "always",
     mutationFn: async (payload) => {
       if (!userId) throw new Error("You must be logged in to send a message.");
 
@@ -69,10 +70,6 @@ export function useFeedbackSubmit(userId, setActiveTab) {
     }
     if (!formData.message.trim()) {
       toast.error("Please enter your message.");
-      return;
-    }
-    if (!navigator.onLine) {
-      toast.error("You are currently offline. Please connect to a network.");
       return;
     }
     submitMutation.mutate({

@@ -1,6 +1,7 @@
 // src/lib/syncManager.js
 import { localDb } from '../localDb';
 import { authClient } from '../auth-client';
+import apiClient from '../apiClient';
 
 
 export const getAllPendingWrites = async () => {
@@ -43,6 +44,10 @@ export const processOfflineQueue = async () => {
       else if (task.action_type === 'UPDATE_PROGRESS') {
         // Example: Sending general percentage updates
         await authClient.post('/api/module/progress/', task.payload);
+      }
+
+      else if (task.action_type === 'SUBMIT_FEEDBACK') {
+        await apiClient.post('/feedbacks', task.payload);
       }
 
       // 3. If the API call succeeds, delete the task from Dexie

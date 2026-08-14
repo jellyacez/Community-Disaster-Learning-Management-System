@@ -30,6 +30,10 @@ export default function ReplyModal({
       feedbackId: selectedTicket.feedback_id || selectedTicket.id,
       reply: replyText,
       status: targetStatus,
+    }, {
+      onSuccess: () => {
+        setSelectedTicket(null);
+      }
     });
   };
 
