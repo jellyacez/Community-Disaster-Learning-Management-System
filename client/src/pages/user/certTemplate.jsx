@@ -126,7 +126,7 @@ export default function CertificateTemplate() {
   );
 
   return (
-    <div className="flex flex-col h-full w-full bg-white p-6 rounded-lg shadow-sm">
+    <div className="flex flex-col h-auto w-full bg-white p-6 rounded-lg shadow-sm">
       <div className="mb-4">
         <Link to="/user/certificates" className="inline-flex items-center text-sm font-bold text-gray-500 hover:text-red-600 transition-colors mb-2">
           ← Back to Certificates
@@ -134,20 +134,20 @@ export default function CertificateTemplate() {
       </div>
       <div className="flex justify-between items-center mb-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-800 mb-1">{residentName}'s Certification</h1>
+          <h1 className="text-2xl font-bold text-gray-800 mb-1">{certData.module_title} Certification</h1>
           <p className="text-gray-500 text-sm">View and download your official completion certificate below.</p>
         </div>
         <PDFDownloadLink 
           document={MyDocument} 
           fileName={`Certificate-${residentName.replace(/\s+/g, '')}-${certData.module_title.replace(/\s+/g, '')}.pdf`}
-          className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg transition-colors shadow-sm text-sm whitespace-nowrap"
+          className="px-6 py-2 bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg transition-colors shadow-sm text-sm whitespace-nowrap"
         >
           {({ loading, error }) => (error ? 'Error — try again' : loading ? 'Preparing Document...' : 'Download PDF')}
         </PDFDownloadLink>
       </div>
       
-      <div className="w-full mt-4 border-2 border-gray-200 rounded-xl overflow-hidden shadow-inner flex items-center justify-center bg-gray-50" style={{ height: "65vh", minHeight: "400px" }}>
-        <PDFViewer style={{ width: "100%", height: "100%", border: "none" }} showToolbar={false}>
+      <div className="w-full mt-4 border border-gray-200 rounded-xl overflow-hidden bg-white aspect-[11/8.5]">
+        <PDFViewer style={{ width: "100%", height: "100%", border: "none", background: "transparent" }} showToolbar={false}>
           {MyDocument}
         </PDFViewer>
       </div>
