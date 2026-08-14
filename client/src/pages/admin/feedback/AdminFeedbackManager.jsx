@@ -1,29 +1,20 @@
-import { useMemo, useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
 import useDocumentTitle from "../../../hooks/useDocumentTitle";
-import { HugeiconsIcon } from "@hugeicons/react";
-import {
-  Message01Icon,
-  Clock01Icon,
-  MailReply01Icon,
-  CancelCircleIcon,
-  SentIcon,
-  UserCircleIcon,
-  FilterIcon,
-  Search01Icon,
-  ArrowDown01Icon,
-  ArrowUp01Icon,
-} from "@hugeicons/core-free-icons";
-import toast from "react-hot-toast";
-import apiClient from "../../../lib/apiClient";
 import { authClient } from "../../../lib/auth-client";
-import { BARANGAY_LIST } from "../../../constants/barangays";
 
+// Hooks
+import { useAdminFeedbacks } from "./hooks/useAdminFeedbacks";
+import { useFeedbackFilters } from "./hooks/useFeedbackFilters";
 
+// Components
+import FeedbackHeader from "./components/FeedbackHeader";
+import FeedbackFilters from "./components/FeedbackFilters";
+import FeedbackList from "./components/FeedbackList";
+import ReplyModal from "./components/ReplyModal";
+import CloseConfirmModal from "./components/CloseConfirmModal";
 
 export default function AdminFeedbackManager() {
   useDocumentTitle("Feedback Management | Bacolor LMS Admin");
-  const queryClient = useQueryClient();
 
   // 1. Get logged-in admin session & role
   const { data: session } = authClient.useSession();
@@ -32,19 +23,9 @@ export default function AdminFeedbackManager() {
   const isMdrrmoOrSystem =
     adminRole.includes("mdrrmo") || adminRole === "system_admin";
 
-  // UI Filters
-  const [activeTab, setActiveTab] = useState("all");
-  const [selectedBarangayFilter, setSelectedBarangayFilter] = useState("all");
+  // State for modals/expansion
   const [selectedTicket, setSelectedTicket] = useState(null);
-  const [replyText, setReplyText] = useState("");
-  const [targetStatus, setTargetStatus] = useState("Replied");
   const [ticketToClose, setTicketToClose] = useState(null);
-
-  // Data grid controls
-  const [searchQuery, setSearchQuery] = useState("");
-  const [sortOrder, setSortOrder] = useState("newest"); // "newest" | "oldest" | "status"
-  const [currentPage, setCurrentPage] = useState(1);
-  const PAGE_SIZE = 10;
   const [expandedIds, setExpandedIds] = useState(new Set());
 
   const toggleExpand = (id) => {
@@ -56,581 +37,91 @@ export default function AdminFeedbackManager() {
     });
   };
 
-  // 2. FETCH FEEDBACKS
-    const { data: submissions = [], isLoading } = useQuery({
-      queryKey: ["adminFeedbacks", adminRole, selectedBarangayFilter],
-      queryFn: async () => {
-        const params = new URLSearchParams();
-        if (isMdrrmoOrSystem && selectedBarangayFilter !== "all") {
-          params.append("barangay_id", selectedBarangayFilter);
-        }
-
-        const response = await apiClient.get(`/admin/mdrrmo/feedback?${params.toString()}`);
-        return response.data.data || [];
-      },
-      enabled: !!adminId,
-      refetchInterval: 30000, // Poll every 30s for incoming resident feedback
-    });
-
-
-    const replyMutation = useMutation({
-      mutationFn: async ({ feedbackId, reply, status }) => {
-
-        const response = await apiClient.put(`/admin/mdrrmo/feedback/${feedbackId}/reply`, {
-          reply,
-          status,
-        });
-        return response.data;
-      },
-      onSuccess: () => {
-        toast.success("Official response sent successfully!");
-        queryClient.invalidateQueries({ queryKey: ["adminFeedbacks"] });
-        setSelectedTicket(null);
-        setReplyText("");
-      },
-      onError: (err) => {
-        toast.error(err.response?.data?.message || "Failed to submit reply.");
-      },
-    });
-
-    const closeMutation = useMutation({
-      mutationFn: async (feedbackId) => {
-        const response = await apiClient.put(`/admin/mdrrmo/feedback/${feedbackId}/close`);
-        return response.data;
-      },
-      onSuccess: () => {
-        toast.success("Ticket closed successfully.");
-        queryClient.invalidateQueries({ queryKey: ["adminFeedbacks"] });
-        setTicketToClose(null);
-      },
-      onError: (err) => {
-        toast.error(err.response?.data?.error || "Failed to close ticket.");
-      },
-    });
-
-    const handleConfirmClose = () => {
-      if (!ticketToClose) return;
-      closeMutation.mutate(ticketToClose.feedback_id || ticketToClose.id);
-    };
-
   const handleOpenReplyModal = (ticket) => {
     setSelectedTicket(ticket);
-    setReplyText("");
-    setTargetStatus(ticket.status === "Pending" ? "Replied" : ticket.status);
   };
 
-  const handleSubmitReply = (e) => {
-    e.preventDefault();
-    if (!replyText.trim()) {
-      toast.error("Please enter a reply message.");
-      return;
-    }
-    replyMutation.mutate({
-      feedbackId: selectedTicket.feedback_id || selectedTicket.id,
-      reply: replyText,
-      status: targetStatus,
-    });
-  };
+  // 2. Custom hooks
+  // Filters state needs to be lifted slightly so we can pass selectedBarangayFilter to fetch hook
+  // Wait, useFeedbackFilters uses submissions. But useAdminFeedbacks uses selectedBarangayFilter!
+  // To avoid circular dependencies between hooks, we can keep selectedBarangayFilter here OR
+  // pass the setter. Let's keep it simple: we can extract selectedBarangayFilter here or initialize filters,
+  // then pass filter down. Actually, our extracted hook `useFeedbackFilters` returns selectedBarangayFilter.
+  // But wait, in the original code, selectedBarangayFilter was a simple useState, let's keep it here.
+  const [selectedBarangayFilter, setSelectedBarangayFilter] = useState("all");
 
-  const getTypeBadgeClasses = (type) => {
-    switch (type) {
-      case "report":
-        return "bg-red-100 text-red-700";
-      case "concern":
-        return "bg-amber-100 text-amber-700";
-      case "inquiry":
-        return "bg-blue-100 text-blue-700";
-      case "feedback":
-      default:
-        return "bg-emerald-100 text-emerald-700";
-    }
-  };
+  const {
+    submissions,
+    isLoading,
+    replyMutation,
+    closeMutation,
+  } = useAdminFeedbacks(adminId, adminRole, selectedBarangayFilter, isMdrrmoOrSystem);
 
-  const getStatusBadgeClasses = (status) => {
-    switch (status) {
-      case "Closed":
-        return "bg-gray-200 text-gray-700";
-      case "Replied":
-        return "bg-blue-100 text-blue-700";
-      case "Pending":
-      default:
-        return "bg-amber-100 text-amber-700";
-    }
-  };
-
-  const getStatusIcon = (status) => {
-    switch (status) {
-      case "Closed":
-        return CancelCircleIcon;
-      case "Replied":
-        return MailReply01Icon;
-      case "Pending":
-      default:
-        return Clock01Icon;
-    }
-  };
-
-  const formatMessageTimestamp = (currentDateString, previousDateString, index) => {
-    const current = new Date(currentDateString);
-    const timeString = current.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    
-    if (index === 0 || !previousDateString) {
-      return `${current.toLocaleDateString()} at ${timeString}`;
-    }
-    
-    const prev = new Date(previousDateString);
-    if (current.toDateString() === prev.toDateString()) {
-      return timeString; // Same day, just time
-    }
-    return `${current.toLocaleDateString()} at ${timeString}`; // Crossed a day boundary
-  };
-
-  const filteredSubmissions = useMemo(() => {
-    let result = submissions;
-
-    // 1. Tab filter
-    if (activeTab !== "all") {
-      result = result.filter(
-        (item) => item.status.toLowerCase() === activeTab.toLowerCase()
-      );
-    }
-
-    // 2. Search filter (subject, resident name, type)
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
-      result = result.filter(
-        (item) =>
-          item.subject?.toLowerCase().includes(q) ||
-          item.resident_name?.toLowerCase().includes(q) ||
-          item.type?.toLowerCase().includes(q)
-      );
-    }
-
-    // 3. Sort
-    result = [...result].sort((a, b) => {
-      if (sortOrder === "oldest") {
-        return new Date(a.created_at || a.createdAt) - new Date(b.created_at || b.createdAt);
-      }
-      if (sortOrder === "status") {
-        const order = { Pending: 0, Replied: 1, Closed: 2 };
-        return (order[a.status] ?? 3) - (order[b.status] ?? 3);
-      }
-      // "newest" default
-      return new Date(b.created_at || b.createdAt) - new Date(a.created_at || a.createdAt);
-    });
-
-    return result;
-  }, [activeTab, submissions, searchQuery, sortOrder]);
-
-  const totalPages = Math.max(1, Math.ceil(filteredSubmissions.length / PAGE_SIZE));
-
-  const paginatedSubmissions = useMemo(() => {
-    const start = (currentPage - 1) * PAGE_SIZE;
-    return filteredSubmissions.slice(start, start + PAGE_SIZE);
-  }, [filteredSubmissions, currentPage, PAGE_SIZE]);
-
-  const tabs = useMemo(
-    () => [
-      { key: "all", label: "All Tickets", count: submissions.length },
-      {
-        key: "pending",
-        label: "Needs Response",
-        count: submissions.filter((item) => item.status === "Pending").length,
-      },
-      {
-        key: "replied",
-        label: "Replied",
-        count: submissions.filter((item) => item.status === "Replied").length,
-      },
-      {
-        key: "closed",
-        label: "Closed / Resolved",
-        count: submissions.filter((item) => item.status === "Closed").length,
-      },
-    ],
-    [submissions]
-  );
-
-  // Reset to page 1 whenever filters change
-  const handleTabChange = (key) => { setActiveTab(key); setCurrentPage(1); };
-  const handleSearchChange = (e) => { setSearchQuery(e.target.value); setCurrentPage(1); };
-  const handleSortChange = (e) => { setSortOrder(e.target.value); setCurrentPage(1); };
+  const {
+    activeTab,
+    searchQuery,
+    sortOrder,
+    currentPage,
+    setCurrentPage,
+    PAGE_SIZE,
+    filteredSubmissions,
+    totalPages,
+    paginatedSubmissions,
+    tabs,
+    handleTabChange,
+    handleSearchChange,
+    handleSortChange,
+  } = useFeedbackFilters(submissions);
 
   return (
     <div className="animate-in fade-in duration-300 space-y-6">
       {/* Header */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-8">
-        <div>
-          <nav className="flex text-sm text-gray-500 mb-2" aria-label="Breadcrumb">
-            <ol className="inline-flex items-center space-x-1 md:space-x-2">
-              <li className="inline-flex items-center">Dashboard</li>
-              <li>
-                <div className="flex items-center">
-                  <span className="mx-2 text-gray-400">&gt;</span>
-                  <span>Dashboard & Monitoring</span>
-                </div>
-              </li>
-              <li>
-                <div className="flex items-center">
-                  <span className="mx-2 text-gray-400">&gt;</span>
-                  <span className="text-gray-900 font-semibold">
-                    {isMdrrmoOrSystem ? "Resident Feedbacks" : "Resident Feedbacks"}
-                  </span>
-                </div>
-              </li>
-            </ol>
-          </nav>
-          <h1 className="text-3xl font-extrabold text-gray-900">
-            {isMdrrmoOrSystem ? "MDRRMO Municipal Feedback Desk" : "Barangay Feedback Desk"}
-          </h1>
-          <p className="mt-1 text-sm text-gray-600">
-            {isMdrrmoOrSystem
-              ? "Review communications across all municipal barangays."
-              : "Review communications submitted by residents in your barangay."}
-          </p>
-        </div>
-
-        {/* BARANGAY FILTER (ONLY VISIBLE FOR MDRRMO / SYSTEM ADMIN) */}
-        {isMdrrmoOrSystem && (
-          <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-2xl px-4 py-2 shadow-sm">
-            <HugeiconsIcon icon={FilterIcon} className="w-4 h-4 text-gray-500" />
-            <span className="text-xs font-bold text-gray-500 uppercase">Barangay:</span>
-            <select
-              value={selectedBarangayFilter}
-              onChange={(e) => setSelectedBarangayFilter(e.target.value)}
-              className="bg-transparent text-sm font-bold text-gray-800 focus:outline-none cursor-pointer"
-            >
-              <option value="all">All Barangays (Municipal View)</option>
-              {BARANGAY_LIST.map((b) => (
-                <option key={b.id} value={b.id}>
-                  {b.name}
-                </option>
-              ))}
-            </select>
-          </div>
-        )}
-      </div>
-
-      {/* Analytics Summary removed as per user request (duplicate of filter tabs) */}
+      <FeedbackHeader
+        isMdrrmoOrSystem={isMdrrmoOrSystem}
+        selectedBarangayFilter={selectedBarangayFilter}
+        setSelectedBarangayFilter={setSelectedBarangayFilter}
+      />
 
       {/* Main Inbox */}
       <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6">
-        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between mb-4">
-          <h2 className="text-xl font-black text-gray-900">
-            Incoming Communication Queue
-          </h2>
-          <div className="flex flex-wrap gap-2">
-            {tabs.map((tab) => (
-              <button
-                key={tab.key}
-                type="button"
-                onClick={() => handleTabChange(tab.key)}
-                className={`px-4 py-2 rounded-xl text-sm font-bold transition-colors ${
-                  activeTab === tab.key
-                    ? "bg-red-600 text-white"
-                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                }`}
-              >
-                {tab.label} ({tab.count})
-              </button>
-            ))}
-          </div>
-        </div>
+        <FeedbackFilters
+          tabs={tabs}
+          activeTab={activeTab}
+          handleTabChange={handleTabChange}
+          searchQuery={searchQuery}
+          handleSearchChange={handleSearchChange}
+          sortOrder={sortOrder}
+          handleSortChange={handleSortChange}
+        />
 
-        {/* Search + Sort controls */}
-        <div className="flex flex-col sm:flex-row gap-3 mb-5">
-          <div className="relative flex-1">
-            <HugeiconsIcon icon={Search01Icon} className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Search by subject, resident name, or type..."
-              value={searchQuery}
-              onChange={handleSearchChange}
-              className="w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-red-500 bg-gray-50"
-            />
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-bold text-gray-500 uppercase">Sort:</span>
-            <select
-              value={sortOrder}
-              onChange={handleSortChange}
-              className="px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-red-500 bg-gray-50 font-medium text-gray-700"
-            >
-              <option value="newest">Newest First</option>
-              <option value="oldest">Oldest First</option>
-              <option value="status">By Status (Pending → Replied → Closed)</option>
-            </select>
-          </div>
-        </div>
-
-        {/* Result count */}
-        {!isLoading && (
-          <p className="text-xs text-gray-400 font-semibold mb-3">
-            Showing {filteredSubmissions.length === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1}–{Math.min(currentPage * PAGE_SIZE, filteredSubmissions.length)} of {filteredSubmissions.length} ticket{filteredSubmissions.length !== 1 ? "s" : ""}
-          </p>
-        )}
-
-        {isLoading ? (
-          <div className="py-12 text-center text-gray-400 font-bold">
-            Loading communications...
-          </div>
-        ) : filteredSubmissions.length === 0 ? (
-          <div className="rounded-3xl border border-dashed border-gray-200 bg-gray-50 p-10 text-center">
-            <HugeiconsIcon
-              icon={Message01Icon}
-              className="w-12 h-12 text-gray-300 mx-auto mb-3"
-            />
-            <p className="text-lg font-bold text-gray-800">
-              No tickets found in this queue
-            </p>
-            <p className="text-sm text-gray-500 mt-1">
-              There are no {activeTab === "all" ? "" : activeTab} resident communications matching your filter.
-            </p>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {paginatedSubmissions.map((item) => {
-              const StatusIcon = getStatusIcon(item.status);
-              const ticketId = item.feedback_id || item.id;
-              const isExpanded = expandedIds.has(ticketId);
-              const lastMsg = item.thread?.[item.thread.length - 1];
-
-              return (
-                <div
-                  key={ticketId}
-                  className="rounded-2xl border border-gray-100 bg-gray-50/60 overflow-hidden"
-                >
-                  {/* Summary row — always visible */}
-                  <button
-                    type="button"
-                    onClick={() => toggleExpand(ticketId)}
-                    className="w-full text-left px-5 py-4 flex items-center gap-3 hover:bg-gray-100/60 transition-colors"
-                  >
-                    {/* Badges */}
-                    <div className="flex items-center gap-2 shrink-0">
-                      <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${getTypeBadgeClasses(item.type)}`}>
-                        {item.type}
-                      </span>
-                      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold ${getStatusBadgeClasses(item.status)}`}>
-                        <HugeiconsIcon icon={StatusIcon} className="w-3 h-3" />
-                        {item.status}
-                      </span>
-                    </div>
-
-                    {/* Subject + resident preview */}
-                    <div className="flex-1 min-w-0">
-                      <p className="font-bold text-gray-900 text-sm truncate">{item.subject}</p>
-                      <p className="text-xs text-gray-400 truncate mt-0.5">
-                        {item.resident_name || item.user_id}
-                        {(item.barangay_name || item.barangay) && ` · Bgry. ${item.barangay_name || item.barangay}`}
-                        {!isExpanded && lastMsg && ` · ${lastMsg.sender_type === "admin" ? "You: " : "Resident: "}${lastMsg.message}`}
-                      </p>
-                    </div>
-
-                    {/* Date + chevron */}
-                    <div className="flex items-center gap-2 shrink-0 text-gray-400">
-                      <span className="text-xs hidden sm:block">
-                        {new Date(item.created_at || item.createdAt).toLocaleDateString()}
-                      </span>
-                      <HugeiconsIcon
-                        icon={isExpanded ? ArrowUp01Icon : ArrowDown01Icon}
-                        className="w-4 h-4"
-                      />
-                    </div>
-                  </button>
-
-                  {/* Expanded content */}
-                  {isExpanded && (
-                    <div className="px-5 pb-5 border-t border-gray-100">
-                      {/* Metadata row */}
-                      <div className="flex flex-wrap items-center gap-2 text-xs font-bold text-gray-500 pt-3 mb-4">
-                        <HugeiconsIcon icon={UserCircleIcon} className="w-4 h-4 text-gray-400" />
-                        <span>{item.resident_name || item.user_id}</span>
-                        {(item.barangay_name || item.barangay) && (
-                          <span className="bg-gray-200 text-gray-700 px-2 py-0.5 rounded-md">
-                            Barangay {item.barangay_name || item.barangay}
-                          </span>
-                        )}
-                        <span className="text-gray-400">· Routed to: {item.recipient === "mdrrmo" ? "MDRRMO" : "Barangay"}</span>
-                        <span className="text-gray-400">· {new Date(item.created_at || item.createdAt).toLocaleString()}</span>
-                      </div>
-
-                      {/* Message Thread */}
-                      <div className="space-y-3 flex flex-col">
-                        {item.thread?.map((msg, idx) => (
-                          <div
-                            key={msg.id}
-                            className={`flex w-full ${
-                              msg.sender_type === "admin" ? "justify-end" : "justify-start"
-                            }`}
-                          >
-                            <div className={`rounded-2xl border p-4 max-w-[85%] sm:max-w-[75%] ${
-                              msg.sender_type === "admin"
-                                ? "bg-blue-50/80 border-blue-100"
-                                : "bg-white border-gray-100"
-                            }`}>
-                              <div className="flex justify-between items-center mb-1 gap-4">
-                                <p className={`text-xs font-bold uppercase tracking-wide ${
-                                  msg.sender_type === "admin" ? "text-blue-700" : "text-gray-400"
-                                }`}>
-                                  {msg.sender_type === "admin" ? "Official Response" : "Resident Message"}
-                                </p>
-                                <span className="text-[10px] text-gray-400 font-semibold whitespace-nowrap">
-                                  {formatMessageTimestamp(msg.created_at, item.thread[idx - 1]?.created_at, idx)}
-                                </span>
-                              </div>
-                              <p className="text-sm text-gray-700 whitespace-pre-line leading-relaxed">
-                                {msg.message}
-                              </p>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-
-                      {/* Action Buttons */}
-                      <div className="flex flex-col sm:flex-row gap-2 mt-4 pt-4 border-t border-gray-100 justify-end">
-                        {item.status !== "Closed" && (
-                          <button
-                            onClick={() => setTicketToClose(item)}
-                            className="px-4 py-2 bg-gray-100 text-gray-700 hover:bg-gray-200 text-sm font-bold rounded-xl transition-colors flex items-center gap-2 border border-gray-200"
-                          >
-                            <HugeiconsIcon icon={CancelCircleIcon} className="w-4 h-4" />
-                            Close Thread
-                          </button>
-                        )}
-                        <button
-                          onClick={() => handleOpenReplyModal(item)}
-                          className="px-4 py-2 bg-slate-800 text-white text-sm font-bold rounded-xl hover:bg-slate-700 transition-colors flex items-center gap-2"
-                        >
-                          <HugeiconsIcon icon={MailReply01Icon} className="w-4 h-4" />
-                          Reply
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        )}
-
-        {/* Pagination */}
-        {!isLoading && totalPages > 1 && (
-          <div className="flex items-center justify-between mt-5 pt-4 border-t border-gray-100">
-            <button
-              type="button"
-              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-              disabled={currentPage === 1}
-              className="px-4 py-2 rounded-xl text-sm font-bold bg-gray-100 text-gray-700 hover:bg-gray-200 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-            >
-              ← Previous
-            </button>
-            <span className="text-sm font-semibold text-gray-500">
-              Page {currentPage} of {totalPages}
-            </span>
-            <button
-              type="button"
-              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-              disabled={currentPage === totalPages}
-              className="px-4 py-2 rounded-xl text-sm font-bold bg-gray-100 text-gray-700 hover:bg-gray-200 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-            >
-              Next →
-            </button>
-          </div>
-        )}
+        <FeedbackList
+          isLoading={isLoading}
+          filteredSubmissions={filteredSubmissions}
+          paginatedSubmissions={paginatedSubmissions}
+          activeTab={activeTab}
+          currentPage={currentPage}
+          PAGE_SIZE={PAGE_SIZE}
+          totalPages={totalPages}
+          setCurrentPage={setCurrentPage}
+          expandedIds={expandedIds}
+          toggleExpand={toggleExpand}
+          handleOpenReplyModal={handleOpenReplyModal}
+          setTicketToClose={setTicketToClose}
+        />
       </div>
 
-      {/* REPLY MODAL */}
-      {selectedTicket && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm animate-in fade-in">
-          <div className="w-full max-w-lg bg-white rounded-3xl border border-gray-100 shadow-2xl p-6">
-            <h3 className="text-xl font-black text-gray-900">
-              Respond to Ticket
-            </h3>
-            <p className="text-sm text-gray-500 mt-1">
-              Subject: <span className="font-semibold text-gray-800">{selectedTicket.subject}</span>
-            </p>
+      {/* Modals */}
+      <ReplyModal
+        selectedTicket={selectedTicket}
+        setSelectedTicket={setSelectedTicket}
+        replyMutation={replyMutation}
+      />
 
-            <form onSubmit={handleSubmitReply} className="mt-5 space-y-4">
-              <div>
-                <label className="block text-sm font-bold text-gray-700 mb-1">
-                  Official Office Response
-                </label>
-                <textarea
-                  rows={5}
-                  value={replyText}
-                  onChange={(e) => setReplyText(e.target.value)}
-                  placeholder="Write your official reply, instructions, or resolution details..."
-                  className="w-full px-4 py-3 border border-gray-200 rounded-2xl text-sm resize-none focus:outline-none focus:ring-2 focus:ring-red-500"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-bold text-gray-700 mb-1">
-                  Update Ticket Status
-                </label>
-                <select
-                  value={targetStatus}
-                  onChange={(e) => setTargetStatus(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-200 rounded-2xl bg-white text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
-                >
-                  <option value="Replied">Replied (Keep Open for Follow-up)</option>
-                  <option value="Closed">Closed (Mark as Fully Resolved)</option>
-                </select>
-              </div>
-
-              <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-100">
-                <button
-                  type="button"
-                  onClick={() => setSelectedTicket(null)}
-                  className="px-5 py-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-sm"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={replyMutation.isPending}
-                  className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 disabled:bg-red-400 text-white font-bold text-sm shadow-sm transition-colors"
-                >
-                  <HugeiconsIcon icon={SentIcon} className="w-4 h-4" />
-                  {replyMutation.isPending ? "Sending..." : "Submit Reply"}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* CLOSE CONFIRMATION MODAL */}
-      {ticketToClose && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm animate-in fade-in">
-          <div className="w-full max-w-sm bg-white rounded-3xl border border-gray-100 shadow-2xl p-6 text-center">
-            <div className="mx-auto w-12 h-12 rounded-full bg-red-100 flex items-center justify-center mb-4">
-              <HugeiconsIcon icon={CancelCircleIcon} className="w-6 h-6 text-red-600" />
-            </div>
-            <h3 className="text-xl font-black text-gray-900 mb-2">Close this ticket?</h3>
-            <p className="text-sm text-gray-500 mb-6">
-              The resident will no longer be able to reply to this thread. This action cannot be undone.
-            </p>
-            <div className="flex items-center justify-center gap-3">
-              <button
-                onClick={() => setTicketToClose(null)}
-                className="px-4 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-sm"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleConfirmClose}
-                disabled={closeMutation.isPending}
-                className="px-4 py-2 rounded-xl bg-red-600 hover:bg-red-700 disabled:bg-red-400 text-white font-bold text-sm"
-              >
-                {closeMutation.isPending ? "Closing..." : "Close Ticket"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <CloseConfirmModal
+        ticketToClose={ticketToClose}
+        setTicketToClose={setTicketToClose}
+        closeMutation={closeMutation}
+      />
     </div>
   );
 }
