@@ -34,6 +34,7 @@ export default function NotificationDropdown() {
       // Return raw response.data to handle both old and new backend shapes gracefully
       return response.data;
     },
+    refetchInterval: 30000,
   });
 
   // Defensively handle React Query HMR cache poisoning

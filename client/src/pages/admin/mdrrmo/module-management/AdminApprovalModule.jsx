@@ -32,6 +32,7 @@ export default function AdminModuleApprovals() {
       const response = await apiClient.get("/admin/mdrrmo/approvals");
       return response.data.data || [];
     },
+    refetchInterval: 30000, // Poll every 30s for new approval requests
   });
 
   const actionMutation = useMutation({
@@ -119,7 +120,24 @@ export default function AdminModuleApprovals() {
 
   return (
     <div className="animate-in fade-in duration-300 space-y-6">
-      <div>
+      <div className="mb-8">
+        <nav className="flex text-sm text-gray-500 mb-2" aria-label="Breadcrumb">
+          <ol className="inline-flex items-center space-x-1 md:space-x-2">
+            <li className="inline-flex items-center">Dashboard</li>
+            <li>
+              <div className="flex items-center">
+                <span className="mx-2 text-gray-400">&gt;</span>
+                <span>Curriculum & Content</span>
+              </div>
+            </li>
+            <li>
+              <div className="flex items-center">
+                <span className="mx-2 text-gray-400">&gt;</span>
+                <span className="text-gray-900 font-semibold">Approval Desk</span>
+              </div>
+            </li>
+          </ol>
+        </nav>
         <h1 className="text-3xl font-extrabold text-gray-900">
           Module Approval Desk
         </h1>

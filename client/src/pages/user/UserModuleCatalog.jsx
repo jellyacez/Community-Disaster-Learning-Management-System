@@ -16,6 +16,7 @@ export default function UserModuleCatalog() {
       const res = await apiClient.get('/modules/available');
       return res.data;
     },
+    refetchInterval: 60000, // Poll every 60s for new modules
   });
 
   // Normalize dataset to standardize fields across components

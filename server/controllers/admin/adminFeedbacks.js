@@ -19,7 +19,23 @@ exports.getAdminFeedbacks = async (req, res) => {
         f.*,
         u.name AS resident_name,
         u.barangay_id,
-        b.name AS barangay_name
+        b.name AS barangay_name,
+        COALESCE(
+          (
+            SELECT json_agg(
+              json_build_object(
+                'id', fm.id,
+                'sender_type', fm.sender_type,
+                'sender_id', fm.sender_id,
+                'message', fm.message,
+                'created_at', fm.created_at
+              ) ORDER BY fm.created_at ASC
+            ) FILTER (WHERE fm.id IS NOT NULL)
+            FROM public.feedback_messages fm
+            WHERE fm.feedback_id = f.id
+          ),
+          '[]'::json
+        ) AS thread
       FROM public.feedbacks f
       INNER JOIN public."user" u ON f.user_id = u.id
       LEFT JOIN public.barangays b ON u.barangay_id = b.id
@@ -81,20 +97,83 @@ exports.replyToFeedback = async (req, res) => {
       return res.status(400).json({ success: false, error: "Reply text and status are required." });
     }
 
-    const query = `
-      UPDATE public.feedbacks
-      SET reply = $1, status = $2, replied_by = $3, replied_at = NOW()
-      WHERE feedback_id = $4
-      RETURNING *;
-    `;
-    const { rows } = await pool.query(query, [reply, status, adminId, id]);
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
 
-    if (rows.length === 0) {
-      return res.status(404).json({ success: false, error: "Feedback record not found." });
+      const updateQuery = `
+        UPDATE public.feedbacks
+        SET status = $1
+        WHERE id = $2
+        RETURNING *;
+      `;
+      const { rows } = await client.query(updateQuery, [status, id]);
+
+      if (rows.length === 0) {
+        await client.query('ROLLBACK');
+        return res.status(404).json({ success: false, error: "Feedback record not found." });
+      }
+
+      const insertQuery = `
+        INSERT INTO public.feedback_messages (feedback_id, sender_type, sender_id, message)
+        VALUES ($1, 'admin', $2, $3)
+        RETURNING *;
+      `;
+      await client.query(insertQuery, [id, adminId, reply]);
+
+      await client.query('COMMIT');
+      res.json({ success: true, data: rows[0] });
+    } catch (err) {
+      await client.query('ROLLBACK');
+      throw err;
+    } finally {
+      client.release();
     }
-
-    res.json({ success: true, data: rows[0] });
   } catch (err) {
     res.status(500).json({ success: false, error: "Failed to submit response." });
   }
 };
+
+// @desc    Close a feedback ticket
+// @route   PUT /api/admin/mdrrmo/feedback/:id/close
+exports.closeFeedbackThread = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const adminId = req.user?.id || req.session?.user?.id;
+
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+
+      const checkQuery = "SELECT status FROM public.feedbacks WHERE id = $1 FOR UPDATE";
+      const checkRes = await client.query(checkQuery, [id]);
+      
+      if (checkRes.rowCount === 0) {
+        await client.query('ROLLBACK');
+        return res.status(404).json({ success: false, error: "Feedback record not found." });
+      }
+
+      if (checkRes.rows[0].status === 'Closed') {
+        await client.query('ROLLBACK');
+        return res.status(400).json({ success: false, error: "Ticket is already closed." });
+      }
+
+      const updateQuery = "UPDATE public.feedbacks SET status = 'Closed' WHERE id = $1 RETURNING *";
+      const { rows } = await client.query(updateQuery, [id]);
+
+      const insertQuery = "INSERT INTO public.feedback_messages (feedback_id, sender_type, sender_id, message) VALUES ($1, 'admin', $2, 'Ticket closed by admin.') RETURNING *";
+      await client.query(insertQuery, [id, adminId]);
+
+      await client.query('COMMIT');
+      res.json({ success: true, data: rows[0] });
+    } catch (err) {
+      await client.query('ROLLBACK');
+      throw err;
+    } finally {
+      client.release();
+    }
+  } catch (err) {
+    res.status(500).json({ success: false, error: "Failed to close ticket." });
+  }
+};
+

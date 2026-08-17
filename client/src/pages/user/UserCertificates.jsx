@@ -65,7 +65,7 @@ export default function UserCertificates() {
 
         {/* Certificate list */}
         {isLoading ? (
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[1, 2, 3, 4, 5, 6].map((i) => (
               <div key={i} className="rounded-2xl border border-gray-100 p-4 animate-pulse">
                 <div className="h-3 w-20 bg-gray-200 rounded mb-3" />
@@ -100,7 +100,7 @@ export default function UserCertificates() {
             </Link>
           </div>
         ) : (
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {certificates.map((cert) => (
               <CertificateCard
                 key={cert.verification_token || cert.cert_rec}

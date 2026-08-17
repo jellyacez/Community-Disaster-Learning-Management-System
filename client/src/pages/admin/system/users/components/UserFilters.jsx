@@ -1,6 +1,6 @@
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Search01Icon } from "@hugeicons/core-free-icons";
-import { BACOLOR_BARANGAYS } from "../../../../../constants/locations";
+import { BARANGAY_LIST } from "../../../../../constants/barangays";
 
 export default function UserFilters({
   search,
@@ -36,8 +36,8 @@ export default function UserFilters({
           className="px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10 bg-white"
         >
           <option value="">All Barangays</option>
-          {BACOLOR_BARANGAYS.map(b => (
-            <option key={b} value={b}>{b}</option>
+          {BARANGAY_LIST.map(b => (
+            <option key={b.id} value={b.name}>{b.name}</option>
           ))}
         </select>
         <label htmlFor="role-filter" className="sr-only">Filter by role</label>

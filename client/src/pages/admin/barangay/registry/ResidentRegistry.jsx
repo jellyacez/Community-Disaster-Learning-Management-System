@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 
 import ResidentRegistrySkeleton from "./ResidentRegistrySkeleton";
-import { BACOLOR_BARANGAYS } from "../../../../constants/locations";
+import { BARANGAY_LIST } from "../../../../constants/barangays";
 import apiClient from "../../../../lib/apiClient";
 import ConfirmationModal from "../../../../components/ui/modals/ConfirmationModal";
 
@@ -92,8 +92,8 @@ export default function ResidentRegistry() {
               className="p-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-red-500 transition-all shadow-sm"
             >
               <option value="All">All Registered Sectors</option>
-              {BACOLOR_BARANGAYS.map((b) => (
-                <option key={b} value={b}>Barangay {b}</option>
+              {BARANGAY_LIST.map((b) => (
+                <option key={b.id} value={b.name}>Barangay {b.name}</option>
               ))}
             </select>
           </div>

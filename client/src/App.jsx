@@ -43,7 +43,7 @@ const SystemSecurity = lazy(
 const AdminFeedbackManager = lazy(
   () => import("./pages/admin/feedback/AdminFeedbackManager")
 );
-const UserFeedback = lazy(() => import("./pages/user/UserFeedback"));
+const UserFeedback = lazy(() => import("./pages/user/feedback/UserFeedback"));
 const UserDashboard = lazy(() => import("./pages/user/UserDashboard"));
 const UserCertificates = lazy(() => import("./pages/user/UserCertificates"));
 const UserAnnouncements = lazy(() => import("./pages/user/UserAnnouncements"));
