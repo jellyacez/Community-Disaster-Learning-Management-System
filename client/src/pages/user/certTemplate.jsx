@@ -11,7 +11,7 @@ const styles = StyleSheet.create({
   // Top corner elements
   qrCode: { position: "absolute", top: 20, left: 30, width: 55, height: 55 },
   certNumber: { position: "absolute", top: 20, right: 30, fontSize: 8, color: "#888" },
-  
+  hoursText: { fontSize: 10, fontWeight: "bold", color: "#1e3a8a", marginBottom: 12, textTransform: "uppercase", letterSpacing: 0.5 },
   headerText: { fontSize: 10, textTransform: "uppercase", color: "#555", marginBottom: 4, letterSpacing: 1 },
   headerSub: { fontSize: 10, color: "#777", marginBottom: 20, textAlign: "center" },
   title: { fontSize: 38, fontWeight: "bold", color: "#1e3a8a", marginBottom: 5, letterSpacing: 2 },
@@ -60,6 +60,7 @@ export default function CertificateTemplate() {
   }
 
   const certId = certData.cert_rec;
+  const trainingHours = certData.training_hours || certData.hours || certData.duration_hours || 40;
   const verificationUrl = `${window.location.origin}/verify?token=${token}`;
   const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(verificationUrl)}`;
 
@@ -93,6 +94,7 @@ export default function CertificateTemplate() {
               <Text style={styles.name}>{residentName}</Text>
             </View>
             <Text style={styles.nameSubLine}>Authorized Resident</Text>
+            <Text style={styles.hoursText}>Total Training Credited: {trainingHours} Hours</Text>
             <Text style={styles.description}>
               has successfully satisfied all academic and practical requirements of the Community Disaster 
               Learning Management System by completing the <Text style={{ fontWeight: "bold" }}>{certData.module_title}</Text> training module.

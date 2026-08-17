@@ -100,7 +100,7 @@ const auth = betterAuth({
         mdrrmo_admin: {},
       },
     }),
-    twoFactor({
+    /*twoFactor({
       otpOptions: {
         sendOTP: async ({ user, otp }) => {
           const { orgFooterText, supportEmail } = await getOrgSettings();
@@ -109,6 +109,7 @@ const auth = betterAuth({
         },
       },
     }),
+    */
   ],
   trustedOrigins:
     process.env.NODE_ENV === "production" && process.env.FRONTEND_URL

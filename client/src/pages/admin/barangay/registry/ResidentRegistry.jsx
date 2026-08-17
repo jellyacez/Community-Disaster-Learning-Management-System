@@ -9,7 +9,11 @@ import ConfirmationModal from "../../../../components/ui/modals/ConfirmationModa
 
 const fetchResidents = async () => {
   const res = await apiClient.get("/admin/residents");
-  return res.data;
+  // Safely extract the resident array regardless of backend payload wrapper
+  if (Array.isArray(res.data)) return res.data;
+  if (Array.isArray(res.data?.data)) return res.data.data;
+  if (Array.isArray(res.data?.residents)) return res.data.residents;
+  return [];
 };
 
 export default function ResidentRegistry() {
@@ -22,7 +26,7 @@ export default function ResidentRegistry() {
   const { data: residents = [], isLoading, isError } = useQuery({
     queryKey: ["adminResidents"],
     queryFn: fetchResidents,
-    retry: 1
+    retry: 1,
   });
 
   const mutation = useMutation({
@@ -36,13 +40,16 @@ export default function ResidentRegistry() {
     },
     onError: (err) => {
       toast.error(err?.response?.data?.error || "Action failed.");
-    }
+    },
   });
 
   const filteredResidents = useMemo(() => {
-    return residents.filter(r => {
+    const list = Array.isArray(residents) ? residents : [];
+    return list.filter((r) => {
       const matchesSector = selectedSector === "All" || r.barangay === selectedSector;
-      const matchesSearch = r.name?.toLowerCase().includes(searchQuery.toLowerCase()) || r.status?.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesSearch =
+        r.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        r.status?.toLowerCase().includes(searchQuery.toLowerCase());
       return matchesSector && matchesSearch;
     });
   }, [residents, selectedSector, searchQuery]);

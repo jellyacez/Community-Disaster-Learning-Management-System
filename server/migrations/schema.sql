@@ -854,12 +854,10 @@ CREATE TABLE public."twoFactor" (
     secret text NOT NULL,
     "backupCodes" text NOT NULL,
     "userId" text NOT NULL,
-    verified boolean
+    verified boolean,
+    "failedVerificationCount" integer,
+    "lockedUntil" timestamp with time zone
 );
-
-ALTER TABLE "twoFactor" ADD column "failedVerificationCount" integer;
-
-alter table "twoFactor" ADD column "lockedUntil" timestamp with time zone;
 
 
 ALTER TABLE public."twoFactor" OWNER TO postgres;

@@ -5,6 +5,7 @@ const { ADMIN_ROLES } = require("../../config/permissions");
 const requirePermission = require("../../middleware/requirePermission");
 const { authenticate } = require("../../middleware/authenticate");
 
+
 // All admin routes require authentication first
 router.use(authenticate);
 const adminFeedbacksController = require("../../controllers/admin/adminFeedbacks");
@@ -20,7 +21,9 @@ const mdrrmoOverviewController = require("../../controllers/admin/mdrrmoOverview
 const certificateManagementController = require("../../controllers/admin/certificateManagement");
 const { adminDataLimiter, adminWriteLimiter, destructiveActionLimiter } = require("../../middleware/rateLimiters");
 const ModuleService = require("../../services/modules/ModuleService");
-
+const barangayController = require("../../controllers/admin/barangayController");
+const validate = require("../../middleware/validate");
+const { announcementSchema } = require("../../utils/validators");
 // Existing routes
 
 // @route   GET /api/admin/residents
@@ -230,3 +233,48 @@ router.get(
 router.put(
   "/mdrrmo/module/:id/review", requireRole(ADMIN_ROLES), adminWriteLimiter, moduleController.updateModuleStatus);
 module.exports = router;
+
+// ==========================================
+// Barangay Admin Dashboards & Features
+// ==========================================
+
+// @route   GET /api/admin/barangay/analytics
+// @desc    Get scoped analytics for Barangay Admin
+// @access  Private (barangay_admin, system_admin)
+router.get(
+  "/barangay/analytics",
+  requireRole(ADMIN_ROLES),
+  adminDataLimiter,
+  barangayController.getBarangayAnalytics
+);
+
+// @route   GET /api/admin/barangay/announcements
+// @desc    Get local announcements & alerts
+// @access  Private (barangay_admin, system_admin)
+router.get(
+  "/barangay/announcements",
+  requireRole(ADMIN_ROLES),
+  adminDataLimiter,
+  barangayController.getBarangayAnnouncements
+);
+
+// @route   POST /api/admin/barangay/announcements
+// @desc    Publish a new local alert/announcement
+// @access  Private (barangay_admin, system_admin)
+router.post(
+  "/barangay/announcements",
+  requireRole(ADMIN_ROLES),
+  adminWriteLimiter,
+  validate(announcementSchema),
+  barangayController.createBarangayAnnouncement
+);
+
+// @route   GET /api/admin/barangay/activity-log
+// @desc    Get activity logs for residents in the assigned barangay
+// @access  Private (barangay_admin, system_admin)
+router.get(
+  "/barangay/activity-log",
+  requireRole(ADMIN_ROLES),
+  adminDataLimiter,
+  barangayController.getBarangayActivityLog
+);

@@ -7,7 +7,7 @@ export default function BarangayAdminDashboard() {
 
   const getHeaderTitle = () => {
     if (location.pathname.includes("/dashboard")) return "Dashboard Overview";
-    if (location.pathname.includes("/registry")) return "Residential Compliance Registry";
+    if (location.pathname.includes("/registry") || location.pathname.includes("/residents")) return "Residential Compliance Registry";
     if (location.pathname.includes("/categories")) return "Localized Category Configurations";
     if (location.pathname.includes("/logs")) return "System Web Logs Audit Trail";
     if (location.pathname.includes("/syllabus")) return "Active Central Training Curriculum";
