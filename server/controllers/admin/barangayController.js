@@ -152,28 +152,88 @@ exports.createBarangayAnnouncement = async (req, res) => {
 exports.getBarangayActivityLog = async (req, res) => {
   try {
     const barangayId = req.user?.barangay_id;
+    const page = parseInt(req.query.page) || 1;
     const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 50, 1), 100);
+    const offset = (page - 1) * limit;
+
+    const search = req.query.search || '';
+    const action = req.query.action || '';
 
     if (!barangayId) {
       return res.status(400).json({ error: "No barangay assigned to this administrator account." });
     }
 
+    // 1. Explicitly scope to the admin's barangay AND strictly require resident role
+    const conditions = ["u.barangay_id = $1", "u.role = 'resident'"];
+    const params = [barangayId];
+    let paramIndex = 2;
+
+    // 2. Add search filter (name, email, or log content)
+    if (search) {
+      conditions.push(`(u.name ILIKE $${paramIndex} OR u.email ILIKE $${paramIndex} OR al.act_log ILIKE $${paramIndex})`);
+      params.push(`%${search}%`);
+      paramIndex++;
+    }
+
+    // 3. Add action type filter (matching real resident actions)
+    if (action) {
+      if (action === 'auth') {
+        conditions.push(`(al.act_log ILIKE $${paramIndex} OR al.act_log ILIKE $${paramIndex+1})`);
+        params.push('%Log%', '%password%');
+        paramIndex += 2;
+      } else if (action === 'account') {
+        conditions.push(`al.act_log ILIKE $${paramIndex}`);
+        params.push('%Account created%');
+        paramIndex++;
+      } else if (action === 'learning') {
+        conditions.push(`(al.act_log ILIKE $${paramIndex} OR al.act_log ILIKE $${paramIndex+1} OR al.act_log ILIKE $${paramIndex+2})`);
+        params.push('%Enrolled%', '%Completed%', '%Earned certificate%');
+        paramIndex += 3;
+      } else {
+        conditions.push(`al.act_log ILIKE $${paramIndex}`);
+        params.push(`%${action}%`);
+        paramIndex++;
+      }
+    }
+
+    const whereClause = `WHERE ${conditions.join(' AND ')}`;
+
+    // 4. Get total count for pagination metadata
+    const countQuery = `
+      SELECT COUNT(*) FROM activity_log al
+      JOIN "user" u ON al.user_id = u.id
+      ${whereClause}
+    `;
+    const countResult = await pool.query(countQuery, params);
+    const total = parseInt(countResult.rows[0].count, 10);
+
+    // 5. Get paginated results with explicit field shape matching ActivityLogTable props
     const result = await pool.query(
       `SELECT 
-        al.act_id AS id, 
-        al.act_log AS details, 
-        al.act_date AS created_at, 
+        al.act_id, 
+        al.user_id,
         u.name AS user_name, 
-        u.email AS user_email
+        u.role AS user_role,
+        al.act_date, 
+        al.act_log
        FROM activity_log al
        JOIN "user" u ON al.user_id = u.id
-       WHERE u.barangay_id = $1
-       ORDER BY al.act_date DESC
-       LIMIT $2`,
-      [barangayId, limit]
+       ${whereClause}
+       ORDER BY al.act_date DESC, al.act_id DESC
+       LIMIT $${paramIndex} OFFSET $${paramIndex+1}`,
+      [...params, limit, offset]
     );
 
-    res.json({ success: true, data: result.rows });
+    res.json({ 
+      success: true, 
+      data: result.rows,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit)
+      }
+    });
   } catch (error) {
     console.error("Error fetching barangay activity logs:", error);
     res.status(500).json({ error: "Failed to fetch activity logs." });

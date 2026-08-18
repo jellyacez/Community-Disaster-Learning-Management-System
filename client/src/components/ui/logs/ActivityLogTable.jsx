@@ -1,4 +1,4 @@
-﻿import { HugeiconsIcon } from "@hugeicons/react";
+import { HugeiconsIcon } from "@hugeicons/react";
 import { Note01Icon, Folder01Icon } from "@hugeicons/core-free-icons";
 import RoleBadge from "./RoleBadge";
 import { getActionColor } from "./logUtils";
@@ -15,7 +15,7 @@ function SkeletonRow() {
   );
 }
 
-export default function ActivityLogTable({ logs, isLoading, meta, setPage, limit, setLimit }) {
+export default function ActivityLogTable({ logs, isLoading, meta, setPage, limit, setLimit, hideRoleColumn = false }) {
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
       <div className="overflow-x-auto">
@@ -24,7 +24,7 @@ export default function ActivityLogTable({ logs, isLoading, meta, setPage, limit
             <tr className="bg-gray-50 text-gray-500 text-xs uppercase tracking-wider">
               <th className="px-6 py-4 font-semibold w-48 text-sm">Timestamp</th>
               <th className="px-6 py-4 font-semibold w-64 text-sm">User</th>
-              <th className="px-6 py-4 font-semibold w-40 text-sm">Role</th>
+              {!hideRoleColumn && <th className="px-6 py-4 font-semibold w-40 text-sm">Role</th>}
               <th className="px-6 py-4 font-semibold text-sm">Action</th>
             </tr>
           </thead>
@@ -33,7 +33,7 @@ export default function ActivityLogTable({ logs, isLoading, meta, setPage, limit
               [1, 2, 3, 4, 5, 6, 7, 8].map((i) => <SkeletonRow key={i} />)
             ) : logs.length === 0 ? (
               <tr>
-                <td colSpan={4} className="py-24 text-center">
+                <td colSpan={hideRoleColumn ? 3 : 4} className="py-24 text-center">
                   <div className="flex flex-col items-center justify-center space-y-3">
                     <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mb-2">
                       <HugeiconsIcon icon={Folder01Icon} className="w-8 h-8 text-gray-300" />
@@ -68,9 +68,11 @@ export default function ActivityLogTable({ logs, isLoading, meta, setPage, limit
                       </div>
                     </div>
                   </td>
-                  <td className="px-6 py-4">
-                    <RoleBadge role={log.user_role} />
-                  </td>
+                  {!hideRoleColumn && (
+                    <td className="px-6 py-4">
+                      <RoleBadge role={log.user_role} />
+                    </td>
+                  )}
                   <td className={`px-6 py-4 text-sm font-medium leading-snug ${getActionColor(log.act_log)}`}>
                     {log.act_log}
                   </td>

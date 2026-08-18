@@ -281,7 +281,7 @@ router.post(
 // @access  Private (barangay_admin, system_admin)
 router.get(
   "/barangay/activity-log",
-  requireRole(ADMIN_ROLES),
+  requireRole(['barangay_admin']),
   adminDataLimiter,
   barangayController.getBarangayActivityLog
 );
