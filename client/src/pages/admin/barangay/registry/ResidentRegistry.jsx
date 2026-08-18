@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 
 import ResidentRegistrySkeleton from "./ResidentRegistrySkeleton";
+import StatusBadge from "../../../../components/ui/StatusBadge";
 import { BARANGAY_LIST } from "../../../../constants/barangays";
 import apiClient from "../../../../lib/apiClient";
 import ConfirmationModal from "../../../../components/ui/modals/ConfirmationModal";
@@ -157,13 +158,13 @@ export default function ResidentRegistry() {
                     <td className="py-3 font-mono text-gray-500">{r.barangay}</td>
                     <td className="py-3 text-center font-bold text-gray-700">{r.modulesCompleted || 0} Modules Completed</td>
                     <td className="py-3 text-center">
-                      <span className={`px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider ${
-                        r.status === "banned" ? "bg-red-50 text-red-600 border border-red-200" :
-                        r.status === "archived" ? "bg-slate-50 text-slate-600 border border-slate-200" :
-                        r.status === "Ready" ? "bg-emerald-50 text-emerald-600 border border-emerald-200" : "bg-amber-50 text-amber-600 border border-amber-200"
-                      }`}>
+                      <StatusBadge color={
+                        r.status === "banned" ? "red" :
+                        r.status === "archived" ? "slate" :
+                        r.status === "Ready" ? "emerald" : "amber"
+                      }>
                         {r.status || "Pending"}
-                      </span>
+                      </StatusBadge>
                     </td>
                     <td className="py-3 text-right space-x-2">
                       {r.status === "Ready" && (

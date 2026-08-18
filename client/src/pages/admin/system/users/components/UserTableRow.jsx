@@ -2,13 +2,9 @@ import { memo, useState, useRef, useEffect } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { MoreHorizontalIcon, Edit02Icon, Key01Icon, UserBlock01Icon } from "@hugeicons/core-free-icons";
 import UserStatusBadge from "./UserStatusBadge";
+import StatusBadge from "../../../../../components/ui/StatusBadge";
 
-const ROLE_COLORS = {
-  system_admin: "bg-purple-100 text-purple-800",
-  mdrrmo_admin: "bg-blue-100 text-blue-800",
-  barangay_admin: "bg-teal-100 text-teal-800",
-  resident: "bg-gray-100 text-gray-700",
-};
+
 
 const ROLE_LABELS = {
   system_admin: "System Admin",
@@ -65,9 +61,13 @@ function UserTableRow({ user, onManageClick, isSelected, onToggleSelect }) {
       </td>
       <td className="px-4 py-3 text-sm text-gray-600">{user.barangay || "—"}</td>
       <td className="px-4 py-3">
-        <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${ROLE_COLORS[user.role] || "bg-gray-100 text-gray-700"}`}>
+        <StatusBadge color={
+          user.role === 'system_admin' ? 'purple' : 
+          user.role === 'mdrrmo_admin' ? 'blue' : 
+          user.role === 'barangay_admin' ? 'teal' : 'gray'
+        }>
           {ROLE_LABELS[user.role] || user.role}
-        </span>
+        </StatusBadge>
       </td>
       <td className="px-4 py-3">
         <UserStatusBadge user={user} />

@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { authClient } from "../../../../../lib/auth-client";
 import { ArrowLeft01Icon, ArrowRight01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
+import StatusBadge from "../../../../../components/ui/StatusBadge";
 
 export default function ActiveModulesTable({ modules = [], selectedCategory, statusFilter, onApprove, onReject }) {
   const { data: session } = authClient.useSession();
@@ -29,10 +30,10 @@ export default function ActiveModulesTable({ modules = [], selectedCategory, sta
 
   const getStatusBadge = (status) => {
     switch(status) {
-      case 'published': return <span className="px-2.5 py-1 bg-emerald-100 text-emerald-700 text-[10px] font-bold tracking-wide uppercase rounded-full">Published</span>;
-      case 'pending_review': return <span className="px-2.5 py-1 bg-amber-100 text-amber-700 text-[10px] font-bold tracking-wide uppercase rounded-full animate-pulse">Pending Review</span>;
-      case 'rejected': return <span className="px-2.5 py-1 bg-red-100 text-red-700 text-[10px] font-bold tracking-wide uppercase rounded-full">Rejected</span>;
-      default: return <span className="px-2.5 py-1 bg-gray-100 text-gray-700 text-[10px] font-bold tracking-wide uppercase rounded-full">Draft</span>;
+      case 'published': return <StatusBadge color="emerald">Published</StatusBadge>;
+      case 'pending_review': return <StatusBadge color="amber" className="animate-pulse">Pending Review</StatusBadge>;
+      case 'rejected': return <StatusBadge color="red">Rejected</StatusBadge>;
+      default: return <StatusBadge color="gray">Draft</StatusBadge>;
     }
   };
 

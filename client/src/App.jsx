@@ -265,7 +265,6 @@ export default function App() {
                     path="dashboard"
                     element={<BarangayWorkspaceOverview />}
                   />
-                  <Route path="registry" element={<BarangayResidentRegistry />} />
                   <Route path="residents" element={<BarangayResidentRegistry />} />
                   <Route path="logs" element={<BarangaySystemLogs />} />
                   <Route path="feedback" element={<AdminFeedbackManager />} />

@@ -118,7 +118,7 @@ export const ROLE_BASED_LINKS = {
     {
       category: "Community Oversight",
       items: [
-        { name: "Full Registry Log", path: "/admin/barangay/registry", icon: Database01Icon },
+
         { name: "Resident Management", path: "/admin/barangay/residents", icon: UserGroupIcon },
         { name: "Resident Feedbacks", path: "/admin/barangay/feedback", icon: Message01Icon },
       ]
