@@ -10,7 +10,7 @@ export default function SystemAdminDashboard() {
     <div className="min-h-screen bg-gray-50 p-4 sm:p-8">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900">
+          <h1 className="text-3xl font-black text-gray-900 tracking-tight">
             System Admin Dashboard
           </h1>
           <p className="text-gray-500 mt-1">
