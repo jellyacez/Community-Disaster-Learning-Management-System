@@ -90,15 +90,11 @@ const BarangayWorkspaceOverview = lazy(
 const BarangayResidentRegistry = lazy(
   () => import("./pages/admin/barangay/registry/ResidentRegistry"),
 );
-const BarangayCategoryConfig = lazy(
-  () => import("./pages/admin/barangay/categories/CategoryConfig"),
-);
+
 const BarangaySystemLogs = lazy(
   () => import("./pages/admin/barangay/logs/SystemLogs"),
 );
-const BarangayActiveSyllabus = lazy(
-  () => import("./pages/admin/barangay/syllabus/ActiveSyllabus"),
-);
+
 
 const CertificatePDF = lazy(
   () => import("./pages/user/certTemplate"),
@@ -271,9 +267,7 @@ export default function App() {
                   />
                   <Route path="registry" element={<BarangayResidentRegistry />} />
                   <Route path="residents" element={<BarangayResidentRegistry />} />
-                  <Route path="categories" element={<BarangayCategoryConfig />} />
                   <Route path="logs" element={<BarangaySystemLogs />} />
-                  <Route path="syllabus" element={<BarangayActiveSyllabus />} />
                   <Route path="feedback" element={<AdminFeedbackManager />} />
                   <Route
                     path="workspace"

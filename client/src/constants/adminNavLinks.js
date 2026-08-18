@@ -123,13 +123,7 @@ export const ROLE_BASED_LINKS = {
         { name: "Resident Feedbacks", path: "/admin/barangay/feedback", icon: Message01Icon },
       ]
     },
-    {
-      category: "Content & Syllabus",
-      items: [
-        { name: "Category Content", path: "/admin/barangay/categories", icon: Settings01Icon },
-        { name: "Program Syllabus", path: "/admin/barangay/syllabus", icon: Task01Icon },
-      ]
-    },
+
     {
       category: "Governance",
       items: [

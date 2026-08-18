@@ -34,7 +34,7 @@ router.get("/residents", requireRole(ADMIN_ROLES), adminDataLimiter, requirePerm
 // @route   GET /api/admin/modules
 // @desc    Get all modules with pagination and scoping
 // @access  Private (admin/system_admin only)
-router.get("/modules", requireRole(ADMIN_ROLES), adminDataLimiter, requirePermission('manage_modules'), moduleController.getAllModules);
+router.get("/modules", requireRole(['system_admin', 'mdrrmo_admin', 'head_mdrrmo_admin']), adminDataLimiter, requirePermission('manage_modules'), moduleController.getAllModules);
 
 // @route   GET /api/admin/certificates
 // @desc    Get all certificates with pagination and scoping
