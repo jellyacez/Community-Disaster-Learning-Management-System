@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { UserGroupIcon, Certificate01Icon, Activity01Icon, Notification01Icon, CheckmarkCircle01Icon, Alert01Icon, UserAdd01Icon, Search01Icon, ArrowRight01Icon, Shield01Icon, RefreshIcon, Note01Icon, Download01Icon, Folder01Icon } from "@hugeicons/core-free-icons";
+import StatCard from "../../system/overview/components/StatCard";
 import WorkspaceOverviewSkeleton from "./WorkspaceOverviewSkeleton";
 import ResidentInspectorPanel from "../../shared/ResidentInspectorPanel";
 import AnnouncementModal from "./announcementModal";
@@ -124,92 +125,51 @@ export default function WorkspaceOverview() {
 
       {/* Row 1: 5 Metric Cards */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-        
-        {/* Total Monitored */}
-        <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm relative overflow-hidden flex flex-col justify-between">
-          <div className="flex items-start justify-between">
-            <div className="p-2.5 bg-blue-50 text-blue-600 rounded-xl">
-              <HugeiconsIcon icon={UserGroupIcon} className="w-5 h-5" />
-            </div>
-            <span className="text-[10px] font-bold uppercase tracking-wider text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">
-              Jurisdiction
-            </span>
-          </div>
-          <div className="mt-4">
-            <h3 className="text-3xl font-black font-mono text-gray-900">{totalResidents}</h3>
-            <p className="text-xs font-bold text-gray-800 mt-1">Total Residents</p>
-            <p className="text-[11px] text-gray-400">All registered locals</p>
-          </div>
-        </div>
-
-        {/* Certified Safe */}
-        <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm relative overflow-hidden flex flex-col justify-between">
-          <div className="flex items-start justify-between">
-            <div className="p-2.5 bg-emerald-50 text-emerald-600 rounded-xl">
-              <HugeiconsIcon icon={Certificate01Icon} className="w-5 h-5" />
-            </div>
-            <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">
-              Safe Certified
-            </span>
-          </div>
-          <div className="mt-4">
-            <h3 className="text-3xl font-black font-mono text-emerald-600">{certifiedCount}</h3>
-            <p className="text-xs font-bold text-gray-800 mt-1">Certified Safe</p>
-            <p className="text-[11px] text-gray-400">Passed DRRM training</p>
-          </div>
-        </div>
-
-        {/* Active Learners */}
-        <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm relative overflow-hidden flex flex-col justify-between">
-          <div className="flex items-start justify-between">
-            <div className="p-2.5 bg-amber-50 text-amber-600 rounded-xl">
-              <HugeiconsIcon icon={Activity01Icon} className="w-5 h-5" />
-            </div>
-            <span className="text-[10px] font-bold uppercase tracking-wider text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full">
-              Active 30d
-            </span>
-          </div>
-          <div className="mt-4">
-            <h3 className="text-3xl font-black font-mono text-amber-600">{activeLearners}</h3>
-            <p className="text-xs font-bold text-gray-800 mt-1">Active Learners</p>
-            <p className="text-[11px] text-gray-400">Recent module activity</p>
-          </div>
-        </div>
-
-        {/* Pending Certification */}
-        <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm relative overflow-hidden flex flex-col justify-between">
-          <div className="flex items-start justify-between">
-            <div className="p-2.5 bg-slate-50 text-slate-600 rounded-xl">
-              <HugeiconsIcon icon={UserAdd01Icon} className="w-5 h-5" />
-            </div>
-            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">
-              Incomplete
-            </span>
-          </div>
-          <div className="mt-4">
-            <h3 className="text-3xl font-black font-mono text-slate-700">{pendingCount}</h3>
-            <p className="text-xs font-bold text-gray-800 mt-1">Pending Status</p>
-            <p className="text-[11px] text-gray-400">In training / uncertified</p>
-          </div>
-        </div>
-
-        {/* Local Alerts */}
-        <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm relative overflow-hidden flex flex-col justify-between col-span-2 md:col-span-1">
-          <div className="flex items-start justify-between">
-            <div className="p-2.5 bg-red-50 text-red-600 rounded-xl">
-              <HugeiconsIcon icon={Notification01Icon} className="w-5 h-5" />
-            </div>
-            <span className="text-[10px] font-bold uppercase tracking-wider text-red-600 bg-red-50 px-2 py-0.5 rounded-full">
-              Advisories
-            </span>
-          </div>
-          <div className="mt-4">
-            <h3 className="text-3xl font-black font-mono text-red-600">{localAlertsCount}</h3>
-            <p className="text-xs font-bold text-gray-800 mt-1">Local Advisories</p>
-            <p className="text-[11px] text-gray-400">Sector announcements</p>
-          </div>
-        </div>
-
+        <StatCard
+          icon={UserGroupIcon}
+          label="Total Residents"
+          value={totalResidents}
+          sub="All registered locals"
+          trendText="Jurisdiction"
+          color="blue"
+          loading={isLoading || isFetching}
+        />
+        <StatCard
+          icon={Certificate01Icon}
+          label="Certified Safe"
+          value={certifiedCount}
+          sub="Passed DRRM training"
+          trendText="Safe Certified"
+          color="green"
+          loading={isLoading || isFetching}
+        />
+        <StatCard
+          icon={Activity01Icon}
+          label="Active Learners"
+          value={activeLearners}
+          sub="Recent module activity"
+          trendText="Active 30d"
+          color="amber"
+          loading={isLoading || isFetching}
+        />
+        <StatCard
+          icon={UserAdd01Icon}
+          label="Pending Status"
+          value={pendingCount}
+          sub="In training / uncertified"
+          trendText="Incomplete"
+          color="gray"
+          loading={isLoading || isFetching}
+        />
+        <StatCard
+          icon={Notification01Icon}
+          label="Local Advisories"
+          value={localAlertsCount}
+          sub="Sector announcements"
+          trendText="Advisories"
+          color="red"
+          loading={isLoading || isFetching}
+        />
       </div>
 
       {/* Row 2: Analytics Visualizers */}

@@ -1,13 +1,16 @@
 
-export default function RegisterPersonnelForm({ userForm, setUserForm, handleUserSubmit }) {
+export default function RegisterPersonnelForm({ userForm, setUserForm, handleUserSubmit, onClose }) {
   return (
-    <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm w-full space-y-5">
-      <h2 className="text-xs font-bold text-gray-400 uppercase tracking-wider border-b border-gray-100 pb-2 font-mono">
-        Register District Personnel
-      </h2>
+    <div className="p-6 w-full space-y-5">
+      <div className="flex items-center justify-between border-b border-gray-100 pb-4">
+        <h2 className="text-lg font-black text-gray-900 tracking-tight">Add Personnel</h2>
+        <button type="button" onClick={onClose} className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
+          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+        </button>
+      </div>
       <form onSubmit={handleUserSubmit} className="space-y-4">
         <div>
-          <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">Personnel Full Name</label>
+          <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">Full Name</label>
           <input 
             type="text" 
             placeholder="e.g., Juan Dela Cruz" 
@@ -17,7 +20,7 @@ export default function RegisterPersonnelForm({ userForm, setUserForm, handleUse
           />
         </div>
         <div>
-          <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">Official Email Address</label>
+          <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">Email Address</label>
           <input 
             type="email" 
             placeholder="username@mdrrmo.gov.ph" 
@@ -27,7 +30,7 @@ export default function RegisterPersonnelForm({ userForm, setUserForm, handleUse
           />
         </div>
         <div>
-          <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">System Account Role Scope</label>
+          <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">Role</label>
           <select 
             value={userForm.role} 
             onChange={(e) => setUserForm({ ...userForm, role: e.target.value })} 
@@ -40,7 +43,7 @@ export default function RegisterPersonnelForm({ userForm, setUserForm, handleUse
           type="submit" 
           className="w-full py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl text-xs uppercase tracking-wider shadow-sm transition-colors mt-2"
         >
-          Create Account Parameters
+          Create Account
         </button>
       </form>
     </div>

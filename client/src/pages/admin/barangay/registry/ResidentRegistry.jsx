@@ -1,4 +1,6 @@
-import { useState, useMemo } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { MoreHorizontalIcon, Archive02Icon, UserBlock01Icon } from "@hugeicons/core-free-icons";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 
@@ -18,6 +20,21 @@ const fetchResidents = async () => {
 };
 
 export default function ResidentRegistry() {
+  
+
+  const [openDropdownId, setOpenDropdownId] = useState(null);
+  const dropdownRef = useRef(null);
+
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setOpenDropdownId(null);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   const queryClient = useQueryClient();
   const [selectedSector, setSelectedSector] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
@@ -54,10 +71,6 @@ export default function ResidentRegistry() {
       return matchesSector && matchesSearch;
     });
   }, [residents, selectedSector, searchQuery]);
-
-  const handleVerifyCertificate = (residentName) => {
-    toast.success(`Auditing Certification Database Ledger:\nRecord for ${residentName} is verified, authentic, and matches server records.`);
-  };
 
   const confirmAction = async () => {
     if (modalConfig.userId && modalConfig.action) {
@@ -127,7 +140,7 @@ export default function ResidentRegistry() {
           </div>
           <input 
             type="text" 
-            placeholder="Search resident identity queries..." 
+            placeholder="Search by name or email..." 
             value={searchQuery} 
             onChange={(e) => setSearchQuery(e.target.value)} 
             className="w-full sm:w-72 p-2.5 border border-gray-200 text-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 transition-all shadow-sm" 
@@ -137,13 +150,13 @@ export default function ResidentRegistry() {
         {/* Registry Table */}
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="text-xs text-gray-400 border-b border-gray-100">
-                <th className="pb-3 font-semibold uppercase tracking-wider">Resident Name</th>
-                <th className="pb-3 font-semibold uppercase tracking-wider">Sector Location</th>
-                <th className="pb-3 font-semibold uppercase tracking-wider text-center">Syllabus Cleared</th>
-                <th className="pb-3 font-semibold uppercase tracking-wider text-center">State</th>
-                <th className="pb-3 font-semibold uppercase tracking-wider text-right">Actions</th>
+            <thead className="bg-gray-50" className="bg-gray-50" className="bg-gray-50">
+              <tr className="text-xs text-gray-500 border-b border-gray-200">
+                <th className="py-3 px-6 font-semibold uppercase tracking-wider">Resident</th>
+                <th className="py-3 px-6 font-semibold uppercase tracking-wider">Barangay</th>
+                <th className="py-3 px-6 font-semibold uppercase tracking-wider text-center">Modules Completed</th>
+                <th className="py-3 px-6 font-semibold uppercase tracking-wider text-center">State</th>
+                <th className="py-3 px-6 font-semibold uppercase tracking-wider text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="text-sm divide-y divide-gray-50">
@@ -154,10 +167,22 @@ export default function ResidentRegistry() {
               ) : (
                 filteredResidents.map((r) => (
                   <tr key={r.id || r._id} className="hover:bg-gray-50/50 transition-colors">
-                    <td className="py-3 font-semibold text-gray-800">{r.name}</td>
-                    <td className="py-3 font-mono text-gray-500">{r.barangay}</td>
-                    <td className="py-3 text-center font-bold text-gray-700">{r.modulesCompleted || 0} Modules Completed</td>
-                    <td className="py-3 text-center">
+                    <td className="py-3 px-6">
+                      <div className="flex items-center gap-3">
+                        <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
+                          <span className="text-xs font-bold text-blue-700">
+                            {r.name?.charAt(0).toUpperCase() || "R"}
+                          </span>
+                        </div>
+                        <div>
+                          <p className="font-semibold text-gray-900">{r.name}</p>
+                          <p className="text-xs text-gray-500 mt-0.5">{r.id || r._id}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="py-3 px-6 font-mono text-gray-500">{r.barangay}</td>
+                    <td className="py-3 px-6 text-center font-bold text-gray-700">{r.modulesCompleted || 0} Modules Completed</td>
+                    <td className="py-3 px-6 text-center">
                       <StatusBadge color={
                         r.status === "banned" ? "red" :
                         r.status === "archived" ? "slate" :
@@ -166,30 +191,47 @@ export default function ResidentRegistry() {
                         {r.status || "Pending"}
                       </StatusBadge>
                     </td>
-                    <td className="py-3 text-right space-x-2">
-                      {r.status === "Ready" && (
-                        <button 
-                          type="button" 
-                          onClick={() => handleVerifyCertificate(r.name)} 
-                          className="px-3 py-1.5 text-xs font-medium border border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-600 hover:text-white rounded-lg transition-all shadow-sm"
+                    <td className="py-3 px-6 text-right relative">
+                      <button 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setOpenDropdownId(openDropdownId === (r.id || r._id) ? null : (r.id || r._id));
+                        }}
+                        className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                      >
+                        <HugeiconsIcon icon={MoreHorizontalIcon} size={18} />
+                      </button>
+                      
+                      {openDropdownId === (r.id || r._id) && (
+                        <div 
+                          ref={dropdownRef}
+                          className="absolute right-8 top-10 w-48 bg-white border border-gray-100 rounded-xl shadow-lg shadow-gray-200/50 py-1.5 z-50 text-left animate-in zoom-in-95 duration-100"
                         >
-                          Audit QR Code
-                        </button>
+                          <div className="px-3 py-1.5 border-b border-gray-50 mb-1">
+                            <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Manage Resident</p>
+                          </div>
+                          <button 
+                            onClick={() => {
+                              setModalConfig((r.id || r._id), "archive");
+                              setOpenDropdownId(null);
+                            }}
+                            className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-600 hover:bg-gray-50 transition-colors"
+                          >
+                            <HugeiconsIcon icon={Archive02Icon} size={16} />
+                            <span>Archive Record</span>
+                          </button>
+                          <button 
+                            onClick={() => {
+                              setModalConfig((r.id || r._id), "ban");
+                              setOpenDropdownId(null);
+                            }}
+                            className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                          >
+                            <HugeiconsIcon icon={UserBlock01Icon} size={16} />
+                            <span>Ban Resident</span>
+                          </button>
+                        </div>
                       )}
-                      <button 
-                        type="button" 
-                        onClick={() => setModalConfig({ isOpen: true, userId: r.id || r._id, action: "archive" })} 
-                        className="px-3 py-1.5 text-xs border border-slate-200 text-gray-700 hover:bg-slate-50 font-semibold rounded-lg transition-colors shadow-sm"
-                      >
-                        Archive
-                      </button>
-                      <button 
-                        type="button" 
-                        onClick={() => setModalConfig({ isOpen: true, userId: r.id || r._id, action: "ban" })} 
-                        className="px-3 py-1.5 text-xs border border-red-200 text-red-600 hover:bg-red-600 hover:text-white font-semibold rounded-lg transition-colors shadow-sm"
-                      >
-                        Ban
-                      </button>
                     </td>
                   </tr>
                 ))
