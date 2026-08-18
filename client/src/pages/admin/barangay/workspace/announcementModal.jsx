@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { X, Bell, AlertCircle } from "lucide-react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { Cancel01Icon, Notification01Icon, Alert01Icon } from "@hugeicons/core-free-icons";
 import toast from "react-hot-toast";
 import apiClient from "../../../../lib/apiClient";
 
@@ -45,7 +46,7 @@ export default function AnnouncementModal({ isOpen, onClose, barangayName = "You
         <div className="flex items-center justify-between border-b border-gray-100 pb-3">
           <div className="flex items-center gap-2.5">
             <div className="p-2 bg-red-50 text-red-600 rounded-xl">
-              <Bell className="w-5 h-5" />
+              <HugeiconsIcon icon={Notification01Icon} className="w-5 h-5" />
             </div>
             <div>
               <div className="flex items-center gap-2">
@@ -62,7 +63,7 @@ export default function AnnouncementModal({ isOpen, onClose, barangayName = "You
             onClick={onClose}
             className="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition"
           >
-            <X className="w-4 h-4" />
+            <HugeiconsIcon icon={Cancel01Icon} className="w-4 h-4" />
           </button>
         </div>
 
@@ -97,7 +98,7 @@ export default function AnnouncementModal({ isOpen, onClose, barangayName = "You
           </div>
 
           <div className="bg-amber-50 border border-amber-200 text-amber-800 p-3 rounded-xl flex items-start gap-2.5 text-xs">
-            <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-amber-600" />
+            <HugeiconsIcon icon={Alert01Icon} className="w-4 h-4 shrink-0 mt-0.5 text-amber-600" />
             <span>
               This message will appear immediately on the announcement boards of registered residents in <strong>Barangay {barangayName}</strong>.
             </span>

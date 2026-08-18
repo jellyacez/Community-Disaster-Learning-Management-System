@@ -1,8 +1,9 @@
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Underline from '@tiptap/extension-underline';
-import { Bold, Italic, Underline as UnderlineIcon, List, ListOrdered } from 'lucide-react';
-import { useEffect } from 'react';
+import { HugeiconsIcon } from '@hugeicons/react';
+import { TextBoldIcon, TextItalicIcon, TextUnderlineIcon, LeftToRightListBulletIcon, LeftToRightListNumberIcon } from '@hugeicons/core-free-icons';
+import { useEffect, useState } from 'react';
 
 const MenuBar = ({ editor }) => {
   if (!editor) {
@@ -26,7 +27,7 @@ const MenuBar = ({ editor }) => {
         className={toggleStyle('bold', 'bold')}
         title="Bold"
       >
-        <Bold className="w-4 h-4" />
+        <HugeiconsIcon icon={TextBoldIcon} className="w-4 h-4" />
       </button>
       <button
         type="button"
@@ -35,7 +36,7 @@ const MenuBar = ({ editor }) => {
         className={toggleStyle('italic', 'italic')}
         title="Italic"
       >
-        <Italic className="w-4 h-4" />
+        <HugeiconsIcon icon={TextItalicIcon} className="w-4 h-4" />
       </button>
       <button
         type="button"
@@ -44,7 +45,7 @@ const MenuBar = ({ editor }) => {
         className={toggleStyle('underline', 'underline')}
         title="Underline"
       >
-        <UnderlineIcon className="w-4 h-4" />
+        <HugeiconsIcon icon={TextUnderlineIcon} className="w-4 h-4" />
       </button>
       
       <div className="w-px h-6 bg-gray-300 mx-1 self-center" />
@@ -55,7 +56,7 @@ const MenuBar = ({ editor }) => {
         className={toggleStyle('bulletList', 'bulletList')}
         title="Bullet List"
       >
-        <List className="w-4 h-4" />
+        <HugeiconsIcon icon={LeftToRightListBulletIcon} className="w-4 h-4" />
       </button>
       <button
         type="button"
@@ -63,13 +64,15 @@ const MenuBar = ({ editor }) => {
         className={toggleStyle('orderedList', 'orderedList')}
         title="Ordered List"
       >
-        <ListOrdered className="w-4 h-4" />
+        <HugeiconsIcon icon={LeftToRightListNumberIcon} className="w-4 h-4" />
       </button>
     </div>
   );
 };
 
 export default function RichTextEditor({ value, onChange, placeholder, className = "" }) {
+  const [, forceUpdate] = useState(0);
+
   const editor = useEditor({
     extensions: [
       StarterKit.configure(),
@@ -84,6 +87,12 @@ export default function RichTextEditor({ value, onChange, placeholder, className
     },
     onUpdate: ({ editor }) => {
       onChange(editor.getHTML());
+    },
+    onSelectionUpdate: () => {
+      forceUpdate((prev) => prev + 1);
+    },
+    onTransaction: () => {
+      forceUpdate((prev) => prev + 1);
     },
   });
 

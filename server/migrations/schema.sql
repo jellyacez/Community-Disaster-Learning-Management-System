@@ -2,12 +2,12 @@
 -- PostgreSQL database dump
 --
 
-\restrict I8xrIoFt52dMZQPM4T5JDEanGkZC1nZti3TbFXEiaWbyDb3Wl1cw8myASYua4ef
+\restrict 5IhK4TLFiV6DsYE2D0nx3GY6TBtS2riu0Jkd2noJ9iBZYBTkCvHZOtBaDaaPgG3
 
 -- Dumped from database version 18.4
 -- Dumped by pg_dump version 18.4
 
--- Started on 2026-08-13 20:53:59
+-- Started on 2026-08-18 16:00:21
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -32,7 +32,7 @@ SET row_security = off;
 ALTER SCHEMA public OWNER TO postgres;
 
 --
--- TOC entry 5311 (class 0 OID 0)
+-- TOC entry 5312 (class 0 OID 0)
 -- Dependencies: 7
 -- Name: SCHEMA public; Type: COMMENT; Schema: -; Owner: postgres
 --
@@ -59,7 +59,7 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp" WITH SCHEMA public;
 
 
 --
--- TOC entry 5313 (class 0 OID 0)
+-- TOC entry 5314 (class 0 OID 0)
 -- Dependencies: 2
 -- Name: EXTENSION "uuid-ossp"; Type: COMMENT; Schema: -; Owner: 
 --
@@ -444,7 +444,8 @@ CREATE TABLE public.announcements (
     title character varying(255) NOT NULL,
     content text NOT NULL,
     date timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    author_id text NOT NULL
+    author_id text NOT NULL,
+    barangay_id integer
 );
 
 
@@ -495,7 +496,7 @@ CREATE SEQUENCE public.barangays_id_seq
 ALTER SEQUENCE public.barangays_id_seq OWNER TO postgres;
 
 --
--- TOC entry 5314 (class 0 OID 0)
+-- TOC entry 5315 (class 0 OID 0)
 -- Dependencies: 227
 -- Name: barangays_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
 --
@@ -535,7 +536,7 @@ CREATE SEQUENCE public.blocked_ips_id_seq
 ALTER SEQUENCE public.blocked_ips_id_seq OWNER TO postgres;
 
 --
--- TOC entry 5315 (class 0 OID 0)
+-- TOC entry 5316 (class 0 OID 0)
 -- Dependencies: 229
 -- Name: blocked_ips_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
 --
@@ -651,7 +652,7 @@ CREATE SEQUENCE public.feedback_messages_id_seq
 ALTER SEQUENCE public.feedback_messages_id_seq OWNER TO postgres;
 
 --
--- TOC entry 5316 (class 0 OID 0)
+-- TOC entry 5317 (class 0 OID 0)
 -- Dependencies: 261
 -- Name: feedback_messages_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
 --
@@ -699,7 +700,7 @@ CREATE SEQUENCE public.feedbacks_id_seq
 ALTER SEQUENCE public.feedbacks_id_seq OWNER TO postgres;
 
 --
--- TOC entry 5317 (class 0 OID 0)
+-- TOC entry 5318 (class 0 OID 0)
 -- Dependencies: 235
 -- Name: feedbacks_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
 --
@@ -1015,7 +1016,7 @@ CREATE TABLE public."user" (
 ALTER TABLE public."user" OWNER TO postgres;
 
 --
--- TOC entry 5318 (class 0 OID 0)
+-- TOC entry 5319 (class 0 OID 0)
 -- Dependencies: 252
 -- Name: COLUMN "user".consent_given_at; Type: COMMENT; Schema: public; Owner: postgres
 --
@@ -1024,7 +1025,7 @@ COMMENT ON COLUMN public."user".consent_given_at IS 'Timestamp when the user exp
 
 
 --
--- TOC entry 5319 (class 0 OID 0)
+-- TOC entry 5320 (class 0 OID 0)
 -- Dependencies: 252
 -- Name: COLUMN "user".consent_version; Type: COMMENT; Schema: public; Owner: postgres
 --
@@ -1066,7 +1067,7 @@ CREATE SEQUENCE public.user_notification_notification_id_seq
 ALTER SEQUENCE public.user_notification_notification_id_seq OWNER TO postgres;
 
 --
--- TOC entry 5320 (class 0 OID 0)
+-- TOC entry 5321 (class 0 OID 0)
 -- Dependencies: 259
 -- Name: user_notification_notification_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
 --
@@ -1685,7 +1686,16 @@ ALTER TABLE ONLY public.account
 
 
 --
--- TOC entry 5158 (class 2606 OID 42331)
+-- TOC entry 5136 (class 2606 OID 42337)
+-- Name: announcements announcements_barangay_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.announcements
+    ADD CONSTRAINT announcements_barangay_id_fkey FOREIGN KEY (barangay_id) REFERENCES public.barangays(id) ON DELETE CASCADE;
+
+
+--
+-- TOC entry 5159 (class 2606 OID 42331)
 -- Name: feedback_messages feedback_messages_feedback_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1694,7 +1704,7 @@ ALTER TABLE ONLY public.feedback_messages
 
 
 --
--- TOC entry 5141 (class 2606 OID 42183)
+-- TOC entry 5142 (class 2606 OID 42183)
 -- Name: feedbacks feedbacks_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1703,7 +1713,7 @@ ALTER TABLE ONLY public.feedbacks
 
 
 --
--- TOC entry 5136 (class 2606 OID 42188)
+-- TOC entry 5137 (class 2606 OID 42188)
 -- Name: announcements fk_author; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1712,7 +1722,7 @@ ALTER TABLE ONLY public.announcements
 
 
 --
--- TOC entry 5137 (class 2606 OID 42193)
+-- TOC entry 5138 (class 2606 OID 42193)
 -- Name: certificates fk_certificates_revoked_by; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1721,7 +1731,7 @@ ALTER TABLE ONLY public.certificates
 
 
 --
--- TOC entry 5142 (class 2606 OID 42198)
+-- TOC entry 5143 (class 2606 OID 42198)
 -- Name: levels fk_level_module; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1730,7 +1740,7 @@ ALTER TABLE ONLY public.levels
 
 
 --
--- TOC entry 5146 (class 2606 OID 42203)
+-- TOC entry 5147 (class 2606 OID 42203)
 -- Name: module_steps fk_level_steps; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1739,7 +1749,7 @@ ALTER TABLE ONLY public.module_steps
 
 
 --
--- TOC entry 5138 (class 2606 OID 42208)
+-- TOC entry 5139 (class 2606 OID 42208)
 -- Name: certificates fk_modact; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1748,7 +1758,7 @@ ALTER TABLE ONLY public.certificates
 
 
 --
--- TOC entry 5143 (class 2606 OID 42213)
+-- TOC entry 5144 (class 2606 OID 42213)
 -- Name: module_activity fk_module; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1757,7 +1767,7 @@ ALTER TABLE ONLY public.module_activity
 
 
 --
--- TOC entry 5147 (class 2606 OID 42218)
+-- TOC entry 5148 (class 2606 OID 42218)
 -- Name: questions fk_module; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1766,7 +1776,7 @@ ALTER TABLE ONLY public.questions
 
 
 --
--- TOC entry 5140 (class 2606 OID 42223)
+-- TOC entry 5141 (class 2606 OID 42223)
 -- Name: choices fk_question; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1775,7 +1785,7 @@ ALTER TABLE ONLY public.choices
 
 
 --
--- TOC entry 5148 (class 2606 OID 42228)
+-- TOC entry 5149 (class 2606 OID 42228)
 -- Name: results fk_quiz_module; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1784,7 +1794,7 @@ ALTER TABLE ONLY public.results
 
 
 --
--- TOC entry 5149 (class 2606 OID 42233)
+-- TOC entry 5150 (class 2606 OID 42233)
 -- Name: results fk_quiz_user; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1802,7 +1812,7 @@ ALTER TABLE ONLY public.activity_log
 
 
 --
--- TOC entry 5139 (class 2606 OID 42243)
+-- TOC entry 5140 (class 2606 OID 42243)
 -- Name: certificates fk_user; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1811,7 +1821,7 @@ ALTER TABLE ONLY public.certificates
 
 
 --
--- TOC entry 5144 (class 2606 OID 42248)
+-- TOC entry 5145 (class 2606 OID 42248)
 -- Name: module_activity fk_user; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1820,7 +1830,7 @@ ALTER TABLE ONLY public.module_activity
 
 
 --
--- TOC entry 5153 (class 2606 OID 42253)
+-- TOC entry 5154 (class 2606 OID 42253)
 -- Name: user_step_progress fk_user; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1829,7 +1839,7 @@ ALTER TABLE ONLY public.user_step_progress
 
 
 --
--- TOC entry 5157 (class 2606 OID 42304)
+-- TOC entry 5158 (class 2606 OID 42304)
 -- Name: user_notification fk_user_notification_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1838,7 +1848,7 @@ ALTER TABLE ONLY public.user_notification
 
 
 --
--- TOC entry 5145 (class 2606 OID 42309)
+-- TOC entry 5146 (class 2606 OID 42309)
 -- Name: module_data module_data_author_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1847,7 +1857,7 @@ ALTER TABLE ONLY public.module_data
 
 
 --
--- TOC entry 5150 (class 2606 OID 42258)
+-- TOC entry 5151 (class 2606 OID 42258)
 -- Name: session session_userId_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1856,7 +1866,7 @@ ALTER TABLE ONLY public.session
 
 
 --
--- TOC entry 5151 (class 2606 OID 42263)
+-- TOC entry 5152 (class 2606 OID 42263)
 -- Name: twoFactor twoFactor_userId_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1865,7 +1875,7 @@ ALTER TABLE ONLY public."twoFactor"
 
 
 --
--- TOC entry 5152 (class 2606 OID 42268)
+-- TOC entry 5153 (class 2606 OID 42268)
 -- Name: user user_barangay_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1874,7 +1884,7 @@ ALTER TABLE ONLY public."user"
 
 
 --
--- TOC entry 5154 (class 2606 OID 42273)
+-- TOC entry 5155 (class 2606 OID 42273)
 -- Name: user_step_progress user_step_progress_step_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1883,7 +1893,7 @@ ALTER TABLE ONLY public.user_step_progress
 
 
 --
--- TOC entry 5155 (class 2606 OID 42278)
+-- TOC entry 5156 (class 2606 OID 42278)
 -- Name: individual_records individual_records_session_id_fkey; Type: FK CONSTRAINT; Schema: rate_limit; Owner: postgres
 --
 
@@ -1892,7 +1902,7 @@ ALTER TABLE ONLY rate_limit.individual_records
 
 
 --
--- TOC entry 5156 (class 2606 OID 42283)
+-- TOC entry 5157 (class 2606 OID 42283)
 -- Name: records_aggregated records_aggregated_session_id_fkey; Type: FK CONSTRAINT; Schema: rate_limit; Owner: postgres
 --
 
@@ -1901,7 +1911,7 @@ ALTER TABLE ONLY rate_limit.records_aggregated
 
 
 --
--- TOC entry 5312 (class 0 OID 0)
+-- TOC entry 5313 (class 0 OID 0)
 -- Dependencies: 7
 -- Name: SCHEMA public; Type: ACL; Schema: -; Owner: postgres
 --
@@ -1910,11 +1920,11 @@ REVOKE USAGE ON SCHEMA public FROM PUBLIC;
 GRANT ALL ON SCHEMA public TO PUBLIC;
 
 
--- Completed on 2026-08-13 20:53:59
+-- Completed on 2026-08-18 16:00:21
 
 --
 -- PostgreSQL database dump complete
 --
 
-\unrestrict I8xrIoFt52dMZQPM4T5JDEanGkZC1nZti3TbFXEiaWbyDb3Wl1cw8myASYua4ef
+\unrestrict 5IhK4TLFiV6DsYE2D0nx3GY6TBtS2riu0Jkd2noJ9iBZYBTkCvHZOtBaDaaPgG3
 

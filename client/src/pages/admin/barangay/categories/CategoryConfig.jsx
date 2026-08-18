@@ -19,7 +19,29 @@ export default function CategoryConfig() {
   };
 
   return (
-    <div className="max-w-xl mx-auto bg-white p-8 rounded-2xl border border-gray-100 shadow-sm space-y-6 animate-in fade-in duration-150">
+    <>
+      <div className="mb-8">
+        <nav className="flex text-sm text-gray-500 mb-2" aria-label="Breadcrumb">
+          <ol className="inline-flex items-center space-x-1 md:space-x-2">
+            <li className="inline-flex items-center">Dashboard</li>
+            <li>
+              <div className="flex items-center">
+                <span className="mx-2 text-gray-400">&gt;</span>
+                <span className="text-gray-900 font-semibold">Localized Category Configurations</span>
+              </div>
+            </li>
+          </ol>
+        </nav>
+
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+          <div>
+            <h1 className="text-3xl font-black text-gray-900 tracking-tight">Localized Category Configurations</h1>
+            <p className="text-sm font-medium text-gray-500 mt-1">Manage custom content categories for your barangay</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="max-w-xl mx-auto bg-white p-8 rounded-2xl border border-gray-100 shadow-sm space-y-6 animate-in fade-in duration-150">
       <h3 className="text-sm font-bold uppercase tracking-wider text-gray-800 border-b border-gray-100 pb-2 font-mono">
         Configure Category Content Records
       </h3>
@@ -60,6 +82,7 @@ export default function CategoryConfig() {
           )}
         </div>
       </div>
-    </div>
+      </div>
+    </>
   );
 }

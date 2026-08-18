@@ -1,22 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import {
-  Users,
-  Award,
-  Activity,
-  Bell,
-  CheckCircle2,
-  AlertTriangle,
-  UserCheck,
-  Search,
-  ExternalLink,
-  ShieldCheck,
-  RefreshCw,
-  FileSpreadsheet,
-  Download,
-  BookOpen
-} from "lucide-react";
-
+import { HugeiconsIcon } from "@hugeicons/react";
+import { UserGroupIcon, Certificate01Icon, Activity01Icon, Notification01Icon, CheckmarkCircle01Icon, Alert01Icon, UserAdd01Icon, Search01Icon, ArrowRight01Icon, Shield01Icon, RefreshIcon, Note01Icon, Download01Icon, Folder01Icon } from "@hugeicons/core-free-icons";
 import WorkspaceOverviewSkeleton from "./WorkspaceOverviewSkeleton";
 import ResidentInspectorPanel from "../../shared/ResidentInspectorPanel";
 import AnnouncementModal from "./announcementModal";
@@ -50,7 +35,7 @@ export default function WorkspaceOverview() {
   if (isError) {
     return (
       <div className="p-6 bg-red-50 border border-red-200 text-red-700 rounded-2xl flex items-center gap-3">
-        <AlertTriangle className="w-5 h-5 shrink-0 text-red-600" />
+        <HugeiconsIcon icon={Alert01Icon} className="w-5 h-5 shrink-0 text-red-600" />
         <div>
           <p className="font-bold text-sm">Failed to load barangay workspace</p>
           <p className="text-xs text-red-500">Ensure your administrative account is assigned to an active sector jurisdiction.</p>
@@ -84,13 +69,34 @@ export default function WorkspaceOverview() {
   };
 
   return (
-    <div className="space-y-6 font-sans">
+    <div className="space-y-6 font-sans animate-in fade-in duration-150">
       
+      <div className="mb-4">
+        <nav className="flex text-sm text-gray-500 mb-2" aria-label="Breadcrumb">
+          <ol className="inline-flex items-center space-x-1 md:space-x-2">
+            <li className="inline-flex items-center">Dashboard</li>
+            <li>
+              <div className="flex items-center">
+                <span className="mx-2 text-gray-400">&gt;</span>
+                <span className="text-gray-900 font-semibold">Dashboard Overview</span>
+              </div>
+            </li>
+          </ol>
+        </nav>
+
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-2">
+          <div>
+            <h1 className="text-3xl font-black text-gray-900 tracking-tight">Dashboard Overview</h1>
+            <p className="text-sm font-medium text-gray-500 mt-1">High-level metrics and system activity overview for your barangay</p>
+          </div>
+        </div>
+      </div>
+
       {/* Top Notification / Sector Banner */}
       <div className="bg-gradient-to-r from-red-50 to-orange-50 border-l-4 border-red-600 p-4 rounded-2xl flex items-center justify-between shadow-sm">
         <div className="flex items-center gap-3">
           <div className="p-2 bg-red-100 text-red-600 rounded-xl">
-            <ShieldCheck className="w-5 h-5" />
+            <HugeiconsIcon icon={Shield01Icon} className="w-5 h-5" />
           </div>
           <div>
             <div className="flex items-center gap-2">
@@ -112,7 +118,7 @@ export default function WorkspaceOverview() {
           disabled={isFetching}
           className="p-2 text-gray-400 hover:text-gray-600 hover:bg-white rounded-xl transition-all"
         >
-          <RefreshCw className={`w-4 h-4 ${isFetching ? "animate-spin text-red-600" : ""}`} />
+          <HugeiconsIcon icon={RefreshIcon} className={`w-4 h-4 ${isFetching ? "animate-spin text-red-600" : ""}`} />
         </button>
       </div>
 
@@ -123,7 +129,7 @@ export default function WorkspaceOverview() {
         <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm relative overflow-hidden flex flex-col justify-between">
           <div className="flex items-start justify-between">
             <div className="p-2.5 bg-blue-50 text-blue-600 rounded-xl">
-              <Users className="w-5 h-5" />
+              <HugeiconsIcon icon={UserGroupIcon} className="w-5 h-5" />
             </div>
             <span className="text-[10px] font-bold uppercase tracking-wider text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">
               Jurisdiction
@@ -140,7 +146,7 @@ export default function WorkspaceOverview() {
         <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm relative overflow-hidden flex flex-col justify-between">
           <div className="flex items-start justify-between">
             <div className="p-2.5 bg-emerald-50 text-emerald-600 rounded-xl">
-              <Award className="w-5 h-5" />
+              <HugeiconsIcon icon={Certificate01Icon} className="w-5 h-5" />
             </div>
             <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">
               Safe Certified
@@ -157,7 +163,7 @@ export default function WorkspaceOverview() {
         <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm relative overflow-hidden flex flex-col justify-between">
           <div className="flex items-start justify-between">
             <div className="p-2.5 bg-amber-50 text-amber-600 rounded-xl">
-              <Activity className="w-5 h-5" />
+              <HugeiconsIcon icon={Activity01Icon} className="w-5 h-5" />
             </div>
             <span className="text-[10px] font-bold uppercase tracking-wider text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full">
               Active 30d
@@ -174,7 +180,7 @@ export default function WorkspaceOverview() {
         <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm relative overflow-hidden flex flex-col justify-between">
           <div className="flex items-start justify-between">
             <div className="p-2.5 bg-slate-50 text-slate-600 rounded-xl">
-              <UserCheck className="w-5 h-5" />
+              <HugeiconsIcon icon={UserAdd01Icon} className="w-5 h-5" />
             </div>
             <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">
               Incomplete
@@ -191,7 +197,7 @@ export default function WorkspaceOverview() {
         <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm relative overflow-hidden flex flex-col justify-between col-span-2 md:col-span-1">
           <div className="flex items-start justify-between">
             <div className="p-2.5 bg-red-50 text-red-600 rounded-xl">
-              <Bell className="w-5 h-5" />
+              <HugeiconsIcon icon={Notification01Icon} className="w-5 h-5" />
             </div>
             <span className="text-[10px] font-bold uppercase tracking-wider text-red-600 bg-red-50 px-2 py-0.5 rounded-full">
               Advisories
@@ -270,7 +276,7 @@ export default function WorkspaceOverview() {
           <div className="space-y-4 my-auto py-3">
             {modulePerformance.length === 0 ? (
               <div className="text-center py-8">
-                <BookOpen className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+                <HugeiconsIcon icon={Folder01Icon} className="w-8 h-8 text-gray-300 mx-auto mb-2" />
                 <p className="text-xs text-gray-400 italic">No syllabus engagement recorded yet for this barangay.</p>
               </div>
             ) : (
@@ -317,10 +323,10 @@ export default function WorkspaceOverview() {
               className="w-full flex items-center justify-between p-3 bg-gray-50 hover:bg-gray-100 rounded-xl text-xs font-semibold text-gray-700 transition border border-gray-100"
             >
               <span className="flex items-center gap-2.5">
-                <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
+                <HugeiconsIcon icon={Note01Icon} className="w-4 h-4 text-emerald-600" />
                 Export Barangay Roster
               </span>
-              <Download className="w-3.5 h-3.5 text-gray-400" />
+              <HugeiconsIcon icon={Download01Icon} className="w-3.5 h-3.5 text-gray-400" />
             </button>
 
             <button
@@ -329,15 +335,15 @@ export default function WorkspaceOverview() {
               className="w-full flex items-center justify-between p-3 bg-red-50 hover:bg-red-100/80 rounded-xl text-xs font-bold text-red-700 transition border border-red-100"
             >
               <span className="flex items-center gap-2.5">
-                <Bell className="w-4 h-4 text-red-600" />
+                <HugeiconsIcon icon={Notification01Icon} className="w-4 h-4 text-red-600" />
                 Add Announcement
               </span>
-              <ExternalLink className="w-3.5 h-3.5 text-red-400" />
+              <HugeiconsIcon icon={ArrowRight01Icon} className="w-3.5 h-3.5 text-red-400" />
             </button>
           </div>
 
           <div className="bg-emerald-50 border border-emerald-100 p-3 rounded-xl flex items-center gap-2.5">
-            <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+            <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-4 h-4 text-emerald-600 shrink-0" />
             <span className="text-[11px] font-medium text-emerald-800">DRRM Sync Connected</span>
           </div>
         </div>
@@ -353,7 +359,7 @@ export default function WorkspaceOverview() {
               <p className="text-xs text-gray-400">Residents belonging to your jurisdiction</p>
             </div>
             <div className="relative">
-              <Search className="w-4 h-4 text-gray-400 absolute left-3 top-2.5" />
+              <HugeiconsIcon icon={Search01Icon} className="w-4 h-4 text-gray-400 absolute left-3 top-2.5" />
               <input
                 type="text"
                 placeholder="Search citizen..."

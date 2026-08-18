@@ -15,8 +15,8 @@ const { getOrgSettings } = require("./settings");
 
 const parseSecrets = () => {
   if (process.env.BETTER_AUTH_SECRETS) {
-    return process.env.BETTER_AUTH_SECRETS.split(',').map(part => {
-      const [version, value] = part.split(':');
+    return process.env.BETTER_AUTH_SECRETS.split(",").map((part) => {
+      const [version, value] = part.split(":");
       return { version: parseInt(version, 10), value };
     });
   }
@@ -27,7 +27,9 @@ const auth = betterAuth({
   database: pool,
   baseURL: process.env.BETTER_AUTH_URL,
   ...(process.env.BETTER_AUTH_SECRETS ? { secrets: parseSecrets() } : {}),
-  ...(process.env.BETTER_AUTH_SECRET ? { secret: process.env.BETTER_AUTH_SECRET } : {}),
+  ...(process.env.BETTER_AUTH_SECRET
+    ? { secret: process.env.BETTER_AUTH_SECRET }
+    : {}),
   socialProviders: {
     google: {
       clientId: process.env.GOOGLE_CLIENT_ID,
@@ -39,8 +41,8 @@ const auth = betterAuth({
     updateAge: 60 * 60 * 24, // Roll the session forward if active within 24 hours
     cookieCache: {
       enabled: false, // Disabled to ensure instant session invalidation for Global Force Logout
-      maxAge: 5 * 60
-    }
+      maxAge: 5 * 60,
+    },
   },
   emailAndPassword: {
     enabled: true,
@@ -49,7 +51,12 @@ const auth = betterAuth({
     passwordResetTokenExpiresIn: 15 * 60, // 15 minutes in seconds
     sendResetPassword: async ({ user, token }) => {
       const { orgFooterText, supportEmail } = await getOrgSettings();
-      const mailOptions = getResetPasswordEmail(user, token, orgFooterText, supportEmail);
+      const mailOptions = getResetPasswordEmail(
+        user,
+        token,
+        orgFooterText,
+        supportEmail,
+      );
       await transporter.sendMail(mailOptions);
     },
   },
@@ -58,7 +65,12 @@ const auth = betterAuth({
     autoSignInAfterVerification: true,
     sendVerificationEmail: async ({ user, token }) => {
       const { orgFooterText, supportEmail } = await getOrgSettings();
-      const mailOptions = getVerificationEmail(user, token, orgFooterText, supportEmail);
+      const mailOptions = getVerificationEmail(
+        user,
+        token,
+        orgFooterText,
+        supportEmail,
+      );
       await transporter.sendMail(mailOptions);
     },
   },
@@ -100,16 +112,20 @@ const auth = betterAuth({
         mdrrmo_admin: {},
       },
     }),
-    /*twoFactor({
+    twoFactor({
       otpOptions: {
         sendOTP: async ({ user, otp }) => {
           const { orgFooterText, supportEmail } = await getOrgSettings();
-          const mailOptions = getOTPEmail(user, otp, orgFooterText, supportEmail);
+          const mailOptions = getOTPEmail(
+            user,
+            otp,
+            orgFooterText,
+            supportEmail,
+          );
           await transporter.sendMail(mailOptions);
         },
       },
     }),
-    */
   ],
   trustedOrigins:
     process.env.NODE_ENV === "production" && process.env.FRONTEND_URL

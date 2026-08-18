@@ -22,6 +22,7 @@ const express = require("express");
 const helmet = require("helmet");
 const cors = require("cors");
 const hpp = require("hpp");
+const sanitizeMiddleware = require("./middleware/sanitizeMiddleware");
 
 const { toNodeHandler } = require("better-auth/node");
 const { auth } = require("./utils/auth");
@@ -92,6 +93,7 @@ app.use(
 );
 
 app.use(hpp());
+app.use(sanitizeMiddleware);
 app.use(globalLimiter);
 
 const ipBlocklistMiddleware = require("./middleware/ipBlocklistMiddleware");
