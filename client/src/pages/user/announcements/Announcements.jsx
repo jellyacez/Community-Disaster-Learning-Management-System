@@ -1,8 +1,8 @@
 // --- START: UserAnnouncements.jsx ---
 
-import AnnouncementCard from "../../components/ui/announcements/AnnouncementCard";
-import useDocumentTitle from "../../hooks/useDocumentTitle";
-import { usePaginatedAnnouncements } from "./hooks/usePaginatedAnnouncements";
+import AnnouncementCard from "../../../components/ui/announcements/AnnouncementCard";
+import useDocumentTitle from "../../../hooks/useDocumentTitle";
+import { usePaginatedAnnouncements } from "../hooks/usePaginatedAnnouncements";
 import { HugeiconsIcon } from '@hugeicons/react';
 import { ArrowLeft01Icon, ArrowRight01Icon } from '@hugeicons/core-free-icons';
 

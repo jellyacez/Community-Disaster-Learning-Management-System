@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { useScrollSpy } from "../../../../hooks/useScrollSpy";
+import { useScrollSpy } from "../../../../../hooks/useScrollSpy";
 
 const NAV_ITEMS = [
   { id: "module-details", label: "Module Details" },

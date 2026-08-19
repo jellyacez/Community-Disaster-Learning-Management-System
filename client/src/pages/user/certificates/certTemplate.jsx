@@ -1,6 +1,6 @@
 import { useOutletContext, useSearchParams, Link } from "react-router-dom"; 
 import { useQuery } from "@tanstack/react-query";
-import apiClient from "../../lib/apiClient";
+import apiClient from "../../../lib/apiClient";
 import { PDFViewer, PDFDownloadLink, Document, Page, Text, View, StyleSheet, Image } from "@react-pdf/renderer";
 
 const styles = StyleSheet.create({

@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import apiClient from "../../lib/apiClient";
-import useDocumentTitle from "../../hooks/useDocumentTitle";
+import apiClient from "../../../lib/apiClient";
+import useDocumentTitle from "../../../hooks/useDocumentTitle";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   Certificate01Icon,
@@ -10,7 +10,7 @@ import {
   InformationCircleIcon,
   Cancel01Icon,
 } from "@hugeicons/core-free-icons";
-import CertificateCard from "../../components/ui/certificates/CertificateCard";
+import CertificateCard from "../../../components/ui/certificates/CertificateCard";
 
 export default function UserCertificates() {
   useDocumentTitle("Certificates | Bacolor LMS");

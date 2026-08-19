@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import ModuleBuilderWizard from "./ModuleBuilderWizard";
+import ModuleBuilderWizard from "./builders/ModuleBuilderWizard";
 import DashboardHeader from "./components/DashboardHeader";
 import ModuleGrid from "./components/ModuleGrid";
 import apiClient from "../../../../lib/apiClient";

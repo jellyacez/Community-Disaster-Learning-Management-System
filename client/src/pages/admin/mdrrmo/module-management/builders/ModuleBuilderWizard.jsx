@@ -4,8 +4,8 @@ import ModuleHeaderForm from "./ModuleHeaderForm";
 import LevelSelector from "./LevelBuilder";
 import SequenceCanvas from "./SequenceCanvas";
 import StepBuilder from "./StepBuilder";
-import ModulePlayerPreviewModal from "../../../../components/ui/modules/viewer/ModulePlayerPreviewModal";
-import ConfirmationModal from "../../../../components/ui/modals/ConfirmationModal";
+import ModulePlayerPreviewModal from "../../../../../components/ui/modules/viewer/ModulePlayerPreviewModal";
+import ConfirmationModal from "../../../../../components/ui/modals/ConfirmationModal";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   Cancel01Icon,

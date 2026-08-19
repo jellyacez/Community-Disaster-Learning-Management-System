@@ -25,7 +25,10 @@ export default function ResidentStatsCards({ stats, isLoading }) {
         {isLoading ? (
           <div className="h-9 bg-amber-200 rounded w-16 mt-2 animate-pulse"></div>
         ) : (
-          <p className="text-3xl font-black text-amber-600 mt-2 font-mono">{averageScore}%</p>
+          <p className="text-3xl font-black text-amber-600 mt-2 font-mono flex items-baseline">
+            <span>{averageScore}</span>
+            <span className="text-lg font-bold ml-0.5 opacity-75">%</span>
+          </p>
         )}
       </div>
       <div className="bg-white p-5 rounded-2xl border border-blue-100 shadow-sm bg-blue-50/30">
@@ -33,7 +36,10 @@ export default function ResidentStatsCards({ stats, isLoading }) {
         {isLoading ? (
           <div className="h-9 bg-blue-200 rounded w-16 mt-2 animate-pulse"></div>
         ) : (
-          <p className="text-3xl font-black text-blue-600 mt-2 font-mono">{coverageRate}%</p>
+          <p className="text-3xl font-black text-blue-600 mt-2 font-mono flex items-baseline">
+            <span>{coverageRate}</span>
+            <span className="text-lg font-bold ml-0.5 opacity-75">%</span>
+          </p>
         )}
       </div>
     </div>

@@ -1,15 +1,15 @@
 // --- START: UserSettings.jsx ---
 import { useOutletContext } from "react-router-dom";
-import useDocumentTitle from "../../hooks/useDocumentTitle";
-import ProfilePreferences from "../../components/settings/ProfilePreferences";
-import SecuritySettings from "../../components/settings/SecuritySettings";
-import ActiveDevices from "../../components/settings/ActiveDevices";
-import TwoFactorSettings from "../../components/settings/TwoFactorSettings";
-import NotificationPreferences from "../../components/settings/NotificationPreferences";
-import LocalizationSettings from "../../components/settings/LocalizationSettings";
-import DangerZone from "../../components/settings/DangerZone";
-import HelpSupport from "../../components/settings/HelpSupport";
-import LoginHistory from "../../components/settings/LoginHistory";
+import useDocumentTitle from "../../../hooks/useDocumentTitle";
+import ProfilePreferences from "../../../components/settings/ProfilePreferences";
+import SecuritySettings from "../../../components/settings/SecuritySettings";
+import ActiveDevices from "../../../components/settings/ActiveDevices";
+import TwoFactorSettings from "../../../components/settings/TwoFactorSettings";
+import NotificationPreferences from "../../../components/settings/NotificationPreferences";
+import LocalizationSettings from "../../../components/settings/LocalizationSettings";
+import DangerZone from "../../../components/settings/DangerZone";
+import HelpSupport from "../../../components/settings/HelpSupport";
+import LoginHistory from "../../../components/settings/LoginHistory";
 
 export default function UserSettings() {
   useDocumentTitle("Settings | Bacolor LMS");

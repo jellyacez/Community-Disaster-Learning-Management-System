@@ -8,12 +8,25 @@ export default function SectorKPIs({ kpiData, trends, isLoading }) {
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
       <StatCard
         icon={StarAward01Icon}
-        label="Top Completion Rate"
-        value={kpiData.mostActiveRate}
+        label="Avg Completion Rate"
+        value={kpiData.avgCompletionRate ?? 0}
         suffix="%"
-        sub={`${kpiData.mostActiveName} — Highest performing barangay`}
+        sub="Across active barangays"
         color="green"
         isNumeric={true}
+        trend={
+          kpiData.mostActiveRate > 0
+            ? {
+                direction: "up",
+                color: "green",
+                text: `${kpiData.mostActiveName} leading (${kpiData.mostActiveRate}%)`,
+              }
+            : {
+                direction: "flat",
+                color: "gray",
+                text: "No completions yet",
+              }
+        }
         loading={isLoading}
       />
       <StatCard

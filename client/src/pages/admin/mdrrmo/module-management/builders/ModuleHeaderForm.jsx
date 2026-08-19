@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import toast from "react-hot-toast";
-import apiClient from "../../../../lib/apiClient";
-import RichTextEditor from "../../../../components/ui/RichTextEditor";
+import apiClient from "../../../../../lib/apiClient";
+import RichTextEditor from "../../../../../components/ui/RichTextEditor";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { 
   Link01Icon, 

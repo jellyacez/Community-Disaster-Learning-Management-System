@@ -1,6 +1,6 @@
 import { useState } from "react";
-import ConfirmationModal from "../../../../components/ui/modals/ConfirmationModal";
-import SequenceCard from "./components/SequenceCard";
+import ConfirmationModal from "../../../../../components/ui/modals/ConfirmationModal";
+import SequenceCard from "../components/SequenceCard";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { 
   Flag01Icon,

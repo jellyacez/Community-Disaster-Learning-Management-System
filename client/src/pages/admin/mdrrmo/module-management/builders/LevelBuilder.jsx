@@ -1,5 +1,5 @@
 import { useState } from "react";
-import ConfirmationModal from "../../../../components/ui/modals/ConfirmationModal";
+import ConfirmationModal from "../../../../../components/ui/modals/ConfirmationModal";
 
 export default function LevelSelector({
   stagedLevels,

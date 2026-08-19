@@ -1,11 +1,11 @@
 import { useState, useMemo } from "react";
-import ModuleCard from "../../components/ui/modules/ModuleCard.jsx";
-import ModuleSkeleton from "../../components/ui/modules/ModuleSkeleton.jsx";
-import useDocumentTitle from "../../hooks/useDocumentTitle";
-import SearchBar from "../../components/ui/inputs/SearchBar.jsx";
+import ModuleCard from "../../../components/ui/modules/ModuleCard.jsx";
+import ModuleSkeleton from "../../../components/ui/modules/ModuleSkeleton.jsx";
+import useDocumentTitle from "../../../hooks/useDocumentTitle";
+import SearchBar from "../../../components/ui/inputs/SearchBar.jsx";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import apiClient from "../../lib/apiClient";
-import continuousLearningImg from "../../assets/continuous-learning.svg";
+import apiClient from "../../../lib/apiClient";
+import continuousLearningImg from "../../../assets/continuous-learning.svg";
 
 export default function UserModuleCatalog() {
   const queryClient = useQueryClient();

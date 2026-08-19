@@ -2,19 +2,19 @@
 import { useState, useEffect, useCallback } from "react";
 import { useOutletContext, useLocation, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import apiClient from "../../lib/apiClient";
-import { authClient } from "../../lib/auth-client";
+import apiClient from "../../../lib/apiClient";
+import { authClient } from "../../../lib/auth-client";
 
-import WelcomeModal from "../../components/ui/modals/WelcomeModal.jsx";
-import WelcomeBanner from "../../components/ui/dashboard/WelcomeBanner.jsx";
-import DashboardStats from "../../components/ui/dashboard/DashboardStats.jsx";
-import DashboardEnrolledList from "../../components/ui/dashboard/DashboardEnrolledList.jsx";
-import DashboardAnnouncementsList from "../../components/ui/dashboard/DashboardAnnouncementsList.jsx";
-import DashboardEmergencyContacts from "../../components/ui/dashboard/DashboardEmergencyContacts.jsx";
+import WelcomeModal from "../../../components/ui/modals/WelcomeModal.jsx";
+import WelcomeBanner from "../../../components/ui/dashboard/WelcomeBanner.jsx";
+import DashboardStats from "../../../components/ui/dashboard/DashboardStats.jsx";
+import DashboardEnrolledList from "../../../components/ui/dashboard/DashboardEnrolledList.jsx";
+import DashboardAnnouncementsList from "../../../components/ui/dashboard/DashboardAnnouncementsList.jsx";
+import DashboardEmergencyContacts from "../../../components/ui/dashboard/DashboardEmergencyContacts.jsx";
 
-import useDocumentTitle from "../../hooks/useDocumentTitle";
+import useDocumentTitle from "../../../hooks/useDocumentTitle";
 import toast from "react-hot-toast";
-import OnboardingModal from "../../components/ui/modals/OnboardingModal.jsx";
+import OnboardingModal from "../../../components/ui/modals/OnboardingModal.jsx";
 
 export default function UserDashboard() {
   useDocumentTitle("Dashboard | Bacolor LMS");

@@ -1,11 +1,11 @@
 import { useParams, useNavigate } from "react-router-dom";
-import useDocumentTitle from "../../hooks/useDocumentTitle";
+import useDocumentTitle from "../../../hooks/useDocumentTitle";
 
-import { useModuleViewer } from "../../hooks/useModuleViewer";
-import { MenuIcon } from "../../components/ui/modules/viewer/ModuleIcons";
-import ModuleViewerSidebar from "../../components/ui/modules/viewer/ModuleViewerSidebar";
-import ModuleViewerContent from "../../components/ui/modules/viewer/ModuleViewerContent";
-import Spinner from "../../components/ui/Spinner";
+import { useModuleViewer } from "../../../hooks/useModuleViewer";
+import { MenuIcon } from "../../../components/ui/modules/viewer/ModuleIcons";
+import ModuleViewerSidebar from "../../../components/ui/modules/viewer/ModuleViewerSidebar";
+import ModuleViewerContent from "../../../components/ui/modules/viewer/ModuleViewerContent";
+import Spinner from "../../../components/ui/Spinner";
 
 export default function ModuleViewer() {
   const { moduleId } = useParams();

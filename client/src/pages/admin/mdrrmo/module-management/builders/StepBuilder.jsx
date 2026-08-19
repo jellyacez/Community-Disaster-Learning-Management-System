@@ -1,5 +1,5 @@
 import AssessmentEditor from "./AssessmentEditor";
-import LearningContentEditor from "./step-components/LearningContentEditor";
+import LearningContentEditor from "../step-components/LearningContentEditor";
 import toast from "react-hot-toast";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { 

@@ -1,12 +1,12 @@
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import apiClient from "../../lib/apiClient";
+import apiClient from "../../../lib/apiClient";
 import { useState } from "react";
 import DOMPurify from "dompurify";
-import Spinner from "../../components/ui/Spinner";
-import { authClient } from "../../lib/auth-client";
-import { ADMIN_ROLES } from "../../constants/roles";
-import PublishedModulePreviewModal from "../../components/ui/modules/viewer/PublishedModulePreviewModal";
+import Spinner from "../../../components/ui/Spinner";
+import { authClient } from "../../../lib/auth-client";
+import { ADMIN_ROLES } from "../../../constants/roles";
+import PublishedModulePreviewModal from "../../../components/ui/modules/viewer/PublishedModulePreviewModal";
 
 const fetchModuleDetails = async (moduleId) => {
   const res = await apiClient.get(`modules/${moduleId}/details`);

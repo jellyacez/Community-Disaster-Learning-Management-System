@@ -2,14 +2,14 @@
 import { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import apiClient from "../../lib/apiClient";
-import educationImg from "../../assets/education.svg";
-import ModuleCard from "../../components/ui/modules/ModuleCard.jsx";
-import ModuleSkeleton from "../../components/ui/modules/ModuleSkeleton.jsx";
-import useDocumentTitle from "../../hooks/useDocumentTitle";
+import apiClient from "../../../lib/apiClient";
+import educationImg from "../../../assets/education.svg";
+import ModuleCard from "../../../components/ui/modules/ModuleCard.jsx";
+import ModuleSkeleton from "../../../components/ui/modules/ModuleSkeleton.jsx";
+import useDocumentTitle from "../../../hooks/useDocumentTitle";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Search01Icon, CheckmarkCircle02Icon, Activity01Icon } from "@hugeicons/core-free-icons";
-import SearchBar from "../../components/ui/inputs/SearchBar.jsx";
+import SearchBar from "../../../components/ui/inputs/SearchBar.jsx";
 
 export default function UserEnrolledModules() {
   useDocumentTitle("Enrolled Modules | Bacolor LMS");

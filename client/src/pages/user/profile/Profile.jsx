@@ -2,13 +2,13 @@
 import { useMemo } from "react";
 import { useOutletContext } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import apiClient from "../../lib/apiClient";
-import useDocumentTitle from "../../hooks/useDocumentTitle";
-import ProfileAvatar from "../../components/ui/profile/ProfileAvatar";
-import AccountDetails from "../../components/ui/profile/AccountDetails";
-import StatsOverview from "../../components/ui/profile/StatsOverview";
-import BadgesSection from "../../components/ui/profile/BadgesSection";
-import ActivityTimeline from "../../components/ui/profile/ActivityTimeline";
+import apiClient from "../../../lib/apiClient";
+import useDocumentTitle from "../../../hooks/useDocumentTitle";
+import ProfileAvatar from "../../../components/ui/profile/ProfileAvatar";
+import AccountDetails from "../../../components/ui/profile/AccountDetails";
+import StatsOverview from "../../../components/ui/profile/StatsOverview";
+import BadgesSection from "../../../components/ui/profile/BadgesSection";
+import ActivityTimeline from "../../../components/ui/profile/ActivityTimeline";
 
 export default function UserProfile() {
   useDocumentTitle("User Profile | Bacolor LMS");

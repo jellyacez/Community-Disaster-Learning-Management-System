@@ -44,21 +44,21 @@ const AdminFeedbackManager = lazy(
   () => import("./pages/admin/feedback/AdminFeedbackManager")
 );
 const UserFeedback = lazy(() => import("./pages/user/feedback/UserFeedback"));
-const UserDashboard = lazy(() => import("./pages/user/UserDashboard"));
-const UserCertificates = lazy(() => import("./pages/user/UserCertificates"));
-const UserAnnouncements = lazy(() => import("./pages/user/UserAnnouncements"));
-const UserModuleCatalog = lazy(() => import("./pages/user/UserModuleCatalog"));
+const UserDashboard = lazy(() => import("./pages/user/dashboard/Dashboard"));
+const UserCertificates = lazy(() => import("./pages/user/certificates/Certificates"));
+const UserAnnouncements = lazy(() => import("./pages/user/announcements/Announcements"));
+const UserModuleCatalog = lazy(() => import("./pages/user/catalog/ModuleCatalog"));
 const UserEnrolledModules = lazy(
-  () => import("./pages/user/UserEnrolledModules"),
+  () => import("./pages/user/enrolled-modules/EnrolledModules"),
 );
-const ModuleViewer = lazy(() => import("./pages/user/ModuleViewer"));
-const UserProfile = lazy(() => import("./pages/user/UserProfile"));
-const UserSettings = lazy(() => import("./pages/user/UserSettings"));
+const ModuleViewer = lazy(() => import("./pages/user/module-viewer/ModuleViewer"));
+const UserProfile = lazy(() => import("./pages/user/profile/Profile"));
+const UserSettings = lazy(() => import("./pages/user/settings/Settings"));
 const NotFoundPage = lazy(() => import("./pages/public/NotFoundPage"));
 const MaintenancePage = lazy(() => import("./pages/public/MaintenancePage"));
 
 const ModuleDetailsPage = lazy(
-  () => import("./pages/user/ModuleDetailsPage"),
+  () => import("./pages/user/module-viewer/ModuleDetailsPage"),
 );
 const BarangayAdminDashboard = lazy(
   () => import("./pages/admin/barangay/BarangayAdminDashboard"),
@@ -97,7 +97,7 @@ const BarangaySystemLogs = lazy(
 
 
 const CertificatePDF = lazy(
-  () => import("./pages/user/certTemplate"),
+  () => import("./pages/user/certificates/certTemplate"),
 );
 const ProtectedRoute = lazy(() => import("./components/auth/ProtectedRoute"));
 const UserLayout = lazy(() => import("./components/layouts/UserLayout"));

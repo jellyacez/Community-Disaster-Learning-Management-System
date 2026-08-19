@@ -57,8 +57,15 @@ export default function StatCard({ icon, label, value, suffix, sub, color = "gra
         </div>
       ) : (
         <div className="mt-auto flex flex-col gap-2">
-          <p className={`text-4xl lg:text-[40px] font-extrabold tracking-tight leading-none ${isZero ? "text-gray-300" : "text-gray-900"} ${isNumeric ? "tabular-nums" : ""}`}>
-            {isNumeric ? Number(value ?? 0).toLocaleString() : value}{suffix && suffix}
+          <p className={`text-4xl lg:text-[40px] font-extrabold tracking-tight leading-none flex items-baseline ${isZero ? "text-gray-300" : "text-gray-900"}`}>
+            <span className={isNumeric ? "tabular-nums" : ""}>
+              {isNumeric ? Number(value ?? 0).toLocaleString() : value}
+            </span>
+            {suffix && (
+              <span className={`text-xl lg:text-2xl font-bold ml-1 ${isZero ? "text-gray-300" : "text-gray-500"}`}>
+                {suffix}
+              </span>
+            )}
           </p>
           <div>
             <p className="text-[18px] font-semibold text-gray-900 leading-snug">{label}</p>
