@@ -8,6 +8,11 @@ export default function FeedbackHistory({ userId, activeTab, setActiveTab }) {
     submissions,
     isLoading,
     filteredSubmissions,
+    paginatedSubmissions,
+    currentPage,
+    setCurrentPage,
+    PAGE_SIZE,
+    totalPages,
     tabs,
     searchQuery,
     setSearchQuery,
@@ -61,6 +66,13 @@ export default function FeedbackHistory({ userId, activeTab, setActiveTab }) {
         />
       </div>
 
+      {/* Result count */}
+      {!isLoading && filteredSubmissions.length > 0 && (
+        <p className="text-xs text-gray-400 font-semibold mb-3">
+          Showing {filteredSubmissions.length === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1}–{Math.min(currentPage * PAGE_SIZE, filteredSubmissions.length)} of {filteredSubmissions.length} message{filteredSubmissions.length !== 1 ? "s" : ""}
+        </p>
+      )}
+
       {isLoading ? (
         <div className="py-12 text-center text-gray-400 font-bold">
           Loading communication history...
@@ -95,7 +107,7 @@ export default function FeedbackHistory({ userId, activeTab, setActiveTab }) {
         </div>
       ) : (
         <div className="space-y-3">
-          {filteredSubmissions.map((item) => (
+          {paginatedSubmissions.map((item) => (
             <FeedbackHistoryCard
               key={item.feedback_id || item.id}
               item={item}
@@ -107,6 +119,31 @@ export default function FeedbackHistory({ userId, activeTab, setActiveTab }) {
               userReplyMutation={userReplyMutation}
             />
           ))}
+        </div>
+      )}
+
+      {/* Pagination */}
+      {!isLoading && totalPages > 1 && (
+        <div className="flex items-center justify-between mt-5 pt-4 border-t border-gray-100">
+          <button
+            type="button"
+            onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+            disabled={currentPage === 1}
+            className="px-4 py-2 rounded-xl text-sm font-bold bg-gray-100 text-gray-700 hover:bg-gray-200 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+          >
+            ← Previous
+          </button>
+          <span className="text-sm font-semibold text-gray-500">
+            Page {currentPage} of {totalPages}
+          </span>
+          <button
+            type="button"
+            onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+            disabled={currentPage === totalPages}
+            className="px-4 py-2 rounded-xl text-sm font-bold bg-gray-100 text-gray-700 hover:bg-gray-200 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+          >
+            Next →
+          </button>
         </div>
       )}
     </div>

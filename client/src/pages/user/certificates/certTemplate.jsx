@@ -60,7 +60,20 @@ export default function CertificateTemplate() {
   }
 
   const certId = certData.cert_rec;
-  const trainingHours = certData.training_hours || certData.hours || certData.duration_hours || 40;
+  const formattedHours = (() => {
+    if (certData.duration) {
+      const dur = String(certData.duration).trim();
+      if (dur.toLowerCase().includes("hour") || dur.toLowerCase().includes("min")) {
+        return dur;
+      }
+      return `${dur} Hours`;
+    }
+    if (certData.training_hours || certData.hours || certData.duration_hours) {
+      return `${certData.training_hours || certData.hours || certData.duration_hours} Hours`;
+    }
+    return "1.5 Hours";
+  })();
+
   const verificationUrl = `${window.location.origin}/verify?token=${token}`;
   const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(verificationUrl)}`;
 
@@ -94,7 +107,7 @@ export default function CertificateTemplate() {
               <Text style={styles.name}>{residentName}</Text>
             </View>
             <Text style={styles.nameSubLine}>Authorized Resident</Text>
-            <Text style={styles.hoursText}>Total Training Credited: {trainingHours} Hours</Text>
+            <Text style={styles.hoursText}>Total Training Credited: {formattedHours}</Text>
             <Text style={styles.description}>
               has successfully satisfied all academic and practical requirements of the Community Disaster 
               Learning Management System by completing the <Text style={{ fontWeight: "bold" }}>{certData.module_title}</Text> training module.

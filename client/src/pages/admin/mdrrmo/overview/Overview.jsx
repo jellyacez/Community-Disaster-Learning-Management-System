@@ -153,6 +153,7 @@ export default function Overview() {
             sub="Total resident accounts"
             color="blue"
             loading={metricsLoading}
+            href="/admin/mdrrmo/users"
           />
           <StatCard
             icon={Certificate01Icon}
@@ -161,6 +162,7 @@ export default function Overview() {
             sub="Total verified certificates"
             color="green"
             loading={metricsLoading}
+            href="/admin/mdrrmo/sector-overview"
           />
           <StatCard
             icon={BookOpen01Icon}

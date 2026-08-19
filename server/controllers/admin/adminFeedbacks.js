@@ -44,17 +44,14 @@ exports.getAdminFeedbacks = async (req, res) => {
     const queryParams = [];
     const conditions = [];
 
-    // 1. MDRRMO / System Admin Scoping
+    // 1. MDRRMO / System Admin Scoping: strictly only tickets sent to 'mdrrmo'
     if (isMdrrmoOrSystem) {
       if (req.query.barangay_id && req.query.barangay_id !== "all") {
         queryParams.push(parseInt(req.query.barangay_id, 10));
         conditions.push(`u.barangay_id = $${queryParams.length}`);
       }
 
-      if (req.query.office && req.query.office !== "all") {
-        queryParams.push(req.query.office);
-        conditions.push(`f.recipient = $${queryParams.length}`);
-      }
+      conditions.push(`f.recipient = 'mdrrmo'`);
     }
     // 2. Barangay Admin Scoping
     else if (adminRole === "barangay_admin") {
@@ -65,7 +62,7 @@ exports.getAdminFeedbacks = async (req, res) => {
         });
       }
 
-      queryParams.push(adminBarangayId);
+      queryParams.push(parseInt(adminBarangayId, 10));
       conditions.push(`u.barangay_id = $${queryParams.length}`);
       conditions.push(`f.recipient = 'barangay'`);
     } else {

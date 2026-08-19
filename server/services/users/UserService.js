@@ -146,7 +146,14 @@ class UserService {
 
   async getCertificateData(userId, token) {
     const query = `
-      SELECT c.cert_rec, c.verification_token, c.completion_date, c.expires_at, m.modname as module_title, m.description as module_description
+      SELECT 
+        c.cert_rec, 
+        c.verification_token, 
+        c.completion_date, 
+        c.expires_at, 
+        m.modname as module_title, 
+        m.description as module_description,
+        m.duration
       FROM certificates c
       JOIN module_data m ON c.module_id = m.mod_id
       WHERE c.user_id = $1 AND c.verification_token = $2 AND c.status != 'revoked'

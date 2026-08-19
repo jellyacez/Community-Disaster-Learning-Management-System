@@ -9,6 +9,13 @@ export function useFeedbackHistory(userId, activeTab) {
   const [searchQuery, setSearchQuery] = useState("");
   const [replyInputs, setReplyInputs] = useState({});
   const [expandedIds, setExpandedIds] = useState(new Set());
+  const [currentPage, setCurrentPage] = useState(1);
+  const PAGE_SIZE = 10;
+
+  const handleSearchChange = (val) => {
+    setSearchQuery(val);
+    setCurrentPage(1);
+  };
 
   const toggleExpand = (id) => {
     setExpandedIds((prev) => {
@@ -71,6 +78,13 @@ export function useFeedbackHistory(userId, activeTab) {
     return result;
   }, [activeTab, submissions, searchQuery]);
 
+  const totalPages = Math.max(1, Math.ceil(filteredSubmissions.length / PAGE_SIZE));
+
+  const paginatedSubmissions = useMemo(() => {
+    const start = (currentPage - 1) * PAGE_SIZE;
+    return filteredSubmissions.slice(start, start + PAGE_SIZE);
+  }, [filteredSubmissions, currentPage, PAGE_SIZE]);
+
   const tabs = useMemo(() => [
     { key: "all", label: "All", count: submissions.length },
     {
@@ -94,9 +108,14 @@ export function useFeedbackHistory(userId, activeTab) {
     submissions,
     isLoading,
     filteredSubmissions,
+    paginatedSubmissions,
+    currentPage,
+    setCurrentPage,
+    PAGE_SIZE,
+    totalPages,
     tabs,
     searchQuery,
-    setSearchQuery,
+    setSearchQuery: handleSearchChange,
     expandedIds,
     toggleExpand,
     replyInputs,

@@ -71,7 +71,12 @@ export default function ActiveModulesTable({ modules = [], selectedCategory, sta
                   {paginatedModules.map(mod => (
                     <tr key={mod.id} className="hover:bg-gray-50/50 transition-colors">
                       <td className="py-3 px-6">
-                        <p className="text-[14px] font-semibold text-gray-900 truncate max-w-[200px]">{mod.title}</p>
+                        <Link 
+                          to={`/admin/mdrrmo/modules/${mod.id}/details`}
+                          className="text-[14px] font-semibold text-gray-900 hover:text-red-600 truncate max-w-[200px] block transition-colors"
+                        >
+                          {mod.title}
+                        </Link>
                         <p className="text-[12px] text-gray-500">{mod.step_count} Steps</p>
                       </td>
                       <td className="py-3 px-6">
@@ -83,14 +88,14 @@ export default function ActiveModulesTable({ modules = [], selectedCategory, sta
                       <td className="py-3 px-6 text-right">
                         {isHeadAdmin && mod.status === 'pending_review' ? (
                           <Link 
-                            to={`/admin/mdrrmo/modules/${mod.id}`}
+                            to="/admin/mdrrmo/approvals"
                             className="inline-block px-4 py-1.5 bg-red-600 text-white text-[12px] font-bold tracking-wide uppercase rounded hover:bg-red-700 transition-colors"
                           >
                             Review
                           </Link>
                         ) : (
                           <Link 
-                            to={`/admin/mdrrmo/modules/${mod.id}`}
+                            to={`/admin/mdrrmo/modules/${mod.id}/details`}
                             className="text-[13px] font-semibold text-red-600 hover:text-red-700 hover:underline"
                           >
                             Manage
