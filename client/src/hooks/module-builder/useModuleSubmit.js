@@ -152,7 +152,7 @@ export function useModuleSubmit({
 
       toast.success("Syllabus configuration successfully published to the production database.", { id: loadingToastId });
       setEditingModuleId(null);
-      setModuleForm({ title: "", description: "", level: "Level 1", category: "General Safety / Protocols", duration: "15 mins", image_url: "" });
+      setModuleForm({ title: "", description: "", level: "Level 1", category: "General", duration: "15 mins", image_url: "" });
       setStagedFlows([]);
       setStagedLevels([{ levelOrder: 1, levelTitle: "", levelDescription: "", passing_threshold: 80, is_locked_by_default: false }]);
       setActiveLevelOrder(1);

@@ -39,7 +39,7 @@ export default function DashboardEnrolledList({ displayData, loading, navigate, 
                     You have no modules currently in progress. Head over to the catalog to start a new one!
                   </p>
                   <button
-                    onClick={() => navigate("/user/catalog")}
+                    onClick={() => navigate("/user/modules")}
                     className="rounded-xl bg-red-600 px-6 py-3 text-sm font-bold text-white hover:bg-red-700 transition"
                   >
                     Explore Catalog

@@ -1,17 +1,12 @@
-// src/lib/syncManager.js
 import { localDb } from '../localDb';
-import { authClient } from '../auth-client';
 import apiClient from '../apiClient';
 
-
 export const getAllPendingWrites = async () => {
-
   return await localDb.sync_queue
     .where('status')
     .equals('pending')
     .toArray();
 };
-
 
 export const dequeueWrite = async (syncId) => {
   return await localDb.sync_queue.delete(syncId);
@@ -32,18 +27,12 @@ export const processOfflineQueue = async () => {
   // 2. Loop through and execute each task based on its action_type
   for (const task of pendingTasks) {
     try {
-
       if (task.action_type === 'MARK_STEP_COMPLETE') {
-        await authClient.post(`/modules/${task.payload.mod_id}/steps/${task.payload.step_id}/complete`, { answers: null });
+        await apiClient.post(`/modules/${task.payload.mod_id}/steps/${task.payload.step_id}/complete`, { answers: null });
       }
 
       else if (task.action_type === 'SUBMIT_QUIZ') {
-        await authClient.post(`/modules/${task.payload.mod_id}/steps/${task.payload.step_id}/complete`, { answers: task.payload.answer });
-      }
-
-      else if (task.action_type === 'UPDATE_PROGRESS') {
-        // Example: Sending general percentage updates
-        await authClient.post('/api/module/progress/', task.payload);
+        await apiClient.post(`/modules/${task.payload.mod_id}/steps/${task.payload.step_id}/complete`, { answers: task.payload.answer });
       }
 
       else if (task.action_type === 'SUBMIT_FEEDBACK') {
