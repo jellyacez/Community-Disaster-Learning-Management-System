@@ -9,6 +9,7 @@ import StatusBadge from "../../../../components/ui/StatusBadge";
 import { BARANGAY_LIST } from "../../../../constants/barangays";
 import apiClient from "../../../../lib/apiClient";
 import ConfirmationModal from "../../../../components/ui/modals/ConfirmationModal";
+import useDebounce from "../../../../hooks/useDebounce";
 
 const fetchResidents = async () => {
   const res = await apiClient.get("/admin/residents");
@@ -20,8 +21,6 @@ const fetchResidents = async () => {
 };
 
 export default function ResidentRegistry() {
-  
-
   const [openDropdownId, setOpenDropdownId] = useState(null);
   const dropdownRef = useRef(null);
 
@@ -38,6 +37,7 @@ export default function ResidentRegistry() {
   const queryClient = useQueryClient();
   const [selectedSector, setSelectedSector] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
+  const debouncedSearchQuery = useDebounce(searchQuery, 300);
 
   const [modalConfig, setModalConfig] = useState({ isOpen: false, userId: null, action: null });
 
@@ -63,14 +63,17 @@ export default function ResidentRegistry() {
 
   const filteredResidents = useMemo(() => {
     const list = Array.isArray(residents) ? residents : [];
+    const query = debouncedSearchQuery.trim().toLowerCase();
     return list.filter((r) => {
       const matchesSector = selectedSector === "All" || r.barangay === selectedSector;
       const matchesSearch =
-        r.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        r.status?.toLowerCase().includes(searchQuery.toLowerCase());
+        !query ||
+        r.name?.toLowerCase().includes(query) ||
+        r.email?.toLowerCase().includes(query) ||
+        r.status?.toLowerCase().includes(query);
       return matchesSector && matchesSearch;
     });
-  }, [residents, selectedSector, searchQuery]);
+  }, [residents, selectedSector, debouncedSearchQuery]);
 
   const confirmAction = async () => {
     if (modalConfig.userId && modalConfig.action) {
@@ -150,7 +153,7 @@ export default function ResidentRegistry() {
         {/* Registry Table */}
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
-            <thead className="bg-gray-50" className="bg-gray-50" className="bg-gray-50">
+            <thead className="bg-gray-50">
               <tr className="text-xs text-gray-500 border-b border-gray-200">
                 <th className="py-3 px-6 font-semibold uppercase tracking-wider">Resident</th>
                 <th className="py-3 px-6 font-semibold uppercase tracking-wider">Barangay</th>
@@ -212,7 +215,7 @@ export default function ResidentRegistry() {
                           </div>
                           <button 
                             onClick={() => {
-                              setModalConfig((r.id || r._id), "archive");
+                              setModalConfig({ isOpen: true, userId: (r.id || r._id), action: "archive" });
                               setOpenDropdownId(null);
                             }}
                             className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-600 hover:bg-gray-50 transition-colors"
@@ -222,7 +225,7 @@ export default function ResidentRegistry() {
                           </button>
                           <button 
                             onClick={() => {
-                              setModalConfig((r.id || r._id), "ban");
+                              setModalConfig({ isOpen: true, userId: (r.id || r._id), action: "ban" });
                               setOpenDropdownId(null);
                             }}
                             className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
