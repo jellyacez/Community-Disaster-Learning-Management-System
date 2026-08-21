@@ -1,7 +1,25 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { UserGroupIcon, Certificate01Icon, Activity01Icon, Notification01Icon, CheckmarkCircle01Icon, Alert01Icon, UserAdd01Icon, Search01Icon, ArrowRight01Icon, Shield01Icon, RefreshIcon, Note01Icon, Download01Icon, Folder01Icon } from "@hugeicons/core-free-icons";
+import { 
+  UserGroupIcon, 
+  Certificate01Icon, 
+  Activity01Icon, 
+  Notification01Icon, 
+  CheckmarkCircle01Icon, 
+  Alert01Icon, 
+  UserAdd01Icon, 
+  Search01Icon, 
+  ArrowRight01Icon, 
+  Shield01Icon, 
+  RefreshIcon, 
+  Note01Icon, 
+  Download01Icon, 
+  Download02Icon,
+  Time02Icon,
+  Folder01Icon 
+} from "@hugeicons/core-free-icons";
+import toast from "react-hot-toast";
 import StatCard from "../../system/overview/components/StatCard";
 import WorkspaceOverviewSkeleton from "./WorkspaceOverviewSkeleton";
 import ResidentInspectorPanel from "../../shared/ResidentInspectorPanel";
@@ -51,6 +69,9 @@ export default function WorkspaceOverview() {
   
   // Defined here to prevent ReferenceError
   const barangay = data?.analytics?.barangay || { id: null, name: "Local Jurisdiction" };
+  const formattedBarangayName = barangay.name?.toLowerCase().startsWith("barangay")
+    ? barangay.name
+    : `Barangay ${barangay.name || "Local"}`;
 
   const totalResidents = parseInt(kpis.total_residents, 10) || residents.length;
   const certifiedCount = parseInt(kpis.certified_residents, 10) || 0;
@@ -69,58 +90,81 @@ export default function WorkspaceOverview() {
     alert(`Auditing Certification Database Ledger:\nRecord for ${residentName} is verified and authentic.`);
   };
 
+  const handleExportReport = () => {
+    if (!residents.length) {
+      toast.error("No resident records available to export.");
+      return;
+    }
+    const headers = ["ID", "Name", "Email", "Jurisdiction", "Quiz Score", "Status"];
+    const rows = residents.map((r) => [
+      r.id || "",
+      `"${(r.name || "").replace(/"/g, '""')}"`,
+      `"${(r.email || "").replace(/"/g, '""')}"`,
+      `"${formattedBarangayName}"`,
+      `${r.quizScore || 0}%`,
+      `"${r.status || "Pending"}"`,
+    ]);
+    const csvContent = "data:text/csv;charset=utf-8," + [headers.join(","), ...rows.map(e => e.join(","))].join("\n");
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `${formattedBarangayName.replace(/\s+/g, "_")}_DRRM_Report_${new Date().toISOString().split("T")[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    toast.success(`Exported report for ${formattedBarangayName}!`);
+  };
+
   return (
-    <div className="space-y-6 font-sans animate-in fade-in duration-150">
+    <div className="space-y-6 font-sans animate-in fade-in duration-150 pb-10">
       
-      <div className="mb-4">
-        <nav className="flex text-sm text-gray-500 mb-2" aria-label="Breadcrumb">
-          <ol className="inline-flex items-center space-x-1 md:space-x-2">
-            <li className="inline-flex items-center">Dashboard</li>
-            <li>
-              <div className="flex items-center">
-                <span className="mx-2 text-gray-400">&gt;</span>
-                <span className="text-gray-900 font-semibold">Dashboard Overview</span>
-              </div>
-            </li>
-          </ol>
-        </nav>
-
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-2">
-          <div>
-            <h1 className="text-3xl font-black text-gray-900 tracking-tight">Dashboard Overview</h1>
-            <p className="text-sm font-medium text-gray-500 mt-1">High-level metrics and system activity overview for your barangay</p>
-          </div>
+      {/* Header Row (Matching MDRRMO Header Card Design) */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-gray-100 shadow-[0_2px_12px_-3px_rgba(0,0,0,0.06)]">
+        <div>
+          <h1 className="text-3xl font-black text-gray-900 tracking-tight">
+            {formattedBarangayName} Disaster Risk Reduction and Management Office
+          </h1>
+          <p className="text-[14px] text-gray-500 font-medium mt-1">
+            Local Community Oversight & Preparedness Hub
+          </p>
         </div>
-      </div>
-
-      {/* Top Notification / Sector Banner */}
-      <div className="bg-gradient-to-r from-red-50 to-orange-50 border-l-4 border-red-600 p-4 rounded-2xl flex items-center justify-between shadow-sm">
-        <div className="flex items-center gap-3">
-          <div className="p-2 bg-red-100 text-red-600 rounded-xl">
-            <HugeiconsIcon icon={Shield01Icon} className="w-5 h-5" />
-          </div>
-          <div>
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+          {/* Status Badge */}
+          <div className="bg-emerald-50 border border-emerald-100 rounded-xl px-5 py-3 flex flex-wrap items-center justify-between gap-4 shadow-sm">
             <div className="flex items-center gap-2">
-              <h2 className="text-sm font-bold text-gray-900">
-                Barangay {barangay.name} • DRRM Jurisdiction
-              </h2>
-              <span className="text-[10px] font-mono font-bold bg-red-100 text-red-700 px-2 py-0.5 rounded-md">
-                Sector Active
-              </span>
+              <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
+              <span className="text-sm font-extrabold text-emerald-900 tracking-wide uppercase">Operational</span>
             </div>
-            <p className="text-xs text-gray-600 mt-0.5">
-              Tracking localized household disaster preparedness and compliance for Barangay {barangay.name}.
-            </p>
+
+            <div className="flex items-center gap-6 text-[13px] font-semibold text-emerald-700">
+              <div className="flex items-center gap-1.5">
+                <HugeiconsIcon icon={Time02Icon} className="w-4 h-4 opacity-70" />
+                <span>Live Connection</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-4 shrink-0">
+            <button
+              type="button"
+              onClick={handleExportReport}
+              className="h-10 px-4 bg-white border border-gray-200 text-gray-700 text-[12px] font-bold tracking-wide uppercase rounded flex items-center gap-2 hover:bg-gray-50 transition-colors whitespace-nowrap shadow-sm cursor-pointer"
+            >
+              <HugeiconsIcon
+                icon={Download02Icon}
+                className="w-4 h-4 text-red-600 shrink-0"
+              />
+              Export Report
+            </button>
+            <button
+              type="button"
+              onClick={() => setIsAnnouncementModalOpen(true)}
+              className="h-10 px-4 bg-red-600 text-white text-[12px] font-bold tracking-wide uppercase rounded flex items-center gap-2 hover:bg-red-700 transition-colors shadow-sm whitespace-nowrap cursor-pointer"
+            >
+              + Post Announcement
+            </button>
           </div>
         </div>
-        <button
-          type="button"
-          onClick={() => refetch()}
-          disabled={isFetching}
-          className="p-2 text-gray-400 hover:text-gray-600 hover:bg-white rounded-xl transition-all"
-        >
-          <HugeiconsIcon icon={RefreshIcon} className={`w-4 h-4 ${isFetching ? "animate-spin text-red-600" : ""}`} />
-        </button>
       </div>
 
       {/* Row 1: 5 Metric Cards */}
