@@ -2,12 +2,12 @@
 -- PostgreSQL database dump
 --
 
-\restrict 5IhK4TLFiV6DsYE2D0nx3GY6TBtS2riu0Jkd2noJ9iBZYBTkCvHZOtBaDaaPgG3
+\restrict g7LnI8266YBBnbmTkg9C9GuqufRvPuSe7RassMw2axRz6h4Jn4ZwEfofPm09sgP
 
 -- Dumped from database version 18.4
 -- Dumped by pg_dump version 18.4
 
--- Started on 2026-08-18 16:00:21
+-- Started on 2026-08-21 15:49:58
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -564,7 +564,8 @@ CREATE TABLE public.certificates (
     status character varying(50) DEFAULT 'active'::character varying NOT NULL,
     revocation_reason text,
     revoked_at timestamp with time zone,
-    revoked_by text
+    revoked_by text,
+    recert_notified_at timestamp with time zone
 );
 
 
@@ -1920,11 +1921,11 @@ REVOKE USAGE ON SCHEMA public FROM PUBLIC;
 GRANT ALL ON SCHEMA public TO PUBLIC;
 
 
--- Completed on 2026-08-18 16:00:21
+-- Completed on 2026-08-21 15:49:58
 
 --
 -- PostgreSQL database dump complete
 --
 
-\unrestrict 5IhK4TLFiV6DsYE2D0nx3GY6TBtS2riu0Jkd2noJ9iBZYBTkCvHZOtBaDaaPgG3
+\unrestrict g7LnI8266YBBnbmTkg9C9GuqufRvPuSe7RassMw2axRz6h4Jn4ZwEfofPm09sgP
 

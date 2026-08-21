@@ -239,3 +239,167 @@ exports.getBarangayActivityLog = async (req, res) => {
     res.status(500).json({ error: "Failed to fetch activity logs." });
   }
 };
+
+// 5. GET /api/admin/barangay/certifications
+// @desc    Get scoped resident certification roster with tactical filters and computed status
+// @access  Private (barangay_admin only)
+exports.getBarangayCertifications = async (req, res) => {
+  try {
+    const barangayId = req.user?.barangay_id;
+    if (!barangayId) {
+      return res.status(403).json({
+        success: false,
+        error: "SECURITY_FAULT: No barangay associated with this account.",
+      });
+    }
+
+    const { page = 1, limit = 10, search = "", moduleId = "", status = "" } = req.query;
+    const pageNum = Math.max(parseInt(page, 10) || 1, 1);
+    const limitNum = Math.min(Math.max(parseInt(limit, 10) || 10, 1), 100);
+    const offset = (pageNum - 1) * limitNum;
+
+    // 1. Fetch KPI Summary counts for this assigned barangay
+    const summaryQuery = `
+      WITH scoped_certs AS (
+        SELECT 
+          c.cert_id,
+          CASE 
+            WHEN c.status = 'revoked' THEN 'revoked'
+            WHEN c.expires_at < NOW() THEN 'expired'
+            WHEN c.expires_at <= NOW() + INTERVAL '30 days' THEN 'expiring_soon'
+            ELSE 'active'
+          END AS computed_status
+        FROM public.certificates c
+        INNER JOIN public."user" u ON c.user_id = u.id
+        WHERE u.barangay_id = $1
+      )
+      SELECT 
+        COUNT(*)::int AS total,
+        COUNT(*) FILTER (WHERE computed_status = 'active')::int AS active,
+        COUNT(*) FILTER (WHERE computed_status = 'expiring_soon')::int AS expiring_soon,
+        COUNT(*) FILTER (WHERE computed_status = 'expired')::int AS expired,
+        COUNT(*) FILTER (WHERE computed_status = 'revoked')::int AS revoked
+      FROM scoped_certs
+    `;
+    const summaryRes = await pool.query(summaryQuery, [barangayId]);
+    const summary = summaryRes.rows[0] || {
+      total: 0,
+      active: 0,
+      expiring_soon: 0,
+      expired: 0,
+      revoked: 0,
+    };
+
+    // 2. Fetch distinct modules present for filter dropdown
+    const modulesQuery = `
+      SELECT DISTINCT m.mod_id, m.modname
+      FROM public.certificates c
+      INNER JOIN public."user" u ON c.user_id = u.id
+      INNER JOIN public.module_data m ON c.module_id = m.mod_id
+      WHERE u.barangay_id = $1
+      ORDER BY m.modname ASC
+    `;
+    const modulesRes = await pool.query(modulesQuery, [barangayId]);
+
+    // 3. Build filtered roster query
+    const conditions = [];
+    const params = [barangayId];
+
+    if (search && search.trim()) {
+      params.push(`%${search.trim()}%`);
+      const pIdx = params.length;
+      conditions.push(
+        `(resident_name ILIKE $${pIdx} OR resident_email ILIKE $${pIdx} OR cert_rec ILIKE $${pIdx} OR module_title ILIKE $${pIdx})`
+      );
+    }
+
+    if (moduleId && !isNaN(parseInt(moduleId, 10))) {
+      params.push(parseInt(moduleId, 10));
+      conditions.push(`module_id = $${params.length}`);
+    }
+
+    if (status && ["active", "expiring_soon", "expired", "revoked"].includes(status.toLowerCase())) {
+      params.push(status.toLowerCase());
+      conditions.push(`computed_status = $${params.length}`);
+    }
+
+    const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
+
+    const baseCte = `
+      WITH scoped_roster AS (
+        SELECT 
+          c.cert_id,
+          c.cert_rec,
+          c.completion_date,
+          c.expires_at,
+          c.status AS stored_status,
+          c.revocation_reason,
+          c.revoked_at,
+          c.verification_token,
+          c.recert_notified_at,
+          u.id AS user_id,
+          u.name AS resident_name,
+          u.email AS resident_email,
+          u.barangay_id,
+          m.mod_id AS module_id,
+          m.modname AS module_title,
+          m.modcat AS module_category,
+          CASE 
+            WHEN c.status = 'revoked' THEN 'revoked'
+            WHEN c.expires_at < NOW() THEN 'expired'
+            WHEN c.expires_at <= NOW() + INTERVAL '30 days' THEN 'expiring_soon'
+            ELSE 'active'
+          END AS computed_status
+        FROM public.certificates c
+        INNER JOIN public."user" u ON c.user_id = u.id
+        INNER JOIN public.module_data m ON c.module_id = m.mod_id
+        WHERE u.barangay_id = $1
+      )
+    `;
+
+    // Count filtered records
+    const countQuery = `
+      ${baseCte}
+      SELECT COUNT(*)::int AS count
+      FROM scoped_roster
+      ${whereClause}
+    `;
+    const countRes = await pool.query(countQuery, params);
+    const totalCount = countRes.rows[0]?.count || 0;
+
+    // Fetch paginated data
+    params.push(limitNum);
+    const limitIdx = params.length;
+    params.push(offset);
+    const offsetIdx = params.length;
+
+    const dataQuery = `
+      ${baseCte}
+      SELECT *
+      FROM scoped_roster
+      ${whereClause}
+      ORDER BY completion_date DESC, cert_id DESC
+      LIMIT $${limitIdx} OFFSET $${offsetIdx}
+    `;
+    const dataRes = await pool.query(dataQuery, params);
+
+    return res.json({
+      success: true,
+      data: dataRes.rows,
+      meta: {
+        total: totalCount,
+        page: pageNum,
+        limit: limitNum,
+        totalPages: Math.ceil(totalCount / limitNum) || 1,
+      },
+      summary,
+      modules: modulesRes.rows,
+    });
+  } catch (error) {
+    console.error("Error fetching barangay certifications:", error);
+    return res.status(500).json({
+      success: false,
+      error: "Failed to fetch certifications.",
+    });
+  }
+};

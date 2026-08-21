@@ -442,7 +442,7 @@ class ModuleProgressService {
       `SELECT c.cert_id, c.cert_rec, u.barangay_id as learner_barangay_id, u.id as learner_id
        FROM certificates c
        JOIN "user" u ON c.user_id = u.id
-       WHERE c.cert_id = $1 AND c.status = 'issued'`,
+       WHERE c.cert_id = $1 AND c.status = 'active'`,
       [certId]
     );
 

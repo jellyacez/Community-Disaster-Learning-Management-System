@@ -20,7 +20,6 @@ const moduleController = require("../../controllers/modules/moduleController");
 const mdrrmoOverviewController = require("../../controllers/admin/mdrrmoOverviewController");
 const certificateManagementController = require("../../controllers/admin/certificateManagement");
 const { adminDataLimiter, adminWriteLimiter, destructiveActionLimiter } = require("../../middleware/rateLimiters");
-const ModuleService = require("../../services/modules/ModuleService");
 const barangayController = require("../../controllers/admin/barangayController");
 const validate = require("../../middleware/validate");
 const { announcementSchema } = require("../../utils/validators");
@@ -238,8 +237,18 @@ router.get(
 );
 
 router.put(
-  "/mdrrmo/module/:id/review", requireRole(ADMIN_ROLES), adminWriteLimiter, moduleController.updateModuleStatus);
-module.exports = router;
+  "/mdrrmo/module/:id/review", requireRole(ADMIN_ROLES), adminWriteLimiter, moduleController.updateModuleStatus
+);
+
+// @route   GET /api/admin/mdrrmo/certifications/analytics
+// @desc    Get municipal-wide certification analytics and compliance data
+// @access  Private (mdrrmo_admin, system_admin)
+router.get(
+  "/mdrrmo/certifications/analytics",
+  requireRole(['system_admin', 'mdrrmo_admin', 'head_mdrrmo_admin']),
+  adminDataLimiter,
+  mdrrmoOverviewController.getMunicipalCertAnalytics
+);
 
 // ==========================================
 // Barangay Admin Dashboards & Features
@@ -253,6 +262,16 @@ router.get(
   requireRole(ADMIN_ROLES),
   adminDataLimiter,
   barangayController.getBarangayAnalytics
+);
+
+// @route   GET /api/admin/barangay/certifications
+// @desc    Get scoped resident certification roster for Barangay Admin
+// @access  Private (barangay_admin only)
+router.get(
+  "/barangay/certifications",
+  requireRole(['barangay_admin']),
+  adminDataLimiter,
+  barangayController.getBarangayCertifications
 );
 
 // @route   GET /api/admin/barangay/announcements
@@ -278,10 +297,12 @@ router.post(
 
 // @route   GET /api/admin/barangay/activity-log
 // @desc    Get activity logs for residents in the assigned barangay
-// @access  Private (barangay_admin, system_admin)
+// @access  Private (barangay_admin only)
 router.get(
   "/barangay/activity-log",
   requireRole(['barangay_admin']),
   adminDataLimiter,
   barangayController.getBarangayActivityLog
 );
+
+module.exports = router;

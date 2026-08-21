@@ -94,6 +94,9 @@ const BarangayResidentRegistry = lazy(
 const BarangaySystemLogs = lazy(
   () => import("./pages/admin/barangay/logs/SystemLogs"),
 );
+const BarangayCertifications = lazy(
+  () => import("./pages/admin/barangay/certifications/BarangayCertifications"),
+);
 
 
 const CertificatePDF = lazy(
@@ -266,6 +269,7 @@ export default function App() {
                     element={<BarangayWorkspaceOverview />}
                   />
                   <Route path="residents" element={<BarangayResidentRegistry />} />
+                  <Route path="certifications" element={<BarangayCertifications />} />
                   <Route path="logs" element={<BarangaySystemLogs />} />
                   <Route path="feedback" element={<AdminFeedbackManager />} />
                   <Route

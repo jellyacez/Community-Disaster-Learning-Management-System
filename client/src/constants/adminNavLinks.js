@@ -9,6 +9,7 @@ import {
   Shield01Icon,
   Activity01Icon,
   Message01Icon,
+  Award01Icon,
 } from "@hugeicons/core-free-icons";
 
 export const ROLE_BASED_LINKS = {
@@ -183,6 +184,11 @@ export const ROLE_BASED_LINKS = {
           name: "Resident Management",
           path: "/admin/barangay/residents",
           icon: UserGroupIcon,
+        },
+        {
+          name: "Certification Roster",
+          path: "/admin/barangay/certifications",
+          icon: Award01Icon,
         },
         {
           name: "Resident Feedbacks",

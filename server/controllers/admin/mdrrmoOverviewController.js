@@ -312,3 +312,16 @@ exports.getSectorOverviewCategoryBreakdown = async (req, res) => {
   }
 };
 
+// @desc    Get municipal-wide certification analytics and compliance data
+// @route   GET /api/admin/mdrrmo/certifications/analytics
+// @access  Private (system_admin, mdrrmo_admin, head_mdrrmo_admin)
+exports.getMunicipalCertAnalytics = async (req, res) => {
+  try {
+    // Stub for Phase 3 implementation
+    return res.json({ success: true, message: "Phase 3 stub: getMunicipalCertAnalytics", data: {} });
+  } catch (error) {
+    console.error("Error fetching municipal cert analytics:", error);
+    return res.status(500).json({ success: false, message: 'Server Error' });
+  }
+};
+

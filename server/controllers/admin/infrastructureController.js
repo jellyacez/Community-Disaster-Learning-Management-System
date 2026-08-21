@@ -9,7 +9,7 @@ exports.downloadDatabaseBackup = async (req, res) => {
     const dbUser = process.env.DB_USER || "postgres";
     const dbHost = process.env.DB_HOST || "localhost";
     const dbPort = process.env.DB_PORT || "5432";
-    const dbName = process.env.DB_NAME || "cdlms";
+    const dbName = process.env.DB_DATABASE || "LMS_db";
     const dbPassword = process.env.DB_PASSWORD || "";
 
     // Generate a timestamped filename
@@ -44,16 +44,21 @@ exports.downloadDatabaseBackup = async (req, res) => {
       },
     };
 
-    execFile("pg_dump", pgDumpArgs, execOptions, (error) => {
+    // Allow overriding the pg_dump binary path via env var.
+    // This avoids relying on system PATH, which may not be updated without a reboot on Windows.
+    const pgDumpBin = process.env.PG_DUMP_PATH || "pg_dump";
+
+    execFile(pgDumpBin, pgDumpArgs, execOptions, (error) => {
       if (error) {
         console.error("pg_dump error:", error);
 
         // Check if pg_dump is not recognized (common on local Windows setups during Capstone defenses)
         if (
-          error.message &&
-          (error.message.includes("is not recognized") ||
-            error.message.includes("not found") ||
-            error.code === 127)
+          error.code === "ENOENT" ||
+          error.code === 127 ||
+          (error.message &&
+            (error.message.includes("is not recognized") ||
+              error.message.includes("not found")))
         ) {
           console.log(
             "pg_dump not found. Generating a mock SQL backup for defense demonstration purposes.",
@@ -76,11 +81,15 @@ CREATE TABLE "user" (
           fs.writeFileSync(backupPath, mockSqlContent);
 
           return res.download(backupPath, filename, (err) => {
-            if (err) console.error("Error sending mock backup file:", err);
             fs.unlink(backupPath, (unlinkErr) => {
               if (unlinkErr)
                 console.error("Error cleaning up mock backup file:", unlinkErr);
             });
+            if (err) {
+              console.error("Error sending mock backup file:", err);
+              return;
+            }
+            // Only log after the download actually succeeded
             require("../../utils/logger").logActivity(
               req.user.id,
               "Triggered full database backup download (Mock)",
@@ -124,7 +133,7 @@ CREATE TABLE "user" (
     });
   } catch (err) {
     console.error("Backup route error:", err);
-    res.status(500).json({ success: false, message: "`Server Error" });
+    res.status(500).json({ success: false, message: "Server Error" });
   }
 };
 
@@ -142,36 +151,40 @@ exports.downloadServerLogs = async (req, res) => {
       fs.mkdirSync(tmpDir, { recursive: true });
     }
 
-    // Determine if we have real logs to serve
-    const potentialLogPaths = [
-      path.join(__dirname, "..", "..", "logs", "error.log"),
-      path.join(__dirname, "..", "..", "error.log")
-    ];
-    
+    // Scan the logs/ directory for the most recent daily-rotating error log file
+    // (logger.js produces files named error-YYYY-MM-DD.log, not a fixed error.log)
+    const logsDir = path.join(__dirname, "..", "..", "logs");
     let realLogFound = false;
-    for (const logPath of potentialLogPaths) {
-      if (fs.existsSync(logPath)) {
-        fs.copyFileSync(logPath, logsPath);
+
+    if (fs.existsSync(logsDir)) {
+      const errorLogFiles = fs.readdirSync(logsDir)
+        .filter(f => f.startsWith("error-") && f.endsWith(".log"))
+        .sort()
+        .reverse(); // most recent date first (lexicographic sort works for YYYY-MM-DD)
+
+      if (errorLogFiles.length > 0) {
+        const mostRecentLog = path.join(logsDir, errorLogFiles[0]);
+        fs.copyFileSync(mostRecentLog, logsPath);
         realLogFound = true;
-        break;
       }
     }
 
     if (!realLogFound) {
       // If no real logs exist (e.g., local dev environment without a file logger),
       // provide a clean fallback message instead of a fake error trace.
-      const fallbackLogContent = `[${new Date().toISOString()}] [INFO] System Log Export
-No active server error log file was found at export time.
-The system is currently operating normally or file-based logging is disabled in this environment.
-`;
+      const fallbackLogContent = `[${new Date().toISOString()}] [INFO] System Log Export\nNo active server error log file was found at export time.\nThe system is currently operating normally or file-based logging is disabled in this environment.\n`;
       fs.writeFileSync(logsPath, fallbackLogContent);
     }
 
     res.download(logsPath, filename, (err) => {
-      if (err) console.error("Error sending log file:", err);
       fs.unlink(logsPath, (unlinkErr) => {
         if (unlinkErr) console.error("Error cleaning up log file:", unlinkErr);
       });
+      if (err) {
+        console.error("Error sending log file:", err);
+        return;
+      }
+      // Only log after the download actually succeeded
       require("../../utils/logger").logActivity(
         req.user.id,
         "Downloaded raw server error logs (.log)",
@@ -179,7 +192,6 @@ The system is currently operating normally or file-based logging is disabled in 
     });
   } catch (err) {
     console.error("Logs route error:", err);
-    res.status(500).json({ success: false, message: "`Server Error" });
+    res.status(500).json({ success: false, message: "Server Error" });
   }
 };
-
