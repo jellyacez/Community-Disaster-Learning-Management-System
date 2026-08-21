@@ -122,10 +122,10 @@ export default function WorkspaceOverview() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-gray-100 shadow-[0_2px_12px_-3px_rgba(0,0,0,0.06)]">
         <div>
           <h1 className="text-3xl font-black text-gray-900 tracking-tight">
-            {formattedBarangayName} Disaster Risk Reduction and Management Office
+            {formattedBarangayName} Community Portal
           </h1>
           <p className="text-[14px] text-gray-500 font-medium mt-1">
-            Local Community Oversight & Preparedness Hub
+            Disaster Preparedness & Local Oversight Hub
           </p>
         </div>
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
