@@ -124,20 +124,20 @@ export default function AdminSidebar({ sidebarOpen, setSidebarOpen }) {
                             : "text-gray-700 hover:bg-gray-100"
                         }`}
                       >
-                        <span className="relative z-10 flex items-center gap-3 font-semibold">
-                          <HugeiconsIcon icon={link.icon} className={`w-5 h-5 ${isActive ? "text-red-600" : "text-gray-400 group-hover:text-gray-600"}`} />
-                          {link.name}
+                        <span className="relative z-10 flex items-center gap-3 text-sm font-semibold whitespace-nowrap min-w-0">
+                          <HugeiconsIcon icon={link.icon} className={`w-5 h-5 shrink-0 -translate-y-px ${isActive ? "text-red-600" : "text-gray-400 group-hover:text-gray-600"}`} />
+                          <span className="truncate">{link.name}</span>
                         </span>
                         
                         {hasSubItems ? (
                           <HugeiconsIcon
                             icon={isExpanded ? ArrowDown01Icon : ArrowRight01Icon}
-                            className={`relative z-10 w-4 h-4 ${isActive ? "text-red-600" : "text-gray-500"}`}
+                            className={`relative z-10 w-4 h-4 shrink-0 ${isActive ? "text-red-600" : "text-gray-500"}`}
                           />
                         ) : (
                           <HugeiconsIcon
                             icon={ArrowRight01Icon}
-                            className={`relative z-10 w-4 h-4 ${
+                            className={`relative z-10 w-4 h-4 shrink-0 ${
                               isActive ? "text-red-600" : "text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity"
                             }`}
                           />

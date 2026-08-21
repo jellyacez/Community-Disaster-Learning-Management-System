@@ -3,11 +3,8 @@ import {
   UserGroupIcon,
   Database01Icon,
   Shield01Icon,
-  Note01Icon,
   Settings01Icon,
-  FolderAddIcon,
   Clock01Icon,
-  Certificate01Icon,
 } from "@hugeicons/core-free-icons";
 
 export default function PlatformOverviewGrid({ stats, loading }) {

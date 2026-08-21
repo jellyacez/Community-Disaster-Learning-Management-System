@@ -202,7 +202,7 @@ export const ROLE_BASED_LINKS = {
       category: "Governance",
       items: [
         {
-          name: "Resident Logs",
+          name: "Audit Web Trail",
           path: "/admin/barangay/logs",
           icon: Note01Icon,
         },
