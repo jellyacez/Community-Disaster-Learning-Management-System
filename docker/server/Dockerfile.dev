@@ -1,0 +1,24 @@
+# ============================================================
+# Server — Development Dockerfile
+# Installs ALL dependencies (including devDeps like nodemon),
+# then waits for source code to be mounted at runtime via volume.
+# ============================================================
+FROM node:22-alpine
+
+WORKDIR /app
+
+# Install all deps (dev included — nodemon lives here)
+COPY server/package.json server/package-lock.json ./
+RUN npm install
+
+# Source is NOT copied — it is mounted as a volume at runtime
+# so that every file save on the host is immediately visible
+# inside the container (enabling nodemon auto-restart).
+
+EXPOSE 5000
+
+# CHOKIDAR_USEPOLLING: required on Windows/macOS Docker where
+# inotify events don't propagate across the VM boundary.
+ENV CHOKIDAR_USEPOLLING=true
+
+CMD ["npm", "run", "dev"]

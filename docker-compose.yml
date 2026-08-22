@@ -1,3 +1,23 @@
+# ============================================================
+# docker-compose.yml  —  PRODUCTION build
+#
+# Serves the React app as a static bundle via nginx.
+# No hot reload — use docker-compose.dev.yml for development.
+#
+# Usage:
+#   docker compose up --build
+#
+# What you get:
+#   http://localhost      → nginx (serves the built React SPA + proxies /api)
+#   http://localhost:5000 → Express API (internal only — routed via nginx)
+#   localhost:5432        → PostgreSQL  (127.0.0.1 only — not public)
+#
+# Before running:
+#   1. Copy docker/env/server.env.example → server/.env and fill in secrets.
+#   2. For a real public deployment, replace all `localhost` URLs below with
+#      your actual domain name.
+# ============================================================
+
 services:
   # ──────────────────────────────────────────────
   # PostgreSQL Database
@@ -10,10 +30,14 @@ services:
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_DB: ${DB_DATABASE}
+    # Bound to 127.0.0.1 only — Postgres is not exposed to the public internet.
+    # Remove this ports block entirely when deploying to a remote server.
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    networks:
+      - lms_internal
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_DATABASE}"]
       interval: 10s
@@ -22,8 +46,6 @@ services:
 
   # ──────────────────────────────────────────────
   # Express Backend (API)
-  # Build context is the repo root so the Dockerfile
-  # can reference server/ paths directly.
   # ──────────────────────────────────────────────
   server:
     build:
@@ -37,33 +59,64 @@ services:
     env_file:
       - ./server/.env
     environment:
-      # Override DB_HOST to point to the Docker network alias instead of localhost
-      DB_HOST: db
-      NODE_ENV: development
+      DB_HOST: db              # talk to the Postgres container, not localhost
+      NODE_ENV: production
+      # Used by Better Auth to build redirect URLs in emails and OAuth callbacks.
+      # Must be what the browser can reach — change to your real domain in prod.
+      BETTER_AUTH_URL: http://localhost:5000
+      # Allow CORS requests from the nginx container (port 80).
+      # Change to your real domain in prod.
+      FRONTEND_URL: http://localhost
+    # Bound to 127.0.0.1 — traffic reaches the API only through the nginx proxy.
+    # Remove the ports block when deploying remotely (nginx handles all traffic).
     ports:
-      - "5000:5000"
+      - "127.0.0.1:5000:5000"
     volumes:
-      # Persist uploaded files outside the container
       - server_uploads:/app/uploads
       - server_logs:/app/logs
+      - server_tmp:/app/tmp
+    networks:
+      - lms_internal
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:5000/api/health || exit 1"]
+      interval: 30s
+      timeout: 5s
+      start_period: 20s
+      retries: 3
 
   # ──────────────────────────────────────────────
-  # React / Vite Frontend
-  # Build context is the repo root so the Dockerfile
-  # can reference client/ paths directly.
+  # React / Vite Frontend — built into a static bundle, served by nginx.
+  # nginx also reverse-proxies /api/* to the server container.
   # ──────────────────────────────────────────────
   client:
     build:
       context: .
       dockerfile: docker/client/Dockerfile
+      args:
+        # VITE_ variables are baked into the bundle at build time.
+        # /api calls go to nginx which proxies them to the server container —
+        # so the browser only ever talks to port 80.
+        # Change to your real domain for a public deployment.
+        VITE_API_URL: http://localhost/api
+        VITE_BASE_URL: http://localhost
+        VITE_FRONTEND_URL: http://localhost
+        VITE_DISABLE_MFA: "false"
     container_name: lms_client
     restart: unless-stopped
     depends_on:
-      - server
+      server:
+        condition: service_healthy
     ports:
       - "80:80"
+    networks:
+      - lms_internal
+
+networks:
+  lms_internal:
+    driver: bridge
 
 volumes:
   postgres_data:
   server_uploads:
   server_logs:
+  server_tmp:

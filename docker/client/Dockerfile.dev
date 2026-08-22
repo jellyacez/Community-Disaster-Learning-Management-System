@@ -1,0 +1,25 @@
+# ============================================================
+# Client — Development Dockerfile
+# Installs ALL dependencies, then waits for source code to be
+# mounted at runtime via volume (enabling Vite HMR).
+# ============================================================
+FROM node:22-alpine
+
+WORKDIR /app
+
+# Install all deps
+COPY client/package.json client/package-lock.json ./
+RUN npm install
+
+# Source is NOT copied — it is mounted as a volume at runtime
+# so that every file save triggers Vite's hot module replacement.
+
+EXPOSE 5173
+
+# CHOKIDAR_USEPOLLING: required on Windows/macOS Docker where
+# inotify events don't propagate across the VM boundary.
+ENV CHOKIDAR_USEPOLLING=true
+
+# vite.config.js already sets host: '0.0.0.0' and hmr config —
+# no extra flags needed here.
+CMD ["npm", "run", "dev"]

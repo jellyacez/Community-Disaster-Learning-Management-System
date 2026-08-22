@@ -1,0 +1,98 @@
+# ============================================================
+# docker-compose.dev.yml
+#
+# Development stack — full hot-reload, no nginx.
+#
+# Usage:
+#   docker compose -f docker-compose.dev.yml up --build
+#
+# What you get:
+#   http://localhost:5173  → Vite dev server (React, with HMR)
+#   http://localhost:5000  → Express API    (nodemon auto-restart)
+#   localhost:5432         → PostgreSQL     (connect via pgAdmin)
+#
+# How live-editing works:
+#   Your local source files are mounted INTO the containers.
+#   Edit any file on your machine → the container sees it instantly
+#   → Vite hot-reloads the browser / nodemon restarts the server.
+#   No rebuild needed. Git push/pull works normally on your machine.
+# ============================================================
+
+services:
+  # ──────────────────────────────────────────────
+  # PostgreSQL Database
+  # ──────────────────────────────────────────────
+  db:
+    image: postgres:16-alpine
+    container_name: lms_db_dev
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+      POSTGRES_DB: ${DB_DATABASE:-LMS_db}
+    ports:
+      # Exposed so you can connect with pgAdmin on your machine
+      - "5432:5432"
+    volumes:
+      - postgres_dev_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres} -d ${DB_DATABASE:-LMS_db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ──────────────────────────────────────────────
+  # Express Backend — nodemon (auto-restart on save)
+  # ──────────────────────────────────────────────
+  server:
+    build:
+      context: .
+      dockerfile: docker/server/Dockerfile.dev
+    container_name: lms_server_dev
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file:
+      - ./server/.env
+    environment:
+      DB_HOST: db          # override: talk to the Postgres container
+      NODE_ENV: development
+      BETTER_AUTH_URL: http://localhost:5000
+      FRONTEND_URL: http://localhost:5173
+    ports:
+      - "5000:5000"
+    volumes:
+      # Mount your local server source INTO the container
+      - ./server:/app
+      # Isolate the container's node_modules from your host folder.
+      # This named volume keeps the deps installed during `docker build`
+      # and prevents your host's node_modules (or lack thereof) from
+      # overwriting them.
+      - server_dev_modules:/app/node_modules
+
+  # ──────────────────────────────────────────────
+  # React / Vite Frontend — HMR (hot module replacement)
+  # ──────────────────────────────────────────────
+  client:
+    build:
+      context: .
+      dockerfile: docker/client/Dockerfile.dev
+    container_name: lms_client_dev
+    restart: unless-stopped
+    depends_on:
+      - server
+    environment:
+      NODE_ENV: development
+    ports:
+      - "5173:5173"
+    volumes:
+      # Mount your local client source INTO the container
+      - ./client:/app
+      # Same node_modules isolation trick as the server
+      - client_dev_modules:/app/node_modules
+
+volumes:
+  postgres_dev_data:
+  server_dev_modules:
+  client_dev_modules:
