@@ -1,180 +1,236 @@
 # Community Disaster Learning Management System
 
-A progressive, multi-level web application designed to train and certify residents of Bacolor, Pampanga in Disaster Risk Reduction and Management (DRRM). This platform aligns with PRC and NDRRMC standards, providing tailored education on flooding, earthquakes, and fire safety.
+A progressive, multi-level web application designed to train and certify residents of Bacolor, Pampanga in Disaster Risk Reduction and Management (DRRM). The platform aligns with PRC and NDRRMC standards and covers local hazards including flooding, earthquakes, and fire safety.
+
+---
 
 ## 🌟 Key Features
 
-- **Progressive Learning**: Multi-level modules tailored to local hazards.
-- **Role-Based Access Control (RBAC)**: Secure, partitioned dashboards for Residents, Barangay Admins, MDRRMO Admins, and System Admins utilizing a dynamically rendered `AdminLayout` for least-privilege UI generation.
-- **Enterprise-Grade Security**: Powered by Better Auth with secure HTTP-only session cookies, backend middleware protection, and strict IP Rate Limiting.
-- **Multi-Factor Authentication (MFA)**: Optional 2FA for residents, and strictly enforced mandatory MFA for all administrative roles.
-- **Responsive & Dynamic UI**: Built with React, TailwindCSS, Framer Motion, and beautiful Hugeicons. Features mobile-first design, interactive floating animations, and dynamic skeleton loaders.
-- **Performance Optimized**: Built using advanced React performance patterns including `React.memo`, stable `useCallback` event handlers, and `React.lazy` code splitting to ensure blistering fast loads even with complex administrative tables.
-- **Advanced Admin Dashboards**: Live data visualization using `recharts`, real-time server health monitoring, and interactive quick action panels connected directly to the live PostgreSQL database.
-- **Account Management**: Full end-to-end authentication flows including secure registration, login, and forgot password recovery.
+- **Progressive Learning** — Multi-level modules tailored to local hazards with quiz-based assessments and verifiable PDF certificates
+- **Role-Based Access Control** — Partitioned dashboards for Residents, Barangay Admins, MDRRMO Admins, and System Admins with least-privilege UI generation
+- **Enterprise-Grade Auth** — Powered by Better Auth with HTTP-only session cookies, versioned secret rotation, and strict backend middleware protection
+- **Multi-Factor Authentication** — Optional 2FA for residents; mandatory enforced MFA for all admin roles via TOTP
+- **Feedback & Communication** — Residents can submit tickets and communicate directly with Barangay and MDRRMO offices
+- **Real-time Admin Dashboards** — Live data visualization, server health monitoring, and sector/barangay performance tracking
+- **Responsive UI** — Mobile-first design built with React, Tailwind CSS, Framer Motion, and Hugeicons
+- **Security Hardened** — Rate limiting (PostgreSQL-backed), Helmet, CORS, HPP, XSS sanitization, payload validation, and strict startup environment checks
 
 ---
 
-## 🛠️ Technology Stack
+## 🛠️ Tech Stack
 
-### Backend (Server)
-
-- **Node.js & Express**: API and server framework
-- **PostgreSQL & pg**: Relational database for structured data
-- **Better Auth**: Comprehensive session management and RBAC admin plugin
-- **Express Rate Limit**: DDoS, brute-force, and spam protection
-- **Helmet & CORS**: Essential HTTP security layers
-
-### Frontend (Client)
-
-- **React + Vite**: Blazing fast modern UI framework
-- **React Router Dom**: Dynamic client-side routing with protected routes
-- **TailwindCSS**: Utility-first styling for a premium aesthetic
-- **Framer Motion**: Smooth, dynamic micro-animations
-- **Hugeicons**: High-quality SVG icon library
-
----
-
-## 📦 Detailed Dependencies
-
-### Server Dependencies
-
-- `express` (5.2.1)
-- `pg` (8.21.0)
-- `cors` (2.8.6)
-- `dotenv` (17.4.2)
-- `better-auth` (1.6.15)
-- `express-rate-limit` (8.5.2)
-- `@acpr/rate-limit-postgresql` (1.4.1)
-- `helmet` (8.2.0)
-- `hpp` (0.2.3)
-- `sanitize-html` (2.17.5)
-- `nodemailer` (9.0.1)
-- `@react-pdf/renderer` (4.5.1)
-- `node-cron` (3.0.3)
-- `nodemon` (3.1.14) - _dev_
-- `dexi` (4.4.4)
--  `dexie-react-hooks`: (4.4.0)
-
-### Client Dependencies
-
-- `react` / `react-dom` (19.2.6)
-- `react-router-dom` (7.17.0)
-- `@tanstack/react-query` (5.101.0)
-- `axios` (1.17.0)
-- `better-auth` (1.6.15)
-- `framer-motion` (12.40.0)
-- `react-hot-toast` (2.6.0)
-- `qrcode.react` (4.2.0)
-- `recharts` (3.9.1)
-- `dompurify` (3.4.11)
-- `@react-pdf/renderer` (4.5.1)
-- `@hugeicons/react` (1.1.6)
-- `@hugeicons/core-free-icons` (4.2.0)
-- `tailwindcss` (4.3.0) & `@tailwindcss/vite` - _dev_
-- `vite` (8.0.12) - _dev_
-- `eslint` (10.3.0) - _dev_
+| Layer | Technology |
+|---|---|
+| **Backend** | Node.js, Express 5, PostgreSQL, Better Auth |
+| **Frontend** | React 19, Vite, Tailwind CSS v4, Framer Motion |
+| **Auth** | Better Auth (sessions, RBAC admin plugin, 2FA/TOTP) |
+| **Email** | Nodemailer (Gmail SMTP / App Password) |
+| **PDF** | @react-pdf/renderer |
+| **Charts** | Recharts |
+| **Icons** | Hugeicons |
+| **Dev Tools** | nodemon, ESLint |
+| **Containers** | Docker, Docker Compose, nginx |
 
 ---
 
 ## 🚀 Getting Started
 
-### Prerequisites
+There are three ways to run the project. Pick the one that suits you.
 
-- Node.js installed (v18+)
-- PostgreSQL installed and running
+---
 
-### 1. Server Setup
+### Option A — Local Dev (Node + Postgres on your machine)
 
-Navigate into the server directory and install dependencies:
+**Prerequisites:** Node.js v22+, PostgreSQL 16
+
+#### 1. Clone the repo
+
+```bash
+git clone https://github.com/jellyacez/Community-Disaster-Learning-Management-System.git
+cd Community-Disaster-Learning-Management-System
+```
+
+#### 2. Set up environment files
+
+```bash
+# Server
+copy docker\env\server.env.example server\.env
+
+# Client
+copy docker\env\client.env.example client\.env
+```
+
+Open `server/.env` and fill in your database credentials and secrets. See the [Environment Variables](#-environment-variables) section below.
+
+#### 3. Install dependencies
+
+```bash
+# Server
+cd server && npm install
+
+# Client (in a new terminal)
+cd client && npm install
+```
+
+#### 4. Initialize the database
+
+Create a PostgreSQL database (e.g. `LMS_db`), then run:
 
 ```bash
 cd server
-npm ci # Use npm ci for deterministic builds in production, or npm install for dev
+node config/setup.js
 ```
 
-Create a `.env` file in the `server` directory:
+#### 5. Start the dev servers
 
-```env
-PORT=5000
-DB_HOST=localhost
-DB_PORT=5432
-DB_DATABASE=your_database_name
-DB_USER=postgres
-DB_PASSWORD=your_postgres_password
-BETTER_AUTH_URL=http://localhost:5173
-BETTER_AUTH_SECRETS=1:your_super_secret_random_string_here
-
-# SMTP Configuration for Email OTP (strictly for testing, will change once deployed in aws)
-SMTP_HOST=smtp.gmail.com
-SMTP_PORT=465
-SMTP_USER=your-email@gmail.com
-SMTP_PASS=your-app-password
-
-# Developer Options
-DISABLE_MFA=true
+**Terminal 1 — Server:**
+```bash
+cd server && npm run dev
+# → http://localhost:5000
 ```
 
-_(Tip: Generate a secure secret using `npx @better-auth/cli secret`)_
+**Terminal 2 — Client:**
+```bash
+cd client && npm run dev
+# → http://localhost:5173
+```
 
-**Database Schema:**
-You must initialize the PostgreSQL database with the custom tables (e.g., `module_data`, `announcements`) defined in `server/schema.sql`. Note that Better-Auth uses standard plugins to auto-migrate its own tables, but the application data tables must be created manually using the provided schema.
+---
+
+### Option B — Docker Dev (hot reload, no local Node/Postgres needed)
+
+**Prerequisites:** Docker Desktop only
 
 ```bash
-npx @better-auth/cli migrate --config ./utils/auth.js
+# Copy and fill in server/.env first (see Environment Variables below)
+copy docker\env\server.env.example server\.env
+
+docker compose -f docker-compose.dev.yml up --build
 ```
 
-**Run the Server:**
+| Service | URL |
+|---|---|
+| Frontend (Vite + HMR) | http://localhost:5173 |
+| Backend API | http://localhost:5000 |
+| Database | `localhost:5432` |
+
+Edit files on your machine normally — Vite hot-reloads the browser, nodemon restarts the server. Git works as usual.
+
+See [`docker/SETUP.md`](docker/SETUP.md) for full details.
+
+---
+
+### Option C — Docker Full Stack (nginx, production build)
+
+**Prerequisites:** Docker Desktop only
 
 ```bash
-npm run dev
+copy docker\env\server.env.example server\.env
+
+docker compose up --build
 ```
 
-### 2. Client Setup
+| Service | URL |
+|---|---|
+| Frontend (nginx) | http://localhost |
+| Backend API | http://localhost:5000 |
 
-Open a new terminal, navigate to the client directory, and install dependencies:
+No hot reload — use this to test the production build. See [`docker/SETUP.md`](docker/SETUP.md) for full details.
 
+---
+
+## 🔐 Environment Variables
+
+Copy `docker/env/server.env.example` to `server/.env` and fill in:
+
+| Variable | Description |
+|---|---|
+| `DB_HOST` | `localhost` for local dev; Docker overrides to `db` automatically |
+| `DB_PORT` | `5432` |
+| `DB_DATABASE` | Your database name (e.g. `LMS_db`) |
+| `DB_USER` | Your Postgres user |
+| `DB_PASSWORD` | Your Postgres password |
+| `JWT_SECRET` | Generate: `node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"` |
+| `BETTER_AUTH_URL` | `http://localhost:5000` |
+| `BETTER_AUTH_SECRETS` | Generate: `npm run rotate-better-auth` |
+| `EMAIL_USER` | Gmail address for sending emails |
+| `EMAIL_APP_PASSWORD` | Gmail App Password |
+| `GOOGLE_CLIENT_ID` | Google OAuth client ID |
+| `GOOGLE_CLIENT_SECRET` | Google OAuth client secret |
+| `FRONTEND_URL` | `http://localhost:5173` (dev) |
+| `NODE_ENV` | `development` or `production` |
+
+**Generate fresh auth secrets any time:**
 ```bash
-cd client
-npm ci # Use npm ci for deterministic builds in production, or npm install for dev
+cd server
+npm run rotate-better-auth   # rotates BETTER_AUTH_SECRETS only
+npm run rotate-secrets       # rotates both JWT_SECRET and BETTER_AUTH_SECRETS
 ```
-
-Create a `.env` file in the `client` directory (optional for dev):
-
-```env
-# Developer Options
-VITE_DISABLE_MFA=true
-```
-
-**Run the Client:**
-
-```bash
-npm run dev
-```
-
-The application will be live at `http://localhost:5173`.
 
 ---
 
 ## 🛡️ Security Architecture
 
-1. **Frontend Protection**: The `<ProtectedRoute />` component explicitly checks active sessions and role scopes to prevent cross-role contamination. Unauthorized attempts trigger a full-screen "Access Denied" overlay (preventing layout exposure) and securely redirect users back to their authorized dynamic dashboards.
-2. **Authentication Middleware**: The backend employs `betterAuthMiddleware.js` to ensure the requester is logged into a valid session.
-3. **Authorization Middleware**: The `adminMiddleware.js` operates as an Express gatekeeper, strictly validating that the secure session token belongs to a `system_admin` before any sensitive database queries are run.
-4. **Distributed Rate Limiting**: Defends the server from brute-force and DDoS attacks. Rate limit states are synchronized globally via PostgreSQL (`@acpr/rate-limit-postgresql`), ensuring absolute effectiveness across multi-process and load-balanced cluster deployments.
-5. **SQL Injection Prevention**: All custom database interactions are securely parameterized through `pg` bounds.
-6. **Payload Limits**: Incoming JSON requests are strictly capped at 500kb to mathematically prevent memory exhaustion and buffer attacks.
-7. **HTTP Parameter Pollution (HPP)**: The server safely parses query strings to prevent duplication-based backend bypasses.
-8. **Targeted XSS Sanitization**: A custom `sanitize-html` utility scrubs incoming rich-text content for the LMS modules, explicitly permitting safe HTML formatting while completely eliminating XSS vectors like `<script>`, inline CSS (`<p style>`), and malicious `<iframe>` injections.
-9. **Credential Security**: All password mutations, hashing algorithms, and session invalidations rely 100% on Better Auth's internal secure server API, ensuring zero manual database manipulation.
-10. **Device Management**: Users can monitor all active sessions across different devices (e.g., Mobile, Windows, Mac) and can selectively or completely revoke active sessions from the Settings dashboard.
-11. **Security Cooldowns**: A strict 24-hour cooldown lock is enforced on manual password changes via the user dashboard to mitigate brute-force account takeovers. Legitimate owners can bypass this lock via the secure Email Recovery flow.
-12. **Multi-Factor Authentication (MFA)**: Time-based One-Time Password (TOTP) enforcement utilizing Better Auth's twoFactor plugin. Highly privileged roles (system_admin, mdrrmo_admin, barangay_admin) are strictly gated by backend middleware, redirecting them to an un-bypassable MFA setup flow if their account lacks 2FA.
-13. **Data Privacy**: The platform includes standardized Privacy Policy and Terms & Conditions. API routes are strictly structured utilizing isolated `/routes` modules (e.g. `authRoutes.js`, `userRoutes.js`) to strictly scope SQL `SELECT` statements and prevent data over-fetching.
-14. **Optimized Frontend Architecture**: Large administrative components (like User Management) are strictly decoupled into independent Container Components and Presentation Components. This limits re-renders, prevents UI layout shifting during data fetches, and cleanly separates React Query data mutations from pure visual rendering.
-15. **Zero-Downtime Secret Rotation**: The backend features automated utility scripts (`npm run rotate-better-auth` and `npm run rotate-secrets`) to securely cycle Better Auth cryptographic keys using envelope encryption (versioned secrets) and rotate dotenvx file encryption keys without invalidating active user sessions.
-16. **Strict Startup Validation**: The server enforces a strict boot sequence that automatically crashes if critical environment variables (like Database credentials or Auth secrets) are missing, preventing the application from booting into an insecure default state.
-17. **Strict CORS Policy**: Production environments strictly enforce CORS to exclusively match the explicitly defined frontend origin, neutralizing cross-origin attacks from compromised local environments.
-18. **Payload Validation & S3 Readiness**: High-risk endpoints (like system branding) employ hybrid validation—strictly limiting raw Base64 payloads to 2MB and checking MIME types to prevent Denial of Service, while securely accepting AWS S3 HTTPS URLs for cloud storage.
-19. **R.A. 10173 (Data Privacy Act) Compliance**: Automated 90-day retention policies for logs, robust "Right to Be Forgotten" hard-deletion pipelines for analytics data (`user_step_progress`, `results`), and strict PII redaction in system logs.
-20. **Dual-Layer Logging Architecture**: Strict separation of concerns between System Audit Logs (human-readable security events like "50+ failed logins" stored in PostgreSQL for the Admin UI) and Server Crash Logs (raw code errors, stack traces, and unhandled promise rejections caught via PM2/Process Managers and routed strictly to local server `.log` files to ensure visibility even during total database failure). Both layers are actively managed by `logRetention.js` to prevent database bloat and hard drive exhaustion.
+1. **Protected Routes** — `<ProtectedRoute />` checks active sessions and role scopes; unauthorized access shows a full-screen denial overlay and redirects
+2. **Auth Middleware** — `betterAuthMiddleware.js` validates every request has an active Better Auth session
+3. **Admin Middleware** — `adminMiddleware.js` validates the session role before any sensitive query runs
+4. **Rate Limiting** — PostgreSQL-backed distributed rate limiting via `@acpr/rate-limit-postgresql`; effective across multi-process deployments
+5. **SQL Injection Prevention** — All queries use parameterized statements via `pg`
+6. **XSS Sanitization** — `sanitize-html` scrubs rich-text module content; allows safe formatting, strips `<script>`, inline styles, and `<iframe>`
+7. **HTTP Security Headers** — Helmet sets CSP, HSTS, X-Frame-Options, and more
+8. **CORS** — Strict origin allowlist; production locks to `FRONTEND_URL` only
+9. **HPP** — HTTP Parameter Pollution protection on all query strings
+10. **Payload Limits** — JSON body capped at 500 KB; Base64 uploads capped at 2 MB
+11. **MFA Enforcement** — Admin roles are redirected to a mandatory TOTP setup flow if 2FA is not configured
+12. **Secret Rotation** — `npm run rotate-secrets` / `rotate-better-auth` rotate cryptographic keys using versioned envelope encryption without invalidating active sessions
+13. **Startup Validation** — Server crashes immediately on boot if any critical env variable is missing
+14. **Session Management** — HTTP-only cookies, 7-day expiry with 24-hour rolling refresh; users can revoke individual or all sessions from Settings
+15. **Password Security** — 24-hour cooldown on manual password changes; bypass only via email recovery flow
+16. **Data Privacy (R.A. 10173)** — 90-day log retention, hard-deletion pipelines for analytics PII, strict PII redaction in system logs
+17. **Dual-Layer Logging** — Audit logs (security events) in PostgreSQL for the Admin UI; crash logs (stack traces) to local `.log` files for visibility during DB failure
+
+---
+
+## 📁 Project Structure
+
+```
+├── client/                 ← React + Vite frontend
+│   ├── src/
+│   │   ├── pages/          ← Route-level page components
+│   │   ├── components/     ← Shared UI components
+│   │   ├── hooks/          ← Custom React hooks
+│   │   └── lib/            ← API client, auth client config
+│   └── .env                ← Copy from docker/env/client.env.example
+│
+├── server/                 ← Express.js backend
+│   ├── controllers/        ← Route handler logic
+│   ├── routes/             ← Express router definitions
+│   ├── middleware/         ← Auth, admin, rate-limit guards
+│   ├── services/           ← Business logic / DB queries
+│   ├── utils/              ← Auth config, mailer, logger, cron jobs
+│   ├── migrations/         ← SQL migration files
+│   └── .env                ← Copy from docker/env/server.env.example
+│
+├── docker/
+│   ├── client/
+│   │   ├── Dockerfile      ← Production build (nginx)
+│   │   ├── Dockerfile.dev  ← Development build (Vite)
+│   │   └── nginx.conf      ← nginx SPA + API proxy config
+│   ├── server/
+│   │   ├── Dockerfile      ← Production image
+│   │   └── Dockerfile.dev  ← Development image (nodemon)
+│   ├── env/
+│   │   ├── client.env.example
+│   │   └── server.env.example
+│   └── SETUP.md            ← Detailed Docker setup guide
+│
+├── docker-compose.yml      ← Production stack (nginx, no hot reload)
+├── docker-compose.dev.yml  ← Development stack (Vite HMR + nodemon)
+└── .dockerignore
+```
+
+---
+
+## 📜 License
+
+For academic/capstone use — Municipality of Bacolor, Pampanga MDRRMO.
