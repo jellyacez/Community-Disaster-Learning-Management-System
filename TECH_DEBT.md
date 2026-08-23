@@ -113,3 +113,12 @@ This document tracks identified technical debt, architectural decisions, and res
 - **Location:** `client/src/lib/LocalSave/syncManager.js`, `client/src/hooks/useNetworkSync.js`
 - **Description:** When `processOfflineQueue()` encounters an error, it increments `retry_count`.
 - **Recommended Action:** For long-term production resilience, consider implementing exponential backoff intervals for failed retries and a maximum retry cap with user-facing notification if an offline sync permanently fails (e.g. server validation rejection).
+
+---
+
+### 6. Certificate Revocation Authority — MDRRMO Override Not Yet Implemented
+- **Current state:** Only `barangay_admin` can revoke certificates, correctly scoped to their own barangay (verified working).
+- **Gap:** Original feature spec describes MDRRMO as having 'ultimate verification authority' to revoke any certificate municipality-wide — this was never built. No revoke action exists in the MDRRMO dashboard (Phase 3 is read-only/analytics).
+- **Decided direction (not yet implemented):** MDRRMO-tier admins should be able to revoke any certificate, with the affected barangay's admin(s) notified afterward (via the existing in-app notification bell and/or the existing nodemailer pipeline — mechanism TBD). Still needs: which MDRRMO tiers get this power (all three, or just `mdrrmo_admin` + `head_mdrrmo_admin`), and confirmation of whether a barangay can have multiple assigned admins (notification must reach all of them if so).
+- **Revisit:** After Phase 4/5 wrap, before final handover.
+
