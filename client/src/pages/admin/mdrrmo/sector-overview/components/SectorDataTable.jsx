@@ -1,9 +1,10 @@
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Search01Icon, ArrowUp01Icon, ArrowDown01Icon } from "@hugeicons/core-free-icons";
+import { SkeletonTableRow } from "../../../../../components/ui/Skeleton";
 
 export default function SectorDataTable({
   sectorData,
-  sortedData,
+  sortedData = [],
   searchQuery,
   setSearchQuery,
   showFilters,
@@ -14,7 +15,8 @@ export default function SectorDataTable({
   requestSort,
   sortConfig,
   selectedBarangayId,
-  handleRowClick
+  handleRowClick,
+  isLoading
 }) {
   const renderSortIcon = (columnKey) => {
     if (sortConfig.key !== columnKey) return null;
@@ -212,7 +214,11 @@ export default function SectorDataTable({
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-50">
-            {sortedData.length === 0 ? (
+            {isLoading ? (
+              [1, 2, 3, 4, 5, 6].map((i) => (
+                <SkeletonTableRow key={i} columns={5} />
+              ))
+            ) : sortedData.length === 0 ? (
               <tr>
                 <td colSpan="5" className="px-6 py-12 text-center text-gray-500">
                   No barangays found matching "<span className="font-semibold text-gray-900">{searchQuery}</span>"

@@ -14,6 +14,7 @@ import {
 import toast from "react-hot-toast";
 import apiClient from "../../../../lib/apiClient";
 import ConfirmationModal from "../../../../components/ui/modals/ConfirmationModal";
+import { SkeletonModuleCard } from "../../../../components/ui/Skeleton";
 
 export default function AdminModuleApprovals() {
   useDocumentTitle("Module Approvals | Bacolor LMS Admin");
@@ -170,8 +171,10 @@ export default function AdminModuleApprovals() {
         </div>
 
         {isLoading ? (
-          <div className="py-12 text-center text-gray-400 font-bold">
-            Loading approval queue...
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <SkeletonModuleCard key={i} />
+            ))}
           </div>
         ) : filteredModules.length === 0 ? (
           <div className="rounded-3xl border border-dashed border-gray-200 bg-gray-50 p-10 text-center">

@@ -1,6 +1,7 @@
 import ModuleCard from "../../../../../components/ui/modules/ModuleCard";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Folder01Icon } from "@hugeicons/core-free-icons";
+import { SkeletonModuleCard } from "../../../../../components/ui/Skeleton";
 
 export default function ModuleGrid({
   isLoading,
@@ -17,8 +18,10 @@ export default function ModuleGrid({
 }) {
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center p-24">
-        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-red-600"></div>
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        {[1, 2, 3, 4, 5, 6].map((i) => (
+          <SkeletonModuleCard key={i} />
+        ))}
       </div>
     );
   }

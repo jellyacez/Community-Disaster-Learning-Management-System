@@ -7,6 +7,7 @@ import {
   ArrowLeft01Icon,
   ArrowRight01Icon,
 } from "@hugeicons/core-free-icons";
+import { SkeletonLeaderboardRow } from "../../../../../components/ui/Skeleton";
 
 export default function BarangayComplianceChart({ barangays = [], isLoading }) {
   const [activeTab, setActiveTab] = useState("top"); // "top" | "attention" | "all"
@@ -92,8 +93,10 @@ export default function BarangayComplianceChart({ barangays = [], isLoading }) {
       </div>
 
       {isLoading ? (
-        <div className="flex-1 flex items-center justify-center">
-          <div className="w-8 h-8 border-3 border-red-200 border-t-red-600 rounded-full animate-spin"></div>
+        <div className="space-y-3 py-1">
+          {[1, 2, 3, 4, 5].map((i) => (
+            <SkeletonLeaderboardRow key={i} />
+          ))}
         </div>
       ) : displayList.length === 0 ? (
         <div className="flex-1 flex items-center justify-center text-sm text-gray-400">

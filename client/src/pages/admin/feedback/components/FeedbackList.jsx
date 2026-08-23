@@ -1,6 +1,7 @@
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Message01Icon } from "@hugeicons/core-free-icons";
 import FeedbackTicketCard from "./FeedbackTicketCard";
+import { FeedbackTicketSkeleton } from "../../../../components/ui/Skeleton";
 
 export default function FeedbackList({
   isLoading,
@@ -26,8 +27,10 @@ export default function FeedbackList({
       )}
 
       {isLoading ? (
-        <div className="py-12 text-center text-gray-400 font-bold">
-          Loading communications...
+        <div className="space-y-3">
+          {[1, 2, 3, 4].map((i) => (
+            <FeedbackTicketSkeleton key={i} />
+          ))}
         </div>
       ) : filteredSubmissions.length === 0 ? (
         <div className="rounded-3xl border border-dashed border-gray-200 bg-gray-50 p-10 text-center">

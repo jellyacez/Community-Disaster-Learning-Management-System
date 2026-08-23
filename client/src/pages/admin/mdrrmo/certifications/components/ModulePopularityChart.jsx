@@ -6,6 +6,7 @@ import {
   ResponsiveContainer,
   Legend,
 } from "recharts";
+import { SkeletonChart } from "../../../../../components/ui/Skeleton";
 
 const CATEGORY_COLORS = {
   Flood: "#3b82f6",
@@ -58,7 +59,7 @@ export default function ModulePopularityChart({ modules = [], isLoading }) {
 
       {isLoading ? (
         <div className="flex-1 flex items-center justify-center">
-          <div className="w-8 h-8 border-3 border-red-200 border-t-red-600 rounded-full animate-spin"></div>
+          <SkeletonChart type="donut" height={220} />
         </div>
       ) : pieData.length === 0 ? (
         <div className="flex-1 flex items-center justify-center text-sm text-gray-400">

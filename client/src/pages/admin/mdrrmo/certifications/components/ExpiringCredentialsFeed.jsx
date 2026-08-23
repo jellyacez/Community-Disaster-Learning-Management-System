@@ -1,5 +1,6 @@
 import SearchBar from "../../../../../components/ui/inputs/SearchBar";
 import CertificateLifecycleBadge from "../../../../../components/ui/certificates/CertificateLifecycleBadge";
+import { SkeletonTableRow } from "../../../../../components/ui/Skeleton";
 import { BARANGAY_LIST } from "../../../../../constants/barangays";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
@@ -132,18 +133,13 @@ export default function ExpiringCredentialsFeed({
 
       {/* Action Table Shell (Matches ActivityLogTable.jsx exactly) */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-        {isLoading ? (
-          <div className="p-12 text-center">
-            <div className="w-8 h-8 border-3 border-red-200 border-t-red-600 rounded-full animate-spin mx-auto mb-3"></div>
-            <p className="text-sm font-medium text-gray-500">Loading municipal certification feed...</p>
-          </div>
-        ) : isError ? (
+        {isError ? (
           <div className="p-8 text-center bg-red-50/50">
             <HugeiconsIcon icon={CancelCircleIcon} className="w-10 h-10 text-red-500 mx-auto mb-2" />
             <p className="font-semibold text-red-800">Failed to load certification feed</p>
             <p className="text-xs text-red-600 mt-1">{error?.response?.data?.error || error?.message}</p>
           </div>
-        ) : certificates.length === 0 ? (
+        ) : !isLoading && certificates.length === 0 ? (
           <div className="p-12 text-center">
             <div className="w-14 h-14 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-3">
               <HugeiconsIcon icon={Award01Icon} className="w-7 h-7 text-gray-300" />
@@ -177,65 +173,69 @@ export default function ExpiringCredentialsFeed({
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50">
-                {certificates.map((cert) => (
-                  <tr key={cert.cert_id} className="hover:bg-gray-50/60 transition-colors">
-                    {/* Resident & Barangay */}
-                    <td className="px-6 py-4">
-                      <div className="font-semibold text-gray-900 text-sm">{cert.resident_name}</div>
-                      <div className="text-xs text-gray-500">{cert.resident_email}</div>
-                      <div className="mt-1">
-                        <span className="inline-block text-[11px] font-semibold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-md border border-blue-100">
-                          {cert.barangay_name || "Unassigned"}
-                        </span>
-                      </div>
-                    </td>
+                {isLoading
+                  ? [1, 2, 3, 4, 5, 6].map((i) => (
+                      <SkeletonTableRow key={i} columns={6} hasAvatar={true} />
+                    ))
+                  : certificates.map((cert) => (
+                      <tr key={cert.cert_id} className="hover:bg-gray-50/60 transition-colors">
+                        {/* Resident & Barangay */}
+                        <td className="px-6 py-4">
+                          <div className="font-semibold text-gray-900 text-sm">{cert.resident_name}</div>
+                          <div className="text-xs text-gray-500">{cert.resident_email}</div>
+                          <div className="mt-1">
+                            <span className="inline-block text-[11px] font-semibold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-md border border-blue-100">
+                              {cert.barangay_name || "Unassigned"}
+                            </span>
+                          </div>
+                        </td>
 
-                    {/* Module */}
-                    <td className="px-6 py-4">
-                      <div className="font-medium text-gray-900 text-sm">{cert.module_title}</div>
-                      {cert.module_category && (
-                        <span className="inline-block mt-0.5 text-[11px] font-medium text-gray-500 bg-gray-100 px-2 py-0.5 rounded">
-                          {cert.module_category}
-                        </span>
-                      )}
-                    </td>
+                        {/* Module */}
+                        <td className="px-6 py-4">
+                          <div className="font-medium text-gray-900 text-sm">{cert.module_title}</div>
+                          {cert.module_category && (
+                            <span className="inline-block mt-0.5 text-[11px] font-medium text-gray-500 bg-gray-100 px-2 py-0.5 rounded">
+                              {cert.module_category}
+                            </span>
+                          )}
+                        </td>
 
-                    {/* Control No */}
-                    <td className="px-6 py-4 font-mono text-xs text-gray-700 font-semibold">
-                      {cert.cert_rec}
-                    </td>
+                        {/* Control No */}
+                        <td className="px-6 py-4 font-mono text-xs text-gray-700 font-semibold">
+                          {cert.cert_rec}
+                        </td>
 
-                    {/* Issued Date */}
-                    <td className="px-6 py-4 text-sm text-gray-600 whitespace-nowrap">
-                      {formatDate(cert.completion_date)}
-                    </td>
+                        {/* Issued Date */}
+                        <td className="px-6 py-4 text-sm text-gray-600 whitespace-nowrap">
+                          {formatDate(cert.completion_date)}
+                        </td>
 
-                    {/* Expires Date */}
-                    <td className="px-6 py-4 text-sm whitespace-nowrap">
-                      <span
-                        className={
-                          cert.computed_status === "expiring_soon"
-                            ? "text-amber-700 font-semibold"
-                            : cert.computed_status === "expired"
-                            ? "text-red-700 font-semibold"
-                            : "text-gray-600"
-                        }
-                      >
-                        {formatDate(cert.expires_at)}
-                      </span>
-                    </td>
+                        {/* Expires Date */}
+                        <td className="px-6 py-4 text-sm whitespace-nowrap">
+                          <span
+                            className={
+                              cert.computed_status === "expiring_soon"
+                                ? "text-amber-700 font-semibold"
+                                : cert.computed_status === "expired"
+                                ? "text-red-700 font-semibold"
+                                : "text-gray-600"
+                            }
+                          >
+                            {formatDate(cert.expires_at)}
+                          </span>
+                        </td>
 
-                    {/* Lifecycle Status Badge */}
-                    <td className="px-6 py-4 text-center">
-                      <CertificateLifecycleBadge status={cert.computed_status} />
-                      {cert.computed_status === "revoked" && cert.revocation_reason && (
-                        <p className="text-[10px] text-gray-400 mt-1 italic truncate max-w-[180px] mx-auto">
-                          {cert.revocation_reason}
-                        </p>
-                      )}
-                    </td>
-                  </tr>
-                ))}
+                        {/* Lifecycle Status Badge */}
+                        <td className="px-6 py-4 text-center">
+                          <CertificateLifecycleBadge status={cert.computed_status} />
+                          {cert.computed_status === "revoked" && cert.revocation_reason && (
+                            <p className="text-[10px] text-gray-400 mt-1 italic truncate max-w-[180px] mx-auto">
+                              {cert.revocation_reason}
+                            </p>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
               </tbody>
             </table>
           </div>

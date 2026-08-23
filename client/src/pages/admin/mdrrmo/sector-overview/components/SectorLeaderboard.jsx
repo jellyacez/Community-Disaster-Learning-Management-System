@@ -1,14 +1,22 @@
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Medal01Icon, Medal02Icon, Medal03Icon } from "@hugeicons/core-free-icons";
 import { getLeaderboardColor } from "../utils";
+import { SkeletonLeaderboardRow } from "../../../../../components/ui/Skeleton";
 
-export default function SectorLeaderboard({ top5, bottom5, selectedBarangayId, handleRowClick }) {
+export default function SectorLeaderboard({ top5 = [], bottom5 = [], selectedBarangayId, handleRowClick, isLoading }) {
   return (
     <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm flex flex-col">
       <h2 className="text-lg font-bold text-gray-900 mb-1">Preparedness Leaderboard</h2>
       <p className="text-sm text-gray-500 mb-6">Top performing barangays and those needing attention.</p>
       
-      <div className="flex-1 overflow-y-auto space-y-6">
+      {isLoading ? (
+        <div className="space-y-3 py-1">
+          {[1, 2, 3, 4, 5].map((i) => (
+            <SkeletonLeaderboardRow key={i} />
+          ))}
+        </div>
+      ) : (
+        <div className="flex-1 overflow-y-auto space-y-6">
         {/* Top 5 Section */}
         {top5.length > 0 && (
           <div>
@@ -89,6 +97,7 @@ export default function SectorLeaderboard({ top5, bottom5, selectedBarangayId, h
           </div>
         )}
       </div>
+      )}
     </div>
   );
 }

@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import apiClient from "../../../../../lib/apiClient";
+import { SkeletonChart } from "../../../../../components/ui/Skeleton";
 import {
   PieChart,
   Pie,
@@ -80,7 +81,7 @@ export function MdrrmoModuleDistributionChart({ onCategoryClick, selectedCategor
       
       {distLoading ? (
         <div className="flex-1 flex items-center justify-center">
-           <div className="w-8 h-8 border-4 border-red-500 border-t-transparent rounded-full animate-spin" />
+          <SkeletonChart type="donut" height={240} />
         </div>
       ) : !pieData || pieData.length === 0 ? (
         <div className="flex-1 flex items-center justify-center text-sm text-gray-400">
@@ -181,8 +182,8 @@ export function MdrrmoEnrollmentTrendChart() {
       </div>
       
       {trendLoading ? (
-        <div className="flex-1 flex items-center justify-center">
-           <div className="w-8 h-8 border-4 border-red-500 border-t-transparent rounded-full animate-spin" />
+        <div className="flex-1 flex flex-col justify-end">
+          <SkeletonChart type="area" height={240} />
         </div>
       ) : !trendData || trendData.length === 0 ? (
         <div className="flex-1 flex items-center justify-center text-sm text-gray-400">

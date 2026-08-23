@@ -4,8 +4,9 @@ import { authClient } from "../../../../../lib/auth-client";
 import { ArrowLeft01Icon, ArrowRight01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import StatusBadge from "../../../../../components/ui/StatusBadge";
+import { SkeletonTableRow } from "../../../../../components/ui/Skeleton";
 
-export default function ActiveModulesTable({ modules = [], selectedCategory, statusFilter, onApprove, onReject }) {
+export default function ActiveModulesTable({ modules = [], isLoading, selectedCategory, statusFilter, onApprove, onReject }) {
   const { data: session } = authClient.useSession();
   const isHeadAdmin = session?.user?.role === "head_mdrrmo_admin";
 
@@ -51,7 +52,7 @@ export default function ActiveModulesTable({ modules = [], selectedCategory, sta
       </div>
 
       <div className="flex-1 flex flex-col justify-between overflow-x-auto min-h-0">
-        {filtered.length === 0 ? (
+        {!isLoading && filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-gray-400 text-sm py-12">
             <p>No modules found matching the criteria.</p>
           </div>
@@ -68,42 +69,46 @@ export default function ActiveModulesTable({ modules = [], selectedCategory, sta
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
-                  {paginatedModules.map(mod => (
-                    <tr key={mod.id} className="hover:bg-gray-50/50 transition-colors">
-                      <td className="py-3 px-6">
-                        <Link 
-                          to={`/admin/mdrrmo/modules/${mod.id}/details`}
-                          className="text-[14px] font-semibold text-gray-900 hover:text-red-600 truncate max-w-[200px] block transition-colors"
-                        >
-                          {mod.title}
-                        </Link>
-                        <p className="text-[12px] text-gray-500">{mod.step_count} Steps</p>
-                      </td>
-                      <td className="py-3 px-6">
-                        <span className="text-[13px] font-medium text-gray-600">{mod.category}</span>
-                      </td>
-                      <td className="py-3 px-6">
-                        {getStatusBadge(mod.status)}
-                      </td>
-                      <td className="py-3 px-6 text-right">
-                        {isHeadAdmin && mod.status === 'pending_review' ? (
-                          <Link 
-                            to="/admin/mdrrmo/approvals"
-                            className="inline-block px-4 py-1.5 bg-red-600 text-white text-[12px] font-bold tracking-wide uppercase rounded hover:bg-red-700 transition-colors"
-                          >
-                            Review
-                          </Link>
-                        ) : (
-                          <Link 
-                            to={`/admin/mdrrmo/modules/${mod.id}/details`}
-                            className="text-[13px] font-semibold text-red-600 hover:text-red-700 hover:underline"
-                          >
-                            Manage
-                          </Link>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
+                  {isLoading
+                    ? [1, 2, 3, 4, 5].map((i) => (
+                        <SkeletonTableRow key={i} columns={4} padding="py-3 px-6" />
+                      ))
+                    : paginatedModules.map((mod) => (
+                        <tr key={mod.id} className="hover:bg-gray-50/50 transition-colors">
+                          <td className="py-3 px-6">
+                            <Link 
+                              to={`/admin/mdrrmo/modules/${mod.id}/details`}
+                              className="text-[14px] font-semibold text-gray-900 hover:text-red-600 truncate max-w-[200px] block transition-colors"
+                            >
+                              {mod.title}
+                            </Link>
+                            <p className="text-[12px] text-gray-500">{mod.step_count} Steps</p>
+                          </td>
+                          <td className="py-3 px-6">
+                            <span className="text-[13px] font-medium text-gray-600">{mod.category}</span>
+                          </td>
+                          <td className="py-3 px-6">
+                            {getStatusBadge(mod.status)}
+                          </td>
+                          <td className="py-3 px-6 text-right">
+                            {isHeadAdmin && mod.status === 'pending_review' ? (
+                              <Link 
+                                to="/admin/mdrrmo/approvals"
+                                className="inline-block px-4 py-1.5 bg-red-600 text-white text-[12px] font-bold tracking-wide uppercase rounded hover:bg-red-700 transition-colors"
+                              >
+                                Review
+                              </Link>
+                            ) : (
+                              <Link 
+                                to={`/admin/mdrrmo/modules/${mod.id}/details`}
+                                className="text-[13px] font-semibold text-red-600 hover:text-red-700 hover:underline"
+                              >
+                                Manage
+                              </Link>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
                 </tbody>
               </table>
             </div>

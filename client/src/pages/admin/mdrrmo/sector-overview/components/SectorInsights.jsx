@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Alert01Icon, StarAward01Icon, UserGroupIcon } from "@hugeicons/core-free-icons";
 
-export default function SectorInsights({ kpiData, top5, bottom5, sectorData, setSearchQuery, setFilters }) {
+export default function SectorInsights({ kpiData, top5, bottom5, sectorData, setSearchQuery, setFilters, isLoading }) {
   const insights = useMemo(() => {
     if (!kpiData || !top5 || !bottom5) return [];
     const list = [];
@@ -70,6 +70,25 @@ export default function SectorInsights({ kpiData, top5, bottom5, sectorData, set
 
     return list;
   }, [kpiData, top5, bottom5, sectorData, setSearchQuery, setFilters]);
+
+  if (isLoading) {
+    return (
+      <div className="mb-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="h-28 rounded-2xl bg-white border border-gray-100 p-5 animate-pulse shadow-sm flex flex-col justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-xl bg-gray-200" />
+              <div className="h-3.5 w-24 bg-gray-200 rounded-full" />
+            </div>
+            <div className="space-y-1.5 mt-2">
+              <div className="h-4 w-3/4 bg-gray-200 rounded-full" />
+              <div className="h-3 w-1/2 bg-gray-100 rounded-full" />
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }
 
   if (insights.length === 0) return null;
 

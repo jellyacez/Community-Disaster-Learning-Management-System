@@ -1,25 +1,25 @@
 import { StarAward01Icon, Alert01Icon, UserGroupIcon, Home01Icon } from "@hugeicons/core-free-icons";
 import StatCard from "../../../system/overview/components/StatCard";
 
-export default function SectorKPIs({ kpiData, trends, isLoading }) {
-  if (!kpiData) return null;
+export default function SectorKPIs({ kpiData = {}, trends, isLoading }) {
+  const k = kpiData || {};
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
       <StatCard
         icon={StarAward01Icon}
         label="Avg Completion Rate"
-        value={kpiData.avgCompletionRate ?? 0}
+        value={k.avgCompletionRate ?? 0}
         suffix="%"
         sub="Across active barangays"
         color="green"
         isNumeric={true}
         trend={
-          kpiData.mostActiveRate > 0
+          k.mostActiveRate > 0
             ? {
                 direction: "up",
                 color: "green",
-                text: `${kpiData.mostActiveName} leading (${kpiData.mostActiveRate}%)`,
+                text: `${k.mostActiveName} leading (${k.mostActiveRate}%)`,
               }
             : {
                 direction: "flat",
@@ -32,7 +32,7 @@ export default function SectorKPIs({ kpiData, trends, isLoading }) {
       <StatCard
         icon={Alert01Icon}
         label="Below Threshold"
-        value={kpiData.belowThreshold}
+        value={k.belowThreshold ?? 0}
         sub="Sectors with 0% completion"
         color="red"
         trend={trends?.belowThreshold}
@@ -41,7 +41,7 @@ export default function SectorKPIs({ kpiData, trends, isLoading }) {
       <StatCard
         icon={UserGroupIcon}
         label="Certified Responders"
-        value={kpiData.totalCertified}
+        value={k.totalCertified ?? 0}
         sub="Residents with active certs"
         color="blue"
         trend={trends?.certifiedResponders}
@@ -50,7 +50,7 @@ export default function SectorKPIs({ kpiData, trends, isLoading }) {
       <StatCard
         icon={Home01Icon}
         label="Barangays Covered"
-        value={kpiData.coveredBarangays + " / 21"}
+        value={(k.coveredBarangays ?? 0) + " / 21"}
         sub="Sectors with registered users"
         color="purple"
         isNumeric={false}

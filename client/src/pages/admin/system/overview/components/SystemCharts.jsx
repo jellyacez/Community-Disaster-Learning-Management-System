@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import apiClient from "../../../../../lib/apiClient";
+import { SkeletonChart } from "../../../../../components/ui/Skeleton";
 import {
   PieChart,
   Pie,
@@ -41,8 +42,8 @@ const TrafficTooltip = ({ active, payload, label }) => {
   return null;
 };
 
-export default function SystemCharts({ stats }) {
-  const { data: trafficData } = useQuery({
+export default function SystemCharts({ stats = {}, loading }) {
+  const { data: trafficData, isLoading: trafficLoading } = useQuery({
     queryKey: ["trafficAnalytics"],
     queryFn: async () => {
       const res = await apiClient.get("/admin/analytics/traffic");
@@ -50,8 +51,6 @@ export default function SystemCharts({ stats }) {
     },
     refetchInterval: 15000,
   });
-
-  if (!stats) return null;
 
   // Premium Gradient Palette
   const pieData = [
@@ -69,7 +68,11 @@ export default function SystemCharts({ stats }) {
       <div className="bg-white rounded-2xl border border-gray-100 shadow-[0_2px_12px_-3px_rgba(0,0,0,0.06)] p-6 flex flex-col h-full min-h-[350px] transition-all hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)]">
         <h2 className="text-base font-bold text-gray-900 mb-6">User Distribution</h2>
         
-        {filteredPieData.length === 0 ? (
+        {loading ? (
+          <div className="flex-1 flex items-center justify-center">
+            <SkeletonChart type="donut" height={240} />
+          </div>
+        ) : filteredPieData.length === 0 ? (
           <div className="flex-1 flex items-center justify-center text-sm text-gray-400">
             No user data available.
           </div>
@@ -140,8 +143,12 @@ export default function SystemCharts({ stats }) {
           <h2 className="text-base font-bold text-gray-900">Active Users Trend</h2>
           <span className="text-[10px] font-bold uppercase tracking-widest text-red-600 bg-red-50 px-2 py-1 rounded-full animate-pulse">Live 24h</span>
         </div>
-        
-        {!trafficData || trafficData.length === 0 ? (
+
+        {trafficLoading ? (
+          <div className="flex-1 flex flex-col justify-end">
+            <SkeletonChart type="area" height={240} />
+          </div>
+        ) : !trafficData || trafficData.length === 0 ? (
           <div className="flex-1 flex items-center justify-center text-sm text-gray-400">
             No traffic data available.
           </div>

@@ -63,7 +63,7 @@ export default function SystemOverview() {
       <div className="grid lg:grid-cols-3 gap-6">
         {/* Left Side: Charts & Logs */}
         <div className="lg:col-span-2 flex flex-col gap-6">
-          <SystemCharts stats={s} />
+          <SystemCharts stats={s} loading={statsLoading} />
           <RecentActivityFeed />
         </div>
 

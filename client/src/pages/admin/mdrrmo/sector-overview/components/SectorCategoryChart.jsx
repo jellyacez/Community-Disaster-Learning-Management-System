@@ -8,13 +8,14 @@ import {
   ResponsiveContainer
 } from "recharts";
 import { getCategoryColor } from "../utils";
+import { SkeletonChart } from "../../../../../components/ui/Skeleton";
 
 export default function SectorCategoryChart({ 
   selectedBarangayId, 
   selectedBarangayName, 
   setSelectedBarangayId, 
   isBreakdownLoading, 
-  breakdownData 
+  breakdownData = []
 }) {
   return (
     <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm flex flex-col">
@@ -35,10 +36,7 @@ export default function SectorCategoryChart({
       
       <div className="flex-1 min-h-[300px] flex items-center justify-center">
         {isBreakdownLoading ? (
-          <div className="animate-pulse flex flex-col items-center">
-            <div className="w-32 h-32 bg-gray-200 rounded-full mb-4"></div>
-            <div className="h-4 bg-gray-200 rounded w-24"></div>
-          </div>
+          <SkeletonChart type="donut" height={260} />
         ) : breakdownData.length > 0 ? (
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>

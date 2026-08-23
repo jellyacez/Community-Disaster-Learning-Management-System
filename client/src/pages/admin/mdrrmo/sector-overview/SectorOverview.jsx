@@ -52,11 +52,7 @@ export default function SectorOverview() {
     <div className="max-w-7xl mx-auto animate-in fade-in duration-150 px-6 md:px-12 pt-2 md:pt-2 pb-12">
       <SectorHeader totalResidents={totalResidents} lastUpdated={lastUpdated} />
 
-      {isLoading ? (
-        <div className="flex items-center justify-center p-24">
-          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-red-600"></div>
-        </div>
-      ) : isError ? (
+      {isError ? (
         <div className="p-6 bg-red-50 text-red-600 rounded-2xl border border-red-100 text-center">
           <p className="font-bold text-lg">Error loading sector data.</p>
           <p className="text-sm">Please ensure the backend routes are connected.</p>
@@ -70,6 +66,7 @@ export default function SectorOverview() {
             sectorData={sectorData}
             setSearchQuery={setSearchQuery}
             setFilters={setFilters}
+            isLoading={isLoading}
           />
 
           <SectorKPIs kpiData={kpiData} trends={trends} isLoading={isLoading} />
@@ -81,6 +78,7 @@ export default function SectorOverview() {
               bottom5={bottom5}
               selectedBarangayId={selectedBarangayId}
               handleRowClick={handleRowClick}
+              isLoading={isLoading}
             />
 
             <SectorCategoryChart
@@ -93,7 +91,7 @@ export default function SectorOverview() {
                   : "Municipality-Wide"
               }
               setSelectedBarangayId={setSelectedBarangayId}
-              isBreakdownLoading={isBreakdownLoading}
+              isBreakdownLoading={isLoading || isBreakdownLoading}
               breakdownData={breakdownData}
             />
           </div>
@@ -112,6 +110,7 @@ export default function SectorOverview() {
             sortConfig={sortConfig}
             selectedBarangayId={selectedBarangayId}
             handleRowClick={handleRowClick}
+            isLoading={isLoading}
           />
         </>
       )}

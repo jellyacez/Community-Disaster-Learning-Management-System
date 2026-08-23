@@ -200,6 +200,7 @@ export default function Overview() {
         <div className="lg:col-span-2">
           <ActiveModulesTable
             modules={modules}
+            isLoading={isLoadingModules}
             selectedCategory={selectedCategory}
             statusFilter={statusFilter}
           />
