@@ -76,6 +76,9 @@ const MdrrmoSectorOverview = lazy(
 const MdrrmoActivityLog = lazy(
   () => import("./pages/admin/mdrrmo/logs/ActivityLog"),
 );
+const MdrrmoCertifications = lazy(
+  () => import("./pages/admin/mdrrmo/certifications/MdrrmoCertifications"),
+);
 const MdrrmoModuleManagement = lazy(
   () => import("./pages/admin/mdrrmo/module-management/ModuleManagement"),
 );
@@ -233,6 +236,10 @@ export default function App() {
                   <Route
                     path="sector-overview"
                     element={<MdrrmoSectorOverview />}
+                  />
+                  <Route
+                    path="certifications"
+                    element={<MdrrmoCertifications />}
                   />
                   <Route
                     path="logs"

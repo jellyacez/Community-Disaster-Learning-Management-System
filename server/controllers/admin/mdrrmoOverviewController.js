@@ -317,11 +317,249 @@ exports.getSectorOverviewCategoryBreakdown = async (req, res) => {
 // @access  Private (system_admin, mdrrmo_admin, head_mdrrmo_admin)
 exports.getMunicipalCertAnalytics = async (req, res) => {
   try {
-    // Stub for Phase 3 implementation
-    return res.json({ success: true, message: "Phase 3 stub: getMunicipalCertAnalytics", data: {} });
+    // 1. Overall Municipal KPI Summary using identical computed_status CASE
+    const summaryQuery = `
+      WITH municipal_certs AS (
+        SELECT 
+          c.cert_id,
+          CASE 
+            WHEN c.status = 'revoked' THEN 'revoked'
+            WHEN c.expires_at < NOW() THEN 'expired'
+            WHEN c.expires_at <= NOW() + INTERVAL '30 days' THEN 'expiring_soon'
+            ELSE 'active'
+          END AS computed_status
+        FROM public.certificates c
+        INNER JOIN public."user" u ON c.user_id = u.id AND u.archived = false AND (u.banned IS NULL OR u.banned = false)
+      )
+      SELECT 
+        COUNT(*)::int AS total_certified,
+        COUNT(CASE WHEN computed_status = 'active' THEN 1 END)::int AS active_count,
+        COUNT(CASE WHEN computed_status = 'expiring_soon' THEN 1 END)::int AS expiring_soon_count,
+        COUNT(CASE WHEN computed_status = 'expired' THEN 1 END)::int AS expired_count,
+        COUNT(CASE WHEN computed_status = 'revoked' THEN 1 END)::int AS revoked_count
+      FROM municipal_certs;
+    `;
+    const summaryRes = await pool.query(summaryQuery);
+    const summary = summaryRes.rows[0] || {
+      total_certified: 0,
+      active_count: 0,
+      expiring_soon_count: 0,
+      expired_count: 0,
+      revoked_count: 0,
+    };
+
+    // 2. 21-Barangay Compliance Leaderboard
+    // All 21 barangays guaranteed via RIGHT/LEFT JOIN from barangays table
+    // Active certified count strictly uses computed_status = 'active' (status = 'active' AND expires_at >= NOW() AND status != 'revoked')
+    const barangayQuery = `
+      WITH cert_scoped AS (
+        SELECT 
+          c.cert_id,
+          c.user_id,
+          CASE 
+            WHEN c.status = 'revoked' THEN 'revoked'
+            WHEN c.expires_at < NOW() THEN 'expired'
+            WHEN c.expires_at <= NOW() + INTERVAL '30 days' THEN 'expiring_soon'
+            ELSE 'active'
+          END AS computed_status
+        FROM public.certificates c
+      )
+      SELECT 
+        b.id AS barangay_id,
+        b.name AS barangay_name,
+        COUNT(DISTINCT CASE WHEN u.role = 'resident' THEN u.id END)::int AS resident_count,
+        COUNT(DISTINCT CASE WHEN u.role = 'resident' AND cs.computed_status = 'active' THEN u.id END)::int AS active_certified_count,
+        COUNT(DISTINCT CASE WHEN cs.computed_status = 'expiring_soon' THEN cs.cert_id END)::int AS expiring_soon_count,
+        COUNT(DISTINCT CASE WHEN cs.computed_status = 'expired' THEN cs.cert_id END)::int AS expired_count,
+        COUNT(DISTINCT CASE WHEN cs.computed_status = 'revoked' THEN cs.cert_id END)::int AS revoked_count,
+        COUNT(DISTINCT cs.cert_id)::int AS total_certs,
+        COALESCE(
+          ROUND(
+            (COUNT(DISTINCT CASE WHEN u.role = 'resident' AND cs.computed_status = 'active' THEN u.id END)::numeric / 
+             NULLIF(COUNT(DISTINCT CASE WHEN u.role = 'resident' THEN u.id END), 0)
+            ) * 100, 1
+          ), 0.0
+        )::float AS compliance_rate
+      FROM public.barangays b
+      LEFT JOIN public."user" u ON u.barangay_id = b.id AND u.archived = false AND (u.banned IS NULL OR u.banned = false)
+      LEFT JOIN cert_scoped cs ON cs.user_id = u.id
+      GROUP BY b.id, b.name
+      ORDER BY compliance_rate DESC, b.name ASC;
+    `;
+    const barangayRes = await pool.query(barangayQuery);
+
+    // 3. Module Popularity & Certification Distribution
+    const moduleQuery = `
+      WITH cert_scoped AS (
+        SELECT 
+          c.cert_id,
+          c.module_id,
+          CASE 
+            WHEN c.status = 'revoked' THEN 'revoked'
+            WHEN c.expires_at < NOW() THEN 'expired'
+            WHEN c.expires_at <= NOW() + INTERVAL '30 days' THEN 'expiring_soon'
+            ELSE 'active'
+          END AS computed_status
+        FROM public.certificates c
+        INNER JOIN public."user" u ON c.user_id = u.id AND u.archived = false AND (u.banned IS NULL OR u.banned = false)
+      )
+      SELECT 
+        m.mod_id AS module_id,
+        m.modname AS module_title,
+        COALESCE(m.modcat, 'General') AS category,
+        COUNT(cs.cert_id)::int AS total_certificates,
+        COUNT(CASE WHEN cs.computed_status = 'active' THEN 1 END)::int AS active_certificates,
+        COUNT(CASE WHEN cs.computed_status = 'expiring_soon' THEN 1 END)::int AS expiring_soon_certificates,
+        COUNT(CASE WHEN cs.computed_status = 'expired' THEN 1 END)::int AS expired_certificates
+      FROM public.module_data m
+      LEFT JOIN cert_scoped cs ON cs.module_id = m.mod_id
+      WHERE m.status = 'published'
+      GROUP BY m.mod_id, m.modname, m.modcat
+      ORDER BY total_certificates DESC, m.modname ASC;
+    `;
+    const moduleRes = await pool.query(moduleQuery);
+
+    return res.json({
+      success: true,
+      data: {
+        summary,
+        barangays: barangayRes.rows,
+        modules: moduleRes.rows,
+      },
+    });
   } catch (error) {
     console.error("Error fetching municipal cert analytics:", error);
     return res.status(500).json({ success: false, message: 'Server Error' });
   }
 };
+
+// @desc    Get municipal-wide paginated certificate action feed
+// @route   GET /api/admin/mdrrmo/certifications/feed
+// @access  Private (system_admin, mdrrmo_admin, head_mdrrmo_admin)
+exports.getMunicipalCertFeed = async (req, res) => {
+  try {
+    const { page = 1, limit = 10, search = "", barangayId = "", moduleId = "", status = "" } = req.query;
+    const pageNum = Math.max(parseInt(page, 10) || 1, 1);
+    const limitNum = Math.min(Math.max(parseInt(limit, 10) || 10, 1), 100);
+    const offset = (pageNum - 1) * limitNum;
+
+    const conditions = ["u.archived = false", "(u.banned IS NULL OR u.banned = false)"];
+    const params = [];
+
+    // Optional barangay filter
+    if (barangayId && !isNaN(parseInt(barangayId, 10))) {
+      params.push(parseInt(barangayId, 10));
+      conditions.push(`u.barangay_id = $${params.length}`);
+    }
+
+    // Optional module filter
+    if (moduleId && !isNaN(parseInt(moduleId, 10))) {
+      params.push(parseInt(moduleId, 10));
+      conditions.push(`c.module_id = $${params.length}`);
+    }
+
+    // Optional search term
+    if (search && search.trim()) {
+      params.push(`%${search.trim()}%`);
+      const sIdx = params.length;
+      conditions.push(`(
+        u.name ILIKE $${sIdx} OR 
+        u.email ILIKE $${sIdx} OR 
+        c.cert_rec ILIKE $${sIdx} OR 
+        m.modname ILIKE $${sIdx}
+      )`);
+    }
+
+    const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
+
+    // Base CTE with computed status
+    const baseCte = `
+      WITH municipal_feed AS (
+        SELECT 
+          c.cert_id,
+          c.cert_rec,
+          c.completion_date,
+          c.expires_at,
+          c.status AS raw_status,
+          c.revoked_at,
+          c.revocation_reason,
+          u.id AS resident_id,
+          u.name AS resident_name,
+          u.email AS resident_email,
+          u.barangay_id,
+          b.name AS barangay_name,
+          m.mod_id AS module_id,
+          m.modname AS module_title,
+          m.modcat AS module_category,
+          CASE 
+            WHEN c.status = 'revoked' THEN 'revoked'
+            WHEN c.expires_at < NOW() THEN 'expired'
+            WHEN c.expires_at <= NOW() + INTERVAL '30 days' THEN 'expiring_soon'
+            ELSE 'active'
+          END AS computed_status
+        FROM public.certificates c
+        INNER JOIN public."user" u ON c.user_id = u.id
+        LEFT JOIN public.barangays b ON u.barangay_id = b.id
+        INNER JOIN public.module_data m ON c.module_id = m.mod_id
+        ${whereClause}
+      )
+    `;
+
+    // Filter by computed status if provided
+    let statusFilter = "";
+    if (status && ['active', 'expiring_soon', 'expired', 'revoked'].includes(status)) {
+      params.push(status);
+      statusFilter = `WHERE computed_status = $${params.length}`;
+    }
+
+    // Count query
+    const countQuery = `
+      ${baseCte}
+      SELECT COUNT(*)::int AS total FROM municipal_feed ${statusFilter};
+    `;
+    const countRes = await pool.query(countQuery, params);
+    const total = countRes.rows[0]?.total || 0;
+
+    // Pagination query
+    params.push(limitNum);
+    const limitIdx = params.length;
+    params.push(offset);
+    const offsetIdx = params.length;
+
+    const dataQuery = `
+      ${baseCte}
+      SELECT * FROM municipal_feed
+      ${statusFilter}
+      ORDER BY 
+        CASE computed_status
+          WHEN 'expiring_soon' THEN 1
+          WHEN 'expired' THEN 2
+          WHEN 'active' THEN 3
+          WHEN 'revoked' THEN 4
+          ELSE 5
+        END,
+        expires_at ASC,
+        completion_date DESC
+      LIMIT $${limitIdx} OFFSET $${offsetIdx};
+    `;
+    const dataRes = await pool.query(dataQuery, params);
+
+    return res.json({
+      success: true,
+      data: {
+        certificates: dataRes.rows,
+        pagination: {
+          total,
+          page: pageNum,
+          limit: limitNum,
+          totalPages: Math.ceil(total / limitNum) || 1,
+        },
+      },
+    });
+  } catch (error) {
+    console.error("Error fetching municipal cert feed:", error);
+    return res.status(500).json({ success: false, message: 'Server Error' });
+  }
+};
+
 

@@ -250,6 +250,16 @@ router.get(
   mdrrmoOverviewController.getMunicipalCertAnalytics
 );
 
+// @route   GET /api/admin/mdrrmo/certifications/feed
+// @desc    Get municipal-wide paginated certificate action feed
+// @access  Private (mdrrmo_admin, system_admin)
+router.get(
+  "/mdrrmo/certifications/feed",
+  requireRole(['system_admin', 'mdrrmo_admin', 'head_mdrrmo_admin']),
+  adminDataLimiter,
+  mdrrmoOverviewController.getMunicipalCertFeed
+);
+
 // ==========================================
 // Barangay Admin Dashboards & Features
 // ==========================================

@@ -65,6 +65,7 @@ export const ROLE_BASED_LINKS = {
           icon: Database01Icon,
           subItems: [
             { name: "Sector Overview", path: "/admin/mdrrmo/sector-overview" },
+            { name: "Certification Analytics", path: "/admin/mdrrmo/certifications" },
             { name: "Activity & Monitoring Logs", path: "/admin/mdrrmo/logs" },
           ],
         },
@@ -120,6 +121,7 @@ export const ROLE_BASED_LINKS = {
           icon: Database01Icon,
           subItems: [
             { name: "Sector Overview", path: "/admin/mdrrmo/sector-overview" },
+            { name: "Certification Analytics", path: "/admin/mdrrmo/certifications" },
             { name: "Activity & Monitoring Logs", path: "/admin/mdrrmo/logs" },
           ],
         },
