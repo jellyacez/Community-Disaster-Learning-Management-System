@@ -70,6 +70,21 @@ This document tracks identified technical debt, architectural decisions, and res
 
 ---
 
+### Resolved: Offline Queue Retry Strategy, Backoff & User-Facing Notifications
+- **Location:** `client/src/lib/LocalSave/syncManager.js`, `client/src/lib/localDb.js`, `client/src/hooks/useNetworkSync.js`, `client/src/components/ui/UnsyncedQueueIndicator.jsx`, `client/src/pages/user/feedback/components/FeedbackHistoryCard.jsx`
+- **Issue:** Queued offline writes previously incremented `retry_count` without backoff intervals or error classification, retrying indefinitely on reconnect/interval and lacking user notifications when requests permanently failed (e.g., 4xx client/validation rejections). Furthermore, only 3 of 8 offline action types were wired up in `syncManager.js`.
+- **Resolution:**
+  - **Error Classification:** Structured error classification distinguishing transient errors (5xx server errors, 429 rate limits, network timeouts when `navigator.onLine === true`) from terminal errors (4xx client/validation errors, unhandled schemas).
+  - **Full-Jitter Exponential Backoff:** Implemented delay calculation $\text{delay} = \min(\text{MAX\_DELAY},\, \text{BASE\_DELAY} \times 2^{\text{retry\_count}-1}) \pm \text{jitter}$ (10s $\to$ 20s $\to$ 40s $\to$ 80s $\to$ 160s, capped at 30m).
+  - **Offline Budget Protection:** Loop strictly checks `navigator.onLine` before and between tasks, pausing immediately without burning retry attempts when offline.
+  - **Max Retry Cap & Fallback:** Cap set to 5 attempts; tasks that exhaust retries transition to `status: 'failed'` (`error_type: 'transient_exhausted'`).
+  - **Complete Action Dispatch:** Added explicit handlers for all 8 queued actions (`SUBMIT_FEEDBACK`, `MARK_STEP_COMPLETE`, `SUBMIT_QUIZ`, `UPDATE_PROGRESS`, `COMPLETE_MODULE`, `UPDATE_NAME`, `UPDATE_AVATAR`, `UPDATE_NOTIFICATION_SETTINGS`) with a default terminal error catch for unknown actions.
+  - **Dexie Schema Migration:** Added `localDb.version(2).stores({ sync_queue: "++sync_id, action_type, status, next_retry_at, retry_count, created_at" })` to ensure existing browser databases migrate cleanly.
+  - **User-Facing UI:** Added `UnsyncedQueueIndicator` global drawer in `UserNavbar` and per-card `[Retry]` / `[Discard]` actions with live failure explanations in `FeedbackHistoryCard`.
+- **Verification:** Verified via live Puppeteer tests against built React SPA with real DOM clicks, verifying "Sync Failed" badge rendering, retry queue dispatch, and drawer discard removal from IndexedDB.
+
+---
+
 ## 🟡 Open / Active Technical Debt Items
 
 ### 1. Sequence Canvas Flow Configuration Stub (`SequenceCanvas.jsx`)
@@ -109,14 +124,7 @@ This document tracks identified technical debt, architectural decisions, and res
 
 ---
 
-### 5. Offline Queue Retry Strategy & Notification Bounds
-- **Location:** `client/src/lib/LocalSave/syncManager.js`, `client/src/hooks/useNetworkSync.js`
-- **Description:** When `processOfflineQueue()` encounters an error, it increments `retry_count`.
-- **Recommended Action:** For long-term production resilience, consider implementing exponential backoff intervals for failed retries and a maximum retry cap with user-facing notification if an offline sync permanently fails (e.g. server validation rejection).
-
----
-
-### 6. Certificate Revocation Authority — MDRRMO Override Not Yet Implemented
+### 5. Certificate Revocation Authority — MDRRMO Override Not Yet Implemented
 - **Current state:** Only `barangay_admin` can revoke certificates, correctly scoped to their own barangay (verified working).
 - **Gap:** Original feature spec describes MDRRMO as having 'ultimate verification authority' to revoke any certificate municipality-wide — this was never built. No revoke action exists in the MDRRMO dashboard (Phase 3 is read-only/analytics).
 - **Decided direction (not yet implemented):** MDRRMO-tier admins should be able to revoke any certificate, with the affected barangay's admin(s) notified afterward (via the existing in-app notification bell and/or the existing nodemailer pipeline — mechanism TBD). Still needs: which MDRRMO tiers get this power (all three, or just `mdrrmo_admin` + `head_mdrrmo_admin`), and confirmation of whether a barangay can have multiple assigned admins (notification must reach all of them if so).
