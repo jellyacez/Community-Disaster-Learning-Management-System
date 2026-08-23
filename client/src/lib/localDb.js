@@ -17,3 +17,7 @@ localDb.version(1).stores({
 
     sync_queue: "++sync_id, action_type, status"
 });
+
+localDb.version(2).stores({
+    sync_queue: "++sync_id, action_type, status, next_retry_at, retry_count, created_at"
+});

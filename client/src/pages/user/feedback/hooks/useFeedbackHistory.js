@@ -1,7 +1,9 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import apiClient from "../../../../lib/apiClient";
+import { localDb } from "../../../../lib/localDb";
+import { retryFailedTask, discardFailedTask } from "../../../../lib/LocalSave/syncManager";
 
 export function useFeedbackHistory(userId, activeTab) {
   const queryClient = useQueryClient();
@@ -10,7 +12,29 @@ export function useFeedbackHistory(userId, activeTab) {
   const [replyInputs, setReplyInputs] = useState({});
   const [expandedIds, setExpandedIds] = useState(new Set());
   const [currentPage, setCurrentPage] = useState(1);
+  const [offlineFeedbackItems, setOfflineFeedbackItems] = useState([]);
   const PAGE_SIZE = 10;
+
+  // Load offline feedback items from Dexie
+  const loadOfflineFeedbacks = async () => {
+    try {
+      const items = await localDb.sync_queue
+        .where("action_type")
+        .equals("SUBMIT_FEEDBACK")
+        .toArray();
+      setOfflineFeedbackItems(items);
+    } catch (e) {
+      console.error("Error loading offline feedback from Dexie:", e);
+    }
+  };
+
+  useEffect(() => {
+    loadOfflineFeedbacks();
+    window.addEventListener("offline-sync-queue-updated", loadOfflineFeedbacks);
+    return () => {
+      window.removeEventListener("offline-sync-queue-updated", loadOfflineFeedbacks);
+    };
+  }, []);
 
   const handleSearchChange = (val) => {
     setSearchQuery(val);
@@ -29,15 +53,41 @@ export function useFeedbackHistory(userId, activeTab) {
   const handleReplyChange = (id, val) => setReplyInputs((prev) => ({ ...prev, [id]: val }));
 
   // 1. FETCH LIVE FEEDBACK HISTORY
-  const { data: submissions = [], isLoading } = useQuery({
+  const { data: serverSubmissions = [], isLoading } = useQuery({
     queryKey: ["userFeedbacks", userId],
     queryFn: async () => {
       const response = await apiClient.get("/feedbacks/my-submissions");
       return response.data.data || [];
     },
     enabled: !!userId,
-    // Polling intentionally omitted per instructions
   });
+
+  // Merge server submissions with offline queue items
+  const submissions = useMemo(() => {
+    const formattedOffline = offlineFeedbackItems.map((item) => ({
+      id: `offline-${item.sync_id}`,
+      sync_id: item.sync_id,
+      isOfflineItem: true,
+      subject: item.payload?.subject || "Untitled Feedback",
+      type: item.payload?.type || "feedback",
+      recipient: item.payload?.recipient || "barangay",
+      status: item.status === "failed" ? "Sync Failed" : item.status === "retrying" ? "Syncing" : "Queued Offline",
+      created_at: item.created_at || new Date().toISOString(),
+      last_error: item.last_error,
+      error_type: item.error_type,
+      retry_count: item.retry_count,
+      thread: [
+        {
+          id: `offline-msg-${item.sync_id}`,
+          sender_type: "resident",
+          message: item.payload?.message || "",
+          created_at: item.created_at || new Date().toISOString(),
+        },
+      ],
+    }));
+
+    return [...formattedOffline, ...serverSubmissions];
+  }, [offlineFeedbackItems, serverSubmissions]);
 
   const userReplyMutation = useMutation({
     mutationFn: async ({ id, reply }) => {
@@ -104,6 +154,25 @@ export function useFeedbackHistory(userId, activeTab) {
     },
   ], [submissions]);
 
+  const handleRetryOfflineItem = async (syncId) => {
+    try {
+      toast.loading("Retrying offline sync...", { id: `retry-${syncId}` });
+      await retryFailedTask(syncId);
+      toast.success("Sync triggered.", { id: `retry-${syncId}` });
+    } catch (e) {
+      toast.error("Retry failed to initiate.", { id: `retry-${syncId}` });
+    }
+  };
+
+  const handleDiscardOfflineItem = async (syncId) => {
+    try {
+      await discardFailedTask(syncId);
+      toast.success("Offline message discarded.");
+    } catch (e) {
+      toast.error("Failed to discard message.");
+    }
+  };
+
   return {
     submissions,
     isLoading,
@@ -122,5 +191,7 @@ export function useFeedbackHistory(userId, activeTab) {
     handleReplyChange,
     handleSubmitUserReply,
     userReplyMutation,
+    handleRetryOfflineItem,
+    handleDiscardOfflineItem,
   };
 }

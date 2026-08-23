@@ -15,60 +15,116 @@ export default function FeedbackHistoryCard({
   handleReplyChange,
   handleSubmitUserReply,
   userReplyMutation,
+  handleRetryOfflineItem,
+  handleDiscardOfflineItem,
 }) {
   const StatusIcon = getStatusIcon(item.status);
   const ticketId = item.feedback_id || item.id;
   const lastMsg = item.thread?.[item.thread.length - 1];
+  const isFailed = item.status === "Sync Failed";
 
   return (
-    <div className={`rounded-2xl border border-gray-100 bg-gray-50/70 overflow-hidden transition-all ${isExpanded ? "border-b-2 border-gray-200 pb-6 mb-6" : ""}`}>
+    <div className={`rounded-2xl border ${isFailed ? "border-red-200 bg-red-50/30" : "border-gray-100 bg-gray-50/70"} overflow-hidden transition-all ${isExpanded ? "border-b-2 border-gray-200 pb-6 mb-6" : ""}`}>
       {/* Summary row */}
-      <button
-        type="button"
-        onClick={() => toggleExpand(ticketId)}
-        className="w-full text-left px-5 py-4 flex items-center gap-3 hover:bg-gray-100/60 transition-colors"
-      >
-        <div className="flex items-center gap-2 shrink-0">
-          <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${getTypeBadgeClasses(item.type)}`}>
-            {item.type}
-          </span>
-          <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold ${getStatusBadgeClasses(item.status)}`}>
-            <HugeiconsIcon icon={StatusIcon} className="w-3 h-3" />
-            {item.status}
-          </span>
-        </div>
+      <div className="flex items-center justify-between">
+        <button
+          type="button"
+          onClick={() => toggleExpand(ticketId)}
+          className="flex-1 text-left px-5 py-4 flex items-center gap-3 hover:bg-gray-100/60 transition-colors"
+        >
+          <div className="flex items-center gap-2 shrink-0">
+            <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${getTypeBadgeClasses(item.type)}`}>
+              {item.type}
+            </span>
+            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold ${getStatusBadgeClasses(item.status)}`}>
+              <HugeiconsIcon icon={StatusIcon} className="w-3 h-3" />
+              {item.status}
+            </span>
+          </div>
 
-        <div className="flex-1 min-w-0">
-          <p className="font-semibold text-gray-900 text-sm truncate">{item.subject}</p>
-          {!isExpanded && lastMsg && (
-            <p className="text-sm text-gray-500 truncate mt-0.5">
-              {lastMsg.sender_type === "admin" ? "Office: " : "You: "}{lastMsg.message}
-            </p>
-          )}
-        </div>
+          <div className="flex-1 min-w-0">
+            <p className="font-semibold text-gray-900 text-sm truncate">{item.subject}</p>
+            {!isExpanded && (
+              <p className="text-sm text-gray-500 truncate mt-0.5">
+                {item.isOfflineItem
+                  ? isFailed
+                    ? `Failed: ${item.last_error || "Could not sync"}`
+                    : "Stored locally on device — queued for synchronization."
+                  : lastMsg
+                  ? `${lastMsg.sender_type === "admin" ? "Office: " : "You: "}${lastMsg.message}`
+                  : ""}
+              </p>
+            )}
+          </div>
 
-        <div className="flex items-center gap-2 shrink-0 text-gray-400">
-          <span className="text-xs hidden sm:block">
-            {new Date(item.created_at || item.createdAt).toLocaleDateString()}
-          </span>
-          <HugeiconsIcon icon={isExpanded ? ArrowUp01Icon : ArrowDown01Icon} className="w-4 h-4" />
-        </div>
-      </button>
+          <div className="flex items-center gap-2 shrink-0 text-gray-400">
+            <span className="text-xs hidden sm:block">
+              {new Date(item.created_at || item.createdAt).toLocaleDateString()}
+            </span>
+            <HugeiconsIcon icon={isExpanded ? ArrowUp01Icon : ArrowDown01Icon} className="w-4 h-4" />
+          </div>
+        </button>
+
+        {/* Quick action for offline items directly on the card */}
+        {item.isOfflineItem && (
+          <div className="pr-4 flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => handleRetryOfflineItem(item.sync_id)}
+              className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold transition-colors cursor-pointer"
+            >
+              Retry
+            </button>
+            <button
+              type="button"
+              onClick={() => handleDiscardOfflineItem(item.sync_id)}
+              className="px-3 py-1.5 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-xl text-xs font-bold transition-colors cursor-pointer"
+            >
+              Discard
+            </button>
+          </div>
+        )}
+      </div>
 
       {/* Expanded thread */}
       {isExpanded && (
         <div className="border-t border-gray-100">
-          {/* Metadata header — flush left */}
+          {/* Metadata header */}
           <div className="px-5 pt-3">
             <p className="text-xs text-gray-400">
               Submitted: {new Date(item.created_at || item.createdAt).toLocaleString()}
               {" · "}
               Routed to: {item.recipient === "mdrrmo" ? "MDRRMO" : "Barangay"}
+              {item.isOfflineItem && " · (Offline Queue Item)"}
             </p>
+
+            {item.isOfflineItem && isFailed && (
+              <div className="mt-2 p-3 bg-red-50 border border-red-200 rounded-xl text-xs text-red-700">
+                <p className="font-bold">Sync Failure Reason:</p>
+                <p className="mt-0.5 font-mono">{item.last_error || "Unknown synchronization error."}</p>
+                <div className="mt-2 flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => handleRetryOfflineItem(item.sync_id)}
+                    className="px-3 py-1 bg-red-600 text-white font-bold rounded-lg hover:bg-red-700 transition-colors"
+                  >
+                    Retry Synchronization Now
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleDiscardOfflineItem(item.sync_id)}
+                    className="px-3 py-1 bg-gray-200 text-gray-700 font-bold rounded-lg hover:bg-gray-300 transition-colors"
+                  >
+                    Discard from Queue
+                  </button>
+                </div>
+              </div>
+            )}
+
             <hr className="my-3 border-gray-100" />
           </div>
 
-          {/* Message Thread — grouped consecutive messages */}
+          {/* Message Thread */}
           <div className="px-5 flex flex-col gap-1">
             {item.thread?.map((msg, idx) => {
               const isResident = msg.sender_type === "resident";
@@ -80,7 +136,6 @@ export default function FeedbackHistoryCard({
                   key={msg.id || idx}
                   className={`flex flex-col ${isResident ? "items-end" : "items-start"} ${isFirstInGroup && idx > 0 ? "mt-3" : ""}`}
                 >
-                  {/* Metadata: only for first in a consecutive group */}
                   {isFirstInGroup && (
                     <div className={`flex items-center gap-2 mb-1 ${isResident ? "flex-row-reverse" : "flex-row"}`}>
                       <span className={`text-xs font-bold uppercase tracking-wide ${isResident ? "text-gray-400" : "text-blue-700"}`}>
@@ -92,7 +147,6 @@ export default function FeedbackHistoryCard({
                     </div>
                   )}
 
-                  {/* Bubble — only wraps the message text */}
                   <div
                     className={`w-fit max-w-[80%] rounded-2xl border px-4 py-2.5 ${
                       isResident
@@ -111,8 +165,8 @@ export default function FeedbackHistoryCard({
             })}
           </div>
 
-          {/* Reply Input */}
-          {item.status !== "Closed" && item.thread?.some((m) => m.sender_type === "admin") && (
+          {/* Reply Input (only for live server tickets) */}
+          {!item.isOfflineItem && item.status !== "Closed" && item.thread?.some((m) => m.sender_type === "admin") && (
             <div className="px-5 mt-4 pt-4 border-t border-gray-100">
               <textarea
                 rows={3}

@@ -2,6 +2,7 @@ import { HugeiconsIcon } from '@hugeicons/react';
 import { Menu01Icon } from '@hugeicons/core-free-icons';
 import { useLocation, useNavigate } from 'react-router-dom';
 import NotificationDropdown from './NotificationDropdown';
+import UnsyncedQueueIndicator from '../ui/UnsyncedQueueIndicator';
 
 export default function UserNavbar({
   currentUser,
@@ -44,6 +45,7 @@ export default function UserNavbar({
         </div>
 
         <div className="flex items-center gap-3">
+          <UnsyncedQueueIndicator />
           <NotificationDropdown />
 
           <button

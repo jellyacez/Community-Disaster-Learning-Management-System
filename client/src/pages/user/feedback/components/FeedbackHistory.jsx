@@ -22,6 +22,8 @@ export default function FeedbackHistory({ userId, activeTab, setActiveTab }) {
     handleReplyChange,
     handleSubmitUserReply,
     userReplyMutation,
+    handleRetryOfflineItem,
+    handleDiscardOfflineItem,
   } = useFeedbackHistory(userId, activeTab);
 
   return (
@@ -117,6 +119,8 @@ export default function FeedbackHistory({ userId, activeTab, setActiveTab }) {
               handleReplyChange={handleReplyChange}
               handleSubmitUserReply={handleSubmitUserReply}
               userReplyMutation={userReplyMutation}
+              handleRetryOfflineItem={handleRetryOfflineItem}
+              handleDiscardOfflineItem={handleDiscardOfflineItem}
             />
           ))}
         </div>

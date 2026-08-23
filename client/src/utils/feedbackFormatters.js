@@ -2,6 +2,8 @@ import {
   CancelCircleIcon,
   MailReply01Icon,
   Clock01Icon,
+  AlertCircleIcon,
+  RefreshIcon
 } from "@hugeicons/core-free-icons";
 
 export const getTypeBadgeClasses = (type) => {
@@ -24,6 +26,11 @@ export const getStatusBadgeClasses = (status) => {
       return "bg-gray-200 text-gray-800";
     case "Replied":
       return "bg-green-100 text-green-800";
+    case "Sync Failed":
+      return "bg-red-100 text-red-800 border border-red-200";
+    case "Syncing":
+    case "Queued Offline":
+      return "bg-purple-100 text-purple-800 border border-purple-200";
     case "Pending":
     default:
       return "bg-amber-100 text-amber-800";
@@ -36,6 +43,11 @@ export const getStatusIcon = (status) => {
       return CancelCircleIcon;
     case "Replied":
       return MailReply01Icon;
+    case "Sync Failed":
+      return AlertCircleIcon;
+    case "Syncing":
+    case "Queued Offline":
+      return RefreshIcon;
     case "Pending":
     default:
       return Clock01Icon;
