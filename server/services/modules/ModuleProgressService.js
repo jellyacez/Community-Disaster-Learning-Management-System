@@ -351,7 +351,7 @@ class ModuleProgressService {
   async verifyCertificateByToken(token) {
     const query = `
       SELECT 
-        u.name AS learner_name,
+        COALESCE(u.name, c.anonymized_name, 'Archived Resident') AS learner_name,
         m.modname AS module_title,
         m.description AS module_description,
         c.completion_date,
@@ -362,7 +362,7 @@ class ModuleProgressService {
           ELSE c.status 
         END as status
       FROM public.certificates c
-      JOIN public."user" u ON c.user_id = u.id
+      LEFT JOIN public."user" u ON c.user_id = u.id
       JOIN public.module_data m ON c.module_id = m.mod_id
       WHERE c.verification_token = $1
     `;

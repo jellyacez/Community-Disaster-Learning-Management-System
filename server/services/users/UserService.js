@@ -73,10 +73,29 @@ class UserService {
     const total = parseInt(countResult.rows[0].count);
 
     const result = await pool.query(
-      `SELECT u.id, u.name, u.email, u."emailVerified", u.image, u.role, u."banned", u."banReason", u."banExpires", u."createdAt", u."updatedAt", u."twoFactorEnabled", b.name AS barangay, u.archived
-         FROM "user" u 
-         LEFT JOIN barangays b ON u.barangay_id = b.id ${where.replace(/barangay_id/g, 'u.barangay_id')}
-         ORDER BY u."createdAt" DESC LIMIT $${idx} OFFSET $${idx + 1}`,
+      `SELECT 
+         u.id, 
+         u.name, 
+         u.email, 
+         u."emailVerified", 
+         u.image, 
+         u.role, 
+         u."banned", 
+         u."banReason", 
+         u."banExpires", 
+         u."createdAt", 
+         u."updatedAt", 
+         u."twoFactorEnabled", 
+         b.name AS barangay, 
+         u.archived,
+         (SELECT COUNT(*)::int 
+          FROM certificates c 
+          WHERE c.user_id = u.id 
+            AND c.status != 'revoked'
+         ) AS "modulesCompleted"
+       FROM "user" u 
+       LEFT JOIN barangays b ON u.barangay_id = b.id ${where.replace(/barangay_id/g, 'u.barangay_id')}
+       ORDER BY u."createdAt" DESC LIMIT $${idx} OFFSET $${idx + 1}`,
       [...values, limit, offset]
     );
 

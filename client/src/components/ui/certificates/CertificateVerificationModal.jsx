@@ -195,7 +195,7 @@ export default function CertificateVerificationModal({ isOpen, onClose }) {
         {/* Modal Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-gray-50/50">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-100 text-blue-600 shadow-sm">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-red-100 text-red-600 shadow-sm">
               <HugeiconsIcon icon={QrCodeIcon} className="w-5 h-5" />
             </div>
             <div>
@@ -229,7 +229,7 @@ export default function CertificateVerificationModal({ isOpen, onClose }) {
                 onClick={() => handleTabChange("camera")}
                 className={`flex-1 flex items-center justify-center gap-2 py-2 text-xs font-bold rounded-lg transition-all cursor-pointer ${
                   activeTab === "camera"
-                    ? "bg-white text-blue-600 shadow-sm"
+                    ? "bg-white text-red-600 shadow-sm"
                     : "text-gray-600 hover:text-gray-900"
                 }`}
               >
@@ -241,7 +241,7 @@ export default function CertificateVerificationModal({ isOpen, onClose }) {
                 onClick={() => handleTabChange("manual")}
                 className={`flex-1 flex items-center justify-center gap-2 py-2 text-xs font-bold rounded-lg transition-all cursor-pointer ${
                   activeTab === "manual"
-                    ? "bg-white text-blue-600 shadow-sm"
+                    ? "bg-white text-red-600 shadow-sm"
                     : "text-gray-600 hover:text-gray-900"
                 }`}
               >
@@ -254,7 +254,7 @@ export default function CertificateVerificationModal({ isOpen, onClose }) {
           {/* Loading Indicator */}
           {isVerifying && (
             <div className="py-12 flex flex-col items-center justify-center text-center space-y-3">
-              <Spinner className="w-8 h-8 text-blue-600" />
+              <Spinner className="w-8 h-8 text-red-600" />
               <p className="text-sm font-semibold text-gray-700">Verifying credential against registry...</p>
             </div>
           )}
@@ -311,7 +311,7 @@ export default function CertificateVerificationModal({ isOpen, onClose }) {
                     value={tokenInput}
                     onChange={(e) => setTokenInput(e.target.value)}
                     placeholder="e.g. 123e4567-e89b-12d3-a456-426614174000"
-                    className="w-full rounded-xl border border-gray-300 px-4 py-3 text-sm text-gray-900 font-mono focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none"
+                    className="w-full rounded-xl border border-gray-300 px-4 py-3 text-sm text-gray-900 font-mono focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none"
                     required
                     autoFocus
                   />
@@ -323,7 +323,7 @@ export default function CertificateVerificationModal({ isOpen, onClose }) {
 
               <button
                 type="submit"
-                className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition shadow-sm cursor-pointer"
+                className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl transition shadow-sm cursor-pointer"
               >
                 <HugeiconsIcon icon={CheckmarkBadge01Icon} className="w-4 h-4" />
                 <span>Verify Token</span>
@@ -395,7 +395,7 @@ export default function CertificateVerificationModal({ isOpen, onClose }) {
                 <button
                   type="button"
                   onClick={handleScanAnother}
-                  className="flex-1 flex items-center justify-center gap-2 py-2.5 px-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition shadow-sm cursor-pointer text-xs"
+                  className="flex-1 flex items-center justify-center gap-2 py-2.5 px-4 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl transition shadow-sm cursor-pointer text-xs"
                 >
                   <HugeiconsIcon icon={RefreshIcon} className="w-4 h-4" />
                   <span>Verify Another</span>

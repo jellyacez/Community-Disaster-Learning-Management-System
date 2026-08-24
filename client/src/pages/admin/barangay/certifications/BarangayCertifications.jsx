@@ -120,7 +120,7 @@ export default function BarangayCertifications() {
           <div className="flex items-center gap-2 self-start md:self-auto">
             <button
               onClick={() => setIsVerifyModalOpen(true)}
-              className="inline-flex items-center gap-2 px-3.5 py-2 text-sm font-semibold text-white bg-blue-600 rounded-xl hover:bg-blue-700 transition-colors shadow-sm cursor-pointer"
+              className="inline-flex items-center gap-2 px-3.5 py-2 text-sm font-semibold text-white bg-red-600 rounded-xl hover:bg-red-700 transition-colors shadow-sm cursor-pointer"
             >
               <HugeiconsIcon icon={QrCodeIcon} className="w-4 h-4" />
               <span>Verify / Scan QR</span>

@@ -66,11 +66,12 @@ export default function ResidentRegistry() {
     const query = debouncedSearchQuery.trim().toLowerCase();
     return list.filter((r) => {
       const matchesSector = selectedSector === "All" || r.barangay === selectedSector;
+      const accountStatus = r.banned ? "banned" : r.archived ? "archived" : "active";
       const matchesSearch =
         !query ||
         r.name?.toLowerCase().includes(query) ||
         r.email?.toLowerCase().includes(query) ||
-        r.status?.toLowerCase().includes(query);
+        accountStatus.includes(query);
       return matchesSector && matchesSearch;
     });
   }, [residents, selectedSector, debouncedSearchQuery]);
@@ -184,15 +185,17 @@ export default function ResidentRegistry() {
                       </div>
                     </td>
                     <td className="py-3 px-6 font-mono text-gray-500">{r.barangay}</td>
-                    <td className="py-3 px-6 text-center font-bold text-gray-700">{r.modulesCompleted || 0} Modules Completed</td>
+                    <td className="py-3 px-6 text-center font-bold text-gray-700">
+                      {r.modulesCompleted ?? 0} {r.modulesCompleted === 1 ? "Module" : "Modules"} Completed
+                    </td>
                     <td className="py-3 px-6 text-center">
-                      <StatusBadge color={
-                        r.status === "banned" ? "red" :
-                        r.status === "archived" ? "slate" :
-                        r.status === "Ready" ? "emerald" : "amber"
-                      }>
-                        {r.status || "Pending"}
-                      </StatusBadge>
+                      {r.banned ? (
+                        <StatusBadge color="red">Banned</StatusBadge>
+                      ) : r.archived ? (
+                        <StatusBadge color="slate">Archived</StatusBadge>
+                      ) : (
+                        <StatusBadge color="emerald">Active</StatusBadge>
+                      )}
                     </td>
                     <td className="py-3 px-6 text-right relative">
                       <button 
