@@ -12,17 +12,21 @@ export default function UserNavbar({
   const location = useLocation();
   const navigate = useNavigate();
 
-  const pageTitles = {
-    '/userDashboard': 'Homepage',
-    '/user/announcements': 'Announcements',
-    '/user/modules': 'Module Catalog',
-    '/user/enrolled': 'Enrolled Modules',
-    '/user/certificates': 'My Certificates',
-    '/user/profile': 'User Profile',
-    '/user/settings': 'Settings',
+  const getPageTitle = (pathname) => {
+    if (pathname === '/userDashboard') return 'Homepage';
+    if (pathname.startsWith('/user/announcements')) return 'Announcements';
+    if (pathname.startsWith('/user/enrolled')) return 'Enrolled Modules';
+    if (pathname.startsWith('/user/certificates/view')) return 'Certificate Viewer';
+    if (pathname.startsWith('/user/certificates')) return 'My Certificates';
+    if (pathname.startsWith('/user/feedback')) return 'Feedback & Support';
+    if (pathname.startsWith('/user/modules/') && pathname.endsWith('/details')) return 'Module Details';
+    if (pathname.startsWith('/user/modules')) return 'Module Catalog';
+    if (pathname.startsWith('/user/profile')) return 'User Profile';
+    if (pathname.startsWith('/user/settings')) return 'Settings';
+    return 'Resident Portal';
   };
 
-  const currentTitle = pageTitles[location.pathname] || 'User Dashboard';
+  const currentTitle = getPageTitle(location.pathname);
 
   return (
     <header className="sticky top-0 z-30 border-b border-gray-200 bg-white/90 backdrop-blur">

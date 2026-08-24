@@ -5,19 +5,10 @@ import {
   Award01Icon,
   EyeIcon,
   Download01Icon,
+  Calendar03Icon,
+  Clock01Icon,
+  QrCodeIcon,
 } from "@hugeicons/core-free-icons";
-
-/**
- * CertificateCard
- *
- * cert shape (from /user/dashboard):
- *   cert.verification_token  — string
- *   cert.cert_rec            — string (control number)
- *   cert.module_title        — string
- *   cert.completion_date     — ISO date string
- *   cert.expires_at          — ISO date string | null
- *   cert.status              — "active" | "expired" | "revoked"
- */
 
 /** Derive a display-level status that includes "expiring_soon" */
 function resolveStatus(cert) {
@@ -33,28 +24,24 @@ function resolveStatus(cert) {
 
 const STATUS_CONFIG = {
   active: {
-    label: "Active",
-    badge: "bg-green-100 text-green-800",
-    iconBg: "bg-red-600",
-    card: "border-gray-100",
+    label: "Active Credential",
+    badge: "bg-emerald-50 text-emerald-700 border-emerald-200",
+    border: "border-gray-200 hover:border-emerald-300",
   },
   expiring_soon: {
     label: "Expiring Soon",
-    badge: "bg-amber-100 text-amber-800",
-    iconBg: "bg-amber-500",
-    card: "border-amber-100",
+    badge: "bg-amber-50 text-amber-700 border-amber-200",
+    border: "border-amber-200 hover:border-amber-300",
   },
   expired: {
     label: "Expired",
-    badge: "bg-red-100 text-red-800",
-    iconBg: "bg-red-400",
-    card: "border-red-100",
+    badge: "bg-red-50 text-red-700 border-red-200",
+    border: "border-red-200 hover:border-red-300",
   },
   revoked: {
     label: "Revoked",
-    badge: "bg-gray-100 text-gray-800",
-    iconBg: "bg-gray-400",
-    card: "border-gray-200",
+    badge: "bg-gray-100 text-gray-700 border-gray-200",
+    border: "border-gray-200 opacity-60",
   },
 };
 
@@ -76,78 +63,100 @@ const CertificateCard = memo(function CertificateCard({ cert }) {
 
   return (
     <div
-      className={`rounded-2xl border bg-white shadow-sm p-4 flex flex-col gap-3 transition-shadow hover:shadow-md ${cfg.card} ${
-        isRevoked ? "opacity-60" : ""
-      }`}
+      className={`rounded-2xl border bg-white shadow-sm p-6 flex flex-col justify-between gap-5 transition-all duration-200 hover:shadow-md ${cfg.border}`}
     >
-      {/* Top row: status badge + cert ID */}
-      <div className="flex items-center justify-between gap-2">
-        <span
-          className={`inline-flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-full ${cfg.badge}`}
-        >
-          <HugeiconsIcon icon={Award01Icon} className="w-3 h-3" />
-          {cfg.label}
-        </span>
-        <span
-          className="text-xs text-gray-400 font-mono truncate max-w-[120px]"
-          title={cert.cert_rec}
-        >
-          {cert.cert_rec}
-        </span>
-      </div>
+      <div className="space-y-4">
+        {/* Top Header Row: Status Badge + Control Number */}
+        <div className="flex items-center justify-between gap-3 pb-3 border-b border-gray-100">
+          <span
+            className={`inline-flex items-center gap-1.5 text-xs font-extrabold px-3 py-1 rounded-full border ${cfg.badge}`}
+          >
+            <HugeiconsIcon icon={Award01Icon} className="w-3.5 h-3.5" />
+            <span>{cfg.label}</span>
+          </span>
 
-      {/* Title */}
-      <div>
-        <h3
-          className={`font-black text-base leading-snug ${
-            isRevoked ? "text-gray-400 line-through" : "text-gray-900"
-          }`}
-          title={cert.module_title}
-        >
-          {cert.module_title}
-        </h3>
+          <span
+            className="text-xs font-mono font-bold text-gray-500 bg-gray-50 px-2.5 py-1 rounded-lg border border-gray-200 truncate"
+            title={cert.cert_rec}
+          >
+            {cert.cert_rec}
+          </span>
+        </div>
 
-        {/* Issued + Expires dates */}
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-1">
-          <p className="text-xs text-gray-500">
-            Issued: <span className="font-medium text-gray-700">{fmt(cert.completion_date)}</span>
+        {/* Certificate Title & Subject */}
+        <div>
+          <h3
+            className={`text-lg font-black leading-snug ${
+              isRevoked ? "text-gray-400 line-through" : "text-gray-900"
+            }`}
+            title={cert.module_title}
+          >
+            {cert.module_title}
+          </h3>
+          <p className="text-xs font-medium text-gray-500 mt-1">
+            Community Disaster Risk Reduction & Management Certification
           </p>
-          {cert.expires_at && (
-            <p className={`text-xs ${displayStatus === "expired" ? "text-red-500 font-semibold" : displayStatus === "expiring_soon" ? "text-amber-600 font-semibold" : "text-gray-500"}`}>
-              Expires: <span className="font-medium">{fmt(cert.expires_at)}</span>
-            </p>
-          )}
+        </div>
+
+        {/* Issued and Validity Details */}
+        <div className="grid grid-cols-2 gap-3 py-3 px-3.5 bg-gray-50/80 rounded-xl border border-gray-100 text-xs">
+          <div className="flex items-center gap-2">
+            <HugeiconsIcon icon={Calendar03Icon} className="w-4 h-4 text-gray-400 shrink-0" />
+            <div>
+              <p className="text-[10px] uppercase font-bold text-gray-400">Issued Date</p>
+              <p className="font-semibold text-gray-700">{fmt(cert.completion_date)}</p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <HugeiconsIcon icon={Clock01Icon} className="w-4 h-4 text-gray-400 shrink-0" />
+            <div>
+              <p className="text-[10px] uppercase font-bold text-gray-400">Validity Expiration</p>
+              <p
+                className={`font-semibold ${
+                  displayStatus === "expired"
+                    ? "text-red-600 font-bold"
+                    : displayStatus === "expiring_soon"
+                    ? "text-amber-600 font-bold"
+                    : "text-gray-700"
+                }`}
+              >
+                {fmt(cert.expires_at)}
+              </p>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Action buttons */}
-      <div className="flex gap-2 mt-auto">
+      {/* Action Buttons */}
+      <div className="flex items-center gap-3 pt-2">
         {isRevoked ? (
           <button
             disabled
-            className="flex-1 py-2 bg-gray-100 text-gray-400 text-xs font-bold rounded-xl cursor-not-allowed text-center"
+            className="w-full py-2.5 bg-gray-100 text-gray-400 text-xs font-bold rounded-xl cursor-not-allowed text-center"
           >
-            Unavailable
+            Credential Revoked
           </button>
         ) : (
           <>
             <Link
               to={viewUrl}
-              className="inline-flex flex-1 justify-center items-center gap-1.5 py-2 bg-red-50 hover:bg-red-100 text-red-700 text-xs font-bold rounded-xl transition-colors"
+              className="flex-1 inline-flex items-center justify-center gap-2 py-2.5 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded-xl shadow-xs transition-colors"
             >
-              <HugeiconsIcon icon={EyeIcon} className="w-3.5 h-3.5" />
-              View
+              <HugeiconsIcon icon={EyeIcon} className="w-4 h-4" />
+              <span>View Certificate</span>
             </Link>
+
             <Link
               to={viewUrl}
-              className={`inline-flex flex-1 justify-center items-center gap-1.5 py-2 border text-xs font-bold rounded-xl transition-colors ${
+              className={`flex-1 inline-flex items-center justify-center gap-2 py-2.5 border text-xs font-bold rounded-xl transition-colors ${
                 isInactive
                   ? "bg-gray-50 border-gray-200 text-gray-400 pointer-events-none"
-                  : "bg-white border-gray-200 hover:bg-gray-50 text-gray-700"
+                  : "bg-white border-gray-300 hover:bg-gray-50 text-gray-700 shadow-xs"
               }`}
             >
-              <HugeiconsIcon icon={Download01Icon} className="w-3.5 h-3.5" />
-              Download
+              <HugeiconsIcon icon={Download01Icon} className="w-4 h-4" />
+              <span>Download PDF</span>
             </Link>
           </>
         )}

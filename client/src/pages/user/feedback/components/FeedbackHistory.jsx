@@ -2,6 +2,7 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import { Message01Icon, Search01Icon } from "@hugeicons/core-free-icons";
 import FeedbackHistoryCard from "./FeedbackHistoryCard";
 import { useFeedbackHistory } from "../hooks/useFeedbackHistory";
+import { FeedbackTicketSkeleton } from "../../../../components/ui/Skeleton";
 
 export default function FeedbackHistory({ userId, activeTab, setActiveTab }) {
   const {
@@ -76,8 +77,10 @@ export default function FeedbackHistory({ userId, activeTab, setActiveTab }) {
       )}
 
       {isLoading ? (
-        <div className="py-12 text-center text-gray-400 font-bold">
-          Loading communication history...
+        <div className="space-y-4">
+          {[1, 2, 3].map((i) => (
+            <FeedbackTicketSkeleton key={i} />
+          ))}
         </div>
       ) : submissions.length === 0 ? (
         <div className="rounded-3xl border border-dashed border-gray-200 bg-gray-50 p-10 text-center">
