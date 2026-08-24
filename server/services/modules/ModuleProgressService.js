@@ -201,11 +201,15 @@ class ModuleProgressService {
 
         logger.logActivity(user_id, `Completed module: ${modTitle}`);
 
-        // We still check here as an early return, but we will also use ON CONFLICT DO NOTHING below
+        // Check if certificate already exists for renewal or fresh issuance
         const certCheck = await client.query(
-          `SELECT cert_id, verification_token FROM certificates WHERE user_id = $1 AND module_id = $2`, 
+          `SELECT cert_id, verification_token, status, expires_at, revoked_at, revoked_by, revocation_reason 
+           FROM certificates 
+           WHERE user_id = $1 AND module_id = $2`, 
           [user_id, mod_id]
         );
+
+        const { RECERTIFICATION_INTERVAL_YEARS } = require("../../config/constants");
 
         if (certCheck.rowCount === 0) {
           // Fix 3: Get the correct result_id, prioritizing final assessments and higher levels
@@ -228,7 +232,6 @@ class ModuleProgressService {
           const cert_rec = `CERT-${Date.now().toString(36).toUpperCase()}-${Math.floor(Math.random() * 1000)}`;
           const crypto = require("crypto");
           const token = crypto.randomUUID();
-          const { RECERTIFICATION_INTERVAL_YEARS } = require("../../config/constants");
 
           const certInsert = await client.query(
             `INSERT INTO certificates (
@@ -259,8 +262,46 @@ class ModuleProgressService {
              }
           }
         } else {
-          // Certificate already existed before this transaction began
-          verificationToken = certCheck.rows[0].verification_token;
+          // Existing Certificate — Handle Renewal / Recertification
+          const existingCert = certCheck.rows[0];
+          const isExpired = new Date(existingCert.expires_at) < new Date();
+          const isRevoked = existingCert.status === "revoked";
+          const isExpiringSoon = new Date(existingCert.expires_at) <= new Date(Date.now() + 30 * 86400 * 1000);
+
+          if (isExpired || isRevoked || isExpiringSoon) {
+            // Preserve audit trail in activity_log before resetting fields
+            if (isRevoked) {
+              await logger.logActivity(
+                user_id,
+                `Certificate renewed after prior revocation on ${existingCert.revoked_at ? new Date(existingCert.revoked_at).toLocaleDateString() : 'N/A'} (Prior Revocation Reason: "${existingCert.revocation_reason || 'No reason provided'}", Revoked By: ${existingCert.revoked_by || 'Admin'}) for module: ${modTitle}`
+              );
+            } else {
+              await logger.logActivity(
+                user_id,
+                `Recertified module: ${modTitle} (Extended validity for ${RECERTIFICATION_INTERVAL_YEARS} year)`
+              );
+            }
+
+            // Renew certificate: extend expires_at by RECERTIFICATION_INTERVAL_YEARS, reset recert_notified_at to NULL, set status to 'active'
+            const renewResult = await client.query(
+              `UPDATE certificates 
+               SET completion_date = CURRENT_TIMESTAMP,
+                   expires_at = CURRENT_TIMESTAMP + (INTERVAL '1 year' * $1),
+                   status = 'active',
+                   recert_notified_at = NULL,
+                   revocation_reason = NULL,
+                   revoked_at = NULL,
+                   revoked_by = NULL
+               WHERE cert_id = $2
+               RETURNING verification_token`,
+              [RECERTIFICATION_INTERVAL_YEARS, existingCert.cert_id]
+            );
+
+            verificationToken = renewResult.rows[0]?.verification_token || existingCert.verification_token;
+          } else {
+            // Still active with > 30 days remaining, return existing verification token
+            verificationToken = existingCert.verification_token;
+          }
         }
       }
 
