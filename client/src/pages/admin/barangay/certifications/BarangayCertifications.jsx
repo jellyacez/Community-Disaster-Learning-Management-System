@@ -10,12 +10,14 @@ import {
   UnavailableIcon,
   ArrowLeft01Icon,
   ArrowRight01Icon,
+  QrCodeIcon,
 } from "@hugeicons/core-free-icons";
 import apiClient from "../../../../lib/apiClient";
 import StatCard from "../../../../components/ui/StatCard";
 import SearchBar from "../../../../components/ui/inputs/SearchBar";
 import { SkeletonTableRow } from "../../../../components/ui/Skeleton";
 import CertificateLifecycleBadge from "../../../../components/ui/certificates/CertificateLifecycleBadge";
+import CertificateVerificationModal from "../../../../components/ui/certificates/CertificateVerificationModal";
 import useDebounce from "../../../../hooks/useDebounce";
 
 const fetchBarangayCertifications = async ({ page, limit, search, moduleId, status }) => {
@@ -35,6 +37,7 @@ export default function BarangayCertifications() {
   const [searchInput, setSearchInput] = useState("");
   const [selectedModule, setSelectedModule] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("");
+  const [isVerifyModalOpen, setIsVerifyModalOpen] = useState(false);
 
   const debouncedSearch = useDebounce(searchInput, 350);
   const limit = 10;
@@ -114,17 +117,26 @@ export default function BarangayCertifications() {
               Track, inspect, and filter disaster preparedness certifications conferred to residents in your barangay
             </p>
           </div>
-          <button
-            onClick={() => refetch()}
-            disabled={isFetching}
-            className="inline-flex items-center gap-2 px-3.5 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-xl hover:bg-gray-50 transition-colors shadow-sm self-start md:self-auto cursor-pointer"
-          >
-            <HugeiconsIcon
-              icon={RefreshIcon}
-              className={`w-4 h-4 ${isFetching ? "animate-spin text-red-600" : "text-gray-500"}`}
-            />
-            <span>Refresh</span>
-          </button>
+          <div className="flex items-center gap-2 self-start md:self-auto">
+            <button
+              onClick={() => setIsVerifyModalOpen(true)}
+              className="inline-flex items-center gap-2 px-3.5 py-2 text-sm font-semibold text-white bg-blue-600 rounded-xl hover:bg-blue-700 transition-colors shadow-sm cursor-pointer"
+            >
+              <HugeiconsIcon icon={QrCodeIcon} className="w-4 h-4" />
+              <span>Verify / Scan QR</span>
+            </button>
+            <button
+              onClick={() => refetch()}
+              disabled={isFetching}
+              className="inline-flex items-center gap-2 px-3.5 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-xl hover:bg-gray-50 transition-colors shadow-sm cursor-pointer"
+            >
+              <HugeiconsIcon
+                icon={RefreshIcon}
+                className={`w-4 h-4 ${isFetching ? "animate-spin text-red-600" : "text-gray-500"}`}
+              />
+              <span>Refresh</span>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -379,6 +391,12 @@ export default function BarangayCertifications() {
           </div>
         )}
       </div>
+
+      {/* In-Portal Certificate Verification & QR Scanner Modal */}
+      <CertificateVerificationModal
+        isOpen={isVerifyModalOpen}
+        onClose={() => setIsVerifyModalOpen(false)}
+      />
     </div>
   );
 }

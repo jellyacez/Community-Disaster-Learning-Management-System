@@ -52,4 +52,18 @@ const authenticate = async (req, res, next) => {
   }
 };
 
-module.exports = { authenticate };
+// @desc    Optional session hydrator for public endpoints with tiered rate limits
+// @access  Public (does not reject unauthenticated requests)
+const optionalAuthenticate = async (req, res, next) => {
+  try {
+    const session = await auth.api.getSession({ headers: req.headers });
+    if (session && session.user && !session.user.archived) {
+      req.user = session.user;
+    }
+  } catch (_) {
+    // Graceful fallback for unauthenticated public traffic
+  }
+  next();
+};
+
+module.exports = { authenticate, optionalAuthenticate };

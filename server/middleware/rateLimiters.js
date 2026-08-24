@@ -74,9 +74,13 @@ const destructiveActionLimiter = rateLimit({
 const certificateVerifyLimiter = rateLimit({
   store: new PostgresStore(dbConfig, "cert_verify_"),
   windowMs: 15 * 60 * 1000,
-  max: 50, // Dedicated low-volume limiter
+  max: (req) => {
+    if (req.user?.id) return 500;
+    return 50;
+  },
   keyGenerator: (req) => {
-    return `anon_${ipKeyGenerator(req.ip)}`; // Verification is unauthenticated
+    if (req.user?.id) return `admin_${req.user.id}`;
+    return `anon_${ipKeyGenerator(req.ip)}`;
   },
   message: {
     error: "Too many requests to this endpoint, please try again later.",
