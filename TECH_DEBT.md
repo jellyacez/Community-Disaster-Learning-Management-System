@@ -1,6 +1,6 @@
 # Technical Debt & Architecture Log
 
-This document tracks identified technical debt, architectural decisions, and resolution history for the Bacolor Community Disaster Learning Management System.
+This document tracks identified technical debt, architectural decisions, missing features, optimization opportunities, and resolution history for the Bacolor Community Disaster Learning Management System.
 
 ---
 
@@ -85,48 +85,149 @@ This document tracks identified technical debt, architectural decisions, and res
 
 ---
 
-## 🟡 Open / Active Technical Debt Items
+### Resolved: Phase 4 Automated Recertification Lifecycle & Audit Preservation
+- **Location:** `server/utils/certificateExpiryCron.js`, `server/services/modules/ModuleProgressService.js`
+- **Issue:** Expired certificates remained stale without automated state transitions, residents had no proactive notice before credentials expired, and retaking expiring/expired courses lacked dedicated recertification renewal handlers in `ModuleProgressService.js`.
+- **Resolution:**
+  - **Two-Step Maintenance Cron:** Extended daily 1:00 AM cron to first transition active certs past `expires_at` to `'expired'`, then query 30-day active candidates with `recert_notified_at IS NULL` to dispatch branded email notices and timestamp `recert_notified_at = NOW()`.
+  - **Renewal & Audit Logic:** When a resident completes an expiring or expired module, `ModuleProgressService.js` extends validity by 1 year, resets `recert_notified_at = NULL`, and preserves full audit history in `activity_log`.
+- **Verification:** Exercised and confirmed via unit/integration test suites for plain renewals, revoked renewals, and cron notification email dispatching.
 
-### 1. Sequence Canvas Flow Configuration Stub (`SequenceCanvas.jsx`)
+---
+
+### Resolved: Phase 5 Two-Tier Rate Limiting on Certificate Verification
+- **Location:** `server/middleware/rateLimiters.js`, `client/src/components/ui/certificates/CertificateVerificationModal.jsx`, `client/src/pages/admin/barangay/certifications/BarangayCertifications.jsx`
+- **Issue:** Public QR scanning on `/api/certificates/verify/:token` required rate limiting to prevent enumeration attacks, but a strict static limit (50 req/15min) risked throttling legitimate field barangay administrators scanning multiple residents during community disaster response drills.
+- **Resolution:**
+  - **Dynamic Two-Tier Limiter:** Configured dynamic `keyGenerator` and function-valued `max` in `express-rate-limit`:
+    - Anonymous requests $\to$ `anon_<ip>` with a **50 requests / 15 min** quota.
+    - Authenticated admins $\to$ `admin_<userId>` with an elevated **500 requests / 15 min** quota.
+  - **In-Portal Verification Modal:** Built `CertificateVerificationModal` featuring `html5-qrcode` camera viewfinder and manual token search, mounted directly on `BarangayCertifications.jsx`.
+- **Verification:** Tested against live server with anonymous and authenticated Bearer tokens, confirming isolated bucket counters and rate limit headers.
+
+---
+
+### Resolved: Resident Registry Historical Completion Count & Account Standing Alignment
+- **Location:** `server/services/users/UserService.js`, `client/src/pages/admin/barangay/registry/ResidentRegistry.jsx`
+- **Issue:**
+  1. The `Modules Completed` column in `ResidentRegistry.jsx` used mock fallbacks and risked computing live compliance rather than historical completions.
+  2. The `STATE` column defaulted to `"Pending"` due to an unpopulated `r.status` property.
+- **Resolution:**
+  - **Historical Completion Query:** Added correlated scalar subquery in `UserService.getAllUsers`: `SELECT COUNT(*)::int FROM certificates c WHERE c.user_id = u.id AND c.status != 'revoked'`, accurately reflecting all completed modules without expiry filtering.
+  - **Real Account Standing:** Mapped `STATE` directly to `banned` and `archived` database flags (`Banned` $\to$ Red, `Archived` $\to$ Slate, `Active` $\to$ Emerald).
+  - Replaced raw UUID identifiers with resident email subtitles (`user@email.com`) and added search debouncing.
+- **Verification:** Verified with live database queries and browser screenshots displaying accurate varying counts and badges.
+
+---
+
+### Resolved: User Portal Navigation Routing & Header Matching
+- **Location:** `client/src/components/layouts/UserNavbar.jsx`
+- **Issue:** The navbar header title fell back to `"User Dashboard"` when navigating to `/user/feedback` and dynamic subroutes because `pageTitles` was a static key-value map lacking feedback and subroute entries.
+- **Resolution:** Implemented dynamic prefix matching in `getPageTitle(pathname)` covering `/user/feedback` $\to$ `"Feedback & Support"`, `/user/certificates/view` $\to$ `"Certificate Viewer"`, `/user/modules/:id/details` $\to$ `"Module Details"`, and all other resident routes.
+- **Verification:** Verified live via browser automation across all user routes.
+
+---
+
+### Resolved: Resident Portal UI/UX Modernization & Skeleton Loading System
+- **Location:** `client/src/pages/user/` (`ModuleCatalog.jsx`, `Certificates.jsx`, `EnrolledModules.jsx`, `Announcements.jsx`, `FeedbackHistory.jsx`, `ModuleDetailsPage.jsx`)
+- **Issue:**
+  1. Resident pages displayed unstyled text placeholders (`"Loading announcements..."`, `"Loading communication history..."`) or spinners, causing visual layout shifts.
+  2. `ModuleCatalog.jsx` and `EnrolledModules.jsx` lacked debouncing and category filtering.
+  3. `ModuleCatalog.jsx` pagination was disconnected from the grid with awkward bottom whitespace.
+  4. `Certificates.jsx` contained artificial filler cards that cluttered the view.
+- **Resolution:**
+  - **Full Skeleton System:** Implemented full-fidelity animated skeletons for announcements, feedback tickets, module details syllabus, and certificate cards.
+  - **Catalog & Enrolled Modernization:** Added `useDebounce(..., 350)` on all search inputs, dynamic category dropdown filters, and an 8-item page layout (`itemsPerPage = 8`) with cohesive pagination.
+  - **Prestigious Credential Card:** Redesigned `CertificateCard.jsx` to render an official credential presentation with control numbers, issue/expiry matrix, and View/Download actions in a balanced 2-column layout.
+- **Verification:** Verified across all resident pages with browser screenshots and clean `npm run build` production bundles.
+
+---
+
+## 🟡 Open / Active Technical Debt & Optimization Items
+
+### 1. Server-Side Pagination & Cursor Querying for High-Scale Endpoints
+- **Location:** `client/src/pages/admin/feedback/AdminFeedbackManager.jsx`, `client/src/pages/admin/barangay/registry/ResidentRegistry.jsx`, `client/src/pages/admin/barangay/certifications/BarangayCertifications.jsx`, `client/src/pages/user/catalog/ModuleCatalog.jsx`
+- **Description:** Several administrative and user views currently fetch the entire dataset via REST API and execute filtering, sorting, and pagination on the client side in `useMemo`.
+- **Architectural Impact:** While performant for small-to-medium datasets (< 500 records), this pattern will degrade performance as resident accounts, certification records, and feedback tickets scale into thousands.
+- **Recommended Action:**
+  - Update backend endpoints (`GET /api/users`, `GET /api/feedbacks/admin`, `GET /api/certificates`) to accept `page`, `limit`, `search`, and `filter` query parameters with SQL `LIMIT` / `OFFSET` or keyset/cursor pagination.
+  - Connect React components to pass pagination query parameters into React Query hooks.
+
+---
+
+### 2. Large Production Bundle Chunks & Code Splitting
+- **Location:** `client/src/` build output
+- **Description:** Vite build output warns that several chunk sizes exceed 500 kB after minification:
+  - `dist/assets/certTemplate-*.js` (~1.43 MB): Includes PDF rendering engines, Canvas utilities, and embedded vector graphics.
+  - `dist/assets/index-*.js` (~540 kB): Core React, TanStack Query, React Router, and common libraries bundle.
+  - `dist/assets/ModuleManagement-*.js` (~470 kB): TipTap rich text suite, drag-and-drop canvas, and SVG icon sets.
+  - `dist/assets/BarangayCertifications-*.js` (~391 kB): Certificate tables and `html5-qrcode` scanner bundle.
+  - `dist/assets/PieChart-*.js` (~330 kB): Charting engine.
+- **Recommended Action:**
+  - Use `React.lazy()` and dynamic `import()` for large admin tools (`ModuleBuilderWizard`, `AdminFeedbackManager`, `BarangayCertifications`), PDF generators (`certTemplate`), and charting components.
+  - Configure manual chunking in `vite.config.js` (`build.rollupOptions.output.manualChunks`) to split vendor libraries (e.g. `html5-qrcode`, `jspdf`, `chart.js`) into separate cached chunks.
+
+---
+
+### 3. Certificate Revocation Authority — MDRRMO Municipal Override
+- **Current State:** Only `barangay_admin` can revoke certificates, correctly scoped to their own barangay jurisdiction.
+- **Gap:** The original disaster readiness specification designates MDRRMO as having ultimate verification authority to revoke any certificate municipality-wide if fraudulent completion or procedural non-compliance is detected. No revoke action currently exists on the MDRRMO Municipal Certification Analytics portal.
+- **Recommended Action:**
+  - Add MDRRMO revocation capability with mandatory reason logging.
+  - Dispatch automated notifications (in-app alert bell and Nodemailer email) to all assigned barangay administrators for the affected sector when an MDRRMO override revocation occurs.
+
+---
+
+### 4. Real-Time Push Notifications (WebSocket / SSE) vs. Polling Overhead
+- **Location:** `client/src/` (Global banners, notification dropdowns, feedback manager, system health)
+- **Description:** The system currently relies on TanStack Query `refetchInterval` polling (ranging from 5s on `SystemHealth` to 30s/60s on alerts, feedback, and certifications).
+- **Architectural Impact:** Under high concurrent resident usage, continuous HTTP polling generates steady baseline database queries even when data has not changed.
+- **Recommended Action:**
+  - Implement a lightweight Server-Sent Events (SSE) or WebSocket gateway for urgent real-time events (e.g. MDRRMO disaster broadcast alerts, new high-priority resident feedback, emergency credential revocations).
+  - Retain React Query polling as a secondary fallback for offline resilience.
+
+---
+
+### 5. Database Indexing & Query Plan Optimization
+- **Location:** `server/` PostgreSQL schema
+- **Description:** As table sizes grow, multi-table joins across `users`, `certificates`, `module_activity`, and `barangays` may experience sequential scans.
+- **Recommended Action:** Execute a database migration to add targeted composite and partial indexes:
+  ```sql
+  -- Optimize certificate lookups, status filtering, and expiry cron sweeps
+  CREATE INDEX IF NOT EXISTS idx_certificates_user_status ON certificates(user_id, status);
+  CREATE INDEX IF NOT EXISTS idx_certificates_expiry_sweep ON certificates(status, expires_at) WHERE status = 'active';
+  CREATE INDEX IF NOT EXISTS idx_certificates_verification_token ON certificates(verification_token);
+
+  -- Optimize resident historical completion aggregations
+  CREATE INDEX IF NOT EXISTS idx_certificates_user_non_revoked ON certificates(user_id) WHERE status != 'revoked';
+
+  -- Optimize module activity progress tracking
+  CREATE INDEX IF NOT EXISTS idx_module_activity_user_modstatus ON module_activity(user_id, modstatus);
+
+  -- Optimize feedback queue filtering by barangay and status
+  CREATE INDEX IF NOT EXISTS idx_feedbacks_user_status_created ON feedbacks(user_id, status, created_at DESC);
+  ```
+
+---
+
+### 6. Module Builder Wizard Editing Mode (`PUT /api/modules/:id`)
+- **Location:** `client/src/pages/admin/mdrrmo/module-management/builders/ModuleBuilderWizard.jsx`, `client/src/hooks/useModuleBuilder.js`
+- **Description:** The frontend wizard contains scaffolding for `editingModuleId`, but full module editing (hydrating existing level/step sequences, diffing questions, and updating published syllabi) is not yet implemented.
+- **Status:** Scheduled for a future administrative milestone. Requires a dedicated `PUT /api/modules/:id` backend route and database transaction logic for step reconciliation.
+
+---
+
+### 7. Sequence Canvas Flow Configuration Stub (`SequenceCanvas.jsx`)
 - **Location:** `client/src/pages/admin/mdrrmo/module-management/builders/SequenceCanvas.jsx:L76-L81`
 - **Description:** A "Set By" `<select>` element containing options `Sequential` and `Optional` is present in the builder canvas header. It is currently unmanaged (no `value` prop, no `onChange` handler, and not part of the module form payload).
-- **Architectural Reality:** The PostgreSQL schema enforces a strictly linear progression model:
-  ```sql
-  CONSTRAINT module_steps_level_id_step_order_key UNIQUE (level_id, step_order);
-  ```
-  Both `ModuleProgressService.js` and `ModuleViewer.jsx` compute progress strictly linearly ($1 \to 2 \to 3$). There is no schema support for conditional or optional branching.
-- **Recommended Action:** Pending explicit scope decision:
-  - If branching is desired in a future milestone: expand the database schema (`is_optional`, `flow_type`) and rewrite `ModuleProgressService`.
-  - If progression remains strictly linear: replace the `<select>` with a decorative status badge (`Flow: Sequential`) or remove it to avoid user confusion.
+- **Architectural Reality:** The PostgreSQL schema enforces a strictly linear progression model (`UNIQUE (level_id, step_order)`). `ModuleProgressService.js` and `ModuleViewer.jsx` compute progress strictly linearly ($1 \to 2 \to 3$).
+- **Recommended Action:**
+  - If progression remains strictly linear: replace the `<select>` with a decorative status badge (`Flow: Sequential`) or remove it to prevent administrative confusion.
+  - If conditional branching is desired in the future: expand schema support (`is_optional`, `flow_type`) and update `ModuleProgressService`.
 
 ---
 
-### 2. Module Editing Capability (Intentionally Deferred)
-- **Location:** `client/src/pages/admin/mdrrmo/module-management/builders/ModuleBuilderWizard.jsx`, `client/src/hooks/useModuleBuilder.js`
-- **Description:** The frontend wizard contains scaffolding for `editingModuleId`, but full module editing (hydrating existing level/step sequences, updating existing assessments, and diffing DB rows) is not yet implemented.
-- **Status:** Explicitly excluded from current sprint per development roadmap. When scheduled, will require a dedicated `PUT /api/modules/:id` endpoint and step reconciliation logic.
-
----
-
-### 3. Orphaned File: `client/src/constants/locations.js`
+### 8. Orphaned File Cleanup: `client/src/constants/locations.js`
 - **Location:** `client/src/constants/locations.js`
-- **Description:** All admin filter components have been migrated to the canonical `BARANGAY_LIST` in `barangays.js`. `locations.js` has zero active imports in the repository.
-- **Recommended Action:** Safe to delete in a subsequent dead-code cleanup pass.
-
----
-
-### 4. Large Production Bundle Chunks & Code Splitting
-- **Location:** `client/src/` build output
-- **Description:** Vite build output warns that chunks exceed 500 kB:
-  - `dist/assets/certTemplate-*.js` (~1.43 MB): Includes PDF rendering, canvas utilities, and embedded assets.
-  - `dist/assets/ModuleManagement-*.js` (~470 kB): Includes TipTap rich text suite, drag-and-drop canvas, and SVG icons.
-- **Recommended Action:** Implement React dynamic imports (`React.lazy()` / `import()`) for `certTemplate`, `AdminFeedbackManager`, and `ModuleBuilderWizard` to optimize initial client bundle size and Time-to-Interactive (TTI).
-
----
-
-### 5. Certificate Revocation Authority — MDRRMO Override Not Yet Implemented
-- **Current state:** Only `barangay_admin` can revoke certificates, correctly scoped to their own barangay (verified working).
-- **Gap:** Original feature spec describes MDRRMO as having 'ultimate verification authority' to revoke any certificate municipality-wide — this was never built. No revoke action exists in the MDRRMO dashboard (Phase 3 is read-only/analytics).
-- **Decided direction (not yet implemented):** MDRRMO-tier admins should be able to revoke any certificate, with the affected barangay's admin(s) notified afterward (via the existing in-app notification bell and/or the existing nodemailer pipeline — mechanism TBD). Still needs: which MDRRMO tiers get this power (all three, or just `mdrrmo_admin` + `head_mdrrmo_admin`), and confirmation of whether a barangay can have multiple assigned admins (notification must reach all of them if so).
-- **Revisit:** After Phase 4/5 wrap, before final handover.
-
+- **Description:** All admin filtering components have been migrated to the canonical `BARANGAY_LIST` in `client/src/constants/barangays.js`. `locations.js` has zero active imports across the repository.
+- **Recommended Action:** Delete the file in a subsequent dead-code cleanup pass.
