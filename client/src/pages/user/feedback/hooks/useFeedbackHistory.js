@@ -15,12 +15,11 @@ export function useFeedbackHistory(userId, activeTab) {
   const [offlineFeedbackItems, setOfflineFeedbackItems] = useState([]);
   const PAGE_SIZE = 10;
 
-  // Load offline feedback items from Dexie
+  // Load offline feedback items and replies from Dexie
   const loadOfflineFeedbacks = async () => {
     try {
       const items = await localDb.sync_queue
-        .where("action_type")
-        .equals("SUBMIT_FEEDBACK")
+        .filter((t) => t.action_type === "SUBMIT_FEEDBACK" || t.action_type === "REPLY_FEEDBACK")
         .toArray();
       setOfflineFeedbackItems(items);
     } catch (e) {
@@ -31,8 +30,10 @@ export function useFeedbackHistory(userId, activeTab) {
   useEffect(() => {
     loadOfflineFeedbacks();
     window.addEventListener("offline-sync-queue-updated", loadOfflineFeedbacks);
+    window.addEventListener("offline-sync-item-success", loadOfflineFeedbacks);
     return () => {
       window.removeEventListener("offline-sync-queue-updated", loadOfflineFeedbacks);
+      window.removeEventListener("offline-sync-item-success", loadOfflineFeedbacks);
     };
   }, []);
 
@@ -62,42 +63,120 @@ export function useFeedbackHistory(userId, activeTab) {
     enabled: !!userId,
   });
 
-  // Merge server submissions with offline queue items
+  // Merge server submissions with offline queue items (new tickets + thread replies)
   const submissions = useMemo(() => {
-    const formattedOffline = offlineFeedbackItems.map((item) => ({
-      id: `offline-${item.sync_id}`,
-      sync_id: item.sync_id,
-      isOfflineItem: true,
-      subject: item.payload?.subject || "Untitled Feedback",
-      type: item.payload?.type || "feedback",
-      recipient: item.payload?.recipient || "barangay",
-      status: item.status === "failed" ? "Sync Failed" : item.status === "retrying" ? "Syncing" : "Queued Offline",
-      created_at: item.created_at || new Date().toISOString(),
-      last_error: item.last_error,
-      error_type: item.error_type,
-      retry_count: item.retry_count,
-      thread: [
-        {
-          id: `offline-msg-${item.sync_id}`,
-          sender_type: "resident",
-          message: item.payload?.message || "",
-          created_at: item.created_at || new Date().toISOString(),
-        },
-      ],
-    }));
+    const offlineTickets = offlineFeedbackItems
+      .filter((i) => i.action_type === "SUBMIT_FEEDBACK")
+      .map((item) => ({
+        id: `offline-${item.sync_id}`,
+        sync_id: item.sync_id,
+        isOfflineItem: true,
+        subject: item.payload?.subject || "Untitled Feedback",
+        type: item.payload?.type || "feedback",
+        recipient: item.payload?.recipient || "barangay",
+        status: item.status === "failed" ? "Sync Failed" : item.status === "retrying" ? "Syncing" : "Queued Offline",
+        created_at: item.created_at || new Date().toISOString(),
+        last_error: item.last_error,
+        error_type: item.error_type,
+        retry_count: item.retry_count,
+        thread: [
+          {
+            id: `offline-msg-${item.sync_id}`,
+            sender_type: "resident",
+            message: item.payload?.message || "",
+            created_at: item.created_at || new Date().toISOString(),
+          },
+        ],
+      }));
 
-    return [...formattedOffline, ...serverSubmissions];
+    const offlineReplies = offlineFeedbackItems.filter(
+      (i) => i.action_type === "REPLY_FEEDBACK"
+    );
+
+    const mergedServer = serverSubmissions.map((ticket) => {
+      const matchingReplies = offlineReplies.filter(
+        (r) => String(r.payload?.feedback_id || r.payload?.id) === String(ticket.id)
+      );
+
+      if (matchingReplies.length === 0) return ticket;
+
+      const formattedReplies = matchingReplies.map((r) => ({
+        id: `offline-reply-${r.sync_id}`,
+        sync_id: r.sync_id,
+        sender_type: "resident",
+        message: r.payload?.reply || "",
+        created_at: r.created_at || new Date().toISOString(),
+        isOfflineReply: true,
+        status: r.status,
+        last_error: r.last_error,
+      }));
+
+      return {
+        ...ticket,
+        thread: [...(ticket.thread || []), ...formattedReplies],
+      };
+    });
+
+    return [...offlineTickets, ...mergedServer];
   }, [offlineFeedbackItems, serverSubmissions]);
 
   const userReplyMutation = useMutation({
+    networkMode: "always",
     mutationFn: async ({ id, reply }) => {
-      const response = await apiClient.put(`/feedbacks/${id}/reply`, { reply });
-      return response.data;
+      if (!userId) throw new Error("Unauthorized");
+
+      // OFFLINE GUARD: Queue in localDb if disconnected
+      if (!navigator.onLine) {
+        await localDb.transaction("rw", localDb.sync_queue, async () => {
+          await localDb.sync_queue.add({
+            action_type: "REPLY_FEEDBACK",
+            status: "pending",
+            payload: { feedback_id: id, reply, user_id: userId },
+            retry_count: 0,
+            created_at: new Date().toISOString(),
+          });
+        });
+        window.dispatchEvent(new CustomEvent("offline-sync-queue-updated"));
+        return { queuedOffline: true, id };
+      }
+
+      try {
+        const response = await apiClient.put(`/feedbacks/${id}/reply`, { reply });
+        return response.data;
+      } catch (err) {
+        const isNetworkFailure =
+          !err.response ||
+          (err.response?.status === 503 &&
+            err.response?.data?.error === "Network Error / Offline");
+
+        if (isNetworkFailure) {
+          await localDb.transaction("rw", localDb.sync_queue, async () => {
+            await localDb.sync_queue.add({
+              action_type: "REPLY_FEEDBACK",
+              status: "pending",
+              payload: { feedback_id: id, reply, user_id: userId },
+              retry_count: 0,
+              created_at: new Date().toISOString(),
+            });
+          });
+          window.dispatchEvent(new CustomEvent("offline-sync-queue-updated"));
+          return { queuedOffline: true, id };
+        }
+        throw err;
+      }
     },
-    onSuccess: () => {
-      toast.success("Reply sent successfully.");
-      queryClient.invalidateQueries(["userFeedbacks", userId]);
-      setReplyInputs({});
+    onSuccess: (data, variables) => {
+      if (data?.queuedOffline) {
+        toast.success("Offline: Reply queued and will send when connected.", {
+          icon: "📦",
+        });
+        loadOfflineFeedbacks();
+      } else {
+        toast.success("Reply sent successfully.");
+      }
+      // TanStack Query v5 object syntax
+      queryClient.invalidateQueries({ queryKey: ["userFeedbacks", userId] });
+      setReplyInputs((prev) => ({ ...prev, [variables.id]: "" }));
     },
     onError: (err) => {
       toast.error(err.response?.data?.message || "Failed to send reply.");

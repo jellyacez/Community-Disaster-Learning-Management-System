@@ -131,6 +131,9 @@ export default function FeedbackHistoryCard({
               const prevMsg = item.thread[idx - 1];
               const isFirstInGroup = !prevMsg || prevMsg.sender_type !== msg.sender_type;
 
+              const isOfflineReply = msg.isOfflineReply;
+              const isReplyFailed = msg.status === "failed";
+
               return (
                 <div
                   key={msg.id || idx}
@@ -150,7 +153,11 @@ export default function FeedbackHistoryCard({
                   <div
                     className={`w-fit max-w-[80%] rounded-2xl border px-4 py-2.5 ${
                       isResident
-                        ? "bg-white border-gray-200"
+                        ? isOfflineReply
+                          ? isReplyFailed
+                            ? "bg-red-50 border-red-200"
+                            : "bg-amber-50/80 border-amber-200"
+                          : "bg-white border-gray-200"
                         : "bg-blue-50 border-blue-100"
                     }`}
                   >
@@ -159,6 +166,31 @@ export default function FeedbackHistoryCard({
                     }`}>
                       {msg.message}
                     </p>
+
+                    {isOfflineReply && (
+                      <div className="mt-2 pt-1.5 border-t border-black/5 flex items-center justify-between gap-3 text-[11px]">
+                        <span className={`font-semibold ${isReplyFailed ? "text-red-600 font-bold" : "text-amber-700"}`}>
+                          {isReplyFailed ? `Sync Failed: ${msg.last_error || "Network error"}` : "Queued offline (pending sync)"}
+                        </span>
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => handleRetryOfflineItem(msg.sync_id)}
+                            className="text-red-600 hover:text-red-800 font-bold underline cursor-pointer"
+                          >
+                            Retry
+                          </button>
+                          <span className="text-gray-300">·</span>
+                          <button
+                            type="button"
+                            onClick={() => handleDiscardOfflineItem(msg.sync_id)}
+                            className="text-gray-500 hover:text-gray-700 font-medium underline cursor-pointer"
+                          >
+                            Discard
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               );

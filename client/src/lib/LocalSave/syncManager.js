@@ -61,6 +61,8 @@ export const getActionDescription = (task) => {
   switch (task.action_type) {
     case 'SUBMIT_FEEDBACK':
       return p.subject ? `Feedback: "${p.subject}"` : 'Feedback Message';
+    case 'REPLY_FEEDBACK':
+      return `Reply to Ticket #${p.feedback_id || p.id || ''}`;
     case 'MARK_STEP_COMPLETE':
       return `Module ${p.mod_id || ''} Step ${p.step_id || ''} Progress`;
     case 'SUBMIT_QUIZ':
@@ -120,6 +122,12 @@ const dispatchTask = async (task) => {
   switch (task.action_type) {
     case 'SUBMIT_FEEDBACK':
       return await apiClient.post('/feedbacks', task.payload);
+
+    case 'REPLY_FEEDBACK':
+      return await apiClient.put(
+        `/feedbacks/${task.payload.feedback_id || task.payload.id}/reply`,
+        { reply: task.payload.reply }
+      );
 
     case 'MARK_STEP_COMPLETE':
       return await apiClient.post(

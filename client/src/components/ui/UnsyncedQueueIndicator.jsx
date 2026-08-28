@@ -73,6 +73,7 @@ export default function UnsyncedQueueIndicator() {
   const getItemIcon = (actionType) => {
     switch (actionType) {
       case "SUBMIT_FEEDBACK":
+      case "REPLY_FEEDBACK":
         return Message01Icon;
       case "UPDATE_NAME":
       case "UPDATE_AVATAR":

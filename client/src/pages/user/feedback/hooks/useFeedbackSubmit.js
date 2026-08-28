@@ -31,23 +31,44 @@ export function useFeedbackSubmit(userId, setActiveTab, onDone) {
             action_type: "SUBMIT_FEEDBACK",
             status: "pending",
             payload: { ...payload, user_id: userId },
+            retry_count: 0,
+            created_at: new Date().toISOString(),
           });
         });
+        window.dispatchEvent(new CustomEvent("offline-sync-queue-updated"));
         return { queuedOffline: true };
       }
 
-      const response = await apiClient.post("/feedbacks", payload);
-      return response.data;
+      try {
+        const response = await apiClient.post("/feedbacks", payload);
+        return response.data;
+      } catch (err) {
+        const isNetworkFailure = !err.response || (err.response?.status === 503 && err.response?.data?.error === 'Network Error / Offline');
+        if (isNetworkFailure) {
+          await localDb.transaction("rw", localDb.sync_queue, async () => {
+            await localDb.sync_queue.add({
+              action_type: "SUBMIT_FEEDBACK",
+              status: "pending",
+              payload: { ...payload, user_id: userId },
+              retry_count: 0,
+              created_at: new Date().toISOString(),
+            });
+          });
+          window.dispatchEvent(new CustomEvent("offline-sync-queue-updated"));
+          return { queuedOffline: true };
+        }
+        throw err;
+      }
     },
     onSuccess: (data) => {
       if (data?.queuedOffline) {
-        toast.success("Offline: Message queued and will send when connected.");
+        toast.success("Offline: Message queued and will send when connected.", { icon: "📦" });
       } else {
         toast.success("Your message has been submitted.");
       }
       
-      // IMPORTANT: Invalidate the history query using the exact key format
-      queryClient.invalidateQueries(["userFeedbacks", userId]);
+      // TanStack Query v5 object syntax
+      queryClient.invalidateQueries({ queryKey: ["userFeedbacks", userId] });
       
       setFormData({
         recipient: "barangay",

@@ -190,7 +190,22 @@ This document tracks identified technical debt, architectural decisions, missing
   - `idx_feedbacks_user_status_created` — composite on `(user_id, status, created_at DESC)` for the feedback queue admin and user views.
 - **Verification:** Confirmed all 6 indexes exist in `LMS_db` via `pg_indexes` query. `schema.sql` updated to reflect the new state.
 
+---
 
+### Resolved: Offline Feedback Reply Queuing & Reconnect Sync Engine
+- **Location:** `client/src/lib/LocalSave/syncManager.js`, `client/src/pages/user/feedback/hooks/useFeedbackHistory.js`, `client/src/pages/user/feedback/hooks/useFeedbackSubmit.js`, `client/src/pages/user/feedback/components/FeedbackHistoryCard.jsx`, `client/src/components/ui/UnsyncedQueueIndicator.jsx`
+- **Issue:** While initial ticket creation supported offline queuing (`SUBMIT_FEEDBACK`) in Dexie `localDb.sync_queue`, threaded replies in `useFeedbackHistory.js` had no offline branch and failed immediately when disconnected.
+- **Resolution:**
+  - Added `REPLY_FEEDBACK` action handler to `syncManager.js` (`dispatchTask` calling `PUT /api/feedbacks/:id/reply`, `getActionDescription`).
+  - Wrapped `userReplyMutation` in `useFeedbackHistory.js` with `networkMode: "always"` and offline guards/network failure catches that queue tasks into Dexie `localDb.sync_queue`.
+  - Merged offline queued replies seamlessly into `submissions` message threads with pending badge indicators and inline `Retry` / `Discard` buttons for failed attempts.
+  - Added `REPLY_FEEDBACK` icon handling in `UnsyncedQueueIndicator.jsx`.
+  - Modernized React Query cache invalidations across feedback hooks to TanStack Query v5 object syntax `{ queryKey: ["userFeedbacks", userId] }`.
+- **Verification:** Verified end-to-end via automated Puppeteer Chromium test:
+  1. Authenticated resident and loaded `/user/feedback`.
+  2. Severed network via Chrome DevTools Protocol (`Network.emulateNetworkConditions: { offline: true }`).
+  3. Submitted follow-up reply while offline: verified instant toast notification, local Dexie `sync_queue` persistence, and inline "Queued offline (pending sync)" badge.
+  4. Restored network (`offline: false`): verified automated background sync dequeuing and persistence to PostgreSQL `feedback_messages`.
 
 ---
 
@@ -299,15 +314,7 @@ This document tracks identified technical debt, architectural decisions, missing
 
 ---
 
-### 11. Missing Offline Reply Queuing in Resident Feedback (`useFeedbackHistory.js`)
-- **Location:** `client/src/pages/user/feedback/hooks/useFeedbackHistory.js:L92-L105`
-- **Description:** While initial ticket creation (`useFeedbackSubmit.js`) supports offline queuing (`SUBMIT_FEEDBACK`) when `!navigator.onLine`, the `userReplyMutation` in `useFeedbackHistory.js` lacks an offline fallback branch and fails immediately with a network error.
-- **Recommended Action:**
-  - Add `REPLY_FEEDBACK` action handler to `syncManager.js` and wrap `userReplyMutation` to queue message replies in `localDb.sync_queue` when disconnected.
-
----
-
-### 12. TanStack Query v5 Syntax & Deprecation Inconsistencies
+### 11. TanStack Query v5 Syntax & Deprecation Inconsistencies
 - **Location:** `client/src/hooks/useModuleViewer.js`, `client/src/pages/user/dashboard/Dashboard.jsx`, `client/src/pages/user/hooks/usePaginatedAnnouncements.js`
 - **Description:**
   - `useModuleViewer.js` and `useFeedbackHistory.js` use legacy array syntax for invalidations: `queryClient.invalidateQueries(["userDashboard"])` instead of TanStack Query v5 object syntax `{ queryKey: ["userDashboard"] }`.
