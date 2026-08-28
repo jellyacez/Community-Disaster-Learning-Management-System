@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import apiClient from "../../lib/apiClient";
 import useDocumentTitle from "../../hooks/useDocumentTitle";
@@ -8,6 +8,7 @@ import {
   CheckmarkBadge01Icon,
   Alert02Icon,
   Cancel01Icon,
+  Shield01Icon,
 } from "@hugeicons/core-free-icons";
 import Spinner from "../../components/ui/Spinner";
 
@@ -63,9 +64,8 @@ export default function VerifyCertificate() {
             icon={CheckmarkBadge01Icon}
             className="w-16 h-16 text-gray-300 mx-auto mb-4"
           />
-          <p className="text-gray-500">
-            Enter a verification token above to check the authenticity of a
-            certificate.
+          <p className="text-gray-500 font-medium">
+            Enter a verification token above or scan a certificate QR code to check authenticity.
           </p>
         </div>
       );
@@ -74,8 +74,8 @@ export default function VerifyCertificate() {
     if (isLoading) {
       return (
         <div className="text-center p-8 mt-8">
-          <Spinner className="w-8 h-8 text-blue-600 mx-auto mb-4" />
-          <p className="text-gray-500">Verifying certificate...</p>
+          <Spinner className="w-8 h-8 text-red-600 mx-auto mb-4" />
+          <p className="text-gray-500 font-medium">Validating credential against MDRRMO records...</p>
         </div>
       );
     }
@@ -83,47 +83,45 @@ export default function VerifyCertificate() {
     if (isError) {
       if (error.message === "NOT_FOUND") {
         return (
-          <div className="text-center p-8 bg-red-50 rounded-2xl border border-red-200 mt-8">
+          <div className="text-center p-8 bg-red-50 rounded-2xl border border-red-200 mt-8 animate-in fade-in">
             <HugeiconsIcon
               icon={Cancel01Icon}
               className="w-16 h-16 text-red-500 mx-auto mb-4"
             />
-            <h2 className="text-xl font-bold text-red-800 mb-2">
+            <h2 className="text-xl font-black text-red-900 mb-2">
               Certificate Not Found
             </h2>
-            <p className="text-red-600">
-              No valid certificate matches this verification token. It may be
-              malformed or non-existent.
+            <p className="text-red-700 text-sm max-w-md mx-auto leading-relaxed">
+              No matching official certificate record was found for this token. The identifier may be invalid, malformed, or fraudulent.
             </p>
           </div>
         );
       }
       if (error.message === "RATE_LIMIT") {
         return (
-          <div className="text-center p-8 bg-orange-50 rounded-2xl border border-orange-200 mt-8">
+          <div className="text-center p-8 bg-amber-50 rounded-2xl border border-amber-200 mt-8 animate-in fade-in">
             <HugeiconsIcon
               icon={Alert02Icon}
-              className="w-16 h-16 text-orange-500 mx-auto mb-4"
+              className="w-16 h-16 text-amber-600 mx-auto mb-4"
             />
-            <h2 className="text-xl font-bold text-orange-800 mb-2">
-              Too Many Requests
+            <h2 className="text-xl font-black text-amber-900 mb-2">
+              Verification Rate Limit Exceeded
             </h2>
-            <p className="text-orange-600">
-              Please wait a moment before trying again.
+            <p className="text-amber-700 text-sm max-w-md mx-auto leading-relaxed">
+              Too many lookups received from this network. Please wait a few moments before submitting another request.
             </p>
           </div>
         );
       }
       return (
-        <div className="text-center p-8 bg-gray-50 rounded-2xl border border-gray-200 mt-8">
+        <div className="text-center p-8 bg-gray-50 rounded-2xl border border-gray-200 mt-8 animate-in fade-in">
           <HugeiconsIcon
             icon={Alert02Icon}
             className="w-16 h-16 text-gray-400 mx-auto mb-4"
           />
-          <h2 className="text-xl font-bold text-gray-800 mb-2">System Error</h2>
-          <p className="text-gray-600">
-            An error occurred while verifying this certificate. Please try again
-            later.
+          <h2 className="text-xl font-black text-gray-900 mb-2">Service Unavailable</h2>
+          <p className="text-gray-600 text-sm max-w-md mx-auto">
+            Unable to connect to the verification registry at this time. Please try again shortly.
           </p>
         </div>
       );
@@ -138,72 +136,107 @@ export default function VerifyCertificate() {
         expires_at,
       } = certData;
 
-      let statusColor = "bg-green-100 text-green-800 border-green-200";
+      let statusColor = "bg-emerald-50 text-emerald-900 border-emerald-200";
       let statusIcon = (
-        <HugeiconsIcon icon={CheckmarkBadge01Icon} className="w-6 h-6 text-green-600" />
+        <HugeiconsIcon icon={CheckmarkBadge01Icon} className="w-7 h-7 text-emerald-600 shrink-0" />
       );
-      let statusText = "Valid & Active";
+      let statusBadge = "bg-emerald-100 text-emerald-800 border-emerald-200";
+      let statusText = "Official & Active";
+      let statusDesc = "This credential is valid, accredited, and currently in good standing.";
 
       if (status === "expired") {
-        statusColor = "bg-orange-100 text-orange-800 border-orange-200";
-        statusIcon = <HugeiconsIcon icon={Alert02Icon} className="w-6 h-6 text-orange-600" />;
-        statusText = "Expired";
+        statusColor = "bg-amber-50 text-amber-900 border-amber-200";
+        statusIcon = <HugeiconsIcon icon={Alert02Icon} className="w-7 h-7 text-amber-600 shrink-0" />;
+        statusBadge = "bg-amber-100 text-amber-800 border-amber-200";
+        statusText = "Expired Credential";
+        statusDesc = "This certificate was legitimately earned but has passed its validity period.";
       } else if (status === "revoked") {
-        statusColor = "bg-red-100 text-red-800 border-red-200";
-        statusIcon = <HugeiconsIcon icon={Cancel01Icon} className="w-6 h-6 text-red-600" />;
-        statusText = "Revoked";
+        statusColor = "bg-red-50 text-red-900 border-red-200";
+        statusIcon = <HugeiconsIcon icon={Cancel01Icon} className="w-7 h-7 text-red-600 shrink-0" />;
+        statusBadge = "bg-red-100 text-red-800 border-red-200";
+        statusText = "Certificate Revoked";
+        statusDesc = "This certificate was formally revoked by municipal administrative authority.";
       }
 
       return (
-        <div className="bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden mt-8">
-          <div
-            className={`p-6 flex items-center gap-4 border-b ${statusColor}`}
-          >
+        <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden mt-8 animate-in fade-in duration-200">
+          {/* Status Header Banner */}
+          <div className={`p-6 flex items-start gap-4 border-b ${statusColor}`}>
             {statusIcon}
-            <div>
-              <h2 className="text-xl font-bold">{statusText}</h2>
-              <p className="text-sm opacity-90">Certificate Status</p>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2.5 flex-wrap">
+                <h2 className="text-xl font-black">{statusText}</h2>
+                <span className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full border ${statusBadge}`}>
+                  {status?.toUpperCase()}
+                </span>
+              </div>
+              <p className="text-xs mt-1 text-gray-600 leading-relaxed">{statusDesc}</p>
             </div>
           </div>
 
-          <div className="p-8">
-            <div className="grid gap-6 md:grid-cols-2">
+          {/* Core Certificate Meta (Data Minimization: Strictly Non-Sensitive) */}
+          <div className="p-6 sm:p-8 space-y-6">
+            <div className="grid gap-6 sm:grid-cols-2">
               <div>
-                <p className="text-sm text-gray-500 font-medium mb-1">
+                <p className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-1 font-mono">
                   Learner Name
                 </p>
-                <p className="text-lg font-bold text-gray-900">
-                  {learner_name}
+                <p className="text-lg font-black text-gray-900">
+                  {learner_name || "Archived Resident"}
                 </p>
               </div>
+
               <div>
-                <p className="text-sm text-gray-500 font-medium mb-1">Module</p>
-                <p className="text-lg font-bold text-gray-900">
+                <p className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-1 font-mono">
+                  Training Module
+                </p>
+                <p className="text-lg font-black text-gray-900">
                   {module_title}
                 </p>
               </div>
+
               <div>
-                <p className="text-sm text-gray-500 font-medium mb-1">
-                  Completion Date
+                <p className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-1 font-mono">
+                  Issue / Completion Date
                 </p>
-                <p className="text-gray-900">
-                  {new Date(completion_date).toLocaleDateString("en-US", {
-                    year: "numeric",
-                    month: "long",
-                    day: "numeric",
-                  })}
+                <p className="text-sm font-semibold text-gray-800">
+                  {completion_date
+                    ? new Date(completion_date).toLocaleDateString("en-US", {
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric",
+                      })
+                    : "—"}
                 </p>
               </div>
+
               <div>
-                <p className="text-sm text-gray-500 font-medium mb-1">
-                  Expiration Date
+                <p className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-1 font-mono">
+                  Validity / Expiration Date
                 </p>
-                <p className="text-gray-900">
-                  {new Date(expires_at).toLocaleDateString("en-US", {
-                    year: "numeric",
-                    month: "long",
-                    day: "numeric",
-                  })}
+                <p className="text-sm font-semibold text-gray-800">
+                  {expires_at
+                    ? new Date(expires_at).toLocaleDateString("en-US", {
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric",
+                      })
+                    : "Lifetime / No Expiry"}
+                </p>
+              </div>
+            </div>
+
+            {/* Issuing Authority Badge */}
+            <div className="pt-6 border-t border-gray-100 flex items-center gap-3.5 bg-gray-50/80 -mx-6 -mb-6 sm:-mx-8 sm:-mb-8 p-5 sm:px-8">
+              <div className="w-10 h-10 rounded-xl bg-red-100 border border-red-200 flex items-center justify-center shrink-0">
+                <HugeiconsIcon icon={Shield01Icon} className="w-5 h-5 text-red-600" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-xs font-bold text-gray-900">
+                  Issued under the Authority of Bacolor MDRRMO & Local DRRMC
+                </p>
+                <p className="text-[11px] text-gray-500">
+                  Municipality of Bacolor, Province of Pampanga • Official Disaster Readiness Record
                 </p>
               </div>
             </div>
@@ -216,48 +249,70 @@ export default function VerifyCertificate() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-2xl mx-auto">
+    <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8 flex flex-col justify-between">
+      <div className="max-w-2xl mx-auto w-full">
+        {/* Portal Header */}
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">
+          <div className="inline-flex items-center gap-2 px-3 py-1 bg-red-50 border border-red-200 text-red-700 rounded-full text-xs font-bold mb-3">
+            <HugeiconsIcon icon={Shield01Icon} className="w-4 h-4 text-red-600" />
+            <span>Official DRRM Public Registry</span>
+          </div>
+          <h1 className="text-3xl font-black text-gray-900 tracking-tight">
             Certificate Verification
           </h1>
-          <p className="mt-4 text-lg text-gray-500">
-            Verify the authenticity and current status of a MDRRMO certificate.
+          <p className="mt-2 text-sm text-gray-500 max-w-md mx-auto">
+            Verify the authenticity, accreditation, and current status of a Bacolor MDRRMO training credential.
           </p>
         </div>
 
+        {/* Verification Input Form */}
         <form
           onSubmit={handleVerify}
-          className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100"
+          className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100"
         >
           <label
             htmlFor="token"
-            className="block text-sm font-medium text-gray-700 mb-2"
+            className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-2 font-mono"
           >
             Verification Token (UUID)
           </label>
-          <div className="flex gap-4">
+          <div className="flex flex-col sm:flex-row gap-3">
             <input
               type="text"
               id="token"
               value={tokenInput}
               onChange={(e) => setTokenInput(e.target.value)}
               placeholder="e.g. 123e4567-e89b-12d3-a456-426614174000"
-              className="flex-1 rounded-xl border border-gray-300 px-4 py-3 text-gray-900 focus:border-blue-500 focus:ring-blue-500 font-mono text-sm"
+              className="flex-1 rounded-2xl border border-gray-300 px-4 py-3 text-gray-900 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 font-mono text-sm outline-none transition"
               required
             />
             <button
               type="submit"
-              className="px-6 py-3 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition shadow-sm"
+              className="px-6 py-3 bg-red-600 text-white font-bold rounded-2xl hover:bg-red-700 active:bg-red-800 transition shadow-md shadow-red-600/20 cursor-pointer shrink-0"
             >
-              Verify
+              Verify Certificate
             </button>
           </div>
         </form>
 
         {renderContent()}
       </div>
+
+      {/* R.A. 10173 Data Privacy Compliance Notice */}
+      <footer className="mt-12 text-center text-xs text-gray-400 max-w-md mx-auto leading-relaxed border-t border-gray-200/60 pt-6">
+        <p className="font-semibold text-gray-500 mb-1">
+          Republic Act No. 10173 — Data Privacy Act of 2012
+        </p>
+        <p>
+          This public verification portal displays strictly non-sensitive credential status to confirm disaster training compliance. Private contact details and learner identifiers are protected and withheld.
+        </p>
+        <div className="mt-3">
+          <Link to="/" className="text-red-600 font-semibold hover:underline">
+            Return to Portal Home
+          </Link>
+        </div>
+      </footer>
     </div>
   );
 }
+

@@ -39,13 +39,18 @@ export default function ActiveModulesTable({ modules = [], isLoading, selectedCa
   };
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-[0_2px_12px_-3px_rgba(0,0,0,0.06)] h-full min-h-[350px] flex flex-col transition-all hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)]">
-      <div className="p-6 border-b border-gray-100 flex items-center justify-between shrink-0">
-        <h2 className="text-[18px] font-bold text-gray-900">
-          {statusFilter === 'pending_review' ? 'Pending Approvals' : 'Active Modules'}
-        </h2>
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-[0_2px_12px_-3px_rgba(0,0,0,0.06)] h-full min-h-[360px] flex flex-col transition-all hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)]">
+      <div className="p-5 border-b border-gray-100 flex items-center justify-between shrink-0">
+        <div>
+          <h2 className="text-base font-bold text-gray-900">
+            {statusFilter === 'pending_review' ? 'Pending Approvals' : 'Active Modules'}
+          </h2>
+          <p className="text-xs text-gray-400 mt-0.5">
+            {statusFilter === 'pending_review' ? 'Modules awaiting administrative review' : 'Published curriculum & syllabus management'}
+          </p>
+        </div>
         {selectedCategory && (
-          <span className="text-[10px] font-bold uppercase tracking-widest text-red-600 bg-red-50 px-2 py-1 rounded-full">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-red-600 bg-red-50 border border-red-100 px-2 py-0.5 rounded-full">
             {selectedCategory}
           </span>
         )}
@@ -57,51 +62,52 @@ export default function ActiveModulesTable({ modules = [], isLoading, selectedCa
             <p>No modules found matching the criteria.</p>
           </div>
         ) : (
-          <div className="flex flex-col h-full">
+          <div className="flex flex-col justify-between h-full">
             <div className="flex-1">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="bg-gray-50/50">
-                    <th className="py-3 px-6 text-[11px] font-bold uppercase tracking-wider text-gray-500 border-b border-gray-100">Module Name</th>
-                    <th className="py-3 px-6 text-[11px] font-bold uppercase tracking-wider text-gray-500 border-b border-gray-100">Category</th>
-                    <th className="py-3 px-6 text-[11px] font-bold uppercase tracking-wider text-gray-500 border-b border-gray-100">Status</th>
-                    <th className="py-3 px-6 text-[11px] font-bold uppercase tracking-wider text-gray-500 border-b border-gray-100 text-right">Action</th>
+                  <tr className="bg-gray-50/50 text-[11px] font-bold uppercase tracking-wider text-gray-500 border-b border-gray-100">
+                    <th className="py-2.5 px-4 sm:px-5">Module Name</th>
+                    <th className="py-2.5 px-3">Category</th>
+                    <th className="py-2.5 px-3 text-center">Status</th>
+                    <th className="py-2.5 px-4 sm:px-5 text-right">Action</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-100">
+                <tbody className="divide-y divide-gray-100 text-xs">
                   {isLoading
                     ? [1, 2, 3, 4, 5].map((i) => (
-                        <SkeletonTableRow key={i} columns={4} padding="py-3 px-6" />
+                        <SkeletonTableRow key={i} columns={4} padding="py-3 px-4 sm:px-5" />
                       ))
                     : paginatedModules.map((mod) => (
                         <tr key={mod.id} className="hover:bg-gray-50/50 transition-colors">
-                          <td className="py-3 px-6">
+                          <td className="py-2.5 px-4 sm:px-5 max-w-[180px] sm:max-w-[220px]">
                             <Link 
                               to={`/admin/mdrrmo/modules/${mod.id}/details`}
-                              className="text-[14px] font-semibold text-gray-900 hover:text-red-600 truncate max-w-[200px] block transition-colors"
+                              className="font-semibold text-gray-900 hover:text-red-600 truncate block transition-colors text-xs"
+                              title={mod.title}
                             >
                               {mod.title}
                             </Link>
-                            <p className="text-[12px] text-gray-500">{mod.step_count} Steps</p>
+                            <p className="text-[11px] text-gray-400 mt-0.5">{mod.step_count} Steps</p>
                           </td>
-                          <td className="py-3 px-6">
-                            <span className="text-[13px] font-medium text-gray-600">{mod.category}</span>
+                          <td className="py-2.5 px-3 whitespace-nowrap">
+                            <span className="text-xs font-medium text-gray-600">{mod.category}</span>
                           </td>
-                          <td className="py-3 px-6">
+                          <td className="py-2.5 px-3 text-center whitespace-nowrap">
                             {getStatusBadge(mod.status)}
                           </td>
-                          <td className="py-3 px-6 text-right">
+                          <td className="py-2.5 px-4 sm:px-5 text-right whitespace-nowrap">
                             {isHeadAdmin && mod.status === 'pending_review' ? (
                               <Link 
                                 to="/admin/mdrrmo/approvals"
-                                className="inline-block px-4 py-1.5 bg-red-600 text-white text-[12px] font-bold tracking-wide uppercase rounded hover:bg-red-700 transition-colors"
+                                className="inline-flex items-center justify-center px-2.5 py-1 bg-red-600 text-white text-[11px] font-bold uppercase rounded-lg hover:bg-red-700 transition-colors shadow-2xs"
                               >
                                 Review
                               </Link>
                             ) : (
                               <Link 
                                 to={`/admin/mdrrmo/modules/${mod.id}/details`}
-                                className="text-[13px] font-semibold text-red-600 hover:text-red-700 hover:underline"
+                                className="inline-flex items-center justify-center px-2.5 py-1 text-[11px] font-semibold text-gray-700 bg-gray-50 hover:bg-gray-100 border border-gray-200/80 rounded-lg transition-colors"
                               >
                                 Manage
                               </Link>
@@ -114,28 +120,32 @@ export default function ActiveModulesTable({ modules = [], isLoading, selectedCa
             </div>
 
             {totalPages > 1 && (
-              <div className="flex items-center justify-between px-6 py-4 border-t border-gray-100 shrink-0">
-                <span className="text-xs font-semibold text-gray-500">
-                  Showing {(currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, filtered.length)} of {filtered.length} entries
+              <div className="flex items-center justify-between px-4 sm:px-5 py-3 border-t border-gray-100 shrink-0 bg-white">
+                <span className="text-[11px] font-medium text-gray-500">
+                  Showing <span className="font-semibold text-gray-800">{(currentPage - 1) * itemsPerPage + 1}</span> to{" "}
+                  <span className="font-semibold text-gray-800">{Math.min(currentPage * itemsPerPage, filtered.length)}</span> of{" "}
+                  <span className="font-semibold text-gray-800">{filtered.length}</span> entries
                 </span>
                 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5">
                   <button
+                    type="button"
                     onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                     disabled={currentPage === 1}
-                    className="p-1.5 rounded border border-gray-200 text-gray-600 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors"
+                    className="p-1 rounded-lg border border-gray-200 text-gray-600 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors cursor-pointer"
                   >
-                    <HugeiconsIcon icon={ArrowLeft01Icon} className="w-4 h-4" />
+                    <HugeiconsIcon icon={ArrowLeft01Icon} className="w-3.5 h-3.5" />
                   </button>
-                  <span className="text-xs font-bold text-gray-700 min-w-[32px] text-center">
+                  <span className="text-xs font-semibold text-gray-700 px-1 text-center">
                     {currentPage} / {totalPages}
                   </span>
                   <button
+                    type="button"
                     onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                     disabled={currentPage === totalPages}
-                    className="p-1.5 rounded border border-gray-200 text-gray-600 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors"
+                    className="p-1 rounded-lg border border-gray-200 text-gray-600 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors cursor-pointer"
                   >
-                    <HugeiconsIcon icon={ArrowRight01Icon} className="w-4 h-4" />
+                    <HugeiconsIcon icon={ArrowRight01Icon} className="w-3.5 h-3.5" />
                   </button>
                 </div>
               </div>

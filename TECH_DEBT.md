@@ -141,23 +141,56 @@ This document tracks identified technical debt, architectural decisions, missing
   - **Prestigious Credential Card:** Redesigned `CertificateCard.jsx` to render an official credential presentation with control numbers, issue/expiry matrix, and View/Download actions in a balanced 2-column layout.
 - **Verification:** Verified across all resident pages with browser screenshots and clean `npm run build` production bundles.
 
-### Resolved: Dead Code & Orphaned Files Purge
-- **Location:** `client/src/` and `server/`
-- **Issue:** Multiple superseded prototype views, early offline database implementations, unreferenced modals, and 0-byte server stubs remained in the repository following incremental architecture migrations.
+### Resolved: Public Certificate Verification Deleted-Account Anonymization & Security Hardening
+- **Location:** `server/services/modules/ModuleProgressService.js`, `server/routes/certificatesRoutes.js`, `server/controllers/certificatesController.js`
+- **Issue:** 
+  1. The verification query used an `INNER JOIN` on `public."user" u ON c.user_id = u.id`. When a user exercised their Right to Be Forgotten and deleted their account (`user_id = NULL`), legitimate unexpired certificates returned `404 Not Found`, incorrectly making authentic credentials appear fraudulent.
+  2. The public lookup endpoint required strict rate limiting to prevent automated scraping.
 - **Resolution:**
-  - Permanently deleted all identified orphaned files:
-    - `client/src/constants/locations.js` (superseded by `barangays.js` `BARANGAY_LIST`).
-    - `client/src/lib/OfflineQueue.js` & `client/src/lib/LocalSave/localStore.js` (superseded by `localDb.js` `LMS_OfflineDB` and `syncManager.js`).
-    - `client/src/components/ui/inputs/TermsCheckbox.jsx` (superseded by `ExplicitConsentModal.jsx` and inline handlers in `RegisterForm.jsx`).
-    - `client/src/pages/admin/barangay/registry/ResidentRegistrySkeleton.jsx` (superseded by `SkeletonTableRow` inline rendering).
-    - `client/src/pages/admin/feedback/components/CloseConfirmModal.jsx` & `ReplyModal.jsx` (superseded by inline reply and close confirmation in `FeedbackTicketCard.jsx`).
-    - `client/src/pages/admin/mdrrmo/module-management/builders/StickyBuilderNav.jsx` (superseded by multi-step wizard in `ModuleBuilderWizard.jsx`).
-    - `client/src/pages/admin/mdrrmo/overview/components/MdrrmoQuickActions.jsx` (superseded by direct CTA buttons in `Overview.jsx`).
-    - `client/src/pages/admin/SystemAdminDashboard.jsx`, `components/SystemAdminUserTable.jsx`, `hooks/useSystemAdmin.js` (superseded by `SystemAdminRoot.jsx` layout).
-    - Entire directory `client/src/pages/admin/mdrrmo/barangay-management/` (superseded by `UserManagement.jsx` and `SectorOverview.jsx`).
-    - `server/controllers/admin/notificationController.js` (0-byte empty file).
-    - `server/middleware/levelMiddleware.js` (0 imports; progression enforced in `ModuleProgressService.js`).
-- **Verification:** Verified clean client production build (`vite build` in 7.58s with 0 errors).
+  - **LEFT JOIN & Fallback:** Updated query to `LEFT JOIN public."user" u ON c.user_id = u.id` with `COALESCE(u.name, c.anonymized_name, 'Archived Resident') AS learner_name`. Authentic certificates of deleted accounts now verify cleanly with active status and anonymized learner names.
+  - **Strict UUID Pre-validation:** Rejects non-UUID strings before querying PostgreSQL to close off integer enumeration attacks (`/verify/1`, `/verify/2`).
+  - **Live State Computation:** Evaluates `status` and `expires_at < NOW()` in real-time at scan time with zero frozen cache.
+  - **Two-Tier Postgres Rate Limiting:** 50 requests / 15 min for public unauthenticated scans; 500 requests / 15 min for authenticated admins, backed by PostgreSQL persistence.
+- **Verification:** Tested against PostgreSQL with active user, deleted account (`user_id = NULL`), expired timestamp, and revoked status; all 4 returned exact expected payloads.
+
+---
+
+### Resolved: Public Verification Page Brand Alignment & Authority Badging
+- **Location:** `client/src/pages/public/VerifyCertificate.jsx`
+- **Issue:** The public certificate verification screen used default blue button styling inconsistent with the Bacolor LMS red brand identity and lacked issuing authority badges and explicit Data Privacy Act disclosures.
+- **Resolution:**
+  - **Brand Theming:** Updated CTA buttons and input focus rings to primary brand red (`bg-red-600 hover:bg-red-700`).
+  - **Issuing Authority Badge:** Added official municipal credential badge: *"Issued under the Authority of Bacolor MDRRMO & Local DRRMC (Municipality of Bacolor, Province of Pampanga)"*.
+  - **R.A. 10173 Compliance Notice:** Added a dedicated footer citing Republic Act No. 10173 (Data Privacy Act of 2012), affirming that only essential qualification metadata is displayed on public routes.
+- **Verification:** Verified via Puppeteer in Chromium and compiled with 0 errors via `npm run build`.
+
+---
+
+### Resolved: Barangay Admin Dashboard Header Card Modernization & Search Debouncing
+- **Location:** `client/src/pages/admin/barangay/workspace/WorkspaceOverview.jsx`, `client/src/pages/admin/barangay/registry/ResidentRegistry.jsx`
+- **Issue:**
+  1. The Barangay Admin overview lacked alignment with the unified MDRRMO header card and did not display localized jurisdiction names.
+  2. The Resident Registry search filter re-computed on every single keystroke.
+- **Resolution:**
+  - **MDRRMO-Aligned Header:** Integrated unified header card displaying `{formattedBarangayName} Community Portal` (e.g. *Barangay Mesalipit Community Portal*), live connection status, and client-side CSV roster export.
+  - **Search Debouncing:** Added 300ms `useDebounce` hook to search inputs covering `name`, `email`, and `status`.
+- **Verification:** Verified via live Puppeteer in Chromium and confirmed 0 build errors.
+
+---
+
+### Resolved: Database Indexing & Query Plan Optimization
+- **Location:** `server/migrations/schema.sql`, live PostgreSQL `LMS_db`
+- **Issue:** Multi-table joins across `certificates`, `module_activity`, and `feedbacks` were running sequential scans as tables grew.
+- **Resolution:** Executed a live database migration that created 6 targeted composite and partial indexes:
+  - `idx_certificates_user_status` — composite on `(user_id, status)` for certificate lookups and filtering.
+  - `idx_certificates_expiry_sweep` — partial index on `(status, expires_at) WHERE status = 'active'` for the daily 1:00 AM recertification cron.
+  - `idx_certificates_verification_token` — index on `verification_token` for QR-code scan verification endpoint.
+  - `idx_certificates_user_non_revoked` — partial index on `(user_id) WHERE status != 'revoked'` for the historical completion scalar subquery in `UserService.getAllUsers`.
+  - `idx_module_activity_user_modstatus` — composite on `(user_id, modstatus)` replacing two separate single-column indexes.
+  - `idx_feedbacks_user_status_created` — composite on `(user_id, status, created_at DESC)` for the feedback queue admin and user views.
+- **Verification:** Confirmed all 6 indexes exist in `LMS_db` via `pg_indexes` query. `schema.sql` updated to reflect the new state.
+
+
 
 ---
 
@@ -179,7 +212,7 @@ This document tracks identified technical debt, architectural decisions, missing
   - `dist/assets/certTemplate-*.js` (~1.43 MB): Includes PDF rendering engines, Canvas utilities, and embedded vector graphics.
   - `dist/assets/index-*.js` (~540 kB): Core React, TanStack Query, React Router, and common libraries bundle.
   - `dist/assets/ModuleManagement-*.js` (~470 kB): TipTap rich text suite, drag-and-drop canvas, and SVG icon sets.
-  - `dist/assets/BarangayCertifications-*.js` (~391 kB): Certificate tables and `html5-qrcode` scanner bundle.
+  - `dist/assets/CertificateVerificationModal-*.js` (~380 kB): Certificate tables and `html5-qrcode` scanner bundle.
   - `dist/assets/PieChart-*.js` (~330 kB): Charting engine.
 - **Recommended Action:**
   - Use `React.lazy()` and dynamic `import()` for large admin tools (`ModuleBuilderWizard`, `AdminFeedbackManager`, `BarangayCertifications`), PDF generators (`certTemplate`), and charting components.
@@ -206,28 +239,14 @@ This document tracks identified technical debt, architectural decisions, missing
 
 ---
 
-### Resolved: Database Indexing & Query Plan Optimization
-- **Location:** `server/migrations/schema.sql`, live PostgreSQL `LMS_db`
-- **Issue:** Multi-table joins across `certificates`, `module_activity`, and `feedbacks` were running sequential scans as tables grew.
-- **Resolution:** Executed a live database migration that created 6 targeted composite and partial indexes:
-  - `idx_certificates_user_status` — composite on `(user_id, status)` for certificate lookups and filtering.
-  - `idx_certificates_expiry_sweep` — partial index on `(status, expires_at) WHERE status = 'active'` for the daily 1:00 AM recertification cron.
-  - `idx_certificates_verification_token` — index on `verification_token` for QR-code scan verification endpoint.
-  - `idx_certificates_user_non_revoked` — partial index on `(user_id) WHERE status != 'revoked'` for the historical completion scalar subquery in `UserService.getAllUsers`.
-  - `idx_module_activity_user_modstatus` — composite on `(user_id, modstatus)` replacing two separate single-column indexes.
-  - `idx_feedbacks_user_status_created` — composite on `(user_id, status, created_at DESC)` for the feedback queue admin and user views.
-- **Verification:** Confirmed all 6 indexes exist in `LMS_db` via `pg_indexes` query. `schema.sql` updated to reflect the new state.
-
----
-
-### 6. Module Builder Wizard Editing Mode (`PUT /api/modules/:id`)
+### 5. Module Builder Wizard Editing Mode (`PUT /api/modules/:id`)
 - **Location:** `client/src/pages/admin/mdrrmo/module-management/builders/ModuleBuilderWizard.jsx`, `client/src/hooks/useModuleBuilder.js`
-- **Description:** The frontend wizard contains scaffolding for `editingModuleId`, but full module editing (hydrating existing level/step sequences, diffing questions, and updating published syllabi) is not yet implemented.
-- **Status:** Scheduled for a future administrative milestone. Requires a dedicated `PUT /api/modules/:id` backend route and database transaction logic for step reconciliation.
+- **Description:** The frontend wizard contains scaffolding for `editingModuleId`, but full module editing (hydrating existing level/step sequences, diffing questions, and updating published syllabi) is deferred on the product roadmap.
+- **Status:** Explicitly deferred pending product roadmap approval. Requires a dedicated `PUT /api/modules/:id` backend route and database transaction logic for step reconciliation.
 
 ---
 
-### 7. Sequence Canvas Flow Configuration Stub (`SequenceCanvas.jsx`)
+### 6. Sequence Canvas Flow Configuration Stub (`SequenceCanvas.jsx`)
 - **Location:** `client/src/pages/admin/mdrrmo/module-management/builders/SequenceCanvas.jsx:L76-L81`
 - **Description:** A "Set By" `<select>` element containing options `Sequential` and `Optional` is present in the builder canvas header. It is currently unmanaged (no `value` prop, no `onChange` handler, and not part of the module form payload).
 - **Architectural Reality:** The PostgreSQL schema enforces a strictly linear progression model (`UNIQUE (level_id, step_order)`). `ModuleProgressService.js` and `ModuleViewer.jsx` compute progress strictly linearly ($1 \to 2 \to 3$).

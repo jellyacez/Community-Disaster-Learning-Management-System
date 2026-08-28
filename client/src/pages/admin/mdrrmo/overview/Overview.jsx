@@ -19,6 +19,7 @@ import {
 } from "./components/MdrrmoCharts";
 import ActiveModulesTable from "./components/ActiveModulesTable";
 import MdrrmoRecentActivity from "./components/MdrrmoRecentActivity";
+import MdrrmoQuickActions from "./components/MdrrmoQuickActions";
 
 // TODO: confirm 'pending_review' matches the approval workflow's actual status value once that's implemented
 export default function Overview() {
@@ -171,19 +172,11 @@ export default function Overview() {
         </div>
       </div>
 
-      {/* 2x2 Grid Layout */}
-      {/* Row 2: Recent Activity & Trend */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      {/* Row 2: Operational & Curriculum Triad (3 Equal Columns: Events, Distribution, Actions) */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
         <div className="lg:col-span-1">
           <MdrrmoRecentActivity />
         </div>
-        <div className="lg:col-span-2">
-          <MdrrmoEnrollmentTrendChart />
-        </div>
-      </div>
-
-      {/* Row 3: Module Distribution & Active Modules Table */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-1">
           <MdrrmoModuleDistributionChart
             selectedCategory={selectedCategory}
@@ -193,7 +186,19 @@ export default function Overview() {
             }}
           />
         </div>
-        <div className="lg:col-span-2">
+        <div className="lg:col-span-1">
+          <MdrrmoQuickActions
+            pendingReviewsCount={m.pending_reviews}
+          />
+        </div>
+      </div>
+
+      {/* Row 3: Management Catalog & Activity Analytics (2 Equal Columns) */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
+        <div className="lg:col-span-1">
+          <MdrrmoEnrollmentTrendChart />
+        </div>
+        <div className="lg:col-span-1">
           <ActiveModulesTable
             modules={modules}
             isLoading={isLoadingModules}

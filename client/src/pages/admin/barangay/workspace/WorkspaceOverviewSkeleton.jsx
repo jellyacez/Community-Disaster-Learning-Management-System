@@ -68,16 +68,17 @@ export default function WorkspaceOverviewSkeleton() {
             <SkeletonBlock className="h-4 w-full" />
           </div>
         </div>
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm lg:col-span-3 h-[360px] flex flex-col justify-between">
-          <div className="border-b border-gray-100 pb-3">
+        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-[0_2px_12px_-3px_rgba(0,0,0,0.06)] lg:col-span-3 h-[360px] flex flex-col justify-between">
+          <div className="pb-3 border-b border-gray-100">
             <SkeletonBlock className="h-5 w-32 mb-1" />
             <SkeletonBlock className="h-3 w-40" />
           </div>
-          <div className="flex-1 flex flex-col justify-between gap-2.5 pt-3">
-            <SkeletonBlock className="h-11 w-full rounded-xl" />
-            <SkeletonBlock className="h-11 w-full rounded-xl" />
-            <SkeletonBlock className="h-11 w-full rounded-xl" />
-            <SkeletonBlock className="h-11 w-full rounded-xl" />
+          <div className="flex-1 flex flex-col justify-between gap-2 pt-3">
+            <SkeletonBlock className="h-10 w-full rounded-xl" />
+            <SkeletonBlock className="h-10 w-full rounded-xl" />
+            <SkeletonBlock className="h-10 w-full rounded-xl" />
+            <SkeletonBlock className="h-10 w-full rounded-xl" />
+            <SkeletonBlock className="h-10 w-full rounded-xl" />
           </div>
         </div>
       </div>
