@@ -39,8 +39,8 @@ This document tracks identified technical debt, architectural decisions, missing
 ### Resolved: `BACOLOR_BARANGAYS` Static Admin Filters
 - **Previous location:** `client/src/constants/locations.js` (used in `ResidentRegistry.jsx`, `BarangayFilters.jsx`, `UserFilters.jsx`)
 - **Issue:** Admin filtering components used a hardcoded flat string array. The backend mapped string names back to IDs via a subquery (`SELECT id FROM barangays WHERE name = $1`), creating brittleness if barangay names drifted.
-- **Resolution:** All three components migrated to import `BARANGAY_LIST` from `client/src/constants/barangays.js` (the canonical `{id, name}` object array). `option` keys now use `b.id` and `value` continues to use `b.name` (matching the existing backend string-match logic, which has not changed). `locations.js` is now fully orphaned with zero imports — safe to delete in a future cleanup pass.
-- **Note:** The deeper backend refactor (passing `barangay_id` integer directly instead of a name string) was not pursued — the backend `UserService.js` subquery approach still works and the risk of name drift is eliminated on the frontend since `BARANGAY_LIST` and the `barangays` DB table are kept in sync.
+- **Resolution:** All three components migrated to import `BARANGAY_LIST` from `client/src/constants/barangays.js` (the canonical `{id, name}` object array). `option` keys now use `b.id` and `value` continues to use `b.name` (matching the existing backend string-match logic, which has not changed). `client/src/constants/locations.js` has been permanently deleted from the repository.
+- **Verification:** Verified `client` production build completes cleanly with 0 errors after removal.
 
 ---
 
@@ -141,6 +141,24 @@ This document tracks identified technical debt, architectural decisions, missing
   - **Prestigious Credential Card:** Redesigned `CertificateCard.jsx` to render an official credential presentation with control numbers, issue/expiry matrix, and View/Download actions in a balanced 2-column layout.
 - **Verification:** Verified across all resident pages with browser screenshots and clean `npm run build` production bundles.
 
+### Resolved: Dead Code & Orphaned Files Purge
+- **Location:** `client/src/` and `server/`
+- **Issue:** Multiple superseded prototype views, early offline database implementations, unreferenced modals, and 0-byte server stubs remained in the repository following incremental architecture migrations.
+- **Resolution:**
+  - Permanently deleted all identified orphaned files:
+    - `client/src/constants/locations.js` (superseded by `barangays.js` `BARANGAY_LIST`).
+    - `client/src/lib/OfflineQueue.js` & `client/src/lib/LocalSave/localStore.js` (superseded by `localDb.js` `LMS_OfflineDB` and `syncManager.js`).
+    - `client/src/components/ui/inputs/TermsCheckbox.jsx` (superseded by `ExplicitConsentModal.jsx` and inline handlers in `RegisterForm.jsx`).
+    - `client/src/pages/admin/barangay/registry/ResidentRegistrySkeleton.jsx` (superseded by `SkeletonTableRow` inline rendering).
+    - `client/src/pages/admin/feedback/components/CloseConfirmModal.jsx` & `ReplyModal.jsx` (superseded by inline reply and close confirmation in `FeedbackTicketCard.jsx`).
+    - `client/src/pages/admin/mdrrmo/module-management/builders/StickyBuilderNav.jsx` (superseded by multi-step wizard in `ModuleBuilderWizard.jsx`).
+    - `client/src/pages/admin/mdrrmo/overview/components/MdrrmoQuickActions.jsx` (superseded by direct CTA buttons in `Overview.jsx`).
+    - `client/src/pages/admin/SystemAdminDashboard.jsx`, `components/SystemAdminUserTable.jsx`, `hooks/useSystemAdmin.js` (superseded by `SystemAdminRoot.jsx` layout).
+    - Entire directory `client/src/pages/admin/mdrrmo/barangay-management/` (superseded by `UserManagement.jsx` and `SectorOverview.jsx`).
+    - `server/controllers/admin/notificationController.js` (0-byte empty file).
+    - `server/middleware/levelMiddleware.js` (0 imports; progression enforced in `ModuleProgressService.js`).
+- **Verification:** Verified clean client production build (`vite build` in 7.58s with 0 errors).
+
 ---
 
 ## 🟡 Open / Active Technical Debt & Optimization Items
@@ -217,9 +235,3 @@ This document tracks identified technical debt, architectural decisions, missing
   - If progression remains strictly linear: replace the `<select>` with a decorative status badge (`Flow: Sequential`) or remove it to prevent administrative confusion.
   - If conditional branching is desired in the future: expand schema support (`is_optional`, `flow_type`) and update `ModuleProgressService`.
 
----
-
-### 8. Orphaned File Cleanup: `client/src/constants/locations.js`
-- **Location:** `client/src/constants/locations.js`
-- **Description:** All admin filtering components have been migrated to the canonical `BARANGAY_LIST` in `client/src/constants/barangays.js`. `locations.js` has zero active imports across the repository.
-- **Recommended Action:** Delete the file in a subsequent dead-code cleanup pass.

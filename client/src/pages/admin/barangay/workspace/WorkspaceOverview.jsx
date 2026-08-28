@@ -215,12 +215,12 @@ export default function WorkspaceOverview() {
         
         {/* Compliance Distribution */}
         <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm lg:col-span-4 flex flex-col justify-between">
-          <div>
+          <div className="border-b border-gray-100 pb-3">
             <h3 className="text-sm font-bold text-gray-900">Community Safety Compliance</h3>
             <p className="text-xs text-gray-400 mt-0.5">Ratio of certified vs uncertified citizens</p>
           </div>
 
-          <div className="my-6 flex flex-col items-center justify-center relative">
+          <div className="my-auto py-4 flex flex-col items-center justify-center relative">
             <div className="relative w-36 h-36 flex items-center justify-center">
               <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
                 <path
@@ -247,7 +247,7 @@ export default function WorkspaceOverview() {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-2 pt-4 border-t border-gray-100 text-xs">
+          <div className="grid grid-cols-2 gap-2 pt-3 border-t border-gray-100 text-xs">
             <div className="flex items-center gap-2">
               <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
               <span className="text-gray-600 font-medium">{certifiedCount} Certified</span>
@@ -345,63 +345,83 @@ export default function WorkspaceOverview() {
         </div>
 
         {/* Quick Admin Actions */}
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm lg:col-span-3 flex flex-col justify-between space-y-4">
-          <div>
+        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm lg:col-span-3 flex flex-col justify-between">
+          <div className="border-b border-gray-100 pb-3">
             <h3 className="text-sm font-bold text-gray-900">Quick Actions</h3>
             <p className="text-xs text-gray-400 mt-0.5">Barangay administrative tools</p>
           </div>
 
-          <div className="space-y-2.5">
+          <div className="flex-1 flex flex-col justify-between gap-2.5 pt-3">
             {/* Verify Certificate */}
             <button
               type="button"
               onClick={() => setIsVerifyModalOpen(true)}
-              className="w-full flex items-center justify-between p-3 bg-red-50 hover:bg-red-100/80 rounded-xl text-xs font-bold text-red-700 transition border border-red-100 cursor-pointer"
+              className="group w-full flex items-center justify-between p-2.5 bg-red-50/60 hover:bg-red-50 rounded-xl text-xs transition-all border border-red-100/80 hover:border-red-200 cursor-pointer shadow-[0_1px_2px_rgba(0,0,0,0.02)]"
             >
-              <span className="flex items-center gap-2.5">
-                <HugeiconsIcon icon={QrCodeIcon} className="w-4 h-4 text-red-600 shrink-0" />
-                Verify Certificate
-              </span>
-              <HugeiconsIcon icon={ArrowRight01Icon} className="w-3.5 h-3.5 text-red-400 shrink-0" />
+              <div className="flex items-center gap-2.5 text-left">
+                <div className="w-8 h-8 rounded-lg bg-red-100/80 text-red-600 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                  <HugeiconsIcon icon={QrCodeIcon} className="w-4 h-4" />
+                </div>
+                <div>
+                  <div className="font-bold text-red-900">Verify Certificate</div>
+                  <div className="text-[10px] text-red-700/70 font-medium">Scan or validate QR code</div>
+                </div>
+              </div>
+              <HugeiconsIcon icon={ArrowRight01Icon} className="w-3.5 h-3.5 text-red-400 group-hover:text-red-600 group-hover:translate-x-0.5 transition-all shrink-0 ml-1" />
             </button>
 
             {/* Manage Residents */}
             <button
               type="button"
               onClick={() => navigate("/admin/barangay/residents")}
-              className="w-full flex items-center justify-between p-3 bg-gray-50 hover:bg-gray-100 rounded-xl text-xs font-semibold text-gray-700 transition border border-gray-100 cursor-pointer"
+              className="group w-full flex items-center justify-between p-2.5 bg-gray-50/70 hover:bg-blue-50/40 rounded-xl text-xs transition-all border border-gray-100 hover:border-blue-100 cursor-pointer shadow-[0_1px_2px_rgba(0,0,0,0.02)]"
             >
-              <span className="flex items-center gap-2.5">
-                <HugeiconsIcon icon={UserGroupIcon} className="w-4 h-4 text-blue-600 shrink-0" />
-                Manage Residents
-              </span>
-              <HugeiconsIcon icon={ArrowRight01Icon} className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+              <div className="flex items-center gap-2.5 text-left">
+                <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                  <HugeiconsIcon icon={UserGroupIcon} className="w-4 h-4" />
+                </div>
+                <div>
+                  <div className="font-semibold text-gray-800 group-hover:text-blue-900">Manage Residents</div>
+                  <div className="text-[10px] text-gray-400 font-medium">Jurisdiction roster & records</div>
+                </div>
+              </div>
+              <HugeiconsIcon icon={ArrowRight01Icon} className="w-3.5 h-3.5 text-gray-400 group-hover:text-blue-500 group-hover:translate-x-0.5 transition-all shrink-0 ml-1" />
             </button>
 
             {/* Certification Roster */}
             <button
               type="button"
               onClick={() => navigate("/admin/barangay/certifications")}
-              className="w-full flex items-center justify-between p-3 bg-gray-50 hover:bg-gray-100 rounded-xl text-xs font-semibold text-gray-700 transition border border-gray-100 cursor-pointer"
+              className="group w-full flex items-center justify-between p-2.5 bg-gray-50/70 hover:bg-amber-50/40 rounded-xl text-xs transition-all border border-gray-100 hover:border-amber-100 cursor-pointer shadow-[0_1px_2px_rgba(0,0,0,0.02)]"
             >
-              <span className="flex items-center gap-2.5">
-                <HugeiconsIcon icon={Award01Icon} className="w-4 h-4 text-amber-600 shrink-0" />
-                Certification Roster
-              </span>
-              <HugeiconsIcon icon={ArrowRight01Icon} className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+              <div className="flex items-center gap-2.5 text-left">
+                <div className="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                  <HugeiconsIcon icon={Award01Icon} className="w-4 h-4" />
+                </div>
+                <div>
+                  <div className="font-semibold text-gray-800 group-hover:text-amber-900">Certification Roster</div>
+                  <div className="text-[10px] text-gray-400 font-medium">Review certified locals</div>
+                </div>
+              </div>
+              <HugeiconsIcon icon={ArrowRight01Icon} className="w-3.5 h-3.5 text-gray-400 group-hover:text-amber-500 group-hover:translate-x-0.5 transition-all shrink-0 ml-1" />
             </button>
 
             {/* Resident Feedback */}
             <button
               type="button"
               onClick={() => navigate("/admin/barangay/feedback")}
-              className="w-full flex items-center justify-between p-3 bg-gray-50 hover:bg-gray-100 rounded-xl text-xs font-semibold text-gray-700 transition border border-gray-100 cursor-pointer"
+              className="group w-full flex items-center justify-between p-2.5 bg-gray-50/70 hover:bg-emerald-50/40 rounded-xl text-xs transition-all border border-gray-100 hover:border-emerald-100 cursor-pointer shadow-[0_1px_2px_rgba(0,0,0,0.02)]"
             >
-              <span className="flex items-center gap-2.5">
-                <HugeiconsIcon icon={Message01Icon} className="w-4 h-4 text-emerald-600 shrink-0" />
-                Resident Feedback
-              </span>
-              <HugeiconsIcon icon={ArrowRight01Icon} className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+              <div className="flex items-center gap-2.5 text-left">
+                <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                  <HugeiconsIcon icon={Message01Icon} className="w-4 h-4" />
+                </div>
+                <div>
+                  <div className="font-semibold text-gray-800 group-hover:text-emerald-900">Resident Feedback</div>
+                  <div className="text-[10px] text-gray-400 font-medium">Inquiries & community reports</div>
+                </div>
+              </div>
+              <HugeiconsIcon icon={ArrowRight01Icon} className="w-3.5 h-3.5 text-gray-400 group-hover:text-emerald-500 group-hover:translate-x-0.5 transition-all shrink-0 ml-1" />
             </button>
           </div>
         </div>

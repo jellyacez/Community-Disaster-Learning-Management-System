@@ -33,27 +33,52 @@ export default function WorkspaceOverviewSkeleton() {
       </div>
 
       {/* Body Content Skeleton */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm lg:col-span-5 h-[340px] space-y-4">
-          <SkeletonBlock className="h-5 w-48 mb-2" />
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm lg:col-span-4 h-[360px] flex flex-col justify-between">
+          <div className="border-b border-gray-100 pb-3">
+            <SkeletonBlock className="h-5 w-48 mb-1" />
+            <SkeletonBlock className="h-3 w-36" />
+          </div>
           <SkeletonBlock className="w-36 h-36 rounded-full mx-auto" />
+          <div className="pt-3 border-t border-gray-100 flex justify-between">
+            <SkeletonBlock className="h-3 w-20" />
+            <SkeletonBlock className="h-3 w-20" />
+          </div>
         </div>
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm lg:col-span-4 h-[340px] space-y-4">
-          <SkeletonBlock className="h-5 w-40 mb-2" />
-          {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="space-y-1.5">
-              <div className="flex justify-between">
-                <SkeletonBlock className="h-3 w-24" />
-                <SkeletonBlock className="h-3 w-12" />
-              </div>
-              <SkeletonBlock className="h-2 w-full rounded-full" />
+        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm lg:col-span-5 h-[360px] flex flex-col justify-between">
+          <div className="border-b border-gray-100 pb-3 flex justify-between items-center">
+            <div>
+              <SkeletonBlock className="h-5 w-40 mb-1" />
+              <SkeletonBlock className="h-3 w-32" />
             </div>
-          ))}
+            <SkeletonBlock className="h-4 w-20 rounded" />
+          </div>
+          <div className="space-y-3 py-2">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="space-y-1.5">
+                <div className="flex justify-between">
+                  <SkeletonBlock className="h-3 w-24" />
+                  <SkeletonBlock className="h-3 w-12" />
+                </div>
+                <SkeletonBlock className="h-2 w-full rounded-full" />
+              </div>
+            ))}
+          </div>
+          <div className="pt-3 border-t border-gray-100">
+            <SkeletonBlock className="h-4 w-full" />
+          </div>
         </div>
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm lg:col-span-3 h-[340px] space-y-3">
-          <SkeletonBlock className="h-5 w-32" />
-          <SkeletonBlock className="h-12 w-full rounded-xl" />
-          <SkeletonBlock className="h-12 w-full rounded-xl" />
+        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm lg:col-span-3 h-[360px] flex flex-col justify-between">
+          <div className="border-b border-gray-100 pb-3">
+            <SkeletonBlock className="h-5 w-32 mb-1" />
+            <SkeletonBlock className="h-3 w-40" />
+          </div>
+          <div className="flex-1 flex flex-col justify-between gap-2.5 pt-3">
+            <SkeletonBlock className="h-11 w-full rounded-xl" />
+            <SkeletonBlock className="h-11 w-full rounded-xl" />
+            <SkeletonBlock className="h-11 w-full rounded-xl" />
+            <SkeletonBlock className="h-11 w-full rounded-xl" />
+          </div>
         </div>
       </div>
     </div>
