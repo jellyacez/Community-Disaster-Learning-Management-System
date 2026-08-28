@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router-dom";
+import { authClient } from "../../../../../lib/auth-client";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   BookOpen01Icon,
@@ -6,11 +7,14 @@ import {
   Shield01Icon,
   UserGroupIcon,
   Message01Icon,
+  Certificate01Icon,
   ArrowRight01Icon,
 } from "@hugeicons/core-free-icons";
 
 export default function MdrrmoQuickActions({ pendingReviewsCount = 0 }) {
   const navigate = useNavigate();
+  const { data: session } = authClient.useSession();
+  const isHeadAdmin = session?.user?.role === "head_mdrrmo_admin";
 
   const actions = [
     {
@@ -20,15 +24,27 @@ export default function MdrrmoQuickActions({ pendingReviewsCount = 0 }) {
       icon: BookOpen01Icon,
       onClick: () => navigate("/admin/mdrrmo/modules"),
     },
-    {
-      id: "pending-approvals",
-      title: "Pending Approvals",
-      description: "Review submitted module revisions",
-      icon: Task01Icon,
-      badge: pendingReviewsCount > 0 ? `${pendingReviewsCount} Pending` : null,
-      badgeColor: "bg-amber-50 text-amber-700 border-amber-200/80",
-      onClick: () => navigate("/admin/mdrrmo/approvals"),
-    },
+    ...(isHeadAdmin
+      ? [
+          {
+            id: "pending-approvals",
+            title: "Pending Approvals",
+            description: "Review submitted module revisions",
+            icon: Task01Icon,
+            badge: pendingReviewsCount > 0 ? `${pendingReviewsCount} Pending` : null,
+            badgeColor: "bg-amber-50 text-amber-700 border-amber-200/80",
+            onClick: () => navigate("/admin/mdrrmo/approvals"),
+          },
+        ]
+      : [
+          {
+            id: "certification-analytics",
+            title: "Certification Analytics",
+            description: "Track municipal certification records",
+            icon: Certificate01Icon,
+            onClick: () => navigate("/admin/mdrrmo/certifications"),
+          },
+        ]),
     {
       id: "sector-overview",
       title: "Sector Overview & Audit",

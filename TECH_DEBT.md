@@ -254,3 +254,65 @@ This document tracks identified technical debt, architectural decisions, missing
   - If progression remains strictly linear: replace the `<select>` with a decorative status badge (`Flow: Sequential`) or remove it to prevent administrative confusion.
   - If conditional branching is desired in the future: expand schema support (`is_optional`, `flow_type`) and update `ModuleProgressService`.
 
+---
+
+### 7. Third-Party External Dependency for Certificate QR Generation (`certTemplate.jsx`)
+- **Location:** `client/src/pages/user/certificates/certTemplate.jsx:L78`
+- **Description:** The printable/downloadable PDF certificate embeds a QR code fetched at runtime from an external third-party API: `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=...`.
+- **Architectural & Security Risk:**
+  - **Offline Vulnerability:** If a resident is offline or in low-connectivity conditions, the PDF rendering engine hangs or fails to generate the certificate image.
+  - **Data Privacy & Dependency:** Transmits the verification URL to an external third-party service on every PDF generation.
+  - **Availability:** Service outages or rate limiting by the external provider break in-app certificate downloads.
+- **Recommended Action:**
+  - Replace external HTTP call with a local, zero-network QR code generation library (e.g. `qrcode` / canvas data URI generator) executing entirely on the client.
+
+---
+
+### 8. Hardcoded Signatory Placeholders in Certificate Template (`certTemplate.jsx`)
+- **Location:** `client/src/pages/user/certificates/certTemplate.jsx:L84-L85`
+- **Description:** Signatories in the official PDF credential are hardcoded static strings: `const barangayAdminName = "Hon. Juan Dela Cruz"` and `const systemAdminName = "System Administrator"`.
+- **Architectural Gap:** Does not reflect real elected barangay officials, actual issuing captains, or authorized MDRRMO officers.
+- **Recommended Action:**
+  - Update `GET /api/users/certificates/:token` to join the issuing barangay metadata (e.g. `barangays.captain_name` or `barangays.admin_signatory`) and municipal MDRRMO leadership from system settings.
+
+---
+
+### 9. Mock Data & Scaffolding Stubs in Resident Settings (`Settings.jsx`)
+- **Location:** `client/src/components/settings/LoginHistory.jsx`, `client/src/components/settings/LocalizationSettings.jsx`, `client/src/components/settings/HelpSupport.jsx`
+- **Description:**
+  - `LoginHistory.jsx`: Renders a 100% hardcoded mock array of devices and IP addresses (`"iPhone 13"`, `"MacBook Pro"`, `"San Fernando, Pampanga"`, `"112.198.xxx.xx"`) with an unhandled "View Full History" button.
+  - `LocalizationSettings.jsx`: Language select and Theme buttons are unmanaged UI scaffolding with no active i18n or theme engine bindings.
+  - `HelpSupport.jsx`: The "Contact Support" button has no `onClick` or `Link` handler and does not navigate to `/user/feedback`.
+- **Recommended Action:**
+  - Connect `LoginHistory.jsx` to live user sessions from Better-Auth's `session` table or PostgreSQL `activity_log`.
+  - Wire `HelpSupport.jsx` button to route directly to `/user/feedback`.
+  - Add functional persistence or hide unimplemented localization/theme scaffolding until full i18n is scheduled.
+
+---
+
+### 10. Gamification Mastery Badge Scope Flaw (`BadgesSection.jsx`)
+- **Location:** `client/src/components/ui/profile/BadgesSection.jsx:L25-L39`
+- **Description:** Hazard mastery badges (`Flood Master`, `Earthquake Expert`, `Fire Safety Vanguard`) compute unlock status using `enrolledModules` rather than the total catalog of published modules.
+- **Architectural Impact:** If a resident enlists in only 1 of 5 flood modules and completes it, `floodModules.length === floodCompleted.length` evaluates to `true`, instantly awarding the master badge despite remaining uncompleted courses in that hazard domain.
+- **Recommended Action:**
+  - Update badge calculation logic to evaluate against total published modules per category returned by the backend or catalog query.
+
+---
+
+### 11. Missing Offline Reply Queuing in Resident Feedback (`useFeedbackHistory.js`)
+- **Location:** `client/src/pages/user/feedback/hooks/useFeedbackHistory.js:L92-L105`
+- **Description:** While initial ticket creation (`useFeedbackSubmit.js`) supports offline queuing (`SUBMIT_FEEDBACK`) when `!navigator.onLine`, the `userReplyMutation` in `useFeedbackHistory.js` lacks an offline fallback branch and fails immediately with a network error.
+- **Recommended Action:**
+  - Add `REPLY_FEEDBACK` action handler to `syncManager.js` and wrap `userReplyMutation` to queue message replies in `localDb.sync_queue` when disconnected.
+
+---
+
+### 12. TanStack Query v5 Syntax & Deprecation Inconsistencies
+- **Location:** `client/src/hooks/useModuleViewer.js`, `client/src/pages/user/dashboard/Dashboard.jsx`, `client/src/pages/user/hooks/usePaginatedAnnouncements.js`
+- **Description:**
+  - `useModuleViewer.js` and `useFeedbackHistory.js` use legacy array syntax for invalidations: `queryClient.invalidateQueries(["userDashboard"])` instead of TanStack Query v5 object syntax `{ queryKey: ["userDashboard"] }`.
+  - `usePaginatedAnnouncements.js` passes `keepPreviousData: true` (deprecated in v5) instead of `placeholderData: keepPreviousData`.
+  - `Dashboard.jsx` specifies `onError` inside `useQuery` (ignored in TanStack Query v5).
+- **Recommended Action:**
+  - Modernize all resident query hooks to standard TanStack Query v5 object schemas.
+
