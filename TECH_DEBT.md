@@ -242,11 +242,25 @@ This document tracks identified technical debt, architectural decisions, missing
 - **Issue:** PDF certificate signatories and titles were hardcoded static mock strings (`"Hon. Juan Dela Cruz"` and `"System Administrator"`).
 - **Resolution:**
   - Upgraded `UserService.getCertificateData` to query real barangay administrator names assigned to the learner's registered barangay (`SELECT ba.name FROM "user" ba WHERE ba.role = 'barangay_admin' AND ba.barangay_id = u.barangay_id`) and senior municipal MDRRMO leadership (`head_mdrrmo_admin` / `mdrrmo_admin`).
-  - Updated `certTemplate.jsx` to dynamically render authentic official signatures, localized resident barangay context (`Authorized Resident — Brgy. <Barangay>`), and structured institutional titles (`Barangay DRRMC — Brgy. <Barangay>`, `Municipal DRRMO Head`).
+  - Updated `certTemplate.jsx` to dynamically render authentic official signatures, localized resident barangay context (`Authorized Resident — Brgy. <Barangay>`), and structured institutional titles (`Barangay Captain — Brgy. <Barangay>`, `Municipal DRRMO Head`).
 - **Verification:** Verified via automated Puppeteer test:
   1. Authenticated resident assigned to Barangay Concepcion.
   2. Intercepted `GET /api/users/certificates/:token` and asserted dynamic presence of `barangay_admin_name`, `mdrrmo_officer_name`, and `resident_barangay`.
   3. Verified that the PDF generation and download link successfully rendered the live signatories with zero hardcoding.
+
+---
+
+### Resolved: Client PDF Web Worker CSP Directive & Browser Buffer Compatibility
+- **Location:** `client/index.html`, `server/server.js`, `client/vite.config.js`, `client/src/main.jsx`, `client/src/pages/user/certificates/certTemplate.jsx`
+- **Issue:** `@react-pdf/renderer` PDF compilation in background Web Workers was blocked by the browser due to missing `worker-src 'self' blob:` and `script-src ... blob:` in the client SPA CSP meta tag. When the worker was blocked, the engine's main-thread fallback threw `Buffer is not defined` and `Module "buffer" has been externalized`.
+- **Resolution:**
+  - Configured matching CSP directives across `client/index.html` and `server/server.js` (`worker-src 'self' blob:; script-src 'self' 'wasm-unsafe-eval' blob:;`).
+  - Added the browser `buffer` npm package to `client/package.json`.
+  - Configured Vite resolution alias (`buffer: "buffer/"`) and polyfilled `window.Buffer` in `main.jsx` and `certTemplate.jsx` to support in-browser binary stream encoding without Node built-in collisions.
+- **Verification:** Verified via automated Puppeteer test:
+  1. Loaded `/user/certificates/view?token=...` in Chromium.
+  2. Confirmed 0 CSP violations, 0 console errors, and successful PDF iframe rendering as a blob URL (`blob:http://localhost:5173/...`).
+  3. Confirmed the action button successfully transitioned to an active `Download PDF` state.
 
 ---
 

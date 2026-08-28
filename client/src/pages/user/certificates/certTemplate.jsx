@@ -1,3 +1,9 @@
+import { Buffer } from "buffer/";
+if (typeof window !== "undefined") {
+  window.Buffer = window.Buffer || Buffer;
+  globalThis.Buffer = globalThis.Buffer || Buffer;
+}
+
 import { useState, useEffect } from "react";
 import { useOutletContext, useSearchParams, Link } from "react-router-dom"; 
 import { useQuery } from "@tanstack/react-query";
@@ -121,8 +127,8 @@ export default function CertificateTemplate() {
   })();
 
   const barangayAdminTitle = residentBarangay
-    ? `Barangay DRRMC — Brgy. ${residentBarangay}`
-    : "Barangay Administrator";
+    ? `Barangay Captain — Brgy. ${residentBarangay}`
+    : "Barangay Captain";
 
   const mdrrmoOfficerName = certData.mdrrmo_officer_name || "Municipal DRRM Officer";
   const mdrrmoOfficerTitle = "Municipal DRRMO Head";

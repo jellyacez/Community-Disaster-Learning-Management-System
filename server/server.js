@@ -61,7 +61,7 @@ app.use(
     contentSecurityPolicy: {
       directives: {
         defaultSrc: ["'self'"],
-        scriptSrc: ["'self'", "'wasm-unsafe-eval'"],
+        scriptSrc: ["'self'", "'wasm-unsafe-eval'", "blob:"],
         workerSrc: ["'self'", "blob:"],
         connectSrc: ["'self'"],
         styleSrc: ["'self'", "'unsafe-inline'"],
