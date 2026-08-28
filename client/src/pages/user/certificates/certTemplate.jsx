@@ -1,5 +1,7 @@
+import { useState, useEffect } from "react";
 import { useOutletContext, useSearchParams, Link } from "react-router-dom"; 
 import { useQuery } from "@tanstack/react-query";
+import QRCode from "qrcode";
 import apiClient from "../../../lib/apiClient";
 import { PDFViewer, PDFDownloadLink, Document, Page, Text, View, StyleSheet, Image } from "@react-pdf/renderer";
 
@@ -36,6 +38,34 @@ export default function CertificateTemplate() {
   const [searchParams] = useSearchParams();
   const token = searchParams.get("token");
   const residentName = currentUser?.name || "Resident"; 
+  const [qrDataUrl, setQrDataUrl] = useState("");
+
+  useEffect(() => {
+    if (!token) return;
+    const origin = typeof window !== "undefined" ? window.location.origin : "http://localhost:5173";
+    const verificationUrl = `${origin}/verify?token=${token}`;
+    let isMounted = true;
+
+    QRCode.toDataURL(verificationUrl, {
+      width: 150,
+      margin: 1,
+      errorCorrectionLevel: "M",
+      color: {
+        dark: "#000000",
+        light: "#ffffff",
+      },
+    })
+      .then((url) => {
+        if (isMounted) setQrDataUrl(url);
+      })
+      .catch((err) => {
+        console.error("Failed to generate local certificate QR code:", err);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [token]);
 
   const { data: certData, isLoading, isError } = useQuery({
     queryKey: ["certificateData", token],
@@ -51,7 +81,7 @@ export default function CertificateTemplate() {
     return <div className="p-8 text-center text-red-500 font-bold">Error: No certificate token provided.</div>;
   }
 
-  if (isLoading) {
+  if (isLoading || (!qrDataUrl && !isError)) {
     return <div className="p-8 text-center text-gray-500 font-bold">Loading certificate...</div>;
   }
 
@@ -74,15 +104,28 @@ export default function CertificateTemplate() {
     return "1.5 Hours";
   })();
 
-  const verificationUrl = `${window.location.origin}/verify?token=${token}`;
-  const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(verificationUrl)}`;
-
   const dateIssued = new Date(certData.completion_date).toLocaleDateString('en-US', {
     year: 'numeric', month: 'long', day: 'numeric'
   });
 
-  const barangayAdminName = "Hon. Juan Dela Cruz"; 
-  const systemAdminName = "System Administrator";
+  const learnerDisplayName = certData.learner_name || residentName || "Authorized Resident";
+  const residentBarangay = certData.resident_barangay || currentUser?.barangay || "Bacolor";
+
+  const barangayAdminName = (() => {
+    if (certData.barangay_admin_name) {
+      return certData.barangay_admin_name.startsWith("Hon.")
+        ? certData.barangay_admin_name
+        : `Hon. ${certData.barangay_admin_name}`;
+    }
+    return residentBarangay ? `Hon. Barangay Captain (${residentBarangay})` : "Hon. Barangay Captain";
+  })();
+
+  const barangayAdminTitle = residentBarangay
+    ? `Barangay DRRMC — Brgy. ${residentBarangay}`
+    : "Barangay Administrator";
+
+  const mdrrmoOfficerName = certData.mdrrmo_officer_name || "Municipal DRRM Officer";
+  const mdrrmoOfficerTitle = "Municipal DRRMO Head";
 
   const MyDocument = (
     <Document>
@@ -90,8 +133,8 @@ export default function CertificateTemplate() {
         <View style={styles.outerBorder}>
           <View style={styles.innerBorder}>
             
-            {/* Fetches the QR image instantly from the web */}
-            <Image style={styles.qrCode} src={qrImageUrl} />
+            {/* Zero-network local QR code generator (PNG base64 Data URI) */}
+            {qrDataUrl && <Image style={styles.qrCode} src={qrDataUrl} />}
 
             <Text style={styles.certNumber}>Control No. {certId}</Text>
             
@@ -104,9 +147,9 @@ export default function CertificateTemplate() {
             <Text style={styles.subtitle}>OF COMPLETION</Text>
             <Text style={styles.certifyText}>This is to officially certify that</Text>
             <View style={styles.nameContainer}>
-              <Text style={styles.name}>{residentName}</Text>
+              <Text style={styles.name}>{learnerDisplayName}</Text>
             </View>
-            <Text style={styles.nameSubLine}>Authorized Resident</Text>
+            <Text style={styles.nameSubLine}>Authorized Resident — Brgy. {residentBarangay}</Text>
             <Text style={styles.hoursText}>Total Training Credited: {formattedHours}</Text>
             <Text style={styles.description}>
               has successfully satisfied all academic and practical requirements of the Community Disaster 
@@ -120,16 +163,16 @@ export default function CertificateTemplate() {
               <View style={styles.sigBlock}>
                 <Text style={styles.sigName}>{barangayAdminName}</Text>
                 <View style={styles.sigLine}>
-                  <Text style={styles.sigTitle}>Barangay Administrator</Text>
+                  <Text style={styles.sigTitle}>{barangayAdminTitle}</Text>
                 </View>
               </View>
               <View style={styles.sealPlaceholder}>
                 <Text style={styles.sealText}>Official{"\n"}MDRRMO{"\n"}Seal</Text>
               </View>
               <View style={styles.sigBlock}>
-                <Text style={styles.sigName}>{systemAdminName}</Text>
+                <Text style={styles.sigName}>{mdrrmoOfficerName}</Text>
                 <View style={styles.sigLine}>
-                  <Text style={styles.sigTitle}>Platform Verification</Text>
+                  <Text style={styles.sigTitle}>{mdrrmoOfficerTitle}</Text>
                 </View>
               </View>
             </View>

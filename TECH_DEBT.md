@@ -209,6 +209,47 @@ This document tracks identified technical debt, architectural decisions, missing
 
 ---
 
+### Resolved: Zero-Network Local Certificate QR Code Generation
+- **Location:** `client/src/pages/user/certificates/certTemplate.jsx`
+- **Issue:** The PDF completion certificate was fetching verification QR codes dynamically from an external third-party service (`api.qrserver.com`), introducing network failure risks during offline access, rate-limiting vulnerabilities, and external dependency leakage.
+- **Resolution:**
+  - Integrated local client-side QR generation using the `qrcode` engine (`QRCode.toDataURL`).
+  - Rendered verification URLs (`/verify?token=...`) directly as embedded base64 PNG data URIs inside `@react-pdf/renderer`'s `<Image />` component.
+  - Eliminated all external network requests during PDF certificate preview, generation, and downloading.
+- **Verification:** Verified via live Puppeteer automated test:
+  1. Loaded certificate viewer route `/user/certificates/view?token=...`.
+  2. Monitored all outgoing network requests during page load and PDF render: confirmed **0 external HTTP requests**.
+  3. Verified base64 Data URI generation and confirmed PDF download action renders without errors.
+
+---
+
+### Resolved: Gamification Mastery Badge Scope Calculation
+- **Location:** `server/services/users/DashboardService.js`, `client/src/pages/user/profile/Profile.jsx`, `client/src/components/ui/profile/BadgesSection.jsx`
+- **Issue:** Hazard mastery badges (`Flood Master`, `Earthquake Expert`, `Fire Safety Vanguard`) evaluated unlock progress solely against the resident's enrolled modules (`enrolledModules.filter()`) instead of the total system course catalog. A resident enrolled in only 1 of 3 flood modules would immediately receive the "Flood Master" badge upon finishing that single module.
+- **Resolution:**
+  - Enhanced backend `DashboardService.getDashboardData` to query and return system-wide catalog category totals (`categoryTotals: { flood: 3, earthquake: 3, ... }`).
+  - Updated `Profile.jsx` to pass `categoryTotals` to `BadgesSection.jsx`.
+  - Refactored `BadgesSection.jsx` to evaluate badge unlock status and progress text (`${completed}/${catalogTotal} Completed`) strictly against full catalog category volume.
+- **Verification:** Verified via Puppeteer automated test:
+  1. Initialized resident with 1 completed flood module out of 3 total flood modules in the database.
+  2. Rendered `/user/profile` and evaluated the Badges & Achievements section in the DOM.
+  3. Confirmed "First Step Taken" was unlocked (1/1 completed) while "Flood Master" remained accurately **Locked** displaying `1/3 Completed` (and "Earthquake Expert" displayed `0/3 Completed`).
+
+---
+
+### Resolved: Dynamic Certificate Signatories & Barangay Metadata
+- **Location:** `server/services/users/UserService.js`, `client/src/pages/user/certificates/certTemplate.jsx`
+- **Issue:** PDF certificate signatories and titles were hardcoded static mock strings (`"Hon. Juan Dela Cruz"` and `"System Administrator"`).
+- **Resolution:**
+  - Upgraded `UserService.getCertificateData` to query real barangay administrator names assigned to the learner's registered barangay (`SELECT ba.name FROM "user" ba WHERE ba.role = 'barangay_admin' AND ba.barangay_id = u.barangay_id`) and senior municipal MDRRMO leadership (`head_mdrrmo_admin` / `mdrrmo_admin`).
+  - Updated `certTemplate.jsx` to dynamically render authentic official signatures, localized resident barangay context (`Authorized Resident — Brgy. <Barangay>`), and structured institutional titles (`Barangay DRRMC — Brgy. <Barangay>`, `Municipal DRRMO Head`).
+- **Verification:** Verified via automated Puppeteer test:
+  1. Authenticated resident assigned to Barangay Concepcion.
+  2. Intercepted `GET /api/users/certificates/:token` and asserted dynamic presence of `barangay_admin_name`, `mdrrmo_officer_name`, and `resident_barangay`.
+  3. Verified that the PDF generation and download link successfully rendered the live signatories with zero hardcoding.
+
+---
+
 ## 🟡 Open / Active Technical Debt & Optimization Items
 
 ### 1. Server-Side Pagination & Cursor Querying for High-Scale Endpoints
@@ -271,28 +312,7 @@ This document tracks identified technical debt, architectural decisions, missing
 
 ---
 
-### 7. Third-Party External Dependency for Certificate QR Generation (`certTemplate.jsx`)
-- **Location:** `client/src/pages/user/certificates/certTemplate.jsx:L78`
-- **Description:** The printable/downloadable PDF certificate embeds a QR code fetched at runtime from an external third-party API: `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=...`.
-- **Architectural & Security Risk:**
-  - **Offline Vulnerability:** If a resident is offline or in low-connectivity conditions, the PDF rendering engine hangs or fails to generate the certificate image.
-  - **Data Privacy & Dependency:** Transmits the verification URL to an external third-party service on every PDF generation.
-  - **Availability:** Service outages or rate limiting by the external provider break in-app certificate downloads.
-- **Recommended Action:**
-  - Replace external HTTP call with a local, zero-network QR code generation library (e.g. `qrcode` / canvas data URI generator) executing entirely on the client.
-
----
-
-### 8. Hardcoded Signatory Placeholders in Certificate Template (`certTemplate.jsx`)
-- **Location:** `client/src/pages/user/certificates/certTemplate.jsx:L84-L85`
-- **Description:** Signatories in the official PDF credential are hardcoded static strings: `const barangayAdminName = "Hon. Juan Dela Cruz"` and `const systemAdminName = "System Administrator"`.
-- **Architectural Gap:** Does not reflect real elected barangay officials, actual issuing captains, or authorized MDRRMO officers.
-- **Recommended Action:**
-  - Update `GET /api/users/certificates/:token` to join the issuing barangay metadata (e.g. `barangays.captain_name` or `barangays.admin_signatory`) and municipal MDRRMO leadership from system settings.
-
----
-
-### 9. Mock Data & Scaffolding Stubs in Resident Settings (`Settings.jsx`)
+### 7. Mock Data & Scaffolding Stubs in Resident Settings (`Settings.jsx`)
 - **Location:** `client/src/components/settings/LoginHistory.jsx`, `client/src/components/settings/LocalizationSettings.jsx`, `client/src/components/settings/HelpSupport.jsx`
 - **Description:**
   - `LoginHistory.jsx`: Renders a 100% hardcoded mock array of devices and IP addresses (`"iPhone 13"`, `"MacBook Pro"`, `"San Fernando, Pampanga"`, `"112.198.xxx.xx"`) with an unhandled "View Full History" button.
@@ -305,16 +325,7 @@ This document tracks identified technical debt, architectural decisions, missing
 
 ---
 
-### 10. Gamification Mastery Badge Scope Flaw (`BadgesSection.jsx`)
-- **Location:** `client/src/components/ui/profile/BadgesSection.jsx:L25-L39`
-- **Description:** Hazard mastery badges (`Flood Master`, `Earthquake Expert`, `Fire Safety Vanguard`) compute unlock status using `enrolledModules` rather than the total catalog of published modules.
-- **Architectural Impact:** If a resident enlists in only 1 of 5 flood modules and completes it, `floodModules.length === floodCompleted.length` evaluates to `true`, instantly awarding the master badge despite remaining uncompleted courses in that hazard domain.
-- **Recommended Action:**
-  - Update badge calculation logic to evaluate against total published modules per category returned by the backend or catalog query.
-
----
-
-### 11. TanStack Query v5 Syntax & Deprecation Inconsistencies
+### 8. TanStack Query v5 Syntax & Deprecation Inconsistencies
 - **Location:** `client/src/hooks/useModuleViewer.js`, `client/src/pages/user/dashboard/Dashboard.jsx`, `client/src/pages/user/hooks/usePaginatedAnnouncements.js`
 - **Description:**
   - `useModuleViewer.js` and `useFeedbackHistory.js` use legacy array syntax for invalidations: `queryClient.invalidateQueries(["userDashboard"])` instead of TanStack Query v5 object syntax `{ queryKey: ["userDashboard"] }`.

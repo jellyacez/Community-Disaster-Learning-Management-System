@@ -34,6 +34,14 @@ export default function UserProfile() {
         : [];
   }, [dashboardData]);
 
+  const categoryTotals = useMemo(() => {
+    return dashboardData?.categoryTotals 
+      ? dashboardData.categoryTotals 
+      : dashboardData?.data?.categoryTotals 
+        ? dashboardData.data.categoryTotals 
+        : {};
+  }, [dashboardData]);
+
   // Derived state memoization to prevent expensive calculations on re-renders
   const { totalCompleted, totalHours, activeModules } = useMemo(() => {
     let completed = 0;
@@ -91,7 +99,7 @@ export default function UserProfile() {
           <StatsOverview totalCompleted={totalCompleted} totalHours={totalHours} activeModules={activeModules} />
           <div className="grid gap-6 lg:grid-cols-2 items-stretch">
             <ActivityTimeline enrolledModules={enrolledModules} />
-            <BadgesSection enrolledModules={enrolledModules} />
+            <BadgesSection enrolledModules={enrolledModules} categoryTotals={categoryTotals} />
           </div>
         </div>
       </div>

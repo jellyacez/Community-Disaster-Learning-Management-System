@@ -15,6 +15,17 @@ class DashboardService {
       "SELECT COUNT(*) FROM module_data",
     );
     const totalModules = parseInt(modulesCountQuery.rows[0].count, 10);
+
+    const categoryCountsQuery = await pool.query(
+      `SELECT LOWER(modcat) as category, COUNT(*)::int as total
+       FROM module_data
+       GROUP BY LOWER(modcat)`
+    );
+    const categoryTotals = categoryCountsQuery.rows.reduce((acc, row) => {
+      acc[row.category] = row.total;
+      return acc;
+    }, {});
+
     const announcementsQuery = await pool.query(`
       SELECT a.id, a.title, a.content, a.date, u.name as author_name
       FROM announcements a
@@ -84,6 +95,7 @@ class DashboardService {
 
     return {
       totalModules,
+      categoryTotals,
       announcements,
       enrolledModules,
       completionRate,

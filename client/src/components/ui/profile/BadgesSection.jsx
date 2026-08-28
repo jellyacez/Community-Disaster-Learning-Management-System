@@ -15,27 +15,45 @@ import {
   ArrowRight01Icon,
 } from "@hugeicons/core-free-icons";
 
-export default function BadgesSection({ enrolledModules }) {
+export default function BadgesSection({ enrolledModules = [], categoryTotals = {} }) {
   const { allBadges, earnedCount } = useMemo(() => {
     if (!enrolledModules) return { allBadges: [], earnedCount: 0 };
 
     const totalCompleted = enrolledModules.filter((m) => m.progress === 100).length;
 
-    // Track categorizations (case-insensitive)
-    const floodModules = enrolledModules.filter((m) =>
-      m.category?.toLowerCase().includes("flood")
-    );
-    const floodCompleted = floodModules.filter((m) => m.progress === 100);
+    // Completed counts per category
+    const floodCompleted = enrolledModules.filter((m) =>
+      m.category?.toLowerCase().includes("flood") && m.progress === 100
+    ).length;
 
-    const earthquakeModules = enrolledModules.filter((m) =>
-      m.category?.toLowerCase().includes("earthquake")
-    );
-    const earthquakeCompleted = earthquakeModules.filter((m) => m.progress === 100);
+    const earthquakeCompleted = enrolledModules.filter((m) =>
+      m.category?.toLowerCase().includes("earthquake") && m.progress === 100
+    ).length;
 
-    const fireModules = enrolledModules.filter((m) =>
-      m.category?.toLowerCase().includes("fire")
-    );
-    const fireCompleted = fireModules.filter((m) => m.progress === 100);
+    const fireCompleted = enrolledModules.filter((m) =>
+      m.category?.toLowerCase().includes("fire") && m.progress === 100
+    ).length;
+
+    // Helper to calculate total catalog modules for a category from system totals
+    const getCategoryCatalogTotal = (catKeyword) => {
+      let sum = 0;
+      if (categoryTotals && typeof categoryTotals === "object") {
+        Object.entries(categoryTotals).forEach(([cat, count]) => {
+          if (cat.toLowerCase().includes(catKeyword)) {
+            sum += Number(count) || 0;
+          }
+        });
+      }
+      // Fallback to enrolled modules in this category if categoryTotals is not available
+      if (sum === 0) {
+        sum = enrolledModules.filter((m) => m.category?.toLowerCase().includes(catKeyword)).length;
+      }
+      return sum;
+    };
+
+    const totalFloodCatalog = getCategoryCatalogTotal("flood");
+    const totalEarthquakeCatalog = getCategoryCatalogTotal("earthquake");
+    const totalFireCatalog = getCategoryCatalogTotal("fire");
 
     const badgeDefinitions = [
       {
@@ -58,8 +76,8 @@ export default function BadgesSection({ enrolledModules }) {
         title: "Flood Master",
         description: "Complete all flood safety modules",
         icon: TsunamiIcon,
-        isUnlocked: floodModules.length > 0 && floodCompleted.length === floodModules.length,
-        progressText: `${floodCompleted.length}/${Math.max(1, floodModules.length)} Completed`,
+        isUnlocked: totalFloodCatalog > 0 && floodCompleted >= totalFloodCatalog,
+        progressText: `${floodCompleted}/${Math.max(1, totalFloodCatalog)} Completed`,
         theme: {
           bg: "bg-blue-50",
           border: "border-blue-200",
@@ -74,9 +92,9 @@ export default function BadgesSection({ enrolledModules }) {
         description: "Complete all earthquake response modules",
         icon: Alert01Icon,
         isUnlocked:
-          earthquakeModules.length > 0 &&
-          earthquakeCompleted.length === earthquakeModules.length,
-        progressText: `${earthquakeCompleted.length}/${Math.max(1, earthquakeModules.length)} Completed`,
+          totalEarthquakeCatalog > 0 &&
+          earthquakeCompleted >= totalEarthquakeCatalog,
+        progressText: `${earthquakeCompleted}/${Math.max(1, totalEarthquakeCatalog)} Completed`,
         theme: {
           bg: "bg-amber-50",
           border: "border-amber-200",
@@ -90,8 +108,8 @@ export default function BadgesSection({ enrolledModules }) {
         title: "Fire Safety Vanguard",
         description: "Complete all fire prevention modules",
         icon: FlameIcon,
-        isUnlocked: fireModules.length > 0 && fireCompleted.length === fireModules.length,
-        progressText: `${fireCompleted.length}/${Math.max(1, fireModules.length)} Completed`,
+        isUnlocked: totalFireCatalog > 0 && fireCompleted >= totalFireCatalog,
+        progressText: `${fireCompleted}/${Math.max(1, totalFireCatalog)} Completed`,
         theme: {
           bg: "bg-red-50",
           border: "border-red-200",
@@ -134,7 +152,7 @@ export default function BadgesSection({ enrolledModules }) {
 
     const count = badgeDefinitions.filter((b) => b.isUnlocked).length;
     return { allBadges: badgeDefinitions, earnedCount: count };
-  }, [enrolledModules]);
+  }, [enrolledModules, categoryTotals]);
 
   return (
     <section className="rounded-3xl border border-gray-100 bg-white p-6 shadow-sm h-full flex flex-col justify-between">

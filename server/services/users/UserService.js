@@ -170,12 +170,31 @@ class UserService {
         c.verification_token, 
         c.completion_date, 
         c.expires_at, 
+        c.barangay as certificate_barangay,
         m.modname as module_title, 
         m.description as module_description,
-        m.duration
+        m.duration,
+        COALESCE(u.name, c.anonymized_name, 'Resident') as learner_name,
+        COALESCE(b.name, c.barangay, 'Bacolor') as resident_barangay,
+        (
+          SELECT ba.name 
+          FROM public."user" ba 
+          WHERE ba.role = 'barangay_admin' AND (ba.barangay_id = u.barangay_id OR (u.barangay_id IS NULL AND ba.barangay_id IS NOT NULL))
+          ORDER BY ba."createdAt" ASC 
+          LIMIT 1
+        ) as barangay_admin_name,
+        (
+          SELECT ha.name 
+          FROM public."user" ha 
+          WHERE ha.role IN ('head_mdrrmo_admin', 'mdrrmo_admin', 'system_admin') 
+          ORDER BY CASE WHEN ha.role = 'head_mdrrmo_admin' THEN 1 WHEN ha.role = 'mdrrmo_admin' THEN 2 ELSE 3 END, ha."createdAt" ASC 
+          LIMIT 1
+        ) as mdrrmo_officer_name
       FROM certificates c
       JOIN module_data m ON c.module_id = m.mod_id
-      WHERE c.user_id = $1 AND c.verification_token = $2 AND c.status != 'revoked'
+      LEFT JOIN public."user" u ON c.user_id = u.id
+      LEFT JOIN barangays b ON u.barangay_id = b.id
+      WHERE (c.user_id = $1 OR c.user_id IS NULL) AND c.verification_token = $2 AND c.status != 'revoked'
     `;
     const { rows } = await pool.query(query, [userId, token]);
     
