@@ -13,7 +13,6 @@ import {
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import StatCard from "../../system/overview/components/StatCard";
-import MdrrmoStatusBar from "./components/MdrrmoStatusBar";
 import {
   MdrrmoModuleDistributionChart,
   MdrrmoEnrollmentTrendChart,
@@ -93,23 +92,20 @@ export default function Overview() {
             Staff & Responder Training Hub
           </p>
         </div>
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-          <MdrrmoStatusBar isError={metricsError} />
-          <div className="flex items-center gap-4 shrink-0">
-            <button className="h-10 px-4 bg-white border border-gray-200 text-gray-700 text-[12px] font-bold tracking-wide uppercase rounded flex items-center gap-2 hover:bg-gray-50 transition-colors whitespace-nowrap">
-              <HugeiconsIcon
-                icon={Download02Icon}
-                className="w-4 h-4 text-red-600 shrink-0"
-              />
-              Export Report
-            </button>
-            <Link
-              to="/admin/mdrrmo/modules"
-              className="h-10 px-4 bg-red-600 text-white text-[12px] font-bold tracking-wide uppercase rounded flex items-center gap-2 hover:bg-red-700 transition-colors shadow-sm whitespace-nowrap"
-            >
-              + Create Module
-            </Link>
-          </div>
+        <div className="flex items-center gap-4 shrink-0">
+          <button className="h-10 px-4 bg-white border border-gray-200 text-gray-700 text-[12px] font-bold tracking-wide uppercase rounded-xl flex items-center gap-2 hover:bg-gray-50 transition-colors whitespace-nowrap shadow-sm cursor-pointer">
+            <HugeiconsIcon
+              icon={Download02Icon}
+              className="w-4 h-4 text-red-600 shrink-0"
+            />
+            Export Report
+          </button>
+          <Link
+            to="/admin/mdrrmo/modules"
+            className="h-10 px-4 bg-red-600 text-white text-[12px] font-bold tracking-wide uppercase rounded-xl flex items-center gap-2 hover:bg-red-700 transition-colors shadow-sm whitespace-nowrap"
+          >
+            + Create Module
+          </Link>
         </div>
       </div>
 

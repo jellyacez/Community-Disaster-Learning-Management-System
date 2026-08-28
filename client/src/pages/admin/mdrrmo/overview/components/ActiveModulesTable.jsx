@@ -11,7 +11,7 @@ export default function ActiveModulesTable({ modules = [], isLoading, selectedCa
   const isHeadAdmin = session?.user?.role === "head_mdrrmo_admin";
 
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
+  const itemsPerPage = 5;
 
   let filtered = modules;
   if (selectedCategory) {

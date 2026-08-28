@@ -1678,6 +1678,59 @@ CREATE INDEX verification_identifier_idx ON public.verification USING btree (ide
 
 
 --
+-- Tech Debt #5: Database Indexing & Query Plan Optimization
+-- These composite and partial indexes optimize the most expensive multi-table
+-- joins across certificates, module_activity, and feedbacks.
+--
+
+--
+-- Name: idx_certificates_user_status; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX IF NOT EXISTS idx_certificates_user_status ON public.certificates USING btree (user_id, status);
+
+
+--
+-- Name: idx_certificates_expiry_sweep; Type: INDEX; Schema: public; Owner: postgres
+-- Partial index used by the daily 1:00 AM recertification cron sweep.
+--
+
+CREATE INDEX IF NOT EXISTS idx_certificates_expiry_sweep ON public.certificates USING btree (status, expires_at) WHERE ((status)::text = 'active'::text);
+
+
+--
+-- Name: idx_certificates_verification_token; Type: INDEX; Schema: public; Owner: postgres
+-- Optimizes QR-code certificate verification lookups.
+--
+
+CREATE INDEX IF NOT EXISTS idx_certificates_verification_token ON public.certificates USING btree (verification_token);
+
+
+--
+-- Name: idx_certificates_user_non_revoked; Type: INDEX; Schema: public; Owner: postgres
+-- Optimizes the historical completion count scalar subquery in UserService.getAllUsers.
+--
+
+CREATE INDEX IF NOT EXISTS idx_certificates_user_non_revoked ON public.certificates USING btree (user_id) WHERE ((status)::text <> 'revoked'::text);
+
+
+--
+-- Name: idx_module_activity_user_modstatus; Type: INDEX; Schema: public; Owner: postgres
+-- Composite index replacing the two separate single-column indexes (idx_module_activity_user, idx_module_activity_status).
+--
+
+CREATE INDEX IF NOT EXISTS idx_module_activity_user_modstatus ON public.module_activity USING btree (user_id, modstatus);
+
+
+--
+-- Name: idx_feedbacks_user_status_created; Type: INDEX; Schema: public; Owner: postgres
+-- Optimizes feedback queue filtering by resident and status with chronological ordering.
+--
+
+CREATE INDEX IF NOT EXISTS idx_feedbacks_user_status_created ON public.feedbacks USING btree (user_id, status, created_at DESC);
+
+
+--
 -- TOC entry 5134 (class 2606 OID 42178)
 -- Name: account account_userId_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --

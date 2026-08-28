@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { 
@@ -6,24 +7,27 @@ import {
   Certificate01Icon, 
   Activity01Icon, 
   Notification01Icon, 
-  CheckmarkCircle01Icon, 
   Alert01Icon, 
   UserAdd01Icon, 
   Search01Icon, 
   ArrowRight01Icon, 
+  ArrowLeft01Icon,
   Shield01Icon, 
   RefreshIcon, 
   Note01Icon, 
   Download01Icon, 
   Download02Icon,
-  Time02Icon,
-  Folder01Icon 
+  Folder01Icon,
+  QrCodeIcon,
+  Award01Icon,
+  Message01Icon
 } from "@hugeicons/core-free-icons";
 import toast from "react-hot-toast";
 import StatCard from "../../system/overview/components/StatCard";
 import WorkspaceOverviewSkeleton from "./WorkspaceOverviewSkeleton";
 import ResidentInspectorPanel from "../../shared/ResidentInspectorPanel";
 import AnnouncementModal from "./announcementModal";
+import CertificateVerificationModal from "../../../../components/ui/certificates/CertificateVerificationModal";
 import apiClient from "../../../../lib/apiClient";
 
 const fetchOverviewData = async () => {
@@ -39,9 +43,13 @@ const fetchOverviewData = async () => {
 };
 
 export default function WorkspaceOverview() {
+  const navigate = useNavigate();
   const [selectedResident, setSelectedResident] = useState(null);
   const [searchFilter, setSearchFilter] = useState("");
   const [isAnnouncementModalOpen, setIsAnnouncementModalOpen] = useState(false);
+  const [isVerifyModalOpen, setIsVerifyModalOpen] = useState(false);
+  const [modulePage, setModulePage] = useState(1);
+  const moduleLimit = 5;
 
   const { data, isLoading, isError, refetch, isFetching } = useQuery({
     queryKey: ["barangayWorkspaceOverview"],
@@ -66,6 +74,9 @@ export default function WorkspaceOverview() {
   const residents = Array.isArray(data?.residents) ? data.residents : [];
   const kpis = data?.analytics?.kpis || {};
   const modulePerformance = data?.analytics?.modulePerformance || [];
+  const totalModules = modulePerformance.length;
+  const totalModulePages = Math.max(1, Math.ceil(totalModules / moduleLimit));
+  const paginatedModules = modulePerformance.slice((modulePage - 1) * moduleLimit, modulePage * moduleLimit);
   
   // Defined here to prevent ReferenceError
   const barangay = data?.analytics?.barangay || { id: null, name: "Local Jurisdiction" };
@@ -86,8 +97,8 @@ export default function WorkspaceOverview() {
     r.email?.toLowerCase().includes(searchFilter.toLowerCase())
   );
 
-  const handleVerifyCertificate = (residentName) => {
-    alert(`Auditing Certification Database Ledger:\nRecord for ${residentName} is verified and authentic.`);
+  const handleVerifyCertificate = () => {
+    setIsVerifyModalOpen(true);
   };
 
   const handleExportReport = () => {
@@ -128,42 +139,25 @@ export default function WorkspaceOverview() {
             Disaster Preparedness & Local Oversight Hub
           </p>
         </div>
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-          {/* Status Badge */}
-          <div className="bg-emerald-50 border border-emerald-100 rounded-xl px-5 py-3 flex flex-wrap items-center justify-between gap-4 shadow-sm">
-            <div className="flex items-center gap-2">
-              <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
-              <span className="text-sm font-extrabold text-emerald-900 tracking-wide uppercase">Operational</span>
-            </div>
-
-            <div className="flex items-center gap-6 text-[13px] font-semibold text-emerald-700">
-              <div className="flex items-center gap-1.5">
-                <HugeiconsIcon icon={Time02Icon} className="w-4 h-4 opacity-70" />
-                <span>Live Connection</span>
-              </div>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-4 shrink-0">
-            <button
-              type="button"
-              onClick={handleExportReport}
-              className="h-10 px-4 bg-white border border-gray-200 text-gray-700 text-[12px] font-bold tracking-wide uppercase rounded flex items-center gap-2 hover:bg-gray-50 transition-colors whitespace-nowrap shadow-sm cursor-pointer"
-            >
-              <HugeiconsIcon
-                icon={Download02Icon}
-                className="w-4 h-4 text-red-600 shrink-0"
-              />
-              Export Report
-            </button>
-            <button
-              type="button"
-              onClick={() => setIsAnnouncementModalOpen(true)}
-              className="h-10 px-4 bg-red-600 text-white text-[12px] font-bold tracking-wide uppercase rounded flex items-center gap-2 hover:bg-red-700 transition-colors shadow-sm whitespace-nowrap cursor-pointer"
-            >
-              + Post Announcement
-            </button>
-          </div>
+        <div className="flex items-center gap-4 shrink-0">
+          <button
+            type="button"
+            onClick={handleExportReport}
+            className="h-10 px-4 bg-white border border-gray-200 text-gray-700 text-[12px] font-bold tracking-wide uppercase rounded-xl flex items-center gap-2 hover:bg-gray-50 transition-colors whitespace-nowrap shadow-sm cursor-pointer"
+          >
+            <HugeiconsIcon
+              icon={Download02Icon}
+              className="w-4 h-4 text-red-600 shrink-0"
+            />
+            Export Report
+          </button>
+          <button
+            type="button"
+            onClick={() => setIsAnnouncementModalOpen(true)}
+            className="h-10 px-4 bg-red-600 text-white text-[12px] font-bold tracking-wide uppercase rounded-xl flex items-center gap-2 hover:bg-red-700 transition-colors shadow-sm whitespace-nowrap cursor-pointer"
+          >
+            + Post Announcement
+          </button>
         </div>
       </div>
 
@@ -284,7 +278,7 @@ export default function WorkspaceOverview() {
                 <p className="text-xs text-gray-400 italic">No syllabus engagement recorded yet for this barangay.</p>
               </div>
             ) : (
-              modulePerformance.map((mod) => {
+              paginatedModules.map((mod) => {
                 const enrolled = parseInt(mod.total_enrolled, 10) || 0;
                 const completed = parseInt(mod.completed_count, 10) || 0;
                 const rate = enrolled > 0 ? Math.round((completed / enrolled) * 100) : 0;
@@ -307,48 +301,108 @@ export default function WorkspaceOverview() {
             )}
           </div>
 
-          <div className="text-[11px] text-gray-400 pt-3 border-t border-gray-100 flex justify-between">
-            <span>Minimum Passing: 80%</span>
-            <span>Accredited DRRM Standard</span>
+          {/* Table / List Pagination Footer */}
+          <div className="pt-3 border-t border-gray-100 space-y-2.5">
+            {totalModules > 0 && (
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <p className="text-xs text-gray-500">
+                  Showing <span className="font-medium text-gray-900">{(modulePage - 1) * moduleLimit + 1}</span> to{" "}
+                  <span className="font-medium text-gray-900">
+                    {Math.min(modulePage * moduleLimit, totalModules)}
+                  </span>{" "}
+                  of <span className="font-medium text-gray-900">{totalModules}</span> modules
+                </p>
+                <div className="flex items-center gap-1.5 self-end sm:self-auto">
+                  <button
+                    type="button"
+                    onClick={() => setModulePage((p) => Math.max(p - 1, 1))}
+                    disabled={modulePage <= 1}
+                    className="px-2.5 py-1 text-xs font-semibold text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm cursor-pointer flex items-center gap-1"
+                  >
+                    <HugeiconsIcon icon={ArrowLeft01Icon} className="w-3 h-3" />
+                    Previous
+                  </button>
+                  <span className="text-xs font-medium text-gray-600 px-1">
+                    Page {modulePage} of {totalModulePages}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setModulePage((p) => Math.min(p + 1, totalModulePages))}
+                    disabled={modulePage >= totalModulePages}
+                    className="px-2.5 py-1 text-xs font-semibold text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm cursor-pointer flex items-center gap-1"
+                  >
+                    Next
+                    <HugeiconsIcon icon={ArrowRight01Icon} className="w-3 h-3" />
+                  </button>
+                </div>
+              </div>
+            )}
+            <div className="text-[11px] text-gray-400 flex justify-between">
+              <span>Minimum Passing: 80%</span>
+              <span>Accredited DRRM Standard</span>
+            </div>
           </div>
         </div>
 
         {/* Quick Admin Actions */}
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm lg:col-span-3 flex flex-col justify-between space-y-3">
+        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm lg:col-span-3 flex flex-col justify-between space-y-4">
           <div>
             <h3 className="text-sm font-bold text-gray-900">Quick Actions</h3>
             <p className="text-xs text-gray-400 mt-0.5">Barangay administrative tools</p>
           </div>
 
           <div className="space-y-2.5">
+            {/* Verify Certificate */}
             <button
               type="button"
-              onClick={() => alert("Exporting resident roster...")}
-              className="w-full flex items-center justify-between p-3 bg-gray-50 hover:bg-gray-100 rounded-xl text-xs font-semibold text-gray-700 transition border border-gray-100"
+              onClick={() => setIsVerifyModalOpen(true)}
+              className="w-full flex items-center justify-between p-3 bg-red-50 hover:bg-red-100/80 rounded-xl text-xs font-bold text-red-700 transition border border-red-100 cursor-pointer"
             >
               <span className="flex items-center gap-2.5">
-                <HugeiconsIcon icon={Note01Icon} className="w-4 h-4 text-emerald-600" />
-                Export Barangay Roster
+                <HugeiconsIcon icon={QrCodeIcon} className="w-4 h-4 text-red-600 shrink-0" />
+                Verify Certificate
               </span>
-              <HugeiconsIcon icon={Download01Icon} className="w-3.5 h-3.5 text-gray-400" />
+              <HugeiconsIcon icon={ArrowRight01Icon} className="w-3.5 h-3.5 text-red-400 shrink-0" />
             </button>
 
+            {/* Manage Residents */}
             <button
               type="button"
-              onClick={() => setIsAnnouncementModalOpen(true)}
-              className="w-full flex items-center justify-between p-3 bg-red-50 hover:bg-red-100/80 rounded-xl text-xs font-bold text-red-700 transition border border-red-100"
+              onClick={() => navigate("/admin/barangay/residents")}
+              className="w-full flex items-center justify-between p-3 bg-gray-50 hover:bg-gray-100 rounded-xl text-xs font-semibold text-gray-700 transition border border-gray-100 cursor-pointer"
             >
               <span className="flex items-center gap-2.5">
-                <HugeiconsIcon icon={Notification01Icon} className="w-4 h-4 text-red-600" />
-                Add Announcement
+                <HugeiconsIcon icon={UserGroupIcon} className="w-4 h-4 text-blue-600 shrink-0" />
+                Manage Residents
               </span>
-              <HugeiconsIcon icon={ArrowRight01Icon} className="w-3.5 h-3.5 text-red-400" />
+              <HugeiconsIcon icon={ArrowRight01Icon} className="w-3.5 h-3.5 text-gray-400 shrink-0" />
             </button>
-          </div>
 
-          <div className="bg-emerald-50 border border-emerald-100 p-3 rounded-xl flex items-center gap-2.5">
-            <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-4 h-4 text-emerald-600 shrink-0" />
-            <span className="text-[11px] font-medium text-emerald-800">DRRM Sync Connected</span>
+            {/* Certification Roster */}
+            <button
+              type="button"
+              onClick={() => navigate("/admin/barangay/certifications")}
+              className="w-full flex items-center justify-between p-3 bg-gray-50 hover:bg-gray-100 rounded-xl text-xs font-semibold text-gray-700 transition border border-gray-100 cursor-pointer"
+            >
+              <span className="flex items-center gap-2.5">
+                <HugeiconsIcon icon={Award01Icon} className="w-4 h-4 text-amber-600 shrink-0" />
+                Certification Roster
+              </span>
+              <HugeiconsIcon icon={ArrowRight01Icon} className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+            </button>
+
+            {/* Resident Feedback */}
+            <button
+              type="button"
+              onClick={() => navigate("/admin/barangay/feedback")}
+              className="w-full flex items-center justify-between p-3 bg-gray-50 hover:bg-gray-100 rounded-xl text-xs font-semibold text-gray-700 transition border border-gray-100 cursor-pointer"
+            >
+              <span className="flex items-center gap-2.5">
+                <HugeiconsIcon icon={Message01Icon} className="w-4 h-4 text-emerald-600 shrink-0" />
+                Resident Feedback
+              </span>
+              <HugeiconsIcon icon={ArrowRight01Icon} className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+            </button>
           </div>
         </div>
 
@@ -455,6 +509,11 @@ export default function WorkspaceOverview() {
         isOpen={isAnnouncementModalOpen}
         onClose={() => setIsAnnouncementModalOpen(false)}
         barangayName={barangay.name}
+      />
+
+      <CertificateVerificationModal
+        isOpen={isVerifyModalOpen}
+        onClose={() => setIsVerifyModalOpen(false)}
       />
 
     </div>

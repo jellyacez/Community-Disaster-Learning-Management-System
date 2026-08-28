@@ -188,25 +188,17 @@ This document tracks identified technical debt, architectural decisions, missing
 
 ---
 
-### 5. Database Indexing & Query Plan Optimization
-- **Location:** `server/` PostgreSQL schema
-- **Description:** As table sizes grow, multi-table joins across `users`, `certificates`, `module_activity`, and `barangays` may experience sequential scans.
-- **Recommended Action:** Execute a database migration to add targeted composite and partial indexes:
-  ```sql
-  -- Optimize certificate lookups, status filtering, and expiry cron sweeps
-  CREATE INDEX IF NOT EXISTS idx_certificates_user_status ON certificates(user_id, status);
-  CREATE INDEX IF NOT EXISTS idx_certificates_expiry_sweep ON certificates(status, expires_at) WHERE status = 'active';
-  CREATE INDEX IF NOT EXISTS idx_certificates_verification_token ON certificates(verification_token);
-
-  -- Optimize resident historical completion aggregations
-  CREATE INDEX IF NOT EXISTS idx_certificates_user_non_revoked ON certificates(user_id) WHERE status != 'revoked';
-
-  -- Optimize module activity progress tracking
-  CREATE INDEX IF NOT EXISTS idx_module_activity_user_modstatus ON module_activity(user_id, modstatus);
-
-  -- Optimize feedback queue filtering by barangay and status
-  CREATE INDEX IF NOT EXISTS idx_feedbacks_user_status_created ON feedbacks(user_id, status, created_at DESC);
-  ```
+### Resolved: Database Indexing & Query Plan Optimization
+- **Location:** `server/migrations/schema.sql`, live PostgreSQL `LMS_db`
+- **Issue:** Multi-table joins across `certificates`, `module_activity`, and `feedbacks` were running sequential scans as tables grew.
+- **Resolution:** Executed a live database migration that created 6 targeted composite and partial indexes:
+  - `idx_certificates_user_status` — composite on `(user_id, status)` for certificate lookups and filtering.
+  - `idx_certificates_expiry_sweep` — partial index on `(status, expires_at) WHERE status = 'active'` for the daily 1:00 AM recertification cron.
+  - `idx_certificates_verification_token` — index on `verification_token` for QR-code scan verification endpoint.
+  - `idx_certificates_user_non_revoked` — partial index on `(user_id) WHERE status != 'revoked'` for the historical completion scalar subquery in `UserService.getAllUsers`.
+  - `idx_module_activity_user_modstatus` — composite on `(user_id, modstatus)` replacing two separate single-column indexes.
+  - `idx_feedbacks_user_status_created` — composite on `(user_id, status, created_at DESC)` for the feedback queue admin and user views.
+- **Verification:** Confirmed all 6 indexes exist in `LMS_db` via `pg_indexes` query. `schema.sql` updated to reflect the new state.
 
 ---
 
