@@ -1,34 +1,21 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { 
-  UserGroupIcon, 
-  Certificate01Icon, 
-  Activity01Icon, 
-  Notification01Icon, 
-  Alert01Icon, 
-  UserAdd01Icon, 
-  Search01Icon, 
-  ArrowRight01Icon, 
-  ArrowLeft01Icon,
-  Shield01Icon, 
-  RefreshIcon, 
-  Note01Icon, 
-  Download01Icon, 
-  Download02Icon,
-  Folder01Icon,
-  QrCodeIcon,
-  Award01Icon,
-  Message01Icon
-} from "@hugeicons/core-free-icons";
+import { Alert01Icon, Download02Icon } from "@hugeicons/core-free-icons";
 import toast from "react-hot-toast";
-import StatCard from "../../system/overview/components/StatCard";
+
 import WorkspaceOverviewSkeleton from "./WorkspaceOverviewSkeleton";
 import ResidentInspectorPanel from "../../shared/ResidentInspectorPanel";
 import AnnouncementModal from "./announcementModal";
 import CertificateVerificationModal from "../../../../components/ui/certificates/CertificateVerificationModal";
 import apiClient from "../../../../lib/apiClient";
+
+// Modular sub-components
+import WorkspaceKpiGrid from "./components/WorkspaceKpiGrid";
+import CommunityComplianceCard from "./components/CommunityComplianceCard";
+import CurriculumReadinessCard from "./components/CurriculumReadinessCard";
+import WorkspaceQuickActions from "./components/WorkspaceQuickActions";
+import MonitoredCitizenTable from "./components/MonitoredCitizenTable";
 
 const fetchOverviewData = async () => {
   const [residentsRes, analyticsRes] = await Promise.all([
@@ -43,7 +30,6 @@ const fetchOverviewData = async () => {
 };
 
 export default function WorkspaceOverview() {
-  const navigate = useNavigate();
   const [selectedResident, setSelectedResident] = useState(null);
   const [searchFilter, setSearchFilter] = useState("");
   const [isAnnouncementModalOpen, setIsAnnouncementModalOpen] = useState(false);
@@ -51,7 +37,7 @@ export default function WorkspaceOverview() {
   const [modulePage, setModulePage] = useState(1);
   const moduleLimit = 5;
 
-  const { data, isLoading, isError, refetch, isFetching } = useQuery({
+  const { data, isLoading, isError, isFetching } = useQuery({
     queryKey: ["barangayWorkspaceOverview"],
     queryFn: fetchOverviewData,
     retry: 1,
@@ -78,7 +64,6 @@ export default function WorkspaceOverview() {
   const totalModulePages = Math.max(1, Math.ceil(totalModules / moduleLimit));
   const paginatedModules = modulePerformance.slice((modulePage - 1) * moduleLimit, modulePage * moduleLimit);
   
-  // Defined here to prevent ReferenceError
   const barangay = data?.analytics?.barangay || { id: null, name: "Local Jurisdiction" };
   const formattedBarangayName = barangay.name?.toLowerCase().startsWith("barangay")
     ? barangay.name
@@ -129,7 +114,7 @@ export default function WorkspaceOverview() {
   return (
     <div className="space-y-6 font-sans animate-in fade-in duration-150 pb-10">
       
-      {/* Header Row (Matching MDRRMO Header Card Design) */}
+      {/* Header Row */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-gray-100 shadow-[0_2px_12px_-3px_rgba(0,0,0,0.06)]">
         <div>
           <h1 className="text-3xl font-black text-gray-900 tracking-tight">
@@ -162,373 +147,48 @@ export default function WorkspaceOverview() {
       </div>
 
       {/* Row 1: 5 Metric Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-        <StatCard
-          icon={UserGroupIcon}
-          label="Total Residents"
-          value={totalResidents}
-          sub="All registered locals"
-          trendText="Jurisdiction"
-          color="blue"
-          loading={isLoading || isFetching}
-        />
-        <StatCard
-          icon={Certificate01Icon}
-          label="Certified Safe"
-          value={certifiedCount}
-          sub="Passed DRRM training"
-          trendText="Safe Certified"
-          color="green"
-          loading={isLoading || isFetching}
-        />
-        <StatCard
-          icon={Activity01Icon}
-          label="Active Learners"
-          value={activeLearners}
-          sub="Recent module activity"
-          trendText="Active 30d"
-          color="amber"
-          loading={isLoading || isFetching}
-        />
-        <StatCard
-          icon={UserAdd01Icon}
-          label="Pending Status"
-          value={pendingCount}
-          sub="In training / uncertified"
-          trendText="Incomplete"
-          color="gray"
-          loading={isLoading || isFetching}
-        />
-        <StatCard
-          icon={Notification01Icon}
-          label="Local Advisories"
-          value={localAlertsCount}
-          sub="Sector announcements"
-          trendText="Advisories"
-          color="red"
-          loading={isLoading || isFetching}
-        />
-      </div>
+      <WorkspaceKpiGrid
+        totalResidents={totalResidents}
+        certifiedCount={certifiedCount}
+        activeLearners={activeLearners}
+        pendingCount={pendingCount}
+        localAlertsCount={localAlertsCount}
+        loading={isLoading || isFetching}
+      />
 
       {/* Row 2: Analytics Visualizers */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
-        
-        {/* Compliance Distribution */}
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm lg:col-span-4 flex flex-col justify-between">
-          <div className="border-b border-gray-100 pb-3">
-            <h3 className="text-sm font-bold text-gray-900">Community Safety Compliance</h3>
-            <p className="text-xs text-gray-400 mt-0.5">Ratio of certified vs uncertified citizens</p>
-          </div>
+        <CommunityComplianceCard
+          preparednessRate={preparednessRate}
+          certifiedCount={certifiedCount}
+          pendingCount={pendingCount}
+        />
 
-          <div className="my-auto py-4 flex flex-col items-center justify-center relative">
-            <div className="relative w-36 h-36 flex items-center justify-center">
-              <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
-                <path
-                  className="text-gray-100"
-                  strokeWidth="3.8"
-                  stroke="currentColor"
-                  fill="none"
-                  d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                />
-                <path
-                  className="text-emerald-500"
-                  strokeDasharray={`${preparednessRate}, 100`}
-                  strokeWidth="3.8"
-                  strokeLinecap="round"
-                  stroke="currentColor"
-                  fill="none"
-                  d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                />
-              </svg>
-              <div className="absolute flex flex-col items-center">
-                <span className="text-2xl font-black font-mono text-gray-900">{preparednessRate}%</span>
-                <span className="text-[10px] text-gray-400 font-bold uppercase">Certified</span>
-              </div>
-            </div>
-          </div>
+        <CurriculumReadinessCard
+          modulePerformance={modulePerformance}
+          paginatedModules={paginatedModules}
+          modulePage={modulePage}
+          setModulePage={setModulePage}
+          totalModules={totalModules}
+          totalModulePages={totalModulePages}
+          moduleLimit={moduleLimit}
+        />
 
-          <div className="grid grid-cols-2 gap-2 pt-3 border-t border-gray-100 text-xs">
-            <div className="flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
-              <span className="text-gray-600 font-medium">{certifiedCount} Certified</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-gray-300" />
-              <span className="text-gray-600 font-medium">{pendingCount} Pending</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Curriculum Training Completion Breakdown */}
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm lg:col-span-5 flex flex-col justify-between">
-          <div className="flex items-center justify-between border-b border-gray-100 pb-3">
-            <div>
-              <h3 className="text-sm font-bold text-gray-900">Curriculum Readiness</h3>
-              <p className="text-xs text-gray-400 mt-0.5">Disaster module completions</p>
-            </div>
-            <span className="text-[10px] font-mono font-bold bg-gray-100 text-gray-600 px-2 py-0.5 rounded-md">
-              MDRRMO Scoped
-            </span>
-          </div>
-
-          <div className="space-y-4 my-auto py-3">
-            {modulePerformance.length === 0 ? (
-              <div className="text-center py-8">
-                <HugeiconsIcon icon={Folder01Icon} className="w-8 h-8 text-gray-300 mx-auto mb-2" />
-                <p className="text-xs text-gray-400 italic">No syllabus engagement recorded yet for this barangay.</p>
-              </div>
-            ) : (
-              paginatedModules.map((mod) => {
-                const enrolled = parseInt(mod.total_enrolled, 10) || 0;
-                const completed = parseInt(mod.completed_count, 10) || 0;
-                const rate = enrolled > 0 ? Math.round((completed / enrolled) * 100) : 0;
-
-                return (
-                  <div key={mod.module_id} className="space-y-1.5">
-                    <div className="flex justify-between text-xs">
-                      <span className="font-semibold text-gray-800">{mod.module_title}</span>
-                      <span className="font-mono text-gray-500">{completed}/{enrolled} ({rate}%)</span>
-                    </div>
-                    <div className="w-full bg-gray-100 h-2 rounded-full overflow-hidden">
-                      <div
-                        className="bg-red-600 h-full rounded-full transition-all duration-300"
-                        style={{ width: `${rate}%` }}
-                      />
-                    </div>
-                  </div>
-                );
-              })
-            )}
-          </div>
-
-          {/* Table / List Pagination Footer */}
-          <div className="pt-3 border-t border-gray-100 space-y-2.5">
-            {totalModules > 0 && (
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                <p className="text-xs text-gray-500">
-                  Showing <span className="font-medium text-gray-900">{(modulePage - 1) * moduleLimit + 1}</span> to{" "}
-                  <span className="font-medium text-gray-900">
-                    {Math.min(modulePage * moduleLimit, totalModules)}
-                  </span>{" "}
-                  of <span className="font-medium text-gray-900">{totalModules}</span> modules
-                </p>
-                <div className="flex items-center gap-1.5 self-end sm:self-auto">
-                  <button
-                    type="button"
-                    onClick={() => setModulePage((p) => Math.max(p - 1, 1))}
-                    disabled={modulePage <= 1}
-                    className="px-2.5 py-1 text-xs font-semibold text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm cursor-pointer flex items-center gap-1"
-                  >
-                    <HugeiconsIcon icon={ArrowLeft01Icon} className="w-3 h-3" />
-                    Previous
-                  </button>
-                  <span className="text-xs font-medium text-gray-600 px-1">
-                    Page {modulePage} of {totalModulePages}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => setModulePage((p) => Math.min(p + 1, totalModulePages))}
-                    disabled={modulePage >= totalModulePages}
-                    className="px-2.5 py-1 text-xs font-semibold text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm cursor-pointer flex items-center gap-1"
-                  >
-                    Next
-                    <HugeiconsIcon icon={ArrowRight01Icon} className="w-3 h-3" />
-                  </button>
-                </div>
-              </div>
-            )}
-            <div className="text-[11px] text-gray-400 flex justify-between">
-              <span>Minimum Passing: 80%</span>
-              <span>Accredited DRRM Standard</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Quick Admin Actions */}
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-[0_2px_12px_-3px_rgba(0,0,0,0.06)] lg:col-span-3 flex flex-col justify-between">
-          <div className="pb-3 border-b border-gray-100 mb-3">
-            <h3 className="text-sm font-bold text-gray-900">Quick Actions</h3>
-            <p className="text-xs text-gray-400 mt-0.5">Barangay administrative tools</p>
-          </div>
-
-          <div className="flex-1 flex flex-col justify-between gap-2">
-            {/* Verify Certificate */}
-            <button
-              type="button"
-              onClick={() => setIsVerifyModalOpen(true)}
-              className="group w-full flex items-center justify-between p-2.5 rounded-xl border border-gray-200/70 bg-gray-50/40 hover:bg-white hover:border-gray-300 hover:shadow-2xs transition-all text-left cursor-pointer"
-            >
-              <div className="flex items-center gap-2.5 min-w-0">
-                <div className="w-8 h-8 rounded-lg bg-white border border-gray-200/80 flex items-center justify-center shrink-0 text-gray-600 group-hover:text-gray-950 group-hover:border-gray-300 shadow-2xs transition-colors">
-                  <HugeiconsIcon icon={QrCodeIcon} className="w-4 h-4" />
-                </div>
-                <div className="min-w-0">
-                  <div className="text-xs font-semibold text-gray-900 group-hover:text-black truncate">Verify Certificate</div>
-                  <div className="text-[11px] text-gray-400 truncate mt-0.5">Validate resident QR or serial</div>
-                </div>
-              </div>
-              <HugeiconsIcon icon={ArrowRight01Icon} className="w-3.5 h-3.5 text-gray-400 group-hover:text-gray-700 group-hover:translate-x-0.5 transition-all shrink-0 ml-1.5" />
-            </button>
-
-            {/* Post Announcement */}
-            <button
-              type="button"
-              onClick={() => setIsAnnouncementModalOpen(true)}
-              className="group w-full flex items-center justify-between p-2.5 rounded-xl border border-gray-200/70 bg-gray-50/40 hover:bg-white hover:border-gray-300 hover:shadow-2xs transition-all text-left cursor-pointer"
-            >
-              <div className="flex items-center gap-2.5 min-w-0">
-                <div className="w-8 h-8 rounded-lg bg-white border border-gray-200/80 flex items-center justify-center shrink-0 text-gray-600 group-hover:text-gray-950 group-hover:border-gray-300 shadow-2xs transition-colors">
-                  <HugeiconsIcon icon={Notification01Icon} className="w-4 h-4" />
-                </div>
-                <div className="min-w-0">
-                  <div className="text-xs font-semibold text-gray-900 group-hover:text-black truncate">Post Announcement</div>
-                  <div className="text-[11px] text-gray-400 truncate mt-0.5">Broadcast sector advisory</div>
-                </div>
-              </div>
-              <HugeiconsIcon icon={ArrowRight01Icon} className="w-3.5 h-3.5 text-gray-400 group-hover:text-gray-700 group-hover:translate-x-0.5 transition-all shrink-0 ml-1.5" />
-            </button>
-
-            {/* Manage Residents */}
-            <button
-              type="button"
-              onClick={() => navigate("/admin/barangay/residents")}
-              className="group w-full flex items-center justify-between p-2.5 rounded-xl border border-gray-200/70 bg-gray-50/40 hover:bg-white hover:border-gray-300 hover:shadow-2xs transition-all text-left cursor-pointer"
-            >
-              <div className="flex items-center gap-2.5 min-w-0">
-                <div className="w-8 h-8 rounded-lg bg-white border border-gray-200/80 flex items-center justify-center shrink-0 text-gray-600 group-hover:text-gray-950 group-hover:border-gray-300 shadow-2xs transition-colors">
-                  <HugeiconsIcon icon={UserGroupIcon} className="w-4 h-4" />
-                </div>
-                <div className="min-w-0">
-                  <div className="text-xs font-semibold text-gray-900 group-hover:text-black truncate">Resident Directory</div>
-                  <div className="text-[11px] text-gray-400 truncate mt-0.5">Manage jurisdiction records</div>
-                </div>
-              </div>
-              <HugeiconsIcon icon={ArrowRight01Icon} className="w-3.5 h-3.5 text-gray-400 group-hover:text-gray-700 group-hover:translate-x-0.5 transition-all shrink-0 ml-1.5" />
-            </button>
-
-            {/* Certification Roster */}
-            <button
-              type="button"
-              onClick={() => navigate("/admin/barangay/certifications")}
-              className="group w-full flex items-center justify-between p-2.5 rounded-xl border border-gray-200/70 bg-gray-50/40 hover:bg-white hover:border-gray-300 hover:shadow-2xs transition-all text-left cursor-pointer"
-            >
-              <div className="flex items-center gap-2.5 min-w-0">
-                <div className="w-8 h-8 rounded-lg bg-white border border-gray-200/80 flex items-center justify-center shrink-0 text-gray-600 group-hover:text-gray-950 group-hover:border-gray-300 shadow-2xs transition-colors">
-                  <HugeiconsIcon icon={Award01Icon} className="w-4 h-4" />
-                </div>
-                <div className="min-w-0">
-                  <div className="text-xs font-semibold text-gray-900 group-hover:text-black truncate">Certification Roster</div>
-                  <div className="text-[11px] text-gray-400 truncate mt-0.5">Review certified locals</div>
-                </div>
-              </div>
-              <HugeiconsIcon icon={ArrowRight01Icon} className="w-3.5 h-3.5 text-gray-400 group-hover:text-gray-700 group-hover:translate-x-0.5 transition-all shrink-0 ml-1.5" />
-            </button>
-
-            {/* Resident Feedback */}
-            <button
-              type="button"
-              onClick={() => navigate("/admin/barangay/feedback")}
-              className="group w-full flex items-center justify-between p-2.5 rounded-xl border border-gray-200/70 bg-gray-50/40 hover:bg-white hover:border-gray-300 hover:shadow-2xs transition-all text-left cursor-pointer"
-            >
-              <div className="flex items-center gap-2.5 min-w-0">
-                <div className="w-8 h-8 rounded-lg bg-white border border-gray-200/80 flex items-center justify-center shrink-0 text-gray-600 group-hover:text-gray-950 group-hover:border-gray-300 shadow-2xs transition-colors">
-                  <HugeiconsIcon icon={Message01Icon} className="w-4 h-4" />
-                </div>
-                <div className="min-w-0">
-                  <div className="text-xs font-semibold text-gray-900 group-hover:text-black truncate">Resident Feedback</div>
-                  <div className="text-[11px] text-gray-400 truncate mt-0.5">Inquiries & community reports</div>
-                </div>
-              </div>
-              <HugeiconsIcon icon={ArrowRight01Icon} className="w-3.5 h-3.5 text-gray-400 group-hover:text-gray-700 group-hover:translate-x-0.5 transition-all shrink-0 ml-1.5" />
-            </button>
-          </div>
-        </div>
-
+        <WorkspaceQuickActions
+          onOpenVerifyModal={handleVerifyCertificate}
+          onOpenAnnouncementModal={() => setIsAnnouncementModalOpen(true)}
+        />
       </div>
 
       {/* Row 3: High Density Resident Table & Live Selection Inspector */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm lg:col-span-8 space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-gray-100 pb-3">
-            <div>
-              <h3 className="text-sm font-bold text-gray-900">Monitored Citizen Records</h3>
-              <p className="text-xs text-gray-400">Residents belonging to your jurisdiction</p>
-            </div>
-            <div className="relative">
-              <HugeiconsIcon icon={Search01Icon} className="w-4 h-4 text-gray-400 absolute left-3 top-2.5" />
-              <input
-                type="text"
-                placeholder="Search citizen..."
-                value={searchFilter}
-                onChange={(e) => setSearchFilter(e.target.value)}
-                className="pl-9 pr-3 py-1.5 text-xs bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 w-full sm:w-56"
-              />
-            </div>
-          </div>
-
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse text-xs">
-              <thead>
-                <tr className="text-gray-400 border-b border-gray-100 bg-gray-50/50">
-                  <th className="py-2.5 px-3 font-semibold uppercase tracking-wider">Citizen Identity</th>
-                  <th className="py-2.5 px-3 font-semibold uppercase tracking-wider text-center">Score</th>
-                  <th className="py-2.5 px-3 font-semibold uppercase tracking-wider text-center">Status</th>
-                  <th className="py-2.5 px-3 font-semibold uppercase tracking-wider text-right">Action</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-50 text-gray-700">
-                {filteredResidents.length === 0 ? (
-                  <tr>
-                    <td colSpan="4" className="py-8 text-center text-gray-400 italic">
-                      No citizen profiles found matching query.
-                    </td>
-                  </tr>
-                ) : (
-                  filteredResidents.slice(0, 7).map((r) => (
-                    <tr
-                      key={r.id || r._id}
-                      onClick={() => setSelectedResident(r)}
-                      className={`cursor-pointer transition-colors ${
-                        selectedResident?.id === r.id ? "bg-red-50/60 font-medium" : "hover:bg-gray-50/50"
-                      }`}
-                    >
-                      <td className="py-3 px-3">
-                        <div className="font-semibold text-gray-900">{r.name}</div>
-                        <div className="text-[10px] text-gray-400 font-mono">{r.email}</div>
-                      </td>
-                      <td className="py-3 px-3 text-center font-mono font-bold text-gray-600">
-                        {r.quizScore || 0}%
-                      </td>
-                      <td className="py-3 px-3 text-center">
-                        <span
-                          className={`px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider ${
-                            r.status === "Ready"
-                              ? "bg-emerald-50 text-emerald-600 border border-emerald-200"
-                              : "bg-amber-50 text-amber-600 border border-amber-200"
-                          }`}
-                        >
-                          {r.status || "Pending"}
-                        </span>
-                      </td>
-                      <td className="py-3 px-3 text-right">
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setSelectedResident(r);
-                          }}
-                          className="px-2.5 py-1 text-[11px] font-semibold text-gray-700 bg-white border border-gray-200 hover:bg-gray-50 rounded-lg shadow-sm"
-                        >
-                          Inspect
-                        </button>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
+        <MonitoredCitizenTable
+          filteredResidents={filteredResidents}
+          selectedResident={selectedResident}
+          setSelectedResident={setSelectedResident}
+          searchFilter={searchFilter}
+          setSearchFilter={setSearchFilter}
+        />
 
         <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm lg:col-span-4 min-h-[350px]">
           <div className="border-b border-gray-100 pb-3 mb-4">
@@ -540,7 +200,6 @@ export default function WorkspaceOverview() {
             onVerifyCertificate={handleVerifyCertificate}
           />
         </div>
-
       </div>
 
       <AnnouncementModal

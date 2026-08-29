@@ -363,6 +363,20 @@ This document tracks identified technical debt, architectural decisions, missing
 
 ---
 
+### Resolved: Barangay Workspace Overview Decomposition
+- **Location:** `client/src/pages/admin/barangay/workspace/WorkspaceOverview.jsx`
+- **Issue:** The main barangay overview accumulated 559 lines, mixing data queries, 5 KPI stat cards, SVG compliance donut metrics, paginated disaster curriculum cards, 5 administrative quick action triggers, CSV report generation, and monitored resident tables.
+- **Resolution:** Extracted into 5 modular, single-responsibility sub-components under `client/src/pages/admin/barangay/workspace/components/`:
+  - `WorkspaceKpiGrid.jsx` (5 domain StatCards)
+  - `CommunityComplianceCard.jsx` (SVG donut ring and certified/pending legend)
+  - `CurriculumReadinessCard.jsx` (Module completion progress bars, empty state, and page controls with `moduleLimit = 5`)
+  - `WorkspaceQuickActions.jsx` (5 administrative action buttons with navigation and modal triggers)
+  - `MonitoredCitizenTable.jsx` (Searchable citizen table with row selection and Inspector triggers)
+  - `WorkspaceOverview.jsx` (Streamlined coordinator down to ~190 lines)
+- **Verification:** Verified with production build `npm run build` (0 errors) and automated Puppeteer end-to-end browser test validating all 5 KPI cards, compliance ring, curriculum pagination, citizen table/inspector, real CSV export blob generation, and all 5 Quick Action triggers individually.
+
+---
+
 ## 🟡 Open / Active Technical Debt & Optimization Items
 
 ### 1. Server-Side Pagination & Cursor Querying for High-Scale Endpoints
