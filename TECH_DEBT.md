@@ -264,6 +264,67 @@ This document tracks identified technical debt, architectural decisions, missing
 
 ---
 
+### Resolved: Destructive Admin Actions Hardening (`destructiveActionLimiter`, Structural Role Validation & Bulk-Archive Confirm)
+- **Location:** `server/routes/admin/adminRoutes.js`, `server/middleware/rateLimiters.js`, `server/controllers/admin/user-management/banManagement.js`, `server/controllers/admin/user-management/archiveManagement.js`, `client/src/pages/admin/system/users/UserManagement.jsx`
+- **Issue:** Destructive administrative operations (banning users, archiving individual accounts, bulk archiving up to 50 users) required strict defense-in-depth protection against brute-force automation, role-escalation bypasses, and accidental clicks.
+- **Resolution:**
+  - **Rate Limiting:** Mounted PostgreSQL-backed `destructiveActionLimiter` (strict max 5 requests / 15 min keyed by `req.user.id`) across `/users/:id/ban`, `/users/:id/unban`, `/users/:id/archive`, and `/users/bulk-archive`, and `adminWriteLimiter` (max 20 / 15 min) on role updates.
+  - **Structural Role & Scope Checks:** Implemented server-side role validation in controller logic with `SECURITY_FAULT` exception handlers, ensuring `barangay_admin` cannot operate outside their scoped `barangay_id` and non-unscoped roles cannot execute destructive mutations even if route gates were misconfigured.
+  - **Frontend Confirmation:** Added `window.confirm` modal dialogues in `UserManagement.jsx` prior to dispatching `bulk_archive` mutations.
+- **Verification:** Audited route middleware stacks, verified controller exception throwing, and confirmed frontend confirmation triggers in codebase.
+
+### Resolved: Bounded Concurrency Parallel Media Uploads in Module Builder (`useModuleSubmit.js`)
+- **Location:** `client/src/hooks/module-builder/useModuleSubmit.js`
+- **Issue:** Media attachments across staged module steps were previously uploaded sequentially in a synchronous `for` loop, causing publishing bottlenecks for media-heavy modules on slower barangay connections.
+- **Resolution:**
+  - Implemented a worker-pool bounded concurrency mechanism capping simultaneous in-flight uploads at $\le 3$ requests.
+  - Strict step order is preserved in the resulting `uploadedFlows` payload regardless of network completion ordering.
+  - Fail-fast error propagation ensures any individual failure halts subsequent uploads and returns the exact Step-indexed error message.
+  - Replaced per-item toast notifications with an aggregate counter (`"Uploading media (X of Y completed)..."`).
+- **Verification:** Verified via automated Puppeteer test with 5 concurrently staged media attachments. Network timeline confirmed peak concurrency capped at exactly 3, with overlapping in-flight execution and 100% preserved step ordering.
+
+---
+
+### Resolved: `activity_log` Ghost Entries Cleanup (Deleted Test Fixture References)
+- **Location:** PostgreSQL `activity_log` table
+- **Issue:** Historical automated test runs generated 3 activity log entries (act_id: 276, 293, 300) referencing ephemeral fixture modules (`"RESIDENT AUDIT TEST - 1787303460308"` and `"PUPPETEER OFFLINE SYNC TEST"`) that were subsequently deleted from `module_data`.
+- **Resolution:** Permanently purged the 3 orphaned test-fixture records via `DELETE FROM activity_log WHERE act_id IN (276, 293, 300)`. Hard deletion was selected over a soft-delete column to preserve the simple append-only architecture of the production audit log table without requiring `WHERE is_deleted = false` filter clauses across all reporting, CSV export, and log inspection endpoints.
+- **Verification:** Verified via exact SQL `LEFT JOIN` and `NOT EXISTS` queries against `module_data`, confirming 0 orphaned/ghost rows remaining in `activity_log`.
+
+---
+
+### Resolved: Resident Management vs. Certification Roster Data Source Alignment
+- **Location:** `server/services/users/UserService.js`, `server/controllers/admin/barangayController.js`, `client/src/pages/admin/barangay/registry/ResidentRegistry.jsx`
+- **Audit Findings:**
+  - **Modules Completed:** Confirmed that both Resident Management and the Certification Roster derive completion metrics from the same underlying PostgreSQL `certificates` table.
+  - **"STATE" Column Semantics:** Confirmed that the "STATE" column in Resident Management represents **account moderation status** (`Active` / `Banned` / `Archived`) sourced from `user.banned` and `user.archived`, whereas the Certification Roster represents **training compliance status** (`Active` / `Expiring Soon` / `Expired` / `Revoked`).
+- **Verification:** Audited both SQL queries side-by-side and verified UI column mappings in `ResidentRegistry.jsx`.
+
+---
+
+### Resolved: User Distribution Donut vs. Total Users KPI Card Parity (40 = 40)
+- **Location:** `server/controllers/admin/systemStatsController.js`
+- **Issue:** Previous count mismatch (41 vs 42) was root-caused to the exclusion of the `head_mdrrmo_admin` role in the donut chart filter.
+- **Resolution:** Updated the filter to `WHERE role IN ('mdrrmo_admin', 'head_mdrrmo_admin')`.
+- **Verification:** Verified against live PostgreSQL database: Residents (27) + Barangay Admins (3) + MDRRMO Admins (8) + System Admins (2) = **40**; Total Users `COUNT(*)` = **40**. Parity is 100% verified.
+
+---
+
+### Resolved: System Traffic Chart 24h Bucketing & Spike Verification
+- **Location:** `server/controllers/admin/systemStatsController.js:getTrafficAnalytics`
+- **Audit Findings:** Investigated the flat-then-spike chart pattern. Confirmed that the SQL `generate_series` hourly bucketing query is mathematically correct and accurately groups distinct active users from `activity_log` per 1-hour window. The flat zero period followed by an activity peak reflects real user interaction intervals in development/test environments (idle hours vs active test execution), not a timestamp collapse or timezone defect.
+- **Verification:** Verified 24-hour SQL bucket breakdown against recent `activity_log` entries in PostgreSQL.
+
+---
+
+### Resolved: PostgreSQL Foreign Key Constraint Deduplication
+- **Location:** PostgreSQL schema: `public.certificates`, `public.module_activity`, `public.user_step_progress`, `public.questions`
+- **Issue:** Historical migrations generated 66 duplicate foreign key constraints (`fk_user` repeated 16 times per table, `fk_module` repeated 4 times), creating redundant constraint evaluation checks on every insert/update.
+- **Resolution:** Executed a transactional migration dropping all 66 duplicate constraint handles and establishing single, canonical named foreign keys (`fk_certificates_user_id`, `fk_module_activity_user_id`, `fk_module_activity_mod_id`, `fk_user_step_progress_user_id`, `fk_questions_mod_id`).
+- **Verification:** Verified via `information_schema.table_constraints` introspection; total foreign key constraints reduced from 90 to 24 distinct canonical relations.
+
+---
+
 ## 🟡 Open / Active Technical Debt & Optimization Items
 
 ### 1. Server-Side Pagination & Cursor Querying for High-Scale Endpoints
@@ -347,4 +408,70 @@ This document tracks identified technical debt, architectural decisions, missing
   - `Dashboard.jsx` specifies `onError` inside `useQuery` (ignored in TanStack Query v5).
 - **Recommended Action:**
   - Modernize all resident query hooks to standard TanStack Query v5 object schemas.
+
+---
+
+### 9. Dead Code Removal: Service Worker Background Sync & Legacy DB (`service-worker.js`)
+- **Location:** `client/public/service-worker.js:L145-L244`
+- **Description:** `service-worker.js` defines a `sync` event listener and `replayWriteQueue()` function targeting a stale database (`"BacolorLMSOfflineDB"` and `"writeQueue"`).
+- **Architectural Reality:** The client does not register `sync` tags (`registration.sync.register`), and all real offline queueing/sync execution runs on the React thread via Dexie `LMS_OfflineDB` / `syncManager.js`.
+- **Recommended Action:**
+  - Safely delete the orphaned `replayWriteQueue()`, `incrementRetryOrFail()`, and `markItemFailed()` blocks and the `sync` event listener from `service-worker.js`.
+
+---
+
+### 10. Edge Case: Offline Queue Replay When Already Online on Direct App Reopen (`useNetworkSync.js`)
+- **Location:** `client/src/hooks/useNetworkSync.js`
+- **Description:** `useNetworkSync.js` triggers `processOfflineQueue()` on mount and on the window `online` / `visibilitychange` events.
+- **Edge Case Gap:** If a user creates writes offline, closes the tab/browser, reconnects to internet while the browser is closed, and reopens the app directly in an already-online state, the initial mount trigger runs, but any transient network timing before auth cookies re-hydrate may benefit from explicit session-ready gating.
+- **Recommended Action:**
+  - Add explicit sync trigger upon verified authentication session hydration (`authClient.useSession()`) in addition to initial component mount.
+
+---
+
+### 11. "Manage" / Edit Flow for Rejected Modules (`ModuleCard.jsx`)
+- **Location:** `client/src/components/ui/modules/ModuleCard.jsx:L236-L245`
+- **Description:** On administrative module cards, the primary action button (`Manage`) remains a stub displaying `title="Module management/editing is under development."` with a no-op click handler (`e.stopPropagation()`).
+- **Architectural Reality:** When an MDRRMO Head Admin rejects a module with feedback remarks, the original authoring admin sees the rejection notice on their dashboard, but clicking "Manage" cannot open the builder wizard in edit mode populated with existing steps and curriculum data.
+- **Recommended Action:**
+  - Wire `Manage` button to trigger `handleOpenWizard(module)` or `navigate('/admin/mdrrmo/modules/builder?id=' + module.id)`.
+  - Implement edit mode hydration in `useModuleBuilder` / `ModuleBuilderWizard` to pre-populate form headers, levels, and sequence flows from `GET /api/modules/:id`.
+
+---
+
+### 12. Strict Admin-Provisioning Hierarchy Enforcement
+- **Location:** `client/src/pages/admin/system/users/components/provision/AdminRoleSelection.jsx`, `client/src/pages/admin/mdrrmo/user-management/components/RegisterPersonnelForm.jsx`, `server/controllers/admin/user-management/provisionAdmin.js`, `server/config/permissions.js`
+- **Description:**
+  - **Frontend:** `RegisterPersonnelForm.jsx` (MDRRMO admin view) hardcodes `<option value="barangay_admin">`, while `AdminRoleSelection.jsx` (System admin view) displays `mdrrmo_admin` and `barangay_admin`.
+  - **Backend:** `provisionAdmin.js` validates only that the requested role is within `["barangay_admin", "mdrrmo_admin"]`. It does NOT validate whether the authenticated requester (`req.user.role`) possesses the hierarchical authority to provision that specific tier (e.g. `system_admin` $\to$ `head_mdrrmo_admin` $\to$ `mdrrmo_admin` $\to$ `barangay_admin`).
+- **Architectural Impact:** Any account with `provision_admins` permission (which currently includes `mdrrmo_admin`) could send a direct API POST request with `{ role: "mdrrmo_admin" }` to provision a peer MDRRMO admin, bypassing horizontal privilege boundaries.
+- **Recommended Action:**
+  - Implement a server-side hierarchy matrix in `provisionAdmin.js` ensuring a creator can only provision roles strictly below their own rank.
+  - Dynamically populate the frontend role options based on the authenticated admin's current role.
+
+---
+
+### 13. Local Announcements Priority System & Urgent Badging
+- **Location:** `client/src/pages/admin/barangay/workspace/announcementModal.jsx`, `client/src/components/ui/announcements/AnnouncementCard.jsx`, `client/src/pages/admin/mdrrmo/LiveAlerts.jsx`, `server/controllers/admin/barangayController.js`
+- **Description:** While basic localized announcement creation (`title`, `content`) exists for Barangay Admins, the priority categorization system (`Standard` vs `Urgent`), urgent advisory badge indicators on resident announcement cards, and MDRRMO/Municipal broadcast overrides remain unimplemented scaffolding (`LiveAlerts.jsx` displays *"The announcement broadcasting system is currently being developed."*).
+- **Architectural Impact:** Critical emergency advisories cannot be visually differentiated from standard municipal announcements on resident feeds.
+- **Recommended Action:**
+  - Add `priority` column (`VARCHAR(20) DEFAULT 'standard'`) to `announcements` schema.
+  - Add priority selection radio/dropdown in `announcementModal.jsx` and render a high-visibility `Urgent` badge on `AnnouncementCard.jsx`.
+
+---
+
+### 14. Progressive Web App (PWA) Manifest & Production Asset Precaching
+- **Location:** `client/public/manifest.json`, `client/index.html`, `client/public/service-worker.js`, `client/vite.config.js`
+- **Description:**
+  - **Missing Web App Manifest:** No `manifest.json` or `manifest.webmanifest` exists in `client/public/`. The application lacks `theme_color`, `background_color`, `display: "standalone"`, `start_url`, and high-resolution PWA app icon definitions (`192x192`, `512x512`, `maskable`).
+  - **Missing HTML Mobile & PWA Headers:** `index.html` lacks `<link rel="manifest">`, `<meta name="theme-color">`, and Apple touch icon tags (`<link rel="apple-touch-icon">`, `<meta name="apple-mobile-web-app-capable">`).
+  - **Manual Service Worker vs. Vite Chunk Precaching:** `service-worker.js` manually hardcodes `urlsToCache = ["/", "/index.html"]`. It does not automatically precache hashed Vite build bundles (`dist/assets/*.js`, `dist/assets/*.css`), meaning full offline navigation to unvisited views fails unless previously visited.
+  - **Missing Installation Hook:** No `beforeinstallprompt` event listener or custom in-app install prompt banner exists to encourage mobile/desktop installation.
+- **Architectural Impact:** Mobile and desktop users cannot install the LMS as a standalone offline PWA application, and offline reliability is limited to previously cached network responses.
+- **Recommended Action:**
+  - Integrate `vite-plugin-pwa` in `client/vite.config.js` with auto-update service worker strategy and Workbox precaching for all production assets.
+  - Generate canonical PWA icons (`icon-192.png`, `icon-512.png`, `icon-maskable.png`) and create `manifest.webmanifest`.
+  - Add an in-app `InstallAppPrompt` component listening to the window `beforeinstallprompt` event.
+
 

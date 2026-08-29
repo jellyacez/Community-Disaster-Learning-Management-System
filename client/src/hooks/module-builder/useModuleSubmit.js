@@ -41,26 +41,78 @@ export function useModuleSubmit({
     const loadingToastId = toast.loading("Executing module publication process...");
 
     try {
-      // 1. PRE-UPLOAD ALL MEDIA FIRST
-      const uploadedFlows = [];
-      for (let i = 0; i < stagedFlows.length; i++) {
-        const activeFlow = stagedFlows[i];
-        let finalMediaUrl = "";
+      // 1. PRE-UPLOAD ALL MEDIA FIRST (Bounded concurrency pool, max 3 in-flight)
+      const CONCURRENCY_LIMIT = 3;
+      const abortController = new AbortController();
+      const uploadTasks = stagedFlows
+        .map((flow, index) => ({ flow, index }))
+        .filter((item) => Boolean(item.flow.attachedFile));
 
-        if (activeFlow.attachedFile) {
-          toast.loading(`Uploading media for Step ${i + 1}...`, { id: loadingToastId });
-          const formData = new FormData();
-          formData.append("mediaFile", activeFlow.attachedFile);
-          try {
-             const uploadRes = await apiClient.post("modules/upload-media", formData, {
-               headers: { 'Content-Type': 'multipart/form-data' }
-             });
-             finalMediaUrl = uploadRes.data.url;
-          } catch(err) {
-             throw new Error(`Upload failed for Step ${i+1}: ${err.response?.data?.message || err.message}`, { cause: err });
+      const totalUploads = uploadTasks.length;
+      let completedUploads = 0;
+
+      const uploadedFlows = stagedFlows.map((flow) => ({
+        ...flow,
+        finalMediaUrl: "",
+      }));
+
+      if (totalUploads > 0) {
+        toast.loading(`Uploading media (0 of ${totalUploads} completed)...`, {
+          id: loadingToastId,
+        });
+
+        let taskIndex = 0;
+        const workers = Array.from(
+          { length: Math.min(CONCURRENCY_LIMIT, totalUploads) },
+          async () => {
+            while (!abortController.signal.aborted && taskIndex < uploadTasks.length) {
+              const current = uploadTasks[taskIndex++];
+              const formData = new FormData();
+              formData.append("mediaFile", current.flow.attachedFile);
+
+              try {
+                const uploadRes = await apiClient.post(
+                  "modules/upload-media",
+                  formData,
+                  {
+                    headers: { "Content-Type": "multipart/form-data" },
+                    signal: abortController.signal,
+                  }
+                );
+                uploadedFlows[current.index] = {
+                  ...current.flow,
+                  finalMediaUrl: uploadRes.data.url,
+                };
+                completedUploads++;
+                toast.loading(
+                  `Uploading media (${completedUploads} of ${totalUploads} completed)...`,
+                  { id: loadingToastId }
+                );
+              } catch (err) {
+                // If this worker failed because it was aborted by another failing upload, ignore it so the root error propagates
+                const isAbort =
+                  err.name === "CanceledError" ||
+                  err.name === "AbortError" ||
+                  err.code === "ERR_CANCELED" ||
+                  abortController.signal.aborted;
+
+                if (isAbort) {
+                  return;
+                }
+
+                abortController.abort();
+                throw new Error(
+                  `Upload failed for Step ${current.index + 1}: ${
+                    err.response?.data?.message || err.message
+                  }`,
+                  { cause: err }
+                );
+              }
+            }
           }
-        }
-        uploadedFlows.push({ ...activeFlow, finalMediaUrl });
+        );
+
+        await Promise.all(workers);
       }
 
       toast.loading("Synchronizing module data to database...", { id: loadingToastId });

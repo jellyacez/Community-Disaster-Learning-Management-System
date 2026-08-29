@@ -1812,21 +1812,21 @@ ALTER TABLE ONLY public.certificates
 
 
 --
--- TOC entry 5144 (class 2606 OID 42213)
--- Name: module_activity fk_module; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- TOC entry 5144 (class 2606 OID 42203)
+-- Name: module_activity fk_module_activity_mod_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
 ALTER TABLE ONLY public.module_activity
-    ADD CONSTRAINT fk_module FOREIGN KEY (mod_id) REFERENCES public.module_data(mod_id) ON DELETE CASCADE;
+    ADD CONSTRAINT fk_module_activity_mod_id FOREIGN KEY (mod_id) REFERENCES public.module_data(mod_id) ON DELETE CASCADE;
 
 
 --
 -- TOC entry 5148 (class 2606 OID 42218)
--- Name: questions fk_module; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: questions fk_questions_mod_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
 ALTER TABLE ONLY public.questions
-    ADD CONSTRAINT fk_module FOREIGN KEY (mod_id) REFERENCES public.module_data(mod_id) ON DELETE CASCADE;
+    ADD CONSTRAINT fk_questions_mod_id FOREIGN KEY (mod_id) REFERENCES public.module_data(mod_id) ON DELETE CASCADE;
 
 
 --
@@ -1867,29 +1867,29 @@ ALTER TABLE ONLY public.activity_log
 
 --
 -- TOC entry 5140 (class 2606 OID 42243)
--- Name: certificates fk_user; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: certificates fk_certificates_user_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
 ALTER TABLE ONLY public.certificates
-    ADD CONSTRAINT fk_user FOREIGN KEY (user_id) REFERENCES public."user"(id) ON DELETE CASCADE;
+    ADD CONSTRAINT fk_certificates_user_id FOREIGN KEY (user_id) REFERENCES public."user"(id) ON DELETE SET NULL;
 
 
 --
 -- TOC entry 5145 (class 2606 OID 42248)
--- Name: module_activity fk_user; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: module_activity fk_module_activity_user_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
 ALTER TABLE ONLY public.module_activity
-    ADD CONSTRAINT fk_user FOREIGN KEY (user_id) REFERENCES public."user"(id) ON DELETE CASCADE;
+    ADD CONSTRAINT fk_module_activity_user_id FOREIGN KEY (user_id) REFERENCES public."user"(id) ON DELETE CASCADE;
 
 
 --
 -- TOC entry 5154 (class 2606 OID 42253)
--- Name: user_step_progress fk_user; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: user_step_progress fk_user_step_progress_user_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
 ALTER TABLE ONLY public.user_step_progress
-    ADD CONSTRAINT fk_user FOREIGN KEY (user_id) REFERENCES public."user"(id) ON DELETE CASCADE;
+    ADD CONSTRAINT fk_user_step_progress_user_id FOREIGN KEY (user_id) REFERENCES public."user"(id) ON DELETE CASCADE;
 
 
 --
