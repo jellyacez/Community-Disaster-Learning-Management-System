@@ -70,7 +70,7 @@ export default function HazardIdentificationEditor({
                 </span>
               </label>
               <button 
-                type="button"
+                type="button" 
                 onClick={() => removeHazard(hIdx)}
                 className="text-xs font-bold text-red-500 hover:text-red-700 disabled:opacity-30"
                 disabled={currentSituationalData.hazards.length <= 1}

@@ -333,6 +333,14 @@ This document tracks identified technical debt, architectural decisions, missing
 
 ---
 
+### Resolved: Module Builder Step Components Folder Colocation
+- **Location:** `client/src/pages/admin/mdrrmo/module-management/`
+- **Issue:** Step editor components (`LearningContentEditor`, `QuizEditor`, `SituationalEditor`, `PriorityActionEditor`, `HazardIdentificationEditor`, `ActionSequenceEditor`) were previously placed in an orphaned directory `step-components/` outside of `builders/`, creating fragmented module-builder architectural hierarchies.
+- **Resolution:** Relocated all 6 step editor sub-components into `builders/steps/`, standardized all relative utility/modal import paths, updated `AssessmentEditor.jsx` and `StepBuilder.jsx` import paths to `./steps/`, and deleted the legacy `step-components/` directory.
+- **Verification:** Verified with production build `npm run build` (0 errors) and automated Puppeteer test traversing and interacting with all 6 step editors in the live wizard.
+
+---
+
 ## 🟡 Open / Active Technical Debt & Optimization Items
 
 ### 1. Server-Side Pagination & Cursor Querying for High-Scale Endpoints

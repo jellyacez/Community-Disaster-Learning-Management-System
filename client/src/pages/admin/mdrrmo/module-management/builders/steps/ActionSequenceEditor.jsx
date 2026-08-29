@@ -95,7 +95,7 @@ export default function ActionSequenceEditor({
               />
             </div>
             <button 
-              type="button"
+              type="button" 
               onClick={() => removeStep(sIdx)}
               className="pt-2.5 text-xs font-bold text-red-500 hover:text-red-700 disabled:opacity-30"
               disabled={stepsList.length <= 2}

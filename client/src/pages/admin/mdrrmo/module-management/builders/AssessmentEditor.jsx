@@ -1,5 +1,5 @@
-import QuizEditor from "../step-components/QuizEditor";
-import SituationalEditor from "../step-components/SituationalEditor";
+import QuizEditor from "./steps/QuizEditor";
+import SituationalEditor from "./steps/SituationalEditor";
 
 export default function AssessmentEditor({
   currentFlowStep,

@@ -1,9 +1,9 @@
-import RichTextEditor from "../../../../../components/ui/RichTextEditor";
+import RichTextEditor from "../../../../../../components/ui/RichTextEditor";
 import { flushSync } from "react-dom";
 import toast from "react-hot-toast";
 import { useState, useEffect } from "react";
 
-import { scrollToFirstError } from "../../../../../utils/scrollUtils";
+import { scrollToFirstError } from "../../../../../../utils/scrollUtils";
 
 export default function LearningContentEditor({
   currentFlowStep,
