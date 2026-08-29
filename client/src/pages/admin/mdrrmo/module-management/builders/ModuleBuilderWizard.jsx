@@ -6,6 +6,7 @@ import SequenceCanvas from "./SequenceCanvas";
 import StepBuilder from "./StepBuilder";
 import ModulePlayerPreviewModal from "../../../../../components/ui/modules/viewer/ModulePlayerPreviewModal";
 import ConfirmationModal from "../../../../../components/ui/modals/ConfirmationModal";
+import Spinner from "../../../../../components/ui/Spinner";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   Cancel01Icon,
@@ -26,6 +27,7 @@ export default function ModuleBuilderWizard({
   const [wizardStep, setWizardStep] = useState(1);
   const [showResetModal, setShowResetModal] = useState(false);
   const [showExitModal, setShowExitModal] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
 
   const {
@@ -97,18 +99,25 @@ export default function ModuleBuilderWizard({
   };
 
   const handleSubmitWrapper = async (e) => {
-    e.preventDefault();
-    const success = await handleModuleSubmit(e);
-    if (!success) return; 
-    
-    if (refetchModules) {
-      refetchModules();
+    if (e && e.preventDefault) e.preventDefault();
+    if (isSubmitting) return;
+
+    setIsSubmitting(true);
+    try {
+      const success = await handleModuleSubmit(e);
+      if (!success) return; 
+      
+      if (refetchModules) {
+        refetchModules();
+      }
+      // Reset wizard state so reopening always starts fresh on Step 1
+      actions.resetForm();
+      setWizardStep(1);
+      onClose();
+      navigate("/admin/mdrrmo/modules");
+    } finally {
+      setIsSubmitting(false);
     }
-    // Reset wizard state so reopening always starts fresh on Step 1
-    actions.resetForm();
-    setWizardStep(1);
-    onClose();
-    navigate("/admin/mdrrmo/modules");
   };
 
   return (
@@ -138,15 +147,15 @@ export default function ModuleBuilderWizard({
           </div>
         </div>
 
+        {/* Action Controls */}
         <div className="flex items-center gap-3">
           {wizardStep === 2 && (
             <button
-              type="button"
               onClick={() => setWizardStep(1)}
-              className="px-4 py-2 text-sm font-bold text-gray-600 hover:bg-gray-100 rounded-xl transition-colors flex items-center gap-2"
+              className="px-4 py-2 text-sm font-bold text-gray-700 bg-white border border-gray-200 hover:bg-gray-50 rounded-xl transition-colors flex items-center gap-2 shadow-sm"
             >
               <HugeiconsIcon icon={ArrowLeft01Icon} className="w-4 h-4" />
-              Overview
+              Back to Overview
             </button>
           )}
 
@@ -168,9 +177,21 @@ export default function ModuleBuilderWizard({
           ) : (
             <button
               onClick={handleSubmitWrapper}
-              className="px-6 py-2.5 text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl transition-colors flex items-center gap-2 shadow-sm"
+              disabled={isSubmitting}
+              className={`px-6 py-2.5 text-sm font-bold text-white rounded-xl transition-colors flex items-center gap-2 shadow-sm ${
+                isSubmitting
+                  ? "bg-emerald-400 cursor-not-allowed opacity-80"
+                  : "bg-emerald-600 hover:bg-emerald-700 cursor-pointer"
+              }`}
             >
-              {editingModuleId ? "Submit Changes for Review" : "Submit for Review"}
+              {isSubmitting ? (
+                <>
+                  <Spinner className="w-4 h-4 text-white" />
+                  <span>Submitting...</span>
+                </>
+              ) : (
+                editingModuleId ? "Submit Changes for Review" : "Submit for Review"
+              )}
             </button>
           )}
         </div>

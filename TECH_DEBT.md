@@ -325,6 +325,14 @@ This document tracks identified technical debt, architectural decisions, missing
 
 ---
 
+### Resolved: Module Builder Publish Double-Submit Guard (`ModuleBuilderWizard.jsx`)
+- **Location:** `client/src/pages/admin/mdrrmo/module-management/builders/ModuleBuilderWizard.jsx`
+- **Issue:** The "Submit for Review" / "Publish" button lacked an `isSubmitting` disabled guard. Rapid double-clicking or latency spikes could trigger concurrent `POST /api/modules` network calls, resulting in duplicate module creation in `module_data` (where `mod_id` is an auto-incrementing serial key with no natural database deduplication key).
+- **Resolution:** Added dedicated React `isSubmitting` state initialized to `false`, wrapped `handleSubmitWrapper` in a robust `try ... finally` block resetting `setIsSubmitting(false)`, bound `disabled={isSubmitting}` to the submit button, and rendered an active `<Spinner />` with `"Submitting..."` feedback.
+- **Verification:** Verified via automated Puppeteer Chromium test simulating rapid double-clicks on the submit button. Instrumentation confirmed the button transitioned to `disabled={true}` with `"Submitting..."` immediately upon the first click, blocked the second trigger, and a live PostgreSQL query confirmed that exactly 1 module record was created in `module_data`.
+
+---
+
 ## 🟡 Open / Active Technical Debt & Optimization Items
 
 ### 1. Server-Side Pagination & Cursor Querying for High-Scale Endpoints
@@ -473,5 +481,24 @@ This document tracks identified technical debt, architectural decisions, missing
   - Integrate `vite-plugin-pwa` in `client/vite.config.js` with auto-update service worker strategy and Workbox precaching for all production assets.
   - Generate canonical PWA icons (`icon-192.png`, `icon-512.png`, `icon-maskable.png`) and create `manifest.webmanifest`.
   - Add an in-app `InstallAppPrompt` component listening to the window `beforeinstallprompt` event.
+
+---
+
+### 15. Offline-Replay Duplicate Risk (Idempotency Keys)
+- **Location:** `client/src/lib/LocalSave/syncManager.js`, `server/controllers/feedback/feedbackController.js`, `server/controllers/admin/barangayController.js`
+- **Description:**
+  - **Context:** The application is an offline-first PWA with a background sync queue (`syncManager.js` replaying queued writes via Dexie on reconnect). Any `POST` endpoint without a unique constraint is vulnerable to duplicate creation if the server processes a request successfully but the HTTP 200 OK never reaches the client before the connection drops — the client re-queues and replays the same write on the next reconnect.
+  - **Confirmed Vulnerable (verified against real code):**
+    - `POST /api/feedbacks` (`feedbackController.js`) — raw `INSERT INTO feedbacks`, no deduplication key or unique constraint.
+    - Future: `POST /api/announcements` — same pattern, and this endpoint does not exist as a real feature yet (Item 13, deferred).
+  - **Confirmed NOT Vulnerable (real UNIQUE constraints + ON CONFLICT verified):**
+    - `user_step_progress` (`CONSTRAINT unique_user_step UNIQUE (user_id, step_id)` with `ON CONFLICT (user_id, step_id) DO NOTHING`).
+    - `certificates` (`CONSTRAINT uq_certificates_user_module UNIQUE (user_id, module_id)` with `ON CONFLICT (user_id, module_id) DO NOTHING`).
+    - `levels` / `module_steps` (`CONSTRAINT levels_mod_id_level_order_key UNIQUE (mod_id, level_order)` with `ON CONFLICT (mod_id, level_order) DO UPDATE`).
+- **Recommended Action (not yet implemented):**
+  - Client generates a UUID (`client_mutation_id`) when queuing a write in Dexie `sync_queue`, passed either via an `Idempotency-Key` request header or as a body/column value.
+  - Server defines unique constraints on `client_mutation_id` and executes `ON CONFLICT (client_mutation_id) DO NOTHING` on all creation endpoints that interface with the offline sync queue.
+- **Strategic Decision:** Bundle this enhancement with the Local Announcements build (Item 13) rather than fixing feedback in isolation now — no sense adding the idempotency plumbing to a feature that does not exist yet, and current feedback exposure is lower-frequency (requires the specific processed-but-response-lost race condition) than the Publish-button double-click case, which was fixed separately and immediately.
+
 
 
