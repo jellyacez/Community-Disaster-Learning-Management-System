@@ -444,10 +444,11 @@ class ModuleProgressService {
         END as status,
         u.name AS learner_name,
         u.email AS learner_email,
-        u.barangay AS learner_barangay,
+        b.name AS learner_barangay,
         m.modname AS module_title
       FROM public.certificates c
       JOIN public."user" u ON c.user_id = u.id
+      LEFT JOIN public.barangays b ON u.barangay_id = b.id
       JOIN public.module_data m ON c.module_id = m.mod_id
       ${where}
       ORDER BY c.completion_date DESC

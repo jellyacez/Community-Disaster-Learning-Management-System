@@ -1,4 +1,4 @@
-const pool = require("../../config/db");
+const feedbackService = require("../../services/feedback/FeedbackService");
 
 // @desc    Get scoped feedback submissions for admins
 // @route   GET /api/admin/mdrrmo/feedback
@@ -11,73 +11,17 @@ exports.getAdminFeedbacks = async (req, res) => {
       return res.status(401).json({ success: false, error: "Unauthorized. Missing user context." });
     }
 
-    const isMdrrmoOrSystem =
-      adminRole.includes("mdrrmo") || adminRole === "system_admin";
+    const adminContext = {
+      role: adminRole,
+      barangay_id: adminBarangayId,
+    };
 
-    let query = `
-      SELECT
-        f.*,
-        u.name AS resident_name,
-        u.barangay_id,
-        b.name AS barangay_name,
-        COALESCE(
-          (
-            SELECT json_agg(
-              json_build_object(
-                'id', fm.id,
-                'sender_type', fm.sender_type,
-                'sender_id', fm.sender_id,
-                'message', fm.message,
-                'created_at', fm.created_at
-              ) ORDER BY fm.created_at ASC
-            ) FILTER (WHERE fm.id IS NOT NULL)
-            FROM public.feedback_messages fm
-            WHERE fm.feedback_id = f.id
-          ),
-          '[]'::json
-        ) AS thread
-      FROM public.feedbacks f
-      INNER JOIN public."user" u ON f.user_id = u.id
-      LEFT JOIN public.barangays b ON u.barangay_id = b.id
-    `;
-
-    const queryParams = [];
-    const conditions = [];
-
-    // 1. MDRRMO / System Admin Scoping: strictly only tickets sent to 'mdrrmo'
-    if (isMdrrmoOrSystem) {
-      if (req.query.barangay_id && req.query.barangay_id !== "all") {
-        queryParams.push(parseInt(req.query.barangay_id, 10));
-        conditions.push(`u.barangay_id = $${queryParams.length}`);
-      }
-
-      conditions.push(`f.recipient = 'mdrrmo'`);
-    }
-    // 2. Barangay Admin Scoping
-    else if (adminRole === "barangay_admin") {
-      if (!adminBarangayId) {
-        return res.status(403).json({
-          success: false,
-          error: "Forbidden. Admin account is not assigned to a barangay.",
-        });
-      }
-
-      queryParams.push(parseInt(adminBarangayId, 10));
-      conditions.push(`u.barangay_id = $${queryParams.length}`);
-      conditions.push(`f.recipient = 'barangay'`);
-    } else {
-      return res.status(403).json({ success: false, error: "Forbidden. Insufficient permissions." });
-    }
-
-    if (conditions.length > 0) {
-      query += ` WHERE ` + conditions.join(" AND ");
-    }
-
-    query += ` ORDER BY f.created_at DESC;`;
-
-    const { rows } = await pool.query(query, queryParams);
+    const rows = await feedbackService.getAdminFeedbacks(adminContext, req.query);
     res.json({ success: true, data: rows });
   } catch (err) {
+    if (err.statusCode) {
+      return res.status(err.statusCode).json({ success: false, error: err.message });
+    }
     res.status(500).json({ success: false, error: "Failed to load department communications." });
   }
 };
@@ -100,76 +44,20 @@ exports.replyToFeedback = async (req, res) => {
       return res.status(400).json({ success: false, error: "Reply text and status are required." });
     }
 
-    const isMdrrmoOrSystem =
-      adminRole.includes("mdrrmo") || adminRole === "system_admin";
+    const adminContext = {
+      id: adminId,
+      role: adminRole,
+      barangay_id: adminBarangayId,
+    };
 
-    const client = await pool.connect();
-    try {
-      await client.query('BEGIN');
-
-      // 1. Verify ownership/scoping and status with row lock
-      const checkQuery = `
-        SELECT f.id, f.status, f.recipient, u.barangay_id AS resident_barangay_id
-        FROM public.feedbacks f
-        INNER JOIN public."user" u ON f.user_id = u.id
-        WHERE f.id = $1
-        FOR UPDATE
-      `;
-      const checkRes = await client.query(checkQuery, [id]);
-
-      if (checkRes.rowCount === 0) {
-        await client.query('ROLLBACK');
-        return res.status(404).json({ success: false, error: "Feedback record not found." });
-      }
-
-      const ticket = checkRes.rows[0];
-
-      // Scoping enforcement
-      if (adminRole === "barangay_admin") {
-        if (!adminBarangayId || ticket.recipient !== "barangay" || ticket.resident_barangay_id !== parseInt(adminBarangayId, 10)) {
-          await client.query('ROLLBACK');
-          return res.status(403).json({ success: false, error: "Forbidden. Out-of-scope ticket." });
-        }
-      } else if (isMdrrmoOrSystem) {
-        if (ticket.recipient !== "mdrrmo") {
-          await client.query('ROLLBACK');
-          return res.status(403).json({ success: false, error: "Forbidden. Ticket is addressed to a Barangay department." });
-        }
-      } else {
-        await client.query('ROLLBACK');
-        return res.status(403).json({ success: false, error: "Forbidden. Insufficient permissions." });
-      }
-
-      if (ticket.status === 'Closed') {
-        await client.query('ROLLBACK');
-        return res.status(400).json({ success: false, error: "Cannot reply to a closed ticket." });
-      }
-
-      const updateQuery = `
-        UPDATE public.feedbacks
-        SET status = $1
-        WHERE id = $2
-        RETURNING *;
-      `;
-      const { rows } = await client.query(updateQuery, [status, id]);
-
-      const insertQuery = `
-        INSERT INTO public.feedback_messages (feedback_id, sender_type, sender_id, message)
-        VALUES ($1, 'admin', $2, $3)
-        RETURNING *;
-      `;
-      await client.query(insertQuery, [id, adminId, reply]);
-
-      await client.query('COMMIT');
-      res.json({ success: true, data: rows[0] });
-    } catch (err) {
-      await client.query('ROLLBACK');
-      throw err;
-    } finally {
-      client.release();
-    }
+    const updatedTicket = await feedbackService.replyToFeedback(adminContext, id, { reply, status });
+    res.json({ success: true, data: updatedTicket });
   } catch (err) {
-    res.status(500).json({ success: false, error: "Failed to submit response." });
+    console.error("Reply error:", err);
+    if (err.statusCode) {
+      return res.status(err.statusCode).json({ success: false, error: err.message });
+    }
+    res.status(500).json({ success: false, error: "Failed to submit reply." });
   }
 };
 
@@ -178,7 +66,6 @@ exports.replyToFeedback = async (req, res) => {
 exports.closeFeedbackThread = async (req, res) => {
   try {
     const { id } = req.params;
-    const adminId = req.user?.id || req.session?.user?.id;
     const adminRole = req.user?.role || req.session?.user?.role;
     const adminBarangayId = req.user?.barangay_id || req.session?.user?.barangay_id;
 
@@ -186,67 +73,17 @@ exports.closeFeedbackThread = async (req, res) => {
       return res.status(401).json({ success: false, error: "Unauthorized. Missing user context." });
     }
 
-    const isMdrrmoOrSystem =
-      adminRole.includes("mdrrmo") || adminRole === "system_admin";
+    const adminContext = {
+      role: adminRole,
+      barangay_id: adminBarangayId,
+    };
 
-    const client = await pool.connect();
-    try {
-      await client.query('BEGIN');
-
-      // 1. Verify ownership/scoping and status with row lock
-      const checkQuery = `
-        SELECT f.id, f.status, f.recipient, u.barangay_id AS resident_barangay_id
-        FROM public.feedbacks f
-        INNER JOIN public."user" u ON f.user_id = u.id
-        WHERE f.id = $1
-        FOR UPDATE
-      `;
-      const checkRes = await client.query(checkQuery, [id]);
-      
-      if (checkRes.rowCount === 0) {
-        await client.query('ROLLBACK');
-        return res.status(404).json({ success: false, error: "Feedback record not found." });
-      }
-
-      const ticket = checkRes.rows[0];
-
-      // Scoping enforcement
-      if (adminRole === "barangay_admin") {
-        if (!adminBarangayId || ticket.recipient !== "barangay" || ticket.resident_barangay_id !== parseInt(adminBarangayId, 10)) {
-          await client.query('ROLLBACK');
-          return res.status(403).json({ success: false, error: "Forbidden. Out-of-scope ticket." });
-        }
-      } else if (isMdrrmoOrSystem) {
-        if (ticket.recipient !== "mdrrmo") {
-          await client.query('ROLLBACK');
-          return res.status(403).json({ success: false, error: "Forbidden. Ticket is addressed to a Barangay department." });
-        }
-      } else {
-        await client.query('ROLLBACK');
-        return res.status(403).json({ success: false, error: "Forbidden. Insufficient permissions." });
-      }
-
-      if (ticket.status === 'Closed') {
-        await client.query('ROLLBACK');
-        return res.status(400).json({ success: false, error: "Ticket is already closed." });
-      }
-
-      const updateQuery = "UPDATE public.feedbacks SET status = 'Closed' WHERE id = $1 RETURNING *";
-      const { rows } = await client.query(updateQuery, [id]);
-
-      const insertQuery = "INSERT INTO public.feedback_messages (feedback_id, sender_type, sender_id, message) VALUES ($1, 'admin', $2, 'Ticket closed by admin.') RETURNING *";
-      await client.query(insertQuery, [id, adminId]);
-
-      await client.query('COMMIT');
-      res.json({ success: true, data: rows[0] });
-    } catch (err) {
-      await client.query('ROLLBACK');
-      throw err;
-    } finally {
-      client.release();
-    }
+    const updatedTicket = await feedbackService.closeFeedbackThread(adminContext, id);
+    res.json({ success: true, data: updatedTicket });
   } catch (err) {
-    res.status(500).json({ success: false, error: "Failed to close ticket." });
+    if (err.statusCode) {
+      return res.status(err.statusCode).json({ success: false, error: err.message });
+    }
+    res.status(500).json({ success: false, error: "Failed to close feedback thread." });
   }
 };
-

@@ -375,6 +375,30 @@ This document tracks identified technical debt, architectural decisions, missing
   - `WorkspaceOverview.jsx` (Streamlined coordinator down to ~190 lines)
 - **Verification:** Verified with production build `npm run build` (0 errors) and automated Puppeteer end-to-end browser test validating all 5 KPI cards, compliance ring, curriculum pagination, citizen table/inspector, real CSV export blob generation, and all 5 Quick Action triggers individually.
 
+### Resolved: Admin Routes & Analytical Controllers Backend Modularization (Wave 1)
+- **Location:** `server/routes/admin/adminRoutes.js`, `server/controllers/admin/mdrrmoOverviewController.js`, `server/controllers/admin/barangayController.js`
+- **Issue:** Monolithic 318-line `adminRoutes.js` and controllers embedded with heavy database queries.
+- **Resolution:**
+  - Decomposed `adminRoutes.js` into 4 dedicated Express sub-routers (`adminUserRoutes.js`, `adminSystemRoutes.js`, `adminMdrrmoRoutes.js`, `adminBarangayRoutes.js`).
+  - Extracted SQL analytical queries into `server/services/admin/MdrrmoOverviewService.js` and `server/services/admin/BarangayAdminService.js`.
+- **Verification:** Verified with 18-point HTTP test suite asserting 100% exact response JSON schemas, 200 OK statuses, 401 unauthenticated barriers, 403 RBAC barriers, and multi-tenant `barangay_id` jurisdiction isolation.
+
+---
+
+### Resolved: Backend Services & Utilities Modularization (Wave 2)
+- **Location:** `server/utils/emailTemplates.js`, `server/controllers/admin/activityLogController.js`, `server/controllers/admin/systemStatsController.js`, `server/controllers/admin/adminFeedbacks.js`, `server/controllers/users/feedbackController.js`
+- **Issue:** Several utility files and controllers contained bloated logic, direct database aggregation, and inline SQL, increasing maintainability overhead and blurring separation of concerns.
+- **Resolution:**
+  - **Email Templates Decomposition:** Modularized 247-line `server/utils/emailTemplates.js` into focused template modules under `server/utils/templates/` (`emailWrapper.js`, `resetPassword.js`, `verification.js`, `securityAlerts.js`, `otp.js`, `adminPasswordReset.js`, `recertificationReminder.js`) while maintaining 100% backward-compatible function signatures and export contracts.
+  - **Activity Log & Telemetry Extraction:** Extracted database operations into `server/services/admin/ActivityLogService.js` and `server/services/admin/SystemStatsService.js`. Preserved strict byte-for-byte CSV headers (`ID,User ID,User Name,Role,Date,Action`) and formatting escapes in audit log exports.
+  - **Feedback & Offline Sync Contract Service:** Extracted feedback communication logic into `server/services/feedback/FeedbackService.js`. Maintained exact JSON and HTTP status contracts for `POST /api/feedbacks` (201 Created), resident replies, and admin triage threads.
+- **Verification:** Verified with master 28-point automated test suite covering:
+  - 8 email template rendering evaluations.
+  - 18 backend endpoint and RBAC authorization boundary checks.
+  - Live offline-sync replay simulation matching `syncManager.js` dispatch queue.
+  - Full Vite production build compilation.
+  - Interactive Puppeteer browser E2E test suite across all admin workflows.
+
 ---
 
 ## 🟡 Open / Active Technical Debt & Optimization Items
