@@ -341,6 +341,28 @@ This document tracks identified technical debt, architectural decisions, missing
 
 ---
 
+### Resolved: Certificate Verification Modal Decomposition
+- **Location:** `client/src/components/ui/certificates/CertificateVerificationModal.jsx`
+- **Issue:** The verification modal previously accumulated 441 lines in a single file, mixing HTML5 camera scanner state, manual token parsing, error states, and credential preview cards into one monolith.
+- **Resolution:** Modularized into 4 single-responsibility sub-components under `client/src/components/ui/certificates/scanner/`:
+  - `CameraScannerView.jsx` (Html5Qrcode scanner lifecycle, viewport, and fallback controls)
+  - `ManualTokenForm.jsx` (Token/URL input and submit trigger)
+  - `VerificationResultCard.jsx` (Status banner, metadata grid, and verification badge)
+  - `VerificationErrorState.jsx` (Error explanation and retry actions)
+- **Verification:** Verified via automated Puppeteer test covering Camera tab mounting, Manual tab switching, invalid token 404 error rendering, and live database certificate token verification preview.
+
+---
+
+### Resolved: Barangay Certifications & Resident Registry View Decomposition
+- **Location:** `client/src/pages/admin/barangay/certifications/BarangayCertifications.jsx`, `client/src/pages/admin/barangay/registry/ResidentRegistry.jsx`
+- **Issue:** Administrative views exceeded 400 and 340 lines, mixing KPI summaries, complex debounced search/dropdown filter bars, data tables, pagination, and dropdown action modals.
+- **Resolution:** Decomposed into clean sub-components in domain-specific folders:
+  - `certifications/components/`: `CertificationsKpiRow.jsx`, `CertificationsFilterBar.jsx`, `CertificationsTable.jsx`
+  - `registry/components/`: `ResidentRegistryFilterBar.jsx`, `ResidentRegistryTable.jsx`
+- **Verification:** Verified with production build `npm run build` (0 errors) and automated Puppeteer test covering search input debouncing, reset filters, action dropdown menus, and archive confirmation modals.
+
+---
+
 ## 🟡 Open / Active Technical Debt & Optimization Items
 
 ### 1. Server-Side Pagination & Cursor Querying for High-Scale Endpoints

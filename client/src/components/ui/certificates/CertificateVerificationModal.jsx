@@ -3,17 +3,16 @@ import { Html5Qrcode } from "html5-qrcode";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   Cancel01Icon,
-  CheckmarkBadge01Icon,
-  Alert02Icon,
   QrCodeIcon,
   Search01Icon,
-  RefreshIcon,
   Camera01Icon,
-  ViewOffIcon,
 } from "@hugeicons/core-free-icons";
 import apiClient from "../../../lib/apiClient";
 import Spinner from "../Spinner";
-import CertificateLifecycleBadge from "./CertificateLifecycleBadge";
+import CameraScannerView from "./scanner/CameraScannerView";
+import ManualTokenForm from "./scanner/ManualTokenForm";
+import VerificationResultCard from "./scanner/VerificationResultCard";
+import VerificationErrorState from "./scanner/VerificationErrorState";
 
 export default function CertificateVerificationModal({ isOpen, onClose }) {
   const [activeTab, setActiveTab] = useState("camera"); // 'camera' | 'manual'
@@ -95,7 +94,6 @@ export default function CertificateVerificationModal({ isOpen, onClose }) {
 
     setCameraError(null);
     try {
-      // Ensure element exists
       const qrElement = document.getElementById("qr-reader-viewport");
       if (!qrElement) return;
 
@@ -111,12 +109,9 @@ export default function CertificateVerificationModal({ isOpen, onClose }) {
           aspectRatio: 1.0,
         },
         (decodedText) => {
-          // Success callback
           verifyToken(decodedText);
         },
-        () => {
-          // Ignore parse errors while scanning
-        }
+        () => {}
       );
       setScannerStarted(true);
     } catch (err) {
@@ -162,7 +157,6 @@ export default function CertificateVerificationModal({ isOpen, onClose }) {
   // Lifecycle effects
   useEffect(() => {
     if (isOpen && activeTab === "camera" && !certData && !isVerifying) {
-      // Small timeout to allow DOM node render
       const timer = setTimeout(() => {
         startScanner();
       }, 200);
@@ -261,177 +255,37 @@ export default function CertificateVerificationModal({ isOpen, onClose }) {
 
           {/* Tab 1: Camera Scanner */}
           {!isVerifying && !certData && !verifyError && activeTab === "camera" && (
-            <div className="flex flex-col items-center">
-              <div className="relative w-full max-w-[280px] aspect-square rounded-2xl overflow-hidden bg-black border-2 border-gray-200 shadow-inner flex items-center justify-center">
-                <div id="qr-reader-viewport" className="w-full h-full" />
-                {!scannerStarted && !cameraError && (
-                  <div className="absolute inset-0 flex flex-col items-center justify-center text-white bg-gray-900/80 p-4 text-center space-y-2">
-                    <Spinner className="w-6 h-6 text-white" />
-                    <p className="text-xs">Initializing camera feed...</p>
-                  </div>
-                )}
-                {cameraError && (
-                  <div className="absolute inset-0 flex flex-col items-center justify-center text-white bg-gray-900 p-4 text-center space-y-2">
-                    <HugeiconsIcon icon={ViewOffIcon} className="w-8 h-8 text-red-400" />
-                    <p className="text-xs text-red-300">{cameraError}</p>
-                    <button
-                      onClick={() => handleTabChange("manual")}
-                      className="mt-2 px-3 py-1.5 bg-white/20 hover:bg-white/30 text-white rounded-lg text-xs font-semibold"
-                    >
-                      Use Manual Input
-                    </button>
-                  </div>
-                )}
-              </div>
-              <p className="text-xs text-gray-500 mt-3 text-center">
-                Point camera directly at the certificate QR code
-              </p>
-            </div>
+            <CameraScannerView
+              scannerStarted={scannerStarted}
+              cameraError={cameraError}
+              onSwitchToManual={() => handleTabChange("manual")}
+            />
           )}
 
           {/* Tab 2: Manual Token Input */}
           {!isVerifying && !certData && !verifyError && activeTab === "manual" && (
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                if (tokenInput.trim()) {
-                  verifyToken(tokenInput);
-                }
-              }}
-              className="space-y-4"
-            >
-              <div>
-                <label htmlFor="token-input" className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">
-                  Verification Token or URL
-                </label>
-                <div className="relative">
-                  <input
-                    id="token-input"
-                    type="text"
-                    value={tokenInput}
-                    onChange={(e) => setTokenInput(e.target.value)}
-                    placeholder="e.g. 123e4567-e89b-12d3-a456-426614174000"
-                    className="w-full rounded-xl border border-gray-300 px-4 py-3 text-sm text-gray-900 font-mono focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none"
-                    required
-                    autoFocus
-                  />
-                </div>
-                <p className="text-xs text-gray-400 mt-1.5">
-                  Paste the 36-character UUID token or the full QR verification URL.
-                </p>
-              </div>
-
-              <button
-                type="submit"
-                className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl transition shadow-sm cursor-pointer"
-              >
-                <HugeiconsIcon icon={CheckmarkBadge01Icon} className="w-4 h-4" />
-                <span>Verify Token</span>
-              </button>
-            </form>
+            <ManualTokenForm
+              tokenInput={tokenInput}
+              setTokenInput={setTokenInput}
+              onSubmit={verifyToken}
+            />
           )}
 
           {/* Verification Result Card */}
           {!isVerifying && certData && (
-            <div className="space-y-4 animate-in fade-in zoom-in-95 duration-200">
-              <div className={`p-4 rounded-xl border flex items-center justify-between ${
-                certData.status === "active"
-                  ? "bg-emerald-50/80 border-emerald-200 text-emerald-900"
-                  : certData.status === "expiring_soon"
-                  ? "bg-amber-50/80 border-amber-200 text-amber-900"
-                  : certData.status === "expired"
-                  ? "bg-red-50/80 border-red-200 text-red-900"
-                  : "bg-gray-100 border-gray-200 text-gray-800"
-              }`}>
-                <div className="flex items-center gap-3">
-                  <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${
-                    certData.status === "active" ? "bg-emerald-500 text-white" :
-                    certData.status === "expiring_soon" ? "bg-amber-500 text-white" :
-                    certData.status === "expired" ? "bg-red-500 text-white" : "bg-gray-500 text-white"
-                  }`}>
-                    <HugeiconsIcon icon={certData.status === "active" ? CheckmarkBadge01Icon : Alert02Icon} className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-bold capitalize">
-                      {certData.status === "active" ? "Valid & Active Credential" :
-                       certData.status === "expiring_soon" ? "Expiring Soon" :
-                       certData.status === "expired" ? "Expired Certificate" : "Revoked Certificate"}
-                    </h3>
-                    <p className="text-xs opacity-80">
-                      Token: <span className="font-mono">{activeToken.slice(0, 8)}...{activeToken.slice(-4)}</span>
-                    </p>
-                  </div>
-                </div>
-                <CertificateLifecycleBadge status={certData.status} />
-              </div>
-
-              {/* Certificate Details */}
-              <div className="bg-gray-50 rounded-xl p-4 border border-gray-200/80 space-y-3">
-                <div className="grid grid-cols-2 gap-3 text-xs">
-                  <div>
-                    <span className="text-gray-400 font-medium block">Learner Name</span>
-                    <span className="text-gray-900 font-bold text-sm block mt-0.5">{certData.learner_name}</span>
-                  </div>
-                  <div>
-                    <span className="text-gray-400 font-medium block">Module Completed</span>
-                    <span className="text-gray-900 font-bold text-sm block mt-0.5">{certData.module_title}</span>
-                  </div>
-                  <div>
-                    <span className="text-gray-400 font-medium block">Completion Date</span>
-                    <span className="text-gray-700 font-semibold block mt-0.5">
-                      {certData.completion_date ? new Date(certData.completion_date).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" }) : "N/A"}
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-gray-400 font-medium block">Expiration Date</span>
-                    <span className="text-gray-700 font-semibold block mt-0.5">
-                      {certData.expires_at ? new Date(certData.expires_at).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" }) : "N/A"}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  onClick={handleScanAnother}
-                  className="flex-1 flex items-center justify-center gap-2 py-2.5 px-4 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl transition shadow-sm cursor-pointer text-xs"
-                >
-                  <HugeiconsIcon icon={RefreshIcon} className="w-4 h-4" />
-                  <span>Verify Another</span>
-                </button>
-              </div>
-            </div>
+            <VerificationResultCard
+              certData={certData}
+              activeToken={activeToken}
+              onVerifyAnother={handleScanAnother}
+            />
           )}
 
           {/* Verification Error State */}
           {!isVerifying && verifyError && (
-            <div className="text-center py-6 px-4 bg-red-50 rounded-2xl border border-red-200 space-y-3 animate-in fade-in zoom-in-95 duration-200">
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-100 text-red-600 mx-auto">
-                <HugeiconsIcon icon={Alert02Icon} className="w-6 h-6" />
-              </div>
-              <div>
-                <h3 className="text-sm font-bold text-red-900">
-                  {verifyError === "NOT_FOUND" ? "Certificate Not Found" :
-                   verifyError === "RATE_LIMIT" ? "Rate Limit Exceeded" : "Verification Failed"}
-                </h3>
-                <p className="text-xs text-red-600 mt-1 max-w-xs mx-auto leading-relaxed">
-                  {verifyError === "NOT_FOUND"
-                    ? "No valid certification matches this token. It may have been entered incorrectly or never issued."
-                    : verifyError === "RATE_LIMIT"
-                    ? "Too many requests. Please wait a moment before trying again."
-                    : "Unable to complete verification at this time. Please check network connection."}
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={handleScanAnother}
-                className="mt-2 inline-flex items-center gap-1.5 px-4 py-2 bg-white border border-red-300 text-red-700 hover:bg-red-50 font-bold rounded-xl text-xs transition cursor-pointer shadow-sm"
-              >
-                <HugeiconsIcon icon={RefreshIcon} className="w-3.5 h-3.5" />
-                <span>Try Another Token</span>
-              </button>
-            </div>
+            <VerificationErrorState
+              verifyError={verifyError}
+              onTryAnother={handleScanAnother}
+            />
           )}
         </div>
       </div>
