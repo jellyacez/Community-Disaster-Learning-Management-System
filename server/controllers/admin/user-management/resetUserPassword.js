@@ -4,6 +4,8 @@ const { transporter } = require("../../../utils/mailer");
 const { getAdminPasswordResetEmail } = require("../../../utils/emailTemplates");
 const { getOrgSettings } = require("../../../utils/settings");
 const { generateSecurePassword } = require("../../../utils/passwordGenerator");
+const { UNSCOPED_ACCESS_ROLES } = require("../../../config/permissions");
+const { logActivity, logError } = require("../../../utils/logger");
 
 // @desc    Resets a user's password using the better-auth admin API (auto-generates if none provided)
 // @access  Private (admin only)
@@ -25,14 +27,29 @@ exports.resetUserPassword = async (req, res) => {
       .json({ success: false, message: "Password does not meet complexity requirements." });
   }
 
+  const adminContext = req.user;
+  if (!adminContext || !adminContext.role) {
+    return res.status(401).json({ success: false, message: "Unauthorized." });
+  }
+
   try {
-    // 1. Get user details to send the email
-    const userResult = await pool.query(
-      'SELECT name, email FROM "user" WHERE id = $1',
-      [id],
-    );
+    // 1. Get user details to send the email with tenant scoping
+    let userQuery = 'SELECT name, email, barangay_id, role FROM "user" WHERE id = $1';
+    let userValues = [id];
+
+    if (adminContext.role === 'barangay_admin') {
+      if (!adminContext.barangay_id) {
+        throw new Error("SECURITY_FAULT: barangay_admin context missing barangay identifier for scoping.");
+      }
+      userQuery += ' AND barangay_id = $2';
+      userValues.push(adminContext.barangay_id);
+    } else if (!UNSCOPED_ACCESS_ROLES.includes(adminContext.role)) {
+      throw new Error(`SECURITY_FAULT: Unauthorized role '${adminContext.role}' attempted to reset user passwords.`);
+    }
+
+    const userResult = await pool.query(userQuery, userValues);
     if (userResult.rows.length === 0) {
-      return res.status(404).json({ success: false, message: "User not found." });
+      return res.status(404).json({ success: false, message: "User not found or out of scope." });
     }
     const user = userResult.rows[0];
 
@@ -55,6 +72,9 @@ exports.resetUserPassword = async (req, res) => {
         });
     }
 
+    // Revoke existing sessions on forced password reset
+    await pool.query('DELETE FROM "session" WHERE "userId" = $1', [id]);
+
     // 3. Email the user their new password (if auto-generated)
     if (isGenerated) {
       const { orgFooterText, supportEmail } = await getOrgSettings();
@@ -67,9 +87,10 @@ exports.resetUserPassword = async (req, res) => {
       await transporter.sendMail(mailOptions);
     }
 
-    require("../../../utils/logger").logActivity(
-      req.user.id,
-      `Reset password for user ${user.email} (Admin Initiated)`,
+    const scopeStr = adminContext.role === 'barangay_admin' ? `Barangay ${adminContext.barangay_id}` : 'Unscoped';
+    logActivity(
+      adminContext.id,
+      `Reset password for user ${user.email} (Admin Initiated) [Scope: ${scopeStr}]`,
     );
 
     res.json({
@@ -79,7 +100,15 @@ exports.resetUserPassword = async (req, res) => {
       // SECURITY: generatedPassword intentionally omitted — transmitted via email only.
     });
   } catch (err) {
-    console.error("Reset password error:", err);
+    if (err.message && err.message.startsWith('SECURITY_FAULT')) {
+      return res.status(403).json({ success: false, message: err.message });
+    }
+    logError('reset_password_failure', {
+      adminId: adminContext?.id,
+      targetId: id,
+      message: err.message,
+      stack: err.stack,
+    });
     res
       .status(500)
       .json({

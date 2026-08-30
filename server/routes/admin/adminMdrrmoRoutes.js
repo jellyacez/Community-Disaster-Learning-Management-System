@@ -163,15 +163,17 @@ router.put(
 
 router.get(
   "/mdrrmo/approvals",
-  requireRole(ADMIN_ROLES),
+  requireRole(["head_mdrrmo_admin"]),
   adminWriteLimiter,
+  requirePermission("approve_modules"),
   moduleController.getPendingModulesReview
 );
 
 router.put(
   "/mdrrmo/module/:id/review",
-  requireRole(ADMIN_ROLES),
+  requireRole(["head_mdrrmo_admin"]),
   adminWriteLimiter,
+  requirePermission("approve_modules"),
   moduleController.updateModuleStatus
 );
 

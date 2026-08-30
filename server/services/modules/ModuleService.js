@@ -267,10 +267,18 @@ class ModuleService {
         pointsMap[q.question_id] = q.points || 1;
     });
 
-    let score = 0;
+    // Deduplicate submitted answers by questionId (keeping the last submitted choice per question)
+    const answerMap = new Map();
     answers.forEach(ans => {
-        if (correctMap[ans.questionId] === ans.choiceId) {
-            score += pointsMap[ans.questionId] || 1;
+        if (ans && ans.questionId !== undefined) {
+            answerMap.set(ans.questionId, ans.choiceId);
+        }
+    });
+
+    let score = 0;
+    answerMap.forEach((choiceId, questionId) => {
+        if (correctMap[questionId] === choiceId) {
+            score += pointsMap[questionId] || 1;
         }
     });
 
