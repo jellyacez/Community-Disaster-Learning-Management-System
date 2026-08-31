@@ -401,6 +401,28 @@ This document tracks identified technical debt, architectural decisions, missing
 
 ---
 
+### Resolved: Service Worker Dead Background Sync & Legacy Database Removal
+- **Location:** `client/public/service-worker.js`
+- **Issue:** `service-worker.js` contained an orphaned `sync` event listener and legacy database functions (`replayWriteQueue`, `incrementRetryOrFail`, `markItemFailed`) targeting a non-existent indexedDB (`"BacolorLMSOfflineDB"` and `"writeQueue"`). All actual offline queueing runs on the main thread via Dexie `LMS_OfflineDB` and `syncManager.js`.
+- **Resolution:**
+  - Audited the entire client codebase (`0` external references found for `replayWriteQueue`, `incrementRetryOrFail`, `markItemFailed`, or `sync-write-queue`).
+  - Removed the `sync` event listener and the three dead helper functions from `client/public/service-worker.js`.
+  - Preserved valid PWA service worker lifecycle handlers (`install`, `activate`, `fetch` with navigation network-first, API caching, static asset stale-while-revalidate, and offline video placeholder fallbacks).
+- **Verification:** Verified via clean Vite build (`npm run build`, 0 errors) and automated Puppeteer browser tests confirming SW registration, activation, CacheStorage population (`bacolor-lms-cache-v1`), dynamic API caching on first visit, and offline video SVG placeholder delivery.
+
+---
+
+### Resolved: Offline Sync Session-Hydration Gating & Bounded 401 Auth Retry
+- **Location:** `client/src/hooks/useNetworkSync.js`, `client/src/lib/LocalSave/syncManager.js`
+- **Issue:** `useNetworkSync.js` fired `processOfflineQueue()` immediately on mount before Better-Auth session hydration completed. When `syncManager.js` received an HTTP 401, it treated 401 as a hard terminal error (`status: 'failed'`, `next_retry_at: null`), permanently abandoning queued offline writes without retrying.
+- **Resolution:**
+  - **Session-Hydration Gating (`useNetworkSync.js`):** Integrated `authClient.useSession()` to gate the mount-time sync trigger until session hydration completes (`!isPending && session?.user`).
+  - **Bounded 401 Auth Retry (`syncManager.js`):** Reclassified HTTP 401 as a transient, retryable error within a dedicated budget (`MAX_AUTH_RETRY_COUNT = 3`). Transient 401s now retry with full-jitter exponential backoff before transitioning to terminal `status: 'failed'` (`error_type: 'auth_expired'`), preventing both infinite retry loops and data loss during authentication races.
+  - **Dexie DB Audit:** Inspected dev browser `sync_queue` table and confirmed 0 orphaned/lost writes.
+- **Verification:** Verified via Puppeteer tests confirming (1) transient 401 session races safely retry and dequeue on subsequent reconnect, and (2) genuinely logged-out/expired sessions terminate safely after exactly 3 attempts without looping.
+
+---
+
 ## 🟡 Open / Active Technical Debt & Optimization Items
 
 ### 1. Server-Side Pagination & Cursor Querying for High-Scale Endpoints
@@ -487,25 +509,7 @@ This document tracks identified technical debt, architectural decisions, missing
 
 ---
 
-### 9. Dead Code Removal: Service Worker Background Sync & Legacy DB (`service-worker.js`)
-- **Location:** `client/public/service-worker.js:L145-L244`
-- **Description:** `service-worker.js` defines a `sync` event listener and `replayWriteQueue()` function targeting a stale database (`"BacolorLMSOfflineDB"` and `"writeQueue"`).
-- **Architectural Reality:** The client does not register `sync` tags (`registration.sync.register`), and all real offline queueing/sync execution runs on the React thread via Dexie `LMS_OfflineDB` / `syncManager.js`.
-- **Recommended Action:**
-  - Safely delete the orphaned `replayWriteQueue()`, `incrementRetryOrFail()`, and `markItemFailed()` blocks and the `sync` event listener from `service-worker.js`.
-
----
-
-### 10. Edge Case: Offline Queue Replay When Already Online on Direct App Reopen (`useNetworkSync.js`)
-- **Location:** `client/src/hooks/useNetworkSync.js`
-- **Description:** `useNetworkSync.js` triggers `processOfflineQueue()` on mount and on the window `online` / `visibilitychange` events.
-- **Edge Case Gap:** If a user creates writes offline, closes the tab/browser, reconnects to internet while the browser is closed, and reopens the app directly in an already-online state, the initial mount trigger runs, but any transient network timing before auth cookies re-hydrate may benefit from explicit session-ready gating.
-- **Recommended Action:**
-  - Add explicit sync trigger upon verified authentication session hydration (`authClient.useSession()`) in addition to initial component mount.
-
----
-
-### 11. "Manage" / Edit Flow for Rejected Modules (`ModuleCard.jsx`)
+### 9. "Manage" / Edit Flow for Rejected Modules (`ModuleCard.jsx`)
 - **Location:** `client/src/components/ui/modules/ModuleCard.jsx:L236-L245`
 - **Description:** On administrative module cards, the primary action button (`Manage`) remains a stub displaying `title="Module management/editing is under development."` with a no-op click handler (`e.stopPropagation()`).
 - **Architectural Reality:** When an MDRRMO Head Admin rejects a module with feedback remarks, the original authoring admin sees the rejection notice on their dashboard, but clicking "Manage" cannot open the builder wizard in edit mode populated with existing steps and curriculum data.
@@ -515,7 +519,7 @@ This document tracks identified technical debt, architectural decisions, missing
 
 ---
 
-### 12. Strict Admin-Provisioning Hierarchy Enforcement
+### 10. Strict Admin-Provisioning Hierarchy Enforcement
 - **Location:** `client/src/pages/admin/system/users/components/provision/AdminRoleSelection.jsx`, `client/src/pages/admin/mdrrmo/user-management/components/RegisterPersonnelForm.jsx`, `server/controllers/admin/user-management/provisionAdmin.js`, `server/config/permissions.js`
 - **Description:**
   - **Frontend:** `RegisterPersonnelForm.jsx` (MDRRMO admin view) hardcodes `<option value="barangay_admin">`, while `AdminRoleSelection.jsx` (System admin view) displays `mdrrmo_admin` and `barangay_admin`.
@@ -527,7 +531,7 @@ This document tracks identified technical debt, architectural decisions, missing
 
 ---
 
-### 13. Local Announcements Priority System & Urgent Badging
+### 11. Local Announcements Priority System & Urgent Badging
 - **Location:** `client/src/pages/admin/barangay/workspace/announcementModal.jsx`, `client/src/components/ui/announcements/AnnouncementCard.jsx`, `client/src/pages/admin/mdrrmo/LiveAlerts.jsx`, `server/controllers/admin/barangayController.js`
 - **Description:** While basic localized announcement creation (`title`, `content`) exists for Barangay Admins, the priority categorization system (`Standard` vs `Urgent`), urgent advisory badge indicators on resident announcement cards, and MDRRMO/Municipal broadcast overrides remain unimplemented scaffolding (`LiveAlerts.jsx` displays *"The announcement broadcasting system is currently being developed."*).
 - **Architectural Impact:** Critical emergency advisories cannot be visually differentiated from standard municipal announcements on resident feeds.
@@ -537,7 +541,7 @@ This document tracks identified technical debt, architectural decisions, missing
 
 ---
 
-### 14. Progressive Web App (PWA) Manifest & Production Asset Precaching
+### 12. Progressive Web App (PWA) Manifest & Production Asset Precaching
 - **Location:** `client/public/manifest.json`, `client/index.html`, `client/public/service-worker.js`, `client/vite.config.js`
 - **Description:**
   - **Missing Web App Manifest:** No `manifest.json` or `manifest.webmanifest` exists in `client/public/`. The application lacks `theme_color`, `background_color`, `display: "standalone"`, `start_url`, and high-resolution PWA app icon definitions (`192x192`, `512x512`, `maskable`).
@@ -552,13 +556,13 @@ This document tracks identified technical debt, architectural decisions, missing
 
 ---
 
-### 15. Offline-Replay Duplicate Risk (Idempotency Keys)
+### 13. Offline-Replay Duplicate Risk (Idempotency Keys)
 - **Location:** `client/src/lib/LocalSave/syncManager.js`, `server/controllers/feedback/feedbackController.js`, `server/controllers/admin/barangayController.js`
 - **Description:**
   - **Context:** The application is an offline-first PWA with a background sync queue (`syncManager.js` replaying queued writes via Dexie on reconnect). Any `POST` endpoint without a unique constraint is vulnerable to duplicate creation if the server processes a request successfully but the HTTP 200 OK never reaches the client before the connection drops — the client re-queues and replays the same write on the next reconnect.
   - **Confirmed Vulnerable (verified against real code):**
     - `POST /api/feedbacks` (`feedbackController.js`) — raw `INSERT INTO feedbacks`, no deduplication key or unique constraint.
-    - Future: `POST /api/announcements` — same pattern, and this endpoint does not exist as a real feature yet (Item 13, deferred).
+    - Future: `POST /api/announcements` — same pattern, and this endpoint does not exist as a real feature yet (Item 11, deferred).
   - **Confirmed NOT Vulnerable (real UNIQUE constraints + ON CONFLICT verified):**
     - `user_step_progress` (`CONSTRAINT unique_user_step UNIQUE (user_id, step_id)` with `ON CONFLICT (user_id, step_id) DO NOTHING`).
     - `certificates` (`CONSTRAINT uq_certificates_user_module UNIQUE (user_id, module_id)` with `ON CONFLICT (user_id, module_id) DO NOTHING`).
@@ -566,7 +570,4 @@ This document tracks identified technical debt, architectural decisions, missing
 - **Recommended Action (not yet implemented):**
   - Client generates a UUID (`client_mutation_id`) when queuing a write in Dexie `sync_queue`, passed either via an `Idempotency-Key` request header or as a body/column value.
   - Server defines unique constraints on `client_mutation_id` and executes `ON CONFLICT (client_mutation_id) DO NOTHING` on all creation endpoints that interface with the offline sync queue.
-- **Strategic Decision:** Bundle this enhancement with the Local Announcements build (Item 13) rather than fixing feedback in isolation now — no sense adding the idempotency plumbing to a feature that does not exist yet, and current feedback exposure is lower-frequency (requires the specific processed-but-response-lost race condition) than the Publish-button double-click case, which was fixed separately and immediately.
-
-
-
+- **Strategic Decision:** Bundle this enhancement with the Local Announcements build (Item 11) rather than fixing feedback in isolation now — no sense adding the idempotency plumbing to a feature that does not exist yet, and current feedback exposure is lower-frequency (requires the specific processed-but-response-lost race condition) than the Publish-button double-click case, which was fixed separately and immediately.

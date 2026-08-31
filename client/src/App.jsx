@@ -3,9 +3,10 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 import ErrorBoundary from "./components/ErrorBoundary";
 import useNetworkSync from "./hooks/useNetworkSync";
-import { MODULE_VIEWER_ROLES } from "./constants/roles";
 const LandingPage = lazy(() => import("./pages/public/LandingPage"));
-const PrivacyPolicyPage = lazy(() => import("./pages/public/PrivacyPolicyPage"));
+const PrivacyPolicyPage = lazy(
+  () => import("./pages/public/PrivacyPolicyPage"),
+);
 const RegisterPage = lazy(() => import("./pages/auth/RegisterPage"));
 const SignInPage = lazy(() => import("./pages/auth/SignInPage"));
 const ForgotPasswordPage = lazy(
@@ -17,7 +18,6 @@ const VerifyEmailPromptPage = lazy(
 );
 const VerifyEmail = lazy(() => import("./pages/auth/VerifyEmail"));
 const AdminMfaSetupPage = lazy(() => import("./pages/auth/AdminMfaSetupPage"));
-
 
 const SystemAdminRoot = lazy(
   () => import("./pages/admin/system/SystemAdminRoot"),
@@ -41,17 +41,25 @@ const SystemSecurity = lazy(
   () => import("./pages/admin/system/security/SystemSecurity"),
 );
 const AdminFeedbackManager = lazy(
-  () => import("./pages/admin/feedback/AdminFeedbackManager")
+  () => import("./pages/admin/feedback/AdminFeedbackManager"),
 );
 const UserFeedback = lazy(() => import("./pages/user/feedback/UserFeedback"));
 const UserDashboard = lazy(() => import("./pages/user/dashboard/Dashboard"));
-const UserCertificates = lazy(() => import("./pages/user/certificates/Certificates"));
-const UserAnnouncements = lazy(() => import("./pages/user/announcements/Announcements"));
-const UserModuleCatalog = lazy(() => import("./pages/user/catalog/ModuleCatalog"));
+const UserCertificates = lazy(
+  () => import("./pages/user/certificates/Certificates"),
+);
+const UserAnnouncements = lazy(
+  () => import("./pages/user/announcements/Announcements"),
+);
+const UserModuleCatalog = lazy(
+  () => import("./pages/user/catalog/ModuleCatalog"),
+);
 const UserEnrolledModules = lazy(
   () => import("./pages/user/enrolled-modules/EnrolledModules"),
 );
-const ModuleViewer = lazy(() => import("./pages/user/module-viewer/ModuleViewer"));
+const ModuleViewer = lazy(
+  () => import("./pages/user/module-viewer/ModuleViewer"),
+);
 const UserProfile = lazy(() => import("./pages/user/profile/Profile"));
 const UserSettings = lazy(() => import("./pages/user/settings/Settings"));
 const NotFoundPage = lazy(() => import("./pages/public/NotFoundPage"));
@@ -101,7 +109,6 @@ const BarangayCertifications = lazy(
   () => import("./pages/admin/barangay/certifications/BarangayCertifications"),
 );
 
-
 const CertificatePDF = lazy(
   () => import("./pages/user/certificates/certTemplate"),
 );
@@ -112,14 +119,14 @@ import ScrollToTop from "./components/ScrollToTop";
 import GlobalBroadcastBanner from "./components/ui/GlobalBroadcastBanner";
 import AdminModuleApprovals from "./pages/admin/mdrrmo/module-management/AdminApprovalModule";
 
-const VerifyCertificate = lazy(() => import("./pages/public/VerifyCertificate"));
+const VerifyCertificate = lazy(
+  () => import("./pages/public/VerifyCertificate"),
+);
 
 export default function App() {
-     useNetworkSync();
+  useNetworkSync();
   return (
-
-
-  <ErrorBoundary>
+    <ErrorBoundary>
       <ScrollToTop />
       <GlobalBroadcastBanner />
       <Toaster
@@ -155,7 +162,10 @@ export default function App() {
       />
       <Suspense
         fallback={
-          <div className="min-h-screen flex items-center justify-center bg-white" aria-hidden="true">
+          <div
+            className="min-h-screen flex items-center justify-center bg-white"
+            aria-hidden="true"
+          >
             <div className="w-10 h-10 border-4 border-red-200 border-t-red-600 rounded-full animate-spin"></div>
           </div>
         }
@@ -183,7 +193,10 @@ export default function App() {
           </Route>
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/reset-password" element={<ResetPasswordPage />} />
-          <Route path="/verify-email-prompt" element={<VerifyEmailPromptPage />} />
+          <Route
+            path="/verify-email-prompt"
+            element={<VerifyEmailPromptPage />}
+          />
           <Route path="/verify-email" element={<VerifyEmail />} />
           <Route path="/maintenance" element={<MaintenancePage />} />
 
@@ -197,20 +210,41 @@ export default function App() {
               />
               <Route path="/user/modules" element={<UserModuleCatalog />} />
               <Route path="/user/enrolled" element={<UserEnrolledModules />} />
-              <Route path="/user/modules/:id/details" element={<ModuleDetailsPage />} />
+              <Route
+                path="/user/modules/:id/details"
+                element={<ModuleDetailsPage />}
+              />
               <Route path="/user/certificates" element={<UserCertificates />} />
               <Route path="/user/feedback" element={<UserFeedback />} />
               <Route path="/user/profile" element={<UserProfile />} />
               <Route path="/user/settings" element={<UserSettings />} />
-              <Route path="/user/certificates/view" element={<CertificatePDF />} />
-              <Route path="/user/certTemplate" element={<Navigate to="/user/certificates/view" replace />} />
+              <Route
+                path="/user/certificates/view"
+                element={<CertificatePDF />}
+              />
+              <Route
+                path="/user/certTemplate"
+                element={<Navigate to="/user/certificates/view" replace />}
+              />
             </Route>
           </Route>
 
-
-          <Route element={<ProtectedRoute allowedRoles={["system_admin", "head_mdrrmo_admin", "mdrrmo_admin", "barangay_admin"]} />}>
+          <Route
+            element={
+              <ProtectedRoute
+                allowedRoles={[
+                  "system_admin",
+                  "head_mdrrmo_admin",
+                  "mdrrmo_admin",
+                  "barangay_admin",
+                ]}
+              />
+            }
+          >
             <Route element={<AdminLayout />}>
-              <Route element={<ProtectedRoute allowedRoles={["system_admin"]} />}>
+              <Route
+                element={<ProtectedRoute allowedRoles={["system_admin"]} />}
+              >
                 <Route
                   path="/admin/dashboard"
                   element={<Navigate to="/admin/system/dashboard" replace />}
@@ -223,13 +257,20 @@ export default function App() {
                   <Route path="settings" element={<SystemSettings />} />
                   <Route path="health" element={<SystemHealth />} />
                   <Route path="security" element={<SystemSecurity />} />
-                  <Route path="modules/:id/details" element={<ModuleDetailsPage />} />
+                  <Route
+                    path="modules/:id/details"
+                    element={<ModuleDetailsPage />}
+                  />
                 </Route>
               </Route>
 
-
-
-              <Route element={<ProtectedRoute allowedRoles={["head_mdrrmo_admin", "mdrrmo_admin"]} />}>
+              <Route
+                element={
+                  <ProtectedRoute
+                    allowedRoles={["head_mdrrmo_admin", "mdrrmo_admin"]}
+                  />
+                }
+              >
                 <Route path="/admin/mdrrmo" element={<MdrrmoAdminDashboard />}>
                   <Route index element={<Navigate to="dashboard" replace />} />
                   <Route path="dashboard" element={<MdrrmoOverview />} />
@@ -241,16 +282,23 @@ export default function App() {
                     path="certifications"
                     element={<MdrrmoCertifications />}
                   />
-                  <Route
-                    path="logs"
-                    element={<MdrrmoActivityLog />}
-                  />
+                  <Route path="logs" element={<MdrrmoActivityLog />} />
                   <Route path="modules" element={<MdrrmoModuleManagement />} />
-                  <Route path="modules/:id/details" element={<ModuleDetailsPage />} />
+                  <Route
+                    path="modules/:id/details"
+                    element={<ModuleDetailsPage />}
+                  />
 
-                      <Route element={<ProtectedRoute allowedRoles={["head_mdrrmo_admin"]} />}>
-                        <Route path="approvals" element={<AdminModuleApprovals />} />
-                      </Route>
+                  <Route
+                    element={
+                      <ProtectedRoute allowedRoles={["head_mdrrmo_admin"]} />
+                    }
+                  >
+                    <Route
+                      path="approvals"
+                      element={<AdminModuleApprovals />}
+                    />
+                  </Route>
 
                   <Route path="users" element={<MdrrmoUserManagement />} />
                   <Route path="alerts" element={<LiveAlerts />} />
@@ -261,7 +309,6 @@ export default function App() {
                   />
                 </Route>
               </Route>
-
 
               <Route
                 element={<ProtectedRoute allowedRoles={["barangay_admin"]} />}
@@ -275,8 +322,14 @@ export default function App() {
                     path="dashboard"
                     element={<BarangayWorkspaceOverview />}
                   />
-                  <Route path="residents" element={<BarangayResidentRegistry />} />
-                  <Route path="certifications" element={<BarangayCertifications />} />
+                  <Route
+                    path="residents"
+                    element={<BarangayResidentRegistry />}
+                  />
+                  <Route
+                    path="certifications"
+                    element={<BarangayCertifications />}
+                  />
                   <Route path="logs" element={<BarangaySystemLogs />} />
                   <Route path="feedback" element={<AdminFeedbackManager />} />
                   <Route
