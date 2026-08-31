@@ -124,6 +124,162 @@ class ModuleService {
     }
   }
 
+  /**
+   * Updates an existing module, reconciling its levels, steps, questions, and choices.
+   * Runs inside a single database transaction.
+   */
+  async updateModuleTransaction(mod_id, { moduleName, moduleCategory, description, level, duration, video_url, image_url, levels, status, editor_id }) {
+    const safeDescription = cleanRichText(description);
+    const client = await pool.connect();
+
+    try {
+      await client.query("BEGIN");
+
+      // 1. Update Parent Module Record
+      const updateModuleRes = await client.query(
+        `UPDATE public.module_data 
+         SET modname = $1, modcat = $2, description = $3, level = $4, duration = $5, 
+             video_url = $6, image_url = $7, status = COALESCE($8, status),
+             rejection_reason = CASE WHEN $8 = 'pending_review' THEN NULL ELSE rejection_reason END
+         WHERE mod_id = $9
+         RETURNING mod_id`,
+        [moduleName, moduleCategory, safeDescription, level, duration, video_url, image_url, status || null, mod_id]
+      );
+
+      if (updateModuleRes.rowCount === 0) {
+        throw new Error(`Target module with ID ${mod_id} not found.`);
+      }
+
+      // 2. Clean out old structure (Cascading in transaction)
+      // Delete choices & questions tied to existing steps of this module
+      await client.query(
+        `DELETE FROM public.choices 
+         WHERE question_id IN (
+           SELECT question_id FROM public.questions 
+           WHERE mod_id = $1 OR step_id IN (
+             SELECT ms.step_id FROM public.module_steps ms 
+             JOIN public.levels l ON ms.level_id = l.level_id 
+             WHERE l.mod_id = $1
+           )
+         )`,
+        [mod_id]
+      );
+
+      await client.query(
+        `DELETE FROM public.questions 
+         WHERE mod_id = $1 OR step_id IN (
+           SELECT ms.step_id FROM public.module_steps ms 
+           JOIN public.levels l ON ms.level_id = l.level_id 
+           WHERE l.mod_id = $1
+         )`,
+        [mod_id]
+      );
+
+      // Delete module steps and levels
+      await client.query(
+        `DELETE FROM public.module_steps 
+         WHERE level_id IN (SELECT level_id FROM public.levels WHERE mod_id = $1)`,
+        [mod_id]
+      );
+
+      await client.query(
+        `DELETE FROM public.levels WHERE mod_id = $1`,
+        [mod_id]
+      );
+
+      // 3. Re-insert Levels, Steps, Questions, Choices
+      for (const lvl of levels) {
+        const finalAssessmentsCount = (lvl.steps || []).filter(s => s.is_final_assessment).length;
+        if (finalAssessmentsCount > 1) {
+          throw new Error(`Validation Error: Level "${lvl.levelTitle || lvl.levelOrder}" contains multiple Final Assessments. Only one final assessment is permitted per level.`);
+        }
+
+        const levelRes = await client.query(
+          `INSERT INTO public.levels (mod_id, level_order, level_title, level_description, passing_threshold, is_locked_by_default)
+           VALUES ($1, $2, $3, $4, $5, $6) RETURNING level_id`,
+          [mod_id, lvl.levelOrder, lvl.levelTitle, cleanRichText(lvl.levelDescription || ""), lvl.passing_threshold || 80, lvl.is_locked_by_default ?? true]
+        );
+        const level_id = levelRes.rows[0].level_id;
+
+        let lastLearningStepId = null;
+
+        for (const step of (lvl.steps || [])) {
+          let loopBackId = null;
+          if ((step.stepType === 'quiz' || step.stepType === 'situational') && lastLearningStepId) {
+            loopBackId = lastLearningStepId;
+          }
+
+          const stepRes = await client.query(
+            `INSERT INTO public.module_steps (level_id, step_order, step_title, step_content, media_url, step_type, is_final_assessment, loop_back_step_id)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING step_id`,
+            [level_id, step.stepOrder, step.stepTitle, step.stepContent, step.mediaUrl, step.stepType, step.is_final_assessment || false, loopBackId]
+          );
+          const step_id = stepRes.rows[0].step_id;
+
+          if (step.stepType !== 'quiz' && step.stepType !== 'situational') {
+            lastLearningStepId = step_id;
+          }
+
+          if (step.quizQuestions && step.quizQuestions.length > 0) {
+            const qTexts = [];
+            const qPoints = [];
+            const qImages = [];
+
+            for (const q of step.quizQuestions) {
+              qTexts.push(q.questionText);
+              qPoints.push(10);
+              qImages.push(q.imageURL || '');
+            }
+
+            const qRes = await client.query(
+              `INSERT INTO public.questions (mod_id, step_id, question_text, points, image_url)
+               SELECT $1, $2, t, p, i
+               FROM unnest($3::text[], $4::int[], $5::text[]) WITH ORDINALITY AS u(t, p, i, ord)
+               ORDER BY ord
+               RETURNING question_id`,
+              [mod_id, step_id, qTexts, qPoints, qImages]
+            );
+
+            const cQuestionIds = [];
+            const cTexts = [];
+            const cIsCorrects = [];
+            const cRationales = [];
+            const cSequenceOrders = [];
+
+            step.quizQuestions.forEach((q, idx) => {
+              const question_id = qRes.rows[idx].question_id;
+              for (const opt of (q.options || [])) {
+                cQuestionIds.push(question_id);
+                cTexts.push(opt.text);
+                cIsCorrects.push(opt.isCorrect);
+                cRationales.push(cleanRichText(opt.rationale || ""));
+                cSequenceOrders.push(opt.sequence_order || null);
+              }
+            });
+
+            if (cQuestionIds.length > 0) {
+              await client.query(
+                `INSERT INTO public.choices (question_id, choice_text, is_correct, rationale, sequence_order)
+                 SELECT q_id, c_text, c_corr, c_rat, c_seq
+                 FROM unnest($1::int[], $2::text[], $3::boolean[], $4::text[], $5::int[]) WITH ORDINALITY AS u(q_id, c_text, c_corr, c_rat, c_seq, ord)
+                 ORDER BY ord`,
+                [cQuestionIds, cTexts, cIsCorrects, cRationales, cSequenceOrders]
+              );
+            }
+          }
+        }
+      }
+
+      await client.query("COMMIT");
+      return mod_id;
+    } catch (error) {
+      await client.query("ROLLBACK");
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+
   async getAvailableModules(user_id) {
     const result = await pool.query(
      `SELECT
@@ -408,6 +564,114 @@ class ModuleService {
 
     return questions;
   }
+
+  async getModuleForEditing(mod_id) {
+    const modRes = await pool.query(
+      `SELECT mod_id, modname, modcat, description, level, duration, image_url, video_url, status, rejection_reason
+       FROM public.module_data
+       WHERE mod_id = $1`,
+      [mod_id]
+    );
+
+    if (modRes.rowCount === 0) return null;
+
+    const moduleData = modRes.rows[0];
+
+    const levelsRes = await pool.query(
+      `SELECT level_id, level_order, level_title, level_description, passing_threshold, is_locked_by_default
+       FROM public.levels
+       WHERE mod_id = $1
+       ORDER BY level_order ASC`,
+      [mod_id]
+    );
+
+    const stepsRes = await pool.query(
+      `SELECT ms.step_id, ms.level_id, ms.step_order, ms.step_title, ms.step_content, ms.media_url, ms.step_type, ms.is_final_assessment, ms.loop_back_step_id
+       FROM public.module_steps ms
+       JOIN public.levels l ON ms.level_id = l.level_id
+       WHERE l.mod_id = $1
+       ORDER BY ms.step_order ASC`,
+      [mod_id]
+    );
+
+    const stepIds = stepsRes.rows.map(s => s.step_id);
+
+    let allQuestions = [];
+    let allChoices = [];
+
+    if (stepIds.length > 0) {
+      const qRes = await pool.query(
+        `SELECT question_id, step_id, question_text, points, image_url
+         FROM public.questions
+         WHERE step_id = ANY($1::int[])
+         ORDER BY question_id ASC`,
+        [stepIds]
+      );
+      allQuestions = qRes.rows;
+
+      const questionIds = allQuestions.map(q => q.question_id);
+      if (questionIds.length > 0) {
+        const cRes = await pool.query(
+          `SELECT choice_id, question_id, choice_text, is_correct, rationale, sequence_order
+           FROM public.choices
+           WHERE question_id = ANY($1::int[])
+           ORDER BY choice_id ASC`,
+          [questionIds]
+        );
+        allChoices = cRes.rows;
+      }
+    }
+
+    const structuredLevels = levelsRes.rows.map(lvl => {
+      const lvlSteps = stepsRes.rows.filter(s => s.level_id === lvl.level_id).map(step => {
+        const stepQuestions = allQuestions
+          .filter(q => q.step_id === step.step_id)
+          .map(q => ({
+            id: q.question_id,
+            questionText: q.question_text,
+            imageURL: q.image_url,
+            points: q.points,
+            options: allChoices
+              .filter(c => c.question_id === q.question_id)
+              .map(c => ({
+                id: c.choice_id,
+                text: c.choice_text,
+                isCorrect: c.is_correct,
+                rationale: c.rationale,
+                sequence_order: c.sequence_order
+              }))
+          }));
+
+        return {
+          stepId: step.step_id,
+          stepOrder: step.step_order,
+          stepTitle: step.step_title,
+          stepContent: step.step_content,
+          mediaUrl: step.media_url,
+          stepType: step.step_type,
+          is_final_assessment: step.is_final_assessment,
+          loop_back_step_id: step.loop_back_step_id,
+          quizQuestions: stepQuestions
+        };
+      });
+
+      return {
+        levelId: lvl.level_id,
+        levelOrder: lvl.level_order,
+        levelTitle: lvl.level_title,
+        levelDescription: lvl.level_description,
+        passing_threshold: lvl.passing_threshold,
+        is_locked_by_default: lvl.is_locked_by_default,
+        steps: lvlSteps
+      };
+    });
+
+    return {
+      ...moduleData,
+      levels: structuredLevels
+    };
+  }
+  
   async getModuleSyllabusDetails(mod_id) {
     // 1. Fetch parent module details
     const moduleRes = await pool.query(

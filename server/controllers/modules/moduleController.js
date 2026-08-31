@@ -37,6 +37,65 @@ exports.createModule = async (req, res) => {
 };
 // --- End of createModule ---
 
+// @desc    Updates an existing module and reconciles all nested levels and steps in a transaction
+// @access  Private (admin only)
+exports.updateModule = async (req, res) => {
+  const { id: mod_id } = req.params;
+
+  const parsedModId = parseInt(mod_id, 10);
+  if (isNaN(parsedModId) || parsedModId <= 0) {
+    return res.status(400).json({
+      success: false,
+      message: "Invalid module ID format.",
+    });
+  }
+
+  const validation = validateModuleCreation(req.body);
+  if (!validation.isValid) {
+    return res.status(400).json({
+      success: false,
+      message: validation.error,
+    });
+  }
+
+  try {
+    const existing = await ModuleService.getModuleById(parsedModId);
+    if (!existing) {
+      return res.status(404).json({
+        success: false,
+        message: "Target training module not found.",
+      });
+    }
+
+    const payload = { ...req.body, editor_id: req.user.id };
+    await ModuleService.updateModuleTransaction(parsedModId, payload);
+
+    await logActivity(
+      req.user.id,
+      `Updated module ID ${parsedModId}: "${req.body.moduleName || existing.modname || parsedModId}"`
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: "Module updated successfully.",
+      data: { mod_id: parsedModId },
+    });
+  } catch (error) {
+    console.error("Transaction Error updating module structure:", error);
+    logError("update_module_transaction_error", {
+      message: error.message,
+      stack: error.stack,
+      moduleId: parsedModId,
+    });
+    return res.status(500).json({
+      success: false,
+      message:
+        "Transaction failed. Database changes rolled back. " + error.message,
+    });
+  }
+};
+// --- End of updateModule ---
+
 // @desc    Fetches all modules that the current user is not enrolled in
 // @access  Private
 exports.getAvailableModules = async (req, res) => {
@@ -343,5 +402,35 @@ exports.getPendingModulesReview = async (req, res) => {
   } catch (error) {
     logError('get_pending_modules_error', { message: error.message, stack: error.stack });
     res.status(500).json({ success: false, message: 'Failed to get pending modules.' });
+  }
+};
+
+
+// @desc    Get complete module structure for builder editing/hydration
+// @access  Private (admin only)
+exports.getModuleForEditing = async (req, res) => {
+  const { id: mod_id } = req.params;
+
+  const parsedModId = parseInt(mod_id, 10);
+  if (isNaN(parsedModId) || parsedModId <= 0) {
+    return res.status(400).json({ success: false, message: "Invalid module ID format." });
+  }
+
+  try {
+    const moduleData = await ModuleService.getModuleForEditing(parsedModId);
+    if (!moduleData) {
+      return res.status(404).json({ success: false, message: "Module not found." });
+    }
+
+    return res.status(200).json({
+      success: true,
+      data: moduleData,
+    });
+  } catch (error) {
+    console.error("Error fetching module for editing:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error fetching module details for editing.",
+    });
   }
 };

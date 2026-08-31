@@ -20,8 +20,23 @@ const requirePermission = require("../../middleware/requirePermission");
 // @access  Private (admin only)
 router.post("/", requireRole(ADMIN_ROLES), requirePermission('manage_modules'), moduleController.createModule);
 
+// @route   PUT /api/modules/:id
+// @desc    Update/Edit an existing training module
+// @access  Private (admin only with manage_modules permission)
+router.put(
+  "/:id",
+  requireRole(ADMIN_ROLES),
+  requirePermission("manage_modules"),
+  moduleController.updateModule
+);
 
-// @route   PUT /api/modules/:id/status
+// @route   GET /api/modules/:id/edit-details
+// @desc    Get complete module structure for builder wizard editing
+// @access  Private (admin only)
+router.get("/:id/edit-details", requireRole(ADMIN_ROLES), requirePermission('manage_modules'), moduleController.getModuleForEditing);
+
+
+// @route   PUT /api/modules/:id/status
 // @desc    Approve/Reject or change module status
 // @access  Private (head_mdrrmo_admin)
 router.put("/:id/status", requireRole(['head_mdrrmo_admin']), requirePermission('approve_modules'), moduleController.updateModuleStatus);
