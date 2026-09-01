@@ -176,10 +176,34 @@ export default function CertificateVerificationModal({ isOpen, onClose }) {
     };
   }, []);
 
+  const handleClose = () => {
+    stopScanner();
+    onClose();
+  };
+
+  // Keyboard shortcut: Escape to close
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape") {
+        handleClose();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-in fade-in duration-200">
+    <div 
+      onClick={(e) => {
+        if (e.target === e.currentTarget) {
+          handleClose();
+        }
+      }}
+      className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-in fade-in duration-200"
+    >
       <div
         role="dialog"
         aria-modal="true"
@@ -202,10 +226,7 @@ export default function CertificateVerificationModal({ isOpen, onClose }) {
             </div>
           </div>
           <button
-            onClick={() => {
-              stopScanner();
-              onClose();
-            }}
+            onClick={handleClose}
             className="rounded-xl p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-700 transition-colors focus:outline-none cursor-pointer"
             aria-label="Close modal"
           >

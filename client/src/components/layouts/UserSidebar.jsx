@@ -5,7 +5,7 @@ import {
   Home01Icon,
   Megaphone01Icon,
   BookOpen01Icon,
-  Certificate01Icon,
+  Book01Icon,
   UserIcon,
   Settings01Icon,
   Logout01Icon,
@@ -23,7 +23,7 @@ import { useQueryClient } from "@tanstack/react-query";
 const navItems = [
   {
     path: "/userDashboard",
-    label: "Homepage",
+    label: "Dashboard",
     icon: <HugeiconsIcon aria-hidden="true" icon={Home01Icon} className="w-5 h-5" />,
   },
   {
@@ -39,7 +39,7 @@ const navItems = [
   {
     path: "/user/enrolled",
     label: "Enrolled Modules",
-    icon: <HugeiconsIcon aria-hidden="true" icon={Certificate01Icon} className="w-5 h-5" />,
+    icon: <HugeiconsIcon aria-hidden="true" icon={Book01Icon} className="w-5 h-5" />,
   },
   {
     path: "/user/certificates",

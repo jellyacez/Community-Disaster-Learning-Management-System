@@ -1,4 +1,4 @@
-import { memo } from "react";
+import { memo, useEffect } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Alert01Icon, Cancel01Icon, CheckmarkBadge01Icon } from "@hugeicons/core-free-icons";
 
@@ -15,6 +15,18 @@ const ConfirmationModal = memo(function ConfirmationModal({
   type = "warning", // "warning" | "success" | "danger"
   isLoading = false
 }) {
+  // Keyboard shortcut: Escape to cancel
+  useEffect(() => {
+    if (!isOpen || isLoading) return;
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape") {
+        onClose();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, isLoading, onClose]);
+
   if (!isOpen) return null;
 
   const getIcon = () => {

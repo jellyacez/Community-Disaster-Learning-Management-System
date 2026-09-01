@@ -13,7 +13,7 @@ export default function UserNavbar({
   const navigate = useNavigate();
 
   const getPageTitle = (pathname) => {
-    if (pathname === '/userDashboard') return 'Homepage';
+    if (pathname === '/userDashboard') return 'Dashboard';
     if (pathname.startsWith('/user/announcements')) return 'Announcements';
     if (pathname.startsWith('/user/enrolled')) return 'Enrolled Modules';
     if (pathname.startsWith('/user/certificates/view')) return 'Certificate Viewer';
