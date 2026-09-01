@@ -423,6 +423,25 @@ This document tracks identified technical debt, architectural decisions, missing
 
 ---
 
+### Resolved: Module Builder Wizard Editing Mode & Rejection Revision Flow (`PUT /api/modules/:id` & `ModuleCard.jsx`)
+- **Location:** `server/routes/modules/moduleRoutes.js`, `server/controllers/modules/moduleController.js`, `server/services/modules/ModuleService.js`, `client/src/hooks/useModuleBuilder.js`, `client/src/hooks/module-builder/useModuleSubmit.js`, `client/src/components/ui/modules/ModuleCard.jsx`, `client/src/pages/admin/mdrrmo/module-management/ModuleManagement.jsx`
+- **Issue:** 
+  1. The module builder wizard only supported module creation (`POST /api/modules`). Existing learning paths, syllabus steps, and assessment questions could not be updated or re-hydrated for revision.
+  2. On administrative module cards, the primary action button (`Manage` / `Revise & Edit`) was an unmanaged stub with a no-op handler (`e.stopPropagation()`). When an MDRRMO Head Admin rejected a module with remarks, the authoring admin could not open the builder wizard in edit mode.
+- **Resolution:**
+  - **Backend API & Service:** Added `GET /api/modules/:id/edit-details` and `PUT /api/modules/:id` endpoints. Implemented `ModuleService.getModuleForEditing()` to fetch the hierarchical curriculum tree (levels $\to$ steps $\to$ quiz questions $\to$ choices) and `ModuleService.updateModuleTransaction()` to transactionally reconcile and update syllabus metadata, steps, and questions.
+  - **Frontend Hydration & Multi-Step Wizard:** Built `loadModuleForEdit(moduleId)` in `useModuleBuilder.js` to hydrate existing forms, levels, and sequence flows. Updated `useModuleSubmit.js` to execute `PUT /api/modules/:editingModuleId` when `editingModuleId` is present.
+  - **Card Action Flow:** Wired both "Manage" (published/draft modules) and "Revise & Edit" (rejected modules) in `ModuleCard.jsx` and `ModuleManagement.jsx` to `handleEditModule(mod.mod_id)`.
+- **Verification:** Verified end-to-end via automated Puppeteer Chromium test on a live running instance: opened module management, clicked "Manage" on a card, confirmed builder hydration, updated title/content, submitted changes via `PUT /api/modules/:id` (200 OK), reloaded the page, verified persistence in PostgreSQL and UI cards, and confirmed 0 console errors.
+
+### Resolved: Sequence Canvas Flow Configuration Stub (`SequenceCanvas.jsx`)
+- **Location:** `client/src/pages/admin/mdrrmo/module-management/builders/SequenceCanvas.jsx`
+- **Issue:** An unmanaged `<select>` dropdown (`Sequential` / `Optional`) was present in the builder canvas header, creating administrative confusion since the PostgreSQL schema and `ModuleProgressService.js` enforce strict linear progression.
+- **Resolution:** Replaced the unmanaged `<select>` with a static, non-interactive status badge reading `"Flow: Sequential"` with an emerald indicator, matching the actual linear-only backend progression model with no changes to underlying progression logic.
+- **Verification:** Verified via live Puppeteer browser screenshot capture showing the new badge rendered in the Sequence Canvas header, code audit confirming 0 leftover select references, and clean `npm run build` production compilation (0 errors).
+
+---
+
 ## 🟡 Open / Active Technical Debt & Optimization Items
 
 ### 1. Server-Side Pagination & Cursor Querying for High-Scale Endpoints
@@ -468,24 +487,7 @@ This document tracks identified technical debt, architectural decisions, missing
 
 ---
 
-### 5. Module Builder Wizard Editing Mode (`PUT /api/modules/:id`)
-- **Location:** `client/src/pages/admin/mdrrmo/module-management/builders/ModuleBuilderWizard.jsx`, `client/src/hooks/useModuleBuilder.js`
-- **Description:** The frontend wizard contains scaffolding for `editingModuleId`, but full module editing (hydrating existing level/step sequences, diffing questions, and updating published syllabi) is deferred on the product roadmap.
-- **Status:** Explicitly deferred pending product roadmap approval. Requires a dedicated `PUT /api/modules/:id` backend route and database transaction logic for step reconciliation.
-
----
-
-### 6. Sequence Canvas Flow Configuration Stub (`SequenceCanvas.jsx`)
-- **Location:** `client/src/pages/admin/mdrrmo/module-management/builders/SequenceCanvas.jsx:L76-L81`
-- **Description:** A "Set By" `<select>` element containing options `Sequential` and `Optional` is present in the builder canvas header. It is currently unmanaged (no `value` prop, no `onChange` handler, and not part of the module form payload).
-- **Architectural Reality:** The PostgreSQL schema enforces a strictly linear progression model (`UNIQUE (level_id, step_order)`). `ModuleProgressService.js` and `ModuleViewer.jsx` compute progress strictly linearly ($1 \to 2 \to 3$).
-- **Recommended Action:**
-  - If progression remains strictly linear: replace the `<select>` with a decorative status badge (`Flow: Sequential`) or remove it to prevent administrative confusion.
-  - If conditional branching is desired in the future: expand schema support (`is_optional`, `flow_type`) and update `ModuleProgressService`.
-
----
-
-### 7. Mock Data & Scaffolding Stubs in Resident Settings (`Settings.jsx`)
+### 5. Mock Data & Scaffolding Stubs in Resident Settings (`Settings.jsx`)
 - **Location:** `client/src/components/settings/LoginHistory.jsx`, `client/src/components/settings/LocalizationSettings.jsx`, `client/src/components/settings/HelpSupport.jsx`
 - **Description:**
   - `LoginHistory.jsx`: Renders a 100% hardcoded mock array of devices and IP addresses (`"iPhone 13"`, `"MacBook Pro"`, `"San Fernando, Pampanga"`, `"112.198.xxx.xx"`) with an unhandled "View Full History" button.
@@ -498,7 +500,7 @@ This document tracks identified technical debt, architectural decisions, missing
 
 ---
 
-### 8. TanStack Query v5 Syntax & Deprecation Inconsistencies
+### 6. TanStack Query v5 Syntax & Deprecation Inconsistencies
 - **Location:** `client/src/hooks/useModuleViewer.js`, `client/src/pages/user/dashboard/Dashboard.jsx`, `client/src/pages/user/hooks/usePaginatedAnnouncements.js`
 - **Description:**
   - `useModuleViewer.js` and `useFeedbackHistory.js` use legacy array syntax for invalidations: `queryClient.invalidateQueries(["userDashboard"])` instead of TanStack Query v5 object syntax `{ queryKey: ["userDashboard"] }`.
@@ -509,17 +511,7 @@ This document tracks identified technical debt, architectural decisions, missing
 
 ---
 
-### 9. "Manage" / Edit Flow for Rejected Modules (`ModuleCard.jsx`)
-- **Location:** `client/src/components/ui/modules/ModuleCard.jsx:L236-L245`
-- **Description:** On administrative module cards, the primary action button (`Manage`) remains a stub displaying `title="Module management/editing is under development."` with a no-op click handler (`e.stopPropagation()`).
-- **Architectural Reality:** When an MDRRMO Head Admin rejects a module with feedback remarks, the original authoring admin sees the rejection notice on their dashboard, but clicking "Manage" cannot open the builder wizard in edit mode populated with existing steps and curriculum data.
-- **Recommended Action:**
-  - Wire `Manage` button to trigger `handleOpenWizard(module)` or `navigate('/admin/mdrrmo/modules/builder?id=' + module.id)`.
-  - Implement edit mode hydration in `useModuleBuilder` / `ModuleBuilderWizard` to pre-populate form headers, levels, and sequence flows from `GET /api/modules/:id`.
-
----
-
-### 10. Strict Admin-Provisioning Hierarchy Enforcement
+### 7. Strict Admin-Provisioning Hierarchy Enforcement
 - **Location:** `client/src/pages/admin/system/users/components/provision/AdminRoleSelection.jsx`, `client/src/pages/admin/mdrrmo/user-management/components/RegisterPersonnelForm.jsx`, `server/controllers/admin/user-management/provisionAdmin.js`, `server/config/permissions.js`
 - **Description:**
   - **Frontend:** `RegisterPersonnelForm.jsx` (MDRRMO admin view) hardcodes `<option value="barangay_admin">`, while `AdminRoleSelection.jsx` (System admin view) displays `mdrrmo_admin` and `barangay_admin`.
@@ -531,7 +523,7 @@ This document tracks identified technical debt, architectural decisions, missing
 
 ---
 
-### 11. Local Announcements Priority System & Urgent Badging
+### 8. Local Announcements Priority System & Urgent Badging
 - **Location:** `client/src/pages/admin/barangay/workspace/announcementModal.jsx`, `client/src/components/ui/announcements/AnnouncementCard.jsx`, `client/src/pages/admin/mdrrmo/LiveAlerts.jsx`, `server/controllers/admin/barangayController.js`
 - **Description:** While basic localized announcement creation (`title`, `content`) exists for Barangay Admins, the priority categorization system (`Standard` vs `Urgent`), urgent advisory badge indicators on resident announcement cards, and MDRRMO/Municipal broadcast overrides remain unimplemented scaffolding (`LiveAlerts.jsx` displays *"The announcement broadcasting system is currently being developed."*).
 - **Architectural Impact:** Critical emergency advisories cannot be visually differentiated from standard municipal announcements on resident feeds.
@@ -541,7 +533,7 @@ This document tracks identified technical debt, architectural decisions, missing
 
 ---
 
-### 12. Progressive Web App (PWA) Manifest & Production Asset Precaching
+### 9. Progressive Web App (PWA) Manifest & Production Asset Precaching
 - **Location:** `client/public/manifest.json`, `client/index.html`, `client/public/service-worker.js`, `client/vite.config.js`
 - **Description:**
   - **Missing Web App Manifest:** No `manifest.json` or `manifest.webmanifest` exists in `client/public/`. The application lacks `theme_color`, `background_color`, `display: "standalone"`, `start_url`, and high-resolution PWA app icon definitions (`192x192`, `512x512`, `maskable`).
@@ -556,13 +548,13 @@ This document tracks identified technical debt, architectural decisions, missing
 
 ---
 
-### 13. Offline-Replay Duplicate Risk (Idempotency Keys)
+### 10. Offline-Replay Duplicate Risk (Idempotency Keys)
 - **Location:** `client/src/lib/LocalSave/syncManager.js`, `server/controllers/feedback/feedbackController.js`, `server/controllers/admin/barangayController.js`
 - **Description:**
   - **Context:** The application is an offline-first PWA with a background sync queue (`syncManager.js` replaying queued writes via Dexie on reconnect). Any `POST` endpoint without a unique constraint is vulnerable to duplicate creation if the server processes a request successfully but the HTTP 200 OK never reaches the client before the connection drops — the client re-queues and replays the same write on the next reconnect.
   - **Confirmed Vulnerable (verified against real code):**
     - `POST /api/feedbacks` (`feedbackController.js`) — raw `INSERT INTO feedbacks`, no deduplication key or unique constraint.
-    - Future: `POST /api/announcements` — same pattern, and this endpoint does not exist as a real feature yet (Item 11, deferred).
+    - Future: `POST /api/announcements` — same pattern, and this endpoint does not exist as a real feature yet (Item 8, deferred).
   - **Confirmed NOT Vulnerable (real UNIQUE constraints + ON CONFLICT verified):**
     - `user_step_progress` (`CONSTRAINT unique_user_step UNIQUE (user_id, step_id)` with `ON CONFLICT (user_id, step_id) DO NOTHING`).
     - `certificates` (`CONSTRAINT uq_certificates_user_module UNIQUE (user_id, module_id)` with `ON CONFLICT (user_id, module_id) DO NOTHING`).
@@ -570,4 +562,4 @@ This document tracks identified technical debt, architectural decisions, missing
 - **Recommended Action (not yet implemented):**
   - Client generates a UUID (`client_mutation_id`) when queuing a write in Dexie `sync_queue`, passed either via an `Idempotency-Key` request header or as a body/column value.
   - Server defines unique constraints on `client_mutation_id` and executes `ON CONFLICT (client_mutation_id) DO NOTHING` on all creation endpoints that interface with the offline sync queue.
-- **Strategic Decision:** Bundle this enhancement with the Local Announcements build (Item 11) rather than fixing feedback in isolation now — no sense adding the idempotency plumbing to a feature that does not exist yet, and current feedback exposure is lower-frequency (requires the specific processed-but-response-lost race condition) than the Publish-button double-click case, which was fixed separately and immediately.
+- **Strategic Decision:** Bundle this enhancement with the Local Announcements build (Item 8) rather than fixing feedback in isolation now — no sense adding the idempotency plumbing to a feature that does not exist yet, and current feedback exposure is lower-frequency (requires the specific processed-but-response-lost race condition) than the Publish-button double-click case, which was fixed separately and immediately.

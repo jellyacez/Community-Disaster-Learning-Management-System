@@ -72,12 +72,9 @@ export default function SequenceCanvas({
           </p>
         </div>
         <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2 text-sm font-bold text-gray-600 bg-white px-4 py-2 rounded-xl shadow-sm border border-gray-100">
-            <span>Set By</span>
-            <select className="bg-gray-100 border-none rounded-lg px-3 py-1 text-gray-900 outline-none cursor-pointer">
-              <option>Sequential</option>
-              <option>Optional</option>
-            </select>
+          <div className="flex items-center gap-2 text-xs font-bold text-gray-600 bg-white px-3.5 py-2 rounded-xl shadow-sm border border-gray-100">
+            <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+            <span>Flow: Sequential</span>
           </div>
           {stagedFlows.length >= 2 && (
             <button 
