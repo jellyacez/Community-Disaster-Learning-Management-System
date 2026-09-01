@@ -6,6 +6,14 @@ import toast from "react-hot-toast";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
 import apiClient from "../../../lib/apiClient";
 
+const DEFAULT_BACOLOR_BARANGAYS = [
+  "Balas", "Cabalantian", "Cabambangan", "Cabetican", "Calibutbut",
+  "Concepcion", "Dolores", "Duat", "Macabacle", "Magliman",
+  "Maliwalu", "Mesalipit", "Paralayunan", "Potrero", "San Antonio",
+  "San Isidro", "San Vicente", "Santa Barbara", "Santa Ines",
+  "Talba", "Tinajero"
+];
+
 export default function OnboardingModal({ currentUser }) {
   const queryClient = useQueryClient();
   const [onboardingName, setOnboardingName] = useState(currentUser?.name || "");
@@ -14,14 +22,19 @@ export default function OnboardingModal({ currentUser }) {
   const [isSubmittingOnboarding, setIsSubmittingOnboarding] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
 
-  const { data: barangays = [], isLoading } = useQuery({
+  const { data: barangays = DEFAULT_BACOLOR_BARANGAYS, isLoading } = useQuery({
     queryKey: ["barangays"],
     queryFn: async () => {
       const res = await apiClient.get("/public/barangays");
       return res.data;
     },
-    select: (data) => data.map(b => b.name),
-    enabled: !isSuccess && currentUser && (!currentUser.name || !currentUser.barangay_id)
+    select: (data) => {
+      // Handles data whether returned as [{name: '...'}], ['...'], or wrapped in { data: [...] }
+      const list = Array.isArray(data) ? data : data?.data || data?.barangays || [];
+      if (!list.length) return DEFAULT_BACOLOR_BARANGAYS;
+      return list.map((b) => (typeof b === "string" ? b : b.name || b.barangay_name || b));
+    },
+    enabled: !isSuccess && !!currentUser && (!currentUser.name || !currentUser.barangay_id)
   });
 
   if (isSuccess || !currentUser || (currentUser.name && currentUser.barangay_id)) return null;
@@ -39,7 +52,10 @@ export default function OnboardingModal({ currentUser }) {
 
     setIsSubmittingOnboarding(true);
     try {
-      await apiClient.post('/users/onboarding', { name: onboardingName, barangay: onboardingBarangay });
+      await apiClient.post("/users/onboarding", {
+        name: onboardingName.trim(),
+        barangay: onboardingBarangay
+      });
 
       toast.success("Profile completed successfully!");
       setIsSuccess(true);
@@ -52,13 +68,12 @@ export default function OnboardingModal({ currentUser }) {
   };
 
   return (
-    <div className="fixed inset-0 z-100 flex items-center justify-center bg-gray-900/60 backdrop-blur-sm px-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/60 backdrop-blur-sm px-4">
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         className="bg-white rounded-3xl shadow-2xl p-8 max-w-md w-full relative border-t-[8px] border-red-600"
       >
-        
         <div className="h-16 w-16 bg-red-50 rounded-2xl flex items-center justify-center mb-6">
           <HugeiconsIcon aria-hidden="true" icon={CheckmarkBadge01Icon} className="w-8 h-8 text-red-600" />
         </div>
@@ -91,26 +106,32 @@ export default function OnboardingModal({ currentUser }) {
             <div className="relative">
               <button
                 type="button"
-                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                id="onboardingBarangay"
+                onClick={() => setIsDropdownOpen((prev) => !prev)}
                 className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-left focus:ring-2 focus:ring-red-500 outline-none transition flex items-center justify-between"
               >
-                <span className={onboardingBarangay ? "text-gray-900" : "text-gray-400"}>
+                <span className={onboardingBarangay ? "text-gray-900 font-medium" : "text-gray-400"}>
                   {onboardingBarangay || "Select your Barangay"}
                 </span>
-                <HugeiconsIcon icon={ArrowDown01Icon} className={`w-5 h-5 text-gray-400 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
+                <HugeiconsIcon
+                  icon={ArrowDown01Icon}
+                  className={`w-5 h-5 text-gray-400 transition-transform duration-200 ${isDropdownOpen ? "rotate-180" : ""}`}
+                />
               </button>
 
               <AnimatePresence>
                 {isDropdownOpen && (
                   <motion.div
-                    initial={{ opacity: 0, y: 10 }}
+                    initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: 10 }}
+                    exit={{ opacity: 0, y: -10 }}
                     transition={{ duration: 0.15 }}
-                    className="absolute bottom-full mb-2 z-50 w-full bg-white border border-gray-200 rounded-xl shadow-2xl overflow-hidden max-h-52 overflow-y-auto"
+                    className="absolute top-full mt-2 z-50 w-full bg-white border border-gray-200 rounded-xl shadow-2xl overflow-hidden max-h-56 overflow-y-auto"
                   >
                     {isLoading ? (
                       <div className="px-4 py-3 text-gray-500 text-sm">Loading barangays...</div>
+                    ) : barangays.length === 0 ? (
+                      <div className="px-4 py-3 text-gray-400 text-sm">No barangays found</div>
                     ) : (
                       barangays.map((brgy) => (
                         <button
@@ -120,7 +141,11 @@ export default function OnboardingModal({ currentUser }) {
                             setOnboardingBarangay(brgy);
                             setIsDropdownOpen(false);
                           }}
-                          className={`w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors ${onboardingBarangay === brgy ? 'bg-red-50 text-red-700 font-semibold' : 'text-gray-700'}`}
+                          className={`w-full text-left px-4 py-3 hover:bg-red-50 transition-colors text-sm ${
+                            onboardingBarangay === brgy
+                              ? "bg-red-50 text-red-700 font-semibold"
+                              : "text-gray-700"
+                          }`}
                         >
                           {brgy}
                         </button>
@@ -135,7 +160,7 @@ export default function OnboardingModal({ currentUser }) {
           <button
             type="submit"
             disabled={isSubmittingOnboarding}
-            className="w-full py-3 rounded-xl bg-red-600 text-white font-bold hover:bg-red-700 transition disabled:opacity-50"
+            className="w-full py-3 rounded-xl bg-red-600 text-white font-bold hover:bg-red-700 transition disabled:opacity-50 mt-2"
           >
             {isSubmittingOnboarding ? "Saving..." : "Complete Profile"}
           </button>

@@ -12,6 +12,7 @@ export default function ModuleGrid({
   currentPage,
   setCurrentPage,
   handleOpenWizard,
+  handleEditModule,
   setSearchQuery,
   setFilterCategory,
   setFilterLevel
@@ -75,6 +76,7 @@ export default function ModuleGrid({
             module={mod} 
             enrolled={false} 
             isAdminView={true}
+            onManageClick={() => handleEditModule(mod.id)}
             onPreviewClick={() => {}} 
           />
         ))}

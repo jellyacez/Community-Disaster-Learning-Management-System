@@ -33,7 +33,7 @@ export default function ModuleManagement() {
   });
 
   const { state, setters, actions } = useModuleBuilder();
-  const { triggerFlowSequencePreview } = actions;
+  const { triggerFlowSequencePreview, loadModuleForEdit, resetForm } = actions;
 
   const [isWizardOpen, setIsWizardOpen] = useState(false);
   const [showPreviewModal, setShowPreviewModal] = useState(false);
@@ -43,7 +43,7 @@ export default function ModuleManagement() {
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
   const [filterCategory, setFilterCategory] = useState("All");
   const [filterLevel, setFilterLevel] = useState("All");
-  const [filterStatus, setFilterStatus] = useState("All"); // All, Published, Drafts, Pending Review
+  const [filterStatus, setFilterStatus] = useState("All");
   const [sortOption, setSortOption] = useState("Needs revision first");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 6;
@@ -61,7 +61,6 @@ export default function ModuleManagement() {
 
       return matchesSearch && matchesCat && matchesLevel && matchesStatus;
     }).sort((a, b) => {
-      // Sort logic
       const aIsRejected = a.status === 'draft' && !!a.rejection_reason;
       const bIsRejected = b.status === 'draft' && !!b.rejection_reason;
 
@@ -70,7 +69,6 @@ export default function ModuleManagement() {
         if (!aIsRejected && bIsRejected) return 1;
       }
       
-      // Default secondary sort (e.g., ID or date if we had one; assuming larger ID is newer)
       return (b.id || 0) - (a.id || 0);
     });
   }, [rawModules, debouncedSearchQuery, filterCategory, filterLevel, filterStatus, sortOption]);
@@ -79,8 +77,16 @@ export default function ModuleManagement() {
   const paginatedModules = filteredModules.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   const handleOpenWizard = () => {
-    actions.resetForm();
+    resetForm();
     setIsWizardOpen(true);
+  };
+
+  const handleEditModule = async (moduleId) => {
+    resetForm();
+    setIsWizardOpen(true);
+    if (loadModuleForEdit) {
+      await loadModuleForEdit(moduleId);
+    }
   };
 
   return (
@@ -110,6 +116,7 @@ export default function ModuleManagement() {
           currentPage={currentPage}
           setCurrentPage={setCurrentPage}
           handleOpenWizard={handleOpenWizard}
+          handleEditModule={handleEditModule}
           setSearchQuery={setSearchQuery}
           setFilterCategory={setFilterCategory}
           setFilterLevel={setFilterLevel}
@@ -118,7 +125,10 @@ export default function ModuleManagement() {
 
       <ModuleBuilderWizard 
         isOpen={isWizardOpen}
-        onClose={() => setIsWizardOpen(false)}
+        onClose={() => {
+          setIsWizardOpen(false);
+          resetForm();
+        }}
         state={state}
         setters={setters}
         actions={actions}

@@ -22,6 +22,7 @@ const express = require("express");
 const helmet = require("helmet");
 const cors = require("cors");
 const hpp = require("hpp");
+const path = require("path");
 const sanitizeMiddleware = require("./middleware/sanitizeMiddleware");
 
 const { toNodeHandler } = require("better-auth/node");
@@ -42,7 +43,6 @@ if (process.env.NODE_ENV === "production") {
   app.set("trust proxy", 1);
 }
 
-const path = require("path");
 app.use(express.json({ limit: "500kb" }));
 app.use(
   "/uploads",
@@ -65,8 +65,8 @@ app.use(
         workerSrc: ["'self'", "blob:"],
         connectSrc: ["'self'"],
         styleSrc: ["'self'", "'unsafe-inline'"],
-        imgSrc: ["'self'", "data:", "https:"],
-        mediaSrc: ["'self'", "https:"], // Allow HTML5 <video> from AWS S3
+        imgSrc: ["'self'", "data:", "https:", "blob:"],
+        mediaSrc: ["'self'", "https:", "blob:"], // Allow HTML5 <video> from AWS S3 and blob: previews
         frameSrc: ["'self'"], // Removed youtube and vimeo
         frameAncestors: ["'none'"],
         objectSrc: ["'none'"],

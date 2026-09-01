@@ -26,6 +26,7 @@ const ModuleCard = memo(function ModuleCard({
   isAdminView = false,
   onPreviewClick,
   onEnrollSuccess,
+  onManageClick,
 }) {
 
   
@@ -72,6 +73,26 @@ const ModuleCard = memo(function ModuleCard({
     }
     
     navigate(`${basePath}/${module.id}/details`);
+  };
+
+const handleManageModule = (e) => {
+    if (e) {
+      e.stopPropagation();
+      e.preventDefault();
+    }
+    if (isPreview && onPreviewClick) return onPreviewClick();
+    if (isPreview)
+      return toast.error("Navigation is disabled in Live Preview Mode.");
+
+    if (onManageClick) {
+      return onManageClick(module.id || module.mod_id);
+    }
+
+    let builderPath = "/admin/mdrrmo/modules/builder";
+    if (userRole === "system_admin") {
+      builderPath = "/admin/system/modules/builder";
+    }
+    navigate(`${builderPath}?id=${module.id || module.mod_id}`);
   };
 
   const handleEnrollClick = (e) => {
@@ -234,14 +255,11 @@ const ModuleCard = memo(function ModuleCard({
           ) : isAdminView ? (
             <>
               <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  // No toast, just native browser title for non-obtrusive tooltip
-                }}
-                title="Module management/editing is under development."
-                className={`flex-[1.5] rounded-xl px-2 sm:px-4 py-2.5 text-xs sm:text-sm font-bold text-white transition flex items-center justify-center gap-1 sm:gap-2 truncate cursor-pointer ${isRejected ? 'bg-red-600 hover:bg-red-700' : 'bg-gray-900 hover:bg-black'}`}
+                onClick={handleManageModule}
+                  title={isRejected ? "Edit and resolve revision feedback" : "Manage & Edit Module"}
+                  className={`flex-[1.5] rounded-xl px-2 sm:px-4 py-2.5 text-xs sm:text-sm font-bold text-white transition flex items-center justify-center gap-1 sm:gap-2 truncate cursor-pointer ${isRejected ? 'bg-red-600 hover:bg-red-700' : 'bg-gray-900 hover:bg-black'}`}
               >
-                Manage
+              {isRejected ? "Revise & Edit" : "Manage"}
               </button>
               <button
                 onClick={handleViewDetails}

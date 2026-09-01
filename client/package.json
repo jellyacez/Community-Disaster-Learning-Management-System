@@ -26,6 +26,7 @@
     "dompurify": "^3.4.12",
     "framer-motion": "12.40.0",
     "html5-qrcode": "^2.3.8",
+    "qrcode": "^1.5.4",
     "qrcode.react": "4.2.0",
     "react": "19.2.6",
     "react-dom": "19.2.6",
