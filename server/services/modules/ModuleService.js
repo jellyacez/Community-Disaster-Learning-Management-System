@@ -310,7 +310,7 @@ class ModuleService {
 
   async getModuleById(mod_id) {
     const moduleCheck = await pool.query(
-      "SELECT mod_id, modname, status, author_id, rejection_reason FROM module_data WHERE mod_id = $1",
+      "SELECT mod_id, modname, status, author_id, rejection_reason, parent_mod_id FROM module_data WHERE mod_id = $1",
       [mod_id]
     );
     return moduleCheck.rowCount > 0 ? moduleCheck.rows[0] : null;
@@ -764,8 +764,9 @@ class ModuleService {
     const total = parseInt(countResult.rows[0].count, 10);
 
     const result = await pool.query(
-      `SELECT mod_id, modname, modcat, description, level, duration, image_url, moddateadd AS created_at, moddateremove AS updated_at, status, rejection_reason, author_id,
-       (SELECT COUNT(*) FROM public.module_steps ms JOIN public.levels l ON ms.level_id = l.level_id WHERE l.mod_id = public.module_data.mod_id) AS step_count
+      `SELECT mod_id, modname, modcat, description, level, duration, image_url, moddateadd AS created_at, moddateremove AS updated_at, status, rejection_reason, author_id, parent_mod_id,
+       (SELECT COUNT(*) FROM public.module_steps ms JOIN public.levels l ON ms.level_id = l.level_id WHERE l.mod_id = public.module_data.mod_id) AS step_count,
+       (SELECT COUNT(*) FROM public.module_data d2 WHERE d2.parent_mod_id = public.module_data.mod_id AND d2.status IN ('draft', 'pending_review')) > 0 AS has_active_draft
        FROM public.module_data ${where}
        ORDER BY moddateadd DESC LIMIT $${idx} OFFSET $${idx + 1}`,
       [...values, limit, offset]

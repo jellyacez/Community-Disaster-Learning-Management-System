@@ -22,6 +22,8 @@ const fetchModules = async () => {
     image_url: mod.image_url || null,
     rejection_reason: mod.rejection_reason || null,
     author_id: mod.author_id || null,
+    parent_mod_id: mod.parent_mod_id || null,
+    has_active_draft: mod.has_active_draft || false,
   }));
 };
 
@@ -55,9 +57,11 @@ export default function ModuleManagement() {
       const matchesLevel = filterLevel === "All" || mod.level === filterLevel;
       
       let matchesStatus = true;
+      if (filterStatus === "All") matchesStatus = mod.status !== "archived";
       if (filterStatus === "Published") matchesStatus = mod.status === "published";
       if (filterStatus === "Drafts") matchesStatus = mod.status === "draft";
       if (filterStatus === "Pending Review") matchesStatus = mod.status === "pending_review";
+      if (filterStatus === "Archived") matchesStatus = mod.status === "archived";
 
       return matchesSearch && matchesCat && matchesLevel && matchesStatus;
     }).sort((a, b) => {

@@ -177,8 +177,13 @@ const handleManageModule = (e) => {
             )}
             {isAdminView && (
               <>
+                {module.parent_mod_id && (module.status === 'draft' || module.status === 'pending_review') && (
+                  <span className="rounded-full bg-blue-50 px-2.5 py-1 text-xs font-bold text-blue-700 border border-blue-200">
+                    Draft Revision
+                  </span>
+                )}
                 {module.status === "draft" && module.rejection_reason ? (
-                  <span className="flex items-center gap-1 rounded-full bg-red-100 px-2.5 py-1 text-xs font-bold text-red-700 border border-red-200 shrink-0">
+                  <span className="flex items-center gap-1 rounded-full bg-red-50 px-2.5 py-1 text-xs font-bold text-red-700 border border-red-200 shrink-0">
                     <HugeiconsIcon icon={Alert01Icon} className="w-3.5 h-3.5" />
                     Rejected - needs revision
                   </span>
@@ -193,6 +198,10 @@ const handleManageModule = (e) => {
                 ) : module.status === "published" ? (
                   <span className="flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-bold text-emerald-700 border border-emerald-100 shrink-0">
                     Published
+                  </span>
+                ) : module.status === "archived" ? (
+                  <span className="flex items-center gap-1 rounded-full bg-gray-100 px-2.5 py-1 text-xs font-bold text-gray-600 border border-gray-200 shrink-0">
+                    Archived
                   </span>
                 ) : null}
               </>
@@ -253,21 +262,31 @@ const handleManageModule = (e) => {
               {isCompleted ? "Review Module" : "Continue"}
             </button>
           ) : isAdminView ? (
-            <>
-              <button
-                onClick={handleManageModule}
-                  title={isRejected ? "Edit and resolve revision feedback" : "Manage & Edit Module"}
-                  className={`flex-[1.5] rounded-xl px-2 sm:px-4 py-2.5 text-xs sm:text-sm font-bold text-white transition flex items-center justify-center gap-1 sm:gap-2 truncate cursor-pointer ${isRejected ? 'bg-red-600 hover:bg-red-700' : 'bg-gray-900 hover:bg-black'}`}
-              >
-              {isRejected ? "Revise & Edit" : "Manage"}
-              </button>
+            module.status === "archived" ? (
               <button
                 onClick={handleViewDetails}
-                className="flex-1 rounded-xl border border-gray-200 px-2 sm:px-4 py-2.5 text-xs sm:text-sm font-bold text-gray-700 hover:bg-gray-50 transition cursor-pointer truncate"
+                className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-xs sm:text-sm font-bold text-gray-700 hover:bg-gray-50 transition cursor-pointer truncate"
               >
                 View Details
               </button>
-            </>
+            ) : (
+              <>
+                <button
+                  onClick={handleManageModule}
+                  disabled={module.has_active_draft}
+                  title={module.has_active_draft ? "A draft revision is in progress. Please manage the draft." : isRejected ? "Edit and resolve revision feedback" : "Manage & Edit Module"}
+                  className={`flex-[1.5] rounded-xl px-2 sm:px-4 py-2.5 text-xs sm:text-sm font-bold text-white transition flex items-center justify-center gap-1 sm:gap-2 truncate ${module.has_active_draft ? 'bg-gray-400 cursor-not-allowed opacity-70' : isRejected ? 'bg-red-600 hover:bg-red-700 cursor-pointer' : 'bg-gray-900 hover:bg-black cursor-pointer'}`}
+                >
+                  {module.has_active_draft ? "Revision in Progress" : isRejected ? "Revise & Edit" : "Manage"}
+                </button>
+                <button
+                  onClick={handleViewDetails}
+                  className="flex-1 rounded-xl border border-gray-200 px-2 sm:px-4 py-2.5 text-xs sm:text-sm font-bold text-gray-700 hover:bg-gray-50 transition cursor-pointer truncate"
+                >
+                  View Details
+                </button>
+              </>
+            )
           ) : (
             <>
               <button

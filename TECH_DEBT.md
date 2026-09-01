@@ -442,6 +442,49 @@ This document tracks identified technical debt, architectural decisions, missing
 
 ---
 
+### Resolved: Draft/Versioning Model & Progress Preservation for Published Module Edits (`moduleController.js`, `ModuleService.js`, `DashboardService.js`, `ModuleCard.jsx`)
+- **Location:** `server/controllers/modules/moduleController.js`, `server/services/modules/ModuleService.js`, `server/services/users/DashboardService.js`, `client/src/components/ui/modules/ModuleCard.jsx`, `client/src/pages/admin/mdrrmo/module-management/ModuleManagement.jsx`, `server/migrations/schema.sql`, PostgreSQL schema (`module_data`)
+- **Issue:** 
+  1. `updateModuleTransaction` executed a destructive delete-and-reinsert of all levels, steps, questions, and choices under new auto-generated IDs. Because `user_step_progress.step_id` has `ON DELETE CASCADE`, editing an already-published module permanently destroyed enrolled residents' step-completion histories, causing partial progress to reset to 0% and re-locking steps upon visiting `ModuleViewer`.
+  2. "Save as Draft & Exit" on a published module directly demoted the live module to `status: 'draft'`, immediately hiding the active course from resident catalogs.
+  3. Resident dashboard total module counts were double-counting in-flight pending drafts.
+- **Resolution:**
+  - **Draft/Versioning Model (Option 2):** When a `published` module is edited (via either "Submit Changes for Review" or "Save as Draft & Exit"), the backend clones the entire curriculum tree into a new `module_data` draft row (`status: 'draft'` or `'pending_review'`) with `parent_mod_id` referencing the original published module. The original published module and its step IDs remain untouched and fully live for all active learners.
+  - **Seamless Enrollee Completion & Auto-Archiving:** When an MDRRMO Head Admin approves the draft revision (`status = 'published'`), the original module is automatically transitioned to `status = 'archived'`. Residents already enrolled in the archived version stay on that version until completion with 100% progress integrity and receive their certificate upon finishing without regression.
+  - **Duplicate Draft Race Guard:** Added backend validation rejecting competing edit requests with `HTTP 409 Conflict` if an active draft or pending review revision already exists for the module.
+  - **Admin Card UI & Metric Parity:** Disabled the "Manage" button on published cards with an active draft revision (displaying `"Revision in Progress"`), badged the draft with `"Draft Revision"`, and updated `DashboardService.js` to strictly count `status = 'published'` modules to prevent draft double-counting.
+  - **Schema & Migration:** Added `parent_mod_id INTEGER REFERENCES public.module_data(mod_id) ON DELETE SET NULL` and updated the `valid_module_status` check constraint on `module_data` to support the `'archived'` lifecycle state.
+- **Verification:** Verified via comprehensive automated end-to-end test suite (`scratch/verify_versioning_full.js` and `scratch/test_save_as_draft_and_capture.js`):
+  1. Cloned draft created with parent link on edit; original stayed published and visible to residents.
+  2. Resident enrolled in old version retained 50% step progress, completed the final step after revision publication, and received official certificate.
+  3. Second admin blocked with HTTP 409 Conflict when attempting duplicate draft creation.
+  4. Resident dashboard metrics verified not double-counting pending drafts.
+  5. "Save as Draft & Exit" verified non-destructive with before/after database snapshot comparisons.
+  6. Admin UI screenshot verified showing disabled "Revision in Progress" button and "Draft Revision" badge.
+  7. Production build `npm run build` compiled with 0 errors.
+
+---
+
+### Resolved: Admin Training Modules Archived Filtering & Read-Only Protection (`DashboardHeader.jsx`, `ModuleManagement.jsx`, `ModuleCard.jsx`, `moduleController.js`)
+- **Location:** `client/src/pages/admin/mdrrmo/module-management/components/DashboardHeader.jsx`, `client/src/pages/admin/mdrrmo/module-management/ModuleManagement.jsx`, `client/src/components/ui/modules/ModuleCard.jsx`, `server/controllers/modules/moduleController.js`
+- **Issue:** 
+  1. With the introduction of `status = 'archived'` in the draft/versioning lifecycle, the admin "Status" filter dropdown in `DashboardHeader.jsx` was hardcoded to the old status list and lacked an "Archived" option.
+  2. "All Statuses" in `ModuleManagement.jsx` returned archived modules mixed in with active published/draft courses, cluttering the primary curriculum view.
+  3. `ModuleCard.jsx` had no badge for `status === 'archived'`, leaving superseded modules rendered with active "Manage" buttons. Clicking "Manage" and submitting changes on an archived module fell through `updateModule` without cloning, triggering destructive delete-and-reinsert on historical course records.
+- **Resolution:**
+  - **Status Filter Options:** Added `<option value="Archived">Archived</option>` to `DashboardHeader.jsx`.
+  - **Default View Cleanliness:** Configured `ModuleManagement.jsx` so `"All Statuses"` defaults to `mod.status !== 'archived'`, ensuring archived modules only appear when explicitly filtering by `Status: "Archived"`.
+  - **Archived Card Badge & Read-Only UI:** Added a gray `"Archived"` pill badge (`bg-gray-100 text-gray-600 border border-gray-200`) in `ModuleCard.jsx` and replaced the "Manage" button with a single full-width `"View Details"` button for archived modules.
+  - **Server-Side Mutation Guard:** Added an explicit guard in `moduleController.updateModule` rejecting direct `PUT /api/modules/:archivedId` requests with `HTTP 400 Bad Request` (`"Archived modules cannot be edited. They are preserved for historical compliance integrity."`).
+- **Verification:** Verified via live Puppeteer browser automation and API assertions:
+  1. Default view ("All Statuses") confirmed to exclude archived modules.
+  2. "Archived" filter selection confirmed to display archived modules with gray badge and "View Details" button only (no "Manage" button).
+  3. Direct `PUT` API mutation on archived module confirmed blocked with HTTP 400.
+  4. Database audit confirmed 1:1 parent-child lineage integrity.
+  5. `npm run build` compiled with 0 errors.
+
+---
+
 ## 🟡 Open / Active Technical Debt & Optimization Items
 
 ### 1. Server-Side Pagination & Cursor Querying for High-Scale Endpoints

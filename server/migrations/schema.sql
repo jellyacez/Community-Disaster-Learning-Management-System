@@ -809,8 +809,9 @@ CREATE TABLE public.module_data (
     status character varying(20) DEFAULT 'draft'::character varying,
     rejection_reason text,
     author_id text,
+    parent_mod_id integer,
     CONSTRAINT valid_modcat CHECK (((modcat)::text = ANY (ARRAY[('Flood'::character varying)::text, ('Earthquake'::character varying)::text, ('Fire'::character varying)::text, ('General'::character varying)::text]))),
-    CONSTRAINT valid_module_status CHECK (((status)::text = ANY (ARRAY[('draft'::character varying)::text, ('pending_review'::character varying)::text, ('published'::character varying)::text, ('rejected'::character varying)::text])))
+    CONSTRAINT valid_module_status CHECK (((status)::text = ANY (ARRAY[('draft'::character varying)::text, ('pending_review'::character varying)::text, ('published'::character varying)::text, ('rejected'::character varying)::text, ('archived'::character varying)::text])))
 );
 
 
@@ -1731,6 +1732,24 @@ CREATE INDEX IF NOT EXISTS idx_feedbacks_user_status_created ON public.feedbacks
 
 
 --
+-- Name: idx_certificates_revoked_at; Type: INDEX; Schema: public; Owner: postgres
+--
+CREATE INDEX IF NOT EXISTS idx_certificates_revoked_at ON public.certificates USING btree (revoked_at);
+
+
+--
+-- Name: idx_user_consent_version; Type: INDEX; Schema: public; Owner: postgres
+--
+CREATE INDEX IF NOT EXISTS idx_user_consent_version ON public."user" USING btree (consent_version);
+
+
+--
+-- Name: idx_certificates_recert_notified_at; Type: INDEX; Schema: public; Owner: postgres
+--
+CREATE INDEX IF NOT EXISTS idx_certificates_recert_notified_at ON public.certificates USING btree (recert_notified_at) WHERE recert_notified_at IS NULL;
+
+
+--
 -- TOC entry 5134 (class 2606 OID 42178)
 -- Name: account account_userId_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
@@ -1908,6 +1927,38 @@ ALTER TABLE ONLY public.user_notification
 
 ALTER TABLE ONLY public.module_data
     ADD CONSTRAINT module_data_author_id_fkey FOREIGN KEY (author_id) REFERENCES public."user"(id) ON DELETE SET NULL;
+
+
+--
+-- Name: module_data fk_parent_mod_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.module_data
+    ADD CONSTRAINT fk_parent_mod_id FOREIGN KEY (parent_mod_id) REFERENCES public.module_data(mod_id) ON DELETE SET NULL;
+
+
+--
+-- Name: certificates fk_certificates_revoked_by; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.certificates
+    ADD CONSTRAINT fk_certificates_revoked_by FOREIGN KEY (revoked_by) REFERENCES public."user"(id) ON DELETE SET NULL;
+
+
+--
+-- Name: module_activity fk_module_activity_mod_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.module_activity
+    ADD CONSTRAINT fk_module_activity_mod_id FOREIGN KEY (mod_id) REFERENCES public.module_data(mod_id) ON DELETE CASCADE;
+
+
+--
+-- Name: questions fk_questions_mod_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.questions
+    ADD CONSTRAINT fk_questions_mod_id FOREIGN KEY (mod_id) REFERENCES public.module_data(mod_id) ON DELETE CASCADE;
 
 
 --

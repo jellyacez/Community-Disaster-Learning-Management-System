@@ -12,13 +12,14 @@ class DashboardService {
     const userDetails = userQuery.rows[0];
 
     const modulesCountQuery = await pool.query(
-      "SELECT COUNT(*) FROM module_data",
+      "SELECT COUNT(*) FROM module_data WHERE status = 'published'",
     );
     const totalModules = parseInt(modulesCountQuery.rows[0].count, 10);
 
     const categoryCountsQuery = await pool.query(
       `SELECT LOWER(modcat) as category, COUNT(*)::int as total
        FROM module_data
+       WHERE status = 'published'
        GROUP BY LOWER(modcat)`
     );
     const categoryTotals = categoryCountsQuery.rows.reduce((acc, row) => {

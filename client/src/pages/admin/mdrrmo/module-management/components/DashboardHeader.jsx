@@ -117,6 +117,7 @@ export default function DashboardHeader({
             <option value="Published">Published</option>
             <option value="Drafts">Drafts</option>
             <option value="Pending Review">Pending Review</option>
+            <option value="Archived">Archived</option>
           </select>
         </div>
 

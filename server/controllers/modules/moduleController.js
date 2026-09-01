@@ -68,6 +68,47 @@ exports.updateModule = async (req, res) => {
     }
 
     const payload = { ...req.body, editor_id: req.user.id };
+
+    if (existing.status === 'archived') {
+      return res.status(400).json({
+        success: false,
+        message: "Archived modules cannot be edited. They are preserved for historical compliance integrity."
+      });
+    }
+
+    if (existing.status === 'published') {
+      const pool = require("../../config/db");
+      
+      const draftCheck = await pool.query(
+        "SELECT mod_id FROM module_data WHERE parent_mod_id = $1 AND status IN ('draft', 'pending_review') LIMIT 1",
+        [parsedModId]
+      );
+      if (draftCheck.rowCount > 0) {
+        return res.status(409).json({ 
+          success: false, 
+          message: "A draft revision already exists for this module. Please edit the existing draft." 
+        });
+      }
+
+      payload.author_id = req.user.id;
+      payload.status = req.body.status || 'pending_review';
+      
+      const new_mod_id = await ModuleService.createModuleTransaction(payload);
+      
+      await pool.query("UPDATE module_data SET parent_mod_id = $1 WHERE mod_id = $2", [parsedModId, new_mod_id]);
+
+      await logActivity(
+        req.user.id,
+        `Created draft revision (ID ${new_mod_id}) for published module ID ${parsedModId}`
+      );
+
+      return res.status(200).json({
+        success: true,
+        message: "Module cloned to draft successfully.",
+        data: { mod_id: new_mod_id, clonedId: new_mod_id },
+      });
+    }
+
     await ModuleService.updateModuleTransaction(parsedModId, payload);
 
     await logActivity(
@@ -361,6 +402,17 @@ exports.updateModuleStatus = async (req, res) => {
 
     const pool = require("../../config/db");
 
+    if (finalStatus === 'published' && current.parent_mod_id) {
+      await pool.query(
+        "UPDATE module_data SET status = 'archived' WHERE mod_id = $1",
+        [current.parent_mod_id]
+      );
+      await logActivity(
+        req.user.id,
+        `Archived original published module ID ${current.parent_mod_id} following approval of revision ID ${parsedModId}`
+      );
+    }
+
 
     // New: Notify the creator if it was approved or rejected
     if (current.author_id) {
@@ -390,6 +442,7 @@ exports.updateModuleStatus = async (req, res) => {
 
     res.json({ success: true, message: "Status updated successfully" });
   } catch (error) {
+    console.error("updateModuleStatus error:", error);
     logError("update_module_status_error", { message: error.message, stack: error.stack, moduleId: id });
     res.status(500).json({ success: false, message: "Failed to update module status." });
   }
