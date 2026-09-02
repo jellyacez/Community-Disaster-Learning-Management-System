@@ -1567,14 +1567,6 @@ CREATE INDEX idx_activity_log_user_date ON public.activity_log USING btree (user
 
 
 --
--- TOC entry 5050 (class 1259 OID 42165)
--- Name: idx_activity_log_user_id; Type: INDEX; Schema: public; Owner: postgres
---
-
-CREATE INDEX idx_activity_log_user_id ON public.activity_log USING btree (user_id);
-
-
---
 -- TOC entry 5133 (class 1259 OID 42336)
 -- Name: idx_feedback_messages_feedback_id_created_at; Type: INDEX; Schema: public; Owner: postgres
 --
@@ -1596,14 +1588,6 @@ CREATE INDEX idx_module_activity_mod ON public.module_activity USING btree (mod_
 --
 
 CREATE INDEX idx_module_activity_status ON public.module_activity USING btree (modstatus);
-
-
---
--- TOC entry 5081 (class 1259 OID 42168)
--- Name: idx_module_activity_user; Type: INDEX; Schema: public; Owner: postgres
---
-
-CREATE INDEX idx_module_activity_user ON public.module_activity USING btree (user_id);
 
 
 --
@@ -1644,14 +1628,6 @@ CREATE INDEX idx_user_last_active ON public."user" USING btree (last_active);
 --
 
 CREATE INDEX idx_user_role ON public."user" USING btree (role);
-
-
---
--- TOC entry 5099 (class 1259 OID 42174)
--- Name: session_userId_idx; Type: INDEX; Schema: public; Owner: postgres
---
-
-CREATE INDEX "session_userId_idx" ON public.session USING btree ("userId");
 
 
 --
@@ -1700,14 +1676,6 @@ CREATE INDEX IF NOT EXISTS idx_certificates_expiry_sweep ON public.certificates 
 
 
 --
--- Name: idx_certificates_verification_token; Type: INDEX; Schema: public; Owner: postgres
--- Optimizes QR-code certificate verification lookups.
---
-
-CREATE INDEX IF NOT EXISTS idx_certificates_verification_token ON public.certificates USING btree (verification_token);
-
-
---
 -- Name: idx_certificates_user_non_revoked; Type: INDEX; Schema: public; Owner: postgres
 -- Optimizes the historical completion count scalar subquery in UserService.getAllUsers.
 --
@@ -1747,6 +1715,49 @@ CREATE INDEX IF NOT EXISTS idx_user_consent_version ON public."user" USING btree
 -- Name: idx_certificates_recert_notified_at; Type: INDEX; Schema: public; Owner: postgres
 --
 CREATE INDEX IF NOT EXISTS idx_certificates_recert_notified_at ON public.certificates USING btree (recert_notified_at) WHERE recert_notified_at IS NULL;
+
+
+--
+-- Performance & Foreign Key Supporting Indexes (Migration 06)
+--
+
+-- Session FK & Telemetry Indexes
+CREATE INDEX IF NOT EXISTS idx_session_user_id ON public."session" ("userId");
+CREATE INDEX IF NOT EXISTS idx_session_user_updated ON public."session" ("userId", "updatedAt" DESC);
+
+-- Module Data FK, Versioning & Catalog Performance Indexes
+CREATE INDEX IF NOT EXISTS idx_module_data_parent_mod_id ON public.module_data (parent_mod_id);
+CREATE INDEX IF NOT EXISTS idx_module_data_author_id ON public.module_data (author_id);
+CREATE INDEX IF NOT EXISTS idx_module_data_published ON public.module_data (mod_id DESC) WHERE status = 'published' AND moddateremove IS NULL;
+CREATE INDEX IF NOT EXISTS idx_module_data_parent_status ON public.module_data (parent_mod_id, status);
+CREATE INDEX IF NOT EXISTS idx_module_data_status_dateadd ON public.module_data (status, moddateadd DESC);
+
+-- User FK Indexes
+CREATE INDEX IF NOT EXISTS idx_user_barangay_id ON public."user" (barangay_id);
+
+-- User Step Progress FK Indexes
+CREATE INDEX IF NOT EXISTS idx_user_step_progress_step_id ON public.user_step_progress (step_id);
+
+-- Results FK Indexes
+CREATE INDEX IF NOT EXISTS idx_results_user_mod ON public.results (user_id, mod_id);
+CREATE INDEX IF NOT EXISTS idx_results_mod_id ON public.results (mod_id);
+
+-- Announcements FK & Sorting Indexes
+CREATE INDEX IF NOT EXISTS idx_announcements_author_id ON public.announcements (author_id);
+CREATE INDEX IF NOT EXISTS idx_announcements_barangay_id ON public.announcements (barangay_id);
+CREATE INDEX IF NOT EXISTS idx_announcements_date_desc ON public.announcements (date DESC);
+CREATE INDEX IF NOT EXISTS idx_announcements_barangay_date ON public.announcements (barangay_id, date DESC);
+
+-- Certificates FK Indexes
+CREATE INDEX IF NOT EXISTS idx_certificates_revoked_by ON public.certificates (revoked_by);
+CREATE INDEX IF NOT EXISTS idx_certificates_modact_id ON public.certificates (modact_id);
+
+-- Questions & Choices FK Indexes
+CREATE INDEX IF NOT EXISTS idx_choices_question_id ON public.choices (question_id);
+CREATE INDEX IF NOT EXISTS idx_questions_mod_id ON public.questions (mod_id);
+
+-- User Notifications FK Indexes
+CREATE INDEX IF NOT EXISTS idx_user_notification_user_id ON public.user_notification (user_id);
 
 
 --
@@ -1800,7 +1811,7 @@ ALTER TABLE ONLY public.announcements
 --
 
 ALTER TABLE ONLY public.certificates
-    ADD CONSTRAINT fk_certificates_revoked_by FOREIGN KEY (revoked_by) REFERENCES public."user"(id);
+    ADD CONSTRAINT fk_certificates_revoked_by FOREIGN KEY (revoked_by) REFERENCES public."user"(id) ON DELETE SET NULL;
 
 
 --
@@ -1935,30 +1946,6 @@ ALTER TABLE ONLY public.module_data
 
 ALTER TABLE ONLY public.module_data
     ADD CONSTRAINT fk_parent_mod_id FOREIGN KEY (parent_mod_id) REFERENCES public.module_data(mod_id) ON DELETE SET NULL;
-
-
---
--- Name: certificates fk_certificates_revoked_by; Type: FK CONSTRAINT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY public.certificates
-    ADD CONSTRAINT fk_certificates_revoked_by FOREIGN KEY (revoked_by) REFERENCES public."user"(id) ON DELETE SET NULL;
-
-
---
--- Name: module_activity fk_module_activity_mod_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY public.module_activity
-    ADD CONSTRAINT fk_module_activity_mod_id FOREIGN KEY (mod_id) REFERENCES public.module_data(mod_id) ON DELETE CASCADE;
-
-
---
--- Name: questions fk_questions_mod_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY public.questions
-    ADD CONSTRAINT fk_questions_mod_id FOREIGN KEY (mod_id) REFERENCES public.module_data(mod_id) ON DELETE CASCADE;
 
 
 --
