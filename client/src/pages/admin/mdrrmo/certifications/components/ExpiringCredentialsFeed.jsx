@@ -80,11 +80,13 @@ export default function ExpiringCredentialsFeed({
               className="w-full py-2 pl-3 pr-8 text-sm bg-white border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-colors"
             >
               <option value="">All Barangays</option>
-              {BARANGAY_LIST.map((b) => (
-                <option key={b.id} value={b.id}>
-                  {b.name}
-                </option>
-              ))}
+              {[...BARANGAY_LIST]
+                .sort((a, b) => a.name.localeCompare(b.name))
+                .map((b) => (
+                  <option key={b.id} value={b.id}>
+                    {b.name}
+                  </option>
+                ))}
             </select>
           </div>
 
@@ -96,11 +98,13 @@ export default function ExpiringCredentialsFeed({
               className="w-full py-2 pl-3 pr-8 text-sm bg-white border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-colors"
             >
               <option value="">All Training Modules</option>
-              {modules.map((m) => (
-                <option key={m.module_id} value={m.module_id}>
-                  {m.module_title}
-                </option>
-              ))}
+              {[...modules]
+                .sort((a, b) => (a.module_title || "").localeCompare(b.module_title || ""))
+                .map((m) => (
+                  <option key={m.module_id} value={m.module_id}>
+                    {m.module_title}
+                  </option>
+                ))}
             </select>
           </div>
 

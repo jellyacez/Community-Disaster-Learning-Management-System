@@ -35,11 +35,13 @@ export default function CertificationsFilterBar({
             className="w-full py-2 pl-3 pr-8 text-sm bg-white border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-colors"
           >
             <option value="">All Training Modules</option>
-            {modulesList.map((m) => (
-              <option key={m.mod_id} value={m.mod_id}>
-                {m.modname}
-              </option>
-            ))}
+            {[...modulesList]
+              .sort((a, b) => (a.modname || "").localeCompare(b.modname || ""))
+              .map((m) => (
+                <option key={m.mod_id} value={m.mod_id}>
+                  {m.modname}
+                </option>
+              ))}
           </select>
         </div>
 

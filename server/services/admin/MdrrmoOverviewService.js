@@ -135,6 +135,7 @@ class MdrrmoOverviewService {
         SELECT * FROM barangay_stats
         UNION ALL
         SELECT * FROM unassigned_stats
+        WHERE resident_count > 0 OR active_admins > 0 OR certificates_issued > 0
       ) combined_results
       ORDER BY 
         CASE WHEN barangay_name = 'Unassigned' THEN 1 ELSE 0 END, 

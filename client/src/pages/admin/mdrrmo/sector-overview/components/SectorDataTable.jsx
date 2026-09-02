@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Search01Icon, ArrowUp01Icon, ArrowDown01Icon } from "@hugeicons/core-free-icons";
 import { SkeletonTableRow } from "../../../../../components/ui/Skeleton";
@@ -18,6 +19,16 @@ export default function SectorDataTable({
   handleRowClick,
   isLoading
 }) {
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 8;
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, filters, sortConfig]);
+
+  const totalPages = Math.ceil(sortedData.length / ITEMS_PER_PAGE) || 1;
+  const paginatedData = sortedData.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+
   const renderSortIcon = (columnKey) => {
     if (sortConfig.key !== columnKey) return null;
     return sortConfig.direction === 'asc' 
@@ -225,7 +236,7 @@ export default function SectorDataTable({
                 </td>
               </tr>
             ) : (
-              sortedData.map((sector, index) => {
+              paginatedData.map((sector, index) => {
                 const isUnassigned = sector.barangay === 'Unassigned';
                 const isSelected = selectedBarangayId === (isUnassigned ? "unassigned" : sector.id);
                 
@@ -302,6 +313,54 @@ export default function SectorDataTable({
           </tbody>
         </table>
       </div>
+
+      {/* Pagination Controls (Miller's Law 8 items/page) */}
+      {totalPages > 1 && (
+        <div className="p-4 border-t border-gray-100 bg-gray-50/30 flex flex-col sm:flex-row items-center justify-between gap-3 rounded-b-2xl">
+          <p className="text-xs text-gray-500 font-medium">
+            Showing <span className="font-bold text-gray-800">{(currentPage - 1) * ITEMS_PER_PAGE + 1}</span> to{" "}
+            <span className="font-bold text-gray-800">{Math.min(currentPage * ITEMS_PER_PAGE, sortedData.length)}</span> of{" "}
+            <span className="font-bold text-gray-800">{sortedData.length}</span> barangays
+          </p>
+
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+              className="min-h-[44px] px-3.5 py-2 bg-white border border-gray-200 rounded-xl text-xs font-bold text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all cursor-pointer shadow-2xs"
+            >
+              Previous
+            </button>
+
+            <div className="flex items-center gap-1.5">
+              {Array.from({ length: totalPages }).map((_, i) => (
+                <button
+                  key={i}
+                  type="button"
+                  onClick={() => setCurrentPage(i + 1)}
+                  className={`min-w-[44px] min-h-[44px] w-11 h-11 flex items-center justify-center rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                    currentPage === i + 1
+                      ? "bg-blue-600 text-white shadow-md shadow-blue-600/20"
+                      : "bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 shadow-2xs"
+                  }`}
+                >
+                  {i + 1}
+                </button>
+              ))}
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+              className="min-h-[44px] px-3.5 py-2 bg-white border border-gray-200 rounded-xl text-xs font-bold text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all cursor-pointer shadow-2xs"
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

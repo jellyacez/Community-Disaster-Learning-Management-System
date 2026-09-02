@@ -39,14 +39,16 @@ function UserTableRow({ user, onManageClick, isSelected, onToggleSelect }) {
 
   return (
     <tr className={`transition-colors ${isSelected ? "bg-red-50/50" : "hover:bg-gray-50/60"}`}>
-      <td className="px-4 py-3 w-10">
-        <input 
-          type="checkbox" 
-          aria-label={`Select user ${user.name}`}
-          checked={isSelected} 
-          onChange={() => onToggleSelect(user.id)}
-          className="w-4 h-4 text-red-600 rounded border-gray-300 focus:ring-red-500 cursor-pointer"
-        />
+      <td className="px-4 py-3 w-12">
+        <label className="min-w-[44px] min-h-[44px] -m-2 flex items-center justify-center cursor-pointer">
+          <input 
+            type="checkbox" 
+            aria-label={`Select user ${user.name}`}
+            checked={isSelected} 
+            onChange={() => onToggleSelect(user.id)}
+            className="w-4 h-4 text-red-600 rounded border-gray-300 focus:ring-red-500 cursor-pointer"
+          />
+        </label>
       </td>
       <td className="px-4 py-3">
         <div className="flex items-center gap-3">
@@ -79,7 +81,7 @@ function UserTableRow({ user, onManageClick, isSelected, onToggleSelect }) {
         <div className="relative inline-block text-left" ref={menuRef}>
           <button
             onClick={() => setIsOpen(!isOpen)}
-            className="p-1.5 text-gray-400 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+            className="w-11 h-11 min-w-[44px] min-h-[44px] inline-flex items-center justify-center text-gray-400 hover:text-gray-900 hover:bg-gray-100 rounded-xl transition-colors cursor-pointer"
             aria-label="Open action menu"
           >
             <HugeiconsIcon icon={MoreHorizontalIcon} className="w-5 h-5" />

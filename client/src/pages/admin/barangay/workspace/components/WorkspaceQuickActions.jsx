@@ -43,22 +43,25 @@ export default function WorkspaceQuickActions({
           <HugeiconsIcon icon={ArrowRight01Icon} className="w-3.5 h-3.5 text-gray-400 group-hover:text-gray-700 group-hover:translate-x-0.5 transition-all shrink-0 ml-1.5" />
         </button>
 
-        {/* Post Announcement */}
+        {/* Post Announcement (Primary High-Priority Action) */}
         <button
           type="button"
           onClick={onOpenAnnouncementModal}
-          className="group w-full flex items-center justify-between p-2.5 rounded-xl border border-gray-200/70 bg-gray-50/40 hover:bg-white hover:border-gray-300 hover:shadow-2xs transition-all text-left cursor-pointer"
+          className="group w-full flex items-center justify-between p-2.5 rounded-xl border border-red-200/90 bg-red-50/60 hover:bg-red-50 hover:border-red-300 hover:shadow-2xs transition-all text-left cursor-pointer"
         >
           <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-8 h-8 rounded-lg bg-white border border-gray-200/80 flex items-center justify-center shrink-0 text-gray-600 group-hover:text-gray-950 group-hover:border-gray-300 shadow-2xs transition-colors">
+            <div className="w-8 h-8 rounded-lg bg-red-600 border border-red-600 flex items-center justify-center shrink-0 text-white shadow-2xs transition-colors">
               <HugeiconsIcon icon={Notification01Icon} className="w-4 h-4" />
             </div>
             <div className="min-w-0">
-              <div className="text-xs font-semibold text-gray-900 group-hover:text-black truncate">Post Announcement</div>
-              <div className="text-[11px] text-gray-400 truncate mt-0.5">Broadcast sector advisory</div>
+              <div className="flex items-center gap-1.5">
+                <span className="text-xs font-bold text-red-950 group-hover:text-red-900 truncate">Post Announcement</span>
+                <span className="px-1.5 py-0.5 rounded text-[9px] font-extrabold uppercase tracking-wider bg-red-200/70 text-red-800 shrink-0">Priority</span>
+              </div>
+              <div className="text-[11px] text-red-700/80 truncate mt-0.5">Broadcast sector advisory</div>
             </div>
           </div>
-          <HugeiconsIcon icon={ArrowRight01Icon} className="w-3.5 h-3.5 text-gray-400 group-hover:text-gray-700 group-hover:translate-x-0.5 transition-all shrink-0 ml-1.5" />
+          <HugeiconsIcon icon={ArrowRight01Icon} className="w-3.5 h-3.5 text-red-500 group-hover:text-red-700 group-hover:translate-x-0.5 transition-all shrink-0 ml-1.5" />
         </button>
 
         {/* Manage Residents */}

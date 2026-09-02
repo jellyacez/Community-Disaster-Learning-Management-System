@@ -30,17 +30,21 @@ class UserService {
     const values = [];
     let idx = 1;
 
-    // Structural enforcement of barangay scoping
+    // Structural enforcement of barangay scoping and role visibility
     if (adminContext.role === 'barangay_admin') {
       if (!adminContext.barangay_id) {
         throw new Error("SECURITY_FAULT: barangay_admin context missing barangay identifier for scoping.");
       }
-      conditions.push(`barangay_id = $${idx}`);
+      conditions.push(`u.barangay_id = $${idx}`);
       values.push(adminContext.barangay_id);
       idx++;
     } else if (UNSCOPED_ACCESS_ROLES.includes(adminContext.role)) {
+      // MDRRMO Admins cannot see or manage System Admin accounts
+      if (['mdrrmo_admin', 'head_mdrrmo_admin'].includes(adminContext.role)) {
+        conditions.push(`u.role != 'system_admin'`);
+      }
       if (barangayFilter) {
-        conditions.push(`barangay_id = (SELECT id FROM barangays WHERE name = $${idx})`);
+        conditions.push(`u.barangay_id = (SELECT id FROM barangays WHERE name = $${idx})`);
         values.push(barangayFilter);
         idx++;
       }
@@ -49,27 +53,27 @@ class UserService {
     }
 
     if (search) {
-      conditions.push(`(name ILIKE $${idx} OR email ILIKE $${idx})`);
+      conditions.push(`(u.name ILIKE $${idx} OR u.email ILIKE $${idx})`);
       values.push(`%${search}%`);
       idx++;
     }
     if (roleFilter) {
-      conditions.push(`role = $${idx}`);
+      conditions.push(`u.role = $${idx}`);
       values.push(roleFilter);
       idx++;
     }
 
     if (status === "active") {
-      conditions.push(`(archived = false OR archived IS NULL) AND (banned = false OR banned IS NULL)`);
+      conditions.push(`(u.archived = false OR u.archived IS NULL) AND (u.banned = false OR u.banned IS NULL)`);
     } else if (status === "banned") {
-      conditions.push(`banned = true`);
+      conditions.push(`u.banned = true`);
     } else if (status === "archived") {
-      conditions.push(`archived = true`);
+      conditions.push(`u.archived = true`);
     }
 
     const where = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
 
-    const countResult = await pool.query(`SELECT COUNT(*) FROM "user" ${where}`, values);
+    const countResult = await pool.query(`SELECT COUNT(*) FROM "user" u ${where}`, values);
     const total = parseInt(countResult.rows[0].count);
 
     const result = await pool.query(
@@ -94,7 +98,7 @@ class UserService {
             AND c.status != 'revoked'
          ) AS "modulesCompleted"
        FROM "user" u 
-       LEFT JOIN barangays b ON u.barangay_id = b.id ${where.replace(/barangay_id/g, 'u.barangay_id')}
+       LEFT JOIN barangays b ON u.barangay_id = b.id ${where}
        ORDER BY u."createdAt" DESC LIMIT $${idx} OFFSET $${idx + 1}`,
       [...values, limit, offset]
     );

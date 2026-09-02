@@ -27,14 +27,18 @@ export default function SectorLeaderboard({ top5 = [], bottom5 = [], selectedBar
                 const medal = idx === 0 ? <HugeiconsIcon icon={Medal01Icon} className="w-6 h-6 mx-auto text-amber-500 stroke-[2.5]" /> : 
                               idx === 1 ? <HugeiconsIcon icon={Medal02Icon} className="w-6 h-6 mx-auto text-gray-400 stroke-[2.5]" /> : 
                               idx === 2 ? <HugeiconsIcon icon={Medal03Icon} className="w-6 h-6 mx-auto text-amber-700 stroke-[2.5]" /> : 
-                              `${idx + 1}.`;
+                              (
+                                <div className="w-6 h-6 mx-auto rounded-full bg-gray-100 border border-gray-200/80 flex items-center justify-center text-[11px] font-bold text-gray-500 shadow-2xs">
+                                  {idx + 1}
+                                </div>
+                              );
                 return (
                   <div 
                     key={item.id} 
                     onClick={() => handleRowClick(item.id)}
                     className={`flex items-center gap-3 cursor-pointer p-2 -mx-2 rounded-xl transition-all ${isSelected ? 'bg-blue-50/50 ring-1 ring-blue-100' : 'hover:bg-gray-50'}`}
                   >
-                    <div className="w-6 text-center text-sm font-bold text-gray-500 shrink-0">
+                    <div className="w-6 text-center text-sm font-bold text-gray-500 shrink-0 flex items-center justify-center">
                       {medal}
                     </div>
                     <div className="flex-1 min-w-0">

@@ -127,8 +127,8 @@ export default function RegisterForm() {
         >
           {isSubmitting ? (
             <span className="flex items-center justify-center gap-2">
-              <Spinner className="h-5 w-5 text-gray-500" />
-              Validating...
+              <Spinner className="h-5 w-5 text-white" />
+              <span>Validating...</span>
             </span>
           ) : (
             "Create Account"

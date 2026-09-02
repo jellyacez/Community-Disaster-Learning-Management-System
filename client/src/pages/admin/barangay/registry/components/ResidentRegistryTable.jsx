@@ -117,7 +117,7 @@ export default function ResidentRegistryTable({
                           e.stopPropagation();
                           setOpenDropdownId(isDropdownOpen ? null : residentId);
                         }}
-                        className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer"
+                        className="w-11 h-11 min-w-[44px] min-h-[44px] inline-flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-xl transition-colors cursor-pointer"
                         aria-label="Manage resident actions"
                       >
                         <HugeiconsIcon icon={MoreHorizontalIcon} size={18} />
@@ -126,7 +126,7 @@ export default function ResidentRegistryTable({
                       {isDropdownOpen && (
                         <div
                           ref={dropdownRef}
-                          className="absolute right-6 top-12 w-48 bg-white border border-gray-100 rounded-xl shadow-lg shadow-gray-200/50 py-1.5 z-50 text-left animate-in zoom-in-95 duration-100"
+                          className="absolute right-6 top-14 w-48 bg-white border border-gray-100 rounded-xl shadow-lg shadow-gray-200/50 p-1.5 z-50 text-left animate-in zoom-in-95 duration-100"
                         >
                           <div className="px-3 py-1.5 border-b border-gray-50 mb-1">
                             <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Manage Resident</p>
@@ -137,18 +137,21 @@ export default function ResidentRegistryTable({
                               onOpenActionModal(residentId, "archive");
                               setOpenDropdownId(null);
                             }}
-                            className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-600 hover:bg-gray-50 transition-colors cursor-pointer"
+                            className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition-colors cursor-pointer"
                           >
                             <HugeiconsIcon icon={Archive02Icon} size={16} />
                             <span>Archive Record</span>
                           </button>
+                          
+                          <div className="my-1 border-t border-gray-100" />
+
                           <button
                             type="button"
                             onClick={() => {
                               onOpenActionModal(residentId, "ban");
                               setOpenDropdownId(null);
                             }}
-                            className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
+                            className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
                           >
                             <HugeiconsIcon icon={UserBlock01Icon} size={16} />
                             <span>Ban Resident</span>

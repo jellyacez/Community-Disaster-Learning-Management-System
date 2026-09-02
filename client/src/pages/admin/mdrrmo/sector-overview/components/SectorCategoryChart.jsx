@@ -7,6 +7,8 @@ import {
   Tooltip as RechartsTooltip,
   ResponsiveContainer
 } from "recharts";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { Certificate01Icon } from "@hugeicons/core-free-icons";
 import { getCategoryColor } from "../utils";
 import { SkeletonChart } from "../../../../../components/ui/Skeleton";
 
@@ -76,8 +78,16 @@ export default function SectorCategoryChart({
             </PieChart>
           </ResponsiveContainer>
         ) : (
-          <div className="text-center text-gray-400">
-            <p className="text-sm">No active certificates found.</p>
+          <div className="flex flex-col items-center justify-center text-center p-8 max-w-sm mx-auto animate-in fade-in duration-200">
+            <div className="w-16 h-16 rounded-full bg-gray-50 border border-gray-100 flex items-center justify-center text-gray-400 mb-3.5 shadow-2xs">
+              <HugeiconsIcon icon={Certificate01Icon} className="w-8 h-8 text-gray-400 stroke-[1.5]" />
+            </div>
+            <h3 className="text-base font-bold text-gray-900 mb-1">
+              No certificates issued yet for {selectedBarangayName || "this sector"}.
+            </h3>
+            <p className="text-xs text-gray-500 max-w-xs">
+              Residents have not completed or earned certification credentials for this sector yet.
+            </p>
           </div>
         )}
       </div>
