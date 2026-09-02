@@ -19,13 +19,18 @@ export default function DashboardAnnouncementsList({ displayData, loading, navig
         {loading ? (
           [1, 2, 3].map((i) => <AnnouncementSkeleton key={i} />)
         ) : displayData.announcements.length === 0 ? (
-          <div className="text-center py-6">
-            <HugeiconsIcon
-              icon={AlertCircleIcon}
-              className="w-8 h-8 text-gray-300 mx-auto mb-2"
-            />
-            <p className="text-sm text-gray-500">
-              No new announcements at this time.
+          <div className="text-center py-8 px-4 bg-gray-50/60 rounded-2xl border border-gray-100/80">
+            <div className="w-12 h-12 rounded-2xl bg-white border border-gray-100 flex items-center justify-center text-gray-400 mx-auto mb-3 shadow-2xs">
+              <HugeiconsIcon
+                icon={Notification03Icon}
+                className="w-6 h-6 text-gray-400 stroke-[1.5]"
+              />
+            </div>
+            <h4 className="text-xs font-bold text-gray-700 uppercase tracking-wide mb-1">
+              All Clear
+            </h4>
+            <p className="text-xs text-gray-500 max-w-[200px] mx-auto">
+              No active emergency advisories or municipal bulletins at this time.
             </p>
           </div>
         ) : (
@@ -33,7 +38,15 @@ export default function DashboardAnnouncementsList({ displayData, loading, navig
             <div
               key={item.id}
               onClick={() => navigate("/user/announcements")}
-              className="rounded-2xl bg-gray-50 p-4 hover:bg-gray-100 transition cursor-pointer border border-transparent hover:border-gray-200"
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  navigate("/user/announcements");
+                }
+              }}
+              className="rounded-2xl bg-gray-50 p-4 hover:bg-gray-100 transition cursor-pointer border border-transparent hover:border-gray-200 focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 outline-hidden"
             >
               <div className="flex justify-between items-start mb-2">
                 <p className="text-xs font-semibold uppercase tracking-wide text-red-600">

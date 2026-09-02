@@ -1,5 +1,5 @@
 // --- START: UserDashboard.jsx ---
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useOutletContext, useLocation, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import apiClient from "../../../lib/apiClient";
@@ -46,13 +46,13 @@ export default function UserDashboard() {
       ? dashboardData.data
       : {};
 
-  const displayData = {
+  const displayData = useMemo(() => ({
     totalModules: rawData.totalModules || 0,
     announcements: rawData.announcements || [],
     enrolledModules: rawData.enrolledModules || [],
     completionRate: rawData.completionRate || 0,
     certificates: rawData.certificates || [],
-  };
+  }), [rawData]);
 
   useEffect(() => {
     // Wait for the user to finish onboarding before showing WelcomeModal.
@@ -116,7 +116,7 @@ export default function UserDashboard() {
           onBrowse={() => navigate("/user/modules")}
           onContinue={() => navigate("/user/enrolled")}
         />
-        <DashboardStats displayData={displayData} loading={loading} />
+        <DashboardStats displayData={displayData} loading={loading} navigate={navigate} />
 
         <section className="grid gap-6 lg:grid-cols-3">
           <DashboardEnrolledList
