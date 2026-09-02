@@ -6,6 +6,22 @@ This document tracks identified technical debt, architectural decisions, missing
 
 ## 🟢 Resolved Items
 
+### Resolved: Database Index Performance Optimization & Complete Foreign Key Coverage (`06_add_performance_indexes.sql` & `07_drop_redundant_indexes.sql`)
+- **Location:** `server/migrations/` (`06_add_performance_indexes.sql`, `07_drop_redundant_indexes.sql`, `schema.sql`), live PostgreSQL `LMS_db`
+- **Issue:** 
+  1. Multiple core foreign key columns across `session`, `module_data`, `user`, `user_step_progress`, `results`, `announcements`, `certificates`, `choices`, and `questions` lacked supporting B-tree indexes, causing sequential table scans during cascading deletes and multi-table joins.
+  2. Public module catalog filtering (`status = 'published' AND moddateremove IS NULL`) and session telemetry sorting (`"userId" = $1 ORDER BY "updatedAt" DESC`) performed sequential scans and in-memory heap sorting.
+  3. Redundant duplicate indexes (`idx_certificates_verification_token`, `idx_module_activity_user`, `idx_activity_log_user_id`) consumed unnecessary write I/O.
+- **Resolution:**
+  - **Foreign Key Supporting Indexes:** Added 14 missing foreign key indexes (`idx_session_user_id`, `idx_module_data_parent_mod_id`, `idx_module_data_author_id`, `idx_user_barangay_id`, `idx_user_step_progress_step_id`, `idx_results_user_mod`, `idx_results_mod_id`, `idx_announcements_author_id`, `idx_announcements_barangay_id`, `idx_certificates_revoked_by`, `idx_certificates_modact_id`, `idx_choices_question_id`, `idx_questions_mod_id`, `idx_user_notification_user_id`).
+  - **Selective Catalog Partial Index:** Created `idx_module_data_published ON module_data (mod_id DESC) WHERE status = 'published' AND moddateremove IS NULL`, eliminating table scans on the high-frequency public catalog with zero write penalty on drafts/archived edits.
+  - **Session Telemetry & Ordering Composite Indexes:** Created `idx_session_user_updated ON "session" ("userId", "updatedAt" DESC)` eliminating in-memory sorting, along with `idx_module_data_parent_status`, `idx_module_data_status_dateadd`, `idx_announcements_date_desc`, and `idx_announcements_barangay_date`.
+  - **Redundant Index Removal:** Dropped 3 redundant indexes in `07_drop_redundant_indexes.sql`.
+  - **Schema Synchronization:** Updated `schema.sql`, removed legacy duplicate constraint definitions, and verified that fresh `setup.js` runs 100% cleanly from scratch with zero errors.
+- **Verification:** Verified all 20 new indexes exist in `LMS_db` via `pg_indexes`, confirmed 0 dropped indexes remain (total 75 active public indexes), and executed full setup against an isolated scratch database with 0 errors.
+
+---
+
 ### Resolved: Resident Settings Mock Data Elimination & Telemetry Integration (`Settings.jsx`)
 - **Location:** `client/src/components/settings/` (`LoginHistory.jsx`, `LocalizationSettings.jsx`, `HelpSupport.jsx`), `server/controllers/users/userSettingsController.js`, `server/routes/users/userRoutes.js`, `server/utils/auth.js`
 - **Issue:** Resident settings contained mock data and unhandled UI scaffolding:
@@ -608,3 +624,34 @@ This document tracks identified technical debt, architectural decisions, missing
   - Client generates a UUID (`client_mutation_id`) when queuing a write in Dexie `sync_queue`, passed either via an `Idempotency-Key` request header or as a body/column value.
   - Server defines unique constraints on `client_mutation_id` and executes `ON CONFLICT (client_mutation_id) DO NOTHING` on all creation endpoints that interface with the offline sync queue.
 - **Strategic Decision:** Bundle this enhancement with the Local Announcements build (Item 7) rather than fixing feedback in isolation now — no sense adding the idempotency plumbing to a feature that does not exist yet, and current feedback exposure is lower-frequency (requires the specific processed-but-response-lost race condition) than the Publish-button double-click case, which was fixed separately and immediately.
+
+---
+
+### 10. Self-Service Disaster Learning FAQ & Knowledge Base
+- **Location:** `client/src/components/settings/HelpSupport.jsx` (currently a single static paragraph routing straight to `/user/feedback` with no self-serve content)
+- **Gap:** No FAQ or self-service knowledge base exists anywhere in the platform. Residents have no way to obtain immediate answers to common operational questions — every inquiry routes directly to the human MDRRMO feedback/ticketing queue.
+- **Proposed Content (5 Core Disaster Learning Questions):**
+  1. **Offline Mode & Syncing:**
+     - *Question:* How do learning modules and progress work during network outages or typhoons?
+     - *Verified System Fact:* The LMS operates offline via client-side Dexie IndexedDB (`localDb.js` / `syncManager.js`). Residents can view previously downloaded lessons and complete quizzes without internet. When connectivity is restored, the background sync engine automatically flushes queued completion tasks with authenticated session cookies.
+  2. **Certificate Validity & Recertification:**
+     - *Question:* How long is my disaster preparedness certification valid, and how do I renew it?
+     - *Verified System Fact:* Disaster preparedness certificates are valid for **1 year** (`RECERTIFICATION_INTERVAL_YEARS = 1` in `server/config/constants.js`). The daily 1:00 AM maintenance cron (`certificateExpiryCron.js`) identifies certificates within a **30-day notice window** (`expires_at <= NOW() + INTERVAL '30 days'`) and dispatches proactive email reminders. Residents can retake the module/assessment to recertify, extending validity for an additional 1 year and recording audit entries in `activity_log`.
+  3. **QR Verification:**
+     - *Question:* How can Barangay officials, employers, or relief coordinators verify my credential?
+     - *Verified System Fact:* Every issued certificate features a secure cryptographic UUID (`verification_token`) and embedded QR code. Evaluators can scan the QR code using any smartphone camera or navigate directly to `https://<domain>/verify/:token` (or use the in-portal scanner in Barangay Certifications) for real-time validation against the live registry.
+  4. **Privacy & Account Rights (R.A. 10173):**
+     - *Question:* How is my personal information protected, and what happens if I delete my account?
+     - *Verified System Fact:* The platform strictly complies with Republic Act No. 10173 (Data Privacy Act of 2012) with explicit versioned consent tracking (`CONSENT_VERSION = 'v1-2026'`). If an account is deleted under the Right to Be Forgotten, all personal identifiers are removed from the `"user"` table, while qualification records are preserved as `"Archived Resident"` (`user_id = NULL`), allowing legitimate credentials to remain publicly verifiable without exposing personal identifiable information (PII).
+  5. **Dialect Support & Localization:**
+     - *Question:* Are disaster training modules available in Kapampangan or Tagalog?
+     - *Verified System Fact:* The platform interface currently operates in English (`en`) by default. As reflected in the Language Preferences section (`LocalizationSettings.jsx`), Kapampangan (`pam`) and Tagalog (`tl`) dialect localizations for the DRRM curriculum are currently under active development.
+- **Scope Constraint:**
+  - **Static Content Only:** Must be implemented as a lightweight static JSON/constants file or hardcoded frontend accordion.
+  - **Out of Scope:** No new database tables, no dynamic CMS backend, and no admin-editable FAQ APIs unless explicitly requested as a standalone requirement by MDRRMO administrators in a future milestone.
+- **Recommended Placement:**
+  - Integrated as an expandable accordion section within `client/src/components/settings/HelpSupport.jsx`, or as a dedicated *"Frequently Asked Questions"* tab alongside the existing ticket interface in `client/src/pages/user/feedback/`.
+  - **Mandatory Fallback CTA:** The FAQ section must conclude with a persistent call-to-action button (*"Still have questions? Contact MDRRMO Support"*) linking directly to `/user/feedback`. The self-service FAQ and human ticketing system must remain complementary rather than replacing one another.
+- **Rationale:**
+  - Deflects high-frequency, repetitive inquiries from overloading the municipal MDRRMO feedback queue.
+  - Closes an identified UX critique in the resident portal by providing persistent, instant self-serve guidance for community disaster learners.
