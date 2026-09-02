@@ -1,39 +1,59 @@
+import React from "react";
+import { useQuery } from "@tanstack/react-query";
+import apiClient from "../../lib/apiClient";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Clock01Icon, LaptopIcon, SmartPhone01Icon } from "@hugeicons/core-free-icons";
 
-export default function LoginHistory() {
-  const historyData = [
-    {
-      id: 1,
-      device: "Windows PC",
-      browser: "Chrome",
-      location: "San Fernando, Pampanga",
-      time: "2 hours ago",
-      ip: "112.198.xxx.xx",
-      type: "laptop",
-      status: "success"
-    },
-    {
-      id: 2,
-      device: "iPhone 13",
-      browser: "Safari",
-      location: "Angeles City, Pampanga",
-      time: "Yesterday, 2:45 PM",
-      ip: "112.201.xxx.xx",
+function parseDevice(userAgent = "") {
+  const ua = userAgent.toLowerCase();
+  if (/mobile|android|iphone|ipad|ipod/.test(ua)) {
+    return {
+      name: "Mobile Device",
       type: "mobile",
-      status: "success"
-    },
-    {
-      id: 3,
-      device: "MacBook Pro",
-      browser: "Firefox",
-      location: "Manila, NCR",
-      time: "Oct 12, 10:15 AM",
-      ip: "180.191.xxx.xx",
+      browser: "Mobile Browser",
+    };
+  }
+  if (/windows/.test(ua)) {
+    return {
+      name: "Windows PC",
       type: "laptop",
-      status: "success"
-    }
-  ];
+      browser: "Chrome / Web",
+    };
+  }
+  if (/macintosh|mac os/.test(ua)) {
+    return {
+      name: "MacBook",
+      type: "laptop",
+      browser: "Safari / Web",
+    };
+  }
+  return {
+    name: "Desktop Device",
+    type: "laptop",
+    browser: "Browser Session",
+  };
+}
+
+function formatRelativeTime(dateString) {
+  if (!dateString) return "Recently";
+  const date = new Date(dateString);
+  return date.toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+export default function LoginHistory() {
+  const { data: sessions = [], isLoading, isError } = useQuery({
+    queryKey: ["userSessions"],
+    queryFn: async () => {
+      const res = await apiClient.get("/users/me/sessions");
+      return res.data?.sessions || [];
+    },
+    staleTime: 60 * 1000,
+  });
 
   return (
     <div className="p-6 md:p-8 w-full flex flex-col space-y-2">
@@ -43,35 +63,77 @@ export default function LoginHistory() {
             <HugeiconsIcon icon={Clock01Icon} className="w-5 h-5 text-red-500" />
             Login History
           </h4>
-          <p className="text-sm text-gray-500 mt-1">Review recent account activity and login attempts.</p>
+          <p className="text-sm text-gray-500 mt-1">
+            Review recent account activity and active device sessions.
+          </p>
         </div>
+
         <div className="md:w-2/3 max-w-md">
-          <div className="flex flex-col space-y-4">
-            {historyData.map((record) => (
-              <div key={record.id} className="flex items-start gap-4 p-4 rounded-2xl border border-gray-100 bg-gray-50/50">
-                <div className="mt-1 text-gray-500">
-                  <HugeiconsIcon icon={record.type === 'laptop' ? LaptopIcon : SmartPhone01Icon} className="w-5 h-5" />
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-center justify-between">
-                    <p className="text-sm font-bold text-gray-900">{record.device} &bull; {record.location}</p>
-                    <span className="text-xs font-medium text-gray-500 whitespace-nowrap ml-2">{record.time}</span>
+          {isLoading && (
+            <div className="flex flex-col space-y-4">
+              {[1, 2, 3].map((n) => (
+                <div
+                  key={n}
+                  className="h-20 animate-pulse rounded-2xl border border-gray-100 bg-gray-50/70"
+                />
+              ))}
+            </div>
+          )}
+
+          {isError && (
+            <div className="p-4 rounded-2xl border border-gray-100 bg-gray-50/50 text-sm text-gray-500">
+              Unable to load login history. Please check back later.
+            </div>
+          )}
+
+          {!isLoading && !isError && sessions.length === 0 && (
+            <div className="p-4 rounded-2xl border border-gray-100 bg-gray-50/50 text-sm text-gray-500">
+              No recent session history found.
+            </div>
+          )}
+
+          {!isLoading && !isError && sessions.length > 0 && (
+            <div className="flex flex-col space-y-4">
+              {sessions.map((record, index) => {
+                const deviceInfo = parseDevice(record.user_agent);
+                const isCurrent = index === 0;
+
+                return (
+                  <div
+                    key={record.id || index}
+                    className="flex items-start gap-4 p-4 rounded-2xl border border-gray-100 bg-gray-50/50"
+                  >
+                    <div className="mt-1 text-gray-500">
+                      <HugeiconsIcon
+                        icon={deviceInfo.type === "laptop" ? LaptopIcon : SmartPhone01Icon}
+                        className="w-5 h-5"
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <p className="text-sm font-bold text-gray-900">
+                            {deviceInfo.name}
+                          </p>
+                          {isCurrent && (
+                            <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 border border-emerald-200">
+                              Current
+                            </span>
+                          )}
+                        </div>
+                        <span className="text-xs font-medium text-gray-500 whitespace-nowrap ml-2">
+                          {formatRelativeTime(record.updated_at || record.created_at)}
+                        </span>
+                      </div>
+                      <p className="text-xs text-gray-500 mt-1">
+                        {deviceInfo.browser} &bull; IP: {record.ip_address || "Protected"}
+                      </p>
+                    </div>
                   </div>
-                  <p className="text-xs text-gray-500 mt-1">{record.browser} &bull; IP: {record.ip}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-      </div>
-      </div>
-      
-      {/* Footer / View Full History */}
-      <div className="flex flex-col md:flex-row gap-8 md:gap-16 mt-2">
-        <div className="md:w-1/3 shrink-0"></div>
-        <div className="md:w-2/3 max-w-md flex justify-end pt-4 border-t border-gray-100">
-          <button className="text-sm font-bold text-red-600 hover:text-red-700 transition">
-            View Full History
-          </button>
+                );
+              })}
+            </div>
+          )}
         </div>
       </div>
     </div>

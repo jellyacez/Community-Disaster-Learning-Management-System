@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const userController = require("../../controllers/users/userController");
 const announcementController = require("../../controllers/users/announcementController");
+const userSettingsController = require("../../controllers/users/userSettingsController");
 const requireRole = require("../../middleware/requireRole");
 const { ADMIN_ROLES } = require("../../config/permissions");
 const { authenticate } = require("../../middleware/authenticate");
@@ -53,5 +54,10 @@ router.get("/me/settings", authenticate, userController.getUserSettings);
 // @desc    Update user's notification settings
 // @access  Private
 router.put("/me/settings", authenticate, userController.updateUserSettings);
+
+// @route   GET /api/users/me/sessions
+// @desc    Get active login sessions / telemetry for current user
+// @access  Private
+router.get("/me/sessions", authenticate, userSettingsController.getUserSessions);
 
 module.exports = router;
