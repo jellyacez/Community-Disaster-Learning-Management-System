@@ -2,10 +2,8 @@ require("dotenv").config();
 
 // Check if required env variables are present
 const requiredEnvVars = ["DB_USER", "DB_PASSWORD", "DB_DATABASE"];
-
 const missingVars = requiredEnvVars.filter((varName) => !process.env[varName]);
 
-// Require at least one of the better-auth secrets
 if (!process.env.BETTER_AUTH_SECRET && !process.env.BETTER_AUTH_SECRETS) {
   missingVars.push("BETTER_AUTH_SECRET or BETTER_AUTH_SECRETS");
 }
@@ -37,7 +35,7 @@ async function startServer() {
   const cleanupPool = new Pool({
     user: process.env.DB_USER,
     password: process.env.DB_PASSWORD,
-    database: process.env.DB_DATABASE, // Targets your actual capstone DB
+    database: process.env.DB_DATABASE,
     host: process.env.DB_HOST || "localhost",
     port: process.env.DB_PORT ? Number(process.env.DB_PORT) : 5432,
   });
@@ -47,26 +45,32 @@ async function startServer() {
     const dbInfo = await client.query("SELECT current_database(), current_user;");
     console.log(`[DB FIX] Connected to target database: "${dbInfo.rows[0].current_database}"`);
 
-    // Drops any constraint, index, or table matching unique_session_key across all schemas
+    // Drops only rate-limiting and tracking tables, leaving the session table intact
     await client.query(`
+      DROP SCHEMA IF EXISTS rate_limit CASCADE;
+
       DO $$ 
       DECLARE 
         r RECORD;
       BEGIN
-        -- Drop any table containing unique_session_key
         FOR r IN (
           SELECT tablename FROM pg_tables 
           WHERE schemaname = 'public' 
-          AND (tablename LIKE '%rate_limit%' OR tablename LIKE '%session%' OR tablename = 'migrations' OR tablename = 'pgmigrations')
+          AND (tablename LIKE '%rate_limit%' OR tablename = 'migrations' OR tablename = 'pgmigrations')
         ) LOOP
           EXECUTE 'DROP TABLE IF EXISTS public."' || r.tablename || '" CASCADE';
         END LOOP;
 
-        -- Drop constraint or standalone index if still present
-        EXECUTE 'DROP INDEX IF EXISTS unique_session_key CASCADE';
+        FOR r IN (
+          SELECT conname, conrelid::regclass AS table_name
+          FROM pg_constraint
+          WHERE conname LIKE '%unique_session_key%'
+        ) LOOP
+          EXECUTE 'ALTER TABLE ' || r.table_name || ' DROP CONSTRAINT IF EXISTS "' || r.conname || '" CASCADE';
+        END LOOP;
       END $$;
     `);
-
+      
     console.log("[DB FIX] Target database cleaned successfully.");
     client.release();
   } catch (err) {
@@ -109,8 +113,8 @@ async function startServer() {
           workerSrc: ["'self'", "blob:"],
           connectSrc: ["'self'"],
           styleSrc: ["'self'", "'unsafe-inline'"],
-          imgSrc: ["'self'", "data:", "https:", "blob:"], // Added blob:
-          mediaSrc: ["'self'", "https:", "blob:"],       // Added blob:
+          imgSrc: ["'self'", "data:", "https:", "blob:"],
+          mediaSrc: ["'self'", "https:", "blob:"],
           frameSrc: ["'self'"],
           frameAncestors: ["'none'"],
           objectSrc: ["'none'"],

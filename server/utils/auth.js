@@ -6,11 +6,9 @@ const { transporter } = require("./mailer");
 const {
   getResetPasswordEmail,
   getVerificationEmail,
-
   getOTPEmail,
 } = require("./emailTemplates");
 const { securityHooksPlugin } = require("./authHooks");
-
 const { getOrgSettings } = require("./settings");
 
 const parseSecrets = () => {
@@ -23,6 +21,13 @@ const parseSecrets = () => {
   return undefined;
 };
 
+// Check if valid Google OAuth keys exist before mounting the provider
+const isGoogleAuthValid = Boolean(
+  process.env.GOOGLE_CLIENT_ID &&
+  process.env.GOOGLE_CLIENT_SECRET &&
+  !process.env.GOOGLE_CLIENT_ID.includes("YOUR_CLIENT_ID")
+);
+
 const auth = betterAuth({
   database: pool,
   baseURL: process.env.BETTER_AUTH_URL,
@@ -30,12 +35,60 @@ const auth = betterAuth({
   ...(process.env.BETTER_AUTH_SECRET
     ? { secret: process.env.BETTER_AUTH_SECRET }
     : {}),
+
+  // 1. Google OAuth Guard to prevent CLIENT_ID_AND_SECRET_REQUIRED crash
   socialProviders: {
-    google: {
-      clientId: process.env.GOOGLE_CLIENT_ID,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+    ...(isGoogleAuthValid
+      ? {
+          google: {
+            clientId: process.env.GOOGLE_CLIENT_ID,
+            clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+          },
+        }
+      : {}),
+  },
+
+  // 2. Map camelCase queries to PostgreSQL snake_case schema columns
+  schema: {
+    session: {
+      fields: {
+        userId: "user_id",
+        expiresAt: "expires_at",
+        createdAt: "created_at",
+        updatedAt: "updated_at",
+        ipAddress: "ip_address",
+        userAgent: "user_agent",
+      },
+    },
+    user: {
+      fields: {
+        emailVerified: "email_verified",
+        createdAt: "created_at",
+        updatedAt: "updated_at",
+      },
+    },
+    account: {
+      fields: {
+        userId: "user_id",
+        accountId: "account_id",
+        providerId: "provider_id",
+        accessToken: "access_token",
+        refreshToken: "refresh_token",
+        accessTokenExpiresAt: "access_token_expires_at",
+        refreshTokenExpiresAt: "refresh_token_expires_at",
+        createdAt: "created_at",
+        updatedAt: "updated_at",
+      },
+    },
+    verification: {
+      fields: {
+        createdAt: "created_at",
+        updatedAt: "updated_at",
+        expiresAt: "expires_at",
+      },
     },
   },
+
   session: {
     expiresIn: 60 * 60 * 24 * 7, // Absolute expiration set to 7 days
     updateAge: 60 * 60 * 24, // Roll the session forward if active within 24 hours
