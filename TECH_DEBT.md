@@ -6,6 +6,21 @@ This document tracks identified technical debt, architectural decisions, missing
 
 ## 🟢 Resolved Items
 
+### Resolved: Resident Settings Mock Data Elimination & Telemetry Integration (`Settings.jsx`)
+- **Location:** `client/src/components/settings/` (`LoginHistory.jsx`, `LocalizationSettings.jsx`, `HelpSupport.jsx`), `server/controllers/users/userSettingsController.js`, `server/routes/users/userRoutes.js`, `server/utils/auth.js`
+- **Issue:** Resident settings contained mock data and unhandled UI scaffolding:
+  1. `LoginHistory.jsx` rendered static hardcoded mock devices/IPs (`"iPhone 13"`, `"112.198.xxx.xx"`).
+  2. `HelpSupport.jsx` "Contact Support" button had no navigation handler.
+  3. `LocalizationSettings.jsx` showed selectable controls that had no backend i18n or theme engine bindings.
+- **Resolution:**
+  - **Live Session Telemetry:** Implemented `GET /api/users/me/sessions` querying active sessions from PostgreSQL `session` table with device parsing, IP display, relative timestamp formatting, and dynamic TanStack Query caching.
+  - **Support Routing:** Connected Help & Support directly to the interactive `/user/feedback` ticketing view.
+  - **Scaffolding Transparency:** Disabled unimplemented language and theme controls, adding clear "Under Development" / "Coming Soon" badges and an informative dialect translation advisory banner.
+  - **OAuth & Schema Guard:** Added Google OAuth environment check to prevent Better-Auth crashes when OAuth is unconfigured, and added column schema mappings.
+- **Verification:** Verified live database query execution against PostgreSQL `session` table, client production build (`0 errors`), and server clean boot.
+
+---
+
 ### Resolved: Offline Sync Manager Authentication Context (`syncManager.js`)
 - **Location:** `client/src/lib/LocalSave/syncManager.js`
 - **Issue:** `syncManager.js` imported `authClient` from `@better-auth/react` and called `authClient.post(...)` for `MARK_STEP_COMPLETE` and `SUBMIT_QUIZ` task actions. Because `authClient` is an authentication SDK and does not expose REST HTTP methods, replaying queued offline tasks caused runtime errors (`TypeError: authClient.post is not a function`).
@@ -530,20 +545,7 @@ This document tracks identified technical debt, architectural decisions, missing
 
 ---
 
-### 5. Mock Data & Scaffolding Stubs in Resident Settings (`Settings.jsx`)
-- **Location:** `client/src/components/settings/LoginHistory.jsx`, `client/src/components/settings/LocalizationSettings.jsx`, `client/src/components/settings/HelpSupport.jsx`
-- **Description:**
-  - `LoginHistory.jsx`: Renders a 100% hardcoded mock array of devices and IP addresses (`"iPhone 13"`, `"MacBook Pro"`, `"San Fernando, Pampanga"`, `"112.198.xxx.xx"`) with an unhandled "View Full History" button.
-  - `LocalizationSettings.jsx`: Language select and Theme buttons are unmanaged UI scaffolding with no active i18n or theme engine bindings.
-  - `HelpSupport.jsx`: The "Contact Support" button has no `onClick` or `Link` handler and does not navigate to `/user/feedback`.
-- **Recommended Action:**
-  - Connect `LoginHistory.jsx` to live user sessions from Better-Auth's `session` table or PostgreSQL `activity_log`.
-  - Wire `HelpSupport.jsx` button to route directly to `/user/feedback`.
-  - Add functional persistence or hide unimplemented localization/theme scaffolding until full i18n is scheduled.
-
----
-
-### 6. TanStack Query v5 Syntax & Deprecation Inconsistencies
+### 5. TanStack Query v5 Syntax & Deprecation Inconsistencies
 - **Location:** `client/src/hooks/useModuleViewer.js`, `client/src/pages/user/dashboard/Dashboard.jsx`, `client/src/pages/user/hooks/usePaginatedAnnouncements.js`
 - **Description:**
   - `useModuleViewer.js` and `useFeedbackHistory.js` use legacy array syntax for invalidations: `queryClient.invalidateQueries(["userDashboard"])` instead of TanStack Query v5 object syntax `{ queryKey: ["userDashboard"] }`.
@@ -554,7 +556,7 @@ This document tracks identified technical debt, architectural decisions, missing
 
 ---
 
-### 7. Strict Admin-Provisioning Hierarchy Enforcement
+### 6. Strict Admin-Provisioning Hierarchy Enforcement
 - **Location:** `client/src/pages/admin/system/users/components/provision/AdminRoleSelection.jsx`, `client/src/pages/admin/mdrrmo/user-management/components/RegisterPersonnelForm.jsx`, `server/controllers/admin/user-management/provisionAdmin.js`, `server/config/permissions.js`
 - **Description:**
   - **Frontend:** `RegisterPersonnelForm.jsx` (MDRRMO admin view) hardcodes `<option value="barangay_admin">`, while `AdminRoleSelection.jsx` (System admin view) displays `mdrrmo_admin` and `barangay_admin`.
@@ -566,7 +568,7 @@ This document tracks identified technical debt, architectural decisions, missing
 
 ---
 
-### 8. Local Announcements Priority System & Urgent Badging
+### 7. Local Announcements Priority System & Urgent Badging
 - **Location:** `client/src/pages/admin/barangay/workspace/announcementModal.jsx`, `client/src/components/ui/announcements/AnnouncementCard.jsx`, `client/src/pages/admin/mdrrmo/LiveAlerts.jsx`, `server/controllers/admin/barangayController.js`
 - **Description:** While basic localized announcement creation (`title`, `content`) exists for Barangay Admins, the priority categorization system (`Standard` vs `Urgent`), urgent advisory badge indicators on resident announcement cards, and MDRRMO/Municipal broadcast overrides remain unimplemented scaffolding (`LiveAlerts.jsx` displays *"The announcement broadcasting system is currently being developed."*).
 - **Architectural Impact:** Critical emergency advisories cannot be visually differentiated from standard municipal announcements on resident feeds.
@@ -576,7 +578,7 @@ This document tracks identified technical debt, architectural decisions, missing
 
 ---
 
-### 9. Progressive Web App (PWA) Manifest & Production Asset Precaching
+### 8. Progressive Web App (PWA) Manifest & Production Asset Precaching
 - **Location:** `client/public/manifest.json`, `client/index.html`, `client/public/service-worker.js`, `client/vite.config.js`
 - **Description:**
   - **Missing Web App Manifest:** No `manifest.json` or `manifest.webmanifest` exists in `client/public/`. The application lacks `theme_color`, `background_color`, `display: "standalone"`, `start_url`, and high-resolution PWA app icon definitions (`192x192`, `512x512`, `maskable`).
@@ -591,13 +593,13 @@ This document tracks identified technical debt, architectural decisions, missing
 
 ---
 
-### 10. Offline-Replay Duplicate Risk (Idempotency Keys)
+### 9. Offline-Replay Duplicate Risk (Idempotency Keys)
 - **Location:** `client/src/lib/LocalSave/syncManager.js`, `server/controllers/feedback/feedbackController.js`, `server/controllers/admin/barangayController.js`
 - **Description:**
   - **Context:** The application is an offline-first PWA with a background sync queue (`syncManager.js` replaying queued writes via Dexie on reconnect). Any `POST` endpoint without a unique constraint is vulnerable to duplicate creation if the server processes a request successfully but the HTTP 200 OK never reaches the client before the connection drops — the client re-queues and replays the same write on the next reconnect.
   - **Confirmed Vulnerable (verified against real code):**
     - `POST /api/feedbacks` (`feedbackController.js`) — raw `INSERT INTO feedbacks`, no deduplication key or unique constraint.
-    - Future: `POST /api/announcements` — same pattern, and this endpoint does not exist as a real feature yet (Item 8, deferred).
+    - Future: `POST /api/announcements` — same pattern, and this endpoint does not exist as a real feature yet (Item 7, deferred).
   - **Confirmed NOT Vulnerable (real UNIQUE constraints + ON CONFLICT verified):**
     - `user_step_progress` (`CONSTRAINT unique_user_step UNIQUE (user_id, step_id)` with `ON CONFLICT (user_id, step_id) DO NOTHING`).
     - `certificates` (`CONSTRAINT uq_certificates_user_module UNIQUE (user_id, module_id)` with `ON CONFLICT (user_id, module_id) DO NOTHING`).
@@ -605,4 +607,4 @@ This document tracks identified technical debt, architectural decisions, missing
 - **Recommended Action (not yet implemented):**
   - Client generates a UUID (`client_mutation_id`) when queuing a write in Dexie `sync_queue`, passed either via an `Idempotency-Key` request header or as a body/column value.
   - Server defines unique constraints on `client_mutation_id` and executes `ON CONFLICT (client_mutation_id) DO NOTHING` on all creation endpoints that interface with the offline sync queue.
-- **Strategic Decision:** Bundle this enhancement with the Local Announcements build (Item 8) rather than fixing feedback in isolation now — no sense adding the idempotency plumbing to a feature that does not exist yet, and current feedback exposure is lower-frequency (requires the specific processed-but-response-lost race condition) than the Publish-button double-click case, which was fixed separately and immediately.
+- **Strategic Decision:** Bundle this enhancement with the Local Announcements build (Item 7) rather than fixing feedback in isolation now — no sense adding the idempotency plumbing to a feature that does not exist yet, and current feedback exposure is lower-frequency (requires the specific processed-but-response-lost race condition) than the Publish-button double-click case, which was fixed separately and immediately.
