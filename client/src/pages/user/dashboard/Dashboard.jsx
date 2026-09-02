@@ -25,18 +25,27 @@ export default function UserDashboard() {
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
   const { data: session } = authClient.useSession();
 
-  const { data: dashboardData, isLoading: loading } = useQuery({
+  const {
+    data: dashboardData,
+    isLoading: loading,
+    isError,
+    error,
+  } = useQuery({
     queryKey: ["userDashboard"],
     queryFn: async () => {
       const response = await apiClient.get("/user/dashboard");
       // Return raw response.data to handle both old and new backend shapes gracefully
       return response.data;
     },
-    onError: (err) => {
-      console.error("Error fetching dashboard data:", err);
-      toast.error("Failed to load dashboard data");
-    },
   });
+
+  // Modern v5 pattern: Handle query error side effects via useEffect
+  useEffect(() => {
+    if (isError && error) {
+      console.error("Error fetching dashboard data:", error);
+      toast.error("Failed to load dashboard data");
+    }
+  }, [isError, error]);
 
   // Defensively handle React Query HMR cache poisoning
   // (where the old { success, data } object might still be cached)

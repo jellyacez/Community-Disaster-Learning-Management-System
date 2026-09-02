@@ -9,6 +9,15 @@ import { Cancel01Icon, Logout01Icon, ArrowRight01Icon, ArrowDown01Icon } from "@
 import { ROLE_BASED_LINKS } from "../../constants/adminNavLinks";
 import useDocumentTitle from "../../hooks/useDocumentTitle";
 
+// Clean label mapping for all admin roles
+const ROLE_DISPLAY_NAMES = {
+  resident: "Resident",
+  barangay_admin: "Barangay Admin",
+  mdrrmo_admin: "MDRRMO Admin",
+  head_mdrrmo_admin: "Head MDRRMO Admin",
+  system_admin: "System Admin",
+};
+
 export default function AdminSidebar({ sidebarOpen, setSidebarOpen }) {
   const { data: session } = authClient.useSession();
   const location = useLocation();
@@ -49,6 +58,9 @@ export default function AdminSidebar({ sidebarOpen, setSidebarOpen }) {
     }
   };
 
+  // Format role label cleanly without underscores
+  const formattedRole = ROLE_DISPLAY_NAMES[userRole] || userRole.replace(/_/g, " ");
+
   return (
     <>
       {/* Mobile Sidebar Overlay */}
@@ -81,7 +93,9 @@ export default function AdminSidebar({ sidebarOpen, setSidebarOpen }) {
             {session?.user?.name?.charAt(0).toUpperCase() || "A"}
           </div>
           <p className="font-semibold text-gray-900">{session?.user?.name || "Loading..."}</p>
-          <p className="text-xs text-gray-500 uppercase tracking-wider font-medium">{userRole.replace('_', ' ')}</p>
+          <p className="text-xs text-gray-500 uppercase tracking-wider font-medium">
+            {formattedRole}
+          </p>
         </div>
 
         {/* Sidebar Navigation */}
@@ -96,8 +110,6 @@ export default function AdminSidebar({ sidebarOpen, setSidebarOpen }) {
                   const hasSubItems = link.subItems && link.subItems.length > 0;
                   const isExpanded = !!expandedMenus[link.name];
                   
-                  // For a flat link, it is active if it matches exactly or is a subpath.
-                  // For a parent link, it is active if any of its subItems match.
                   const isActive = hasSubItems
                     ? link.subItems.some(sub => location.pathname === sub.path || location.pathname.startsWith(`${sub.path}/`))
                     : (location.pathname === link.path || (link.path && location.pathname.startsWith(`${link.path}/`)));
@@ -195,4 +207,3 @@ export default function AdminSidebar({ sidebarOpen, setSidebarOpen }) {
     </>
   );
 }
-
