@@ -3,6 +3,7 @@ import apiClient from '../apiClient';
 import toast from 'react-hot-toast';
 
 export const MAX_RETRY_COUNT = 5;
+export const MAX_AUTH_RETRY_COUNT = 3; // Bounded retries for transient auth (401) races
 export const BASE_DELAY_MS = 10000; // 10 seconds
 export const MAX_DELAY_MS = 1800000; // 30 minutes
 
@@ -22,7 +23,7 @@ export const calculateBackoff = (retryCount) => {
 /**
  * Distinguish between transient and terminal errors
  */
-export const isTransientError = (error) => {
+export const isTransientError = (error, retryCount = 0) => {
   // Device network error or timeout while browser reports online
   if (!error.response && navigator.onLine) return true;
   if (error.code === 'ECONNABORTED' || error.code === 'ERR_NETWORK') return true;
@@ -33,9 +34,13 @@ export const isTransientError = (error) => {
   // Server-side errors (500–599) are transient
   if (error.response?.status >= 500 && error.response?.status <= 599) return true;
 
-  // Everything else (400, 401, 403, 404, 422, unhandled schema) is terminal
+  // Auth race condition (401 Unauthorized) is transient ONLY within bounded retry budget
+  if (error.response?.status === 401 && retryCount < MAX_AUTH_RETRY_COUNT) return true;
+
+  // Everything else (400, 403, 404, 422, unhandled schema, or 401 past budget) is terminal
   return false;
 };
+
 
 /**
  * Human-readable error message extractor
@@ -203,60 +208,50 @@ export const processOfflineQueue = async () => {
         break;
       }
 
+      const isAuthError = error.response?.status === 401;
+      const currentRetries = (task.retry_count || 0) + 1;
+      const maxAllowedRetries = isAuthError ? MAX_AUTH_RETRY_COUNT : MAX_RETRY_COUNT;
       const errorMessage = extractErrorMessage(error);
-      const isTransient = isTransientError(error);
+      const isTransient = isTransientError(error, task.retry_count || 0);
 
-      if (isTransient) {
-        const currentRetries = (task.retry_count || 0) + 1;
+      if (isTransient && currentRetries < maxAllowedRetries) {
+        // Schedule next exponential backoff
+        const backoffDelay = calculateBackoff(currentRetries);
+        const nextRetryAt = Date.now() + backoffDelay;
 
-        if (currentRetries >= MAX_RETRY_COUNT) {
-          // Exhausted retry attempts -> Reclassify as permanently failed
-          console.error(
-            `[SyncManager] Task ${task.sync_id} exhausted max retries (${MAX_RETRY_COUNT}). Marking as failed.`,
-            error
-          );
-          await localDb.sync_queue.update(task.sync_id, {
-            status: 'failed',
-            retry_count: currentRetries,
-            last_error: errorMessage,
-            error_type: 'transient_exhausted',
-            failed_at: Date.now(),
-            next_retry_at: null
-          });
+        console.warn(
+          `[SyncManager] Task ${task.sync_id} encountered transient ${isAuthError ? 'auth (401)' : 'network/server'} error (Attempt ${currentRetries}/${maxAllowedRetries}). Next retry in ${(
+            backoffDelay / 1000
+          ).toFixed(0)}s.`,
+          errorMessage
+        );
 
-          toast.error(`Sync failed for ${getActionDescription(task)} after ${MAX_RETRY_COUNT} attempts: ${errorMessage}`, {
-            duration: 6000
-          });
-        } else {
-          // Schedule next exponential backoff
-          const backoffDelay = calculateBackoff(currentRetries);
-          const nextRetryAt = Date.now() + backoffDelay;
-
-          console.warn(
-            `[SyncManager] Task ${task.sync_id} encountered transient error (Attempt ${currentRetries}/${MAX_RETRY_COUNT}). Next retry in ${(
-              backoffDelay / 1000
-            ).toFixed(0)}s.`,
-            errorMessage
-          );
-
-          await localDb.sync_queue.update(task.sync_id, {
-            status: 'retrying',
-            retry_count: currentRetries,
-            next_retry_at: nextRetryAt,
-            last_error: errorMessage,
-            error_type: 'transient',
-            last_attempt_at: Date.now()
-          });
-        }
+        await localDb.sync_queue.update(task.sync_id, {
+          status: 'retrying',
+          retry_count: currentRetries,
+          next_retry_at: nextRetryAt,
+          last_error: errorMessage,
+          error_type: isAuthError ? 'auth_retry' : 'transient',
+          last_attempt_at: Date.now()
+        });
       } else {
-        // Terminal error -> Fail immediately without retries
-        console.error(`[SyncManager] Task ${task.sync_id} encountered terminal error. Failing immediately:`, errorMessage);
+        // Terminal error OR exhausted retry budget
+        const errorType = isAuthError
+          ? 'auth_expired'
+          : isTransient
+            ? 'transient_exhausted'
+            : 'terminal';
+
+        console.error(
+          `[SyncManager] Task ${task.sync_id} failed (${errorType}). Total attempts: ${currentRetries}.`,
+          errorMessage
+        );
 
         await localDb.sync_queue.update(task.sync_id, {
           status: 'failed',
-          retry_count: (task.retry_count || 0) + 1,
+          retry_count: currentRetries,
           last_error: errorMessage,
-          error_type: 'terminal',
+          error_type: errorType,
           failed_at: Date.now(),
           next_retry_at: null
         });

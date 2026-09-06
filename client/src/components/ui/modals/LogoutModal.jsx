@@ -1,8 +1,19 @@
+import { useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Cancel01Icon, Logout01Icon } from "@hugeicons/core-free-icons";
 
 export default function LogoutModal({ isOpen, onClose, onConfirm }) {
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape") {
+        onClose();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, onClose]);
   return (
     <AnimatePresence>
       {isOpen && (

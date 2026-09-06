@@ -2,7 +2,7 @@ import { useUserManagement } from "./hooks/useUserManagement";
 import UserDirectoryTable from "./components/UserDirectoryTable";
 import RegisterPersonnelForm from "./components/RegisterPersonnelForm";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { UserAdd01Icon } from "@hugeicons/core-free-icons";
+import { UserAdd01Icon, Search01Icon } from "@hugeicons/core-free-icons";
 import { useState } from "react";
 
 export default function UserManagement() {
@@ -56,11 +56,49 @@ export default function UserManagement() {
 
           <button
             onClick={() => setIsAddModalOpen(true)}
-            className="flex items-center justify-center gap-2 px-3 py-1.5 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors w-full sm:w-auto"
+            className="flex items-center justify-center gap-2 px-3.5 py-2 text-sm font-semibold text-white bg-red-600 rounded-xl hover:bg-red-700 transition-colors w-full sm:w-auto shadow-2xs cursor-pointer"
           >
             <HugeiconsIcon icon={UserAdd01Icon} size={16} />
             <span>Add Personnel</span>
           </button>
+        </div>
+
+        {/* Basic Hierarchy-Independent Filters (Search + Role) */}
+        <div className="px-6 py-3.5 bg-gray-50/50 border-b border-gray-100 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+          <div className="relative flex-1">
+            <HugeiconsIcon icon={Search01Icon} className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search by name or email..."
+              aria-label="Search personnel by name or email"
+              value={state.search}
+              onChange={(e) => {
+                actions.setSearch(e.target.value);
+                actions.setPage(1);
+              }}
+              className="w-full pl-9 pr-4 py-2 bg-white border border-gray-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all"
+            />
+          </div>
+
+          <div className="flex items-center gap-2">
+            <label htmlFor="mdrrmo-role-filter" className="sr-only">Filter by role</label>
+            <select
+              id="mdrrmo-role-filter"
+              value={state.roleFilter}
+              aria-label="Filter by role"
+              onChange={(e) => {
+                actions.setRoleFilter(e.target.value);
+                actions.setPage(1);
+              }}
+              className="px-3.5 py-2 bg-white border border-gray-200 rounded-xl text-xs sm:text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all cursor-pointer"
+            >
+              <option value="">All Roles</option>
+              <option value="barangay_admin">Barangay Admin</option>
+              <option value="mdrrmo_admin">MDRRMO Admin</option>
+              <option value="head_mdrrmo_admin">Head MDRRMO Admin</option>
+              <option value="resident">Resident</option>
+            </select>
+          </div>
         </div>
 
         <UserDirectoryTable 
@@ -76,7 +114,15 @@ export default function UserManagement() {
               <RegisterPersonnelForm 
                 userForm={state.userForm}
                 setUserForm={actions.setUserForm}
-                handleUserSubmit={(e) => { actions.handleUserSubmit(e); setIsAddModalOpen(false); }}
+                isSubmitting={state.isMutationPending}
+                handleUserSubmit={async (e) => {
+                  try {
+                    await actions.handleUserSubmit(e);
+                    setIsAddModalOpen(false);
+                  } catch (err) {
+                    // Stay open on error so user can correct
+                  }
+                }}
                 onClose={() => setIsAddModalOpen(false)}
               />
             </div>

@@ -1,5 +1,5 @@
 // --- START: UserDashboard.jsx ---
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useOutletContext, useLocation, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import apiClient from "../../../lib/apiClient";
@@ -15,6 +15,9 @@ import DashboardEmergencyContacts from "../../../components/ui/dashboard/Dashboa
 import useDocumentTitle from "../../../hooks/useDocumentTitle";
 import toast from "react-hot-toast";
 import OnboardingModal from "../../../components/ui/modals/OnboardingModal.jsx";
+
+import { HugeiconsIcon } from "@hugeicons/react";
+import { InformationCircleIcon } from "@hugeicons/core-free-icons";
 
 export default function UserDashboard() {
   useDocumentTitle("Dashboard | Bacolor LMS");
@@ -55,13 +58,19 @@ export default function UserDashboard() {
       ? dashboardData.data
       : {};
 
-  const displayData = {
+  const displayData = useMemo(() => ({
     totalModules: rawData.totalModules || 0,
     announcements: rawData.announcements || [],
     enrolledModules: rawData.enrolledModules || [],
     completionRate: rawData.completionRate || 0,
     certificates: rawData.certificates || [],
-  };
+  }), [rawData]);
+
+  const activeModules = useMemo(
+    () => displayData.enrolledModules.filter((m) => m.progress < 100),
+    [displayData.enrolledModules],
+  );
+  const topActiveModule = activeModules[0];
 
   useEffect(() => {
     // Wait for the user to finish onboarding before showing WelcomeModal.
@@ -69,11 +78,10 @@ export default function UserDashboard() {
     if (!currentUser || !currentUser.barangay_id) return;
 
     // Case 1: Email/password registration — flag set in useRegisterForm on success.
-    const isNewlyRegistered = sessionStorage.getItem("newlyRegistered");
-    if (isNewlyRegistered) {
+    if (sessionStorage.getItem("newlyRegistered") === "true") {
+      setTimeout(() => setShowWelcomeModal(true), 0);
       sessionStorage.removeItem("newlyRegistered");
       sessionStorage.setItem("hasSeenWelcome", "true");
-      setTimeout(() => setShowWelcomeModal(true), 0);
       return;
     }
 
@@ -123,9 +131,10 @@ export default function UserDashboard() {
         <WelcomeBanner
           userName={currentUser.name}
           onBrowse={() => navigate("/user/modules")}
-          onContinue={() => navigate("/user/enrolled")}
+          onResume={() => topActiveModule && handleResume(topActiveModule.id)}
+          hasActiveModules={activeModules.length > 0}
         />
-        <DashboardStats displayData={displayData} loading={loading} />
+        <DashboardStats displayData={displayData} loading={loading} navigate={navigate} />
 
         <section className="grid gap-6 lg:grid-cols-3">
           <DashboardEnrolledList
@@ -143,6 +152,37 @@ export default function UserDashboard() {
             />
 
             <DashboardEmergencyContacts />
+
+            {/* Persistent Support Desk Link */}
+            <div
+              role="button"
+              tabIndex={0}
+              onClick={() => navigate("/user/feedback")}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  navigate("/user/feedback");
+                }
+              }}
+              className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm flex items-center justify-between hover:border-gray-300 hover:shadow-md transition-all cursor-pointer group focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 outline-hidden"
+            >
+              <div className="flex items-center gap-3 min-w-0 pr-2">
+                <div className="w-9 h-9 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600 shrink-0">
+                  <HugeiconsIcon icon={InformationCircleIcon} className="w-5 h-5 stroke-[2]" />
+                </div>
+                <div className="min-w-0">
+                  <h3 className="text-xs sm:text-sm font-bold text-gray-900 group-hover:text-red-600 transition-colors">
+                    MDRRMO Help Desk & Support
+                  </h3>
+                  <p className="text-xs text-gray-500">
+                    Submit inquiries & LMS feedback
+                  </p>
+                </div>
+              </div>
+              <span className="text-xs font-bold text-red-600 group-hover:text-red-700 shrink-0">
+                Contact &rarr;
+              </span>
+            </div>
           </div>
         </section>
       </div>

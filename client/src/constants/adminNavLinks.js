@@ -10,6 +10,7 @@ import {
   Activity01Icon,
   Message01Icon,
   Award01Icon,
+  CheckmarkBadge01Icon,
 } from "@hugeicons/core-free-icons";
 
 export const ROLE_BASED_LINKS = {
@@ -138,7 +139,7 @@ export const ROLE_BASED_LINKS = {
         {
           name: "Approve Modules",
           path: "/admin/mdrrmo/approvals",
-          icon: FolderAddIcon,
+          icon: CheckmarkBadge01Icon,
         },
       ],
     },
@@ -194,7 +195,7 @@ export const ROLE_BASED_LINKS = {
       category: "Governance",
       items: [
         {
-          name: "Audit Web Trail",
+          name: "Activity Log",
           path: "/admin/barangay/logs",
           icon: Note01Icon,
         },

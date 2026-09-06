@@ -66,13 +66,19 @@ const EnrolledModuleCard = memo(function EnrolledModuleCard({ module, onResume }
           </div>
           <div className="h-3 w-full overflow-hidden rounded-full bg-gray-100">
             <div
-              className="h-full rounded-full bg-red-600"
+              className="h-full rounded-full bg-red-600 transition-all duration-500"
               style={{ width: `${module.progress}%` }}
             />
           </div>
+          {module.progress < 100 && module.nextStepTitle && (
+            <p className="mt-2 text-xs font-medium text-gray-600 truncate flex items-center gap-1.5" title={`Next: ${module.nextStepTitle}`}>
+              <span className="font-bold text-red-600 shrink-0">Next:</span>
+              <span className="truncate">{module.nextStepTitle}</span>
+            </p>
+          )}
           <button
             onClick={() => onResume(module.id)}
-            className="mt-4 w-full rounded-xl bg-red-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-red-700 transition cursor-pointer"
+            className="mt-3.5 w-full rounded-xl bg-red-600 px-4 py-3 min-h-[44px] text-sm font-bold text-white hover:bg-red-700 transition flex items-center justify-center cursor-pointer shadow-2xs focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 outline-hidden"
           >
             Resume Module
           </button>

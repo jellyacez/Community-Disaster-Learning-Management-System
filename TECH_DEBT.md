@@ -6,6 +6,37 @@ This document tracks identified technical debt, architectural decisions, missing
 
 ## 🟢 Resolved Items
 
+### Resolved: Database Index Performance Optimization & Complete Foreign Key Coverage (`06_add_performance_indexes.sql` & `07_drop_redundant_indexes.sql`)
+- **Location:** `server/migrations/` (`06_add_performance_indexes.sql`, `07_drop_redundant_indexes.sql`, `schema.sql`), live PostgreSQL `LMS_db`
+- **Issue:** 
+  1. Multiple core foreign key columns across `session`, `module_data`, `user`, `user_step_progress`, `results`, `announcements`, `certificates`, `choices`, and `questions` lacked supporting B-tree indexes, causing sequential table scans during cascading deletes and multi-table joins.
+  2. Public module catalog filtering (`status = 'published' AND moddateremove IS NULL`) and session telemetry sorting (`"userId" = $1 ORDER BY "updatedAt" DESC`) performed sequential scans and in-memory heap sorting.
+  3. Redundant duplicate indexes (`idx_certificates_verification_token`, `idx_module_activity_user`, `idx_activity_log_user_id`) consumed unnecessary write I/O.
+- **Resolution:**
+  - **Foreign Key Supporting Indexes:** Added 14 missing foreign key indexes (`idx_session_user_id`, `idx_module_data_parent_mod_id`, `idx_module_data_author_id`, `idx_user_barangay_id`, `idx_user_step_progress_step_id`, `idx_results_user_mod`, `idx_results_mod_id`, `idx_announcements_author_id`, `idx_announcements_barangay_id`, `idx_certificates_revoked_by`, `idx_certificates_modact_id`, `idx_choices_question_id`, `idx_questions_mod_id`, `idx_user_notification_user_id`).
+  - **Selective Catalog Partial Index:** Created `idx_module_data_published ON module_data (mod_id DESC) WHERE status = 'published' AND moddateremove IS NULL`, eliminating table scans on the high-frequency public catalog with zero write penalty on drafts/archived edits.
+  - **Session Telemetry & Ordering Composite Indexes:** Created `idx_session_user_updated ON "session" ("userId", "updatedAt" DESC)` eliminating in-memory sorting, along with `idx_module_data_parent_status`, `idx_module_data_status_dateadd`, `idx_announcements_date_desc`, and `idx_announcements_barangay_date`.
+  - **Redundant Index Removal:** Dropped 3 redundant indexes in `07_drop_redundant_indexes.sql`.
+  - **Schema Synchronization:** Updated `schema.sql`, removed legacy duplicate constraint definitions, and verified that fresh `setup.js` runs 100% cleanly from scratch with zero errors.
+- **Verification:** Verified all 20 new indexes exist in `LMS_db` via `pg_indexes`, confirmed 0 dropped indexes remain (total 75 active public indexes), and executed full setup against an isolated scratch database with 0 errors.
+
+---
+
+### Resolved: Resident Settings Mock Data Elimination & Telemetry Integration (`Settings.jsx`)
+- **Location:** `client/src/components/settings/` (`LoginHistory.jsx`, `LocalizationSettings.jsx`, `HelpSupport.jsx`), `server/controllers/users/userSettingsController.js`, `server/routes/users/userRoutes.js`, `server/utils/auth.js`
+- **Issue:** Resident settings contained mock data and unhandled UI scaffolding:
+  1. `LoginHistory.jsx` rendered static hardcoded mock devices/IPs (`"iPhone 13"`, `"112.198.xxx.xx"`).
+  2. `HelpSupport.jsx` "Contact Support" button had no navigation handler.
+  3. `LocalizationSettings.jsx` showed selectable controls that had no backend i18n or theme engine bindings.
+- **Resolution:**
+  - **Live Session Telemetry:** Implemented `GET /api/users/me/sessions` querying active sessions from PostgreSQL `session` table with device parsing, IP display, relative timestamp formatting, and dynamic TanStack Query caching.
+  - **Support Routing:** Connected Help & Support directly to the interactive `/user/feedback` ticketing view.
+  - **Scaffolding Transparency:** Disabled unimplemented language and theme controls, adding clear "Under Development" / "Coming Soon" badges and an informative dialect translation advisory banner.
+  - **OAuth & Schema Guard:** Added Google OAuth environment check to prevent Better-Auth crashes when OAuth is unconfigured, and added column schema mappings.
+- **Verification:** Verified live database query execution against PostgreSQL `session` table, client production build (`0 errors`), and server clean boot.
+
+---
+
 ### Resolved: Offline Sync Manager Authentication Context (`syncManager.js`)
 - **Location:** `client/src/lib/LocalSave/syncManager.js`
 - **Issue:** `syncManager.js` imported `authClient` from `@better-auth/react` and called `authClient.post(...)` for `MARK_STEP_COMPLETE` and `SUBMIT_QUIZ` task actions. Because `authClient` is an authentication SDK and does not expose REST HTTP methods, replaying queued offline tasks caused runtime errors (`TypeError: authClient.post is not a function`).
@@ -401,6 +432,90 @@ This document tracks identified technical debt, architectural decisions, missing
 
 ---
 
+### Resolved: Service Worker Dead Background Sync & Legacy Database Removal
+- **Location:** `client/public/service-worker.js`
+- **Issue:** `service-worker.js` contained an orphaned `sync` event listener and legacy database functions (`replayWriteQueue`, `incrementRetryOrFail`, `markItemFailed`) targeting a non-existent indexedDB (`"BacolorLMSOfflineDB"` and `"writeQueue"`). All actual offline queueing runs on the main thread via Dexie `LMS_OfflineDB` and `syncManager.js`.
+- **Resolution:**
+  - Audited the entire client codebase (`0` external references found for `replayWriteQueue`, `incrementRetryOrFail`, `markItemFailed`, or `sync-write-queue`).
+  - Removed the `sync` event listener and the three dead helper functions from `client/public/service-worker.js`.
+  - Preserved valid PWA service worker lifecycle handlers (`install`, `activate`, `fetch` with navigation network-first, API caching, static asset stale-while-revalidate, and offline video placeholder fallbacks).
+- **Verification:** Verified via clean Vite build (`npm run build`, 0 errors) and automated Puppeteer browser tests confirming SW registration, activation, CacheStorage population (`bacolor-lms-cache-v1`), dynamic API caching on first visit, and offline video SVG placeholder delivery.
+
+---
+
+### Resolved: Offline Sync Session-Hydration Gating & Bounded 401 Auth Retry
+- **Location:** `client/src/hooks/useNetworkSync.js`, `client/src/lib/LocalSave/syncManager.js`
+- **Issue:** `useNetworkSync.js` fired `processOfflineQueue()` immediately on mount before Better-Auth session hydration completed. When `syncManager.js` received an HTTP 401, it treated 401 as a hard terminal error (`status: 'failed'`, `next_retry_at: null`), permanently abandoning queued offline writes without retrying.
+- **Resolution:**
+  - **Session-Hydration Gating (`useNetworkSync.js`):** Integrated `authClient.useSession()` to gate the mount-time sync trigger until session hydration completes (`!isPending && session?.user`).
+  - **Bounded 401 Auth Retry (`syncManager.js`):** Reclassified HTTP 401 as a transient, retryable error within a dedicated budget (`MAX_AUTH_RETRY_COUNT = 3`). Transient 401s now retry with full-jitter exponential backoff before transitioning to terminal `status: 'failed'` (`error_type: 'auth_expired'`), preventing both infinite retry loops and data loss during authentication races.
+  - **Dexie DB Audit:** Inspected dev browser `sync_queue` table and confirmed 0 orphaned/lost writes.
+- **Verification:** Verified via Puppeteer tests confirming (1) transient 401 session races safely retry and dequeue on subsequent reconnect, and (2) genuinely logged-out/expired sessions terminate safely after exactly 3 attempts without looping.
+
+---
+
+### Resolved: Module Builder Wizard Editing Mode & Rejection Revision Flow (`PUT /api/modules/:id` & `ModuleCard.jsx`)
+- **Location:** `server/routes/modules/moduleRoutes.js`, `server/controllers/modules/moduleController.js`, `server/services/modules/ModuleService.js`, `client/src/hooks/useModuleBuilder.js`, `client/src/hooks/module-builder/useModuleSubmit.js`, `client/src/components/ui/modules/ModuleCard.jsx`, `client/src/pages/admin/mdrrmo/module-management/ModuleManagement.jsx`
+- **Issue:** 
+  1. The module builder wizard only supported module creation (`POST /api/modules`). Existing learning paths, syllabus steps, and assessment questions could not be updated or re-hydrated for revision.
+  2. On administrative module cards, the primary action button (`Manage` / `Revise & Edit`) was an unmanaged stub with a no-op handler (`e.stopPropagation()`). When an MDRRMO Head Admin rejected a module with remarks, the authoring admin could not open the builder wizard in edit mode.
+- **Resolution:**
+  - **Backend API & Service:** Added `GET /api/modules/:id/edit-details` and `PUT /api/modules/:id` endpoints. Implemented `ModuleService.getModuleForEditing()` to fetch the hierarchical curriculum tree (levels $\to$ steps $\to$ quiz questions $\to$ choices) and `ModuleService.updateModuleTransaction()` to transactionally reconcile and update syllabus metadata, steps, and questions.
+  - **Frontend Hydration & Multi-Step Wizard:** Built `loadModuleForEdit(moduleId)` in `useModuleBuilder.js` to hydrate existing forms, levels, and sequence flows. Updated `useModuleSubmit.js` to execute `PUT /api/modules/:editingModuleId` when `editingModuleId` is present.
+  - **Card Action Flow:** Wired both "Manage" (published/draft modules) and "Revise & Edit" (rejected modules) in `ModuleCard.jsx` and `ModuleManagement.jsx` to `handleEditModule(mod.mod_id)`.
+- **Verification:** Verified end-to-end via automated Puppeteer Chromium test on a live running instance: opened module management, clicked "Manage" on a card, confirmed builder hydration, updated title/content, submitted changes via `PUT /api/modules/:id` (200 OK), reloaded the page, verified persistence in PostgreSQL and UI cards, and confirmed 0 console errors.
+
+### Resolved: Sequence Canvas Flow Configuration Stub (`SequenceCanvas.jsx`)
+- **Location:** `client/src/pages/admin/mdrrmo/module-management/builders/SequenceCanvas.jsx`
+- **Issue:** An unmanaged `<select>` dropdown (`Sequential` / `Optional`) was present in the builder canvas header, creating administrative confusion since the PostgreSQL schema and `ModuleProgressService.js` enforce strict linear progression.
+- **Resolution:** Replaced the unmanaged `<select>` with a static, non-interactive status badge reading `"Flow: Sequential"` with an emerald indicator, matching the actual linear-only backend progression model with no changes to underlying progression logic.
+- **Verification:** Verified via live Puppeteer browser screenshot capture showing the new badge rendered in the Sequence Canvas header, code audit confirming 0 leftover select references, and clean `npm run build` production compilation (0 errors).
+
+---
+
+### Resolved: Draft/Versioning Model & Progress Preservation for Published Module Edits (`moduleController.js`, `ModuleService.js`, `DashboardService.js`, `ModuleCard.jsx`)
+- **Location:** `server/controllers/modules/moduleController.js`, `server/services/modules/ModuleService.js`, `server/services/users/DashboardService.js`, `client/src/components/ui/modules/ModuleCard.jsx`, `client/src/pages/admin/mdrrmo/module-management/ModuleManagement.jsx`, `server/migrations/schema.sql`, PostgreSQL schema (`module_data`)
+- **Issue:** 
+  1. `updateModuleTransaction` executed a destructive delete-and-reinsert of all levels, steps, questions, and choices under new auto-generated IDs. Because `user_step_progress.step_id` has `ON DELETE CASCADE`, editing an already-published module permanently destroyed enrolled residents' step-completion histories, causing partial progress to reset to 0% and re-locking steps upon visiting `ModuleViewer`.
+  2. "Save as Draft & Exit" on a published module directly demoted the live module to `status: 'draft'`, immediately hiding the active course from resident catalogs.
+  3. Resident dashboard total module counts were double-counting in-flight pending drafts.
+- **Resolution:**
+  - **Draft/Versioning Model (Option 2):** When a `published` module is edited (via either "Submit Changes for Review" or "Save as Draft & Exit"), the backend clones the entire curriculum tree into a new `module_data` draft row (`status: 'draft'` or `'pending_review'`) with `parent_mod_id` referencing the original published module. The original published module and its step IDs remain untouched and fully live for all active learners.
+  - **Seamless Enrollee Completion & Auto-Archiving:** When an MDRRMO Head Admin approves the draft revision (`status = 'published'`), the original module is automatically transitioned to `status = 'archived'`. Residents already enrolled in the archived version stay on that version until completion with 100% progress integrity and receive their certificate upon finishing without regression.
+  - **Duplicate Draft Race Guard:** Added backend validation rejecting competing edit requests with `HTTP 409 Conflict` if an active draft or pending review revision already exists for the module.
+  - **Admin Card UI & Metric Parity:** Disabled the "Manage" button on published cards with an active draft revision (displaying `"Revision in Progress"`), badged the draft with `"Draft Revision"`, and updated `DashboardService.js` to strictly count `status = 'published'` modules to prevent draft double-counting.
+  - **Schema & Migration:** Added `parent_mod_id INTEGER REFERENCES public.module_data(mod_id) ON DELETE SET NULL` and updated the `valid_module_status` check constraint on `module_data` to support the `'archived'` lifecycle state.
+- **Verification:** Verified via comprehensive automated end-to-end test suite (`scratch/verify_versioning_full.js` and `scratch/test_save_as_draft_and_capture.js`):
+  1. Cloned draft created with parent link on edit; original stayed published and visible to residents.
+  2. Resident enrolled in old version retained 50% step progress, completed the final step after revision publication, and received official certificate.
+  3. Second admin blocked with HTTP 409 Conflict when attempting duplicate draft creation.
+  4. Resident dashboard metrics verified not double-counting pending drafts.
+  5. "Save as Draft & Exit" verified non-destructive with before/after database snapshot comparisons.
+  6. Admin UI screenshot verified showing disabled "Revision in Progress" button and "Draft Revision" badge.
+  7. Production build `npm run build` compiled with 0 errors.
+
+---
+
+### Resolved: Admin Training Modules Archived Filtering & Read-Only Protection (`DashboardHeader.jsx`, `ModuleManagement.jsx`, `ModuleCard.jsx`, `moduleController.js`)
+- **Location:** `client/src/pages/admin/mdrrmo/module-management/components/DashboardHeader.jsx`, `client/src/pages/admin/mdrrmo/module-management/ModuleManagement.jsx`, `client/src/components/ui/modules/ModuleCard.jsx`, `server/controllers/modules/moduleController.js`
+- **Issue:** 
+  1. With the introduction of `status = 'archived'` in the draft/versioning lifecycle, the admin "Status" filter dropdown in `DashboardHeader.jsx` was hardcoded to the old status list and lacked an "Archived" option.
+  2. "All Statuses" in `ModuleManagement.jsx` returned archived modules mixed in with active published/draft courses, cluttering the primary curriculum view.
+  3. `ModuleCard.jsx` had no badge for `status === 'archived'`, leaving superseded modules rendered with active "Manage" buttons. Clicking "Manage" and submitting changes on an archived module fell through `updateModule` without cloning, triggering destructive delete-and-reinsert on historical course records.
+- **Resolution:**
+  - **Status Filter Options:** Added `<option value="Archived">Archived</option>` to `DashboardHeader.jsx`.
+  - **Default View Cleanliness:** Configured `ModuleManagement.jsx` so `"All Statuses"` defaults to `mod.status !== 'archived'`, ensuring archived modules only appear when explicitly filtering by `Status: "Archived"`.
+  - **Archived Card Badge & Read-Only UI:** Added a gray `"Archived"` pill badge (`bg-gray-100 text-gray-600 border border-gray-200`) in `ModuleCard.jsx` and replaced the "Manage" button with a single full-width `"View Details"` button for archived modules.
+  - **Server-Side Mutation Guard:** Added an explicit guard in `moduleController.updateModule` rejecting direct `PUT /api/modules/:archivedId` requests with `HTTP 400 Bad Request` (`"Archived modules cannot be edited. They are preserved for historical compliance integrity."`).
+- **Verification:** Verified via live Puppeteer browser automation and API assertions:
+  1. Default view ("All Statuses") confirmed to exclude archived modules.
+  2. "Archived" filter selection confirmed to display archived modules with gray badge and "View Details" button only (no "Manage" button).
+  3. Direct `PUT` API mutation on archived module confirmed blocked with HTTP 400.
+  4. Database audit confirmed 1:1 parent-child lineage integrity.
+  5. `npm run build` compiled with 0 errors.
+
+---
+
 ## 🟡 Open / Active Technical Debt & Optimization Items
 
 ### 1. Server-Side Pagination & Cursor Querying for High-Scale Endpoints
@@ -446,37 +561,7 @@ This document tracks identified technical debt, architectural decisions, missing
 
 ---
 
-### 5. Module Builder Wizard Editing Mode (`PUT /api/modules/:id`)
-- **Location:** `client/src/pages/admin/mdrrmo/module-management/builders/ModuleBuilderWizard.jsx`, `client/src/hooks/useModuleBuilder.js`
-- **Description:** The frontend wizard contains scaffolding for `editingModuleId`, but full module editing (hydrating existing level/step sequences, diffing questions, and updating published syllabi) is deferred on the product roadmap.
-- **Status:** Explicitly deferred pending product roadmap approval. Requires a dedicated `PUT /api/modules/:id` backend route and database transaction logic for step reconciliation.
-
----
-
-### 6. Sequence Canvas Flow Configuration Stub (`SequenceCanvas.jsx`)
-- **Location:** `client/src/pages/admin/mdrrmo/module-management/builders/SequenceCanvas.jsx:L76-L81`
-- **Description:** A "Set By" `<select>` element containing options `Sequential` and `Optional` is present in the builder canvas header. It is currently unmanaged (no `value` prop, no `onChange` handler, and not part of the module form payload).
-- **Architectural Reality:** The PostgreSQL schema enforces a strictly linear progression model (`UNIQUE (level_id, step_order)`). `ModuleProgressService.js` and `ModuleViewer.jsx` compute progress strictly linearly ($1 \to 2 \to 3$).
-- **Recommended Action:**
-  - If progression remains strictly linear: replace the `<select>` with a decorative status badge (`Flow: Sequential`) or remove it to prevent administrative confusion.
-  - If conditional branching is desired in the future: expand schema support (`is_optional`, `flow_type`) and update `ModuleProgressService`.
-
----
-
-### 7. Mock Data & Scaffolding Stubs in Resident Settings (`Settings.jsx`)
-- **Location:** `client/src/components/settings/LoginHistory.jsx`, `client/src/components/settings/LocalizationSettings.jsx`, `client/src/components/settings/HelpSupport.jsx`
-- **Description:**
-  - `LoginHistory.jsx`: Renders a 100% hardcoded mock array of devices and IP addresses (`"iPhone 13"`, `"MacBook Pro"`, `"San Fernando, Pampanga"`, `"112.198.xxx.xx"`) with an unhandled "View Full History" button.
-  - `LocalizationSettings.jsx`: Language select and Theme buttons are unmanaged UI scaffolding with no active i18n or theme engine bindings.
-  - `HelpSupport.jsx`: The "Contact Support" button has no `onClick` or `Link` handler and does not navigate to `/user/feedback`.
-- **Recommended Action:**
-  - Connect `LoginHistory.jsx` to live user sessions from Better-Auth's `session` table or PostgreSQL `activity_log`.
-  - Wire `HelpSupport.jsx` button to route directly to `/user/feedback`.
-  - Add functional persistence or hide unimplemented localization/theme scaffolding until full i18n is scheduled.
-
----
-
-### 8. TanStack Query v5 Syntax & Deprecation Inconsistencies
+### 5. TanStack Query v5 Syntax & Deprecation Inconsistencies
 - **Location:** `client/src/hooks/useModuleViewer.js`, `client/src/pages/user/dashboard/Dashboard.jsx`, `client/src/pages/user/hooks/usePaginatedAnnouncements.js`
 - **Description:**
   - `useModuleViewer.js` and `useFeedbackHistory.js` use legacy array syntax for invalidations: `queryClient.invalidateQueries(["userDashboard"])` instead of TanStack Query v5 object syntax `{ queryKey: ["userDashboard"] }`.
@@ -487,35 +572,7 @@ This document tracks identified technical debt, architectural decisions, missing
 
 ---
 
-### 9. Dead Code Removal: Service Worker Background Sync & Legacy DB (`service-worker.js`)
-- **Location:** `client/public/service-worker.js:L145-L244`
-- **Description:** `service-worker.js` defines a `sync` event listener and `replayWriteQueue()` function targeting a stale database (`"BacolorLMSOfflineDB"` and `"writeQueue"`).
-- **Architectural Reality:** The client does not register `sync` tags (`registration.sync.register`), and all real offline queueing/sync execution runs on the React thread via Dexie `LMS_OfflineDB` / `syncManager.js`.
-- **Recommended Action:**
-  - Safely delete the orphaned `replayWriteQueue()`, `incrementRetryOrFail()`, and `markItemFailed()` blocks and the `sync` event listener from `service-worker.js`.
-
----
-
-### 10. Edge Case: Offline Queue Replay When Already Online on Direct App Reopen (`useNetworkSync.js`)
-- **Location:** `client/src/hooks/useNetworkSync.js`
-- **Description:** `useNetworkSync.js` triggers `processOfflineQueue()` on mount and on the window `online` / `visibilitychange` events.
-- **Edge Case Gap:** If a user creates writes offline, closes the tab/browser, reconnects to internet while the browser is closed, and reopens the app directly in an already-online state, the initial mount trigger runs, but any transient network timing before auth cookies re-hydrate may benefit from explicit session-ready gating.
-- **Recommended Action:**
-  - Add explicit sync trigger upon verified authentication session hydration (`authClient.useSession()`) in addition to initial component mount.
-
----
-
-### 11. "Manage" / Edit Flow for Rejected Modules (`ModuleCard.jsx`)
-- **Location:** `client/src/components/ui/modules/ModuleCard.jsx:L236-L245`
-- **Description:** On administrative module cards, the primary action button (`Manage`) remains a stub displaying `title="Module management/editing is under development."` with a no-op click handler (`e.stopPropagation()`).
-- **Architectural Reality:** When an MDRRMO Head Admin rejects a module with feedback remarks, the original authoring admin sees the rejection notice on their dashboard, but clicking "Manage" cannot open the builder wizard in edit mode populated with existing steps and curriculum data.
-- **Recommended Action:**
-  - Wire `Manage` button to trigger `handleOpenWizard(module)` or `navigate('/admin/mdrrmo/modules/builder?id=' + module.id)`.
-  - Implement edit mode hydration in `useModuleBuilder` / `ModuleBuilderWizard` to pre-populate form headers, levels, and sequence flows from `GET /api/modules/:id`.
-
----
-
-### 12. Strict Admin-Provisioning Hierarchy Enforcement
+### 6. Strict Admin-Provisioning Hierarchy Enforcement
 - **Location:** `client/src/pages/admin/system/users/components/provision/AdminRoleSelection.jsx`, `client/src/pages/admin/mdrrmo/user-management/components/RegisterPersonnelForm.jsx`, `server/controllers/admin/user-management/provisionAdmin.js`, `server/config/permissions.js`
 - **Description:**
   - **Frontend:** `RegisterPersonnelForm.jsx` (MDRRMO admin view) hardcodes `<option value="barangay_admin">`, while `AdminRoleSelection.jsx` (System admin view) displays `mdrrmo_admin` and `barangay_admin`.
@@ -527,7 +584,7 @@ This document tracks identified technical debt, architectural decisions, missing
 
 ---
 
-### 13. Local Announcements Priority System & Urgent Badging
+### 7. Local Announcements Priority System & Urgent Badging
 - **Location:** `client/src/pages/admin/barangay/workspace/announcementModal.jsx`, `client/src/components/ui/announcements/AnnouncementCard.jsx`, `client/src/pages/admin/mdrrmo/LiveAlerts.jsx`, `server/controllers/admin/barangayController.js`
 - **Description:** While basic localized announcement creation (`title`, `content`) exists for Barangay Admins, the priority categorization system (`Standard` vs `Urgent`), urgent advisory badge indicators on resident announcement cards, and MDRRMO/Municipal broadcast overrides remain unimplemented scaffolding (`LiveAlerts.jsx` displays *"The announcement broadcasting system is currently being developed."*).
 - **Architectural Impact:** Critical emergency advisories cannot be visually differentiated from standard municipal announcements on resident feeds.
@@ -537,7 +594,7 @@ This document tracks identified technical debt, architectural decisions, missing
 
 ---
 
-### 14. Progressive Web App (PWA) Manifest & Production Asset Precaching
+### 8. Progressive Web App (PWA) Manifest & Production Asset Precaching
 - **Location:** `client/public/manifest.json`, `client/index.html`, `client/public/service-worker.js`, `client/vite.config.js`
 - **Description:**
   - **Missing Web App Manifest:** No `manifest.json` or `manifest.webmanifest` exists in `client/public/`. The application lacks `theme_color`, `background_color`, `display: "standalone"`, `start_url`, and high-resolution PWA app icon definitions (`192x192`, `512x512`, `maskable`).
@@ -552,13 +609,13 @@ This document tracks identified technical debt, architectural decisions, missing
 
 ---
 
-### 15. Offline-Replay Duplicate Risk (Idempotency Keys)
+### 9. Offline-Replay Duplicate Risk (Idempotency Keys)
 - **Location:** `client/src/lib/LocalSave/syncManager.js`, `server/controllers/feedback/feedbackController.js`, `server/controllers/admin/barangayController.js`
 - **Description:**
   - **Context:** The application is an offline-first PWA with a background sync queue (`syncManager.js` replaying queued writes via Dexie on reconnect). Any `POST` endpoint without a unique constraint is vulnerable to duplicate creation if the server processes a request successfully but the HTTP 200 OK never reaches the client before the connection drops — the client re-queues and replays the same write on the next reconnect.
   - **Confirmed Vulnerable (verified against real code):**
     - `POST /api/feedbacks` (`feedbackController.js`) — raw `INSERT INTO feedbacks`, no deduplication key or unique constraint.
-    - Future: `POST /api/announcements` — same pattern, and this endpoint does not exist as a real feature yet (Item 13, deferred).
+    - Future: `POST /api/announcements` — same pattern, and this endpoint does not exist as a real feature yet (Item 7, deferred).
   - **Confirmed NOT Vulnerable (real UNIQUE constraints + ON CONFLICT verified):**
     - `user_step_progress` (`CONSTRAINT unique_user_step UNIQUE (user_id, step_id)` with `ON CONFLICT (user_id, step_id) DO NOTHING`).
     - `certificates` (`CONSTRAINT uq_certificates_user_module UNIQUE (user_id, module_id)` with `ON CONFLICT (user_id, module_id) DO NOTHING`).
@@ -566,7 +623,35 @@ This document tracks identified technical debt, architectural decisions, missing
 - **Recommended Action (not yet implemented):**
   - Client generates a UUID (`client_mutation_id`) when queuing a write in Dexie `sync_queue`, passed either via an `Idempotency-Key` request header or as a body/column value.
   - Server defines unique constraints on `client_mutation_id` and executes `ON CONFLICT (client_mutation_id) DO NOTHING` on all creation endpoints that interface with the offline sync queue.
-- **Strategic Decision:** Bundle this enhancement with the Local Announcements build (Item 13) rather than fixing feedback in isolation now — no sense adding the idempotency plumbing to a feature that does not exist yet, and current feedback exposure is lower-frequency (requires the specific processed-but-response-lost race condition) than the Publish-button double-click case, which was fixed separately and immediately.
+- **Strategic Decision:** Bundle this enhancement with the Local Announcements build (Item 7) rather than fixing feedback in isolation now — no sense adding the idempotency plumbing to a feature that does not exist yet, and current feedback exposure is lower-frequency (requires the specific processed-but-response-lost race condition) than the Publish-button double-click case, which was fixed separately and immediately.
 
+---
 
-
+### 10. Self-Service Disaster Learning FAQ & Knowledge Base
+- **Location:** `client/src/components/settings/HelpSupport.jsx` (currently a single static paragraph routing straight to `/user/feedback` with no self-serve content)
+- **Gap:** No FAQ or self-service knowledge base exists anywhere in the platform. Residents have no way to obtain immediate answers to common operational questions — every inquiry routes directly to the human MDRRMO feedback/ticketing queue.
+- **Proposed Content (5 Core Disaster Learning Questions):**
+  1. **Offline Mode & Syncing:**
+     - *Question:* How do learning modules and progress work during network outages or typhoons?
+     - *Verified System Fact:* The LMS operates offline via client-side Dexie IndexedDB (`localDb.js` / `syncManager.js`). Residents can view previously downloaded lessons and complete quizzes without internet. When connectivity is restored, the background sync engine automatically flushes queued completion tasks with authenticated session cookies.
+  2. **Certificate Validity & Recertification:**
+     - *Question:* How long is my disaster preparedness certification valid, and how do I renew it?
+     - *Verified System Fact:* Disaster preparedness certificates are valid for **1 year** (`RECERTIFICATION_INTERVAL_YEARS = 1` in `server/config/constants.js`). The daily 1:00 AM maintenance cron (`certificateExpiryCron.js`) identifies certificates within a **30-day notice window** (`expires_at <= NOW() + INTERVAL '30 days'`) and dispatches proactive email reminders. Residents can retake the module/assessment to recertify, extending validity for an additional 1 year and recording audit entries in `activity_log`.
+  3. **QR Verification:**
+     - *Question:* How can Barangay officials, employers, or relief coordinators verify my credential?
+     - *Verified System Fact:* Every issued certificate features a secure cryptographic UUID (`verification_token`) and embedded QR code. Evaluators can scan the QR code using any smartphone camera or navigate directly to `https://<domain>/verify/:token` (or use the in-portal scanner in Barangay Certifications) for real-time validation against the live registry.
+  4. **Privacy & Account Rights (R.A. 10173):**
+     - *Question:* How is my personal information protected, and what happens if I delete my account?
+     - *Verified System Fact:* The platform strictly complies with Republic Act No. 10173 (Data Privacy Act of 2012) with explicit versioned consent tracking (`CONSENT_VERSION = 'v1-2026'`). If an account is deleted under the Right to Be Forgotten, all personal identifiers are removed from the `"user"` table, while qualification records are preserved as `"Archived Resident"` (`user_id = NULL`), allowing legitimate credentials to remain publicly verifiable without exposing personal identifiable information (PII).
+  5. **Dialect Support & Localization:**
+     - *Question:* Are disaster training modules available in Kapampangan or Tagalog?
+     - *Verified System Fact:* The platform interface currently operates in English (`en`) by default. As reflected in the Language Preferences section (`LocalizationSettings.jsx`), Kapampangan (`pam`) and Tagalog (`tl`) dialect localizations for the DRRM curriculum are currently under active development.
+- **Scope Constraint:**
+  - **Static Content Only:** Must be implemented as a lightweight static JSON/constants file or hardcoded frontend accordion.
+  - **Out of Scope:** No new database tables, no dynamic CMS backend, and no admin-editable FAQ APIs unless explicitly requested as a standalone requirement by MDRRMO administrators in a future milestone.
+- **Recommended Placement:**
+  - Integrated as an expandable accordion section within `client/src/components/settings/HelpSupport.jsx`, or as a dedicated *"Frequently Asked Questions"* tab alongside the existing ticket interface in `client/src/pages/user/feedback/`.
+  - **Mandatory Fallback CTA:** The FAQ section must conclude with a persistent call-to-action button (*"Still have questions? Contact MDRRMO Support"*) linking directly to `/user/feedback`. The self-service FAQ and human ticketing system must remain complementary rather than replacing one another.
+- **Rationale:**
+  - Deflects high-frequency, repetitive inquiries from overloading the municipal MDRRMO feedback queue.
+  - Closes an identified UX critique in the resident portal by providing persistent, instant self-serve guidance for community disaster learners.

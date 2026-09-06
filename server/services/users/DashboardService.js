@@ -12,13 +12,14 @@ class DashboardService {
     const userDetails = userQuery.rows[0];
 
     const modulesCountQuery = await pool.query(
-      "SELECT COUNT(*) FROM module_data",
+      "SELECT COUNT(*) FROM module_data WHERE status = 'published'",
     );
     const totalModules = parseInt(modulesCountQuery.rows[0].count, 10);
 
     const categoryCountsQuery = await pool.query(
       `SELECT LOWER(modcat) as category, COUNT(*)::int as total
        FROM module_data
+       WHERE status = 'published'
        GROUP BY LOWER(modcat)`
     );
     const categoryTotals = categoryCountsQuery.rows.reduce((acc, row) => {
@@ -59,7 +60,21 @@ class DashboardService {
         md.duration, 
         md.description,
         ma.modstatus as enrollment_status,
-        COALESCE(ma.progress, 0) as progress 
+        COALESCE(ma.progress, 0) as progress,
+        (
+          SELECT ms.step_title
+          FROM module_steps ms
+          JOIN levels l ON ms.level_id = l.level_id
+          WHERE l.mod_id = md.mod_id
+            AND NOT EXISTS (
+              SELECT 1 
+              FROM user_step_progress usp 
+              WHERE usp.user_id = $1 
+                AND usp.step_id = ms.step_id
+            )
+          ORDER BY l.level_order ASC, ms.step_order ASC
+          LIMIT 1
+        ) as "nextStepTitle"
       FROM module_activity ma
       JOIN module_data md ON ma.mod_id = md.mod_id
       WHERE ma.user_id = $1

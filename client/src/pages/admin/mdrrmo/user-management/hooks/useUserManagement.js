@@ -2,17 +2,24 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import apiClient from "../../../../../lib/apiClient";
 import toast from "react-hot-toast";
+import useDebounce from "../../../../../hooks/useDebounce";
 
 export const useUserManagement = () => {
   const queryClient = useQueryClient();
   const [userForm, setUserForm] = useState({ name: "", email: "", role: "barangay_admin" });
   const [page, setPage] = useState(1);
+  const [search, setSearch] = useState("");
+  const [roleFilter, setRoleFilter] = useState("");
+  const debouncedSearch = useDebounce(search, 300);
   const limit = 10;
 
   const { data: usersData, isLoading, isError } = useQuery({
-    queryKey: ["adminUsers", page],
+    queryKey: ["adminUsers", page, debouncedSearch, roleFilter],
     queryFn: async () => {
-      const res = await apiClient.get(`/users?page=${page}&limit=${limit}`);
+      const params = new URLSearchParams({ page, limit });
+      if (debouncedSearch.trim()) params.append("search", debouncedSearch.trim());
+      if (roleFilter) params.append("role", roleFilter);
+      const res = await apiClient.get(`/users?${params.toString()}`);
       return res.data;
     },
     retry: 1,
@@ -20,7 +27,7 @@ export const useUserManagement = () => {
   });
 
   const users = usersData?.data || [];
-  const meta = usersData?.meta || { totalPages: 1, page: 1 };
+  const meta = usersData?.meta || { totalPages: 1, page: 1, total: 0 };
 
   const mutation = useMutation({
     mutationFn: async ({ type, payload }) => {
@@ -79,6 +86,8 @@ export const useUserManagement = () => {
       userForm,
       page,
       limit,
+      search,
+      roleFilter,
       users,
       meta,
       isLoading,
@@ -88,6 +97,8 @@ export const useUserManagement = () => {
     actions: {
       setUserForm,
       setPage,
+      setSearch,
+      setRoleFilter,
       handleUserSubmit,
       handleAccountAction
     }

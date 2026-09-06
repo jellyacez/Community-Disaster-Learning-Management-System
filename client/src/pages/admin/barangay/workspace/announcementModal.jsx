@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Cancel01Icon, Notification01Icon, Alert01Icon } from "@hugeicons/core-free-icons";
@@ -9,6 +9,32 @@ export default function AnnouncementModal({ isOpen, onClose, barangayName = "You
   const queryClient = useQueryClient();
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
+
+  const handleSafeClose = () => {
+    if (title.trim() || content.trim()) {
+      if (window.confirm("Discard unsaved announcement draft?")) {
+        setTitle("");
+        setContent("");
+        onClose();
+      }
+    } else {
+      setTitle("");
+      setContent("");
+      onClose();
+    }
+  };
+
+  // Keyboard shortcut: Escape to close with unsaved guard
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape") {
+        handleSafeClose();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, title, content]);
 
   const mutation = useMutation({
     mutationFn: async (payload) => {
@@ -60,8 +86,8 @@ export default function AnnouncementModal({ isOpen, onClose, barangayName = "You
           </div>
           <button
             type="button"
-            onClick={onClose}
-            className="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition"
+            onClick={handleSafeClose}
+            className="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition cursor-pointer"
           >
             <HugeiconsIcon icon={Cancel01Icon} className="w-4 h-4" />
           </button>
@@ -107,15 +133,15 @@ export default function AnnouncementModal({ isOpen, onClose, barangayName = "You
           <div className="flex items-center justify-end gap-3 pt-2">
             <button
               type="button"
-              onClick={onClose}
-              className="px-4 py-2 text-xs font-semibold text-gray-600 hover:bg-gray-100 rounded-xl transition"
+              onClick={handleSafeClose}
+              className="px-4 py-2 text-xs font-semibold text-gray-600 hover:bg-gray-100 rounded-xl transition cursor-pointer"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={mutation.isPending}
-              className="px-5 py-2 text-xs font-bold text-white bg-red-600 hover:bg-red-700 rounded-xl transition shadow-sm disabled:opacity-50 flex items-center gap-2"
+              className="px-5 py-2 text-xs font-bold text-white bg-red-600 hover:bg-red-700 rounded-xl transition shadow-sm disabled:opacity-50 flex items-center gap-2 cursor-pointer"
             >
               {mutation.isPending ? "Publishing..." : "Broadcast Alert"}
             </button>
