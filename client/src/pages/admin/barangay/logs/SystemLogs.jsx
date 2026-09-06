@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import apiClient from "../../../../lib/apiClient";
 import useDocumentTitle from "../../../../hooks/useDocumentTitle";
 import useDebounce from "../../../../hooks/useDebounce";
@@ -33,7 +33,7 @@ export default function SystemLogs() {
       const res = await apiClient.get(`/admin/barangay/activity-log?${params}`);
       return res.data;
     },
-    keepPreviousData: true,
+    placeholderData: keepPreviousData,
   });
 
   const logs = data?.data || [];

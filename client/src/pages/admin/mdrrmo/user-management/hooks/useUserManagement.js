@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import apiClient from "../../../../../lib/apiClient";
 import toast from "react-hot-toast";
 import useDebounce from "../../../../../hooks/useDebounce";
@@ -23,7 +23,7 @@ export const useUserManagement = () => {
       return res.data;
     },
     retry: 1,
-    keepPreviousData: true,
+    placeholderData: keepPreviousData,
   });
 
   const users = usersData?.data || [];

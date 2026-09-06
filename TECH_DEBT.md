@@ -6,6 +6,41 @@ This document tracks identified technical debt, architectural decisions, missing
 
 ## 🟢 Resolved Items
 
+### Resolved: Resident Portal TanStack Query v5 Modernization (PR #5)
+- **Location:** `client/src/hooks/useModuleViewer.js`, `client/src/pages/user/dashboard/Dashboard.jsx`, `client/src/pages/user/hooks/usePaginatedAnnouncements.js`, `client/src/pages/user/feedback/hooks/useFeedbackHistory.js`
+- **Issue:** Resident query hooks contained legacy TanStack Query patterns and v5 deprecations:
+  1. `useModuleViewer.js` and `useFeedbackHistory.js` passed legacy array syntax to `queryClient.invalidateQueries(["userDashboard"])` instead of object schemas `{ queryKey: [...] }`.
+  2. `usePaginatedAnnouncements.js` passed `keepPreviousData: true` (deprecated in v5) instead of the v5 `placeholderData: keepPreviousData` identity function.
+  3. `Dashboard.jsx` specified `onError` inside `useQuery` (silently ignored in TanStack Query v5).
+- **Resolution:**
+  - Modernized all invalidations in `useModuleViewer.js` and `useFeedbackHistory.js` to TanStack Query v5 object schemas (`queryClient.invalidateQueries({ queryKey: [...] })`).
+  - Updated `usePaginatedAnnouncements.js` to import `keepPreviousData` from `@tanstack/react-query` and set `placeholderData: keepPreviousData`.
+  - Replaced deprecated `useQuery.onError` in `Dashboard.jsx` with standard v5 `isError` / `error` tracking handled reactively via `useEffect`.
+- **Verification:** Merged via PR #5 into `main` (`commit 3d900d7`). Confirmed zero legacy array invalidations remain in resident hooks and verified client production build compiles with 0 errors (`npm run build`).
+
+---
+
+### Resolved: Admin Portal TanStack Query v5 Modernization & Deprecation Cleanup
+- **Location:** 
+  - `client/src/pages/admin/barangay/registry/ResidentRegistry.jsx`
+  - `client/src/pages/admin/barangay/certifications/BarangayCertifications.jsx`
+  - `client/src/pages/admin/barangay/logs/SystemLogs.jsx`
+  - `client/src/pages/admin/mdrrmo/user-management/hooks/useUserManagement.js`
+  - `client/src/pages/admin/mdrrmo/certifications/hooks/useExpiringFeed.js`
+  - `client/src/pages/admin/mdrrmo/logs/ActivityLog.jsx`
+  - `client/src/pages/admin/system/users/hooks/useUserManagement.js`
+  - `client/src/pages/admin/system/logs/ActivityLog.jsx`
+- **Issue:** Administrative views and data tables contained deprecated TanStack Query patterns:
+  1. Five admin paginated table queries and three audit log tables passed `keepPreviousData: true` (deprecated in TanStack Query v5) instead of the v5 functional identity `placeholderData: keepPreviousData`.
+  2. `ResidentRegistry.jsx` contained `onError` inside `useQuery`, which is silently ignored in TanStack Query v5.
+- **Resolution:**
+  - **`placeholderData: keepPreviousData` Migration:** Replaced `keepPreviousData: true` across all 8 admin components and hooks (`ResidentRegistry.jsx`, `BarangayCertifications.jsx`, `useExpiringFeed.js`, MDRRMO `useUserManagement.js`, System `useUserManagement.js`, and the 3 audit log tables `SystemLogs.jsx`, MDRRMO `ActivityLog.jsx`, System `ActivityLog.jsx`) with `placeholderData: keepPreviousData`, importing `keepPreviousData` from `@tanstack/react-query`.
+  - **Centralized Query Error Handling (Single Source of Truth):** Configured global `QueryCache.onError` in `client/src/main.jsx` to extract informative server responses (`error?.response?.data?.message || error?.response?.data?.error || error?.message`), eliminating redundant component-level `useEffect` error toasts in `ResidentRegistry.jsx` and `Dashboard.jsx` and permanently resolving the double-toast stacking bug. Retained `isError` in `useQuery` destructuring where inline UI error banners are rendered (e.g. `ResidentRegistryTable.jsx`).
+  - **Mutation Audit Integrity:** Audited all occurrences of `onError:` across `client/src`; confirmed all remaining occurrences reside safely within `useMutation` options (where `onError` remains standard and fully supported in v5) or global `QueryClient` defaults.
+- **Verification:** Verified via client production build (`npm run build`, 0 errors), confirmed zero lint regressions, and executed real-world Puppeteer automated end-to-end tests with Slow 3G network throttling and forced 500 error interception: confirmed `placeholderData: keepPreviousData` preserves prior rows without skeleton flashing, and confirmed query failures fire exactly 1 error toast instead of stacking duplicates.
+
+---
+
 ### Resolved: Database Index Performance Optimization & Complete Foreign Key Coverage (`06_add_performance_indexes.sql` & `07_drop_redundant_indexes.sql`)
 - **Location:** `server/migrations/` (`06_add_performance_indexes.sql`, `07_drop_redundant_indexes.sql`, `schema.sql`), live PostgreSQL `LMS_db`
 - **Issue:** 
@@ -561,18 +596,7 @@ This document tracks identified technical debt, architectural decisions, missing
 
 ---
 
-### 5. TanStack Query v5 Syntax & Deprecation Inconsistencies
-- **Location:** `client/src/hooks/useModuleViewer.js`, `client/src/pages/user/dashboard/Dashboard.jsx`, `client/src/pages/user/hooks/usePaginatedAnnouncements.js`
-- **Description:**
-  - `useModuleViewer.js` and `useFeedbackHistory.js` use legacy array syntax for invalidations: `queryClient.invalidateQueries(["userDashboard"])` instead of TanStack Query v5 object syntax `{ queryKey: ["userDashboard"] }`.
-  - `usePaginatedAnnouncements.js` passes `keepPreviousData: true` (deprecated in v5) instead of `placeholderData: keepPreviousData`.
-  - `Dashboard.jsx` specifies `onError` inside `useQuery` (ignored in TanStack Query v5).
-- **Recommended Action:**
-  - Modernize all resident query hooks to standard TanStack Query v5 object schemas.
-
----
-
-### 6. Strict Admin-Provisioning Hierarchy Enforcement
+### 5. Strict Admin-Provisioning Hierarchy Enforcement
 - **Location:** `client/src/pages/admin/system/users/components/provision/AdminRoleSelection.jsx`, `client/src/pages/admin/mdrrmo/user-management/components/RegisterPersonnelForm.jsx`, `server/controllers/admin/user-management/provisionAdmin.js`, `server/config/permissions.js`
 - **Description:**
   - **Frontend:** `RegisterPersonnelForm.jsx` (MDRRMO admin view) hardcodes `<option value="barangay_admin">`, while `AdminRoleSelection.jsx` (System admin view) displays `mdrrmo_admin` and `barangay_admin`.
@@ -584,7 +608,7 @@ This document tracks identified technical debt, architectural decisions, missing
 
 ---
 
-### 7. Local Announcements Priority System & Urgent Badging
+### 6. Local Announcements Priority System & Urgent Badging
 - **Location:** `client/src/pages/admin/barangay/workspace/announcementModal.jsx`, `client/src/components/ui/announcements/AnnouncementCard.jsx`, `client/src/pages/admin/mdrrmo/LiveAlerts.jsx`, `server/controllers/admin/barangayController.js`
 - **Description:** While basic localized announcement creation (`title`, `content`) exists for Barangay Admins, the priority categorization system (`Standard` vs `Urgent`), urgent advisory badge indicators on resident announcement cards, and MDRRMO/Municipal broadcast overrides remain unimplemented scaffolding (`LiveAlerts.jsx` displays *"The announcement broadcasting system is currently being developed."*).
 - **Architectural Impact:** Critical emergency advisories cannot be visually differentiated from standard municipal announcements on resident feeds.
@@ -594,7 +618,7 @@ This document tracks identified technical debt, architectural decisions, missing
 
 ---
 
-### 8. Progressive Web App (PWA) Manifest & Production Asset Precaching
+### 7. Progressive Web App (PWA) Manifest & Production Asset Precaching
 - **Location:** `client/public/manifest.json`, `client/index.html`, `client/public/service-worker.js`, `client/vite.config.js`
 - **Description:**
   - **Missing Web App Manifest:** No `manifest.json` or `manifest.webmanifest` exists in `client/public/`. The application lacks `theme_color`, `background_color`, `display: "standalone"`, `start_url`, and high-resolution PWA app icon definitions (`192x192`, `512x512`, `maskable`).
@@ -609,7 +633,7 @@ This document tracks identified technical debt, architectural decisions, missing
 
 ---
 
-### 9. Offline-Replay Duplicate Risk (Idempotency Keys)
+### 8. Offline-Replay Duplicate Risk (Idempotency Keys)
 - **Location:** `client/src/lib/LocalSave/syncManager.js`, `server/controllers/feedback/feedbackController.js`, `server/controllers/admin/barangayController.js`
 - **Description:**
   - **Context:** The application is an offline-first PWA with a background sync queue (`syncManager.js` replaying queued writes via Dexie on reconnect). Any `POST` endpoint without a unique constraint is vulnerable to duplicate creation if the server processes a request successfully but the HTTP 200 OK never reaches the client before the connection drops — the client re-queues and replays the same write on the next reconnect.
@@ -627,7 +651,7 @@ This document tracks identified technical debt, architectural decisions, missing
 
 ---
 
-### 10. Self-Service Disaster Learning FAQ & Knowledge Base
+### 9. Self-Service Disaster Learning FAQ & Knowledge Base
 - **Location:** `client/src/components/settings/HelpSupport.jsx` (currently a single static paragraph routing straight to `/user/feedback` with no self-serve content)
 - **Gap:** No FAQ or self-service knowledge base exists anywhere in the platform. Residents have no way to obtain immediate answers to common operational questions — every inquiry routes directly to the human MDRRMO feedback/ticketing queue.
 - **Proposed Content (5 Core Disaster Learning Questions):**

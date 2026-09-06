@@ -45,10 +45,15 @@ if ("serviceWorker" in navigator) {
 const queryClient = new QueryClient({
   queryCache: new QueryCache({
     onError: (error) => {
-      // Global fallback error handler for all Queries.
-      // We don't want to double-toast if the interceptor already handles it (e.g. 401, 503)
+      // Global single-source error handler for all Queries.
+      // We don't want to toast if the interceptor already handles it (e.g. 401, 503)
       if (error?.response?.status !== 401 && error?.response?.status !== 503) {
-        toast.error(`Error: ${error.message}`);
+        const message =
+          error?.response?.data?.message ||
+          error?.response?.data?.error ||
+          error?.message ||
+          "An unexpected error occurred.";
+        toast.error(message);
       }
     },
   }),

@@ -13,7 +13,6 @@ import DashboardAnnouncementsList from "../../../components/ui/dashboard/Dashboa
 import DashboardEmergencyContacts from "../../../components/ui/dashboard/DashboardEmergencyContacts.jsx";
 
 import useDocumentTitle from "../../../hooks/useDocumentTitle";
-import toast from "react-hot-toast";
 import OnboardingModal from "../../../components/ui/modals/OnboardingModal.jsx";
 
 import { HugeiconsIcon } from "@hugeicons/react";
@@ -31,8 +30,6 @@ export default function UserDashboard() {
   const {
     data: dashboardData,
     isLoading: loading,
-    isError,
-    error,
   } = useQuery({
     queryKey: ["userDashboard"],
     queryFn: async () => {
@@ -41,14 +38,6 @@ export default function UserDashboard() {
       return response.data;
     },
   });
-
-  // Modern v5 pattern: Handle query error side effects via useEffect
-  useEffect(() => {
-    if (isError && error) {
-      console.error("Error fetching dashboard data:", error);
-      toast.error("Failed to load dashboard data");
-    }
-  }, [isError, error]);
 
   // Defensively handle React Query HMR cache poisoning
   // (where the old { success, data } object might still be cached)

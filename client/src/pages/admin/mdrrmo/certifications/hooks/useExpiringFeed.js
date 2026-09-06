@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import apiClient from "../../../../../lib/apiClient";
 import useDebounce from "../../../../../hooks/useDebounce";
 
@@ -40,7 +40,7 @@ export function useExpiringFeed() {
       const res = await apiClient.get("/admin/mdrrmo/certifications/feed", { params });
       return res.data.data;
     },
-    keepPreviousData: true,
+    placeholderData: keepPreviousData,
     refetchInterval: 60000,
   });
 

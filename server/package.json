@@ -33,7 +33,7 @@
     "node-cron": "^4.5.0",
     "nodemailer": "9.0.1",
     "pg": "^8.21.0",
-    "sanitize-html": "2.17.5",
+    "sanitize-html": "^2.17.7",
     "supertest": "^7.2.2",
     "uuid": "^14.0.1"
   },

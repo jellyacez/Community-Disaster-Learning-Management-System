@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { RefreshIcon } from "@hugeicons/core-free-icons";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 
 import apiClient from "../../../../lib/apiClient";
@@ -44,7 +44,7 @@ export default function ResidentRegistry() {
       search: debouncedSearch,
       status: selectedStatus,
     }),
-    keepPreviousData: true,
+    placeholderData: keepPreviousData,
   });
 
   const residents = data?.data || [];

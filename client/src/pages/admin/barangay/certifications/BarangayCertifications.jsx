@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { RefreshIcon, QrCodeIcon } from "@hugeicons/core-free-icons";
 import apiClient from "../../../../lib/apiClient";
@@ -45,7 +45,7 @@ export default function BarangayCertifications() {
       moduleId: selectedModule,
       status: selectedStatus,
     }),
-    keepPreviousData: true,
+    placeholderData: keepPreviousData,
     refetchInterval: 60000,
   });
 
