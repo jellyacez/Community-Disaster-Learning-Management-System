@@ -53,14 +53,14 @@ export function useFeedbackHistory(userId, activeTab) {
 
   const handleReplyChange = (id, val) => setReplyInputs((prev) => ({ ...prev, [id]: val }));
 
-  // 1. FETCH LIVE FEEDBACK HISTORY
+  // 1. FETCH LIVE FEEDBACK HISTORY (TanStack Query v5 object schema)
   const { data: serverSubmissions = [], isLoading } = useQuery({
     queryKey: ["userFeedbacks", userId],
     queryFn: async () => {
       const response = await apiClient.get("/feedbacks/my-submissions");
       return response.data.data || [];
     },
-    enabled: !!userId,
+    enabled: Boolean(userId),
   });
 
   // Merge server submissions with offline queue items (new tickets + thread replies)
@@ -120,6 +120,7 @@ export function useFeedbackHistory(userId, activeTab) {
     return [...offlineTickets, ...mergedServer];
   }, [offlineFeedbackItems, serverSubmissions]);
 
+  // 2. USER REPLY MUTATION (TanStack Query v5 object schema)
   const userReplyMutation = useMutation({
     networkMode: "always",
     mutationFn: async ({ id, reply }) => {
@@ -174,7 +175,7 @@ export function useFeedbackHistory(userId, activeTab) {
       } else {
         toast.success("Reply sent successfully.");
       }
-      // TanStack Query v5 object syntax
+      // TanStack Query v5 Object Invalidation
       queryClient.invalidateQueries({ queryKey: ["userFeedbacks", userId] });
       setReplyInputs((prev) => ({ ...prev, [variables.id]: "" }));
     },

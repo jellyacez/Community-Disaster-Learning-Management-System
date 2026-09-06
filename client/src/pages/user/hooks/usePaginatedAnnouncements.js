@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, keepPreviousData } from '@tanstack/react-query';
 import apiClient from '../../../lib/apiClient';
 
 export function usePaginatedAnnouncements(initialLimit = 5) {
@@ -11,7 +11,8 @@ export function usePaginatedAnnouncements(initialLimit = 5) {
       const response = await apiClient.get(`/users/announcements?page=${currentPage}&limit=${initialLimit}`);
       return response.data;
     },
-    keepPreviousData: true, // Keeps old data on screen while fetching the new page
+    // Modern v5: passes the keepPreviousData identity function to placeholderData
+    placeholderData: keepPreviousData,
   });
 
   const announcements = data?.announcements || [];
