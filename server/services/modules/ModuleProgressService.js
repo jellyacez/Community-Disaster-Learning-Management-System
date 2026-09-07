@@ -268,30 +268,29 @@ class ModuleProgressService {
           const isRevoked = existingCert.status === "revoked";
           const isExpiringSoon = new Date(existingCert.expires_at) <= new Date(Date.now() + 30 * 86400 * 1000);
 
-          if (isExpired || isRevoked || isExpiringSoon) {
-            // Preserve audit trail in activity_log before resetting fields
-            if (isRevoked) {
-              await logger.logActivity(
-                user_id,
-                `Certificate renewed after prior revocation on ${existingCert.revoked_at ? new Date(existingCert.revoked_at).toLocaleDateString() : 'N/A'} (Prior Revocation Reason: "${existingCert.revocation_reason || 'No reason provided'}", Revoked By: ${existingCert.revoked_by || 'Admin'}) for module: ${modTitle}`
-              );
-            } else {
-              await logger.logActivity(
-                user_id,
-                `Recertified module: ${modTitle} (Extended validity for ${RECERTIFICATION_INTERVAL_YEARS} year)`
-              );
-            }
+          if (isRevoked) {
+            // V-02 FIX: A revoked certificate must NOT be reinstated by module completion.
+            // Return the existing (revoked) token so the client can still display cert status,
+            // but do NOT update any certificate fields. Reinstatement requires an explicit
+            // admin action via PATCH /api/admin/certificates/:certId/reinstate.
+            await logger.logActivity(
+              user_id,
+              `Completed module ${modTitle} while holding a revoked certificate (ID: CERT-${existingCert.cert_id}). Certificate remains revoked pending admin reinstatement.`
+            );
+            verificationToken = existingCert.verification_token;
+          } else if (isExpired || isExpiringSoon) {
+            // Non-revoked expired/expiring-soon certificates are eligible for renewal
+            await logger.logActivity(
+              user_id,
+              `Recertified module: ${modTitle} (Extended validity for ${RECERTIFICATION_INTERVAL_YEARS} year)`
+            );
 
-            // Renew certificate: extend expires_at by RECERTIFICATION_INTERVAL_YEARS, reset recert_notified_at to NULL, set status to 'active'
             const renewResult = await client.query(
               `UPDATE certificates 
                SET completion_date = CURRENT_TIMESTAMP,
                    expires_at = CURRENT_TIMESTAMP + (INTERVAL '1 year' * $1),
                    status = 'active',
-                   recert_notified_at = NULL,
-                   revocation_reason = NULL,
-                   revoked_at = NULL,
-                   revoked_by = NULL
+                   recert_notified_at = NULL
                WHERE cert_id = $2
                RETURNING verification_token`,
               [RECERTIFICATION_INTERVAL_YEARS, existingCert.cert_id]
@@ -517,6 +516,79 @@ class ModuleProgressService {
     // Log the deliberate action using logActivity per instructions
     logger.logActivity(adminUserId, `Revoked certificate ${cert.cert_rec} for user ${cert.learner_id}. Reason: ${reason}`);
     
+    return true;
+  }
+
+  /**
+   * Explicitly reinstates a revoked certificate by an authorized admin.
+   * This is the ONLY path to clear a revocation after the V-02 fix — module
+   * completion no longer silently resets revocation fields.
+   *
+   * @param {string|number} certId
+   * @param {string}        reinstateReason  - Required, recorded in activity log
+   * @param {object}        adminContext     - { role, barangay_id }
+   * @param {string}        adminUserId
+   */
+  async reinstateCertificate(certId, reinstateReason, adminContext, adminUserId) {
+    if (!adminContext || !adminContext.role) {
+      throw new Error("SECURITY_FAULT: Missing or invalid adminContext. Cannot safely reinstate certificate.");
+    }
+
+    if (!reinstateReason || reinstateReason.trim().length === 0) {
+      throw new Error("VALIDATION_ERROR: A reason is required to reinstate a certificate.");
+    }
+
+    const { UNSCOPED_ACCESS_ROLES } = require("../../config/permissions");
+
+    // Fetch the cert; only revoked certs can be reinstated
+    const certQuery = await pool.query(
+      `SELECT c.cert_id, c.cert_rec, c.status, u.barangay_id as learner_barangay_id, u.id as learner_id
+       FROM certificates c
+       JOIN "user" u ON c.user_id = u.id
+       WHERE c.cert_id = $1`,
+      [certId]
+    );
+
+    if (certQuery.rowCount === 0) {
+      throw new Error("NOT_FOUND: Certificate not found.");
+    }
+
+    const cert = certQuery.rows[0];
+
+    if (cert.status !== "revoked") {
+      throw new Error("VALIDATION_ERROR: Only revoked certificates can be reinstated.");
+    }
+
+    // Scope check — same as revokeCertificate
+    if (adminContext.role === "barangay_admin") {
+      if (!adminContext.barangay_id || cert.learner_barangay_id !== adminContext.barangay_id) {
+        throw new Error("SECURITY_FAULT: Out-of-scope target. Cannot reinstate certificate for a resident outside your barangay.");
+      }
+    } else if (!UNSCOPED_ACCESS_ROLES.includes(adminContext.role)) {
+      throw new Error(`SECURITY_FAULT: Unauthorized role '${adminContext.role}' attempted to reinstate certificate.`);
+    }
+
+    const { RECERTIFICATION_INTERVAL_YEARS } = require("../../config/constants");
+
+    // Reinstate: reset revocation fields and extend validity from now
+    await pool.query(
+      `UPDATE certificates
+       SET status = 'active',
+           revocation_reason = NULL,
+           revoked_at = NULL,
+           revoked_by = NULL,
+           completion_date = CURRENT_TIMESTAMP,
+           expires_at = CURRENT_TIMESTAMP + (INTERVAL '1 year' * $1),
+           recert_notified_at = NULL
+       WHERE cert_id = $2`,
+      [RECERTIFICATION_INTERVAL_YEARS, certId]
+    );
+
+    logger.logActivity(
+      adminUserId,
+      `Reinstated certificate ${cert.cert_rec} for user ${cert.learner_id}. Reason: ${reinstateReason}`
+    );
+
     return true;
   }
 }

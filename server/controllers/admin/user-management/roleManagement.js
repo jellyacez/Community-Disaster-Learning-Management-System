@@ -1,14 +1,7 @@
 const pool = require("../../../config/db");
 const { UNSCOPED_ACCESS_ROLES } = require("../../../config/permissions");
 const { logActivity, logError } = require("../../../utils/logger");
-
-const ROLE_RANKS = {
-  system_admin: 5,
-  head_mdrrmo_admin: 4,
-  mdrrmo_admin: 3,
-  barangay_admin: 2,
-  resident: 1,
-};
+const { ROLE_RANKS } = require("../../../config/roleHierarchy");
 
 // @desc    Update a user's role
 // @access  Private (system_admin only)

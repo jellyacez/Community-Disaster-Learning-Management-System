@@ -25,6 +25,15 @@ exports.onboarding = async (req, res) => {
     if (err.message === "MISSING_DATA") {
       return res.status(400).json({ success: false, message: "Name and Barangay are required." });
     }
+    if (err.message.startsWith("FORBIDDEN")) {
+      return res.status(403).json({ success: false, message: err.message.replace("FORBIDDEN: ", "") });
+    }
+    if (err.message.startsWith("ALREADY_ONBOARDED")) {
+      return res.status(409).json({ success: false, message: err.message.replace("ALREADY_ONBOARDED: ", "") });
+    }
+    if (err.message === "INVALID_BARANGAY") {
+      return res.status(400).json({ success: false, message: "The specified barangay does not exist." });
+    }
     console.error("Onboarding error:", err.message);
     res.status(500).json({ success: false, message: "Failed to complete onboarding." });
   }

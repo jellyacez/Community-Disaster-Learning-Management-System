@@ -23,11 +23,17 @@ exports.deleteAccount = async (req, res) => {
 
   try {
     // Fetch user details for logging before they are deleted
-    const userRes = await pool.query('SELECT u.email, b.name AS barangay_name FROM "user" u LEFT JOIN barangays b ON u.barangay_id = b.id WHERE u.id = $1', [id]);
+    const userRes = await pool.query('SELECT u.email, u.role, b.name AS barangay_name FROM "user" u LEFT JOIN barangays b ON u.barangay_id = b.id WHERE u.id = $1', [id]);
     if (userRes.rows.length === 0) {
       return res.status(404).json({ success: false, message: 'User not found.' });
     }
-    const { email, barangay_name } = userRes.rows[0];
+    const { email, role: targetRole, barangay_name } = userRes.rows[0];
+
+    // V-01 FIX: system_admin may not delete other system_admin accounts.
+    // This prevents both lateral attacks and last-sysadmin destruction.
+    if (targetRole === 'system_admin') {
+      return res.status(403).json({ success: false, message: 'System administrator accounts cannot be permanently deleted through this endpoint.' });
+    }
 
     // Call the existing pipeline
     await UserService.deleteAccount(id);

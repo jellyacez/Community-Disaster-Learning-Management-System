@@ -6,6 +6,7 @@ const { getOrgSettings } = require("../../../utils/settings");
 const { generateSecurePassword } = require("../../../utils/passwordGenerator");
 const { UNSCOPED_ACCESS_ROLES } = require("../../../config/permissions");
 const { logActivity, logError } = require("../../../utils/logger");
+const { assertActorOutranksTarget } = require("../../../config/roleHierarchy");
 
 // @desc    Resets a user's password using the better-auth admin API (auto-generates if none provided)
 // @access  Private (admin only)
@@ -52,6 +53,10 @@ exports.resetUserPassword = async (req, res) => {
       return res.status(404).json({ success: false, message: "User not found or out of scope." });
     }
     const user = userResult.rows[0];
+
+    // V-01 FIX: Enforce rank hierarchy. The SELECT above already fetches target role.
+    // An mdrrmo_admin may not reset another mdrrmo_admin's password.
+    assertActorOutranksTarget(adminContext.role, user.role);
 
     // 2. Hash the password manually using Better Auth's crypto and update the database directly
     // This safely bypasses the strict plugin permission checks for admin-initiated forced resets.

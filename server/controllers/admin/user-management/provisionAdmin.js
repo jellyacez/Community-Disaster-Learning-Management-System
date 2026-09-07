@@ -4,9 +4,10 @@ const { transporter } = require("../../../utils/mailer");
 const { getAdminPasswordResetEmail } = require("../../../utils/emailTemplates");
 const { getOrgSettings } = require("../../../utils/settings");
 const { generateSecurePassword } = require("../../../utils/passwordGenerator");
+const { assertCanProvision } = require("../../../config/roleHierarchy");
 
 // @desc    Provision a new Admin Account
-// @access  Private (system_admin only)
+// @access  Private (system_admin, head_mdrrmo_admin, mdrrmo_admin — one tier down only)
 exports.provisionAdmin = async (req, res) => {
   const { name, email, role, barangay } = req.body;
   let { password } = req.body;
@@ -17,9 +18,24 @@ exports.provisionAdmin = async (req, res) => {
       .json({ success: false, message: "Name, email, and role are required." });
   }
 
-  const validRoles = ["barangay_admin", "mdrrmo_admin"];
-  if (!validRoles.includes(role)) {
+  // V-01 FIX: Enforce strict one-tier-below provisioning hierarchy.
+  // The static validRoles allowlist is replaced by assertCanProvision(), which
+  // verifies that actorRank === targetRoleRank + 1. This prevents peer-tier
+  // provisioning (e.g. mdrrmo_admin creating another mdrrmo_admin).
+  const provisionableRoles = ["barangay_admin", "mdrrmo_admin", "head_mdrrmo_admin"];
+  if (!provisionableRoles.includes(role)) {
     return res.status(400).json({ success: false, message: "Invalid admin role specified." });
+  }
+  try {
+    assertCanProvision(req.user.role, role);
+  } catch (hierarchyErr) {
+    require("../../../utils/logger").logError("provision_hierarchy_violation", {
+      actorId: req.user?.id,
+      actorRole: req.user?.role,
+      requestedRole: role,
+      message: hierarchyErr.message,
+    });
+    return res.status(403).json({ success: false, message: hierarchyErr.message });
   }
 
   if (role === "barangay_admin" && !barangay) {

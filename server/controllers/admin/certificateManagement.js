@@ -78,8 +78,47 @@ const revokeCertificate = async (req, res) => {
   }
 };
 
-module.exports = {
-  getAllCertificates,
-  revokeCertificate
+const reinstateCertificate = async (req, res) => {
+  try {
+    const { certId } = req.params;
+    const { reason } = req.body;
+
+    const adminContext = {
+      role: req.user.role,
+      barangay_id: req.user.barangay_id
+    };
+
+    const adminUserId = req.user.id;
+
+    await ModuleProgressService.reinstateCertificate(certId, reason, adminContext, adminUserId);
+
+    return res.json({ success: true, message: "Certificate reinstated successfully." });
+  } catch (err) {
+    if (err.message.startsWith("SECURITY_FAULT")) {
+      logger.logError('admin_certificate_reinstate_denied', {
+        userId: req.user?.id,
+        certId: req.params.certId,
+        message: err.message
+      });
+      return res.status(403).json({ success: false, error: err.message });
+    }
+
+    if (err.message.startsWith("VALIDATION_ERROR") || err.message.startsWith("NOT_FOUND")) {
+      return res.status(400).json({ success: false, error: err.message });
+    }
+
+    logger.logError('admin_certificate_reinstate_error', {
+      userId: req.user?.id,
+      certId: req.params.certId,
+      message: err.message,
+      stack: err.stack
+    });
+    return res.status(500).json({ success: false, message: "Server error reinstating certificate." });
+  }
 };
 
+module.exports = {
+  getAllCertificates,
+  revokeCertificate,
+  reinstateCertificate,
+};

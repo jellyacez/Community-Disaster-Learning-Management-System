@@ -45,6 +45,17 @@ router.patch(
   certificateManagementController.revokeCertificate
 );
 
+// @route   PATCH /api/admin/certificates/:certId/reinstate
+// @desc    Reinstate a previously revoked certificate (explicit admin action only)
+// @access  Private (admin only)
+router.patch(
+  "/certificates/:certId/reinstate",
+  requireRole(ADMIN_ROLES),
+  adminWriteLimiter,
+  requirePermission("revoke_certificates"),
+  certificateManagementController.reinstateCertificate
+);
+
 // ==========================================
 // MDRRMO Admin Dashboards (also accessible by System Admin)
 // ==========================================

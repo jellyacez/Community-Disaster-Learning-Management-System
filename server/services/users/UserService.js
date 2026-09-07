@@ -10,8 +10,29 @@ class UserService {
   async onboarding(userId, name, barangay) {
     if (!name || !barangay) throw new Error("MISSING_DATA");
 
+    // V-01 FIX: Prevent tenant-hopping via onboarding.
+    // (1) Only residents may call this endpoint — admin accounts have their
+    //     barangay_id set at provision time and must never self-reassign.
+    // (2) Once barangay_id is set, it cannot be changed through onboarding —
+    //     jurisdiction re-assignment requires an explicit admin action.
+    const userRes = await pool.query('SELECT role, barangay_id FROM "user" WHERE id = $1', [userId]);
+    if (userRes.rowCount === 0) throw new Error("NOT_FOUND");
+
+    const user = userRes.rows[0];
+    const { ADMIN_ROLES } = require("../../config/permissions");
+
+    if (ADMIN_ROLES.includes(user.role)) {
+      throw new Error("FORBIDDEN: Admin accounts cannot use the onboarding endpoint to reassign their barangay.");
+    }
+
+    if (user.barangay_id !== null) {
+      throw new Error("ALREADY_ONBOARDED: Profile setup is a one-time action. Contact your administrator to change your barangay assignment.");
+    }
+
     const bRes = await pool.query('SELECT id FROM barangays WHERE name = $1', [barangay]);
     const barangayId = bRes.rows.length > 0 ? bRes.rows[0].id : null;
+    if (!barangayId) throw new Error("INVALID_BARANGAY");
+
     await pool.query(`UPDATE "user" SET name = $1, barangay_id = $2 WHERE id = $3`, [
       name,
       barangayId,
