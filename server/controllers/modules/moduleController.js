@@ -19,7 +19,8 @@ exports.createModule = async (req, res) => {
     const mod_id = await ModuleService.createModuleTransaction(payload);
 
     // Log module creation to activity_log
-    await logActivity(req.user.id, `Created new module: ${req.body.moduleName}`);
+    const safeModuleName = String(req.body.moduleName || "").replace(/[\r\n]/g, " ");
+    await logActivity(req.user.id, `Created new module: ${safeModuleName}`);
 
     return res.status(201).json({
       success: true,
@@ -27,7 +28,7 @@ exports.createModule = async (req, res) => {
       data: { mod_id },
     });
   } catch (error) {
-    console.error("Transaction Error creating module structure:", error);
+    console.error("Transaction Error creating module structure");
     return res.status(500).json({
       success: false,
       message:
@@ -111,9 +112,10 @@ exports.updateModule = async (req, res) => {
 
     await ModuleService.updateModuleTransaction(parsedModId, payload);
 
+    const safeModuleName = String(req.body.moduleName || existing.modname || parsedModId).replace(/[\r\n]/g, " ");
     await logActivity(
       req.user.id,
-      `Updated module ID ${parsedModId}: "${req.body.moduleName || existing.modname || parsedModId}"`
+      `Updated module ID ${parsedModId}: "${safeModuleName}"`
     );
 
     return res.status(200).json({
@@ -122,9 +124,10 @@ exports.updateModule = async (req, res) => {
       data: { mod_id: parsedModId },
     });
   } catch (error) {
-    console.error("Transaction Error updating module structure:", error);
+    console.error("Transaction Error updating module structure");
     logError("update_module_transaction_error", {
-      message: error.message,
+      code: error?.code,
+      name: error?.name,
       stack: error.stack,
       moduleId: parsedModId,
     });

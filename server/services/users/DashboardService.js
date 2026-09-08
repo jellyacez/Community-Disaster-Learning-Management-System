@@ -1,9 +1,10 @@
 const pool = require("../../config/db");
+const { UNSCOPED_ACCESS_ROLES } = require("../../config/permissions");
 
 class DashboardService {
   async getDashboardData(userId) {
     const userQuery = await pool.query(
-      `SELECT u.name, u.email, u.role, b.name as barangay_name 
+      `SELECT u.name, u.email, u.role, u.barangay_id, b.name as barangay_name 
        FROM "user" u 
        LEFT JOIN barangays b ON u.barangay_id = b.id 
        WHERE u.id = $1`,
@@ -27,13 +28,40 @@ class DashboardService {
       return acc;
     }, {});
 
-    const announcementsQuery = await pool.query(`
-      SELECT a.id, a.title, a.content, a.date, u.name as author_name
-      FROM announcements a
-      JOIN "user" u ON a.author_id = u.id
-      ORDER BY a.date DESC
-      LIMIT 3
-    `);
+    const isUnscoped = userDetails && UNSCOPED_ACCESS_ROLES.includes(userDetails.role);
+    const barangayId = userDetails?.barangay_id || null;
+
+    let announcementsQuery;
+    if (isUnscoped) {
+      announcementsQuery = await pool.query(`
+        SELECT a.id, a.title, a.content, a.date, u.name as author_name
+        FROM announcements a
+        JOIN "user" u ON a.author_id = u.id
+        ORDER BY a.date DESC
+        LIMIT 3
+      `);
+    } else if (barangayId) {
+      announcementsQuery = await pool.query(
+        `
+        SELECT a.id, a.title, a.content, a.date, u.name as author_name
+        FROM announcements a
+        JOIN "user" u ON a.author_id = u.id
+        WHERE a.barangay_id = $1 OR a.barangay_id IS NULL
+        ORDER BY a.date DESC
+        LIMIT 3
+        `,
+        [barangayId]
+      );
+    } else {
+      announcementsQuery = await pool.query(`
+        SELECT a.id, a.title, a.content, a.date, u.name as author_name
+        FROM announcements a
+        JOIN "user" u ON a.author_id = u.id
+        WHERE a.barangay_id IS NULL
+        ORDER BY a.date DESC
+        LIMIT 3
+      `);
+    }
 
     const announcements = announcementsQuery.rows.map((a) => {
       const date = new Date(a.date);

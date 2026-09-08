@@ -56,7 +56,8 @@ exports.logActivity = async (userId, action) => {
     );
   } catch (err) {
     // Swallowing the error to prevent application crashes
-    console.error(`[ActivityLogger Error] Failed to log action '${action}' for user ${userId}:`, err.message);
+    const safeUserId = String(userId).replace(/[\r\n]/g, " ");
+    console.error("[ActivityLogger Error] Failed to record activity log for user %s: %s", safeUserId, err.message);
   }
 };
 

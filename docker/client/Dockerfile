@@ -43,6 +43,12 @@ COPY --from=builder /app/dist /usr/share/nginx/html
 # Copy nginx config (path relative to repo root build context)
 COPY docker/client/nginx.conf /etc/nginx/conf.d/default.conf
 
+# Configure unprivileged execution for non-root nginx user
+RUN touch /var/run/nginx.pid && \
+    chown -R nginx:nginx /var/run/nginx.pid /var/cache/nginx /var/log/nginx /etc/nginx/conf.d
+
+USER nginx
+
 EXPOSE 80
 
 # Health check: nginx returns 200 on the root path

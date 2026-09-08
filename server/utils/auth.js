@@ -180,10 +180,29 @@ const auth = betterAuth({
       },
     }),
   ],
-  trustedOrigins:
-    process.env.NODE_ENV === "production" && process.env.FRONTEND_URL
-      ? [process.env.FRONTEND_URL]
-      : ["http://localhost:5173", "http://localhost:5174"],
+  advanced: {
+    ...(process.env.NODE_ENV === "production"
+      ? {
+          useSecureCookies: false,
+          cookiePrefix: "__Host-better-auth",
+          defaultCookieAttributes: {
+            secure: true,
+            path: "/",
+            sameSite: "lax",
+            httpOnly: true,
+          },
+        }
+      : {}),
+  },
+  trustedOrigins: (() => {
+    if (process.env.NODE_ENV === "production") {
+      if (!process.env.FRONTEND_URL) {
+        throw new Error("FATAL: FRONTEND_URL is required in production mode.");
+      }
+      return [process.env.FRONTEND_URL];
+    }
+    return ["http://localhost:5173", "http://localhost:5174"];
+  })(),
   autoSignIn: true,
 });
 

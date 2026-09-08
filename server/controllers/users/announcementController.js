@@ -1,4 +1,5 @@
 const pool = require("../../config/db");
+const { UNSCOPED_ACCESS_ROLES } = require("../../config/permissions");
 
 // @desc    Get paginated announcements
 // @access  Private
@@ -8,22 +9,59 @@ exports.getPaginatedAnnouncements = async (req, res) => {
     const limit = parseInt(req.query.limit, 10) || 5;
     const offset = (page - 1) * limit;
 
-    // Get total count for pagination math
-    const countQuery = await pool.query("SELECT COUNT(*) FROM announcements");
+    const isUnscoped = req.user && UNSCOPED_ACCESS_ROLES.includes(req.user.role);
+    const barangayId = req.user?.barangay_id || null;
+
+    let countQuery;
+    let announcementsQuery;
+
+    if (isUnscoped) {
+      countQuery = await pool.query("SELECT COUNT(*) FROM announcements");
+      announcementsQuery = await pool.query(
+        `
+        SELECT a.id, a.title, a.content, a.date, u.name as author_name
+        FROM announcements a
+        JOIN "user" u ON a.author_id = u.id
+        ORDER BY a.date DESC
+        LIMIT $1 OFFSET $2
+        `,
+        [limit, offset]
+      );
+    } else if (barangayId) {
+      countQuery = await pool.query(
+        "SELECT COUNT(*) FROM announcements WHERE barangay_id = $1 OR barangay_id IS NULL",
+        [barangayId]
+      );
+      announcementsQuery = await pool.query(
+        `
+        SELECT a.id, a.title, a.content, a.date, u.name as author_name
+        FROM announcements a
+        JOIN "user" u ON a.author_id = u.id
+        WHERE a.barangay_id = $1 OR a.barangay_id IS NULL
+        ORDER BY a.date DESC
+        LIMIT $2 OFFSET $3
+        `,
+        [barangayId, limit, offset]
+      );
+    } else {
+      countQuery = await pool.query(
+        "SELECT COUNT(*) FROM announcements WHERE barangay_id IS NULL"
+      );
+      announcementsQuery = await pool.query(
+        `
+        SELECT a.id, a.title, a.content, a.date, u.name as author_name
+        FROM announcements a
+        JOIN "user" u ON a.author_id = u.id
+        WHERE a.barangay_id IS NULL
+        ORDER BY a.date DESC
+        LIMIT $1 OFFSET $2
+        `,
+        [limit, offset]
+      );
+    }
+
     const total = parseInt(countQuery.rows[0].count, 10);
     const totalPages = Math.ceil(total / limit);
-
-    // Fetch the specific page of announcements
-    const announcementsQuery = await pool.query(
-      `
-      SELECT a.id, a.title, a.content, a.date, u.name as author_name
-      FROM announcements a
-      JOIN "user" u ON a.author_id = u.id
-      ORDER BY a.date DESC
-      LIMIT $1 OFFSET $2
-      `,
-      [limit, offset]
-    );
 
     // Format dates to look nice on the frontend
     const announcements = announcementsQuery.rows.map((a) => {

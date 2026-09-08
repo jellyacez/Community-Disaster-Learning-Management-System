@@ -17,6 +17,22 @@ const RICH_TEXT_FIELDS = new Set([
 ]);
 
 /**
+ * Fields that must pass through untouched without HTML stripping:
+ * - Passwords: must never be HTML-sanitized; they are hashed/compared as opaque strings.
+ * - URLs: query strings containing '&' or valid URL characters must not be entity-escaped.
+ */
+const PASSTHROUGH_FIELDS = new Set([
+  "password",
+  "newPassword",
+  "currentPassword",
+  "image_url",
+  "system_logo",
+  "video_url",
+  "mediaUrl",
+  "imageURL",
+]);
+
+/**
  * Recursively walk a value and sanitize every string.
  *
  * Two modes:
@@ -25,6 +41,7 @@ const RICH_TEXT_FIELDS = new Set([
  *  - Rich text: handled separately by utils/sanitizeHtml.js#cleanRichText()
  *    which allows the app's safe HTML subset. Never pass rich-text fields
  *    through this middleware; sanitize them in the controller instead.
+ *  - Passthrough: passwords and URLs pass through untouched.
  *
  * Objects and arrays are walked recursively so nested payloads are fully
  * covered without any per-route wiring.
@@ -33,7 +50,7 @@ const RICH_TEXT_FIELDS = new Set([
  * JSON number fields (e.g. page, limit, ids) are not coerced to strings.
  */
 const stripAllHtml = (value, key = null) => {
-  if (key && RICH_TEXT_FIELDS.has(key)) {
+  if (key && (RICH_TEXT_FIELDS.has(key) || PASSTHROUGH_FIELDS.has(key))) {
     return value;
   }
 
@@ -46,6 +63,9 @@ const stripAllHtml = (value, key = null) => {
   if (value !== null && typeof value === "object") {
     const sanitized = {};
     for (const k of Object.keys(value)) {
+      if (k === "__proto__" || k === "constructor" || k === "prototype") {
+        continue;
+      }
       sanitized[k] = stripAllHtml(value[k], k);
     }
     return sanitized;

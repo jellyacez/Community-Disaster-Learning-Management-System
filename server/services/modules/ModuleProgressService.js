@@ -229,8 +229,8 @@ class ModuleProgressService {
           
           const result_id = resultIdCheck.rows.length > 0 ? resultIdCheck.rows[0].result_id : null;
           
-          const cert_rec = `CERT-${Date.now().toString(36).toUpperCase()}-${Math.floor(Math.random() * 1000)}`;
           const crypto = require("crypto");
+          const cert_rec = `CERT-${Date.now().toString(36).toUpperCase()}-${crypto.randomBytes(4).toString("hex").toUpperCase()}`;
           const token = crypto.randomUUID();
 
           const certInsert = await client.query(
