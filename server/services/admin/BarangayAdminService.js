@@ -1,4 +1,5 @@
 const pool = require("../../config/db");
+const { cleanRichText } = require("../../utils/sanitizeHtml");
 
 class BarangayAdminService {
   async getBarangayAnalytics(barangayId) {
@@ -85,11 +86,12 @@ class BarangayAdminService {
   }
 
   async createBarangayAnnouncement(title, content, authorId, barangayId) {
+    const sanitizedContent = cleanRichText(content);
     const result = await pool.query(
       `INSERT INTO announcements (title, content, author_id, barangay_id, date)
        VALUES ($1, $2, $3, $4, NOW())
        RETURNING id, title, content, date AS created_at`,
-      [title, content, authorId, barangayId]
+      [title, sanitizedContent, authorId, barangayId]
     );
     return result.rows[0];
   }

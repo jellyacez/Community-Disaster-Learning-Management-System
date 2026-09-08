@@ -2,6 +2,7 @@ import React from "react";
 import PropTypes from "prop-types";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Search01Icon } from "@hugeicons/core-free-icons";
+import StatusBadge from "../../../../../components/ui/StatusBadge";
 
 export default function MonitoredCitizenTable({
   filteredResidents,
@@ -34,8 +35,8 @@ export default function MonitoredCitizenTable({
           <thead>
             <tr className="text-gray-400 border-b border-gray-100 bg-gray-50/50">
               <th className="py-2.5 px-3 font-semibold uppercase tracking-wider">Citizen Identity</th>
-              <th className="py-2.5 px-3 font-semibold uppercase tracking-wider text-center">Score</th>
-              <th className="py-2.5 px-3 font-semibold uppercase tracking-wider text-center">Status</th>
+              <th className="py-2.5 px-3 font-semibold uppercase tracking-wider text-center">Modules Completed</th>
+              <th className="py-2.5 px-3 font-semibold uppercase tracking-wider text-center">Compliance Status</th>
               <th className="py-2.5 px-3 font-semibold uppercase tracking-wider text-right">Action</th>
             </tr>
           </thead>
@@ -47,46 +48,50 @@ export default function MonitoredCitizenTable({
                 </td>
               </tr>
             ) : (
-              filteredResidents.slice(0, 7).map((r) => (
-                <tr
-                  key={r.id || r._id}
-                  onClick={() => setSelectedResident(r)}
-                  className={`cursor-pointer transition-colors ${
-                    selectedResident?.id === r.id ? "bg-red-50/60 font-medium" : "hover:bg-gray-50/50"
-                  }`}
-                >
-                  <td className="py-3 px-3">
-                    <div className="font-semibold text-gray-900">{r.name}</div>
-                    <div className="text-[10px] text-gray-400 font-mono">{r.email}</div>
-                  </td>
-                  <td className="py-3 px-3 text-center font-mono font-bold text-gray-600">
-                    {r.quizScore || 0}%
-                  </td>
-                  <td className="py-3 px-3 text-center">
-                    <span
-                      className={`px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider ${
-                        r.status === "Ready"
-                          ? "bg-emerald-50 text-emerald-600 border border-emerald-200"
-                          : "bg-amber-50 text-amber-600 border border-amber-200"
-                      }`}
-                    >
-                      {r.status || "Pending"}
-                    </span>
-                  </td>
-                  <td className="py-3 px-3 text-right">
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setSelectedResident(r);
-                      }}
-                      className="px-2.5 py-1 text-[11px] font-semibold text-gray-700 bg-white border border-gray-200 hover:bg-gray-50 rounded-lg shadow-sm"
-                    >
-                      Inspect
-                    </button>
-                  </td>
-                </tr>
-              ))
+              filteredResidents.slice(0, 7).map((r) => {
+                const modulesCompleted = r.modulesCompleted ?? 0;
+                const isCertified = modulesCompleted > 0;
+                return (
+                  <tr
+                    key={r.id || r._id}
+                    onClick={() => setSelectedResident(r)}
+                    className={`cursor-pointer transition-colors ${
+                      selectedResident?.id === r.id ? "bg-red-50/60 font-medium" : "hover:bg-gray-50/50"
+                    }`}
+                  >
+                    <td className="py-3 px-3">
+                      <div className="font-semibold text-gray-900 leading-tight">{r.name}</div>
+                      <div className="text-xs text-gray-500 font-normal mt-0.5">{r.email}</div>
+                    </td>
+                    <td className="py-3 px-3 text-center font-semibold text-gray-700">
+                      {modulesCompleted} {modulesCompleted === 1 ? "Module" : "Modules"}
+                    </td>
+                    <td className="py-3 px-3 text-center">
+                      {r.banned ? (
+                        <StatusBadge color="red">Banned</StatusBadge>
+                      ) : r.archived ? (
+                        <StatusBadge color="slate">Archived</StatusBadge>
+                      ) : isCertified ? (
+                        <StatusBadge color="emerald">Certified</StatusBadge>
+                      ) : (
+                        <StatusBadge color="amber">Pending</StatusBadge>
+                      )}
+                    </td>
+                    <td className="py-3 px-3 text-right">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedResident(r);
+                        }}
+                        className="px-2.5 py-1 text-[11px] font-semibold text-gray-700 bg-white border border-gray-200 hover:bg-gray-50 rounded-lg shadow-sm cursor-pointer"
+                      >
+                        Inspect
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })
             )}
           </tbody>
         </table>

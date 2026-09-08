@@ -49,7 +49,7 @@ class ModuleService {
           const stepRes = await client.query(
             `INSERT INTO public.module_steps (level_id, step_order, step_title, step_content, media_url, step_type, is_final_assessment, loop_back_step_id)
              VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING step_id`,
-            [level_id, step.stepOrder, step.stepTitle, step.stepContent, step.mediaUrl, step.stepType, step.is_final_assessment || false, loopBackId]
+            [level_id, step.stepOrder, step.stepTitle, cleanRichText(step.stepContent || ""), step.mediaUrl, step.stepType, step.is_final_assessment || false, loopBackId]
           );
           const step_id = stepRes.rows[0].step_id;
 
@@ -212,7 +212,7 @@ class ModuleService {
           const stepRes = await client.query(
             `INSERT INTO public.module_steps (level_id, step_order, step_title, step_content, media_url, step_type, is_final_assessment, loop_back_step_id)
              VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING step_id`,
-            [level_id, step.stepOrder, step.stepTitle, step.stepContent, step.mediaUrl, step.stepType, step.is_final_assessment || false, loopBackId]
+            [level_id, step.stepOrder, step.stepTitle, cleanRichText(step.stepContent || ""), step.mediaUrl, step.stepType, step.is_final_assessment || false, loopBackId]
           );
           const step_id = stepRes.rows[0].step_id;
 

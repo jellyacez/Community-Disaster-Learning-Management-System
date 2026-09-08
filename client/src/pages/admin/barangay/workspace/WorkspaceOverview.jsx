@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Alert01Icon, Download02Icon } from "@hugeicons/core-free-icons";
@@ -9,6 +9,7 @@ import ResidentInspectorPanel from "../../shared/ResidentInspectorPanel";
 import AnnouncementModal from "./announcementModal";
 import CertificateVerificationModal from "../../../../components/ui/certificates/CertificateVerificationModal";
 import apiClient from "../../../../lib/apiClient";
+import useDebounce from "../../../../hooks/useDebounce";
 
 // Modular sub-components
 import WorkspaceKpiGrid from "./components/WorkspaceKpiGrid";
@@ -37,6 +38,8 @@ export default function WorkspaceOverview() {
   const [modulePage, setModulePage] = useState(1);
   const moduleLimit = 5;
 
+  const debouncedSearch = useDebounce(searchFilter, 350);
+
   const { data, isLoading, isError, isFetching } = useQuery({
     queryKey: ["barangayWorkspaceOverview"],
     queryFn: fetchOverviewData,
@@ -48,10 +51,16 @@ export default function WorkspaceOverview() {
   if (isError) {
     return (
       <div className="p-6 bg-red-50 border border-red-200 text-red-700 rounded-2xl flex items-center gap-3">
-        <HugeiconsIcon icon={Alert01Icon} className="w-5 h-5 shrink-0 text-red-600" />
+        <HugeiconsIcon
+          icon={Alert01Icon}
+          className="w-5 h-5 shrink-0 text-red-600"
+        />
         <div>
           <p className="font-bold text-sm">Failed to load barangay workspace</p>
-          <p className="text-xs text-red-500">Ensure your administrative account is assigned to an active sector jurisdiction.</p>
+          <p className="text-xs text-red-500">
+            Ensure your administrative account is assigned to an active sector
+            jurisdiction.
+          </p>
         </div>
       </div>
     );
@@ -62,10 +71,18 @@ export default function WorkspaceOverview() {
   const modulePerformance = data?.analytics?.modulePerformance || [];
   const totalModules = modulePerformance.length;
   const totalModulePages = Math.max(1, Math.ceil(totalModules / moduleLimit));
-  const paginatedModules = modulePerformance.slice((modulePage - 1) * moduleLimit, modulePage * moduleLimit);
-  
-  const barangay = data?.analytics?.barangay || { id: null, name: "Local Jurisdiction" };
-  const formattedBarangayName = barangay.name?.toLowerCase().startsWith("barangay")
+  const paginatedModules = modulePerformance.slice(
+    (modulePage - 1) * moduleLimit,
+    modulePage * moduleLimit,
+  );
+
+  const barangay = data?.analytics?.barangay || {
+    id: null,
+    name: "Local Jurisdiction",
+  };
+  const formattedBarangayName = barangay.name
+    ?.toLowerCase()
+    .startsWith("barangay")
     ? barangay.name
     : `Barangay ${barangay.name || "Local"}`;
 
@@ -74,12 +91,16 @@ export default function WorkspaceOverview() {
   const activeLearners = parseInt(kpis.active_learners, 10) || 0;
   const localAlertsCount = parseInt(kpis.local_alerts, 10) || 0;
 
-  const preparednessRate = totalResidents > 0 ? Math.round((certifiedCount / totalResidents) * 100) : 0;
+  const preparednessRate =
+    totalResidents > 0
+      ? Math.round((certifiedCount / totalResidents) * 100)
+      : 0;
   const pendingCount = Math.max(0, totalResidents - certifiedCount);
 
-  const filteredResidents = residents.filter(r => 
-    r.name?.toLowerCase().includes(searchFilter.toLowerCase()) ||
-    r.email?.toLowerCase().includes(searchFilter.toLowerCase())
+  const filteredResidents = residents.filter(
+    (r) =>
+      r.name?.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+      r.email?.toLowerCase().includes(debouncedSearch.toLowerCase()),
   );
 
   const handleVerifyCertificate = () => {
@@ -91,20 +112,32 @@ export default function WorkspaceOverview() {
       toast.error("No resident records available to export.");
       return;
     }
-    const headers = ["ID", "Name", "Email", "Jurisdiction", "Quiz Score", "Status"];
+    const headers = [
+      "ID",
+      "Name",
+      "Email",
+      "Jurisdiction",
+      "Modules Completed",
+      "Compliance Status",
+    ];
     const rows = residents.map((r) => [
       r.id || "",
       `"${(r.name || "").replace(/"/g, '""')}"`,
       `"${(r.email || "").replace(/"/g, '""')}"`,
       `"${formattedBarangayName}"`,
-      `${r.quizScore || 0}%`,
-      `"${r.status || "Pending"}"`,
+      r.modulesCompleted ?? 0,
+      `"${(r.modulesCompleted || 0) > 0 ? "Certified" : "Pending"}"`,
     ]);
-    const csvContent = "data:text/csv;charset=utf-8," + [headers.join(","), ...rows.map(e => e.join(","))].join("\n");
+    const csvContent =
+      "data:text/csv;charset=utf-8," +
+      [headers.join(","), ...rows.map((e) => e.join(","))].join("\n");
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `${formattedBarangayName.replace(/\s+/g, "_")}_DRRM_Report_${new Date().toISOString().split("T")[0]}.csv`);
+    link.setAttribute(
+      "download",
+      `${formattedBarangayName.replace(/\s+/g, "_")}_DRRM_Report_${new Date().toISOString().split("T")[0]}.csv`,
+    );
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -113,7 +146,6 @@ export default function WorkspaceOverview() {
 
   return (
     <div className="space-y-6 font-sans animate-in fade-in duration-150 pb-10">
-      
       {/* Header Row */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-gray-100 shadow-[0_2px_12px_-3px_rgba(0,0,0,0.06)]">
         <div>
@@ -192,8 +224,12 @@ export default function WorkspaceOverview() {
 
         <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm lg:col-span-4 min-h-[350px]">
           <div className="border-b border-gray-100 pb-3 mb-4">
-            <h3 className="text-sm font-bold text-gray-900">Active Profile Inspector</h3>
-            <p className="text-xs text-gray-400">Citizen compliance audit details</p>
+            <h3 className="text-sm font-bold text-gray-900">
+              Active Profile Inspector
+            </h3>
+            <p className="text-xs text-gray-400">
+              Citizen compliance audit details
+            </p>
           </div>
           <ResidentInspectorPanel
             selectedResident={selectedResident}
@@ -212,7 +248,6 @@ export default function WorkspaceOverview() {
         isOpen={isVerifyModalOpen}
         onClose={() => setIsVerifyModalOpen(false)}
       />
-
     </div>
   );
 }

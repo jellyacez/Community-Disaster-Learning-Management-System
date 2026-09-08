@@ -102,3 +102,12 @@ exports.validateModuleCreation = (payload) => {
 
   return { isValid: true, error: null };
 };
+
+const Joi = require("joi");
+
+const announcementSchema = Joi.object({
+  title: Joi.string().trim().min(1).max(255).required(),
+  content: Joi.string().trim().min(1).required(),
+});
+
+exports.announcementSchema = announcementSchema;

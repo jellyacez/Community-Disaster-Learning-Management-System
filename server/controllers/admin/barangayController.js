@@ -1,4 +1,5 @@
 const barangayAdminService = require("../../services/admin/BarangayAdminService");
+const { cleanRichText } = require("../../utils/sanitizeHtml");
 
 // 1. GET /api/admin/barangay/analytics
 exports.getBarangayAnalytics = async (req, res) => {
@@ -54,7 +55,8 @@ exports.createBarangayAnnouncement = async (req, res) => {
       return res.status(400).json({ error: "Unauthorized: Missing administrative credentials." });
     }
 
-    const data = await barangayAdminService.createBarangayAnnouncement(title, content, authorId, barangayId);
+    const sanitizedContent = cleanRichText(content);
+    const data = await barangayAdminService.createBarangayAnnouncement(title, sanitizedContent, authorId, barangayId);
     res.status(201).json({ success: true, data });
   } catch (error) {
     console.error("Error posting barangay announcement:", error);
