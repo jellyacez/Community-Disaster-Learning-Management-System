@@ -1,3 +1,5 @@
+import { decodeHtml } from "../../../../../utils/textUtils";
+
 export default function QuizChoice({ opt, isSelected, hasSubmitted, onChoiceClick, selectionOrder = 0 }) {
   let rowClasses = "w-full text-left py-3 px-4 rounded-lg transition-colors flex items-center justify-between gap-3 text-sm";
   
@@ -26,7 +28,7 @@ export default function QuizChoice({ opt, isSelected, hasSubmitted, onChoiceClic
       disabled={hasSubmitted}
       className={rowClasses}
     >
-      <span className="flex-1 leading-snug">{opt.text}</span>
+      <span className="flex-1 leading-snug">{decodeHtml(opt.text)}</span>
       <div className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 transition-colors ${
         hasSubmitted 
           ? (isSelected ? (opt.isCorrect ? 'border-emerald-600 bg-emerald-600 text-white' : 'border-red-600 bg-red-600 text-white') 

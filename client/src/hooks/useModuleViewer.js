@@ -9,6 +9,7 @@ import {
   saveOfflineResult,
   recalculateModuleProgress,
 } from "../lib/LocalSave/progressService";
+import { decodeHtml } from "../utils/textUtils";
 
 export function useModuleViewer(moduleId) {
   const navigate = useNavigate();
@@ -30,7 +31,14 @@ export function useModuleViewer(moduleId) {
     retry: false,
   });
 
-  const moduleData = data?.module || {};
+  const moduleData = useMemo(() => {
+    if (!data?.module) return {};
+    return {
+      ...data.module,
+      title: decodeHtml(data.module.title),
+    };
+  }, [data?.module]);
+
   const completedStepIds = data?.completedStepIds || [];
 
   const enhancedLevels = useMemo(() => {
@@ -43,7 +51,15 @@ export function useModuleViewer(moduleId) {
         lvl.level_order === 1 ||
         !lvl.is_locked_by_default ||
         (previousLvl && passedLevelIds.includes(previousLvl.id));
-      return { ...lvl, isUnlocked };
+      return {
+        ...lvl,
+        title: decodeHtml(lvl.title),
+        steps: (lvl.steps || []).map((s) => ({
+          ...s,
+          title: decodeHtml(s.title),
+        })),
+        isUnlocked,
+      };
     });
   }, [data?.levels, data?.passedLevelIds]);
 
@@ -72,7 +88,17 @@ export function useModuleViewer(moduleId) {
       queryKey: ["stepAssessment", step.id],
       queryFn: async () => {
         const res = await apiClient.get(`/modules/steps/${step.id}/assessment`);
-        return { stepId: step.id, questions: res.data.data };
+        const rawQuestions = res.data?.data || [];
+        const questions = rawQuestions.map((q) => ({
+          ...q,
+          question_text: decodeHtml(q.question_text),
+          options: (q.options || []).map((opt) => ({
+            ...opt,
+            text: decodeHtml(opt.text),
+            rationale: decodeHtml(opt.rationale),
+          })),
+        }));
+        return { stepId: step.id, questions };
       },
       enabled: step.id === activeStepId && isAssessmentStepType(step.type),
       staleTime: Infinity,

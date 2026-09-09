@@ -7,6 +7,7 @@ import {
 } from "@hugeicons/core-free-icons";
 import { SkeletonTableRow } from "../../../../../components/ui/Skeleton";
 import CertificateLifecycleBadge from "../../../../../components/ui/certificates/CertificateLifecycleBadge";
+import { decodeHtml } from "../../../../../utils/textUtils";
 
 export default function CertificationsTable({
   certificates = [],
@@ -89,7 +90,7 @@ export default function CertificationsTable({
 
                       {/* Module */}
                       <td className="px-6 py-4">
-                        <div className="font-medium text-gray-900 text-sm">{cert.module_title}</div>
+                        <div className="font-medium text-gray-900 text-sm">{decodeHtml(cert.module_title)}</div>
                         {cert.module_category && (
                           <span className="inline-block mt-0.5 text-[11px] font-medium text-gray-500 bg-gray-100 px-2 py-0.5 rounded">
                             {cert.module_category}

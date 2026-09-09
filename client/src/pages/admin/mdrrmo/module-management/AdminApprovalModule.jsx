@@ -13,6 +13,7 @@ import {
 } from "@hugeicons/core-free-icons";
 import toast from "react-hot-toast";
 import apiClient from "../../../../lib/apiClient";
+import { decodeHtml } from "../../../../utils/textUtils";
 import ConfirmationModal from "../../../../components/ui/modals/ConfirmationModal";
 import { SkeletonModuleCard } from "../../../../components/ui/Skeleton";
 
@@ -208,7 +209,7 @@ export default function AdminModuleApprovals() {
                   </div>
 
                   <h3 className="text-lg font-black text-gray-900 mb-2 leading-tight">
-                    {moduleItem.title}
+                    {decodeHtml(moduleItem.title)}
                   </h3>
 
                   <div className="flex items-center gap-2 text-xs font-bold text-gray-600 mb-4">
@@ -275,7 +276,7 @@ export default function AdminModuleApprovals() {
               Reject Module
             </h3>
             <p className="text-sm text-gray-500 mt-1 mb-4">
-              Module: <span className="font-semibold text-gray-800">{selectedModule.title}</span>
+              Module: <span className="font-semibold text-gray-800">{decodeHtml(selectedModule.title)}</span>
             </p>
 
             <form onSubmit={handleRejectSubmit} className="space-y-4">

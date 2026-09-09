@@ -6,13 +6,14 @@ import ModuleGrid from "./components/ModuleGrid";
 import apiClient from "../../../../lib/apiClient";
 import { useModuleBuilder } from "../../../../hooks/useModuleBuilder";
 import useDebounce from "../../../../hooks/useDebounce";
+import { decodeHtml } from "../../../../utils/textUtils";
 
 const fetchModules = async () => {
   const res = await apiClient.get("/admin/modules?limit=1000"); 
   const data = res.data.data || [];
   return data.map((mod) => ({
     id: mod.mod_id,
-    title: mod.modname,
+    title: decodeHtml(mod.modname),
     category: mod.modcat,
     status: mod.status,
     step_count: parseInt(mod.step_count, 10) || 0,

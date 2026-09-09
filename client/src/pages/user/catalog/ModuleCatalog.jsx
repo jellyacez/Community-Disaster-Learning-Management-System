@@ -9,6 +9,7 @@ import continuousLearningImg from "../../../assets/continuous-learning.svg";
 import useDebounce from "../../../hooks/useDebounce";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { ArrowLeft01Icon, ArrowRight01Icon, Search01Icon } from "@hugeicons/core-free-icons";
+import { decodeHtml } from "../../../utils/textUtils";
 
 export default function UserModuleCatalog() {
   useDocumentTitle("Module Catalog | Bacolor LMS");
@@ -35,7 +36,7 @@ export default function UserModuleCatalog() {
     return rawModules.map((mod) => ({
       ...mod,
       id: mod.id || mod.mod_id,
-      title: mod.title || mod.modname || "Untitled Module",
+      title: decodeHtml(mod.title || mod.modname) || "Untitled Module",
       category: mod.category || mod.modcat || "General",
       level: mod.level || "Level 1",
       duration: mod.duration || "Varies",

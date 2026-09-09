@@ -11,6 +11,7 @@ import {
 import { useModuleEnrollment } from "../../../hooks/useModuleEnrollment";
 import DOMPurify from "dompurify";
 import toast from "react-hot-toast";
+import { decodeHtml } from "../../../utils/textUtils";
 
 const getCategoryIcon = (category) => {
   const cat = (category || "").toLowerCase();
@@ -209,7 +210,7 @@ const handleManageModule = (e) => {
           </div>
 
           <h2 className="text-xl font-bold text-gray-900 group-hover:text-red-700 transition-colors truncate">
-            {module.title}
+            {decodeHtml(module.title)}
           </h2>
           {isRejected && (
             <div className="mt-1.5 p-2 bg-red-50 border border-red-100 rounded-lg flex items-start gap-2">

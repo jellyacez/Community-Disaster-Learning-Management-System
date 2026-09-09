@@ -4,6 +4,7 @@ import QuizHeader from './QuizHeader';
 import QuizChoice from './QuizChoice';
 import QuizFeedback from './QuizFeedback';
 import QuizStateMessage from './QuizStateMessage';
+import { decodeHtml } from '../../../../../utils/textUtils';
 
 // Fisher-Yates shuffle
 function shuffle(array) {
@@ -159,7 +160,7 @@ export default function InteractiveQuiz({ stepType, questions = [], isLoading = 
 
       {/* Question */}
       <h2 className="text-xl font-semibold text-gray-900 mb-6 leading-snug">
-        {currentQ.question_text}
+        {decodeHtml(currentQ.question_text)}
       </h2>
 
       {/* Choices */}

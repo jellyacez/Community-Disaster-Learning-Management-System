@@ -1,4 +1,5 @@
 import SearchBar from "../../../../../components/ui/inputs/SearchBar";
+import { decodeHtml } from "../../../../../utils/textUtils";
 
 export default function CertificationsFilterBar({
   searchInput,
@@ -39,7 +40,7 @@ export default function CertificationsFilterBar({
               .sort((a, b) => (a.modname || "").localeCompare(b.modname || ""))
               .map((m) => (
                 <option key={m.mod_id} value={m.mod_id}>
-                  {m.modname}
+                  {decodeHtml(m.modname)}
                 </option>
               ))}
           </select>

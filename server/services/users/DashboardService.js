@@ -87,6 +87,7 @@ class DashboardService {
         md.level, 
         md.duration, 
         md.description,
+        md.image_url,
         ma.modstatus as enrollment_status,
         COALESCE(ma.progress, 0) as progress,
         (

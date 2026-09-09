@@ -1,4 +1,5 @@
 import { CheckCircleIcon, LockIcon, PlayIcon, DocumentIcon, QuizIcon, CloseIcon } from "./ModuleIcons";
+import { decodeHtml } from "../../../../utils/textUtils";
 
 export default function ModuleViewerSidebar({
   module,
@@ -32,7 +33,7 @@ export default function ModuleViewerSidebar({
     `}>
       <div className="p-5 border-b border-gray-100 flex items-center justify-between">
         <div className="flex-1">
-          <h2 className="font-bold text-gray-900 line-clamp-2">{module.title || "Module Loading..."}</h2>
+          <h2 className="font-bold text-gray-900 line-clamp-2">{decodeHtml(module.title) || "Module Loading..."}</h2>
           <div className="mt-3 flex items-center gap-3">
             <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden relative">
               <div 
@@ -53,7 +54,7 @@ export default function ModuleViewerSidebar({
           <div key={lvl.id || lvl.levelOrder} className="space-y-2">
             <div className="flex items-center gap-2 px-2 pb-1 border-b border-gray-50">
                <h3 className={`text-xs font-bold uppercase ${(lvl.isUnlocked || isPreviewMode) ? 'text-gray-700' : 'text-gray-400'}`}>
-                 Level {lvl.level_order}: {lvl.title}
+                 Level {lvl.level_order}: {decodeHtml(lvl.title)}
                </h3>
                {!(lvl.isUnlocked || isPreviewMode) && <LockIcon className="w-3 h-3 text-gray-400" />}
             </div>
@@ -85,7 +86,7 @@ export default function ModuleViewerSidebar({
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className={`text-sm font-semibold line-clamp-2 ${isActive ? "text-red-900" : "text-gray-700"}`}>
-                        {step.step_order}. {step.title}
+                        {step.step_order}. {decodeHtml(step.title)}
                       </p>
                       <p className="text-xs text-gray-500 capitalize mt-0.5">
                          {step.type.replace(/_/g, ' ')} {step.is_final_assessment ? "(Final Assessment)" : ""}
@@ -100,15 +101,6 @@ export default function ModuleViewerSidebar({
             </div>
           </div>
         ))}
-      </div>
-      
-      <div className="hidden md:block p-4 border-t border-gray-100 bg-gray-50">
-         <button onClick={() => navigate("/userDashboard")} className="w-full py-2.5 px-4 text-sm font-semibold text-gray-600 hover:text-gray-900 hover:bg-gray-200 rounded-xl transition flex justify-center items-center gap-2">
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-          </svg>
-          Exit to Dashboard
-        </button>
       </div>
     </aside>
   );

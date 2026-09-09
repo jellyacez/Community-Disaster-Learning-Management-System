@@ -1,6 +1,7 @@
 import { useRef, useEffect } from "react";
 import DOMPurify from "dompurify";
 import InteractiveQuiz from "../quiz/InteractiveQuiz";
+import { decodeHtml } from "../../../../../utils/textUtils";
 
 export default function StepContent({
   activeStep,
@@ -110,7 +111,7 @@ export default function StepContent({
   return (
     <div className="max-w-3xl mx-auto w-full pb-12">
       <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-6 leading-tight">
-        {activeStep.title}
+        {decodeHtml(activeStep.title)}
       </h1>
 
       {/* MEDIA COMPONENT: EXPLICIT BRANCHING FOR PDF, VIDEO, AND IMAGE */}
@@ -135,7 +136,7 @@ export default function StepContent({
               <div className="w-full h-[620px] bg-gray-100 rounded-lg overflow-hidden border border-gray-200">
                 <iframe
                   src={mediaUrl}
-                  title={activeStep.title || "PDF Document"}
+                  title={decodeHtml(activeStep.title) || "PDF Document"}
                   className="w-full h-full border-0"
                 />
               </div>

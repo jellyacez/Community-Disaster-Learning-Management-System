@@ -2,7 +2,6 @@ import { useParams, useNavigate } from "react-router-dom";
 import useDocumentTitle from "../../../hooks/useDocumentTitle";
 
 import { useModuleViewer } from "../../../hooks/useModuleViewer";
-import { MenuIcon } from "../../../components/ui/modules/viewer/ModuleIcons";
 import ModuleViewerSidebar from "../../../components/ui/modules/viewer/ModuleViewerSidebar";
 import ModuleViewerContent from "../../../components/ui/modules/viewer/ModuleViewerContent";
 import Spinner from "../../../components/ui/Spinner";
@@ -60,19 +59,6 @@ export default function ModuleViewer() {
 
   return (
     <div className="h-screen overflow-hidden bg-white flex flex-col md:flex-row">
-      
-      <div className="md:hidden flex items-center justify-between bg-white border-b border-gray-200 p-4 sticky top-0 z-20 shadow-sm">
-        <button onClick={() => navigate("/userDashboard")} className="text-gray-500 hover:text-gray-900 transition flex items-center gap-2 text-sm font-semibold">
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-          </svg>
-          Back
-        </button>
-        <button onClick={() => setIsSidebarOpen(true)} className="p-2 bg-gray-100 rounded-lg text-gray-700 hover:bg-gray-200 transition">
-          <MenuIcon />
-        </button>
-      </div>
-
       {isSidebarOpen && (
         <div 
           className="fixed inset-0 bg-black/50 z-30 md:hidden animate-in fade-in"
@@ -104,6 +90,7 @@ export default function ModuleViewer() {
         loopBackData={loopBackData}
         acknowledgeLoopBack={acknowledgeLoopBack}
         navigate={navigate}
+        setIsSidebarOpen={setIsSidebarOpen}
       />
 
     </div>

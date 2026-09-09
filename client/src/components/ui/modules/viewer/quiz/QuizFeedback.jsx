@@ -1,3 +1,5 @@
+import { decodeHtml } from "../../../../../utils/textUtils";
+
 export default function QuizFeedback({ 
   hasSubmitted, 
   selectedChoiceId, 
@@ -14,7 +16,7 @@ export default function QuizFeedback({
           {isCorrect ? 'Correct' : 'Incorrect'}
         </h4>
         <p className="text-gray-700 leading-relaxed text-xs md:text-sm">
-          {rationale || "No rationale provided for this choice."}
+          {decodeHtml(rationale) || "No rationale provided for this choice."}
         </p>
       </div>
     );

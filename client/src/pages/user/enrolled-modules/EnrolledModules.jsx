@@ -6,6 +6,7 @@ import educationImg from "../../../assets/education.svg";
 import ModuleCard from "../../../components/ui/modules/ModuleCard.jsx";
 import ModuleSkeleton from "../../../components/ui/modules/ModuleSkeleton.jsx";
 import useDocumentTitle from "../../../hooks/useDocumentTitle";
+import { decodeHtml } from "../../../utils/textUtils";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   Search01Icon,
@@ -49,7 +50,7 @@ export default function UserEnrolledModules() {
     return rawModules.map((mod) => ({
       ...mod,
       id: mod.id || mod.mod_id,
-      title: mod.title || mod.modname || "Untitled Module",
+      title: decodeHtml(mod.title || mod.modname) || "Untitled Module",
       category: mod.category || mod.modcat || "General",
       level: mod.level || "Level 1",
       duration: mod.duration || "Varies",

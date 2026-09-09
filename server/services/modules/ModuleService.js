@@ -672,14 +672,35 @@ class ModuleService {
     };
   }
   
-  async getModuleSyllabusDetails(mod_id) {
-    // 1. Fetch parent module details
-    const moduleRes = await pool.query(
-      `SELECT mod_id, modname, modcat, description, level, duration, image_url
-       FROM public.module_data
-       WHERE mod_id = $1`,
-      [mod_id]
-    );
+  async getModuleSyllabusDetails(mod_id, user_id = null) {
+    // 1. Fetch parent module details with user enrollment if authenticated
+    let moduleRes;
+    if (user_id) {
+      moduleRes = await pool.query(
+        `SELECT 
+           md.mod_id, md.modname, md.modcat, md.description, md.level, md.duration, md.image_url,
+           (um.mod_id IS NOT NULL) AS is_enrolled,
+           COALESCE(um.progress, 0) AS progress,
+           um.modstatus AS status
+         FROM public.module_data md
+         LEFT JOIN (
+           SELECT DISTINCT ON (mod_id) mod_id, progress, modstatus
+           FROM public.module_activity
+           WHERE user_id = $2
+           ORDER BY mod_id, modact_id DESC
+         ) um ON um.mod_id = md.mod_id
+         WHERE md.mod_id = $1`,
+        [mod_id, user_id]
+      );
+    } else {
+      moduleRes = await pool.query(
+        `SELECT mod_id, modname, modcat, description, level, duration, image_url,
+                false AS is_enrolled, 0 AS progress, null AS status
+         FROM public.module_data
+         WHERE mod_id = $1`,
+        [mod_id]
+      );
+    }
 
     if (moduleRes.rowCount === 0) {
       return null;

@@ -6,6 +6,7 @@ import {
   ArrowLeft01Icon, 
   ArrowRight01Icon 
 } from "@hugeicons/core-free-icons";
+import { decodeHtml } from "../../../../../utils/textUtils";
 
 export default function CurriculumReadinessCard({
   modulePerformance,
@@ -43,7 +44,7 @@ export default function CurriculumReadinessCard({
             return (
               <div key={mod.module_id} className="space-y-1.5">
                 <div className="flex justify-between text-xs">
-                  <span className="font-semibold text-gray-800">{mod.module_title}</span>
+                  <span className="font-semibold text-gray-800">{decodeHtml(mod.module_title)}</span>
                   <span className="font-mono text-gray-500">{completed}/{enrolled} ({rate}%)</span>
                 </div>
                 <div className="w-full bg-gray-100 h-2 rounded-full overflow-hidden">

@@ -2,6 +2,7 @@ import DOMPurify from "dompurify";
 import { memo } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Activity01Icon, Alert01Icon, Book01Icon } from "@hugeicons/core-free-icons";
+import { decodeHtml } from "../../../utils/textUtils";
 
 // Helper for category icons
 const getCategoryIcon = (category) => {
@@ -9,6 +10,12 @@ const getCategoryIcon = (category) => {
   if (cat.includes("flood") || cat.includes("water")) return Activity01Icon;
   if (cat.includes("earthquake") || cat.includes("seismic")) return Alert01Icon;
   return Book01Icon; // default icon
+};
+
+const resolveImageUrl = (url) => {
+  if (!url) return null;
+  if (url.startsWith("http://") || url.startsWith("https://")) return url;
+  return `http://localhost:5000/${url.startsWith("/") ? url.slice(1) : url}`;
 };
 
 const EnrolledModuleCard = memo(function EnrolledModuleCard({ module, onResume }) {
@@ -19,7 +26,7 @@ const EnrolledModuleCard = memo(function EnrolledModuleCard({ module, onResume }
         {module.image_url ? (
           <img 
             loading="lazy"
-            src={module.image_url} 
+            src={resolveImageUrl(module.image_url)} 
             alt={module.title} 
             referrerPolicy="no-referrer"
             className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 absolute inset-0"
@@ -47,7 +54,7 @@ const EnrolledModuleCard = memo(function EnrolledModuleCard({ module, onResume }
             </span>
           </div>
           <h3 className="text-lg font-bold text-gray-900 group-hover:text-red-700 transition-colors">
-            {module.title}
+            {decodeHtml(module.title)}
           </h3>
           <div 
             className="mt-1 text-sm text-gray-500 line-clamp-2 prose-sm max-w-none"

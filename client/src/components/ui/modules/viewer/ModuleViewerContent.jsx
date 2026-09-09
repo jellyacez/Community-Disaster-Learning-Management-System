@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import { PlayIcon, DocumentIcon, QuizIcon } from "./ModuleIcons";
+import { PlayIcon, DocumentIcon, QuizIcon, MenuIcon } from "./ModuleIcons";
 import LoopBackModal from "./components/LoopBackModal";
 import CurriculumMap from "./components/CurriculumMap";
 import StepContent from "./components/StepContent";
@@ -16,7 +16,8 @@ export default function ModuleViewerContent({
   loopBackData,
   acknowledgeLoopBack,
   isPreviewMode = false,
-  navigate
+  navigate,
+  setIsSidebarOpen
 }) {
   const assessmentData = activeStep ? getAssessmentForStep(activeStep.id) : { questions: [], isLoading: false };
   const isAssessment = assessmentData.questions?.length > 0 || activeStep?.type === "quiz" || activeStep?.type === "situational";
@@ -67,8 +68,8 @@ export default function ModuleViewerContent({
         acknowledgeLoopBack={acknowledgeLoopBack} 
       />
 
-      {/* Minimal Top Bar: progress indicator, exit action, no extra decoration */}
-      <header className="border-b border-gray-200 bg-white px-6 py-3.5 md:px-12 flex items-center justify-between z-10 shrink-0">
+      {/* Minimal Top Bar: progress indicator, exit action, mobile menu */}
+      <header className="border-b border-gray-200 bg-white px-4 py-3 md:px-12 flex items-center justify-between z-10 shrink-0">
         <button
           onClick={() => navigate ? navigate("/userDashboard") : handleStepClick(null)}
           className="inline-flex items-center gap-1.5 text-xs font-semibold text-gray-600 hover:text-gray-900 transition-colors"
@@ -79,16 +80,25 @@ export default function ModuleViewerContent({
           <span>Exit to Dashboard</span>
         </button>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
           <span className="text-xs font-medium text-gray-500">
             {activeStep ? `Step ${activeStep.step_order} of ${totalSteps}` : `${completedStepIds.length} of ${totalSteps} completed`}
           </span>
-          <div className="w-24 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+          <div className="w-16 sm:w-24 h-1.5 bg-gray-100 rounded-full overflow-hidden">
             <div
               className="h-full bg-red-600 transition-all duration-300"
               style={{ width: `${totalSteps > 0 ? Math.round((completedStepIds.length / totalSteps) * 100) : 0}%` }}
             />
           </div>
+          {setIsSidebarOpen && (
+            <button
+              onClick={() => setIsSidebarOpen(true)}
+              className="md:hidden p-1.5 bg-gray-100 rounded-lg text-gray-700 hover:bg-gray-200 transition shrink-0 ml-1"
+              aria-label="Open course navigation"
+            >
+              <MenuIcon />
+            </button>
+          )}
         </div>
       </header>
 

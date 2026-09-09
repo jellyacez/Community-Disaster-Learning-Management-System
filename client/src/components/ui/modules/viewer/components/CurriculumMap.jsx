@@ -1,4 +1,6 @@
 import { LockIcon, CheckCircleIcon } from "../ModuleIcons";
+import DOMPurify from "dompurify";
+import { decodeHtml } from "../../../../../utils/textUtils";
 
 export default function CurriculumMap({
   levels = [],
@@ -34,8 +36,13 @@ export default function CurriculumMap({
                 {/* Card */}
                 <div className={`w-full md:w-1/2 pl-28 md:pl-0 ${isEven ? 'md:pr-20 text-left md:text-right' : 'md:pl-20 text-left'}`}>
                   <div className={`p-6 md:p-8 rounded-[2rem] border transition-all duration-300 ${(lvl.isUnlocked || isPreviewMode) ? 'bg-white border-gray-200 hover:shadow-xl hover:border-red-200' : 'bg-gray-50/50 border-gray-200 opacity-70'}`}>
-                    <h3 className={`text-2xl font-black mb-3 tracking-tight ${(lvl.isUnlocked || isPreviewMode) ? 'text-gray-900' : 'text-gray-500'}`}>{lvl.title}</h3>
-                    {lvl.description && <p className="text-sm font-medium text-gray-500 mb-6 leading-relaxed">{lvl.description}</p>}
+                    <h3 className={`text-2xl font-black mb-3 tracking-tight ${(lvl.isUnlocked || isPreviewMode) ? 'text-gray-900' : 'text-gray-500'}`}>{decodeHtml(lvl.title)}</h3>
+                    {lvl.description && (
+                      <div 
+                        className="text-sm font-medium text-gray-500 mb-6 leading-relaxed prose prose-sm max-w-none [&>p]:m-0"
+                        dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(lvl.description) }}
+                      />
+                    )}
                     
                     <div className="space-y-3">
                       {(lvl.steps || []).map((step, sIdx) => {
@@ -57,7 +64,7 @@ export default function CurriculumMap({
                             <div className={`shrink-0 flex items-center justify-center w-8 h-8 rounded-full ${isCompleted ? 'bg-emerald-200/50 text-emerald-700' : isStepLocked ? 'bg-gray-200/50 text-gray-500' : 'bg-red-200/50 text-red-700'}`}>
                               {isCompleted ? <CheckCircleIcon className="w-5 h-5" /> : isStepLocked ? <LockIcon className="w-4 h-4" /> : getStepIcon(step.type)}
                             </div>
-                            <span className="flex-1 truncate font-semibold">{step.title}</span>
+                            <span className="flex-1 truncate font-semibold">{decodeHtml(step.title)}</span>
                             {step.is_final_assessment && <span className="text-[9px] uppercase font-black tracking-widest px-2.5 py-1 rounded-full bg-red-600 text-white shadow-sm">Final</span>}
                           </button>
                         );

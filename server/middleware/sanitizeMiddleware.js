@@ -1,4 +1,5 @@
 const sanitizeHtml = require("sanitize-html");
+const { decodeHTML } = require("entities");
 
 /**
  * List of fields that contain rich text.
@@ -55,7 +56,7 @@ const stripAllHtml = (value, key = null) => {
   }
 
   if (typeof value === "string") {
-    return sanitizeHtml(value, { allowedTags: [], allowedAttributes: {} });
+    return decodeHTML(sanitizeHtml(value, { allowedTags: [], allowedAttributes: {} }));
   }
   if (Array.isArray(value)) {
     return value.map((item) => stripAllHtml(item, key));

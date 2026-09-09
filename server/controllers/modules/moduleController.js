@@ -314,7 +314,8 @@ exports.getModuleSyllabusDetails = async (req, res) => {
   }
 
   try {
-    const details = await ModuleService.getModuleSyllabusDetails(parsedModId);
+    const user_id = req.user?.id || req.user?.userId;
+    const details = await ModuleService.getModuleSyllabusDetails(parsedModId, user_id);
 
     if (!details) {
       return res

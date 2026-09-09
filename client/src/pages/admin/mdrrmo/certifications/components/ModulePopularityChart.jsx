@@ -7,6 +7,7 @@ import {
   Legend,
 } from "recharts";
 import { SkeletonChart } from "../../../../../components/ui/Skeleton";
+import { decodeHtml } from "../../../../../utils/textUtils";
 
 const CATEGORY_COLORS = {
   Flood: "#3b82f6",
@@ -98,7 +99,7 @@ export default function ModulePopularityChart({ modules = [], isLoading }) {
             {modules.slice(0, 4).map((mod) => (
               <div key={mod.module_id} className="flex items-center justify-between text-xs py-1">
                 <div className="truncate pr-2">
-                  <span className="font-medium text-gray-800">{mod.module_title}</span>
+                  <span className="font-medium text-gray-800">{decodeHtml(mod.module_title)}</span>
                   <span className="ml-1.5 text-[10px] text-gray-400 uppercase font-semibold">
                     ({mod.category})
                   </span>

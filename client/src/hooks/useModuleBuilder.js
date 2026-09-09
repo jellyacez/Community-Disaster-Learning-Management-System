@@ -5,6 +5,7 @@ import { useModuleForm } from "./module-builder/useModuleForm";
 import { useLevelManager } from "./module-builder/useLevelManager";
 import { useStepStager } from "./module-builder/useStepStager";
 import { useModuleSubmit } from "./module-builder/useModuleSubmit";
+import { decodeHtml } from "../utils/textUtils";
 
 export function useModuleBuilder() {
   const [formErrors, setFormErrors] = useState({});
@@ -55,7 +56,7 @@ export function useModuleBuilder() {
 
       setEditingModuleId(data.mod_id);
       setModuleForm({
-        title: data.modname || "",
+        title: decodeHtml(data.modname) || "",
         category: data.modcat || "General",
         level: data.level || "Level 1",
         duration: data.duration || "15 mins",
@@ -66,7 +67,7 @@ export function useModuleBuilder() {
       // Hydrate Levels
       const levels = (data.levels || []).map((lvl) => ({
         levelOrder: lvl.levelOrder,
-        levelTitle: lvl.levelTitle || "",
+        levelTitle: decodeHtml(lvl.levelTitle) || "",
         levelDescription: lvl.levelDescription || "",
         passing_threshold: lvl.passing_threshold || 80,
         is_locked_by_default: lvl.is_locked_by_default ?? true
@@ -86,7 +87,7 @@ export function useModuleBuilder() {
           flows.push({
             id: `step-${lvl.levelOrder}-${step.stepOrder}-${Date.now()}`,
             levelOrder: lvl.levelOrder,
-            title: step.stepTitle || "",
+            title: decodeHtml(step.stepTitle) || "",
             type: step.stepType || "text",
             textContent: step.stepType === "text" ? step.stepContent : "",
             mediaUrl: step.mediaUrl || "",
@@ -95,11 +96,11 @@ export function useModuleBuilder() {
             quizQuestions: (step.quizQuestions || []).map((q) => {
               const correctIdx = (q.options || []).findIndex((opt) => opt.isCorrect);
               return {
-                questionText: q.questionText || "",
+                questionText: decodeHtml(q.questionText) || "",
                 correctAnswerIndex: correctIdx >= 0 ? correctIdx : 0,
                 options: (q.options || []).map((opt) => ({
-                  text: opt.text || "",
-                  rationale: opt.rationale || "",
+                  text: decodeHtml(opt.text) || "",
+                  rationale: decodeHtml(opt.rationale) || "",
                   isCorrect: opt.isCorrect || false,
                   sequence_order: opt.sequence_order
                 }))
@@ -110,7 +111,7 @@ export function useModuleBuilder() {
       });
 
       setStagedFlows(flows);
-      toast.success(`Loaded module "${data.modname}" for editing.`);
+      toast.success(`Loaded module "${decodeHtml(data.modname)}" for editing.`);
     } catch (err) {
       console.error("Failed to load module for edit:", err);
       toast.error(`Failed to load module: ${err.response?.data?.message || err.message}`);

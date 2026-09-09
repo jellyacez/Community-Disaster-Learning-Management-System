@@ -6,6 +6,7 @@ import ModuleViewerSidebar from "./ModuleViewerSidebar";
 import ModuleViewerContent from "./ModuleViewerContent";
 import { MenuIcon } from "./ModuleIcons";
 import Spinner from "../../Spinner";
+import { decodeHtml } from "../../../../utils/textUtils";
 
 export default function PublishedModulePreviewModal({
   isOpen,
@@ -29,8 +30,24 @@ export default function PublishedModulePreviewModal({
     retry: 1
   });
 
-  const levels = data?.levels;
-  const module = data?.module;
+  const levels = useMemo(() => {
+    return (data?.levels || []).map((lvl) => ({
+      ...lvl,
+      title: decodeHtml(lvl.title),
+      steps: (lvl.steps || []).map((s) => ({
+        ...s,
+        title: decodeHtml(s.title),
+      })),
+    }));
+  }, [data?.levels]);
+
+  const module = useMemo(() => {
+    if (!data?.module) return null;
+    return {
+      ...data.module,
+      title: decodeHtml(data.module.title),
+    };
+  }, [data?.module]);
 
   const allSteps = useMemo(() => {
     return levels ? levels.reduce((acc, lvl) => [...acc, ...(lvl.steps || [])], []) : [];

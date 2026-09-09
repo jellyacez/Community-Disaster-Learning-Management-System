@@ -1,6 +1,7 @@
 import SearchBar from "../../../../../components/ui/inputs/SearchBar";
 import CertificateLifecycleBadge from "../../../../../components/ui/certificates/CertificateLifecycleBadge";
 import { SkeletonTableRow } from "../../../../../components/ui/Skeleton";
+import { decodeHtml } from "../../../../../utils/textUtils";
 import { BARANGAY_LIST } from "../../../../../constants/barangays";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
@@ -102,7 +103,7 @@ export default function ExpiringCredentialsFeed({
                 .sort((a, b) => (a.module_title || "").localeCompare(b.module_title || ""))
                 .map((m) => (
                   <option key={m.module_id} value={m.module_id}>
-                    {m.module_title}
+                    {decodeHtml(m.module_title)}
                   </option>
                 ))}
             </select>
@@ -196,7 +197,7 @@ export default function ExpiringCredentialsFeed({
 
                         {/* Module */}
                         <td className="px-6 py-4">
-                          <div className="font-medium text-gray-900 text-sm">{cert.module_title}</div>
+                          <div className="font-medium text-gray-900 text-sm">{decodeHtml(cert.module_title)}</div>
                           {cert.module_category && (
                             <span className="inline-block mt-0.5 text-[11px] font-medium text-gray-500 bg-gray-100 px-2 py-0.5 rounded">
                               {cert.module_category}

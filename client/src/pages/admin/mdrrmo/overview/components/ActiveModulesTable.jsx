@@ -5,6 +5,7 @@ import { ArrowLeft01Icon, ArrowRight01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import StatusBadge from "../../../../../components/ui/StatusBadge";
 import { SkeletonTableRow } from "../../../../../components/ui/Skeleton";
+import { decodeHtml } from "../../../../../utils/textUtils";
 
 export default function ActiveModulesTable({ modules = [], isLoading, selectedCategory, statusFilter, onApprove, onReject }) {
   const { data: session } = authClient.useSession();
@@ -84,9 +85,9 @@ export default function ActiveModulesTable({ modules = [], isLoading, selectedCa
                             <Link 
                               to={`/admin/mdrrmo/modules/${mod.id}/details`}
                               className="font-semibold text-gray-900 hover:text-red-600 truncate block transition-colors text-xs"
-                              title={mod.title}
+                              title={decodeHtml(mod.title)}
                             >
-                              {mod.title}
+                              {decodeHtml(mod.title)}
                             </Link>
                             <p className="text-[11px] text-gray-400 mt-0.5">{mod.step_count} Steps</p>
                           </td>
