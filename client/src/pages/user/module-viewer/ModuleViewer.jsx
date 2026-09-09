@@ -59,7 +59,7 @@ export default function ModuleViewer() {
   }
 
   return (
-    <div className="h-screen overflow-hidden bg-gray-50 flex flex-col md:flex-row">
+    <div className="h-screen overflow-hidden bg-white flex flex-col md:flex-row">
       
       <div className="md:hidden flex items-center justify-between bg-white border-b border-gray-200 p-4 sticky top-0 z-20 shadow-sm">
         <button onClick={() => navigate("/userDashboard")} className="text-gray-500 hover:text-gray-900 transition flex items-center gap-2 text-sm font-semibold">
@@ -103,6 +103,7 @@ export default function ModuleViewer() {
         getAssessmentForStep={getAssessmentForStep}
         loopBackData={loopBackData}
         acknowledgeLoopBack={acknowledgeLoopBack}
+        navigate={navigate}
       />
 
     </div>

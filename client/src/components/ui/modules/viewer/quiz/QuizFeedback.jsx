@@ -9,11 +9,11 @@ export default function QuizFeedback({
 
   if (selectedChoiceId) {
     return (
-      <div className={`mt-6 p-5 rounded-2xl border ${isCorrect ? 'bg-emerald-50 border-emerald-100' : 'bg-red-50 border-red-100'} animate-in slide-in-from-top-2 duration-300`}>
-        <h4 className={`text-sm font-bold uppercase tracking-wider mb-2 ${isCorrect ? 'text-emerald-700' : 'text-red-700'}`}>
-          {isCorrect ? 'Correct! Formative Feedback' : 'Incorrect. Formative Feedback'}
+      <div className={`mt-4 p-4 rounded-lg border ${isCorrect ? 'bg-emerald-50/70 border-emerald-200' : 'bg-red-50/70 border-red-200'} transition-all`}>
+        <h4 className={`text-xs font-bold uppercase tracking-wider mb-1 ${isCorrect ? 'text-emerald-800' : 'text-red-800'}`}>
+          {isCorrect ? 'Correct' : 'Incorrect'}
         </h4>
-        <p className="text-gray-700 leading-relaxed text-sm">
+        <p className="text-gray-700 leading-relaxed text-xs md:text-sm">
           {rationale || "No rationale provided for this choice."}
         </p>
       </div>
@@ -21,9 +21,9 @@ export default function QuizFeedback({
   }
 
   return (
-     <div className="mt-6 p-5 rounded-2xl border bg-gray-50 border-gray-200 animate-in slide-in-from-top-2 duration-300">
-       <h4 className="text-sm font-bold uppercase tracking-wider mb-2 text-gray-700">Time Expired</h4>
-       <p className="text-gray-600 text-sm mb-4">You did not select an answer in time.</p>
+     <div className="mt-4 p-4 rounded-lg border bg-gray-50 border-gray-200 transition-all">
+       <h4 className="text-xs font-bold uppercase tracking-wider mb-1 text-gray-700">Time Expired</h4>
+       <p className="text-gray-600 text-xs md:text-sm">You did not select an answer in time.</p>
      </div>
   );
 }

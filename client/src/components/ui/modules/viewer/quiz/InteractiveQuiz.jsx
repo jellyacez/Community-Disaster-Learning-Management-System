@@ -147,7 +147,7 @@ export default function InteractiveQuiz({ stepType, questions = [], isLoading = 
 
   return (
     <div 
-      className={`bg-gradient-to-br from-purple-50/50 via-white to-blue-50/50 border border-purple-100/50 rounded-2xl p-4 md:p-6 shadow-sm relative overflow-hidden select-none ${isPreviewMode ? 'opacity-95' : ''}`}
+      className={`w-full pt-2 select-none ${isPreviewMode ? 'opacity-95' : ''}`}
       onCopy={!isPreviewMode ? handlePreventCopy : undefined}
       onContextMenu={!isPreviewMode ? handlePreventCopy : undefined}
     >
@@ -158,12 +158,12 @@ export default function InteractiveQuiz({ stepType, questions = [], isLoading = 
       />
 
       {/* Question */}
-      <h2 className="text-lg md:text-xl font-bold text-gray-900 mb-4 leading-relaxed">
+      <h2 className="text-xl font-semibold text-gray-900 mb-6 leading-snug">
         {currentQ.question_text}
       </h2>
 
       {/* Choices */}
-      <div className="space-y-3">
+      <div className="space-y-2.5 mb-6">
         {currentQ.options.map((opt) => (
           <QuizChoice 
             key={opt.id} 
@@ -177,19 +177,19 @@ export default function InteractiveQuiz({ stepType, questions = [], isLoading = 
       </div>
 
       {isMultiSelect && !hasSubmitted && !isPreviewMode && (
-        <div className="mt-6 flex justify-end">
+        <div className="mt-4 flex justify-end">
           <button 
             onClick={() => submitAnswer(selectedChoiceIds)}
             disabled={selectedChoiceIds.length === 0}
-            className="px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white font-semibold text-sm rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Submit Answer
           </button>
         </div>
       )}
 
-      {/* Footer Area with Black Next Button */}
-      <div className="mt-8">
+      {/* Footer Area with Next Action */}
+      <div className="mt-6">
         {(hasSubmitted || isLocked) && !isPreviewMode && (
           <QuizFeedback 
             hasSubmitted={hasSubmitted}
@@ -203,10 +203,12 @@ export default function InteractiveQuiz({ stepType, questions = [], isLoading = 
         {(hasSubmitted || isPreviewMode) && !isLocked && (
           <button 
             onClick={handleNextQuestion}
-            className="w-full mt-4 px-6 py-4 bg-gray-900 hover:bg-black active:scale-[0.98] text-white rounded-2xl font-bold transition-all shadow-md flex items-center justify-center gap-2 text-[15px]"
+            className="w-full mt-4 px-6 py-3 bg-red-600 hover:bg-red-700 active:scale-[0.99] text-white rounded-lg font-semibold text-sm transition-colors flex items-center justify-center gap-2"
           >
-            {currentQIndex < shuffledQuestions.length - 1 ? (isPreviewMode ? 'Next Question' : 'Next') : (isPreviewMode ? 'Complete Preview' : 'Complete Assessment')}
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
+            <span>{currentQIndex < shuffledQuestions.length - 1 ? (isPreviewMode ? 'Next Question' : 'Next Question') : (isPreviewMode ? 'Complete Preview' : 'Complete Assessment')}</span>
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+            </svg>
           </button>
         )}
       </div>

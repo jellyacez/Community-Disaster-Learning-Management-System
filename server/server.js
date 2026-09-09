@@ -47,11 +47,18 @@ app.use(express.json({ limit: "500kb" }));
 app.use(
   "/uploads",
   express.static(path.join(__dirname, "uploads"), {
-    // SECURITY: Force the browser to download files rather than render them.
-    // This is a defence-in-depth measure — even if a non-whitelisted file somehow
-    // lands in /uploads/, it cannot be executed as HTML/SVG/JS in the browser.
-    setHeaders: (res) => {
-      res.setHeader("Content-Disposition", "attachment");
+    // Allow safe viewable media (PDFs, videos, standard images) to display inline.
+    // Untrusted or executable types default to attachment to prevent inline HTML/SVG/JS execution.
+    setHeaders: (res, filePath) => {
+      const ext = path.extname(filePath).toLowerCase();
+      if (
+        [".pdf", ".mp4", ".webm", ".ogg", ".jpg", ".jpeg", ".png", ".webp", ".gif"].includes(ext)
+      ) {
+        res.setHeader("Content-Disposition", "inline");
+      } else {
+        res.setHeader("Content-Disposition", "attachment");
+      }
+      res.setHeader("Access-Control-Allow-Origin", "*");
       res.setHeader("X-Content-Type-Options", "nosniff");
     },
   }),
