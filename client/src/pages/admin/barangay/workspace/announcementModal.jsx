@@ -1,30 +1,42 @@
 import React, { useState, useEffect } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { Cancel01Icon, Notification01Icon, Alert01Icon } from "@hugeicons/core-free-icons";
+import {
+  Cancel01Icon,
+  Notification01Icon,
+  Alert01Icon,
+} from "@hugeicons/core-free-icons";
 import toast from "react-hot-toast";
 import apiClient from "../../../../lib/apiClient";
 
-export default function AnnouncementModal({ isOpen, onClose, barangayName = "Your Jurisdiction" }) {
+export default function AnnouncementModal({
+  isOpen,
+  onClose,
+  barangayName = "Your Jurisdiction",
+}) {
   const queryClient = useQueryClient();
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
+  const [priority, setPriority] = useState("standard");
+
+  const resetForm = () => {
+    setTitle("");
+    setContent("");
+    setPriority("standard");
+  };
 
   const handleSafeClose = () => {
     if (title.trim() || content.trim()) {
       if (window.confirm("Discard unsaved announcement draft?")) {
-        setTitle("");
-        setContent("");
+        resetForm();
         onClose();
       }
     } else {
-      setTitle("");
-      setContent("");
+      resetForm();
       onClose();
     }
   };
 
-  // Keyboard shortcut: Escape to close with unsaved guard
   useEffect(() => {
     if (!isOpen) return;
     const handleKeyDown = (e) => {
@@ -42,14 +54,18 @@ export default function AnnouncementModal({ isOpen, onClose, barangayName = "You
       return res.data;
     },
     onSuccess: () => {
-      toast.success(`Announcement broadcasted successfully to Barangay ${barangayName}!`);
+      toast.success(
+        `Announcement broadcasted successfully to Barangay ${barangayName}!`
+      );
       queryClient.invalidateQueries({ queryKey: ["barangayWorkspaceOverview"] });
-      setTitle("");
-      setContent("");
+      queryClient.invalidateQueries({ queryKey: ["barangayAnnouncements"] });
+      resetForm();
       onClose();
     },
     onError: (err) => {
-      toast.error(err?.response?.data?.error || "Failed to publish announcement.");
+      toast.error(
+        err?.response?.data?.error || "Failed to publish announcement."
+      );
     },
   });
 
@@ -57,17 +73,20 @@ export default function AnnouncementModal({ isOpen, onClose, barangayName = "You
 
   const handleSubmit = (e) => {
     e.preventDefault();
+
     if (!title.trim() || !content.trim()) {
       toast.error("Please fill in both title and content.");
       return;
     }
-    mutation.mutate({ title, content });
+
+    console.log("DEBUG announcement payload:", { title, content, priority });
+
+    mutation.mutate({ title, content, priority });
   };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
       <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-gray-100 space-y-5 animate-in zoom-in-95 duration-150">
-        
         {/* Modal Header */}
         <div className="flex items-center justify-between border-b border-gray-100 pb-3">
           <div className="flex items-center gap-2.5">
@@ -76,14 +95,19 @@ export default function AnnouncementModal({ isOpen, onClose, barangayName = "You
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="text-base font-bold text-gray-900">Broadcast Local Advisory</h3>
+                <h3 className="text-base font-bold text-gray-900">
+                  Broadcast Local Advisory
+                </h3>
                 <span className="text-[10px] font-mono font-bold bg-red-50 text-red-700 px-2 py-0.5 rounded">
                   {barangayName}
                 </span>
               </div>
-              <p className="text-xs text-gray-500">Publish notices strictly to Barangay {barangayName} residents</p>
+              <p className="text-xs text-gray-500">
+                Publish notices strictly to Barangay {barangayName} residents
+              </p>
             </div>
           </div>
+
           <button
             type="button"
             onClick={handleSafeClose}
@@ -123,10 +147,65 @@ export default function AnnouncementModal({ isOpen, onClose, barangayName = "You
             />
           </div>
 
+          <div>
+            <label className="block text-xs font-bold uppercase tracking-wider text-gray-600 mb-2 font-mono">
+              Priority Level
+            </label>
+
+            <div className="grid sm:grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={() => setPriority("standard")}
+                className={`rounded-xl border p-3 text-left transition cursor-pointer ${
+                  priority === "standard"
+                    ? "border-gray-900 bg-gray-50 shadow-sm"
+                    : "border-gray-200 bg-white hover:border-gray-300"
+                }`}
+              >
+                <p className="text-sm font-bold text-gray-900">Standard</p>
+                <p className="text-xs text-gray-500 mt-1">
+                  Regular advisory or informational post
+                </p>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setPriority("urgent")}
+                className={`rounded-xl border p-3 text-left transition cursor-pointer ${
+                  priority === "urgent"
+                    ? "border-red-600 bg-red-50 shadow-sm"
+                    : "border-gray-200 bg-white hover:border-gray-300"
+                }`}
+              >
+                <p className="text-sm font-bold text-red-700">Urgent</p>
+                <p className="text-xs text-gray-500 mt-1">
+                  High-priority advisory requiring immediate attention
+                </p>
+              </button>
+            </div>
+
+            <p className="mt-2 text-xs font-medium text-gray-500">
+              Selected priority:{" "}
+              <span
+                className={
+                  priority === "urgent"
+                    ? "text-red-600 font-bold uppercase"
+                    : "text-gray-700 font-bold uppercase"
+                }
+              >
+                {priority}
+              </span>
+            </p>
+          </div>
+
           <div className="bg-amber-50 border border-amber-200 text-amber-800 p-3 rounded-xl flex items-start gap-2.5 text-xs">
-            <HugeiconsIcon icon={Alert01Icon} className="w-4 h-4 shrink-0 mt-0.5 text-amber-600" />
+            <HugeiconsIcon
+              icon={Alert01Icon}
+              className="w-4 h-4 shrink-0 mt-0.5 text-amber-600"
+            />
             <span>
-              This message will appear immediately on the announcement boards of registered residents in <strong>Barangay {barangayName}</strong>.
+              This message will appear immediately on the announcement boards of
+              registered residents in <strong>Barangay {barangayName}</strong>.
             </span>
           </div>
 
@@ -147,7 +226,6 @@ export default function AnnouncementModal({ isOpen, onClose, barangayName = "You
             </button>
           </div>
         </form>
-
       </div>
     </div>
   );

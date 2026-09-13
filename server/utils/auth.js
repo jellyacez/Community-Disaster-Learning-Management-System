@@ -165,7 +165,7 @@ const auth = betterAuth({
         mdrrmo_admin: {},
       },
     }),
-    twoFactor({
+    /*twoFactor({
       otpOptions: {
         sendOTP: async ({ user, otp }) => {
           const { orgFooterText, supportEmail } = await getOrgSettings();
@@ -178,7 +178,7 @@ const auth = betterAuth({
           await transporter.sendMail(mailOptions);
         },
       },
-    }),
+    }),*/
   ],
   advanced: {
     ...(process.env.NODE_ENV === "production"
