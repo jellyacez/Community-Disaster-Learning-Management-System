@@ -134,6 +134,9 @@ const levelResultRoutes = require("./routes/modules/levelResultRoutes");
 const mediaUploadRoutes = require("./routes/modules/mediaUploadRoutes");
 const apiSecurityMiddleware = require("./middleware/apiSecurityMiddleware");
 
+// Notif Route
+app.use("/api/notif", require("./routes/notif/sseRoutes"))
+
 // API Routes (Business logic protected by security middleware)
 app.use("/api/public", publicRoutes);
 app.use("/api/certificates", certificatesRoutes); // Public verification endpoint

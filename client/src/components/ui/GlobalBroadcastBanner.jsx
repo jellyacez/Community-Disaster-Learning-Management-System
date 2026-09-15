@@ -10,7 +10,7 @@ export default function GlobalBroadcastBanner() {
       const res = await apiClient.get("/public/broadcast");
       return res.data;
     },
-    refetchInterval: 60000, // Check every minute
+    refetchInterval: 1000 * 60 * 5, // Check every *5* minutes
     staleTime: 30000,
     retry: false,
   });

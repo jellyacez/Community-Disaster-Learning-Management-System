@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import apiClient from "../../../../lib/apiClient";
 import useDocumentTitle from "../../../../hooks/useDocumentTitle";
@@ -9,8 +10,9 @@ import HealthRow from "./components/HealthRow";
 import SystemAlertBanner from "./components/SystemAlertBanner";
 import SystemCharts from "./components/SystemCharts";
 import QuickActionsPanel from "./components/QuickActionsPanel";
-
 import RecentActivityFeed from "./components/RecentActivityFeed";
+
+import AnnouncementModal from "../../barangay/workspace/announcementModal";
 
 function formatUptime(seconds) {
   const d = Math.floor(seconds / 86400);
@@ -23,6 +25,7 @@ function formatUptime(seconds) {
 
 export default function SystemOverview() {
   useDocumentTitle("System Overview | Admin Console");
+  const [isAnnouncementModalOpen, setIsAnnouncementModalOpen] = useState(false);
 
   const { data: statsData, isLoading: statsLoading } = useQuery({
     queryKey: ["systemStats"],
@@ -30,7 +33,7 @@ export default function SystemOverview() {
       const res = await apiClient.get("/admin/stats");
       return res.data.data;
     },
-    refetchInterval: 15000,
+    refetchInterval: 60000,
   });
 
   const { data: healthData, isLoading: healthLoading } = useQuery({
@@ -39,7 +42,7 @@ export default function SystemOverview() {
       const res = await apiClient.get("/admin/health");
       return res.data.data;
     },
-    refetchInterval: 15000,
+    refetchInterval: 60000,
   });
 
   const { data: settingsData } = useQuery({
@@ -48,8 +51,7 @@ export default function SystemOverview() {
       const res = await apiClient.get("/admin/settings");
       return res.data.data;
     },
-    // Keep settings data fresh every 15s
-    refetchInterval: 15000,
+    refetchInterval: 60000,
   });
 
   const s = statsData || {};
@@ -69,7 +71,10 @@ export default function SystemOverview() {
 
         {/* Right Side: Actions and Health */}
         <div className="lg:col-span-1 space-y-6">
-          <QuickActionsPanel settingsData={settingsData} />
+          <QuickActionsPanel
+            settingsData={settingsData}
+            onOpenAnnouncementModal={() => setIsAnnouncementModalOpen(true)}
+          />
 
           <div className="bg-white rounded-2xl shadow-[0_2px_12px_-3px_rgba(0,0,0,0.06)] border border-transparent p-6">
             <div className="flex items-center gap-2 mb-4">
@@ -164,6 +169,12 @@ export default function SystemOverview() {
           </div>
         </div>
       </div>
+
+      <AnnouncementModal
+        isOpen={isAnnouncementModalOpen}
+        onClose={() => setIsAnnouncementModalOpen(false)}
+        currentUserRole="system_admin"
+      />
     </div>
   );
 }

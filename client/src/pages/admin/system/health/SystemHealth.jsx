@@ -29,7 +29,7 @@ export default function SystemHealth() {
       const res = await apiClient.get("/admin/health");
       return res.data.data;
     },
-    refetchInterval: 5000, // Faster refresh to see the CPU "heartbeat"
+    refetchInterval: 60000, // Faster refresh to see the CPU "heartbeat"
   });
 
   // Calculate dynamic states

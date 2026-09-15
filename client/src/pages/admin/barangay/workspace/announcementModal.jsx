@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   Cancel01Icon,
@@ -13,16 +13,35 @@ export default function AnnouncementModal({
   isOpen,
   onClose,
   barangayName = "Your Jurisdiction",
+  currentUserRole = "barangay_admin",
 }) {
   const queryClient = useQueryClient();
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [priority, setPriority] = useState("standard");
+  const [targetBarangayId, setTargetBarangayId] = useState("");
+
+  const isHighTierAdmin = [
+    "system_admin",
+    "head_mdrrmo_admin",
+    "mdrrmo_admin",
+  ].includes(currentUserRole);
+
+
+  const { data: barangays = [] } = useQuery({
+    queryKey: ["allBarangaysList"],
+    queryFn: async () => {
+      const res = await apiClient.get("/public/barangays");
+      return res.data?.data || res.data || [];
+    },
+    enabled: isOpen && isHighTierAdmin,
+  });
 
   const resetForm = () => {
     setTitle("");
     setContent("");
     setPriority("standard");
+    setTargetBarangayId("");
   };
 
   const handleSafeClose = () => {
@@ -40,9 +59,7 @@ export default function AnnouncementModal({
   useEffect(() => {
     if (!isOpen) return;
     const handleKeyDown = (e) => {
-      if (e.key === "Escape") {
-        handleSafeClose();
-      }
+      if (e.key === "Escape") handleSafeClose();
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
@@ -50,22 +67,23 @@ export default function AnnouncementModal({
 
   const mutation = useMutation({
     mutationFn: async (payload) => {
-      const res = await apiClient.post("/admin/barangay/announcements", payload);
+
+      const endpoint = isHighTierAdmin
+        ? "/admin/mdrrmo/announcements"
+        : "/admin/barangay/announcements";
+      const res = await apiClient.post(endpoint, payload);
       return res.data;
     },
     onSuccess: () => {
-      toast.success(
-        `Announcement broadcasted successfully to Barangay ${barangayName}!`
-      );
+      toast.success("Announcement broadcasted successfully!");
       queryClient.invalidateQueries({ queryKey: ["barangayWorkspaceOverview"] });
       queryClient.invalidateQueries({ queryKey: ["barangayAnnouncements"] });
+      queryClient.invalidateQueries({ queryKey: ["userAnnouncements"] });
       resetForm();
       onClose();
     },
     onError: (err) => {
-      toast.error(
-        err?.response?.data?.error || "Failed to publish announcement."
-      );
+      toast.error(err?.response?.data?.error || "Failed to publish announcement.");
     },
   });
 
@@ -73,21 +91,22 @@ export default function AnnouncementModal({
 
   const handleSubmit = (e) => {
     e.preventDefault();
-
     if (!title.trim() || !content.trim()) {
       toast.error("Please fill in both title and content.");
       return;
     }
 
-    console.log("DEBUG announcement payload:", { title, content, priority });
-
-    mutation.mutate({ title, content, priority });
+    mutation.mutate({
+      title,
+      content,
+      priority,
+      target_barangay_id: isHighTierAdmin && targetBarangayId ? targetBarangayId : null,
+    });
   };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
       <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-gray-100 space-y-5 animate-in zoom-in-95 duration-150">
-        {/* Modal Header */}
         <div className="flex items-center justify-between border-b border-gray-100 pb-3">
           <div className="flex items-center gap-2.5">
             <div className="p-2 bg-red-50 text-red-600 rounded-xl">
@@ -96,14 +115,16 @@ export default function AnnouncementModal({
             <div>
               <div className="flex items-center gap-2">
                 <h3 className="text-base font-bold text-gray-900">
-                  Broadcast Local Advisory
+                  Broadcast Advisory
                 </h3>
                 <span className="text-[10px] font-mono font-bold bg-red-50 text-red-700 px-2 py-0.5 rounded">
-                  {barangayName}
+                  {isHighTierAdmin ? "MDRRMO / HQ" : barangayName}
                 </span>
               </div>
               <p className="text-xs text-gray-500">
-                Publish notices strictly to Barangay {barangayName} residents
+                {isHighTierAdmin
+                  ? "Publish municipal alerts or sector-specific bulletins"
+                  : `Publish notices strictly to Barangay ${barangayName} residents`}
               </p>
             </div>
           </div>
@@ -117,8 +138,28 @@ export default function AnnouncementModal({
           </button>
         </div>
 
-        {/* Modal Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Audience selection for High-tier Admins */}
+          {isHighTierAdmin && (
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-gray-600 mb-1.5 font-mono">
+                Target Sector / Audience
+              </label>
+              <select
+                value={targetBarangayId}
+                onChange={(e) => setTargetBarangayId(e.target.value)}
+                className="w-full px-3.5 py-2.5 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 focus:bg-white transition"
+              >
+                <option value="">All Barangays (Municipality-Wide Broadcast)</option>
+                {barangays.map((b) => (
+                  <option key={b.id} value={b.id}>
+                    Barangay {b.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
           <div>
             <label className="block text-xs font-bold uppercase tracking-wider text-gray-600 mb-1.5 font-mono">
               Advisory Title
@@ -183,19 +224,6 @@ export default function AnnouncementModal({
                 </p>
               </button>
             </div>
-
-            <p className="mt-2 text-xs font-medium text-gray-500">
-              Selected priority:{" "}
-              <span
-                className={
-                  priority === "urgent"
-                    ? "text-red-600 font-bold uppercase"
-                    : "text-gray-700 font-bold uppercase"
-                }
-              >
-                {priority}
-              </span>
-            </p>
           </div>
 
           <div className="bg-amber-50 border border-amber-200 text-amber-800 p-3 rounded-xl flex items-start gap-2.5 text-xs">
@@ -204,8 +232,13 @@ export default function AnnouncementModal({
               className="w-4 h-4 shrink-0 mt-0.5 text-amber-600"
             />
             <span>
-              This message will appear immediately on the announcement boards of
-              registered residents in <strong>Barangay {barangayName}</strong>.
+              {isHighTierAdmin && !targetBarangayId
+                ? "This alert will be broadcast across all registered barangays."
+                : `This message will appear immediately on the boards of Barangay ${
+                    targetBarangayId
+                      ? barangays.find((b) => String(b.id) === String(targetBarangayId))?.name || "Target"
+                      : barangayName
+                  }.`}
             </span>
           </div>
 

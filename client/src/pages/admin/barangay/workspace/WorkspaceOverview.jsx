@@ -173,7 +173,7 @@ export default function WorkspaceOverview() {
             onClick={() => setIsAnnouncementModalOpen(true)}
             className="h-10 px-4 bg-red-600 text-white text-[12px] font-bold tracking-wide uppercase rounded-xl flex items-center gap-2 hover:bg-red-700 transition-colors shadow-sm whitespace-nowrap cursor-pointer"
           >
-            + Post Announcement
+            + Broadcast Advisory
           </button>
         </div>
       </div>

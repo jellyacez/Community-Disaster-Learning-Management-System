@@ -54,6 +54,14 @@ export default function LandingFooter() {
                   How It Works
                 </a>
               </li>
+              <li>
+                <a
+                  href="#faq"
+                  className="hover:text-red-400 transition-colors"
+                >
+                  FAQ
+                </a>
+              </li>
               <li className="pt-2 mt-2 border-t border-gray-800">
                 <Link
                   to="/privacy-policy"

@@ -14,6 +14,7 @@ import LandingHazards from "../../components/ui/landing/LandingHazards";
 import LandingFeatures from "../../components/ui/landing/LandingFeatures";
 import LandingSteps from "../../components/ui/landing/LandingSteps";
 import LandingFooter from "../../components/ui/landing/LandingFooter";
+import LandingFAQ from "../../components/ui/landing/LandingFAQ";
 
 export default function LandingPage() {
   useDocumentTitle("Home | Bacolor LMS");
@@ -118,9 +119,40 @@ export default function LandingPage() {
           </motion.div>
         </div>
       </section>
+      <LandingSteps />
+
+      <section className="py-12 bg-gray-50 border-y border-gray-100">
+        <div className="max-w-4xl mx-auto px-4 text-center">
+          <p className="text-xs text-gray-400 font-semibold uppercase tracking-widest mb-6">
+            Training Content Aligned With
+          </p>
+          <div className="flex flex-wrap justify-center items-center gap-10">
+            {[
+              "Philippine Red Cross",
+              "NDRRMC",
+              "Bacolor MDRRMO",
+              "Republic Act 10121",
+            ].map((org) => (
+              <div key={org} className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-red-500" />
+                <span className="text-sm font-bold text-gray-700">{org}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Mount FAQ Component Here */}
+      <LandingFAQ />
+
+      {/* CTA Section */}
+      <section className="py-24 bg-gradient-to-r from-red-700 via-red-600 to-rose-600">
+        {/* ... */}
+      </section>
 
       <LandingFooter />
     </div>
   );
 }
+
 // --- END: LandingPage.jsx ---

@@ -71,46 +71,58 @@ class BarangayAdminService {
     };
   }
 
-  async getBarangayAnnouncements(barangayId) {
-    const result = await pool.query(
-      `SELECT 
+  async getBarangayAnnouncements(barangayId = null) {
+    let query = `
+      SELECT 
         a.id, 
         a.title, 
         a.content,
         a.priority,
+        a.barangay_id,
+        b.name AS barangay_name,
         a.date AS created_at, 
         u.name AS author_name 
        FROM announcements a
        LEFT JOIN "user" u ON a.author_id = u.id
-       WHERE a.barangay_id = $1
+       LEFT JOIN barangays b ON a.barangay_id = b.id
+    `;
+    const params = [];
+
+    if (barangayId) {
+      query += ` WHERE a.barangay_id = $1`;
+      params.push(barangayId);
+    }
+
+    query += `
        ORDER BY 
          CASE WHEN a.priority = 'urgent' THEN 0 ELSE 1 END,
-         a.date DESC`,
-      [barangayId]
-    );
+         a.date DESC
+    `;
+
+    const result = await pool.query(query, params);
     return result.rows;
   }
 
-    async createBarangayAnnouncement(title, content, priority, authorId, barangayId) {
-      const sanitizedContent = cleanRichText(content);
+  async createBarangayAnnouncement(title, content, priority, authorId, barangayId = null) {
+    const sanitizedContent = cleanRichText(content);
 
-      console.log("DEBUG service priority raw:", priority);
-      console.log("DEBUG typeof priority:", typeof priority);
+    const normalizedPriority =
+      String(priority).toLowerCase() === "urgent" ? "urgent" : "standard";
 
-      const normalizedPriority =
-        String(priority).toLowerCase() === "urgent" ? "urgent" : "standard";
+    const resolvedBarangayId =
+      barangayId !== undefined && barangayId !== null && barangayId !== ""
+        ? parseInt(barangayId, 10)
+        : null;
 
-      console.log("DEBUG service normalizedPriority:", normalizedPriority);
+    const result = await pool.query(
+      `INSERT INTO announcements (title, content, priority, author_id, barangay_id, date)
+      VALUES ($1, $2, $3, $4, $5, NOW())
+      RETURNING id, title, content, priority, barangay_id, date AS created_at`,
+      [title, sanitizedContent, normalizedPriority, authorId, resolvedBarangayId]
+  );
 
-      const result = await pool.query(
-        `INSERT INTO announcements (title, content, priority, author_id, barangay_id, date)
-        VALUES ($1, $2, $3, $4, $5, NOW())
-        RETURNING id, title, content, priority, date AS created_at`,
-        [title, sanitizedContent, normalizedPriority, authorId, barangayId]
-      );
-
-      return result.rows[0];
-    }
+    return result.rows[0];
+  }
 
   async getBarangayActivityLog(barangayId, queryParams) {
     const page = parseInt(queryParams.page, 10) || 1;

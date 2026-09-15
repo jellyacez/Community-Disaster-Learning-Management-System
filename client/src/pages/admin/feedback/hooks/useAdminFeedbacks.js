@@ -17,7 +17,7 @@ export function useAdminFeedbacks(adminId, adminRole, selectedBarangayFilter, is
       return response.data.data || [];
     },
     enabled: !!adminId,
-    refetchInterval: 30000, // Poll every 30s for incoming resident feedback
+    refetchInterval: 1000 * 60 * 3, // Poll every 3 minutes for incoming resident feedback
   });
 
   const replyMutation = useMutation({

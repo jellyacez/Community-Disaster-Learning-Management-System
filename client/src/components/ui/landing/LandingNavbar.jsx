@@ -21,7 +21,7 @@ export default function LandingNavbar() {
         </div>
 
         <div className="hidden md:flex items-center gap-7">
-          {["Features", "Hazards", "How It Works"].map((l) => (
+          {["Features", "Hazards", "How It Works", "FAQ"].map((l) => (
             <a
               key={l}
               href={`#${l.toLowerCase().replace(/ /g, "-")}`}
@@ -65,7 +65,7 @@ export default function LandingNavbar() {
           animate={{ opacity: 1, y: 0 }}
           className="md:hidden bg-white border-t border-gray-100 px-4 py-5 flex flex-col gap-4"
         >
-          {["Features", "Hazards", "How It Works"].map((l) => (
+          {["Features", "Hazards", "How It Works", "FAQ"].map((l) => (
             <a
               key={l}
               href={`#${l.toLowerCase().replace(/ /g, "-")}`}

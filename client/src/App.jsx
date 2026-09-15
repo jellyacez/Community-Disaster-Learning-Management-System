@@ -3,6 +3,8 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 import ErrorBoundary from "./components/ErrorBoundary";
 import useNetworkSync from "./hooks/useNetworkSync";
+import { useRealtimeEvents } from "./hooks/useRealtimeEvents";
+
 const LandingPage = lazy(() => import("./pages/public/LandingPage"));
 const PrivacyPolicyPage = lazy(
   () => import("./pages/public/PrivacyPolicyPage"),
@@ -125,6 +127,7 @@ const VerifyCertificate = lazy(
 
 export default function App() {
   useNetworkSync();
+  useRealtimeEvents(); //
   return (
     <ErrorBoundary>
       <ScrollToTop />
