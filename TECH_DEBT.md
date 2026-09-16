@@ -586,73 +586,7 @@ This document tracks identified technical debt, architectural decisions, missing
 
 ---
 
-## 🟡 Open / Active Technical Debt & Optimization Items
-
-### 1. Server-Side Pagination & Cursor Querying for High-Scale Endpoints
-- **Location:** `client/src/pages/admin/feedback/AdminFeedbackManager.jsx`, `client/src/pages/admin/barangay/registry/ResidentRegistry.jsx`, `client/src/pages/admin/barangay/certifications/BarangayCertifications.jsx`, `client/src/pages/user/catalog/ModuleCatalog.jsx`
-- **Description:** Several administrative and user views currently fetch the entire dataset via REST API and execute filtering, sorting, and pagination on the client side in `useMemo`.
-- **Architectural Impact:** While performant for small-to-medium datasets (< 500 records), this pattern will degrade performance as resident accounts, certification records, and feedback tickets scale into thousands.
-- **Recommended Action:**
-  - Update backend endpoints (`GET /api/users`, `GET /api/feedbacks/admin`, `GET /api/certificates`) to accept `page`, `limit`, `search`, and `filter` query parameters with SQL `LIMIT` / `OFFSET` or keyset/cursor pagination.
-  - Connect React components to pass pagination query parameters into React Query hooks.
-
----
-
-### 2. Large Production Bundle Chunks & Code Splitting
-- **Location:** `client/src/` build output
-- **Description:** Vite build output warns that several chunk sizes exceed 500 kB after minification:
-  - `dist/assets/certTemplate-*.js` (~1.43 MB): Includes PDF rendering engines, Canvas utilities, and embedded vector graphics.
-  - `dist/assets/index-*.js` (~540 kB): Core React, TanStack Query, React Router, and common libraries bundle.
-  - `dist/assets/ModuleManagement-*.js` (~470 kB): TipTap rich text suite, drag-and-drop canvas, and SVG icon sets.
-  - `dist/assets/CertificateVerificationModal-*.js` (~380 kB): Certificate tables and `html5-qrcode` scanner bundle.
-  - `dist/assets/PieChart-*.js` (~330 kB): Charting engine.
-- **Recommended Action:**
-  - Use `React.lazy()` and dynamic `import()` for large admin tools (`ModuleBuilderWizard`, `AdminFeedbackManager`, `BarangayCertifications`), PDF generators (`certTemplate`), and charting components.
-  - Configure manual chunking in `vite.config.js` (`build.rollupOptions.output.manualChunks`) to split vendor libraries (e.g. `html5-qrcode`, `jspdf`, `chart.js`) into separate cached chunks.
-
----
-
-
-### 3. Certificate Revocation Authority — MDRRMO Municipal Override
-- **Current State:** Only `barangay_admin` can revoke certificates, correctly scoped to their own barangay jurisdiction.
-- **Gap:** The original disaster readiness specification designates MDRRMO as having ultimate verification authority to revoke any certificate municipality-wide if fraudulent completion or procedural non-compliance is detected. No revoke action currently exists on the MDRRMO Municipal Certification Analytics portal.
-- **Recommended Action:**
-  - Add MDRRMO revocation capability with mandatory reason logging.
-  - Dispatch automated notifications (in-app alert bell and Nodemailer email) to all assigned barangay administrators for the affected sector when an MDRRMO override revocation occurs.
-
----
-
-### 5. Strict Admin-Provisioning Hierarchy Enforcement
-- **Location:** `client/src/pages/admin/system/users/components/provision/AdminRoleSelection.jsx`, `client/src/pages/admin/mdrrmo/user-management/components/RegisterPersonnelForm.jsx`, `server/controllers/admin/user-management/provisionAdmin.js`, `server/config/permissions.js`
-- **Description:**
-  - **Frontend:** `RegisterPersonnelForm.jsx` (MDRRMO admin view) hardcodes `<option value="barangay_admin">`, while `AdminRoleSelection.jsx` (System admin view) displays `mdrrmo_admin` and `barangay_admin`.
-  - **Backend:** `provisionAdmin.js` validates only that the requested role is within `["barangay_admin", "mdrrmo_admin"]`. It does NOT validate whether the authenticated requester (`req.user.role`) possesses the hierarchical authority to provision that specific tier (e.g. `system_admin` $\to$ `head_mdrrmo_admin` $\to$ `mdrrmo_admin` $\to$ `barangay_admin`).
-- **Architectural Impact:** Any account with `provision_admins` permission (which currently includes `mdrrmo_admin`) could send a direct API POST request with `{ role: "mdrrmo_admin" }` to provision a peer MDRRMO admin, bypassing horizontal privilege boundaries.
-- **Recommended Action:**
-  - Implement a server-side hierarchy matrix in `provisionAdmin.js` ensuring a creator can only provision roles strictly below their own rank.
-  - Dynamically populate the frontend role options based on the authenticated admin's current role.
-
----
-
-### 8. Offline-Replay Duplicate Risk (Idempotency Keys)
-- **Location:** `client/src/lib/LocalSave/syncManager.js`, `server/controllers/feedback/feedbackController.js`, `server/controllers/admin/barangayController.js`
-- **Description:**
-  - **Context:** The application is an offline-first PWA with a background sync queue (`syncManager.js` replaying queued writes via Dexie on reconnect). Any `POST` endpoint without a unique constraint is vulnerable to duplicate creation if the server processes a request successfully but the HTTP 200 OK never reaches the client before the connection drops — the client re-queues and replays the same write on the next reconnect.
-  - **Confirmed Vulnerable (verified against real code):**
-    - `POST /api/feedbacks` (`feedbackController.js`) — raw `INSERT INTO feedbacks`, no deduplication key or unique constraint.
-    - Future: `POST /api/announcements` — same pattern, and this endpoint does not exist as a real feature yet (Item 7, deferred).
-  - **Confirmed NOT Vulnerable (real UNIQUE constraints + ON CONFLICT verified):**
-    - `user_step_progress` (`CONSTRAINT unique_user_step UNIQUE (user_id, step_id)` with `ON CONFLICT (user_id, step_id) DO NOTHING`).
-    - `certificates` (`CONSTRAINT uq_certificates_user_module UNIQUE (user_id, module_id)` with `ON CONFLICT (user_id, module_id) DO NOTHING`).
-    - `levels` / `module_steps` (`CONSTRAINT levels_mod_id_level_order_key UNIQUE (mod_id, level_order)` with `ON CONFLICT (mod_id, level_order) DO UPDATE`).
-- **Recommended Action (not yet implemented):**
-  - Client generates a UUID (`client_mutation_id`) when queuing a write in Dexie `sync_queue`, passed either via an `Idempotency-Key` request header or as a body/column value.
-  - Server defines unique constraints on `client_mutation_id` and executes `ON CONFLICT (client_mutation_id) DO NOTHING` on all creation endpoints that interface with the offline sync queue.
-- **Strategic Decision:** Bundle this enhancement with the Local Announcements build (Item 7) rather than fixing feedback in isolation now — no sense adding the idempotency plumbing to a feature that does not exist yet, and current feedback exposure is lower-frequency (requires the specific processed-but-response-lost race condition) than the Publish-button double-click case, which was fixed separately and immediately.
-
----
-
-### 9. Self-Service Disaster Learning FAQ & Knowledge Base
+### Resolved: Self-Service Disaster Learning FAQ & Knowledge Base
 - **Location:** `client/src/components/settings/HelpSupport.jsx` (currently a single static paragraph routing straight to `/user/feedback` with no self-serve content)
 - **Gap:** No FAQ or self-service knowledge base exists anywhere in the platform. Residents have no way to obtain immediate answers to common operational questions — every inquiry routes directly to the human MDRRMO feedback/ticketing queue.
 - **Proposed Content (5 Core Disaster Learning Questions):**
@@ -680,3 +614,69 @@ This document tracks identified technical debt, architectural decisions, missing
 - **Rationale:**
   - Deflects high-frequency, repetitive inquiries from overloading the municipal MDRRMO feedback queue.
   - Closes an identified UX critique in the resident portal by providing persistent, instant self-serve guidance for community disaster learners.
+
+---
+
+## 🟡 Open / Active Technical Debt & Optimization Items
+
+### 1. Server-Side Pagination & Cursor Querying for High-Scale Endpoints
+- **Location:** `client/src/pages/admin/feedback/AdminFeedbackManager.jsx`, `client/src/pages/admin/barangay/registry/ResidentRegistry.jsx`, `client/src/pages/admin/barangay/certifications/BarangayCertifications.jsx`, `client/src/pages/user/catalog/ModuleCatalog.jsx`
+- **Description:** Several administrative and user views currently fetch the entire dataset via REST API and execute filtering, sorting, and pagination on the client side in `useMemo`.
+- **Architectural Impact:** While performant for small-to-medium datasets (< 500 records), this pattern will degrade performance as resident accounts, certification records, and feedback tickets scale into thousands.
+- **Recommended Action:**
+  - Update backend endpoints (`GET /api/users`, `GET /api/feedbacks/admin`, `GET /api/certificates`) to accept `page`, `limit`, `search`, and `filter` query parameters with SQL `LIMIT` / `OFFSET` or keyset/cursor pagination.
+  - Connect React components to pass pagination query parameters into React Query hooks.
+
+---
+
+### 2. Large Production Bundle Chunks & Code Splitting
+- **Location:** `client/src/` build output
+- **Description:** Vite build output warns that several chunk sizes exceed 500 kB after minification:
+  - `dist/assets/certTemplate-*.js` (~1.43 MB): Includes PDF rendering engines, Canvas utilities, and embedded vector graphics.
+  - `dist/assets/index-*.js` (~540 kB): Core React, TanStack Query, React Router, and common libraries bundle.
+  - `dist/assets/ModuleManagement-*.js` (~470 kB): TipTap rich text suite, drag-and-drop canvas, and SVG icon sets.
+  - `dist/assets/CertificateVerificationModal-*.js` (~380 kB): Certificate tables and `html5-qrcode` scanner bundle.
+  - `dist/assets/PieChart-*.js` (~330 kB): Charting engine.
+- **Recommended Action:**
+  - Use `React.lazy()` and dynamic `import()` for large admin tools (`ModuleBuilderWizard`, `AdminFeedbackManager`, `BarangayCertifications`), PDF generators (`certTemplate`), and charting components.
+  - Configure manual chunking in `vite.config.js` (`build.rollupOptions.output.manualChunks`) to split vendor libraries (e.g. `html5-qrcode`, `jspdf`, `chart.js`) into separate cached chunks.
+
+---
+
+### 3. Certificate Revocation Authority — MDRRMO Municipal Override
+- **Current State:** Only `barangay_admin` can revoke certificates, correctly scoped to their own barangay jurisdiction.
+- **Gap:** The original disaster readiness specification designates MDRRMO as having ultimate verification authority to revoke any certificate municipality-wide if fraudulent completion or procedural non-compliance is detected. No revoke action currently exists on the MDRRMO Municipal Certification Analytics portal.
+- **Recommended Action:**
+  - Add MDRRMO revocation capability with mandatory reason logging.
+  - Dispatch automated notifications (in-app alert bell and Nodemailer email) to all assigned barangay administrators for the affected sector when an MDRRMO override revocation occurs.
+
+---
+
+### 4. Strict Admin-Provisioning Hierarchy Enforcement
+- **Location:** `client/src/pages/admin/system/users/components/provision/AdminRoleSelection.jsx`, `client/src/pages/admin/mdrrmo/user-management/components/RegisterPersonnelForm.jsx`, `server/controllers/admin/user-management/provisionAdmin.js`, `server/config/permissions.js`
+- **Description:**
+  - **Frontend:** `RegisterPersonnelForm.jsx` (MDRRMO admin view) hardcodes `<option value="barangay_admin">`, while `AdminRoleSelection.jsx` (System admin view) displays `mdrrmo_admin` and `barangay_admin`.
+  - **Backend:** `provisionAdmin.js` validates only that the requested role is within `["barangay_admin", "mdrrmo_admin"]`. It does NOT validate whether the authenticated requester (`req.user.role`) possesses the hierarchical authority to provision that specific tier (e.g. `system_admin` $\to$ `head_mdrrmo_admin` $\to$ `mdrrmo_admin` $\to$ `barangay_admin`).
+- **Architectural Impact:** Any account with `provision_admins` permission (which currently includes `mdrrmo_admin`) could send a direct API POST request with `{ role: "mdrrmo_admin" }` to provision a peer MDRRMO admin, bypassing horizontal privilege boundaries.
+- **Recommended Action:**
+  - Implement a server-side hierarchy matrix in `provisionAdmin.js` ensuring a creator can only provision roles strictly below their own rank.
+  - Dynamically populate the frontend role options based on the authenticated admin's current role.
+
+---
+
+### 5. Offline-Replay Duplicate Risk (Idempotency Keys)
+- **Location:** `client/src/lib/LocalSave/syncManager.js`, `server/controllers/feedback/feedbackController.js`, `server/controllers/admin/barangayController.js`
+- **Description:**
+  - **Context:** The application is an offline-first PWA with a background sync queue (`syncManager.js` replaying queued writes via Dexie on reconnect). Any `POST` endpoint without a unique constraint is vulnerable to duplicate creation if the server processes a request successfully but the HTTP 200 OK never reaches the client before the connection drops — the client re-queues and replays the same write on the next reconnect.
+  - **Confirmed Vulnerable (verified against real code):**
+    - `POST /api/feedbacks` (`feedbackController.js`) — raw `INSERT INTO feedbacks`, no deduplication key or unique constraint.
+    - Future: `POST /api/announcements` — same pattern, and this endpoint does not exist as a real feature yet (Item 7, deferred).
+  - **Confirmed NOT Vulnerable (real UNIQUE constraints + ON CONFLICT verified):**
+    - `user_step_progress` (`CONSTRAINT unique_user_step UNIQUE (user_id, step_id)` with `ON CONFLICT (user_id, step_id) DO NOTHING`).
+    - `certificates` (`CONSTRAINT uq_certificates_user_module UNIQUE (user_id, module_id)` with `ON CONFLICT (user_id, module_id) DO NOTHING`).
+    - `levels` / `module_steps` (`CONSTRAINT levels_mod_id_level_order_key UNIQUE (mod_id, level_order)` with `ON CONFLICT (mod_id, level_order) DO UPDATE`).
+- **Recommended Action (not yet implemented):**
+  - Client generates a UUID (`client_mutation_id`) when queuing a write in Dexie `sync_queue`, passed either via an `Idempotency-Key` request header or as a body/column value.
+  - Server defines unique constraints on `client_mutation_id` and executes `ON CONFLICT (client_mutation_id) DO NOTHING` on all creation endpoints that interface with the offline sync queue.
+- **Strategic Decision:** Bundle this enhancement with the Local Announcements build (Item 7) rather than fixing feedback in isolation now — no sense adding the idempotency plumbing to a feature that does not exist yet, and current feedback exposure is lower-frequency (requires the specific processed-but-response-lost race condition) than the Publish-button double-click case, which was fixed separately and immediately.
+
