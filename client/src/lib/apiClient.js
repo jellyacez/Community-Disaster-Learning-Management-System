@@ -44,4 +44,11 @@ apiClient.interceptors.response.use(
   }
 );
 
+
+apiClient.interceptors.request.use((config) => {
+  config.headers["Cache-Control"] = "no-cache";
+  config.headers["Pragma"] = "no-cache";
+  return config;
+});
+
 export default apiClient;

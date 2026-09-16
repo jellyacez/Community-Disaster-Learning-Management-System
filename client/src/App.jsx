@@ -4,6 +4,7 @@ import { Toaster } from "react-hot-toast";
 import ErrorBoundary from "./components/ErrorBoundary";
 import useNetworkSync from "./hooks/useNetworkSync";
 import { useRealtimeEvents } from "./hooks/useRealtimeEvents";
+import InstallAppPrompt from "./components/pwa/InstallAppPrompt";
 
 const LandingPage = lazy(() => import("./pages/public/LandingPage"));
 const PrivacyPolicyPage = lazy(
@@ -163,6 +164,8 @@ export default function App() {
           },
         }}
       />
+
+      <InstallAppPrompt />
       <Suspense
         fallback={
           <div

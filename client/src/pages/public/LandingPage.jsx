@@ -46,12 +46,16 @@ export default function LandingPage() {
       else if (userRole === "barangay_admin")
         navigate("/admin/barangay/dashboard", { replace: true });
       else {
-        // Check system status for residents
-        apiClient.get("/user/dashboard").then(() => {
-          navigate("/userDashboard", { replace: true });
-        }).catch(() => {
-          // Global interceptor handles 503
-        });
+        apiClient
+          .get("/user/dashboard")
+          .then(() => {
+            navigate("/userDashboard", { replace: true });
+          })
+          .catch((err) => {
+            if (err.response?.status === 401) {
+              authClient.signOut();
+            }
+          });
       }
     }
   }, [session, isPending, navigate]);

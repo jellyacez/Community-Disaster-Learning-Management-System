@@ -551,6 +551,41 @@ This document tracks identified technical debt, architectural decisions, missing
 
 ---
 
+### Resolved: Local Announcements Priority System & Urgent Badging
+- **Location:** `client/src/pages/admin/barangay/workspace/announcementModal.jsx`, `client/src/components/ui/announcements/AnnouncementCard.jsx`, `client/src/pages/admin/mdrrmo/LiveAlerts.jsx`, `server/controllers/admin/barangayController.js`
+- **Description:** While basic localized announcement creation (`title`, `content`) exists for Barangay Admins, the priority categorization system (`Standard` vs `Urgent`), urgent advisory badge indicators on resident announcement cards, and MDRRMO/Municipal broadcast overrides remain unimplemented scaffolding (`LiveAlerts.jsx` displays *"The announcement broadcasting system is currently being developed."*).
+- **Architectural Impact:** Critical emergency advisories cannot be visually differentiated from standard municipal announcements on resident feeds.
+- **Recommended Action:**
+  - Add `priority` column (`VARCHAR(20) DEFAULT 'standard'`) to `announcements` schema.
+  - Add priority selection radio/dropdown in `announcementModal.jsx` and render a high-visibility `Urgent` badge on `AnnouncementCard.jsx`.
+
+---
+
+### Resolved: Progressive Web App (PWA) Manifest & Production Asset Precaching
+- **Location:** `client/public/manifest.json`, `client/index.html`, `client/public/service-worker.js`, `client/vite.config.js`
+- **Description:**
+  - **Missing Web App Manifest:** No `manifest.json` or `manifest.webmanifest` exists in `client/public/`. The application lacks `theme_color`, `background_color`, `display: "standalone"`, `start_url`, and high-resolution PWA app icon definitions (`192x192`, `512x512`, `maskable`).
+  - **Missing HTML Mobile & PWA Headers:** `index.html` lacks `<link rel="manifest">`, `<meta name="theme-color">`, and Apple touch icon tags (`<link rel="apple-touch-icon">`, `<meta name="apple-mobile-web-app-capable">`).
+  - **Manual Service Worker vs. Vite Chunk Precaching:** `service-worker.js` manually hardcodes `urlsToCache = ["/", "/index.html"]`. It does not automatically precache hashed Vite build bundles (`dist/assets/*.js`, `dist/assets/*.css`), meaning full offline navigation to unvisited views fails unless previously visited.
+  - **Missing Installation Hook:** No `beforeinstallprompt` event listener or custom in-app install prompt banner exists to encourage mobile/desktop installation.
+- **Architectural Impact:** Mobile and desktop users cannot install the LMS as a standalone offline PWA application, and offline reliability is limited to previously cached network responses.
+- **Recommended Action:**
+  - Integrate `vite-plugin-pwa` in `client/vite.config.js` with auto-update service worker strategy and Workbox precaching for all production assets.
+  - Generate canonical PWA icons (`icon-192.png`, `icon-512.png`, `icon-maskable.png`) and create `manifest.webmanifest`.
+  - Add an in-app `InstallAppPrompt` component listening to the window `beforeinstallprompt` event.
+
+---
+
+### Resolved: Real-Time Push Notifications (WebSocket / SSE) vs. Polling Overhead
+- **Location:** `client/src/` (Global banners, notification dropdowns, feedback manager, system health)
+- **Description:** The system currently relies on TanStack Query `refetchInterval` polling (ranging from 5s on `SystemHealth` to 30s/60s on alerts, feedback, and certifications).
+- **Architectural Impact:** Under high concurrent resident usage, continuous HTTP polling generates steady baseline database queries even when data has not changed.
+- **Recommended Action:**
+  - Implement a lightweight Server-Sent Events (SSE) or WebSocket gateway for urgent real-time events (e.g. MDRRMO disaster broadcast alerts, new high-priority resident feedback, emergency credential revocations).
+  - Retain React Query polling as a secondary fallback for offline resilience.
+
+---
+
 ## 🟡 Open / Active Technical Debt & Optimization Items
 
 ### 1. Server-Side Pagination & Cursor Querying for High-Scale Endpoints
@@ -577,22 +612,13 @@ This document tracks identified technical debt, architectural decisions, missing
 
 ---
 
+
 ### 3. Certificate Revocation Authority — MDRRMO Municipal Override
 - **Current State:** Only `barangay_admin` can revoke certificates, correctly scoped to their own barangay jurisdiction.
 - **Gap:** The original disaster readiness specification designates MDRRMO as having ultimate verification authority to revoke any certificate municipality-wide if fraudulent completion or procedural non-compliance is detected. No revoke action currently exists on the MDRRMO Municipal Certification Analytics portal.
 - **Recommended Action:**
   - Add MDRRMO revocation capability with mandatory reason logging.
   - Dispatch automated notifications (in-app alert bell and Nodemailer email) to all assigned barangay administrators for the affected sector when an MDRRMO override revocation occurs.
-
----
-
-### 4. Real-Time Push Notifications (WebSocket / SSE) vs. Polling Overhead
-- **Location:** `client/src/` (Global banners, notification dropdowns, feedback manager, system health)
-- **Description:** The system currently relies on TanStack Query `refetchInterval` polling (ranging from 5s on `SystemHealth` to 30s/60s on alerts, feedback, and certifications).
-- **Architectural Impact:** Under high concurrent resident usage, continuous HTTP polling generates steady baseline database queries even when data has not changed.
-- **Recommended Action:**
-  - Implement a lightweight Server-Sent Events (SSE) or WebSocket gateway for urgent real-time events (e.g. MDRRMO disaster broadcast alerts, new high-priority resident feedback, emergency credential revocations).
-  - Retain React Query polling as a secondary fallback for offline resilience.
 
 ---
 
@@ -605,31 +631,6 @@ This document tracks identified technical debt, architectural decisions, missing
 - **Recommended Action:**
   - Implement a server-side hierarchy matrix in `provisionAdmin.js` ensuring a creator can only provision roles strictly below their own rank.
   - Dynamically populate the frontend role options based on the authenticated admin's current role.
-
----
-
-### 6. Local Announcements Priority System & Urgent Badging
-- **Location:** `client/src/pages/admin/barangay/workspace/announcementModal.jsx`, `client/src/components/ui/announcements/AnnouncementCard.jsx`, `client/src/pages/admin/mdrrmo/LiveAlerts.jsx`, `server/controllers/admin/barangayController.js`
-- **Description:** While basic localized announcement creation (`title`, `content`) exists for Barangay Admins, the priority categorization system (`Standard` vs `Urgent`), urgent advisory badge indicators on resident announcement cards, and MDRRMO/Municipal broadcast overrides remain unimplemented scaffolding (`LiveAlerts.jsx` displays *"The announcement broadcasting system is currently being developed."*).
-- **Architectural Impact:** Critical emergency advisories cannot be visually differentiated from standard municipal announcements on resident feeds.
-- **Recommended Action:**
-  - Add `priority` column (`VARCHAR(20) DEFAULT 'standard'`) to `announcements` schema.
-  - Add priority selection radio/dropdown in `announcementModal.jsx` and render a high-visibility `Urgent` badge on `AnnouncementCard.jsx`.
-
----
-
-### 7. Progressive Web App (PWA) Manifest & Production Asset Precaching
-- **Location:** `client/public/manifest.json`, `client/index.html`, `client/public/service-worker.js`, `client/vite.config.js`
-- **Description:**
-  - **Missing Web App Manifest:** No `manifest.json` or `manifest.webmanifest` exists in `client/public/`. The application lacks `theme_color`, `background_color`, `display: "standalone"`, `start_url`, and high-resolution PWA app icon definitions (`192x192`, `512x512`, `maskable`).
-  - **Missing HTML Mobile & PWA Headers:** `index.html` lacks `<link rel="manifest">`, `<meta name="theme-color">`, and Apple touch icon tags (`<link rel="apple-touch-icon">`, `<meta name="apple-mobile-web-app-capable">`).
-  - **Manual Service Worker vs. Vite Chunk Precaching:** `service-worker.js` manually hardcodes `urlsToCache = ["/", "/index.html"]`. It does not automatically precache hashed Vite build bundles (`dist/assets/*.js`, `dist/assets/*.css`), meaning full offline navigation to unvisited views fails unless previously visited.
-  - **Missing Installation Hook:** No `beforeinstallprompt` event listener or custom in-app install prompt banner exists to encourage mobile/desktop installation.
-- **Architectural Impact:** Mobile and desktop users cannot install the LMS as a standalone offline PWA application, and offline reliability is limited to previously cached network responses.
-- **Recommended Action:**
-  - Integrate `vite-plugin-pwa` in `client/vite.config.js` with auto-update service worker strategy and Workbox precaching for all production assets.
-  - Generate canonical PWA icons (`icon-192.png`, `icon-512.png`, `icon-maskable.png`) and create `manifest.webmanifest`.
-  - Add an in-app `InstallAppPrompt` component listening to the window `beforeinstallprompt` event.
 
 ---
 
