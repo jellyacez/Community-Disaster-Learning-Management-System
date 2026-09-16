@@ -2018,29 +2018,6 @@ GRANT ALL ON SCHEMA public TO PUBLIC;
 -- PostgreSQL database dump complete
 --
 
-INSERT INTO public.barangays (name) VALUES
-  ('Balas'),
-  ('Cabalantian'),
-  ('Cabambangan'),
-  ('Cabetican'),
-  ('Calibutbut'),
-  ('Concepcion'),
-  ('Dolores'),
-  ('Duat'),
-  ('Macabacle'),
-  ('Magliman'),
-  ('Maliwalu'),
-  ('Mesalipit'),
-  ('Parulog'),
-  ('Potrero'),
-  ('San Antonio'),
-  ('San Isidro'),
-  ('San Vicente'),
-  ('Santa Barbara'),
-  ('Santa Ines'),
-  ('Talba'),
-  ('Tinajero')
-ON CONFLICT (name) DO NOTHING;
 
 
 \unrestrict g7LnI8266YBBnbmTkg9C9GuqufRvPuSe7RassMw2axRz6h4Jn4ZwEfofPm09sgP
