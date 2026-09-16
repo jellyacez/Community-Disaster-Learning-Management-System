@@ -83,15 +83,21 @@ export default function SignInPage() {
       const targetRoute = roleRoutes[userRole] || "/userDashboard";
       
       if (userRole === "resident") {
-        // Verify system status before routing resident
-        apiClient.get("/user/dashboard").then(() => {
-          navigate(targetRoute, { replace: true });
-        }).catch(() => {
-          // Let global interceptor handle 503
-        });
-      } else {
-        navigate(targetRoute, { replace: true });
+  // Verify session validity with backend before redirecting
+  apiClient
+    .get("/user/dashboard")
+    .then(() => {
+      navigate(targetRoute, { replace: true });
+    })
+    .catch((err) => {
+      // If 401, session is dead; log out locally and stay on SignIn
+      if (err.response?.status === 401) {
+        authClient.signOut();
       }
+    });
+} else {
+  navigate(targetRoute, { replace: true });
+}
     }
   }, [session, isPending, navigate]);
 

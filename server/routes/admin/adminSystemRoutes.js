@@ -11,7 +11,7 @@ const activityLogController = require("../../controllers/admin/activityLogContro
 const ipBlocklistController = require("../../controllers/admin/ipBlocklistController");
 const infrastructureController = require("../../controllers/admin/infrastructureController");
 const alertController = require("../../controllers/admin/alertController");
-
+const barangayController = require("../../controllers/admin/barangayController");
 // @route   GET /api/admin/alerts/active
 // @desc    Get all active critical system alerts
 // @access  Private (admin only)
@@ -172,6 +172,15 @@ router.get(
   requireRole(ADMIN_ROLES),
   requirePermission("manage_security"),
   infrastructureController.downloadServerLogs
+);
+
+// @route   POST /api/admin/announcements
+// @desc    Broadcast system or targeted advisory
+// @access  Private (system_admin only)
+router.post(
+  "/announcements",
+  requireRole(["system_admin"]),
+  barangayController.createBarangayAnnouncement
 );
 
 module.exports = router;

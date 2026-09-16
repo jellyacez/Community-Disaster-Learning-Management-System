@@ -20,12 +20,13 @@ import {
 import ActiveModulesTable from "./components/ActiveModulesTable";
 import MdrrmoRecentActivity from "./components/MdrrmoRecentActivity";
 import MdrrmoQuickActions from "./components/MdrrmoQuickActions";
+import AnnouncementModal from "../../barangay/workspace/announcementModal";
 
-// TODO: confirm 'pending_review' matches the approval workflow's actual status value once that's implemented
 export default function Overview() {
   useDocumentTitle("MDRRMO Overview | Admin Console");
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [statusFilter, setStatusFilter] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const {
     data: metricsData,
@@ -38,7 +39,7 @@ export default function Overview() {
       const res = await apiClient.get("/admin/mdrrmo/metrics");
       return res.data.data;
     },
-    refetchInterval: 15000,
+    refetchInterval: 60000,
     retry: 1,
   });
 
@@ -59,7 +60,7 @@ export default function Overview() {
         image_url: mod.image_url || null,
       }));
     },
-    refetchInterval: 15000,
+    refetchInterval: 60000,
     retry: 1,
   });
 
@@ -93,17 +94,29 @@ export default function Overview() {
             Staff & Responder Training Hub
           </p>
         </div>
-        <div className="flex items-center gap-4 shrink-0">
-          <button className="h-10 px-4 bg-white border border-gray-200 text-gray-700 text-[12px] font-bold tracking-wide uppercase rounded-xl flex items-center gap-2 hover:bg-gray-50 transition-colors whitespace-nowrap shadow-sm cursor-pointer">
+        <div className="flex items-center gap-3 shrink-0">
+          <button
+            type="button"
+            className="h-10 px-4 bg-white border border-gray-200 text-gray-700 text-[12px] font-bold tracking-wide uppercase rounded-xl flex items-center gap-2 hover:bg-gray-50 transition-colors whitespace-nowrap shadow-sm cursor-pointer"
+          >
             <HugeiconsIcon
               icon={Download02Icon}
               className="w-4 h-4 text-red-600 shrink-0"
             />
             Export Report
           </button>
+
+          <button
+            type="button"
+            onClick={() => setIsModalOpen(true)}
+            className="h-10 px-4 bg-red-600 text-white text-[12px] font-bold tracking-wide uppercase rounded-xl flex items-center gap-2 hover:bg-red-700 transition-colors shadow-sm whitespace-nowrap cursor-pointer"
+          >
+            + Broadcast Advisory
+          </button>
+
           <Link
             to="/admin/mdrrmo/modules"
-            className="h-10 px-4 bg-red-600 text-white text-[12px] font-bold tracking-wide uppercase rounded-xl flex items-center gap-2 hover:bg-red-700 transition-colors shadow-sm whitespace-nowrap"
+            className="h-10 px-4 bg-gray-900 text-white text-[12px] font-bold tracking-wide uppercase rounded-xl flex items-center gap-2 hover:bg-gray-800 transition-colors shadow-sm whitespace-nowrap"
           >
             + Create Module
           </Link>
@@ -172,7 +185,7 @@ export default function Overview() {
         </div>
       </div>
 
-      {/* Row 2: Operational & Curriculum Triad (3 Equal Columns: Events, Distribution, Actions) */}
+      {/* Row 2: Operational & Curriculum Triad */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
         <div className="lg:col-span-1">
           <MdrrmoRecentActivity />
@@ -193,7 +206,7 @@ export default function Overview() {
         </div>
       </div>
 
-      {/* Row 3: Management Catalog & Activity Analytics (2 Equal Columns) */}
+      {/* Row 3: Management Catalog & Activity Analytics */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
         <div className="lg:col-span-1">
           <MdrrmoEnrollmentTrendChart />
@@ -207,6 +220,13 @@ export default function Overview() {
           />
         </div>
       </div>
+
+      {/* Upgraded Modal with MDRRMO Jurisdictional Scope */}
+      <AnnouncementModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        currentUserRole="mdrrmo_admin"
+      />
     </div>
   );
 }

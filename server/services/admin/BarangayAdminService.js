@@ -7,7 +7,8 @@ class BarangayAdminService {
       `SELECT id, name FROM barangays WHERE id = $1`,
       [barangayId]
     );
-    const barangayName = barangayInfoResult.rows[0]?.name || `Barangay Sector #${barangayId}`;
+    const barangayName =
+      barangayInfoResult.rows[0]?.name || `Barangay Sector #${barangayId}`;
 
     const kpiQuery = `
       SELECT 
@@ -54,8 +55,10 @@ class BarangayAdminService {
       },
       kpis: {
         total_residents: parseInt(kpiResult.rows[0]?.total_residents, 10) || 0,
-        certified_residents: parseInt(kpiResult.rows[0]?.certified_residents, 10) || 0,
-        active_learners: parseInt(kpiResult.rows[0]?.active_learners, 10) || 0,
+        certified_residents:
+          parseInt(kpiResult.rows[0]?.certified_residents, 10) || 0,
+        active_learners:
+          parseInt(kpiResult.rows[0]?.active_learners, 10) || 0,
         local_alerts: parseInt(kpiResult.rows[0]?.local_alerts, 10) || 0,
       },
       modulePerformance: moduleStatsResult.rows.map((row) => ({
@@ -68,37 +71,65 @@ class BarangayAdminService {
     };
   }
 
-  async getBarangayAnnouncements(barangayId) {
-    const result = await pool.query(
-      `SELECT 
+  async getBarangayAnnouncements(barangayId = null) {
+    let query = `
+      SELECT 
         a.id, 
         a.title, 
-        a.content, 
+        a.content,
+        a.priority,
+        a.barangay_id,
+        b.name AS barangay_name,
         a.date AS created_at, 
         u.name AS author_name 
        FROM announcements a
        LEFT JOIN "user" u ON a.author_id = u.id
-       WHERE a.barangay_id = $1
-       ORDER BY a.date DESC`,
-      [barangayId]
-    );
+       LEFT JOIN barangays b ON a.barangay_id = b.id
+    `;
+    const params = [];
+
+    if (barangayId) {
+      query += ` WHERE a.barangay_id = $1`;
+      params.push(barangayId);
+    }
+
+    query += `
+       ORDER BY 
+         CASE WHEN a.priority = 'urgent' THEN 0 ELSE 1 END,
+         a.date DESC
+    `;
+
+    const result = await pool.query(query, params);
     return result.rows;
   }
 
-  async createBarangayAnnouncement(title, content, authorId, barangayId) {
+  async createBarangayAnnouncement(title, content, priority, authorId, barangayId = null) {
     const sanitizedContent = cleanRichText(content);
+
+    const normalizedPriority =
+      String(priority).toLowerCase() === "urgent" ? "urgent" : "standard";
+
+    const resolvedBarangayId =
+      barangayId !== undefined && barangayId !== null && barangayId !== ""
+        ? parseInt(barangayId, 10)
+        : null;
+
     const result = await pool.query(
-      `INSERT INTO announcements (title, content, author_id, barangay_id, date)
-       VALUES ($1, $2, $3, $4, NOW())
-       RETURNING id, title, content, date AS created_at`,
-      [title, sanitizedContent, authorId, barangayId]
-    );
+      `INSERT INTO announcements (title, content, priority, author_id, barangay_id, date)
+      VALUES ($1, $2, $3, $4, $5, NOW())
+      RETURNING id, title, content, priority, barangay_id, date AS created_at`,
+      [title, sanitizedContent, normalizedPriority, authorId, resolvedBarangayId]
+  );
+
     return result.rows[0];
   }
 
   async getBarangayActivityLog(barangayId, queryParams) {
     const page = parseInt(queryParams.page, 10) || 1;
-    const limit = Math.min(Math.max(parseInt(queryParams.limit, 10) || 50, 1), 100);
+    const limit = Math.min(
+      Math.max(parseInt(queryParams.limit, 10) || 50, 1),
+      100
+    );
     const offset = (page - 1) * limit;
 
     const search = queryParams.search || "";
@@ -109,14 +140,18 @@ class BarangayAdminService {
     let paramIndex = 2;
 
     if (search) {
-      conditions.push(`(u.name ILIKE $${paramIndex} OR u.email ILIKE $${paramIndex} OR al.act_log ILIKE $${paramIndex})`);
+      conditions.push(
+        `(u.name ILIKE $${paramIndex} OR u.email ILIKE $${paramIndex} OR al.act_log ILIKE $${paramIndex})`
+      );
       params.push(`%${search}%`);
       paramIndex++;
     }
 
     if (action) {
       if (action === "auth") {
-        conditions.push(`(al.act_log ILIKE $${paramIndex} OR al.act_log ILIKE $${paramIndex + 1})`);
+        conditions.push(
+          `(al.act_log ILIKE $${paramIndex} OR al.act_log ILIKE $${paramIndex + 1})`
+        );
         params.push("%Log%", "%password%");
         paramIndex += 2;
       } else if (action === "account") {
@@ -124,7 +159,9 @@ class BarangayAdminService {
         params.push("%Account created%");
         paramIndex++;
       } else if (action === "learning") {
-        conditions.push(`(al.act_log ILIKE $${paramIndex} OR al.act_log ILIKE $${paramIndex + 1} OR al.act_log ILIKE $${paramIndex + 2})`);
+        conditions.push(
+          `(al.act_log ILIKE $${paramIndex} OR al.act_log ILIKE $${paramIndex + 1} OR al.act_log ILIKE $${paramIndex + 2})`
+        );
         params.push("%Enrolled%", "%Completed%", "%Earned certificate%");
         paramIndex += 3;
       } else {
@@ -172,7 +209,8 @@ class BarangayAdminService {
   }
 
   async getBarangayCertifications(barangayId, queryParams) {
-    const { page = 1, limit = 10, search = "", moduleId = "", status = "" } = queryParams;
+    const { page = 1, limit = 10, search = "", moduleId = "", status = "" } =
+      queryParams;
     const pageNum = Math.max(parseInt(page, 10) || 1, 1);
     const limitNum = Math.min(Math.max(parseInt(limit, 10) || 10, 1), 100);
     const offset = (pageNum - 1) * limitNum;
@@ -234,7 +272,12 @@ class BarangayAdminService {
       conditions.push(`module_id = $${params.length}`);
     }
 
-    if (status && ["active", "expiring_soon", "expired", "revoked"].includes(status.toLowerCase())) {
+    if (
+      status &&
+      ["active", "expiring_soon", "expired", "revoked"].includes(
+        status.toLowerCase()
+      )
+    ) {
       params.push(status.toLowerCase());
       conditions.push(`computed_status = $${params.length}`);
     }

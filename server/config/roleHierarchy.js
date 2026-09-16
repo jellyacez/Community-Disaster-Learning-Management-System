@@ -65,11 +65,20 @@ function assertCanProvision(actorRole, newUserRole) {
   const actorRank = getRank(actorRole);
   const newUserRank = getRank(newUserRole);
 
-  if (actorRank !== newUserRank + 1) {
+  // System admin can provision any role below system admin
+  if (actorRole === "system_admin") {
+    if (newUserRank >= actorRank) {
+      throw new Error("SECURITY_FAULT: Cannot provision equal or higher rank.");
+    }
+    return;
+  }
+
+  // Other administrative roles can only provision roles lower than their own
+  if (actorRank <= newUserRank) {
     throw new Error(
       `SECURITY_FAULT: Provisioning role '${newUserRole}' (rank ${newUserRank}) is not allowed ` +
       `for an actor with role '${actorRole}' (rank ${actorRank}). ` +
-      `You may only provision accounts exactly one tier below your own rank.`
+      `You may only provision accounts below your own rank.`
     );
   }
 }

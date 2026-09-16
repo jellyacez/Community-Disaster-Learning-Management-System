@@ -11,6 +11,7 @@ const mdrrmoOverviewController = require("../../controllers/admin/mdrrmoOverview
 const certificateManagementController = require("../../controllers/admin/certificateManagement");
 const adminFeedbacksController = require("../../controllers/admin/adminFeedbacks");
 const activityLogController = require("../../controllers/admin/activityLogController");
+const barangayController = require("../../controllers/admin/barangayController");
 
 // @route   GET /api/admin/modules
 // @desc    Get all modules with pagination and scoping
@@ -206,6 +207,16 @@ router.get(
   requireRole(["system_admin", "mdrrmo_admin", "head_mdrrmo_admin"]),
   adminDataLimiter,
   mdrrmoOverviewController.getMunicipalCertFeed
+);
+
+// @route   POST /api/admin/mdrrmo/announcements
+// @desc    Broadcast municipal advisory (all sectors or targeted barangay)
+// @access  Private (mdrrmo_admin, head_mdrrmo_admin, system_admin)
+router.post(
+  "/mdrrmo/announcements",
+  requireRole(["system_admin", "mdrrmo_admin", "head_mdrrmo_admin"]),
+  adminWriteLimiter,
+  barangayController.createBarangayAnnouncement
 );
 
 module.exports = router;

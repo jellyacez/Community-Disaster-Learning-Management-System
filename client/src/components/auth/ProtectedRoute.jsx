@@ -17,27 +17,48 @@ export default function ProtectedRoute({ allowedRoles = [] }) {
   const [searchParams] = useSearchParams();
   const location = useLocation();
   const [isMaintenanceChecked, setIsMaintenanceChecked] = useState(false);
+  const [sessionFailed, setSessionFailed] = useState(false);
 
   const isAdmin = session?.user?.role && ADMIN_ROLES.includes(session.user.role);
 
   useEffect(() => {
+    let isMounted = true;
+
     if (session && !isPending && !isAdmin) {
       apiClient
         .get("/public/status")
-        .then(() => setIsMaintenanceChecked(true))
+        .then(() => {
+          if (isMounted) setIsMaintenanceChecked(true);
+        })
         .catch((err) => {
-          // Block render on 503 MAINTENANCE_MODE
+          if (!isMounted) return;
           if (err.response && err.response.status === 503) {
-            // Let the global interceptor handle the redirect
-          } else {
-             setIsMaintenanceChecked(true);
+            // Global interceptor handles maintenance redirect
+            return;
           }
+          // If 401, session is invalid on this port/host
+          if (err.response && err.response.status === 401) {
+            authClient.signOut();
+            setSessionFailed(true);
+            return;
+          }
+          // Always mark checked on other network errors so user isn't stuck spinning
+          setIsMaintenanceChecked(true);
         });
     } else if (session && !isPending) {
-      // Bypass check for explicitly defined admin roles
-      setTimeout(() => setIsMaintenanceChecked(true), 0);
+      setTimeout(() => {
+        if (isMounted) setIsMaintenanceChecked(true);
+      }, 0);
     }
-  }, [session, isPending, setIsMaintenanceChecked, isAdmin]);
+
+    return () => {
+      isMounted = false;
+    };
+  }, [session, isPending, isAdmin]);
+
+  if (sessionFailed) {
+    return <Navigate to="/signin" replace state={{ error: "Session expired. Please sign in again." }} />;
+  }
 
   if (
     isPending ||
@@ -108,10 +129,8 @@ export default function ProtectedRoute({ allowedRoles = [] }) {
     if (!allowedRoles.includes(userRole)) {
       let homePath = "/";
       if (userRole === "system_admin") homePath = "/admin/dashboard";
-      else if (userRole === "mdrrmo_admin")
+      else if (userRole === "mdrrmo_admin" || userRole === "head_mdrrmo_admin")
         homePath = "/admin/mdrrmo/dashboard";
-        else if (userRole === "head_mdrrmo_admin")
-          homePath = "/admin/mdrrmo/dashboard";
       else if (userRole === "barangay_admin")
         homePath = "/admin/barangay/dashboard";
       else if (userRole === "resident" || userRole === "user")

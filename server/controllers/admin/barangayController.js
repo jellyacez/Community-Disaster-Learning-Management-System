@@ -1,5 +1,7 @@
 const barangayAdminService = require("../../services/admin/BarangayAdminService");
 const { cleanRichText } = require("../../utils/sanitizeHtml");
+const { UNSCOPED_ACCESS_ROLES } = require("../../config/permissions");
+const sseService = require("../../services/notif/sseService");
 
 // 1. GET /api/admin/barangay/analytics
 exports.getBarangayAnalytics = async (req, res) => {
@@ -7,8 +9,8 @@ exports.getBarangayAnalytics = async (req, res) => {
     const barangayId = req.user?.barangay_id;
 
     if (!barangayId) {
-      return res.status(400).json({ 
-        error: "SECURITY_FAULT: No barangay associated with this administrator account." 
+      return res.status(400).json({
+        error: "SECURITY_FAULT: No barangay associated with this administrator account.",
       });
     }
 
@@ -16,9 +18,9 @@ exports.getBarangayAnalytics = async (req, res) => {
     return res.json({ success: true, data });
   } catch (error) {
     console.error("DETAILED_BARANGAY_ANALYTICS_ERROR:", error);
-    return res.status(500).json({ 
-      error: "Failed to load barangay analytics.", 
-      detail: error.message 
+    return res.status(500).json({
+      error: "Failed to load barangay analytics.",
+      detail: error.message,
     });
   }
 };
@@ -26,10 +28,19 @@ exports.getBarangayAnalytics = async (req, res) => {
 // 2. GET /api/admin/barangay/announcements
 exports.getBarangayAnnouncements = async (req, res) => {
   try {
-    const barangayId = req.user?.barangay_id;
+    const userRole = req.user?.role;
+    let barangayId = req.user?.barangay_id;
 
-    if (!barangayId) {
-      return res.status(400).json({ error: "No barangay assigned to this administrator account." });
+    if (UNSCOPED_ACCESS_ROLES.includes(userRole)) {
+      // MDRRMO and System Admin view all announcements or optionally filter by query param
+      barangayId = req.query.barangay_id ? parseInt(req.query.barangay_id, 10) : null;
+    } else {
+      // Barangay admin is strictly locked to their barangay
+      if (!barangayId) {
+        return res.status(400).json({
+          error: "No barangay assigned to this administrator account.",
+        });
+      }
     }
 
     const data = await barangayAdminService.getBarangayAnnouncements(barangayId);
@@ -43,23 +54,55 @@ exports.getBarangayAnnouncements = async (req, res) => {
 // 3. POST /api/admin/barangay/announcements
 exports.createBarangayAnnouncement = async (req, res) => {
   try {
-    const { title, content } = req.body;
-    const barangayId = req.user?.barangay_id;
-    const authorId = req.user?.id || req.user?.user_id;
+    const { title, content, priority, target_barangay_id } = req.body;
+    const authorId = req.user?.user_id || req.user?.id;
+    const userRole = req.user?.role;
 
     if (!title || !content) {
-      return res.status(400).json({ error: "Title and content are required." });
+      return res.status(400).json({
+        error: "Title and content are required.",
+      });
     }
 
-    if (!barangayId || !authorId) {
-      return res.status(400).json({ error: "Unauthorized: Missing administrative credentials." });
+    if (!authorId) {
+      return res.status(401).json({
+        error: "Unauthorized: Missing administrative credentials.",
+      });
     }
 
-    const sanitizedContent = cleanRichText(content);
-    const data = await barangayAdminService.createBarangayAnnouncement(title, sanitizedContent, authorId, barangayId);
+    // Determine scope
+    let targetBarangay = null;
+    const isUnscoped = UNSCOPED_ACCESS_ROLES.includes(userRole);
+
+    if (userRole === "barangay_admin") {
+      targetBarangay = req.user?.barangay_id;
+      if (!targetBarangay) {
+        return res.status(400).json({
+          error: "No barangay assigned to this administrator account.",
+        });
+      }
+    } else if (isUnscoped) {
+      targetBarangay = target_barangay_id ? parseInt(target_barangay_id, 10) : null;
+    }
+
+    const data = await barangayAdminService.createBarangayAnnouncement(
+      title,
+      content,
+      priority,
+      authorId,
+      targetBarangay
+    );
+
+    // SSE Realtime push
+    if (targetBarangay) {
+      sseService.broadcastToBarangay(targetBarangay, "ANNOUNCEMENT_CREATED", data);
+    } else {
+      sseService.broadcast("ANNOUNCEMENT_CREATED", data);
+    }
+
     res.status(201).json({ success: true, data });
   } catch (error) {
-    console.error("Error posting barangay announcement:", error);
+    console.error("Error posting announcement:", error);
     res.status(500).json({ error: "Failed to create announcement." });
   }
 };
@@ -70,10 +113,15 @@ exports.getBarangayActivityLog = async (req, res) => {
     const barangayId = req.user?.barangay_id;
 
     if (!barangayId) {
-      return res.status(400).json({ error: "No barangay assigned to this administrator account." });
+      return res.status(400).json({
+        error: "No barangay assigned to this administrator account.",
+      });
     }
 
-    const result = await barangayAdminService.getBarangayActivityLog(barangayId, req.query);
+    const result = await barangayAdminService.getBarangayActivityLog(
+      barangayId,
+      req.query
+    );
     res.json({ success: true, ...result });
   } catch (error) {
     console.error("Error fetching barangay activity logs:", error);
@@ -94,7 +142,10 @@ exports.getBarangayCertifications = async (req, res) => {
       });
     }
 
-    const result = await barangayAdminService.getBarangayCertifications(barangayId, req.query);
+    const result = await barangayAdminService.getBarangayCertifications(
+      barangayId,
+      req.query
+    );
     return res.json({ success: true, ...result });
   } catch (error) {
     console.error("Error fetching barangay certifications:", error);

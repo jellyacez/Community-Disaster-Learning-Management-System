@@ -551,6 +551,72 @@ This document tracks identified technical debt, architectural decisions, missing
 
 ---
 
+### Resolved: Local Announcements Priority System & Urgent Badging
+- **Location:** `client/src/pages/admin/barangay/workspace/announcementModal.jsx`, `client/src/components/ui/announcements/AnnouncementCard.jsx`, `client/src/pages/admin/mdrrmo/LiveAlerts.jsx`, `server/controllers/admin/barangayController.js`
+- **Description:** While basic localized announcement creation (`title`, `content`) exists for Barangay Admins, the priority categorization system (`Standard` vs `Urgent`), urgent advisory badge indicators on resident announcement cards, and MDRRMO/Municipal broadcast overrides remain unimplemented scaffolding (`LiveAlerts.jsx` displays *"The announcement broadcasting system is currently being developed."*).
+- **Architectural Impact:** Critical emergency advisories cannot be visually differentiated from standard municipal announcements on resident feeds.
+- **Recommended Action:**
+  - Add `priority` column (`VARCHAR(20) DEFAULT 'standard'`) to `announcements` schema.
+  - Add priority selection radio/dropdown in `announcementModal.jsx` and render a high-visibility `Urgent` badge on `AnnouncementCard.jsx`.
+
+---
+
+### Resolved: Progressive Web App (PWA) Manifest & Production Asset Precaching
+- **Location:** `client/public/manifest.json`, `client/index.html`, `client/public/service-worker.js`, `client/vite.config.js`
+- **Description:**
+  - **Missing Web App Manifest:** No `manifest.json` or `manifest.webmanifest` exists in `client/public/`. The application lacks `theme_color`, `background_color`, `display: "standalone"`, `start_url`, and high-resolution PWA app icon definitions (`192x192`, `512x512`, `maskable`).
+  - **Missing HTML Mobile & PWA Headers:** `index.html` lacks `<link rel="manifest">`, `<meta name="theme-color">`, and Apple touch icon tags (`<link rel="apple-touch-icon">`, `<meta name="apple-mobile-web-app-capable">`).
+  - **Manual Service Worker vs. Vite Chunk Precaching:** `service-worker.js` manually hardcodes `urlsToCache = ["/", "/index.html"]`. It does not automatically precache hashed Vite build bundles (`dist/assets/*.js`, `dist/assets/*.css`), meaning full offline navigation to unvisited views fails unless previously visited.
+  - **Missing Installation Hook:** No `beforeinstallprompt` event listener or custom in-app install prompt banner exists to encourage mobile/desktop installation.
+- **Architectural Impact:** Mobile and desktop users cannot install the LMS as a standalone offline PWA application, and offline reliability is limited to previously cached network responses.
+- **Recommended Action:**
+  - Integrate `vite-plugin-pwa` in `client/vite.config.js` with auto-update service worker strategy and Workbox precaching for all production assets.
+  - Generate canonical PWA icons (`icon-192.png`, `icon-512.png`, `icon-maskable.png`) and create `manifest.webmanifest`.
+  - Add an in-app `InstallAppPrompt` component listening to the window `beforeinstallprompt` event.
+
+---
+
+### Resolved: Real-Time Push Notifications (WebSocket / SSE) vs. Polling Overhead
+- **Location:** `client/src/` (Global banners, notification dropdowns, feedback manager, system health)
+- **Description:** The system currently relies on TanStack Query `refetchInterval` polling (ranging from 5s on `SystemHealth` to 30s/60s on alerts, feedback, and certifications).
+- **Architectural Impact:** Under high concurrent resident usage, continuous HTTP polling generates steady baseline database queries even when data has not changed.
+- **Recommended Action:**
+  - Implement a lightweight Server-Sent Events (SSE) or WebSocket gateway for urgent real-time events (e.g. MDRRMO disaster broadcast alerts, new high-priority resident feedback, emergency credential revocations).
+  - Retain React Query polling as a secondary fallback for offline resilience.
+
+---
+
+### Resolved: Self-Service Disaster Learning FAQ & Knowledge Base
+- **Location:** `client/src/components/settings/HelpSupport.jsx` (currently a single static paragraph routing straight to `/user/feedback` with no self-serve content)
+- **Gap:** No FAQ or self-service knowledge base exists anywhere in the platform. Residents have no way to obtain immediate answers to common operational questions — every inquiry routes directly to the human MDRRMO feedback/ticketing queue.
+- **Proposed Content (5 Core Disaster Learning Questions):**
+  1. **Offline Mode & Syncing:**
+     - *Question:* How do learning modules and progress work during network outages or typhoons?
+     - *Verified System Fact:* The LMS operates offline via client-side Dexie IndexedDB (`localDb.js` / `syncManager.js`). Residents can view previously downloaded lessons and complete quizzes without internet. When connectivity is restored, the background sync engine automatically flushes queued completion tasks with authenticated session cookies.
+  2. **Certificate Validity & Recertification:**
+     - *Question:* How long is my disaster preparedness certification valid, and how do I renew it?
+     - *Verified System Fact:* Disaster preparedness certificates are valid for **1 year** (`RECERTIFICATION_INTERVAL_YEARS = 1` in `server/config/constants.js`). The daily 1:00 AM maintenance cron (`certificateExpiryCron.js`) identifies certificates within a **30-day notice window** (`expires_at <= NOW() + INTERVAL '30 days'`) and dispatches proactive email reminders. Residents can retake the module/assessment to recertify, extending validity for an additional 1 year and recording audit entries in `activity_log`.
+  3. **QR Verification:**
+     - *Question:* How can Barangay officials, employers, or relief coordinators verify my credential?
+     - *Verified System Fact:* Every issued certificate features a secure cryptographic UUID (`verification_token`) and embedded QR code. Evaluators can scan the QR code using any smartphone camera or navigate directly to `https://<domain>/verify/:token` (or use the in-portal scanner in Barangay Certifications) for real-time validation against the live registry.
+  4. **Privacy & Account Rights (R.A. 10173):**
+     - *Question:* How is my personal information protected, and what happens if I delete my account?
+     - *Verified System Fact:* The platform strictly complies with Republic Act No. 10173 (Data Privacy Act of 2012) with explicit versioned consent tracking (`CONSENT_VERSION = 'v1-2026'`). If an account is deleted under the Right to Be Forgotten, all personal identifiers are removed from the `"user"` table, while qualification records are preserved as `"Archived Resident"` (`user_id = NULL`), allowing legitimate credentials to remain publicly verifiable without exposing personal identifiable information (PII).
+  5. **Dialect Support & Localization:**
+     - *Question:* Are disaster training modules available in Kapampangan or Tagalog?
+     - *Verified System Fact:* The platform interface currently operates in English (`en`) by default. As reflected in the Language Preferences section (`LocalizationSettings.jsx`), Kapampangan (`pam`) and Tagalog (`tl`) dialect localizations for the DRRM curriculum are currently under active development.
+- **Scope Constraint:**
+  - **Static Content Only:** Must be implemented as a lightweight static JSON/constants file or hardcoded frontend accordion.
+  - **Out of Scope:** No new database tables, no dynamic CMS backend, and no admin-editable FAQ APIs unless explicitly requested as a standalone requirement by MDRRMO administrators in a future milestone.
+- **Recommended Placement:**
+  - Integrated as an expandable accordion section within `client/src/components/settings/HelpSupport.jsx`, or as a dedicated *"Frequently Asked Questions"* tab alongside the existing ticket interface in `client/src/pages/user/feedback/`.
+  - **Mandatory Fallback CTA:** The FAQ section must conclude with a persistent call-to-action button (*"Still have questions? Contact MDRRMO Support"*) linking directly to `/user/feedback`. The self-service FAQ and human ticketing system must remain complementary rather than replacing one another.
+- **Rationale:**
+  - Deflects high-frequency, repetitive inquiries from overloading the municipal MDRRMO feedback queue.
+  - Closes an identified UX critique in the resident portal by providing persistent, instant self-serve guidance for community disaster learners.
+
+---
+
 ## 🟡 Open / Active Technical Debt & Optimization Items
 
 ### 1. Server-Side Pagination & Cursor Querying for High-Scale Endpoints
@@ -586,17 +652,7 @@ This document tracks identified technical debt, architectural decisions, missing
 
 ---
 
-### 4. Real-Time Push Notifications (WebSocket / SSE) vs. Polling Overhead
-- **Location:** `client/src/` (Global banners, notification dropdowns, feedback manager, system health)
-- **Description:** The system currently relies on TanStack Query `refetchInterval` polling (ranging from 5s on `SystemHealth` to 30s/60s on alerts, feedback, and certifications).
-- **Architectural Impact:** Under high concurrent resident usage, continuous HTTP polling generates steady baseline database queries even when data has not changed.
-- **Recommended Action:**
-  - Implement a lightweight Server-Sent Events (SSE) or WebSocket gateway for urgent real-time events (e.g. MDRRMO disaster broadcast alerts, new high-priority resident feedback, emergency credential revocations).
-  - Retain React Query polling as a secondary fallback for offline resilience.
-
----
-
-### 5. Strict Admin-Provisioning Hierarchy Enforcement
+### 4. Strict Admin-Provisioning Hierarchy Enforcement
 - **Location:** `client/src/pages/admin/system/users/components/provision/AdminRoleSelection.jsx`, `client/src/pages/admin/mdrrmo/user-management/components/RegisterPersonnelForm.jsx`, `server/controllers/admin/user-management/provisionAdmin.js`, `server/config/permissions.js`
 - **Description:**
   - **Frontend:** `RegisterPersonnelForm.jsx` (MDRRMO admin view) hardcodes `<option value="barangay_admin">`, while `AdminRoleSelection.jsx` (System admin view) displays `mdrrmo_admin` and `barangay_admin`.
@@ -608,32 +664,7 @@ This document tracks identified technical debt, architectural decisions, missing
 
 ---
 
-### 6. Local Announcements Priority System & Urgent Badging
-- **Location:** `client/src/pages/admin/barangay/workspace/announcementModal.jsx`, `client/src/components/ui/announcements/AnnouncementCard.jsx`, `client/src/pages/admin/mdrrmo/LiveAlerts.jsx`, `server/controllers/admin/barangayController.js`
-- **Description:** While basic localized announcement creation (`title`, `content`) exists for Barangay Admins, the priority categorization system (`Standard` vs `Urgent`), urgent advisory badge indicators on resident announcement cards, and MDRRMO/Municipal broadcast overrides remain unimplemented scaffolding (`LiveAlerts.jsx` displays *"The announcement broadcasting system is currently being developed."*).
-- **Architectural Impact:** Critical emergency advisories cannot be visually differentiated from standard municipal announcements on resident feeds.
-- **Recommended Action:**
-  - Add `priority` column (`VARCHAR(20) DEFAULT 'standard'`) to `announcements` schema.
-  - Add priority selection radio/dropdown in `announcementModal.jsx` and render a high-visibility `Urgent` badge on `AnnouncementCard.jsx`.
-
----
-
-### 7. Progressive Web App (PWA) Manifest & Production Asset Precaching
-- **Location:** `client/public/manifest.json`, `client/index.html`, `client/public/service-worker.js`, `client/vite.config.js`
-- **Description:**
-  - **Missing Web App Manifest:** No `manifest.json` or `manifest.webmanifest` exists in `client/public/`. The application lacks `theme_color`, `background_color`, `display: "standalone"`, `start_url`, and high-resolution PWA app icon definitions (`192x192`, `512x512`, `maskable`).
-  - **Missing HTML Mobile & PWA Headers:** `index.html` lacks `<link rel="manifest">`, `<meta name="theme-color">`, and Apple touch icon tags (`<link rel="apple-touch-icon">`, `<meta name="apple-mobile-web-app-capable">`).
-  - **Manual Service Worker vs. Vite Chunk Precaching:** `service-worker.js` manually hardcodes `urlsToCache = ["/", "/index.html"]`. It does not automatically precache hashed Vite build bundles (`dist/assets/*.js`, `dist/assets/*.css`), meaning full offline navigation to unvisited views fails unless previously visited.
-  - **Missing Installation Hook:** No `beforeinstallprompt` event listener or custom in-app install prompt banner exists to encourage mobile/desktop installation.
-- **Architectural Impact:** Mobile and desktop users cannot install the LMS as a standalone offline PWA application, and offline reliability is limited to previously cached network responses.
-- **Recommended Action:**
-  - Integrate `vite-plugin-pwa` in `client/vite.config.js` with auto-update service worker strategy and Workbox precaching for all production assets.
-  - Generate canonical PWA icons (`icon-192.png`, `icon-512.png`, `icon-maskable.png`) and create `manifest.webmanifest`.
-  - Add an in-app `InstallAppPrompt` component listening to the window `beforeinstallprompt` event.
-
----
-
-### 8. Offline-Replay Duplicate Risk (Idempotency Keys)
+### 5. Offline-Replay Duplicate Risk (Idempotency Keys)
 - **Location:** `client/src/lib/LocalSave/syncManager.js`, `server/controllers/feedback/feedbackController.js`, `server/controllers/admin/barangayController.js`
 - **Description:**
   - **Context:** The application is an offline-first PWA with a background sync queue (`syncManager.js` replaying queued writes via Dexie on reconnect). Any `POST` endpoint without a unique constraint is vulnerable to duplicate creation if the server processes a request successfully but the HTTP 200 OK never reaches the client before the connection drops — the client re-queues and replays the same write on the next reconnect.
@@ -649,33 +680,3 @@ This document tracks identified technical debt, architectural decisions, missing
   - Server defines unique constraints on `client_mutation_id` and executes `ON CONFLICT (client_mutation_id) DO NOTHING` on all creation endpoints that interface with the offline sync queue.
 - **Strategic Decision:** Bundle this enhancement with the Local Announcements build (Item 7) rather than fixing feedback in isolation now — no sense adding the idempotency plumbing to a feature that does not exist yet, and current feedback exposure is lower-frequency (requires the specific processed-but-response-lost race condition) than the Publish-button double-click case, which was fixed separately and immediately.
 
----
-
-### 9. Self-Service Disaster Learning FAQ & Knowledge Base
-- **Location:** `client/src/components/settings/HelpSupport.jsx` (currently a single static paragraph routing straight to `/user/feedback` with no self-serve content)
-- **Gap:** No FAQ or self-service knowledge base exists anywhere in the platform. Residents have no way to obtain immediate answers to common operational questions — every inquiry routes directly to the human MDRRMO feedback/ticketing queue.
-- **Proposed Content (5 Core Disaster Learning Questions):**
-  1. **Offline Mode & Syncing:**
-     - *Question:* How do learning modules and progress work during network outages or typhoons?
-     - *Verified System Fact:* The LMS operates offline via client-side Dexie IndexedDB (`localDb.js` / `syncManager.js`). Residents can view previously downloaded lessons and complete quizzes without internet. When connectivity is restored, the background sync engine automatically flushes queued completion tasks with authenticated session cookies.
-  2. **Certificate Validity & Recertification:**
-     - *Question:* How long is my disaster preparedness certification valid, and how do I renew it?
-     - *Verified System Fact:* Disaster preparedness certificates are valid for **1 year** (`RECERTIFICATION_INTERVAL_YEARS = 1` in `server/config/constants.js`). The daily 1:00 AM maintenance cron (`certificateExpiryCron.js`) identifies certificates within a **30-day notice window** (`expires_at <= NOW() + INTERVAL '30 days'`) and dispatches proactive email reminders. Residents can retake the module/assessment to recertify, extending validity for an additional 1 year and recording audit entries in `activity_log`.
-  3. **QR Verification:**
-     - *Question:* How can Barangay officials, employers, or relief coordinators verify my credential?
-     - *Verified System Fact:* Every issued certificate features a secure cryptographic UUID (`verification_token`) and embedded QR code. Evaluators can scan the QR code using any smartphone camera or navigate directly to `https://<domain>/verify/:token` (or use the in-portal scanner in Barangay Certifications) for real-time validation against the live registry.
-  4. **Privacy & Account Rights (R.A. 10173):**
-     - *Question:* How is my personal information protected, and what happens if I delete my account?
-     - *Verified System Fact:* The platform strictly complies with Republic Act No. 10173 (Data Privacy Act of 2012) with explicit versioned consent tracking (`CONSENT_VERSION = 'v1-2026'`). If an account is deleted under the Right to Be Forgotten, all personal identifiers are removed from the `"user"` table, while qualification records are preserved as `"Archived Resident"` (`user_id = NULL`), allowing legitimate credentials to remain publicly verifiable without exposing personal identifiable information (PII).
-  5. **Dialect Support & Localization:**
-     - *Question:* Are disaster training modules available in Kapampangan or Tagalog?
-     - *Verified System Fact:* The platform interface currently operates in English (`en`) by default. As reflected in the Language Preferences section (`LocalizationSettings.jsx`), Kapampangan (`pam`) and Tagalog (`tl`) dialect localizations for the DRRM curriculum are currently under active development.
-- **Scope Constraint:**
-  - **Static Content Only:** Must be implemented as a lightweight static JSON/constants file or hardcoded frontend accordion.
-  - **Out of Scope:** No new database tables, no dynamic CMS backend, and no admin-editable FAQ APIs unless explicitly requested as a standalone requirement by MDRRMO administrators in a future milestone.
-- **Recommended Placement:**
-  - Integrated as an expandable accordion section within `client/src/components/settings/HelpSupport.jsx`, or as a dedicated *"Frequently Asked Questions"* tab alongside the existing ticket interface in `client/src/pages/user/feedback/`.
-  - **Mandatory Fallback CTA:** The FAQ section must conclude with a persistent call-to-action button (*"Still have questions? Contact MDRRMO Support"*) linking directly to `/user/feedback`. The self-service FAQ and human ticketing system must remain complementary rather than replacing one another.
-- **Rationale:**
-  - Deflects high-frequency, repetitive inquiries from overloading the municipal MDRRMO feedback queue.
-  - Closes an identified UX critique in the resident portal by providing persistent, instant self-serve guidance for community disaster learners.

@@ -16,37 +16,9 @@ import toast from "react-hot-toast";
 import App from "./App";
 import "../src/styles/index.css";
 
-// Register PWA Service Worker only in production
-if ("serviceWorker" in navigator) {
-  if (import.meta.env.PROD) {
-    window.addEventListener("load", () => {
-      navigator.serviceWorker.register("/service-worker.js").then(
-        (registration) => {
-          console.log(
-            "ServiceWorker registration successful with scope: ",
-            registration.scope,
-          );
-        },
-        (err) => {
-          console.log("ServiceWorker registration failed: ", err);
-        },
-      );
-    });
-  } else {
-    navigator.serviceWorker.getRegistrations().then((registrations) => {
-      for (let registration of registrations) {
-        registration.unregister();
-        console.log("ServiceWorker unregistered in development mode.");
-      }
-    });
-  }
-}
-
 const queryClient = new QueryClient({
   queryCache: new QueryCache({
     onError: (error) => {
-      // Global single-source error handler for all Queries.
-      // We don't want to toast if the interceptor already handles it (e.g. 401, 503)
       if (error?.response?.status !== 401 && error?.response?.status !== 503) {
         const message =
           error?.response?.data?.message ||
@@ -59,7 +31,7 @@ const queryClient = new QueryClient({
   }),
   defaultOptions: {
     queries: {
-      staleTime: 1000 * 60, // 60s default cache time
+      staleTime: 1000 * 60,
       retry: 1,
       refetchOnWindowFocus: true,
     },

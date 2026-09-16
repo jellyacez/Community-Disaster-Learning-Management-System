@@ -94,6 +94,7 @@ app.use(
             process.env.FRONTEND_URL,
             "http://localhost:5173",
             "http://localhost:5174",
+            "http://localhost:4173", // Allows Vite preview (PWA test port)
           ].filter(Boolean),
     credentials: true,
   }),
@@ -134,6 +135,9 @@ const levelResultRoutes = require("./routes/modules/levelResultRoutes");
 const mediaUploadRoutes = require("./routes/modules/mediaUploadRoutes");
 const apiSecurityMiddleware = require("./middleware/apiSecurityMiddleware");
 
+// Notif Route
+app.use("/api/notif", require("./routes/notif/sseRoutes"))
+
 // API Routes (Business logic protected by security middleware)
 app.use("/api/public", publicRoutes);
 app.use("/api/certificates", certificatesRoutes); // Public verification endpoint
@@ -146,7 +150,17 @@ app.use("/api/feedbacks", apiSecurityMiddleware, feedbackRoutes);
 app.use("/api/modules", apiSecurityMiddleware, mediaUploadRoutes);
 
 app.use("/api/modules", apiSecurityMiddleware, levelResultRoutes);
+app.set("etag", false);
 
+app.use("/api", (req, res, next) => {
+  res.set({
+    "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
+    Pragma: "no-cache",
+    Expires: "0",
+    "Surrogate-Control": "no-store",
+  });
+  next();
+});
 // 404 Catch-All Route
 app.use((req, res) => {
   res.status(404).json({ error: "Route not found" });
