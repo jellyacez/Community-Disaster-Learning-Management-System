@@ -46,14 +46,13 @@ const navItems = [
     label: "My Certificates",
     icon: <HugeiconsIcon aria-hidden="true" icon={Certificate02Icon} className="w-5 h-5" />,
   },
-{
-      path: "/user/feedback",
-      label: "Feedback",
-      icon: (
-        <HugeiconsIcon
-          aria-hidden="true" icon={Message01Icon} className="w-5 h-5" />
-      ),
-    },
+  {
+    path: "/user/feedback",
+    label: "Feedback",
+    icon: (
+      <HugeiconsIcon aria-hidden="true" icon={Message01Icon} className="w-5 h-5" />
+    ),
+  },
   {
     path: "/user/profile",
     label: "User Profile",
@@ -100,7 +99,6 @@ export default function UserSidebar({
     }
   };
 
-
   useEffect(() => {
     const updatePillPosition = () => {
       const activeIndex = navItems.findIndex(item => 
@@ -122,7 +120,6 @@ export default function UserSidebar({
     updatePillPosition();
     window.addEventListener('resize', updatePillPosition);
     
-    // Give a tiny delay for first paint font rendering
     const timeoutId = setTimeout(updatePillPosition, 50);
     
     return () => {
@@ -134,11 +131,11 @@ export default function UserSidebar({
   return (
     <>
       <aside
-        className={`fixed left-0 top-0 z-50 flex h-screen w-72 flex-col border-r border-gray-200 bg-white transition-transform duration-300 lg:translate-x-0 ${
+        className={`fixed left-0 top-0 z-50 flex h-screen w-72 flex-col border-r border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-950 transition-colors duration-200 transition-transform duration-300 lg:translate-x-0 ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
-        <div className="flex items-center justify-between border-b border-gray-200 px-6 py-5">
+        <div className="flex items-center justify-between border-b border-gray-200 dark:border-slate-800 px-6 py-5">
           <div className="flex items-center gap-3">
             <div className="rounded-xl bg-red-600 p-2.5 text-white">
               <HugeiconsIcon
@@ -148,10 +145,10 @@ export default function UserSidebar({
               />
             </div>
             <div>
-              <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">
+              <p className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-slate-400">
                 Bacolor LMS
               </p>
-              <h2 className="text-lg font-extrabold text-gray-900">
+              <h2 className="text-lg font-extrabold text-gray-900 dark:text-white">
                 User Portal
               </h2>
             </div>
@@ -160,7 +157,7 @@ export default function UserSidebar({
           <button
             onClick={() => setSidebarOpen(false)}
             aria-label="Close sidebar menu"
-            className="rounded-lg p-2 text-gray-500 hover:bg-gray-100 lg:hidden cursor-pointer"
+            className="rounded-lg p-2 text-gray-500 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-900 lg:hidden cursor-pointer transition-colors"
           >
             <HugeiconsIcon
               aria-hidden="true"
@@ -170,10 +167,10 @@ export default function UserSidebar({
           </button>
         </div>
 
-        <div className="border-b border-gray-200 px-6 py-5">
-          <p className="text-sm font-bold text-gray-900">{currentUser.name}</p>
-          <p className="text-sm text-gray-500">{currentUser.email}</p>
-          <p className="mt-2 inline-block rounded-full bg-red-50 px-3 py-1 text-xs font-bold text-red-700">
+        <div className="border-b border-gray-200 dark:border-slate-800 px-6 py-5">
+          <p className="text-sm font-bold text-gray-900 dark:text-white">{currentUser.name}</p>
+          <p className="text-sm text-gray-500 dark:text-slate-400">{currentUser.email}</p>
+          <p className="mt-2 inline-block rounded-full bg-red-50 dark:bg-red-950/60 border border-red-100 dark:border-red-900/40 px-3 py-1 text-xs font-bold text-red-700 dark:text-red-400">
             {currentUser.role}
           </p>
         </div>
@@ -198,7 +195,7 @@ export default function UserSidebar({
                 className={`relative flex w-full min-h-[3rem] py-2 items-center justify-between rounded-xl px-4 text-left transition-colors z-10 cursor-pointer ${
                   active
                     ? "bg-red-600 lg:bg-transparent shadow-md lg:shadow-none text-white"
-                    : "text-gray-700 hover:bg-gray-100"
+                    : "text-gray-700 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-900/60 dark:hover:text-white"
                 }`}
               >
                 <span className="relative z-10 flex items-center gap-3 font-semibold">
@@ -207,8 +204,8 @@ export default function UserSidebar({
                 </span>
                 <HugeiconsIcon
                   icon={ArrowRight01Icon}
-                  className={`relative z-10 w-4 h-4 ${
-                    active ? "text-white" : "text-gray-500"
+                  className={`relative z-10 w-4 h-4 transition-colors ${
+                    active ? "text-white" : "text-gray-500 dark:text-slate-500"
                   }`}
                 />
               </button>
@@ -216,10 +213,10 @@ export default function UserSidebar({
           })}
         </nav>
 
-        <div className="border-t border-gray-200 p-4">
+        <div className="border-t border-gray-200 dark:border-slate-800 p-4">
           <button
             onClick={() => setIsLogoutModalOpen(true)}
-            className="flex w-full items-center gap-3 rounded-xl px-4 py-3 font-semibold text-red-600 hover:bg-red-50 cursor-pointer"
+            className="flex w-full items-center gap-3 rounded-xl px-4 py-3 font-semibold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors cursor-pointer"
           >
             <HugeiconsIcon
               aria-hidden="true"
@@ -230,6 +227,7 @@ export default function UserSidebar({
           </button>
         </div>
       </aside>
+
       <LogoutModal
         isOpen={isLogoutModalOpen}
         onClose={() => setIsLogoutModalOpen(false)}

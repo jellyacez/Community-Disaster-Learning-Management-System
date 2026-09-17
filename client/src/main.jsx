@@ -15,6 +15,7 @@ import {
 import toast from "react-hot-toast";
 import App from "./App";
 import "../src/styles/index.css";
+import { ThemeProvider } from "./hooks/context/themeContext";
 
 const queryClient = new QueryClient({
   queryCache: new QueryCache({
@@ -41,9 +42,11 @@ const queryClient = new QueryClient({
 ReactDOM.createRoot(document.getElementById("root")).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        <App />
-      </BrowserRouter>
+      <ThemeProvider>
+        <BrowserRouter>
+          <App />
+        </BrowserRouter>
+      </ThemeProvider>
     </QueryClientProvider>
   </StrictMode>,
 );

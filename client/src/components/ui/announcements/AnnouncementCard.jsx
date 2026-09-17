@@ -14,8 +14,8 @@ const AnnouncementCard = memo(function AnnouncementCard({ item }) {
     <div
       className={`group relative overflow-hidden rounded-2xl p-6 shadow-sm ring-1 transition-all hover:-translate-y-0.5 hover:shadow-md ${
         isUrgent
-          ? "bg-red-50/60 ring-red-300 border border-red-200"
-          : "bg-white ring-gray-200"
+          ? "bg-red-50/60 dark:bg-red-950/20 ring-red-300 dark:ring-red-900/50 border border-red-200 dark:border-red-900/40"
+          : "bg-white dark:bg-slate-900 ring-gray-200 dark:ring-slate-800"
       }`}
     >
       {isUrgent && (
@@ -27,10 +27,10 @@ const AnnouncementCard = memo(function AnnouncementCard({ item }) {
 
       <div className="flex gap-5">
         <div
-          className={`hidden sm:flex h-12 w-12 shrink-0 items-center justify-center rounded-full ring-4 ring-white shadow-sm transition-transform duration-300 group-hover:scale-110 ${
+          className={`hidden sm:flex h-12 w-12 shrink-0 items-center justify-center rounded-full ring-4 ring-white dark:ring-slate-900 shadow-sm transition-transform duration-300 group-hover:scale-110 ${
             isUrgent
-              ? "bg-red-100 text-red-700"
-              : "bg-red-50 text-red-600"
+              ? "bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-400"
+              : "bg-red-50 dark:bg-slate-800 text-red-600 dark:text-red-400"
           }`}
         >
           <HugeiconsIcon icon={Megaphone01Icon} className="h-6 w-6" />
@@ -51,18 +51,18 @@ const AnnouncementCard = memo(function AnnouncementCard({ item }) {
               <h2
                 className={`text-lg font-extrabold leading-tight transition-colors ${
                   isUrgent
-                    ? "text-red-900 group-hover:text-red-950"
-                    : "text-gray-900 group-hover:text-red-700"
+                    ? "text-red-900 dark:text-red-200 group-hover:text-red-950 dark:group-hover:text-white"
+                    : "text-gray-900 dark:text-white group-hover:text-red-700 dark:group-hover:text-red-400"
                 }`}
               >
                 {item.title}
               </h2>
 
-              <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs font-semibold text-gray-500">
+              <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs font-semibold text-gray-500 dark:text-slate-400">
                 <div className="flex items-center gap-1.5">
                   <HugeiconsIcon
                     icon={UserCircleIcon}
-                    className="h-4 w-4 text-gray-400"
+                    className="h-4 w-4 text-gray-400 dark:text-slate-500"
                   />
                   <span>{item.author || item.author_name || "Bacolor Admin"}</span>
                 </div>
@@ -70,7 +70,7 @@ const AnnouncementCard = memo(function AnnouncementCard({ item }) {
                 <div className="flex items-center gap-1.5">
                   <HugeiconsIcon
                     icon={Calendar01Icon}
-                    className="h-4 w-4 text-gray-400"
+                    className="h-4 w-4 text-gray-400 dark:text-slate-500"
                   />
                   <span>{item.date || item.created_at}</span>
                 </div>
@@ -79,12 +79,16 @@ const AnnouncementCard = memo(function AnnouncementCard({ item }) {
           </div>
 
           {isUrgent && (
-            <p className="mb-3 text-xs font-bold uppercase tracking-wide text-red-700">
+            <p className="mb-3 text-xs font-bold uppercase tracking-wide text-red-700 dark:text-red-400">
               High-priority advisory requiring immediate resident attention
             </p>
           )}
 
-          <div className={`text-sm leading-relaxed ${isUrgent ? "text-gray-800" : "text-gray-600"}`}>
+          <div
+            className={`text-sm leading-relaxed ${
+              isUrgent ? "text-gray-800 dark:text-slate-300" : "text-gray-600 dark:text-slate-300"
+            }`}
+          >
             {item.content}
           </div>
         </div>

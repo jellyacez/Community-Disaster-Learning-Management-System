@@ -1,6 +1,8 @@
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 .prose :first-child {
   margin-top: 0;
 }
@@ -15,8 +17,15 @@ html {
 body {
   margin: 0;
   font-family: Arial, Helvetica, sans-serif;
-  background: white;
+  background-color: #ffffff;
   color: #111827;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+:where(.dark, .dark *) body,
+html.dark body {
+  background-color: #030712;
+  color: #f8fafc;
 }
 
 * {
@@ -46,6 +55,123 @@ input, textarea, select, button {
   border-radius: 10px;
 }
 
+:where(.dark, .dark *) *::-webkit-scrollbar-thumb,
+html.dark *::-webkit-scrollbar-thumb {
+  background: #334155;
+}
+
 *::-webkit-scrollbar-thumb:hover {
   background: #d1d5db;
+}
+
+:where(.dark, .dark *) *::-webkit-scrollbar-thumb:hover,
+html.dark *::-webkit-scrollbar-thumb:hover {
+  background: #475569;
+}
+
+
+:where(.dark, .dark *) .bg-white,
+:where(.dark, .dark *) .bg-gray-50,
+:where(.dark, .dark *) .bg-gray-100,
+:where(.dark, .dark *) .bg-gray-200,
+:where(.dark, .dark *) .bg-slate-50,
+:where(.dark, .dark *) .bg-slate-100,
+:where(.dark, .dark *) .bg-slate-200,
+html.dark .bg-white,
+html.dark .bg-gray-50,
+html.dark .bg-gray-100,
+html.dark .bg-gray-200,
+html.dark .bg-slate-50,
+html.dark .bg-slate-100,
+html.dark .bg-slate-200 {
+  background-color: #0b1329 !important; /* deep card navy matching charts */
+}
+
+
+:where(.dark, .dark *) .bg-gray-300,
+:where(.dark, .dark *) .bg-slate-300,
+html.dark .bg-gray-300,
+html.dark .bg-slate-300 {
+  background-color: #111c38 !important;
+}
+
+/* Text inversion */
+:where(.dark, .dark *) .text-gray-900,
+html.dark .text-gray-900 {
+  color: #f8fafc !important;
+}
+
+:where(.dark, .dark *) .text-gray-800,
+html.dark .text-gray-800 {
+  color: #f1f5f9 !important;
+}
+
+:where(.dark, .dark *) .text-gray-700,
+html.dark .text-gray-700 {
+  color: #e2e8f0 !important;
+}
+
+:where(.dark, .dark *) .text-gray-600,
+html.dark .text-gray-600 {
+  color: #cbd5e1 !important;
+}
+
+:where(.dark, .dark *) .text-gray-500,
+:where(.dark, .dark *) .text-gray-400,
+html.dark .text-gray-500,
+html.dark .text-gray-400 {
+  color: #94a3b8 !important;
+}
+
+
+:where(.dark, .dark *) .text-red-700,
+:where(.dark, .dark *) .text-red-600,
+html.dark .text-red-700,
+html.dark .text-red-600 {
+  color: #f87171 !important;
+}
+
+
+:where(.dark, .dark *) .border-gray-100,
+:where(.dark, .dark *) .border-gray-200,
+:where(.dark, .dark *) .border-gray-300,
+:where(.dark, .dark *) .border-slate-100,
+:where(.dark, .dark *) .border-slate-200,
+html.dark .border-gray-100,
+html.dark .border-gray-200,
+html.dark .border-gray-300,
+html.dark .border-slate-100,
+html.dark .border-slate-200 {
+  border-color: #1e293b !important;
+}
+
+:where(.dark, .dark *) .divide-gray-100 > :not([hidden]) ~ :not([hidden]),
+:where(.dark, .dark *) .divide-gray-200 > :not([hidden]) ~ :not([hidden]),
+html.dark .divide-gray-100 > :not([hidden]) ~ :not([hidden]),
+html.dark .divide-gray-200 > :not([hidden]) ~ :not([hidden]) {
+  border-color: #1e293b !important;
+}
+
+
+:where(.dark, .dark *) input:not([type="checkbox"]):not([type="radio"]),
+:where(.dark, .dark *) select,
+:where(.dark, .dark *) textarea,
+html.dark input:not([type="checkbox"]):not([type="radio"]),
+html.dark select,
+html.dark textarea {
+  background-color: #080d1a !important;
+  color: #f8fafc !important;
+  border-color: #1e293b !important;
+}
+
+
+:where(.dark, .dark *) .bg-red-50,
+html.dark .bg-red-50 {
+  background-color: rgba(69, 10, 10, 0.4) !important;
+  border-color: rgba(220, 38, 38, 0.35) !important;
+}
+
+:where(.dark, .dark *) .bg-red-100,
+html.dark .bg-red-100 {
+  background-color: rgba(127, 29, 29, 0.5) !important;
 }
