@@ -7,7 +7,6 @@ const ThemeContext = createContext({
 });
 
 export function ThemeProvider({ children }) {
-  // Place it right here as the initial state:
   const [theme, setTheme] = useState(() => {
     const saved = localStorage.getItem("bacolor_theme");
     if (saved === "dark" || saved === "light") return saved;
