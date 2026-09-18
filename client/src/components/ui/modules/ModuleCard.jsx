@@ -28,9 +28,8 @@ const ModuleCard = memo(function ModuleCard({
   onPreviewClick,
   onEnrollSuccess,
   onManageClick,
+  onEnrollClick, // 1. Accepted confirmation modal trigger prop
 }) {
-
-  
   const navigate = useNavigate();
   const { data: session } = authClient.useSession();
   const userRole = session?.user?.role;
@@ -57,7 +56,6 @@ const ModuleCard = memo(function ModuleCard({
     if (isPreview && onPreviewClick) return onPreviewClick();
     if (isPreview)
       return toast.error("Navigation is disabled in Live Preview Mode.");
-    // Matches the separate viewer route path configuration in App.jsx
     navigate(`/user/modules/${module.id}`);
   };
 
@@ -76,7 +74,7 @@ const ModuleCard = memo(function ModuleCard({
     navigate(`${basePath}/${module.id}/details`);
   };
 
-const handleManageModule = (e) => {
+  const handleManageModule = (e) => {
     if (e) {
       e.stopPropagation();
       e.preventDefault();
@@ -101,6 +99,11 @@ const handleManageModule = (e) => {
     if (isPreview && onPreviewClick) return onPreviewClick();
     if (isPreview)
       return toast.error("Enrollment is disabled in Live Preview Mode.");
+
+    // 2. Trigger parent confirmation modal if provided; otherwise fallback to direct enroll
+    if (onEnrollClick) {
+      return onEnrollClick(module);
+    }
     handleEnroll();
   };
 
@@ -142,7 +145,6 @@ const handleManageModule = (e) => {
           </span>
         </div>
       )}
-
 
       {/* Content */}
       <div className="flex-1 flex flex-col justify-between min-w-0">

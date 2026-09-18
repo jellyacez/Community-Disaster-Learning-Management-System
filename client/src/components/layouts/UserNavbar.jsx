@@ -44,7 +44,6 @@ export default function UserNavbar({
             <p className="text-xs font-semibold uppercase tracking-widest text-gray-500 dark:text-slate-400">
               Resident Learning Dashboard
             </p>
-            <h1 className="text-lg font-extrabold text-gray-900 dark:text-white">{currentTitle}</h1>
           </div>
         </div>
 

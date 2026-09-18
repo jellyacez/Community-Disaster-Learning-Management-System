@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import apiClient from "../../../../lib/apiClient";
+import { authClient } from "../../../../lib/auth-client";
 import useDocumentTitle from "../../../../hooks/useDocumentTitle";
 import {
   FolderAddIcon,
@@ -27,6 +28,10 @@ export default function Overview() {
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [statusFilter, setStatusFilter] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const { data: session } = authClient.useSession();
+  const userRole = session?.user?.role;
+  const isStandardMdrrmo = userRole === "mdrrmo_admin";
 
   const {
     data: metricsData,
@@ -114,12 +119,15 @@ export default function Overview() {
             + Broadcast Advisory
           </button>
 
-          <Link
-            to="/admin/mdrrmo/modules"
-            className="h-10 px-4 bg-gray-900 text-white text-[12px] font-bold tracking-wide uppercase rounded-xl flex items-center gap-2 hover:bg-gray-800 transition-colors shadow-sm whitespace-nowrap"
-          >
-            + Create Module
-          </Link>
+          {/* Rendered strictly for standard MDRRMO Admin */}
+          {isStandardMdrrmo && (
+            <Link
+              to="/admin/mdrrmo/modules"
+              className="h-10 px-4 bg-gray-900 text-white text-[12px] font-bold tracking-wide uppercase rounded-xl flex items-center gap-2 hover:bg-gray-800 transition-colors shadow-sm whitespace-nowrap"
+            >
+              + Create Module
+            </Link>
+          )}
         </div>
       </div>
 

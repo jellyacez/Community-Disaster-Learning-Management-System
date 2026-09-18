@@ -14,16 +14,24 @@ import {
 export default function MdrrmoQuickActions({ pendingReviewsCount = 0 }) {
   const navigate = useNavigate();
   const { data: session } = authClient.useSession();
-  const isHeadAdmin = session?.user?.role === "head_mdrrmo_admin";
+  
+  const userRole = session?.user?.role;
+  const isHeadAdmin = userRole === "head_mdrrmo_admin";
+  const isStandardMdrrmo = userRole === "mdrrmo_admin";
 
   const actions = [
-    {
-      id: "create-module",
-      title: "Create Training Module",
-      description: "Author new DRRM learning syllabus",
-      icon: BookOpen01Icon,
-      onClick: () => navigate("/admin/mdrrmo/modules"),
-    },
+    // Strictly mdrrmo_admin only
+    ...(isStandardMdrrmo
+      ? [
+          {
+            id: "create-module",
+            title: "Create Training Module",
+            description: "Author new DRRM learning syllabus",
+            icon: BookOpen01Icon,
+            onClick: () => navigate("/admin/mdrrmo/modules"),
+          },
+        ]
+      : []),
     ...(isHeadAdmin
       ? [
           {

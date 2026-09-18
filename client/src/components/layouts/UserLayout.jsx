@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Outlet } from "react-router-dom";
+import { useState, useMemo } from "react";
+import { Outlet, useLocation } from "react-router-dom";
 import { authClient } from "../../lib/auth-client";
 import DashboardLayout from "./DashboardLayout";
 
@@ -21,6 +21,7 @@ function formatRole(role) {
 export default function UserLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { data: session } = authClient.useSession();
+  const location = useLocation();
 
   const currentUser = {
     name:
@@ -30,10 +31,8 @@ export default function UserLayout() {
       "User",
     email: session?.user?.email || "No email available",
     barangay_id: session?.user?.barangay_id,
-
     role: formatRole(session?.user?.role),
     image: session?.user?.image,
-    
   };
 
   const userInitials = currentUser.name
@@ -43,12 +42,38 @@ export default function UserLayout() {
     .slice(0, 2)
     .toUpperCase();
 
+  const footerMode = useMemo(() => {
+    const current = (location.pathname || "").toLowerCase();
+
+    // 1. Pages where footer is permanently locked/pinned to viewport
+    const pinnedKeywords = [
+      "module",
+      "catalog",
+      "certificate",
+      "enrolled",
+      "feedback",
+    ];
+    if (pinnedKeywords.some((keyword) => current.includes(keyword))) {
+      return "pinned";
+    }
+
+    // 2. Pages where footer is non-sticky (scrolls naturally below content)
+    const scrollKeywords = ["dashboard", "announcement", "settings"];
+    if (scrollKeywords.some((keyword) => current.includes(keyword))) {
+      return "scroll";
+    }
+
+    // Fallback for any unmatched pages (default: natural scroll)
+    return "scroll";
+  }, [location.pathname]);
+
   return (
     <DashboardLayout
       currentUser={currentUser}
       userInitials={userInitials}
       sidebarOpen={sidebarOpen}
       setSidebarOpen={setSidebarOpen}
+      footerMode={footerMode}
     >
       <Outlet context={{ currentUser, userInitials }} />
     </DashboardLayout>

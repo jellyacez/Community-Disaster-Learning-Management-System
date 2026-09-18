@@ -4,6 +4,7 @@ import ModuleBuilderWizard from "./builders/ModuleBuilderWizard";
 import DashboardHeader from "./components/DashboardHeader";
 import ModuleGrid from "./components/ModuleGrid";
 import apiClient from "../../../../lib/apiClient";
+import { authClient } from "../../../../lib/auth-client";
 import { useModuleBuilder } from "../../../../hooks/useModuleBuilder";
 import useDebounce from "../../../../hooks/useDebounce";
 import { decodeHtml } from "../../../../utils/textUtils";
@@ -29,6 +30,12 @@ const fetchModules = async () => {
 };
 
 export default function ModuleManagement() {
+  const { data: session } = authClient.useSession();
+  const userRole = session?.user?.role;
+  
+  // Only standard MDRRMO Admin can create/author modules (excludes head_mdrrmo_admin)
+  const canCreateModule = userRole === "mdrrmo_admin";
+
   const { data: rawModules = [], isLoading, isError, refetch } = useQuery({
     queryKey: ["adminModules", "management"],
     queryFn: fetchModules,
@@ -82,11 +89,13 @@ export default function ModuleManagement() {
   const paginatedModules = filteredModules.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   const handleOpenWizard = () => {
+    if (!canCreateModule) return;
     resetForm();
     setIsWizardOpen(true);
   };
 
   const handleEditModule = async (moduleId) => {
+    if (!canCreateModule) return;
     resetForm();
     setIsWizardOpen(true);
     if (loadModuleForEdit) {
@@ -109,7 +118,7 @@ export default function ModuleManagement() {
           setFilterStatus={setFilterStatus}
           sortOption={sortOption}
           setSortOption={setSortOption}
-          handleOpenWizard={handleOpenWizard}
+          handleOpenWizard={canCreateModule ? handleOpenWizard : null}
         />
 
         <ModuleGrid 
@@ -120,28 +129,30 @@ export default function ModuleManagement() {
           totalPages={totalPages}
           currentPage={currentPage}
           setCurrentPage={setCurrentPage}
-          handleOpenWizard={handleOpenWizard}
-          handleEditModule={handleEditModule}
+          handleOpenWizard={canCreateModule ? handleOpenWizard : null}
+          handleEditModule={canCreateModule ? handleEditModule : null}
           setSearchQuery={setSearchQuery}
           setFilterCategory={setFilterCategory}
           setFilterLevel={setFilterLevel}
         />
       </div>
 
-      <ModuleBuilderWizard 
-        isOpen={isWizardOpen}
-        onClose={() => {
-          setIsWizardOpen(false);
-          resetForm();
-        }}
-        state={state}
-        setters={setters}
-        actions={actions}
-        refetchModules={refetch}
-        triggerFlowSequencePreview={triggerFlowSequencePreview}
-        showPreviewModal={showPreviewModal}
-        setShowPreviewModal={setShowPreviewModal}
-      />
+      {canCreateModule && (
+        <ModuleBuilderWizard 
+          isOpen={isWizardOpen}
+          onClose={() => {
+            setIsWizardOpen(false);
+            resetForm();
+          }}
+          state={state}
+          setters={setters}
+          actions={actions}
+          refetchModules={refetch}
+          triggerFlowSequencePreview={triggerFlowSequencePreview}
+          showPreviewModal={showPreviewModal}
+          setShowPreviewModal={setShowPreviewModal}
+        />
+      )}
     </>
   );
 }

@@ -72,5 +72,5 @@ router.get("/:id/progress", moduleProgressController.getModuleProgress);
 router.post("/:id/steps/:stepId/complete", moduleProgressController.completeModuleStep);
 
 
-
+router.post("/:id/enroll", authenticate, moduleController.enrollInModule);
 module.exports = router;
