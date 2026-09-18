@@ -2008,6 +2008,8 @@ ALTER TABLE ONLY rate_limit.records_aggregated
 -- Name: SCHEMA public; Type: ACL; Schema: -; Owner: postgres
 --
 
+ALTER TABLE public.announcements ADD COLUMN priority VARCHAR(20) NOT NULL DEFAULT 'standard';
+
 REVOKE USAGE ON SCHEMA public FROM PUBLIC;
 GRANT ALL ON SCHEMA public TO PUBLIC;
 
