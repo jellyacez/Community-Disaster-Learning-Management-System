@@ -3,6 +3,26 @@ const ModuleService = require("../../services/modules/ModuleService");
 const { ADMIN_ROLES } = require("../../config/permissions");
 const { logActivity, logError } = require("../../utils/logger");
 
+/**
+ * Helper function to normalize level payloads so cover_image is never lost
+ */
+function normalizeLevels(levels = []) {
+  if (!Array.isArray(levels)) return [];
+
+  return levels.map((lvl) => ({
+    ...lvl,
+    levelOrder: lvl.levelOrder ?? lvl.level_order,
+    levelTitle: lvl.levelTitle ?? lvl.level_title ?? "",
+    levelDescription: lvl.levelDescription ?? lvl.level_description ?? "",
+    passing_threshold: Number(lvl.passing_threshold) || 80,
+    is_locked_by_default: lvl.is_locked_by_default ?? true,
+    // Explicitly guarantee cover_image is extracted from either naming convention
+    cover_image: lvl.cover_image || lvl.coverImage || null,
+    coverImage: lvl.cover_image || lvl.coverImage || null,
+    steps: Array.isArray(lvl.steps) ? lvl.steps : [],
+  }));
+}
+
 // @desc    Creates a new module and all its nested levels and steps in a transaction
 // @access  Private (admin only)
 exports.createModule = async (req, res) => {
@@ -15,7 +35,12 @@ exports.createModule = async (req, res) => {
   }
 
   try {
-    const payload = { ...req.body, author_id: req.user.id };
+    const payload = {
+      ...req.body,
+      author_id: req.user.id,
+      levels: normalizeLevels(req.body.levels),
+    };
+
     const mod_id = await ModuleService.createModuleTransaction(payload);
 
     // Log module creation to activity_log
@@ -28,7 +53,7 @@ exports.createModule = async (req, res) => {
       data: { mod_id },
     });
   } catch (error) {
-    console.error("Transaction Error creating module structure");
+    console.error("Transaction Error creating module structure:", error);
     return res.status(500).json({
       success: false,
       message:
@@ -68,35 +93,44 @@ exports.updateModule = async (req, res) => {
       });
     }
 
-    const payload = { ...req.body, editor_id: req.user.id };
+    const payload = {
+      ...req.body,
+      editor_id: req.user.id,
+      levels: normalizeLevels(req.body.levels),
+    };
 
-    if (existing.status === 'archived') {
+    if (existing.status === "archived") {
       return res.status(400).json({
         success: false,
-        message: "Archived modules cannot be edited. They are preserved for historical compliance integrity."
+        message:
+          "Archived modules cannot be edited. They are preserved for historical compliance integrity.",
       });
     }
 
-    if (existing.status === 'published') {
+    if (existing.status === "published") {
       const pool = require("../../config/db");
-      
+
       const draftCheck = await pool.query(
         "SELECT mod_id FROM module_data WHERE parent_mod_id = $1 AND status IN ('draft', 'pending_review') LIMIT 1",
         [parsedModId]
       );
       if (draftCheck.rowCount > 0) {
-        return res.status(409).json({ 
-          success: false, 
-          message: "A draft revision already exists for this module. Please edit the existing draft." 
+        return res.status(409).json({
+          success: false,
+          message:
+            "A draft revision already exists for this module. Please edit the existing draft.",
         });
       }
 
       payload.author_id = req.user.id;
-      payload.status = req.body.status || 'pending_review';
-      
+      payload.status = req.body.status || "pending_review";
+
       const new_mod_id = await ModuleService.createModuleTransaction(payload);
-      
-      await pool.query("UPDATE module_data SET parent_mod_id = $1 WHERE mod_id = $2", [parsedModId, new_mod_id]);
+
+      await pool.query(
+        "UPDATE module_data SET parent_mod_id = $1 WHERE mod_id = $2",
+        [parsedModId, new_mod_id]
+      );
 
       await logActivity(
         req.user.id,
@@ -112,7 +146,9 @@ exports.updateModule = async (req, res) => {
 
     await ModuleService.updateModuleTransaction(parsedModId, payload);
 
-    const safeModuleName = String(req.body.moduleName || existing.modname || parsedModId).replace(/[\r\n]/g, " ");
+    const safeModuleName = String(
+      req.body.moduleName || existing.modname || parsedModId
+    ).replace(/[\r\n]/g, " ");
     await logActivity(
       req.user.id,
       `Updated module ID ${parsedModId}: "${safeModuleName}"`
@@ -124,7 +160,7 @@ exports.updateModule = async (req, res) => {
       data: { mod_id: parsedModId },
     });
   } catch (error) {
-    console.error("Transaction Error updating module structure");
+    console.error("Transaction Error updating module structure:", error);
     logError("update_module_transaction_error", {
       code: error?.code,
       name: error?.name,
@@ -152,7 +188,9 @@ exports.getAvailableModules = async (req, res) => {
     res.json(availableModules);
   } catch (error) {
     console.error("Error fetching available modules:", error);
-    res.status(500).json({ success: false, message: "Failed to fetch available modules." });
+    res
+      .status(500)
+      .json({ success: false, message: "Failed to fetch available modules." });
   }
 };
 // --- End of getAvailableModules ---
@@ -162,7 +200,6 @@ exports.getAvailableModules = async (req, res) => {
 exports.enrollInModule = async (req, res) => {
   const { id: mod_id } = req.params;
 
-  // 1. Double check how your betterAuthMiddleware injects user parameters (e.g., req.user vs req.session.user)
   const user_id = req.user?.id || req.user?.userId;
 
   if (!user_id) {
@@ -173,8 +210,6 @@ exports.enrollInModule = async (req, res) => {
   }
 
   try {
-    // Validate mod_id is a proper integer before querying (prevents DB type errors
-    // and stack trace leaks from malformed params like "../etc" or "abc")
     const parsedModId = parseInt(mod_id, 10);
     if (isNaN(parsedModId) || parsedModId <= 0) {
       return res
@@ -188,10 +223,10 @@ exports.enrollInModule = async (req, res) => {
         .status(404)
         .json({ success: false, message: "Target training module not found." });
     }
-    // 2. Ensure your linking table exists in your database with matching columns
+
     const isEnrolled = await ModuleService.checkUserEnrollment(
       user_id,
-      parsedModId,
+      parsedModId
     );
     if (!isEnrolled) {
       await ModuleService.enrollUserInModule(user_id, parsedModId);
@@ -199,10 +234,15 @@ exports.enrollInModule = async (req, res) => {
 
     const enrollmentData = await ModuleService.getEnrollmentData(
       user_id,
-      parsedModId,
+      parsedModId
     );
 
-    await logActivity(user_id, `Enrolled in module ID ${parsedModId}: "${moduleCheck.modname || moduleCheck.title || parsedModId}"`);
+    await logActivity(
+      user_id,
+      `Enrolled in module ID ${parsedModId}: "${
+        moduleCheck.modname || moduleCheck.title || parsedModId
+      }"`
+    );
 
     return res.status(200).json({
       success: true,
@@ -210,10 +250,9 @@ exports.enrollInModule = async (req, res) => {
       data: enrollmentData,
     });
   } catch (error) {
-    // This logs the exact database error inside your backend terminal!
     console.error(
       "Database error during enrollment execution pipeline:",
-      error,
+      error
     );
     return res.status(500).json({
       success: false,
@@ -240,7 +279,7 @@ exports.getModuleViewerData = async (req, res) => {
     const isAdmin = ADMIN_ROLES.includes(req.user?.role);
     const isEnrolled = await ModuleService.checkUserEnrollment(
       user_id,
-      parsedModId,
+      parsedModId
     );
     if (!isEnrolled && !isAdmin) {
       return res.status(403).json({
@@ -315,7 +354,10 @@ exports.getModuleSyllabusDetails = async (req, res) => {
 
   try {
     const user_id = req.user?.id || req.user?.userId;
-    const details = await ModuleService.getModuleSyllabusDetails(parsedModId, user_id);
+    const details = await ModuleService.getModuleSyllabusDetails(
+      parsedModId,
+      user_id
+    );
 
     if (!details) {
       return res
@@ -350,7 +392,6 @@ exports.getAllModules = async (req, res) => {
       level = "",
     } = req.query;
 
-    // Pass the full user context to the service for structural scoping enforcement
     const adminContext = req.user;
 
     const modulesData = await ModuleService.getAllModules(
@@ -359,7 +400,7 @@ exports.getAllModules = async (req, res) => {
       search,
       category,
       level,
-      adminContext,
+      adminContext
     );
 
     res.status(200).json({
@@ -374,7 +415,6 @@ exports.getAllModules = async (req, res) => {
       .json({ success: false, error: { message: "Failed to fetch modules" } });
   }
 };
-// @desc    Update module status (e.g. approve/reject)
 
 // @desc    Update module status (e.g. approve/reject)
 // @access  Private (head_mdrrmo_admin)
@@ -382,31 +422,37 @@ exports.updateModuleStatus = async (req, res) => {
   const { id } = req.params;
   const { status, rejection_reason } = req.body;
 
-  if (!['draft', 'pending_review', 'published', 'rejected'].includes(status)) {
-    return res.status(400).json({ success: false, message: 'Invalid status' });
+  if (!["draft", "pending_review", "published", "rejected"].includes(status)) {
+    return res.status(400).json({ success: false, message: "Invalid status" });
   }
 
-  // Map 'rejected' state to 'draft' status with a reason
-  const finalStatus = status === 'rejected' ? 'draft' : status;
+  const finalStatus = status === "rejected" ? "draft" : status;
 
   try {
     const parsedModId = parseInt(id, 10);
     if (isNaN(parsedModId) || parsedModId <= 0) {
-      return res.status(400).json({ success: false, message: "Invalid module ID format." });
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid module ID format." });
     }
 
-    // Fetch current status before update so we can log the transition.
     const current = await ModuleService.getModuleById(parsedModId);
     if (!current) {
-      return res.status(404).json({ success: false, message: "Module not found." });
+      return res
+        .status(404)
+        .json({ success: false, message: "Module not found." });
     }
     const previousStatus = current.status ?? "unknown";
 
-    await ModuleService.updateModuleStatus(parsedModId, finalStatus, rejection_reason);
+    await ModuleService.updateModuleStatus(
+      parsedModId,
+      finalStatus,
+      rejection_reason
+    );
 
     const pool = require("../../config/db");
 
-    if (finalStatus === 'published' && current.parent_mod_id) {
+    if (finalStatus === "published" && current.parent_mod_id) {
       await pool.query(
         "UPDATE module_data SET status = 'archived' WHERE mod_id = $1",
         [current.parent_mod_id]
@@ -417,51 +463,75 @@ exports.updateModuleStatus = async (req, res) => {
       );
     }
 
-
-    // New: Notify the creator if it was approved or rejected
     if (current.author_id) {
-      if (finalStatus === 'published' && previousStatus !== 'published') {
+      if (finalStatus === "published" && previousStatus !== "published") {
         await pool.query(
           `INSERT INTO public.user_notification (user_id, type, message) VALUES ($1, 'module_approved', $2)`,
-          [current.author_id, `Your module "${current.modname}" has been approved and published.`]
+          [
+            current.author_id,
+            `Your module "${current.modname}" has been approved and published.`,
+          ]
         );
-      } else if (status === 'rejected') {
+      } else if (status === "rejected") {
         await pool.query(
           `INSERT INTO public.user_notification (user_id, type, message) VALUES ($1, 'module_rejected', $2)`,
-          [current.author_id, `Your module "${current.modname}" was returned for revision. Reason: ${rejection_reason || 'See draft for details'}`]
+          [
+            current.author_id,
+            `Your module "${current.modname}" was returned for revision. Reason: ${
+              rejection_reason || "See draft for details"
+            }`,
+          ]
         );
       }
     } else {
-      if (finalStatus === 'published' || status === 'rejected') {
-        console.warn(`[Notification skipped] Module ${parsedModId} has no author_id. Could not notify creator of status change to ${status}.`);
+      if (finalStatus === "published" || status === "rejected") {
+        console.warn(
+          `[Notification skipped] Module ${parsedModId} has no author_id. Could not notify creator of status change to ${status}.`
+        );
       }
     }
 
     await logActivity(
       req.user.id,
-      `Updated module ID ${parsedModId} ("${current.modname || parsedModId}") status: ${previousStatus} → ${finalStatus}${
-        status === "rejected" && rejection_reason ? ` | Reason: ${rejection_reason}` : ""
-      }`,
+      `Updated module ID ${parsedModId} ("${
+        current.modname || parsedModId
+      }") status: ${previousStatus} → ${finalStatus}${
+        status === "rejected" && rejection_reason
+          ? ` | Reason: ${rejection_reason}`
+          : ""
+      }`
     );
 
     res.json({ success: true, message: "Status updated successfully" });
   } catch (error) {
     console.error("updateModuleStatus error:", error);
-    logError("update_module_status_error", { message: error.message, stack: error.stack, moduleId: id });
-    res.status(500).json({ success: false, message: "Failed to update module status." });
+    logError("update_module_status_error", {
+      message: error.message,
+      stack: error.stack,
+      moduleId: id,
+    });
+    res
+      .status(500)
+      .json({ success: false, message: "Failed to update module status." });
   }
 };
 
+// @desc    Get pending modules for review
+// @access  Private (head_mdrrmo_admin)
 exports.getPendingModulesReview = async (req, res) => {
   try {
     const modules = await ModuleService.getPendingModulesReview();
     res.json({ success: true, data: modules });
   } catch (error) {
-    logError('get_pending_modules_error', { message: error.message, stack: error.stack });
-    res.status(500).json({ success: false, message: 'Failed to get pending modules.' });
+    logError("get_pending_modules_error", {
+      message: error.message,
+      stack: error.stack,
+    });
+    res
+      .status(500)
+      .json({ success: false, message: "Failed to get pending modules." });
   }
 };
-
 
 // @desc    Get complete module structure for builder editing/hydration
 // @access  Private (admin only)
@@ -470,13 +540,17 @@ exports.getModuleForEditing = async (req, res) => {
 
   const parsedModId = parseInt(mod_id, 10);
   if (isNaN(parsedModId) || parsedModId <= 0) {
-    return res.status(400).json({ success: false, message: "Invalid module ID format." });
+    return res
+      .status(400)
+      .json({ success: false, message: "Invalid module ID format." });
   }
 
   try {
     const moduleData = await ModuleService.getModuleForEditing(parsedModId);
     if (!moduleData) {
-      return res.status(404).json({ success: false, message: "Module not found." });
+      return res
+        .status(404)
+        .json({ success: false, message: "Module not found." });
     }
 
     return res.status(200).json({

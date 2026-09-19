@@ -25,21 +25,24 @@ class ModuleService {
       // 2. Insert Levels
       for (const lvl of levels) {
         // Guard against multiple final assessments per level
-        const finalAssessmentsCount = lvl.steps.filter(s => s.is_final_assessment).length;
+        const finalAssessmentsCount = (lvl.steps || []).filter(s => s.is_final_assessment).length;
         if (finalAssessmentsCount > 1) {
             throw new Error(`Validation Error: Level "${lvl.levelTitle || lvl.levelOrder}" contains multiple Final Assessments. Only one final assessment is permitted per level.`);
         }
+
+        const coverImage = lvl.cover_image || lvl.coverImage || null;
+
         const levelRes = await client.query(
-          `INSERT INTO public.levels (mod_id, level_order, level_title, level_description, passing_threshold, is_locked_by_default)
-           VALUES ($1, $2, $3, $4, $5, $6) RETURNING level_id`,
-          [mod_id, lvl.levelOrder, lvl.levelTitle, cleanRichText(lvl.levelDescription || ""), lvl.passing_threshold || 80, lvl.is_locked_by_default ?? true]
+          `INSERT INTO public.levels (mod_id, level_order, level_title, level_description, passing_threshold, is_locked_by_default, cover_image)
+           VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING level_id`,
+          [mod_id, lvl.levelOrder, lvl.levelTitle, cleanRichText(lvl.levelDescription || ""), lvl.passing_threshold || 80, lvl.is_locked_by_default ?? true, coverImage]
         );
         const level_id = levelRes.rows[0].level_id;
 
         // 3. Insert Steps for this level
         let lastLearningStepId = null; // Track the most recent non-quiz step
 
-        for (const step of lvl.steps) {
+        for (const step of (lvl.steps || [])) {
           // Calculate loop_back_step_id if it's a quiz
           let loopBackId = null;
           if ((step.stepType === 'quiz' || step.stepType === 'situational') && lastLearningStepId) {
@@ -194,10 +197,12 @@ class ModuleService {
           throw new Error(`Validation Error: Level "${lvl.levelTitle || lvl.levelOrder}" contains multiple Final Assessments. Only one final assessment is permitted per level.`);
         }
 
+        const coverImage = lvl.cover_image || lvl.coverImage || null;
+
         const levelRes = await client.query(
-          `INSERT INTO public.levels (mod_id, level_order, level_title, level_description, passing_threshold, is_locked_by_default)
-           VALUES ($1, $2, $3, $4, $5, $6) RETURNING level_id`,
-          [mod_id, lvl.levelOrder, lvl.levelTitle, cleanRichText(lvl.levelDescription || ""), lvl.passing_threshold || 80, lvl.is_locked_by_default ?? true]
+          `INSERT INTO public.levels (mod_id, level_order, level_title, level_description, passing_threshold, is_locked_by_default, cover_image)
+           VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING level_id`,
+          [mod_id, lvl.levelOrder, lvl.levelTitle, cleanRichText(lvl.levelDescription || ""), lvl.passing_threshold || 80, lvl.is_locked_by_default ?? true, coverImage]
         );
         const level_id = levelRes.rows[0].level_id;
 
@@ -478,7 +483,7 @@ class ModuleService {
     if (moduleResult.rowCount === 0) return null;
 
     const levelsResult = await pool.query(
-      `SELECT level_id as id, level_order, level_title as title, level_description as description, passing_threshold, is_locked_by_default
+      `SELECT level_id as id, level_order, level_title as title, level_description as description, passing_threshold, is_locked_by_default, cover_image
        FROM levels WHERE mod_id = $1 ORDER BY level_order ASC`,
       [mod_id]
     );
@@ -578,7 +583,7 @@ class ModuleService {
     const moduleData = modRes.rows[0];
 
     const levelsRes = await pool.query(
-      `SELECT level_id, level_order, level_title, level_description, passing_threshold, is_locked_by_default
+      `SELECT level_id, level_order, level_title, level_description, passing_threshold, is_locked_by_default, cover_image
        FROM public.levels
        WHERE mod_id = $1
        ORDER BY level_order ASC`,
@@ -662,6 +667,8 @@ class ModuleService {
         levelDescription: lvl.level_description,
         passing_threshold: lvl.passing_threshold,
         is_locked_by_default: lvl.is_locked_by_default,
+        cover_image: lvl.cover_image,
+        coverImage: lvl.cover_image,
         steps: lvlSteps
       };
     });
@@ -706,9 +713,9 @@ class ModuleService {
       return null;
     }
 
-    // 2. Fetch levels assigned to this module, including threshold settings
+    // 2. Fetch levels assigned to this module, including threshold settings and cover_image
     const levelsRes = await pool.query(
-      `SELECT level_id, level_order, level_title, level_description, passing_threshold, is_locked_by_default
+      `SELECT level_id, level_order, level_title, level_description, passing_threshold, is_locked_by_default, cover_image
        FROM public.levels
        WHERE mod_id = $1
        ORDER BY level_order ASC`,
@@ -719,7 +726,7 @@ class ModuleService {
     const stepsRes = await pool.query(
       `SELECT ms.step_id, ms.level_id, ms.step_order, ms.step_title, ms.step_type, ms.is_final_assessment, ms.loop_back_step_id
        FROM public.module_steps ms
-       JOIN public.levels l ON ms.level_id = l.level_id
+       JOIN levels l ON ms.level_id = l.level_id
        WHERE l.mod_id = $1
        ORDER BY ms.step_order ASC`,
       [mod_id]
@@ -738,6 +745,7 @@ class ModuleService {
       levels: structuredLevels
     };
   }
+
   async getAllModules(page = 1, limit = 10, search = "", category = "", level = "", adminContext = null) {
     if (!adminContext || !adminContext.role) {
       throw new Error("SECURITY_FAULT: Missing or invalid adminContext. Cannot safely return modules.");
@@ -803,6 +811,7 @@ class ModuleService {
       },
     };
   }
+
   async updateModuleStatus(mod_id, status, rejection_reason = null) {
     const query = `
       UPDATE public.module_data

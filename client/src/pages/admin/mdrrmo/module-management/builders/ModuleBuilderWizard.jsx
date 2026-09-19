@@ -65,9 +65,19 @@ export default function ModuleBuilderWizard({
     handleEditStep,
   } = actions;
 
+  // Sync uploaded photo directly into the active level inside stagedLevels
+  const handleUpdateLevelImage = (targetLevelOrder, newCoverImage) => {
+    setStagedLevels((prevLevels) =>
+      prevLevels.map((lvl) =>
+        lvl.levelOrder === targetLevelOrder
+          ? { ...lvl, cover_image: newCoverImage, coverImage: newCoverImage }
+          : lvl
+      )
+    );
+  };
+
   useEffect(() => {
     if (formErrors.flows || formErrors.levelTitle) {
-      // Use a small timeout inside the effect to ensure React has fully painted the new tab
       const timer = setTimeout(() => {
         const targetId = formErrors.levelTitle ? "level-title-error-anchor" : "sequence-error-anchor";
         const errorEl = document.getElementById(targetId);
@@ -82,7 +92,6 @@ export default function ModuleBuilderWizard({
   if (!isOpen) return null;
 
   const handleNextStep = () => {
-    // Basic validation before allowing next step
     if (wizardStep === 1) {
       if (!moduleForm.title || !moduleForm.description || !moduleForm.category || !moduleForm.duration || !moduleForm.level) {
         setFormErrors({
@@ -110,7 +119,6 @@ export default function ModuleBuilderWizard({
       if (refetchModules) {
         refetchModules();
       }
-      // Reset wizard state so reopening always starts fresh on Step 1
       actions.resetForm();
       setWizardStep(1);
       onClose();
@@ -236,6 +244,14 @@ export default function ModuleBuilderWizard({
                     handleEditStep={handleEditStep}
                     formError={formErrors.flows}
                     moduleStatus={moduleForm.status}
+                    currentCoverImage={
+                      stagedLevels.find((l) => l.levelOrder === activeLevelOrder)?.cover_image ||
+                      stagedLevels.find((l) => l.levelOrder === activeLevelOrder)?.coverImage ||
+                      null
+                    }
+                    onUpdateCoverImage={(newImg) =>
+                      handleUpdateLevelImage(activeLevelOrder, newImg)
+                    }
                   />
                   {formErrors.flows && stagedFlows.filter(flow => flow.levelOrder === activeLevelOrder).length > 0 && (
                     <div id="sequence-error-anchor" className="animate-in fade-in slide-in-from-top-2 mt-4 p-4 bg-red-50 border border-red-200 rounded-xl flex items-start gap-3">
@@ -304,7 +320,6 @@ export default function ModuleBuilderWizard({
         isOpen={showExitModal}
         onClose={() => setShowExitModal(false)}
         onConfirm={() => {
-          // Also reset on exit so reopening doesn't show stale data
           actions.resetForm();
           setWizardStep(1);
           setShowExitModal(false);

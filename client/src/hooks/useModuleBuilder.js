@@ -64,34 +64,39 @@ export function useModuleBuilder() {
         image_url: data.image_url || ""
       });
 
-      // Hydrate Levels
+      // Hydrate Levels (NOW INCLUDES COVER_IMAGE)
       const levels = (data.levels || []).map((lvl) => ({
-        levelOrder: lvl.levelOrder,
-        levelTitle: decodeHtml(lvl.levelTitle) || "",
-        levelDescription: lvl.levelDescription || "",
+        levelId: lvl.levelId || lvl.level_id,
+        levelOrder: lvl.levelOrder ?? lvl.level_order,
+        levelTitle: decodeHtml(lvl.levelTitle || lvl.level_title) || "",
+        levelDescription: lvl.levelDescription || lvl.level_description || "",
         passing_threshold: lvl.passing_threshold || 80,
-        is_locked_by_default: lvl.is_locked_by_default ?? true
+        is_locked_by_default: lvl.is_locked_by_default ?? true,
+        // Hydrate both keys so builder components and submit hooks receive the image
+        cover_image: lvl.cover_image || lvl.coverImage || null,
+        coverImage: lvl.cover_image || lvl.coverImage || null
       }));
 
       setStagedLevels(
         levels.length > 0
           ? levels
-          : [{ levelOrder: 1, levelTitle: "", levelDescription: "", passing_threshold: 80, is_locked_by_default: false }]
+          : [{ levelOrder: 1, levelTitle: "", levelDescription: "", passing_threshold: 80, is_locked_by_default: false, cover_image: null, coverImage: null }]
       );
       setActiveLevelOrder(1);
 
       // Hydrate Flows / Steps
       const flows = [];
       (data.levels || []).forEach((lvl) => {
+        const currentOrder = lvl.levelOrder ?? lvl.level_order;
         (lvl.steps || []).forEach((step) => {
           flows.push({
-            id: `step-${lvl.levelOrder}-${step.stepOrder}-${Date.now()}`,
-            levelOrder: lvl.levelOrder,
-            title: decodeHtml(step.stepTitle) || "",
-            type: step.stepType || "text",
-            textContent: step.stepType === "text" ? step.stepContent : "",
-            mediaUrl: step.mediaUrl || "",
-            finalMediaUrl: step.mediaUrl || "",
+            id: `step-${currentOrder}-${step.stepOrder || step.step_order}-${Date.now()}-${Math.random()}`,
+            levelOrder: currentOrder,
+            title: decodeHtml(step.stepTitle || step.step_title) || "",
+            type: step.stepType || step.step_type || "text",
+            textContent: (step.stepType || step.step_type) === "text" ? (step.stepContent || step.step_content || "") : "",
+            mediaUrl: step.mediaUrl || step.media_url || "",
+            finalMediaUrl: step.mediaUrl || step.media_url || "",
             is_final_assessment: step.is_final_assessment || false,
             quizQuestions: (step.quizQuestions || []).map((q) => {
               const correctIdx = (q.options || []).findIndex((opt) => opt.isCorrect);
@@ -131,7 +136,7 @@ export function useModuleBuilder() {
   const resetForm = () => {
     setEditingModuleId(null);
     setModuleForm({ title: "", category: "General", level: "Level 1", duration: "15 mins", description: "", image_url: "" });
-    setStagedLevels([{ levelOrder: 1, levelTitle: "", levelDescription: "", passing_threshold: 80, is_locked_by_default: false }]);
+    setStagedLevels([{ levelOrder: 1, levelTitle: "", levelDescription: "", passing_threshold: 80, is_locked_by_default: false, cover_image: null, coverImage: null }]);
     setActiveLevelOrder(1);
     setStagedFlows([]);
     setCurrentFlowStep({ builderStepType: "learning_material", type: "text", title: "", textContent: "", videoUrl: "", assessmentType: "quiz", quizQuestions: [], situationalScenario: "", is_final_assessment: false });

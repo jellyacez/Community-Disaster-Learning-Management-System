@@ -1,11 +1,14 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import ConfirmationModal from "../../../../../components/ui/modals/ConfirmationModal";
 import SequenceCard from "../components/SequenceCard";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { 
   Flag01Icon,
   Folder01Icon,
-  Add01Icon
+  Add01Icon,
+  Upload04Icon,
+  Delete02Icon,
+  Image01Icon
 } from "@hugeicons/core-free-icons";
 
 export default function SequenceCanvas({ 
@@ -15,12 +18,38 @@ export default function SequenceCanvas({
   triggerFlowSequencePreview,
   handleEditStep,
   formError,
-  moduleStatus
+  moduleStatus,
+  currentCoverImage,
+  onUpdateCoverImage
 }) {
   const [draggedItemIndex, setDraggedItemIndex] = useState(null);
   const [stepToDelete, setStepToDelete] = useState(null);
+  const fileInputRef = useRef(null);
 
   const localizedFlows = stagedFlows.filter(flow => flow.levelOrder === activeLevelOrder);
+
+  // File Upload Handler (reads file as base64 Data URL)
+  const handleFileChange = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      if (onUpdateCoverImage) {
+        onUpdateCoverImage(reader.result);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleRemovePhoto = () => {
+    if (onUpdateCoverImage) {
+      onUpdateCoverImage(null);
+    }
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
 
   const handleDragStart = (e, targetIndexWithinFilter) => {
     const absoluteIndex = stagedFlows.findIndex(f => f.id === localizedFlows[targetIndexWithinFilter].id);
@@ -62,7 +91,8 @@ export default function SequenceCanvas({
 
   return (
     <div className="bg-transparent space-y-6">
-      <div className="flex items-center justify-between mb-8">
+      {/* Header Bar */}
+      <div className="flex items-center justify-between mb-4">
         <div>
           <h3 className="text-xl font-bold text-gray-900 tracking-tight">
             Learning Path Sequence
@@ -80,14 +110,78 @@ export default function SequenceCanvas({
             <button 
               type="button" 
               onClick={triggerFlowSequencePreview} 
-              className="px-4 py-2 text-sm font-bold text-white bg-gray-900 hover:bg-black rounded-xl transition-colors shadow-sm"
+              className="px-4 py-2 text-sm font-bold text-white bg-gray-900 hover:bg-black rounded-xl transition-colors shadow-sm cursor-pointer"
             >
               Preview Flow
             </button>
           )}
         </div>
       </div>
-      
+
+      {/* ADMIN PHOTO UPLOADER FOR ACTIVE LEVEL */}
+      <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-xs space-y-3">
+        <div className="flex items-center justify-between">
+          <div>
+            <h4 className="text-sm font-bold text-gray-900 flex items-center gap-2">
+              <HugeiconsIcon icon={Image01Icon} className="w-4 h-4 text-red-600" />
+              Phase {activeLevelOrder} Motivator Photo
+            </h4>
+            <p className="text-xs text-gray-500 mt-0.5">
+              This photo appears on the opposite side of Phase {activeLevelOrder} in the learner's Curriculum Map.
+            </p>
+          </div>
+
+          {currentCoverImage && (
+            <button
+              type="button"
+              onClick={handleRemovePhoto}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-red-600 hover:bg-red-50 transition cursor-pointer"
+            >
+              <HugeiconsIcon icon={Delete02Icon} className="w-4 h-4" />
+              Remove Photo
+            </button>
+          )}
+        </div>
+
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={handleFileChange}
+        />
+
+        {currentCoverImage ? (
+          <div className="relative w-full max-w-md h-44 rounded-xl overflow-hidden border border-gray-200 group">
+            <img
+              src={currentCoverImage}
+              alt={`Phase ${activeLevelOrder} Cover`}
+              className="w-full h-full object-cover"
+            />
+            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="px-4 py-2 bg-white text-gray-900 rounded-xl text-xs font-bold shadow-md hover:bg-gray-100 transition cursor-pointer"
+              >
+                Change Photo
+              </button>
+            </div>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            className="flex flex-col items-center justify-center w-full max-w-md h-32 border-2 border-dashed border-gray-300 hover:border-red-400 rounded-xl bg-gray-50/70 hover:bg-red-50/20 transition cursor-pointer"
+          >
+            <HugeiconsIcon icon={Upload04Icon} className="w-6 h-6 text-gray-400 mb-1" />
+            <span className="text-xs font-bold text-gray-700">Upload Phase Photo</span>
+            <span className="text-[10px] text-gray-400">PNG, JPG, or WEBP (Optional)</span>
+          </button>
+        )}
+      </div>
+
+      {/* Visual Sequence Flow */}
       <div className="flex flex-col items-center">
         {/* Start Node */}
         <div className="flex items-center gap-3 bg-white px-6 py-2.5 rounded-full shadow-sm border border-gray-100 z-10 font-bold text-gray-800 tracking-wide">

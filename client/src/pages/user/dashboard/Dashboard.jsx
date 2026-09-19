@@ -1,4 +1,3 @@
-// --- START: UserDashboard.jsx ---
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useOutletContext, useLocation, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -14,7 +13,56 @@ import useDocumentTitle from "../../../hooks/useDocumentTitle";
 import OnboardingModal from "../../../components/ui/modals/OnboardingModal.jsx";
 
 import { HugeiconsIcon } from "@hugeicons/react";
-import { InformationCircleIcon } from "@hugeicons/core-free-icons";
+import {
+  InformationCircleIcon,
+  AlertCircleIcon,
+  ArrowLeft01Icon,
+  ArrowRight01Icon,
+  Megaphone01Icon,
+} from "@hugeicons/core-free-icons";
+
+/**
+ * Helper: Separates Urgent and Standard announcements,
+ * assigns independent sequential numbers (1, 2, 3...) per group,
+ * and positions all Urgent announcements in the front slots.
+ */
+function organizeAnnouncements(rawList = []) {
+  const urgentList = [];
+  const standardList = [];
+
+  rawList.forEach((item) => {
+    if (!item) return;
+    const priority = String(item.priority || "").trim().toLowerCase();
+    if (priority === "urgent") {
+      urgentList.push(item);
+    } else {
+      standardList.push(item);
+    }
+  });
+
+  const sortByDate = (a, b) => {
+    const dA = new Date(a.date || a.created_at || a.createdAt || 0);
+    const dB = new Date(b.date || b.created_at || b.createdAt || 0);
+    return dA - dB;
+  };
+
+  urgentList.sort(sortByDate);
+  standardList.sort(sortByDate);
+
+  const sequencedUrgent = urgentList.map((item, idx) => ({
+    ...item,
+    seq: item.advisory_number || idx + 1,
+    isUrgent: true,
+  }));
+
+  const sequencedStandard = standardList.map((item, idx) => ({
+    ...item,
+    seq: item.advisory_number || idx + 1,
+    isUrgent: false,
+  }));
+
+  return [...sequencedUrgent, ...sequencedStandard];
+}
 
 export default function UserDashboard() {
   useDocumentTitle("Dashboard | Bacolor LMS");
@@ -42,7 +90,7 @@ export default function UserDashboard() {
     },
   });
 
-  // 2. Dedicated Query to pull latest announcements from backend
+  // 2. Dedicated Query to pull announcements (Fetch enough so standard items aren't truncated)
   const {
     data: announcementsData,
     isLoading: announcementsLoading,
@@ -50,7 +98,7 @@ export default function UserDashboard() {
     queryKey: ["latestAnnouncements"],
     queryFn: async () => {
       try {
-        const response = await apiClient.get("/user/announcements");
+        const response = await apiClient.get("/users/announcements?limit=20");
         const list = Array.isArray(response.data)
           ? response.data
           : response.data?.announcements || response.data?.data || [];
@@ -83,19 +131,24 @@ export default function UserDashboard() {
     });
   }, [announcementsData, rawData.announcements]);
 
+  // Organize into Urgent-first array with independent sequencing
+  const sortedAnnouncements = useMemo(() => {
+    return organizeAnnouncements(resolvedAnnouncements);
+  }, [resolvedAnnouncements]);
+
   // Reset slider index if the announcement list changes or shrinks
   useEffect(() => {
     setCurrentSlide(0);
     setIsTransitioning(false);
-  }, [resolvedAnnouncements.length]);
+  }, [sortedAnnouncements.length]);
 
   const displayData = useMemo(() => ({
     totalModules: rawData.totalModules || 0,
-    announcements: resolvedAnnouncements,
+    announcements: sortedAnnouncements,
     enrolledModules: rawData.enrolledModules || [],
     completionRate: rawData.completionRate || 0,
     certificates: rawData.certificates || [],
-  }), [rawData, resolvedAnnouncements]);
+  }), [rawData, sortedAnnouncements]);
 
   const activeModules = useMemo(
     () => displayData.enrolledModules.filter((m) => m.progress < 100),
@@ -103,37 +156,44 @@ export default function UserDashboard() {
   );
   const topActiveModule = activeModules[0];
 
-  // Clone first item to the end for seamless right-to-left loop
+  // Clone first item to the end for seamless loop
   const carouselItems = useMemo(() => {
-    if (resolvedAnnouncements.length <= 1) return resolvedAnnouncements;
-    return [...resolvedAnnouncements, resolvedAnnouncements[0]];
-  }, [resolvedAnnouncements]);
+    if (sortedAnnouncements.length <= 1) return sortedAnnouncements;
+    return [...sortedAnnouncements, sortedAnnouncements[0]];
+  }, [sortedAnnouncements]);
 
-  // Advance strictly right-to-left
+  // Advance forward (right-to-left)
   const handleNextSlide = useCallback(() => {
-    if (resolvedAnnouncements.length <= 1) return;
+    if (sortedAnnouncements.length <= 1) return;
     setIsTransitioning(true);
     setCurrentSlide((prev) => prev + 1);
-  }, [resolvedAnnouncements.length]);
+  }, [sortedAnnouncements.length]);
+
+  // Advance backward (left-to-right)
+  const handlePrevSlide = useCallback(() => {
+    if (sortedAnnouncements.length <= 1) return;
+    setIsTransitioning(true);
+    setCurrentSlide((prev) => (prev === 0 ? sortedAnnouncements.length - 1 : prev - 1));
+  }, [sortedAnnouncements.length]);
 
   // Reset silently from clone to index 0 after transition ends
   const handleTransitionEnd = () => {
-    if (currentSlide >= resolvedAnnouncements.length) {
+    if (currentSlide >= sortedAnnouncements.length) {
       setIsTransitioning(false);
       setCurrentSlide(0);
     }
   };
 
-  // Auto-play interval: Always advances forward (right-to-left)
+  // Auto-play interval: Advances every 5 seconds
   useEffect(() => {
-    if (resolvedAnnouncements.length <= 1 || isPaused) return;
+    if (sortedAnnouncements.length <= 1 || isPaused) return;
 
     const interval = setInterval(() => {
       handleNextSlide();
     }, 5000);
 
     return () => clearInterval(interval);
-  }, [resolvedAnnouncements.length, isPaused, handleNextSlide]);
+  }, [sortedAnnouncements.length, isPaused, handleNextSlide]);
 
   useEffect(() => {
     if (!currentUser || !currentUser.barangay_id) return;
@@ -194,15 +254,16 @@ export default function UserDashboard() {
           onMouseEnter={() => setIsPaused(true)}
           onMouseLeave={() => setIsPaused(false)}
         >
-          {/* TOP SECTION: Seamless Announcement Slider */}
+          {/* TOP SECTION: Seamless Announcement Slider with Controls */}
           {announcementsLoading ? (
-            <div className="h-20 animate-pulse bg-white/10 rounded-xl" />
-          ) : resolvedAnnouncements.length > 0 ? (
-            <div>
-              <div className="overflow-hidden relative min-h-[90px]">
+            <div className="h-28 animate-pulse bg-white/10 rounded-xl" />
+          ) : sortedAnnouncements.length > 0 ? (
+            <div className="w-full overflow-hidden">
+              {/* Carousel Track Viewport */}
+              <div className="relative w-full overflow-hidden min-h-[105px]">
                 <div
                   onTransitionEnd={handleTransitionEnd}
-                  className={`flex ${
+                  className={`flex w-full ${
                     isTransitioning
                       ? "transition-transform duration-700 ease-in-out"
                       : "transition-none"
@@ -212,38 +273,72 @@ export default function UserDashboard() {
                   }}
                 >
                   {carouselItems.map((item, index) => {
-                    const itemTitle = item.title || item.headline || item.subject || "Notice";
+                    const rawTitle = item.title || item.headline || item.subject || "Notice";
+                    const itemTitle = rawTitle.replace(/^Advisory\s*\d*[:\-]?\s*/i, "");
                     const itemContent = item.content || item.description || item.body || "";
                     const itemDate = item.created_at || item.createdAt || item.date;
 
+                    // 48-Hour Recency Check for the "New" indicator
+                    const postTime = new Date(itemDate || Date.now()).getTime();
+                    const isNew = (Date.now() - postTime) / (1000 * 60 * 60) <= 48;
+                    const isUrgent = item.isUrgent || item.priority === "urgent";
+
                     return (
                       <div
-                        key={`${item.id || item._id || itemTitle}-${index}`}
+                        key={`${item.id || itemTitle}-${index}`}
                         onClick={() => navigate("/user/announcements")}
-                        className="min-w-full shrink-0 cursor-pointer flex flex-col justify-center space-y-1.5 text-left group"
+                        className="w-full min-w-full max-w-full basis-full shrink-0 overflow-hidden cursor-pointer flex flex-col justify-center space-y-1.5 text-left group box-border pr-2"
                       >
-                        {/* Date Badge */}
-                        <div className="flex items-center">
-                          <span className="inline-flex items-center gap-1.5 font-bold text-amber-300 uppercase tracking-wider text-[11px] bg-red-800/60 px-3 py-0.5 rounded-full">
-                            <span className="w-1.5 h-1.5 rounded-full bg-amber-300 animate-pulse" />
-                            {itemDate
-                              ? new Date(itemDate).toLocaleDateString("en-US", {
-                                  month: "short",
-                                  day: "numeric",
-                                  year: "numeric",
-                                })
-                              : "Announcement"}
-                          </span>
+                        {/* Top Advisory Pill Header */}
+                        <div className="flex items-center gap-2 flex-wrap">
+                          {isUrgent ? (
+                            /* Urgent Advisory Pill */
+                            <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-400/25 backdrop-blur-md px-3.5 py-1 text-xs font-black tracking-wide text-amber-300 border border-amber-400/40 shadow-xs shrink-0">
+                              <HugeiconsIcon icon={AlertCircleIcon} className="w-3.5 h-3.5 text-amber-300 shrink-0" />
+                              <span>URGENT ADVISORY #{item.seq}</span>
+                              {isNew && (
+                                <>
+                                  <span className="text-amber-400/60">•</span>
+                                  <span className="inline-flex items-center gap-1 text-white font-bold">
+                                    <span className="h-1.5 w-1.5 rounded-full bg-amber-300 animate-ping" />
+                                    New
+                                  </span>
+                                </>
+                              )}
+                            </span>
+                          ) : (
+                            /* Standard Advisory Pill */
+                            <span className="inline-flex items-center gap-1.5 rounded-full bg-black/25 backdrop-blur-md px-3.5 py-1 text-xs font-semibold text-white border border-white/15 shadow-xs shrink-0">
+                              <HugeiconsIcon icon={Megaphone01Icon} className="w-3.5 h-3.5 text-red-200 shrink-0" />
+                              <span>Advisory #{item.seq}</span>
+                              {isNew && (
+                                <>
+                                  <span className="text-white/40">•</span>
+                                  <span className="inline-flex items-center gap-1 text-emerald-300 font-bold">
+                                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                                    New
+                                  </span>
+                                </>
+                              )}
+                            </span>
+                          )}
+
+                          {/* Date Stamp */}
+                          {itemDate && (
+                            <span className="text-xs font-medium text-red-100/90 whitespace-nowrap">
+                              • {new Date(itemDate).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                            </span>
+                          )}
                         </div>
 
-                        {/* Title */}
-                        <h2 className="text-xl sm:text-2xl lg:text-3xl font-extrabold tracking-tight text-white line-clamp-1 group-hover:underline">
+                        {/* Title: truncated to single line with break-words */}
+                        <h2 className="text-xl sm:text-2xl lg:text-3xl font-extrabold tracking-tight text-white truncate group-hover:underline w-full">
                           {itemTitle}
                         </h2>
 
-                        {/* Content snippet */}
+                        {/* Content: clamped to 2 lines */}
                         {itemContent ? (
-                          <p className="text-sm text-red-100 line-clamp-2 max-w-4xl leading-relaxed">
+                          <p className="text-xs sm:text-sm text-red-100 line-clamp-2 max-w-4xl leading-relaxed break-words">
                             {itemContent}
                           </p>
                         ) : null}
@@ -253,14 +348,41 @@ export default function UserDashboard() {
                 </div>
               </div>
 
-              {/* Slider Controls: Dots in Middle & View All on Far Right */}
-              <div className="relative flex items-center justify-between pt-4">
-                <div className="w-20 hidden sm:block" />
+              {/* Slider Controls: Left/Right Arrow Buttons, Dots in Middle, and View All */}
+              <div className="relative flex items-center justify-between pt-3 gap-2">
+                {/* Left/Right Navigation Arrows */}
+                <div className="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handlePrevSlide();
+                    }}
+                    disabled={sortedAnnouncements.length <= 1}
+                    className="p-1.5 rounded-full bg-black/20 hover:bg-black/40 text-white disabled:opacity-30 disabled:cursor-not-allowed transition cursor-pointer"
+                    aria-label="Previous announcement"
+                  >
+                    <HugeiconsIcon icon={ArrowLeft01Icon} className="w-4 h-4" />
+                  </button>
 
-                {/* Centered Dots Indicator */}
-                {resolvedAnnouncements.length > 1 ? (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleNextSlide();
+                    }}
+                    disabled={sortedAnnouncements.length <= 1}
+                    className="p-1.5 rounded-full bg-black/20 hover:bg-black/40 text-white disabled:opacity-30 disabled:cursor-not-allowed transition cursor-pointer"
+                    aria-label="Next announcement"
+                  >
+                    <HugeiconsIcon icon={ArrowRight01Icon} className="w-4 h-4" />
+                  </button>
+                </div>
+
+                {/* Centered Pagination Dots */}
+                {sortedAnnouncements.length > 1 ? (
                   <div className="flex items-center justify-center gap-1.5 sm:absolute sm:left-1/2 sm:-translate-x-1/2">
-                    {resolvedAnnouncements.map((_, index) => (
+                    {sortedAnnouncements.map((_, index) => (
                       <button
                         key={index}
                         type="button"
@@ -269,8 +391,8 @@ export default function UserDashboard() {
                           setCurrentSlide(index);
                         }}
                         className={`h-1.5 rounded-full transition-all cursor-pointer ${
-                          index === (currentSlide % resolvedAnnouncements.length)
-                            ? "w-7 bg-white"
+                          index === (currentSlide % sortedAnnouncements.length)
+                            ? "w-6 bg-white"
                             : "w-1.5 bg-white/40 hover:bg-white/70"
                         }`}
                         aria-label={`Announcement slide ${index + 1}`}
@@ -279,7 +401,7 @@ export default function UserDashboard() {
                   </div>
                 ) : <div />}
 
-                {/* View All on Right */}
+                {/* View All Link */}
                 <div className="flex items-center">
                   <button
                     type="button"
@@ -367,4 +489,3 @@ export default function UserDashboard() {
     </div>
   );
 }
-// --- END: UserDashboard.jsx ---

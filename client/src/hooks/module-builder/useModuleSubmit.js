@@ -1,4 +1,5 @@
 import toast from "react-hot-toast";
+import { useQueryClient } from "@tanstack/react-query";
 import apiClient from "../../lib/apiClient";
 
 export function useModuleSubmit({
@@ -13,6 +14,8 @@ export function useModuleSubmit({
   setActiveLevelOrder,
   setFormErrors,
 }) {
+  const queryClient = useQueryClient();
+
   const handleModuleSubmit = async (e, targetStatus = "pending_review") => {
     if (e && e.preventDefault) e.preventDefault();
 
@@ -123,7 +126,7 @@ export function useModuleSubmit({
 
       toast.loading("Synchronizing module data to database...", { id: loadingToastId });
 
-      // 2. CREATE NESTED PAYLOAD
+      // 2. CREATE NESTED PAYLOAD (INCLUDING LEVEL MOTIVATOR COVER PHOTOS)
       const levelsPayload = stagedLevels.map((lvl) => {
         const levelFlows = uploadedFlows.filter((f) => f.levelOrder === lvl.levelOrder);
 
@@ -191,6 +194,9 @@ export function useModuleSubmit({
           levelDescription: lvl.levelDescription,
           passing_threshold: Number(lvl.passing_threshold) || 80,
           is_locked_by_default: lvl.is_locked_by_default ?? true,
+          // Attaches the motivator cover photo so PostgreSQL stores it
+          cover_image: lvl.cover_image || lvl.coverImage || null,
+          coverImage: lvl.cover_image || lvl.coverImage || null,
           steps: stepsPayload,
         };
       });
@@ -207,18 +213,33 @@ export function useModuleSubmit({
         status: targetStatus,
       };
 
+      let submittedId = editingModuleId;
+
       if (isEditing) {
         await apiClient.put(`modules/${editingModuleId}`, modulePayload);
         toast.success("Module syllabus successfully updated in the production database.", {
           id: loadingToastId,
         });
       } else {
-        await apiClient.post("modules", modulePayload);
+        const response = await apiClient.post("modules", modulePayload);
+        submittedId = response.data?.mod_id || response.data?.data?.mod_id || null;
         toast.success("Syllabus configuration successfully published to the production database.", {
           id: loadingToastId,
         });
       }
 
+      // 3. CACHE INVALIDATION
+      // Invalidate the learner-side viewer query cache so newly saved images appear immediately
+      if (submittedId) {
+        queryClient.invalidateQueries({ queryKey: ["moduleViewer", String(submittedId)] });
+        queryClient.invalidateQueries({ queryKey: ["moduleViewer", Number(submittedId)] });
+        queryClient.invalidateQueries({ queryKey: ["moduleDetails", String(submittedId)] });
+        queryClient.invalidateQueries({ queryKey: ["moduleDetails", Number(submittedId)] });
+      }
+      queryClient.invalidateQueries({ queryKey: ["adminModules"] });
+      queryClient.invalidateQueries({ queryKey: ["userDashboard"] });
+
+      // 4. RESET STATE
       setEditingModuleId(null);
       setModuleForm({
         title: "",
@@ -236,6 +257,8 @@ export function useModuleSubmit({
           levelDescription: "",
           passing_threshold: 80,
           is_locked_by_default: false,
+          cover_image: null,
+          coverImage: null,
         },
       ]);
       setActiveLevelOrder(1);
