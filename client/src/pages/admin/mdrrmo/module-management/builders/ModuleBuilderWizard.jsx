@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
 import ModuleHeaderForm from "./ModuleHeaderForm";
 import LevelSelector from "./LevelBuilder";
 import SequenceCanvas from "./SequenceCanvas";
@@ -67,9 +68,10 @@ export default function ModuleBuilderWizard({
 
   useEffect(() => {
     if (formErrors.flows || formErrors.levelTitle) {
-      // Use a small timeout inside the effect to ensure React has fully painted the new tab
       const timer = setTimeout(() => {
-        const targetId = formErrors.levelTitle ? "level-title-error-anchor" : "sequence-error-anchor";
+        const targetId = formErrors.levelTitle
+          ? "level-title-error-anchor"
+          : "sequence-error-anchor";
         const errorEl = document.getElementById(targetId);
         if (errorEl) {
           errorEl.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -82,9 +84,14 @@ export default function ModuleBuilderWizard({
   if (!isOpen) return null;
 
   const handleNextStep = () => {
-    // Basic validation before allowing next step
     if (wizardStep === 1) {
-      if (!moduleForm.title || !moduleForm.description || !moduleForm.category || !moduleForm.duration || !moduleForm.level) {
+      if (
+        !moduleForm.title ||
+        !moduleForm.description ||
+        !moduleForm.category ||
+        !moduleForm.duration ||
+        !moduleForm.level
+      ) {
         setFormErrors({
           title: !moduleForm.title ? "Title is required" : "",
           description: !moduleForm.description ? "Description is required" : "",
@@ -105,12 +112,18 @@ export default function ModuleBuilderWizard({
     setIsSubmitting(true);
     try {
       const success = await handleModuleSubmit(e);
-      if (!success) return; 
-      
+      if (!success) return;
+
+      toast.success(
+        editingModuleId
+          ? "Module updated successfully"
+          : "Module created successfully"
+      );
+
       if (refetchModules) {
         refetchModules();
       }
-      // Reset wizard state so reopening always starts fresh on Step 1
+
       actions.resetForm();
       setWizardStep(1);
       onClose();
@@ -121,38 +134,36 @@ export default function ModuleBuilderWizard({
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex flex-col bg-gray-50/95 backdrop-blur-sm overflow-hidden">
-      {/* Wizard Header Bar */}
-      <div className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between shrink-0 shadow-sm z-10">
+    <div className="fixed inset-0 z-[100] flex flex-col bg-gray-50/95 dark:bg-[#030712]/95 backdrop-blur-sm overflow-hidden transition-colors">
+      <div className="bg-white dark:bg-[#0b1329] border-b border-gray-200 dark:border-slate-800 px-6 py-4 flex items-center justify-between shrink-0 shadow-sm z-10">
         <div className="flex items-center gap-4">
           <button
             onClick={() => setShowExitModal(true)}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors text-gray-500"
+            className="p-2 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-lg transition-colors text-gray-500 dark:text-slate-400"
           >
             <HugeiconsIcon icon={Cancel01Icon} className="w-5 h-5" />
           </button>
           <div className="flex flex-col">
-            <h1 className="text-xl font-black text-gray-900 tracking-tight">
+            <h1 className="text-xl font-black text-gray-900 dark:text-white tracking-tight">
               {editingModuleId ? "Edit Learning Path" : "Create Learning Path"}
             </h1>
-            <div className="flex items-center gap-2 text-sm font-bold text-gray-500">
-              <span className={wizardStep === 1 ? "text-red-600" : ""}>
+            <div className="flex items-center gap-2 text-sm font-bold text-gray-500 dark:text-slate-400">
+              <span className={wizardStep === 1 ? "text-red-600 dark:text-red-400" : ""}>
                 Step 1: Overview
               </span>
-              <span className="text-gray-300">/</span>
-              <span className={wizardStep === 2 ? "text-red-600" : ""}>
+              <span className="text-gray-300 dark:text-slate-700">/</span>
+              <span className={wizardStep === 2 ? "text-red-600 dark:text-red-400" : ""}>
                 Step 2: Add Content
               </span>
             </div>
           </div>
         </div>
 
-        {/* Action Controls */}
         <div className="flex items-center gap-3">
           {wizardStep === 2 && (
             <button
               onClick={() => setWizardStep(1)}
-              className="px-4 py-2 text-sm font-bold text-gray-700 bg-white border border-gray-200 hover:bg-gray-50 rounded-xl transition-colors flex items-center gap-2 shadow-sm"
+              className="px-4 py-2 text-sm font-bold text-gray-700 dark:text-slate-200 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-700 rounded-xl transition-colors flex items-center gap-2 shadow-sm"
             >
               <HugeiconsIcon icon={ArrowLeft01Icon} className="w-4 h-4" />
               Back to Overview
@@ -161,7 +172,7 @@ export default function ModuleBuilderWizard({
 
           <button
             onClick={() => setShowResetModal(true)}
-            className="px-4 py-2 text-sm font-bold text-red-600 bg-red-50 hover:bg-red-100 rounded-xl transition-colors"
+            className="px-4 py-2 text-sm font-bold text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/40 hover:bg-red-100 dark:hover:bg-red-900/50 rounded-xl transition-colors"
           >
             Reset
           </button>
@@ -189,18 +200,21 @@ export default function ModuleBuilderWizard({
                   <Spinner className="w-4 h-4 text-white" />
                   <span>Submitting...</span>
                 </>
+              ) : editingModuleId ? (
+                "Submit Changes for Review"
               ) : (
-                editingModuleId ? "Submit Changes for Review" : "Submit for Review"
+                "Submit for Review"
               )}
             </button>
           )}
         </div>
       </div>
 
-      {/* Wizard Content Area */}
       <div className="flex-1 overflow-y-auto p-8 relative">
         <div
-          className={`mx-auto transition-all duration-300 ${wizardStep === 1 ? "max-w-4xl" : "max-w-6xl"}`}
+          className={`mx-auto transition-all duration-300 ${
+            wizardStep === 1 ? "max-w-4xl" : "max-w-6xl"
+          }`}
         >
           {wizardStep === 1 && (
             <div className="animate-in fade-in slide-in-from-bottom-4 duration-300">
@@ -237,20 +251,32 @@ export default function ModuleBuilderWizard({
                     formError={formErrors.flows}
                     moduleStatus={moduleForm.status}
                   />
-                  {formErrors.flows && stagedFlows.filter(flow => flow.levelOrder === activeLevelOrder).length > 0 && (
-                    <div id="sequence-error-anchor" className="animate-in fade-in slide-in-from-top-2 mt-4 p-4 bg-red-50 border border-red-200 rounded-xl flex items-start gap-3">
-                      <div className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center shrink-0">
-                         <HugeiconsIcon icon={Cancel01Icon} className="w-5 h-5 text-red-600" />
+                  {formErrors.flows &&
+                    stagedFlows.filter(
+                      (flow) => flow.levelOrder === activeLevelOrder
+                    ).length > 0 && (
+                      <div
+                        id="sequence-error-anchor"
+                        className="animate-in fade-in slide-in-from-top-2 mt-4 p-4 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/50 rounded-xl flex items-start gap-3"
+                      >
+                        <div className="w-8 h-8 bg-red-100 dark:bg-red-900/50 rounded-full flex items-center justify-center shrink-0">
+                          <HugeiconsIcon
+                            icon={Cancel01Icon}
+                            className="w-5 h-5 text-red-600 dark:text-red-400"
+                          />
+                        </div>
+                        <div>
+                          <h4 className="text-sm font-bold text-red-800 dark:text-red-300">
+                            Validation Error
+                          </h4>
+                          <p className="text-red-600 dark:text-red-400 text-sm mt-0.5">
+                            {formErrors.flows}
+                          </p>
+                        </div>
                       </div>
-                      <div>
-                        <h4 className="text-sm font-bold text-red-800">Validation Error</h4>
-                        <p className="text-red-600 text-sm mt-0.5">
-                          {formErrors.flows}
-                        </p>
-                      </div>
-                    </div>
-                  )}
+                    )}
                 </div>
+
                 <div className="xl:col-span-4 sticky top-0">
                   <StepBuilder
                     currentFlowStep={currentFlowStep}
@@ -304,7 +330,6 @@ export default function ModuleBuilderWizard({
         isOpen={showExitModal}
         onClose={() => setShowExitModal(false)}
         onConfirm={() => {
-          // Also reset on exit so reopening doesn't show stale data
           actions.resetForm();
           setWizardStep(1);
           setShowExitModal(false);
@@ -313,11 +338,10 @@ export default function ModuleBuilderWizard({
         }}
         alternateText="Save as Draft & Exit"
         onAlternateAction={async () => {
-          const success = await handleModuleSubmit(
-            new Event("submit"),
-            "draft"
-          );
+          const success = await handleModuleSubmit(new Event("submit"), "draft");
           if (success) {
+            toast.success("Draft saved successfully");
+
             if (refetchModules) refetchModules();
             actions.resetForm();
             setWizardStep(1);
@@ -325,7 +349,7 @@ export default function ModuleBuilderWizard({
             onClose();
             navigate("/admin/mdrrmo/modules");
           } else {
-             setShowExitModal(false);
+            setShowExitModal(false);
           }
         }}
         title="Exit Builder?"

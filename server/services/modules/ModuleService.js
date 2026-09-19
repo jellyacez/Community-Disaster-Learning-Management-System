@@ -4,9 +4,232 @@ const { UNSCOPED_ACCESS_ROLES } = require("../../config/permissions");
 
 class ModuleService {
   /**
-   * Creates a new module, including its levels, steps, questions, and choices.
-   * Runs inside a single database transaction.
+   * Evaluates progression locking logic for a set of modules against a user's completion records.
    */
+  computeProgressionStatus(allPublishedModules, userCompletions) {
+    const completedModIds = new Set(
+      userCompletions
+        .filter(c => c.modstatus === 'Completed' || c.progress === 100)
+        .map(c => c.mod_id)
+    );
+
+    // 1. Identify all published Fundamentals
+    const fundamentalModules = allPublishedModules.filter(
+      m => (m.category || m.modcat || '').trim().toLowerCase() === 'fundamentals'
+    );
+    const hasCompletedAllFundamentals = fundamentalModules.every(m =>
+      completedModIds.has(m.id || m.mod_id)
+    );
+
+    // 2. Map lock conditions per module
+    return allPublishedModules.map(mod => {
+      const modId = mod.id || mod.mod_id;
+      const category = (mod.category || mod.modcat || '').trim();
+      const level = (mod.level || '').trim();
+      const isFundamental = category.toLowerCase() === 'fundamentals';
+
+      // Tier 0: Fundamentals are always unlocked
+      if (isFundamental) {
+        return {
+          ...mod,
+          is_locked: false,
+          lock_reason: null,
+        };
+      }
+
+      // Tier 1+: Specialized categories locked if Fundamentals incomplete
+      if (!hasCompletedAllFundamentals) {
+        const remainingFundCount = fundamentalModules.filter(f => !completedModIds.has(f.id || f.mod_id)).length;
+        return {
+          ...mod,
+          is_locked: true,
+          lock_reason: `Complete all Fundamentals first (${remainingFundCount} remaining).`,
+        };
+      }
+
+      // Beginner modules unlock as soon as Fundamentals are cleared
+      if (level.toLowerCase() === 'beginner' || level.toLowerCase() === 'level 1') {
+        return {
+          ...mod,
+          is_locked: false,
+          lock_reason: null,
+        };
+      }
+
+      // Intermediate modules require all Beginner modules of the same category
+      if (level.toLowerCase() === 'intermediate' || level.toLowerCase() === 'level 2') {
+        const catBeginners = allPublishedModules.filter(
+          m => (m.category || m.modcat || '').trim().toLowerCase() === category.toLowerCase() &&
+               ((m.level || '').trim().toLowerCase() === 'beginner' || (m.level || '').trim().toLowerCase() === 'level 1')
+        );
+        const hasFinishedBeginners = catBeginners.every(b => completedModIds.has(b.id || b.mod_id));
+
+        return {
+          ...mod,
+          is_locked: !hasFinishedBeginners,
+          lock_reason: hasFinishedBeginners ? null : `Complete all Beginner ${category} modules first.`,
+        };
+      }
+
+      // Advanced modules require all Intermediate modules of the same category
+      if (level.toLowerCase() === 'advanced' || level.toLowerCase() === 'level 3') {
+        const catIntermediates = allPublishedModules.filter(
+          m => (m.category || m.modcat || '').trim().toLowerCase() === category.toLowerCase() &&
+               ((m.level || '').trim().toLowerCase() === 'intermediate' || (m.level || '').trim().toLowerCase() === 'level 2')
+        );
+        const hasFinishedIntermediates = catIntermediates.every(i => completedModIds.has(i.id || i.mod_id));
+
+        return {
+          ...mod,
+          is_locked: !hasFinishedIntermediates,
+          lock_reason: hasFinishedIntermediates ? null : `Complete all Intermediate ${category} modules first.`,
+        };
+      }
+
+      return {
+        ...mod,
+        is_locked: false,
+        lock_reason: null,
+      };
+    });
+  }
+
+  async checkPrerequisitesMet(user_id, target_mod_id) {
+    const publishedRes = await pool.query(
+      `SELECT mod_id, modname, modcat, level FROM public.module_data WHERE status = 'published' AND moddateremove IS NULL`
+    );
+    const userProgressRes = await pool.query(
+      `SELECT DISTINCT ON (mod_id) mod_id, progress, modstatus
+       FROM public.module_activity
+       WHERE user_id = $1
+       ORDER BY mod_id, modact_id DESC`,
+      [user_id]
+    );
+
+    const evaluated = this.computeProgressionStatus(publishedRes.rows, userProgressRes.rows);
+    const target = evaluated.find(m => (m.mod_id || m.id) === target_mod_id);
+    return target ? !target.is_locked : true;
+  }
+
+  async getAvailableModules(user_id) {
+    const result = await pool.query(
+     `SELECT
+        md.mod_id AS id,
+        md.modname AS title,
+        md.modcat AS category,
+        md.description,
+        md.level,
+        md.duration,
+        md.image_url,
+        (um.mod_id IS NOT NULL) AS is_enrolled,
+        COALESCE(um.progress, 0) AS progress,
+        um.modstatus AS enrollment_status
+       FROM public.module_data md
+       LEFT JOIN (
+         SELECT DISTINCT ON (mod_id) mod_id, progress, modstatus
+         FROM public.module_activity
+         WHERE user_id = $1
+         ORDER BY mod_id, modact_id DESC
+       ) um ON um.mod_id = md.mod_id
+       WHERE md.moddateremove IS NULL AND md.status = 'published'
+       ORDER BY md.mod_id DESC`,
+      [user_id]
+    );
+
+    const allPublished = result.rows;
+
+    const userCompletionsRes = await pool.query(
+      `SELECT DISTINCT ON (mod_id) mod_id, progress, modstatus
+       FROM public.module_activity
+       WHERE user_id = $1
+       ORDER BY mod_id, modact_id DESC`,
+      [user_id]
+    );
+
+    return this.computeProgressionStatus(allPublished, userCompletionsRes.rows);
+  }
+
+  async getModuleSyllabusDetails(mod_id, user_id = null) {
+    let moduleRes;
+    if (user_id) {
+      moduleRes = await pool.query(
+        `SELECT 
+           md.mod_id, md.modname, md.modcat, md.description, md.level, md.duration, md.image_url,
+           (um.mod_id IS NOT NULL) AS is_enrolled,
+           COALESCE(um.progress, 0) AS progress,
+           um.modstatus AS status
+         FROM public.module_data md
+         LEFT JOIN (
+           SELECT DISTINCT ON (mod_id) mod_id, progress, modstatus
+           FROM public.module_activity
+           WHERE user_id = $2
+           ORDER BY mod_id, modact_id DESC
+         ) um ON um.mod_id = md.mod_id
+         WHERE md.mod_id = $1`,
+        [mod_id, user_id]
+      );
+    } else {
+      moduleRes = await pool.query(
+        `SELECT mod_id, modname, modcat, description, level, duration, image_url,
+                false AS is_enrolled, 0 AS progress, null AS status
+         FROM public.module_data
+         WHERE mod_id = $1`,
+        [mod_id]
+      );
+    }
+
+    if (moduleRes.rowCount === 0) return null;
+
+    let targetModule = moduleRes.rows[0];
+
+    // Compute prerequisite status if user context is provided
+    if (user_id) {
+      const publishedRes = await pool.query(
+        `SELECT mod_id, modname, modcat, level FROM public.module_data WHERE status = 'published' AND moddateremove IS NULL`
+      );
+      const userProgressRes = await pool.query(
+        `SELECT DISTINCT ON (mod_id) mod_id, progress, modstatus
+         FROM public.module_activity
+         WHERE user_id = $1
+         ORDER BY mod_id, modact_id DESC`,
+        [user_id]
+      );
+      const evaluated = this.computeProgressionStatus(publishedRes.rows, userProgressRes.rows);
+      const match = evaluated.find(m => (m.mod_id || m.id) === parseInt(mod_id, 10));
+      if (match) {
+        targetModule.is_locked = match.is_locked;
+        targetModule.lock_reason = match.lock_reason;
+      }
+    }
+
+    const levelsRes = await pool.query(
+      `SELECT level_id, level_order, level_title, level_description, passing_threshold, is_locked_by_default
+       FROM public.levels
+       WHERE mod_id = $1
+       ORDER BY level_order ASC`,
+      [mod_id]
+    );
+
+    const stepsRes = await pool.query(
+      `SELECT ms.step_id, ms.level_id, ms.step_order, ms.step_title, ms.step_type, ms.is_final_assessment, ms.loop_back_step_id
+       FROM public.module_steps ms
+       JOIN public.levels l ON ms.level_id = l.level_id
+       WHERE l.mod_id = $1
+       ORDER BY ms.step_order ASC`,
+      [mod_id]
+    );
+
+    const structuredLevels = levelsRes.rows.map(lvl => ({
+      ...lvl,
+      steps: stepsRes.rows.filter(step => step.level_id === lvl.level_id)
+    }));
+
+    return {
+      module: targetModule,
+      levels: structuredLevels
+    };
+  }
+
   async createModuleTransaction({ moduleName, moduleCategory, description, level, duration, video_url, image_url, levels, status, author_id }) {
     const safeDescription = cleanRichText(description);
     const client = await pool.connect();
@@ -14,7 +237,6 @@ class ModuleService {
     try {
       await client.query("BEGIN");
 
-      // 1. Insert Module
       const moduleCreation = await client.query(
         `INSERT INTO public.module_data (modname, modcat, description, level, duration, video_url, image_url, status, author_id)
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING mod_id`,
@@ -22,12 +244,10 @@ class ModuleService {
       );
       const mod_id = moduleCreation.rows[0].mod_id;
 
-      // 2. Insert Levels
       for (const lvl of levels) {
-        // Guard against multiple final assessments per level
         const finalAssessmentsCount = lvl.steps.filter(s => s.is_final_assessment).length;
         if (finalAssessmentsCount > 1) {
-            throw new Error(`Validation Error: Level "${lvl.levelTitle || lvl.levelOrder}" contains multiple Final Assessments. Only one final assessment is permitted per level.`);
+          throw new Error(`Validation Error: Level "${lvl.levelTitle || lvl.levelOrder}" contains multiple Final Assessments. Only one final assessment is permitted per level.`);
         }
         const levelRes = await client.query(
           `INSERT INTO public.levels (mod_id, level_order, level_title, level_description, passing_threshold, is_locked_by_default)
@@ -36,11 +256,9 @@ class ModuleService {
         );
         const level_id = levelRes.rows[0].level_id;
 
-        // 3. Insert Steps for this level
-        let lastLearningStepId = null; // Track the most recent non-quiz step
+        let lastLearningStepId = null;
 
         for (const step of lvl.steps) {
-          // Calculate loop_back_step_id if it's a quiz
           let loopBackId = null;
           if ((step.stepType === 'quiz' || step.stepType === 'situational') && lastLearningStepId) {
              loopBackId = lastLearningStepId;
@@ -53,14 +271,11 @@ class ModuleService {
           );
           const step_id = stepRes.rows[0].step_id;
 
-          // Update lastLearningStepId if this is a learning material
           if (step.stepType !== 'quiz' && step.stepType !== 'situational') {
              lastLearningStepId = step_id;
           }
 
-          // 4. BATCH Insert Quiz Questions and Choices
           if (step.quizQuestions && step.quizQuestions.length > 0) {
-            // Prepare Question Arrays
             const qTexts = [];
             const qPoints = [];
             const qImages = [];
@@ -71,7 +286,6 @@ class ModuleService {
               qImages.push(q.imageURL || '');
             }
 
-            // Insert all questions for this step
             const qRes = await client.query(
               `INSERT INTO public.questions (mod_id, step_id, question_text, points, image_url)
                SELECT $1, $2, t, p, i
@@ -81,14 +295,12 @@ class ModuleService {
               [mod_id, step_id, qTexts, qPoints, qImages]
             );
 
-            // Prepare Choice Arrays
             const cQuestionIds = [];
             const cTexts = [];
             const cIsCorrects = [];
             const cRationales = [];
             const cSequenceOrders = [];
 
-            // Map the returned question_ids back to the choices
             step.quizQuestions.forEach((q, idx) => {
               const question_id = qRes.rows[idx].question_id;
               for (const opt of q.options) {
@@ -101,7 +313,6 @@ class ModuleService {
             });
 
             if (cQuestionIds.length > 0) {
-              // Insert all choices for this step
               await client.query(
                 `INSERT INTO public.choices (question_id, choice_text, is_correct, rationale, sequence_order)
                  SELECT q_id, c_text, c_corr, c_rat, c_seq
@@ -124,10 +335,6 @@ class ModuleService {
     }
   }
 
-  /**
-   * Updates an existing module, reconciling its levels, steps, questions, and choices.
-   * Runs inside a single database transaction.
-   */
   async updateModuleTransaction(mod_id, { moduleName, moduleCategory, description, level, duration, video_url, image_url, levels, status, editor_id }) {
     const safeDescription = cleanRichText(description);
     const client = await pool.connect();
@@ -135,7 +342,6 @@ class ModuleService {
     try {
       await client.query("BEGIN");
 
-      // 1. Update Parent Module Record
       const updateModuleRes = await client.query(
         `UPDATE public.module_data 
          SET modname = $1, modcat = $2, description = $3, level = $4, duration = $5, 
@@ -150,8 +356,6 @@ class ModuleService {
         throw new Error(`Target module with ID ${mod_id} not found.`);
       }
 
-      // 2. Clean out old structure (Cascading in transaction)
-      // Delete choices & questions tied to existing steps of this module
       await client.query(
         `DELETE FROM public.choices 
          WHERE question_id IN (
@@ -175,7 +379,6 @@ class ModuleService {
         [mod_id]
       );
 
-      // Delete module steps and levels
       await client.query(
         `DELETE FROM public.module_steps 
          WHERE level_id IN (SELECT level_id FROM public.levels WHERE mod_id = $1)`,
@@ -187,7 +390,6 @@ class ModuleService {
         [mod_id]
       );
 
-      // 3. Re-insert Levels, Steps, Questions, Choices
       for (const lvl of levels) {
         const finalAssessmentsCount = (lvl.steps || []).filter(s => s.is_final_assessment).length;
         if (finalAssessmentsCount > 1) {
@@ -280,37 +482,9 @@ class ModuleService {
     }
   }
 
-  async getAvailableModules(user_id) {
-    const result = await pool.query(
-     `SELECT
-        md.mod_id AS id,
-        md.modname AS title,
-        md.modcat AS category,
-        md.description,
-        md.level,
-        md.duration,
-        md.image_url,
-        (um.mod_id IS NOT NULL) AS is_enrolled,
-        um.progress,
-        um.modstatus AS enrollment_status
-       FROM public.module_data md
-       LEFT JOIN (
-         SELECT DISTINCT ON (mod_id) mod_id, progress, modstatus
-         FROM public.module_activity
-         WHERE user_id = $1
-         ORDER BY mod_id, modact_id DESC
-       ) um ON um.mod_id = md.mod_id
-       WHERE md.moddateremove IS NULL AND md.status = 'published'
-       ORDER BY md.mod_id DESC`,
-      [user_id]
-    );
-
-    return result.rows;
-  }
-
   async getModuleById(mod_id) {
     const moduleCheck = await pool.query(
-      "SELECT mod_id, modname, status, author_id, rejection_reason, parent_mod_id FROM module_data WHERE mod_id = $1",
+      "SELECT mod_id, modname, modcat, level, status, author_id, rejection_reason, parent_mod_id FROM module_data WHERE mod_id = $1",
       [mod_id]
     );
     return moduleCheck.rowCount > 0 ? moduleCheck.rows[0] : null;
@@ -359,116 +533,6 @@ class ModuleService {
     return existing.rowCount > 0 ? existing.rows[0] : null;
   }
 
-  async createStep(levelId, stepOrder, stepTitle, stepContent, mediaUrl, stepType) {
-    const safeContent = cleanRichText(stepContent);
-    const result = await pool.query(
-        `INSERT INTO public.module_steps (level_id, step_order, step_title, step_content, media_url, step_type)
-             VALUES ($1, $2, $3, $4, $5, $6)
-             RETURNING *`,
-        [levelId, stepOrder, stepTitle, safeContent, mediaUrl, stepType]
-    );
-    return result.rows[0];
-  }
-
-  async createQuestion(moduleId, questionText, points, imageURL, stepId = null) {
-    const sanitizedQuestionText = cleanRichText(questionText);
-    const result = await pool.query(
-        `INSERT INTO public.questions (mod_id, question_text, points, image_url, step_id)
-         VALUES ($1, $2, $3, $4, $5)
-         RETURNING *`,
-        [moduleId, sanitizedQuestionText, points, imageURL, stepId]
-    );
-    return result.rows[0];
-  }
-
-  async createChoice(questionId, choiceText, isCorrect, rationale = null) {
-    const sanitizedChoiceText = cleanRichText(choiceText);
-    const sanitizedRationale = rationale ? cleanRichText(rationale) : null;
-    const result = await pool.query(
-        `INSERT INTO public.choices (question_id, choice_text, is_correct, rationale)
-         VALUES ($1, $2, $3, $4)
-         RETURNING *`,
-        [questionId, sanitizedChoiceText, isCorrect, sanitizedRationale]
-    );
-    return result.rows[0];
-  }
-
-  async calculateAndSaveResult(moduleId, userId, answers) {
-    if (!answers || !Array.isArray(answers)) {
-        throw new Error("Answers array is required");
-    }
-
-    const questionsResult = await pool.query(
-        `SELECT question_id, points FROM public.questions WHERE mod_id = $1`,
-        [moduleId]
-    );
-    const questions = questionsResult.rows;
-    const totalPoints = questions.reduce((sum, q) => sum + (q.points || 1), 0);
-
-    const correctChoicesResult = await pool.query(
-        `SELECT c.question_id, c.choice_id
-         FROM public.choices c
-         JOIN public.questions q ON c.question_id = q.question_id
-         WHERE q.mod_id = $1 AND c.is_correct = true`,
-        [moduleId]
-    );
-
-    const correctMap = {};
-    correctChoicesResult.rows.forEach(row => {
-        correctMap[row.question_id] = row.choice_id;
-    });
-
-    const pointsMap = {};
-    questions.forEach(q => {
-        pointsMap[q.question_id] = q.points || 1;
-    });
-
-    // Deduplicate submitted answers by questionId (keeping the last submitted choice per question)
-    const answerMap = new Map();
-    answers.forEach(ans => {
-        if (ans && ans.questionId !== undefined) {
-            answerMap.set(ans.questionId, ans.choiceId);
-        }
-    });
-
-    let score = 0;
-    answerMap.forEach((choiceId, questionId) => {
-        if (correctMap[questionId] === choiceId) {
-            score += pointsMap[questionId] || 1;
-        }
-    });
-
-    const passed = totalPoints > 0 ? (score / totalPoints) >= 0.75 : true;
-
-    const result = await pool.query(
-        `INSERT INTO public.results (mod_id, user_id, score, total_points, passed)
-         VALUES ($1, $2, $3, $4, $5)
-         RETURNING *`,
-        [moduleId, userId, score, totalPoints, passed]
-    );
-
-    return result.rows[0];
-  }
-
-  async createLevel(moduleId, levelOrder, levelTitle, levelDescription) {
-    const safeDescription = cleanRichText(levelDescription);
-    const result = await pool.query(`
-        INSERT INTO public.levels (mod_id, level_order, level_title, level_description)
-        VALUES ($1, $2, $3, $4)
-        ON CONFLICT (mod_id, level_order)
-        DO UPDATE SET
-            level_title = EXCLUDED.level_title,
-            level_description = EXCLUDED.level_description
-        RETURNING *
-    `, [moduleId, levelOrder, levelTitle, safeDescription]);
-
-    if (!result.rows || result.rows.length === 0) {
-        throw new Error("Database failed to return the created level row.");
-    }
-
-    return result.rows[0];
-  }
-
   async getModuleViewerData(user_id, mod_id) {
     const moduleResult = await pool.query(
       "SELECT mod_id as id, modname as title, modcat as category FROM module_data WHERE mod_id = $1",
@@ -491,7 +555,6 @@ class ModuleService {
       [mod_id]
     );
 
-    // Get completed step IDs
     const progressResult = await pool.query(
       `SELECT usp.step_id
        FROM user_step_progress usp
@@ -502,14 +565,12 @@ class ModuleService {
     );
     const completedStepIds = progressResult.rows.map(r => r.step_id);
 
-    // Get passed levels
     const passedLevelsResult = await pool.query(
       `SELECT DISTINCT level_id FROM results WHERE user_id = $1 AND mod_id = $2 AND passed = true`,
       [user_id, mod_id]
     );
     const passedLevelIds = passedLevelsResult.rows.map(r => r.level_id);
 
-    // Assemble the nested structure
     const levels = levelsResult.rows.map(level => {
       const levelSteps = stepsResult.rows.filter(s => s.level_id === level.id);
       return {
@@ -671,73 +732,7 @@ class ModuleService {
       levels: structuredLevels
     };
   }
-  
-  async getModuleSyllabusDetails(mod_id, user_id = null) {
-    // 1. Fetch parent module details with user enrollment if authenticated
-    let moduleRes;
-    if (user_id) {
-      moduleRes = await pool.query(
-        `SELECT 
-           md.mod_id, md.modname, md.modcat, md.description, md.level, md.duration, md.image_url,
-           (um.mod_id IS NOT NULL) AS is_enrolled,
-           COALESCE(um.progress, 0) AS progress,
-           um.modstatus AS status
-         FROM public.module_data md
-         LEFT JOIN (
-           SELECT DISTINCT ON (mod_id) mod_id, progress, modstatus
-           FROM public.module_activity
-           WHERE user_id = $2
-           ORDER BY mod_id, modact_id DESC
-         ) um ON um.mod_id = md.mod_id
-         WHERE md.mod_id = $1`,
-        [mod_id, user_id]
-      );
-    } else {
-      moduleRes = await pool.query(
-        `SELECT mod_id, modname, modcat, description, level, duration, image_url,
-                false AS is_enrolled, 0 AS progress, null AS status
-         FROM public.module_data
-         WHERE mod_id = $1`,
-        [mod_id]
-      );
-    }
 
-    if (moduleRes.rowCount === 0) {
-      return null;
-    }
-
-    // 2. Fetch levels assigned to this module, including threshold settings
-    const levelsRes = await pool.query(
-      `SELECT level_id, level_order, level_title, level_description, passing_threshold, is_locked_by_default
-       FROM public.levels
-       WHERE mod_id = $1
-       ORDER BY level_order ASC`,
-      [mod_id]
-    );
-
-    // 3. Fetch steps and relate them to levels
-    const stepsRes = await pool.query(
-      `SELECT ms.step_id, ms.level_id, ms.step_order, ms.step_title, ms.step_type, ms.is_final_assessment, ms.loop_back_step_id
-       FROM public.module_steps ms
-       JOIN public.levels l ON ms.level_id = l.level_id
-       WHERE l.mod_id = $1
-       ORDER BY ms.step_order ASC`,
-      [mod_id]
-    );
-
-    // Group steps neatly into their corresponding level objects
-    const structuredLevels = levelsRes.rows.map(lvl => {
-      return {
-        ...lvl,
-        steps: stepsRes.rows.filter(step => step.level_id === lvl.level_id)
-      };
-    });
-
-    return {
-      module: moduleRes.rows[0],
-      levels: structuredLevels
-    };
-  }
   async getAllModules(page = 1, limit = 10, search = "", category = "", level = "", adminContext = null) {
     if (!adminContext || !adminContext.role) {
       throw new Error("SECURITY_FAULT: Missing or invalid adminContext. Cannot safely return modules.");
@@ -749,7 +744,6 @@ class ModuleService {
     const values = [];
     let idx = 1;
 
-    // Structural enforcement of barangay scoping
     if (adminContext.role === 'barangay_admin') {
       if (!adminContext.barangay_id) {
         throw new Error("SECURITY_FAULT: barangay_admin context missing barangay identifier for scoping.");
@@ -803,6 +797,7 @@ class ModuleService {
       },
     };
   }
+
   async updateModuleStatus(mod_id, status, rejection_reason = null) {
     const query = `
       UPDATE public.module_data

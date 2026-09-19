@@ -1,4 +1,5 @@
 import { useState } from "react";
+import toast from "react-hot-toast";
 import ConfirmationModal from "../../../../../components/ui/modals/ConfirmationModal";
 
 export default function LevelSelector({
@@ -15,6 +16,7 @@ export default function LevelSelector({
   const handleAddLevel = () => {
     const nextOrder =
       stagedLevels.reduce((max, lvl) => Math.max(max, lvl.levelOrder), 0) + 1;
+
     setStagedLevels([
       ...stagedLevels,
       {
@@ -22,29 +24,48 @@ export default function LevelSelector({
         levelTitle: "",
         levelDescription: "",
         passing_threshold: 80,
-        is_locked_by_default: true
+        is_locked_by_default: true,
       },
     ]);
+
     setActiveLevelOrder(nextOrder);
+    toast.success(`Level ${nextOrder} added successfully`);
   };
 
   const handleUpdateLevel = (levelOrder, field, value) => {
     let finalValue = value;
+
     if (field === "passing_threshold") {
       finalValue = parseInt(value, 10);
       if (isNaN(finalValue)) finalValue = 0;
       if (finalValue < 0) finalValue = 0;
       if (finalValue > 100) finalValue = 100;
     }
+
     setStagedLevels((prev) =>
       prev.map((lvl) =>
-        lvl.levelOrder === levelOrder ? { ...lvl, [field]: finalValue } : lvl,
-      ),
+        lvl.levelOrder === levelOrder ? { ...lvl, [field]: finalValue } : lvl
+      )
     );
+
+    // Only toast for meaningful toggle/number changes, not every text keystroke
+    if (field === "is_locked_by_default") {
+      toast.success(
+        finalValue
+          ? `Level ${levelOrder} is now locked by default`
+          : `Level ${levelOrder} is now unlocked by default`
+      );
+    }
+
+    if (field === "passing_threshold") {
+      toast.success(
+        `Level ${levelOrder} passing threshold set to ${finalValue}%`
+      );
+    }
   };
 
   const activeLevelData = stagedLevels.find(
-    (l) => l.levelOrder === activeLevelOrder,
+    (l) => l.levelOrder === activeLevelOrder
   );
 
   return (
@@ -58,6 +79,7 @@ export default function LevelSelector({
             Organize items into separate level blocks linked to this module.
           </p>
         </div>
+
         <div className="flex items-center gap-2">
           {activeLevelOrder === 1 ? (
             <button
@@ -76,7 +98,7 @@ export default function LevelSelector({
                 type="button"
                 onClick={() => {
                   const lvl = stagedLevels.find(
-                    (l) => l.levelOrder === activeLevelOrder,
+                    (l) => l.levelOrder === activeLevelOrder
                   );
                   if (lvl) setLevelToDelete(lvl);
                 }}
@@ -86,6 +108,7 @@ export default function LevelSelector({
               </button>
             )
           )}
+
           <button
             type="button"
             onClick={handleAddLevel}
@@ -100,7 +123,7 @@ export default function LevelSelector({
       <div className="flex items-center flex-wrap gap-2 pt-2">
         {stagedLevels.map((lvl) => {
           const stepCount = stagedFlows.filter(
-            (f) => f.levelOrder === lvl.levelOrder,
+            (f) => f.levelOrder === lvl.levelOrder
           ).length;
 
           return (
@@ -140,13 +163,21 @@ export default function LevelSelector({
                   handleUpdateLevel(
                     activeLevelData.levelOrder,
                     "levelTitle",
-                    e.target.value,
+                    e.target.value
                   )
                 }
                 placeholder="e.g. Phase 1: Basic Awareness"
-                className={`w-full px-4 py-3 bg-white border ${formErrors.levelTitle ? 'border-red-500 ring-1 ring-red-500' : 'border-slate-200'} rounded-xl text-sm font-medium text-slate-900 focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 transition-all placeholder:text-slate-400`}
+                className={`w-full px-4 py-3 bg-white border ${
+                  formErrors.levelTitle
+                    ? "border-red-500 ring-1 ring-red-500"
+                    : "border-slate-200"
+                } rounded-xl text-sm font-medium text-slate-900 focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 transition-all placeholder:text-slate-400`}
               />
-              {formErrors.levelTitle && <p className="text-red-500 text-xs mt-1.5 font-bold">{formErrors.levelTitle}</p>}
+              {formErrors.levelTitle && (
+                <p className="text-red-500 text-xs mt-1.5 font-bold">
+                  {formErrors.levelTitle}
+                </p>
+              )}
             </div>
 
             <div>
@@ -160,7 +191,7 @@ export default function LevelSelector({
                   handleUpdateLevel(
                     activeLevelData.levelOrder,
                     "levelDescription",
-                    e.target.value,
+                    e.target.value
                   )
                 }
                 placeholder="e.g. Fundamental concepts container."
@@ -168,6 +199,7 @@ export default function LevelSelector({
               />
             </div>
           </div>
+
           <div>
             <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5">
               Passing Threshold (%)
@@ -181,12 +213,13 @@ export default function LevelSelector({
                 handleUpdateLevel(
                   activeLevelData.levelOrder,
                   "passing_threshold",
-                  e.target.value,
+                  e.target.value
                 )
               }
               className="w-full p-3 bg-white border border-slate-200 rounded-xl text-sm font-semibold text-slate-900 focus:outline-none focus:ring-1 focus:ring-red-500 transition-all"
             />
           </div>
+
           <div className="flex items-center space-x-3 mt-4">
             <input
               type="checkbox"
@@ -196,7 +229,7 @@ export default function LevelSelector({
                 handleUpdateLevel(
                   activeLevelData.levelOrder,
                   "is_locked_by_default",
-                  e.target.checked,
+                  e.target.checked
                 )
               }
               className="w-5 h-5 text-red-600 border-slate-300 rounded focus:ring-red-500 cursor-pointer"
@@ -217,7 +250,6 @@ export default function LevelSelector({
         onConfirm={() => {
           if (levelToDelete) {
             if (levelToDelete.levelOrder === 1) {
-              // Clear Level 1
               const updatedLevels = stagedLevels.map((l) =>
                 l.levelOrder === 1
                   ? {
@@ -227,34 +259,36 @@ export default function LevelSelector({
                       passing_threshold: 80,
                       is_locked_by_default: false,
                     }
-                  : l,
+                  : l
               );
               setStagedLevels(updatedLevels);
 
               if (setStagedFlows) {
                 const updatedFlows = stagedFlows.filter(
-                  (f) => f.levelOrder !== 1,
+                  (f) => f.levelOrder !== 1
                 );
                 setStagedFlows(updatedFlows);
               }
+
+              toast.success("Level 1 cleared successfully");
               setLevelToDelete(null);
             } else {
-              // Delete the level
               const updatedLevels = stagedLevels.filter(
-                (l) => l.levelOrder !== levelToDelete.levelOrder,
+                (l) => l.levelOrder !== levelToDelete.levelOrder
               );
               setStagedLevels(updatedLevels);
 
-              // Delete all steps associated with this level
               if (setStagedFlows) {
                 const updatedFlows = stagedFlows.filter(
-                  (f) => f.levelOrder !== levelToDelete.levelOrder,
+                  (f) => f.levelOrder !== levelToDelete.levelOrder
                 );
                 setStagedFlows(updatedFlows);
               }
 
-              // Switch active level
               setActiveLevelOrder(updatedLevels[0]?.levelOrder || null);
+              toast.success(
+                `Level ${levelToDelete.levelOrder} deleted successfully`
+              );
               setLevelToDelete(null);
             }
           }

@@ -2014,6 +2014,15 @@ REVOKE USAGE ON SCHEMA public FROM PUBLIC;
 GRANT ALL ON SCHEMA public TO PUBLIC;
 
 
+
+ALTER TABLE public.module_data
+DROP CONSTRAINT IF EXISTS valid_modcat;
+
+ALTER TABLE public.module_data
+ADD CONSTRAINT valid_modcat
+CHECK (modcat IN ('Fundamentals', 'Flood', 'Earthquake', 'Fire', 'General'));
+
+
 -- Completed on 2026-08-21 15:49:58
 
 --

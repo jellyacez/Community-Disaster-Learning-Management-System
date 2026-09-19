@@ -161,8 +161,6 @@ exports.getAvailableModules = async (req, res) => {
 // @access  Private
 exports.enrollInModule = async (req, res) => {
   const { id: mod_id } = req.params;
-
-  // 1. Double check how your betterAuthMiddleware injects user parameters (e.g., req.user vs req.session.user)
   const user_id = req.user?.id || req.user?.userId;
 
   if (!user_id) {
@@ -173,8 +171,6 @@ exports.enrollInModule = async (req, res) => {
   }
 
   try {
-    // Validate mod_id is a proper integer before querying (prevents DB type errors
-    // and stack trace leaks from malformed params like "../etc" or "abc")
     const parsedModId = parseInt(mod_id, 10);
     if (isNaN(parsedModId) || parsedModId <= 0) {
       return res
@@ -188,7 +184,19 @@ exports.enrollInModule = async (req, res) => {
         .status(404)
         .json({ success: false, message: "Target training module not found." });
     }
-    // 2. Ensure your linking table exists in your database with matching columns
+
+    // Verify Prerequisites
+    const isAdmin = ADMIN_ROLES.includes(req.user?.role);
+    if (!isAdmin) {
+      const allowed = await ModuleService.checkPrerequisitesMet(user_id, parsedModId);
+      if (!allowed) {
+        return res.status(403).json({
+          success: false,
+          message: "Prerequisites not met. Complete foundational and lower-tier modules first.",
+        });
+      }
+    }
+
     const isEnrolled = await ModuleService.checkUserEnrollment(
       user_id,
       parsedModId,
@@ -210,7 +218,6 @@ exports.enrollInModule = async (req, res) => {
       data: enrollmentData,
     });
   } catch (error) {
-    // This logs the exact database error inside your backend terminal!
     console.error(
       "Database error during enrollment execution pipeline:",
       error,
@@ -242,11 +249,23 @@ exports.getModuleViewerData = async (req, res) => {
       user_id,
       parsedModId,
     );
+
     if (!isEnrolled && !isAdmin) {
       return res.status(403).json({
         success: false,
         message: "You are not enrolled in this module.",
       });
+    }
+
+    // Prerequisite check for non-admin viewers
+    if (!isAdmin) {
+      const allowed = await ModuleService.checkPrerequisitesMet(user_id, parsedModId);
+      if (!allowed) {
+        return res.status(403).json({
+          success: false,
+          message: "Prerequisites not met. Complete foundational and lower-tier modules first.",
+        });
+      }
     }
 
     const data = await ModuleService.getModuleViewerData(user_id, parsedModId);
