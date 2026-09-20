@@ -199,7 +199,6 @@ exports.getAvailableModules = async (req, res) => {
 // @access  Private
 exports.enrollInModule = async (req, res) => {
   const { id: mod_id } = req.params;
-
   const user_id = req.user?.id || req.user?.userId;
 
   if (!user_id) {
@@ -222,6 +221,18 @@ exports.enrollInModule = async (req, res) => {
       return res
         .status(404)
         .json({ success: false, message: "Target training module not found." });
+    }
+
+    // Verify Prerequisites
+    const isAdmin = ADMIN_ROLES.includes(req.user?.role);
+    if (!isAdmin) {
+      const allowed = await ModuleService.checkPrerequisitesMet(user_id, parsedModId);
+      if (!allowed) {
+        return res.status(403).json({
+          success: false,
+          message: "Prerequisites not met. Complete foundational and lower-tier modules first.",
+        });
+      }
     }
 
     const isEnrolled = await ModuleService.checkUserEnrollment(
@@ -281,11 +292,23 @@ exports.getModuleViewerData = async (req, res) => {
       user_id,
       parsedModId
     );
+
     if (!isEnrolled && !isAdmin) {
       return res.status(403).json({
         success: false,
         message: "You are not enrolled in this module.",
       });
+    }
+
+    // Prerequisite check for non-admin viewers
+    if (!isAdmin) {
+      const allowed = await ModuleService.checkPrerequisitesMet(user_id, parsedModId);
+      if (!allowed) {
+        return res.status(403).json({
+          success: false,
+          message: "Prerequisites not met. Complete foundational and lower-tier modules first.",
+        });
+      }
     }
 
     const data = await ModuleService.getModuleViewerData(user_id, parsedModId);

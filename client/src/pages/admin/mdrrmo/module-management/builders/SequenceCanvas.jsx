@@ -1,8 +1,9 @@
 import { useState, useRef } from "react";
+import toast from "react-hot-toast";
 import ConfirmationModal from "../../../../../components/ui/modals/ConfirmationModal";
 import SequenceCard from "../components/SequenceCard";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { 
+import {
   Flag01Icon,
   Folder01Icon,
   Add01Icon,
@@ -11,10 +12,10 @@ import {
   Image01Icon
 } from "@hugeicons/core-free-icons";
 
-export default function SequenceCanvas({ 
-  stagedFlows, 
-  setStagedFlows, 
-  activeLevelOrder, 
+export default function SequenceCanvas({
+  stagedFlows,
+  setStagedFlows,
+  activeLevelOrder,
   triggerFlowSequencePreview,
   handleEditStep,
   formError,
@@ -26,7 +27,9 @@ export default function SequenceCanvas({
   const [stepToDelete, setStepToDelete] = useState(null);
   const fileInputRef = useRef(null);
 
-  const localizedFlows = stagedFlows.filter(flow => flow.levelOrder === activeLevelOrder);
+  const localizedFlows = stagedFlows.filter(
+    (flow) => flow.levelOrder === activeLevelOrder
+  );
 
   // File Upload Handler (reads file as base64 Data URL)
   const handleFileChange = (e) => {
@@ -52,7 +55,9 @@ export default function SequenceCanvas({
   };
 
   const handleDragStart = (e, targetIndexWithinFilter) => {
-    const absoluteIndex = stagedFlows.findIndex(f => f.id === localizedFlows[targetIndexWithinFilter].id);
+    const absoluteIndex = stagedFlows.findIndex(
+      (f) => f.id === localizedFlows[targetIndexWithinFilter].id
+    );
     setDraggedItemIndex(absoluteIndex);
     e.dataTransfer.effectAllowed = "move";
   };
@@ -60,15 +65,17 @@ export default function SequenceCanvas({
   const handleDragOver = (e, targetIndexWithinFilter) => {
     e.preventDefault();
     if (draggedItemIndex === null) return;
-    
-    const absoluteTargetIndex = stagedFlows.findIndex(f => f.id === localizedFlows[targetIndexWithinFilter].id);
+
+    const absoluteTargetIndex = stagedFlows.findIndex(
+      (f) => f.id === localizedFlows[targetIndexWithinFilter].id
+    );
     if (draggedItemIndex === absoluteTargetIndex) return;
 
     const updatedFlows = [...stagedFlows];
     const itemToMove = updatedFlows[draggedItemIndex];
     updatedFlows.splice(draggedItemIndex, 1);
     updatedFlows.splice(absoluteTargetIndex, 0, itemToMove);
-    
+
     setDraggedItemIndex(absoluteTargetIndex);
     setStagedFlows(updatedFlows);
   };
@@ -76,11 +83,20 @@ export default function SequenceCanvas({
   const handleDragEnd = () => setDraggedItemIndex(null);
 
   const moveFlowStep = (targetIndexWithinFilter, direction) => {
-    const absoluteIndex = stagedFlows.findIndex(f => f.id === localizedFlows[targetIndexWithinFilter].id);
-    let relativeSiblingIndex = direction === "up" ? targetIndexWithinFilter - 1 : targetIndexWithinFilter + 1;
-    if (relativeSiblingIndex < 0 || relativeSiblingIndex >= localizedFlows.length) return;
+    const absoluteIndex = stagedFlows.findIndex(
+      (f) => f.id === localizedFlows[targetIndexWithinFilter].id
+    );
+    let relativeSiblingIndex =
+      direction === "up"
+        ? targetIndexWithinFilter - 1
+        : targetIndexWithinFilter + 1;
 
-    const absoluteSiblingIndex = stagedFlows.findIndex(f => f.id === localizedFlows[relativeSiblingIndex].id);
+    if (relativeSiblingIndex < 0 || relativeSiblingIndex >= localizedFlows.length)
+      return;
+
+    const absoluteSiblingIndex = stagedFlows.findIndex(
+      (f) => f.id === localizedFlows[relativeSiblingIndex].id
+    );
 
     const updated = [...stagedFlows];
     const temp = updated[absoluteIndex];
@@ -98,14 +114,17 @@ export default function SequenceCanvas({
             Learning Path Sequence
           </h3>
           <p className="text-sm text-gray-500 font-medium mt-1">
-            Build the syllabus for Level {activeLevelOrder}. Add content using the builder.
+            Build the syllabus for Level {activeLevelOrder}. Add content using
+            the builder.
           </p>
         </div>
+
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2 text-xs font-bold text-gray-600 bg-white px-3.5 py-2 rounded-xl shadow-sm border border-gray-100">
             <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
             <span>Flow: Sequential</span>
           </div>
+
           {stagedFlows.length >= 2 && (
             <button 
               type="button" 
@@ -185,27 +204,54 @@ export default function SequenceCanvas({
       <div className="flex flex-col items-center">
         {/* Start Node */}
         <div className="flex items-center gap-3 bg-white px-6 py-2.5 rounded-full shadow-sm border border-gray-100 z-10 font-bold text-gray-800 tracking-wide">
-           <HugeiconsIcon icon={Flag01Icon} className="w-5 h-5 text-gray-400" />
-           Level {activeLevelOrder} Start
+          <HugeiconsIcon icon={Flag01Icon} className="w-5 h-5 text-gray-400" />
+          Level {activeLevelOrder} Start
         </div>
-        
+
         {localizedFlows.length === 0 ? (
           <>
             <div className="h-16 border-l-2 border-dashed border-gray-300"></div>
-            <div id="sequence-error-anchor" className={`text-center py-12 px-8 border-2 border-dashed rounded-3xl max-w-2xl w-full mx-auto transition-colors ${formError ? 'bg-red-50 border-red-300' : 'bg-white border-gray-200'}`}>
-              <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 ${formError ? 'bg-red-100' : 'bg-red-50'}`}>
-                <HugeiconsIcon icon={Folder01Icon} className={`w-8 h-8 ${formError ? 'text-red-600' : 'text-red-500'}`} />
+            <div
+              id="sequence-error-anchor"
+              className={`text-center py-12 px-8 border-2 border-dashed rounded-3xl max-w-2xl w-full mx-auto transition-colors ${
+                formError
+                  ? "bg-red-50 border-red-300"
+                  : "bg-white border-gray-200"
+              }`}
+            >
+              <div
+                className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 ${
+                  formError ? "bg-red-100" : "bg-red-50"
+                }`}
+              >
+                <HugeiconsIcon
+                  icon={Folder01Icon}
+                  className={`w-8 h-8 ${
+                    formError ? "text-red-600" : "text-red-500"
+                  }`}
+                />
               </div>
-              <h3 className={`text-lg font-bold mb-2 ${formError ? 'text-red-800' : 'text-gray-900'}`}>No Content Yet</h3>
-              <p className={`max-w-sm mx-auto text-sm ${formError ? 'text-red-600 font-medium' : 'text-gray-500'}`}>
-                {formError || "Use the builder panel on the right to start adding learning materials, quizzes, and situational assessments."}
+              <h3
+                className={`text-lg font-bold mb-2 ${
+                  formError ? "text-red-800" : "text-gray-900"
+                }`}
+              >
+                No Content Yet
+              </h3>
+              <p
+                className={`max-w-sm mx-auto text-sm ${
+                  formError ? "text-red-600 font-medium" : "text-gray-500"
+                }`}
+              >
+                {formError ||
+                  "Use the builder panel on the right to start adding learning materials, quizzes, and situational assessments."}
               </p>
             </div>
           </>
         ) : (
           <div className="w-full max-w-3xl flex flex-col items-center">
             {localizedFlows.map((flow, index) => (
-              <SequenceCard 
+              <SequenceCard
                 key={flow.id}
                 flow={flow}
                 index={index}
@@ -220,23 +266,26 @@ export default function SequenceCanvas({
                 moduleStatus={moduleStatus}
               />
             ))}
-            
-            {/* Final Add Node connection */}
+
             <div className="h-10 border-l-2 border-dashed border-gray-300"></div>
-            <button className="w-10 h-10 bg-white border-2 border-dashed border-gray-300 text-gray-400 rounded-full flex items-center justify-center hover:border-red-400 hover:text-red-500 hover:bg-red-50 transition-all z-10 shadow-sm cursor-default" title="Use builder panel to add content">
-               <HugeiconsIcon icon={Add01Icon} className="w-5 h-5" />
+            <button
+              className="w-10 h-10 bg-white border-2 border-dashed border-gray-300 text-gray-400 rounded-full flex items-center justify-center hover:border-red-400 hover:text-red-500 hover:bg-red-50 transition-all z-10 shadow-sm cursor-default"
+              title="Use builder panel to add content"
+            >
+              <HugeiconsIcon icon={Add01Icon} className="w-5 h-5" />
             </button>
           </div>
         )}
       </div>
-      
+
       <ConfirmationModal
         isOpen={!!stepToDelete}
         onClose={() => setStepToDelete(null)}
         onConfirm={() => {
           if (stepToDelete) {
-            const updated = stagedFlows.filter(f => f.id !== stepToDelete.id);
+            const updated = stagedFlows.filter((f) => f.id !== stepToDelete.id);
             setStagedFlows(updated);
+            toast.success(`Step "${stepToDelete.title}" removed successfully`);
             setStepToDelete(null);
           }
         }}

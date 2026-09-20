@@ -104,10 +104,11 @@ export default function ModuleDetailsPage() {
     }
   };
 
+  const moduleLevels = data?.levels;
   const totalSteps = useMemo(() => {
-    if (!data?.levels) return 0;
-    return data.levels.reduce((acc, lvl) => acc + (lvl.steps?.length || 0), 0);
-  }, [data?.levels]);
+    if (!moduleLevels) return 0;
+    return moduleLevels.reduce((acc, lvl) => acc + (lvl.steps?.length || 0), 0);
+  }, [moduleLevels]);
 
   if (isLoading) {
     return (
@@ -155,11 +156,10 @@ export default function ModuleDetailsPage() {
   const isEnrolled = Boolean(module.is_enrolled);
   const currentProgress = parseInt(module.progress || 0, 10);
   const isCompleted = isEnrolled && (module.status === "Completed" || currentProgress === 100);
+  const isLocked = !isAdmin && !isEnrolled && Boolean(module.is_locked);
 
   return (
     <div className="max-w-7xl mx-auto space-y-6 animate-in fade-in duration-200">
-      
-      {/* Back Navigation */}
       <div>
         <button 
           onClick={handleBack}
@@ -172,16 +172,14 @@ export default function ModuleDetailsPage() {
         </button>
       </div>
 
-      {/* Module Cover & Header Profile (IBM SkillsBuild course overview pattern) */}
       <div className="bg-white rounded-2xl border border-gray-200/80 shadow-sm overflow-hidden grid grid-cols-1 md:grid-cols-12 gap-6 p-6 md:p-8 items-center">
-        {/* Cover Thumbnail / Fixed Height Cap */}
         <div className="md:col-span-4 h-48 sm:h-52 w-full bg-gray-50 border border-gray-100 rounded-xl overflow-hidden relative flex items-center justify-center text-gray-400 shrink-0">
           {module.image_url ? (
             <img 
               src={resolveImageUrl(module.image_url)} 
               alt={module.modname} 
               referrerPolicy="no-referrer"
-              className="w-full h-full object-cover"
+              className={`w-full h-full object-cover ${isLocked ? "grayscale opacity-75" : ""}`}
             />
           ) : (
             <div className="flex flex-col items-center justify-center p-4 text-center">
@@ -191,14 +189,25 @@ export default function ModuleDetailsPage() {
               <span className="text-xs font-medium text-gray-400">Course Resource</span>
             </div>
           )}
+
+          {isLocked && (
+            <div className="absolute inset-0 bg-gray-950/40 backdrop-blur-[2px] flex items-center justify-center">
+              <div className="w-12 h-12 rounded-full bg-white/90 text-gray-700 flex items-center justify-center shadow-lg">
+                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                  <path d="M7 11V7a5 5 0 0110 0v4" />
+                </svg>
+              </div>
+            </div>
+          )}
         </div>
 
-        {/* Content & Metadata */}
         <div className="md:col-span-8 flex flex-col justify-between space-y-4">
           <div className="space-y-2">
-            {/* Plain metadata text instead of noisy candy pills */}
             <div className="flex flex-wrap items-center gap-2 text-xs text-gray-500">
               <span className="font-semibold text-gray-800">{module.modcat || "General"}</span>
+              <span className="text-gray-300">·</span>
+              <span className="font-medium text-gray-600">{module.level || "Beginner"}</span>
               <span className="text-gray-300">·</span>
               <span>{module.duration || "Self-paced"}</span>
               {isCompleted && (
@@ -219,12 +228,11 @@ export default function ModuleDetailsPage() {
           </div>
 
           <div className="space-y-3.5">
-            {/* Integrated Progress Indicator */}
             <div className="w-full space-y-1.5">
               <div className="flex justify-between items-center text-xs">
                 <span className="font-medium text-gray-500">Course Progress</span>
                 <span className={`font-semibold ${isCompleted ? "text-emerald-600" : isEnrolled ? "text-gray-700" : "text-gray-400"}`}>
-                  {isEnrolled ? `${currentProgress}%` : "Not Enrolled"}
+                  {isEnrolled ? `${currentProgress}%` : isLocked ? "Locked" : "Not Enrolled"}
                 </span>
               </div>
               <div className="h-2 w-full overflow-hidden rounded-full bg-gray-100">
@@ -237,7 +245,6 @@ export default function ModuleDetailsPage() {
               </div>
             </div>
 
-            {/* Action Button */}
             <div className="pt-0.5">
               {isAdmin ? (
                 <button 
@@ -250,6 +257,17 @@ export default function ModuleDetailsPage() {
                   </svg>
                   <span>Preview Module (Read-Only)</span>
                 </button>
+              ) : isLocked ? (
+                <div className="inline-flex flex-col sm:flex-row sm:items-center gap-2.5 bg-amber-50 border border-amber-200 px-4 py-3 rounded-xl">
+                  <div className="flex items-center gap-2 text-amber-800 text-sm font-semibold">
+                    <svg className="w-4 h-4 text-amber-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                      <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                      <path d="M7 11V7a5 5 0 0110 0v4" />
+                    </svg>
+                    <span>Prerequisite Required</span>
+                  </div>
+                  <span className="text-xs text-amber-700">{module.lock_reason || "Complete foundational modules to unlock."}</span>
+                </div>
               ) : !isEnrolled ? (
                 <button 
                   onClick={handleEnroll}
@@ -286,7 +304,6 @@ export default function ModuleDetailsPage() {
         </div>
       </div>
 
-      {/* Description Panel */}
       <div className="bg-white p-6 rounded-2xl border border-gray-200/80 shadow-sm space-y-3">
         <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
           Course Synopsis
@@ -297,7 +314,6 @@ export default function ModuleDetailsPage() {
         />
       </div>
 
-      {/* Level Sequence & Syllabus (Clean roadmap, no side-tab antipattern) */}
       <div className="space-y-4">
         <div className="flex items-center justify-between pb-1 border-b border-gray-200">
           <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wider">
@@ -314,8 +330,6 @@ export default function ModuleDetailsPage() {
               key={lvl.level_id} 
               className="bg-white border border-gray-200/80 rounded-2xl overflow-hidden shadow-sm"
             >
-              
-              {/* Level Header Info: Fixed badge wrapping and plain text metadata */}
               <div className="bg-gray-50/70 px-5 py-4 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                 <div className="min-w-0 space-y-0.5">
                   <div className="flex items-center gap-2.5 min-w-0">
@@ -334,7 +348,6 @@ export default function ModuleDetailsPage() {
                   )}
                 </div>
 
-                {/* Level Threshold Settings as clean plain metadata instead of loud colored pill badges */}
                 <div className="flex items-center gap-3 text-xs text-gray-500 shrink-0">
                   <span className="flex items-center gap-1">
                     Passing score: <strong className="font-semibold text-gray-700">{lvl.passing_threshold || 80}%</strong>
@@ -354,7 +367,6 @@ export default function ModuleDetailsPage() {
                 </div>
               </div>
 
-              {/* Steps inside this Level */}
               <div className="divide-y divide-gray-100 bg-white">
                 {lvl.steps && lvl.steps.length > 0 ? (
                   lvl.steps.map((step) => {
@@ -374,7 +386,6 @@ export default function ModuleDetailsPage() {
                               {decodeHtml(step.step_title)}
                             </p>
                             
-                            {/* Flags only when non-standard (e.g. final exam, loop-back) */}
                             {(step.is_final_assessment || step.loop_back_step_id) && (
                               <div className="flex items-center gap-1.5 mt-1">
                                 {step.is_final_assessment && (
@@ -392,7 +403,6 @@ export default function ModuleDetailsPage() {
                           </div>
                         </div>
 
-                        {/* Step Type as clean text metadata with icon */}
                         <div className="shrink-0 flex items-center gap-1.5 text-xs text-gray-500 font-medium">
                           <StepIcon type={step.step_type} />
                           <span>{typeMeta.label}</span>
@@ -404,7 +414,6 @@ export default function ModuleDetailsPage() {
                   <p className="text-xs text-gray-400 italic p-5">No content steps configured in this level.</p>
                 )}
               </div>
-
             </div>
           ))}
         </div>

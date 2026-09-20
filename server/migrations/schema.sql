@@ -2008,8 +2008,19 @@ ALTER TABLE ONLY rate_limit.records_aggregated
 -- Name: SCHEMA public; Type: ACL; Schema: -; Owner: postgres
 --
 
+ALTER TABLE public.announcements ADD COLUMN priority VARCHAR(20) NOT NULL DEFAULT 'standard';
+
 REVOKE USAGE ON SCHEMA public FROM PUBLIC;
 GRANT ALL ON SCHEMA public TO PUBLIC;
+
+
+
+ALTER TABLE public.module_data
+DROP CONSTRAINT IF EXISTS valid_modcat;
+
+ALTER TABLE public.module_data
+ADD CONSTRAINT valid_modcat
+CHECK (modcat IN ('Fundamentals', 'Flood', 'Earthquake', 'Fire', 'General'));
 
 
 -- Completed on 2026-08-21 15:49:58

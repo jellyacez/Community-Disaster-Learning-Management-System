@@ -175,3 +175,55 @@ html.dark .bg-red-50 {
 html.dark .bg-red-100 {
   background-color: rgba(127, 29, 29, 0.5) !important;
 }
+
+.auth-isolated,
+.auth-isolated * {
+  color-scheme: light !important;
+}
+
+html.dark .auth-isolated .bg-white {
+  background-color: #ffffff !important;
+}
+
+html.dark .auth-isolated .text-gray-900 {
+  color: #111827 !important;
+}
+
+html.dark .auth-isolated .text-gray-800 {
+  color: #1f2937 !important;
+}
+
+html.dark .auth-isolated .text-gray-700 {
+  color: #374151 !important;
+}
+
+html.dark .auth-isolated .text-gray-600 {
+  color: #4b5563 !important;
+}
+
+html.dark .auth-isolated .text-gray-500 {
+  color: #6b7280 !important;
+}
+
+html.dark .auth-isolated .text-gray-400 {
+  color: #9ca3af !important;
+}
+
+html.dark .auth-isolated .border-gray-100 {
+  border-color: #f3f4f6 !important;
+}
+
+html.dark .auth-isolated .border-gray-200,
+html.dark .auth-isolated .border-gray-300 {
+  border-color: #d1d5db !important;
+}
+
+html.dark .auth-isolated input:not([type="checkbox"]):not([type="radio"]) {
+  background-color: #ffffff !important;
+  color: #111827 !important;
+  border-color: #d1d5db !important;
+}
+
+html.dark .auth-isolated input::placeholder {
+  color: #9ca3af !important;
+}

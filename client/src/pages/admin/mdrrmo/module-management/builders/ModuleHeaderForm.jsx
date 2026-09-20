@@ -148,6 +148,7 @@ export default function ModuleHeaderForm({ moduleForm, setModuleForm, formErrors
               onChange={(e) => handleFieldChange('category', e.target.value)} 
               className="w-full py-2 px-3 bg-gray-50 hover:bg-gray-100 border border-transparent focus:border-red-200 focus:bg-white focus:ring-4 focus:ring-red-500/10 text-gray-900 rounded-lg text-xs font-bold transition-all outline-none cursor-pointer appearance-none"
             >
+              <option value="Fundamentals">Fundamentals (Prerequisite Baseline)</option>
               <option value="Flood">Flood</option>
               <option value="Earthquake">Earthquake</option>
               <option value="Fire">Fire</option>
