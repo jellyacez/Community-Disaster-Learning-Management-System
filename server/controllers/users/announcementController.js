@@ -1,7 +1,7 @@
 const pool = require("../../config/db");
 const { UNSCOPED_ACCESS_ROLES } = require("../../config/permissions");
 
-// @desc    Get paginated announcements
+// @desc    Get paginated announcements with separated annual advisory numbering (Urgent & Standard)
 // @access  Private
 exports.getPaginatedAnnouncements = async (req, res) => {
   try {
@@ -20,18 +20,29 @@ exports.getPaginatedAnnouncements = async (req, res) => {
       countQuery = await pool.query("SELECT COUNT(*) FROM announcements");
       announcementsQuery = await pool.query(
         `
-        SELECT 
-          a.id, 
-          a.title, 
-          a.content, 
-          a.priority,
-          a.date, 
-          u.name AS author_name
-        FROM announcements a
-        JOIN "user" u ON a.author_id = u.id
+        WITH numbered_announcements AS (
+          SELECT 
+            a.id, 
+            a.title, 
+            a.content, 
+            a.priority,
+            a.date, 
+            a.barangay_id,
+            u.name AS author_name,
+            /* Independent sequence for urgent vs standard resetting each calendar year */
+            ROW_NUMBER() OVER (
+              PARTITION BY a.priority, EXTRACT(YEAR FROM a.date) 
+              ORDER BY a.date ASC, a.id ASC
+            ) AS advisory_number
+          FROM announcements a
+          JOIN "user" u ON a.author_id = u.id
+        )
+        SELECT *
+        FROM numbered_announcements
         ORDER BY 
-          CASE WHEN a.priority = 'urgent' THEN 0 ELSE 1 END,
-          a.date DESC
+          /* Urgent announcements take first slots (0 before 1), ordered sequentially */
+          CASE WHEN priority = 'urgent' THEN 0 ELSE 1 END ASC,
+          advisory_number ASC
         LIMIT $1 OFFSET $2
         `,
         [limit, offset]
@@ -43,19 +54,28 @@ exports.getPaginatedAnnouncements = async (req, res) => {
       );
       announcementsQuery = await pool.query(
         `
-        SELECT 
-          a.id, 
-          a.title, 
-          a.content, 
-          a.priority,
-          a.date, 
-          u.name AS author_name
-        FROM announcements a
-        JOIN "user" u ON a.author_id = u.id
-        WHERE a.barangay_id = $1 OR a.barangay_id IS NULL
+        WITH numbered_announcements AS (
+          SELECT 
+            a.id, 
+            a.title, 
+            a.content, 
+            a.priority,
+            a.date, 
+            a.barangay_id,
+            u.name AS author_name,
+            ROW_NUMBER() OVER (
+              PARTITION BY a.priority, EXTRACT(YEAR FROM a.date) 
+              ORDER BY a.date ASC, a.id ASC
+            ) AS advisory_number
+          FROM announcements a
+          JOIN "user" u ON a.author_id = u.id
+          WHERE a.barangay_id = $1 OR a.barangay_id IS NULL
+        )
+        SELECT *
+        FROM numbered_announcements
         ORDER BY 
-          CASE WHEN a.priority = 'urgent' THEN 0 ELSE 1 END,
-          a.date DESC
+          CASE WHEN priority = 'urgent' THEN 0 ELSE 1 END ASC,
+          advisory_number ASC
         LIMIT $2 OFFSET $3
         `,
         [barangayId, limit, offset]
@@ -66,19 +86,28 @@ exports.getPaginatedAnnouncements = async (req, res) => {
       );
       announcementsQuery = await pool.query(
         `
-        SELECT 
-          a.id, 
-          a.title, 
-          a.content, 
-          a.priority,
-          a.date, 
-          u.name AS author_name
-        FROM announcements a
-        JOIN "user" u ON a.author_id = u.id
-        WHERE a.barangay_id IS NULL
+        WITH numbered_announcements AS (
+          SELECT 
+            a.id, 
+            a.title, 
+            a.content, 
+            a.priority,
+            a.date, 
+            a.barangay_id,
+            u.name AS author_name,
+            ROW_NUMBER() OVER (
+              PARTITION BY a.priority, EXTRACT(YEAR FROM a.date) 
+              ORDER BY a.date ASC, a.id ASC
+            ) AS advisory_number
+          FROM announcements a
+          JOIN "user" u ON a.author_id = u.id
+          WHERE a.barangay_id IS NULL
+        )
+        SELECT *
+        FROM numbered_announcements
         ORDER BY 
-          CASE WHEN a.priority = 'urgent' THEN 0 ELSE 1 END,
-          a.date DESC
+          CASE WHEN priority = 'urgent' THEN 0 ELSE 1 END ASC,
+          advisory_number ASC
         LIMIT $1 OFFSET $2
         `,
         [limit, offset]
@@ -89,18 +118,20 @@ exports.getPaginatedAnnouncements = async (req, res) => {
     const totalPages = Math.ceil(total / limit);
 
     const announcements = announcementsQuery.rows.map((a) => {
-      const date = new Date(a.date);
+      const dateObj = new Date(a.date);
       return {
         id: a.id,
+        advisory_number: parseInt(a.advisory_number, 10),
         title: a.title,
         content: a.content,
         priority: a.priority || "standard",
-        date: date.toLocaleDateString("en-US", {
+        barangay_id: a.barangay_id,
+        created_at: a.date, // Preserves raw timestamp for 48h recency calculations
+        date: dateObj.toLocaleDateString("en-US", {
           month: "short",
           day: "numeric",
           year: "numeric",
         }),
-        author: a.author_name,
       };
     });
 

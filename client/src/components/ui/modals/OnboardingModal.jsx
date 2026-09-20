@@ -7,17 +7,33 @@ import { useQueryClient, useQuery } from "@tanstack/react-query";
 import apiClient from "../../../lib/apiClient";
 
 const DEFAULT_BACOLOR_BARANGAYS = [
-  "Balas", "Cabalantian", "Cabambangan", "Cabetican", "Calibutbut",
-  "Concepcion", "Dolores", "Duat", "Macabacle", "Magliman",
-  "Maliwalu", "Mesalipit", "Paralayunan", "Potrero", "San Antonio",
-  "San Isidro", "San Vicente", "Santa Barbara", "Santa Ines",
-  "Talba", "Tinajero"
+  { id: 1, name: "Balas" },
+  { id: 2, name: "Cabalantian" },
+  { id: 3, name: "Cabambangan" },
+  { id: 4, name: "Cabetican" },
+  { id: 5, name: "Calibutbut" },
+  { id: 6, name: "Concepcion" },
+  { id: 7, name: "Dolores" },
+  { id: 8, name: "Duat" },
+  { id: 9, name: "Macabacle" },
+  { id: 10, name: "Magliman" },
+  { id: 11, name: "Maliwalu" },
+  { id: 12, name: "Mesalipit" },
+  { id: 13, name: "Paralayunan" },
+  { id: 14, name: "Potrero" },
+  { id: 15, name: "San Antonio" },
+  { id: 16, name: "San Isidro" },
+  { id: 17, name: "San Vicente" },
+  { id: 18, name: "Santa Barbara" },
+  { id: 19, name: "Santa Ines" },
+  { id: 20, name: "Talba" },
+  { id: 21, name: "Tinajero" }
 ];
 
 export default function OnboardingModal({ currentUser }) {
   const queryClient = useQueryClient();
   const [onboardingName, setOnboardingName] = useState(currentUser?.name || "");
-  const [onboardingBarangay, setOnboardingBarangay] = useState("");
+  const [selectedBarangay, setSelectedBarangay] = useState(null);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isSubmittingOnboarding, setIsSubmittingOnboarding] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
@@ -29,10 +45,17 @@ export default function OnboardingModal({ currentUser }) {
       return res.data;
     },
     select: (data) => {
-      // Handles data whether returned as [{name: '...'}], ['...'], or wrapped in { data: [...] }
       const list = Array.isArray(data) ? data : data?.data || data?.barangays || [];
       if (!list.length) return DEFAULT_BACOLOR_BARANGAYS;
-      return list.map((b) => (typeof b === "string" ? b : b.name || b.barangay_name || b));
+      return list.map((b, idx) => {
+        if (typeof b === "string") {
+          return { id: idx + 1, name: b.trim() };
+        }
+        return {
+          id: b.id ?? b.barangay_id ?? idx + 1,
+          name: (b.name || b.barangay_name || "").trim()
+        };
+      });
     },
     enabled: !isSuccess && !!currentUser && (!currentUser.name || !currentUser.barangay_id)
   });
@@ -45,16 +68,19 @@ export default function OnboardingModal({ currentUser }) {
       toast.error("Please enter your Full Name");
       return;
     }
-    if (!onboardingBarangay) {
+    if (!selectedBarangay) {
       toast.error("Please select a Barangay to continue");
       return;
     }
 
     setIsSubmittingOnboarding(true);
     try {
+      // Sends all expected shape variations (name, barangay_id, barangayId)
       await apiClient.post("/users/onboarding", {
         name: onboardingName.trim(),
-        barangay: onboardingBarangay
+        barangay: selectedBarangay.name,
+        barangay_id: selectedBarangay.id,
+        barangayId: selectedBarangay.id
       });
 
       toast.success("Profile completed successfully!");
@@ -62,7 +88,12 @@ export default function OnboardingModal({ currentUser }) {
       queryClient.invalidateQueries({ queryKey: ["userDashboard"] });
       queryClient.invalidateQueries({ queryKey: ["session"] });
     } catch (err) {
-      toast.error(err.response?.data?.message || err.message || "Failed to update profile");
+      toast.error(
+        err.response?.data?.message ||
+        err.response?.data?.error ||
+        err.message ||
+        "Failed to update profile"
+      );
       setIsSubmittingOnboarding(false);
     }
   };
@@ -110,8 +141,8 @@ export default function OnboardingModal({ currentUser }) {
                 onClick={() => setIsDropdownOpen((prev) => !prev)}
                 className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-left focus:ring-2 focus:ring-red-500 outline-none transition flex items-center justify-between"
               >
-                <span className={onboardingBarangay ? "text-gray-900 font-medium" : "text-gray-400"}>
-                  {onboardingBarangay || "Select your Barangay"}
+                <span className={selectedBarangay ? "text-gray-900 font-medium" : "text-gray-400"}>
+                  {selectedBarangay ? selectedBarangay.name : "Select your Barangay"}
                 </span>
                 <HugeiconsIcon
                   icon={ArrowDown01Icon}
@@ -135,19 +166,19 @@ export default function OnboardingModal({ currentUser }) {
                     ) : (
                       barangays.map((brgy) => (
                         <button
-                          key={brgy}
+                          key={brgy.id || brgy.name}
                           type="button"
                           onClick={() => {
-                            setOnboardingBarangay(brgy);
+                            setSelectedBarangay(brgy);
                             setIsDropdownOpen(false);
                           }}
                           className={`w-full text-left px-4 py-3 hover:bg-red-50 transition-colors text-sm ${
-                            onboardingBarangay === brgy
+                            selectedBarangay?.id === brgy.id || selectedBarangay?.name === brgy.name
                               ? "bg-red-50 text-red-700 font-semibold"
                               : "text-gray-700"
                           }`}
                         >
-                          {brgy}
+                          {brgy.name}
                         </button>
                       ))
                     )}

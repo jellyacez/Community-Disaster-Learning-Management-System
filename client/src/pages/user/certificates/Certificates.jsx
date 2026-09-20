@@ -50,13 +50,7 @@ export default function UserCertificates() {
               <HugeiconsIcon icon={CheckmarkCircle02Icon} className="w-3.5 h-3.5 text-green-600" />
               <span>{activeCount} Active Credential{activeCount === 1 ? '' : 's'}</span>
             </div>
-          )}
-          <Link
-            to="/user/modules"
-            className="inline-flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl text-sm transition-all shadow-sm cursor-pointer"
-          >
-            <span>Earn Certifications</span>
-          </Link>
+          )}  
         </div>
       </div>
 

@@ -54,11 +54,6 @@ const navItems = [
     ),
   },
   {
-    path: "/user/profile",
-    label: "User Profile",
-    icon: <HugeiconsIcon aria-hidden="true" icon={UserIcon} className="w-5 h-5" />,
-  },
-  {
     path: "/user/settings",
     label: "Settings",
     icon: <HugeiconsIcon aria-hidden="true" icon={Settings01Icon} className="w-5 h-5" />,

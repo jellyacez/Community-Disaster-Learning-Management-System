@@ -29,12 +29,25 @@ class UserService {
       throw new Error("ALREADY_ONBOARDED: Profile setup is a one-time action. Contact your administrator to change your barangay assignment.");
     }
 
-    const bRes = await pool.query('SELECT id FROM barangays WHERE name = $1', [barangay]);
-    const barangayId = bRes.rows.length > 0 ? bRes.rows[0].id : null;
+    // Flexible lookup: accepts numeric ID, integer string, or case-insensitive/trimmed name
+    let barangayId = null;
+
+    if (!isNaN(barangay) && Number.isInteger(Number(barangay))) {
+      const bRes = await pool.query('SELECT id FROM barangays WHERE id = $1', [Number(barangay)]);
+      barangayId = bRes.rows.length > 0 ? bRes.rows[0].id : null;
+    } else {
+      const cleanName = String(barangay).trim();
+      const bRes = await pool.query(
+        'SELECT id FROM barangays WHERE LOWER(TRIM(name)) = LOWER($1)',
+        [cleanName]
+      );
+      barangayId = bRes.rows.length > 0 ? bRes.rows[0].id : null;
+    }
+
     if (!barangayId) throw new Error("INVALID_BARANGAY");
 
     await pool.query(`UPDATE "user" SET name = $1, barangay_id = $2 WHERE id = $3`, [
-      name,
+      name.trim(),
       barangayId,
       userId,
     ]);
@@ -257,7 +270,6 @@ class UserService {
   }
 
   async updateUserSettings(userId, newSettings) {
-    // Merge new settings with existing settings
     const { rows } = await pool.query('SELECT settings FROM "user" WHERE id = $1', [userId]);
     const currentSettings = (rows.length > 0 && rows[0].settings) ? rows[0].settings : { announcements: true, reminders: true };
     

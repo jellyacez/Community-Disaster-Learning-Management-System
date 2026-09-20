@@ -66,6 +66,17 @@ export default function ModuleBuilderWizard({
     handleEditStep,
   } = actions;
 
+  // Sync uploaded photo directly into the active level inside stagedLevels
+  const handleUpdateLevelImage = (targetLevelOrder, newCoverImage) => {
+    setStagedLevels((prevLevels) =>
+      prevLevels.map((lvl) =>
+        lvl.levelOrder === targetLevelOrder
+          ? { ...lvl, cover_image: newCoverImage, coverImage: newCoverImage }
+          : lvl
+      )
+    );
+  };
+
   useEffect(() => {
     if (formErrors.flows || formErrors.levelTitle) {
       const timer = setTimeout(() => {
@@ -250,6 +261,14 @@ export default function ModuleBuilderWizard({
                     handleEditStep={handleEditStep}
                     formError={formErrors.flows}
                     moduleStatus={moduleForm.status}
+                    currentCoverImage={
+                      stagedLevels.find((l) => l.levelOrder === activeLevelOrder)?.cover_image ||
+                      stagedLevels.find((l) => l.levelOrder === activeLevelOrder)?.coverImage ||
+                      null
+                    }
+                    onUpdateCoverImage={(newImg) =>
+                      handleUpdateLevelImage(activeLevelOrder, newImg)
+                    }
                   />
                   {formErrors.flows &&
                     stagedFlows.filter(

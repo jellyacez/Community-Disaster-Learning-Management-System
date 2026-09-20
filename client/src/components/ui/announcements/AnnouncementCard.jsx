@@ -1,99 +1,89 @@
-import { memo } from "react";
+import { memo, useMemo } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
-  Megaphone01Icon,
   Calendar01Icon,
-  UserCircleIcon,
   Alert01Icon,
 } from "@hugeicons/core-free-icons";
 
 const AnnouncementCard = memo(function AnnouncementCard({ item }) {
-  const isUrgent = item.priority === "urgent";
+  const isUrgent = item?.priority === "urgent";
+
+  // Use the yearly sequence from DB or fall back to item.id
+  const seqNum = item?.advisory_number || item?.id || 1;
+  const advisoryLabel = `Advisory #${seqNum}`;
+
+  // Check if announcement was posted within the last 48 hours
+  const isNew = useMemo(() => {
+    const postDate = new Date(item?.date || item?.created_at || Date.now());
+    const hoursSince = (Date.now() - postDate.getTime()) / (1000 * 60 * 60);
+    return hoursSince <= 48;
+  }, [item?.date, item?.created_at]);
+
+  const formattedDate = useMemo(() => {
+    const d = item?.date || item?.created_at;
+    if (!d) return "";
+    return new Date(d).toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
+  }, [item?.date, item?.created_at]);
 
   return (
-    <div
-      className={`group relative overflow-hidden rounded-2xl p-6 shadow-sm ring-1 transition-all hover:-translate-y-0.5 hover:shadow-md ${
+    <article
+      className={`relative flex flex-col rounded-2xl bg-white dark:bg-slate-900 border p-5 sm:p-6 transition-all duration-150 shadow-sm ${
         isUrgent
-          ? "bg-red-50/60 dark:bg-red-950/20 ring-red-300 dark:ring-red-900/50 border border-red-200 dark:border-red-900/40"
-          : "bg-white dark:bg-slate-900 ring-gray-200 dark:ring-slate-800"
+          ? "border-red-300 dark:border-red-900/60"
+          : "border-gray-200 dark:border-slate-800"
       }`}
     >
-      {isUrgent && (
-        <>
-          <div className="absolute left-0 top-0 h-full w-2 bg-red-600" />
-          <div className="absolute top-0 left-0 right-0 h-1 bg-red-500" />
-        </>
-      )}
-
-      <div className="flex gap-5">
-        <div
-          className={`hidden sm:flex h-12 w-12 shrink-0 items-center justify-center rounded-full ring-4 ring-white dark:ring-slate-900 shadow-sm transition-transform duration-300 group-hover:scale-110 ${
-            isUrgent
-              ? "bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-400"
-              : "bg-red-50 dark:bg-slate-800 text-red-600 dark:text-red-400"
-          }`}
-        >
-          <HugeiconsIcon icon={Megaphone01Icon} className="h-6 w-6" />
-        </div>
-
-        <div className="flex-1">
-          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-3">
-            <div className="flex-1">
-              <div className="flex flex-wrap items-center gap-2 mb-2">
-                {isUrgent && (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-red-600 px-3 py-1 text-[10px] font-black uppercase tracking-wider text-white shadow-sm">
-                    <HugeiconsIcon icon={Alert01Icon} className="h-3.5 w-3.5" />
-                    Urgent
-                  </span>
-                )}
-              </div>
-
-              <h2
-                className={`text-lg font-extrabold leading-tight transition-colors ${
-                  isUrgent
-                    ? "text-red-900 dark:text-red-200 group-hover:text-red-950 dark:group-hover:text-white"
-                    : "text-gray-900 dark:text-white group-hover:text-red-700 dark:group-hover:text-red-400"
-                }`}
-              >
-                {item.title}
-              </h2>
-
-              <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs font-semibold text-gray-500 dark:text-slate-400">
-                <div className="flex items-center gap-1.5">
-                  <HugeiconsIcon
-                    icon={UserCircleIcon}
-                    className="h-4 w-4 text-gray-400 dark:text-slate-500"
-                  />
-                  <span>{item.author || item.author_name || "Bacolor Admin"}</span>
-                </div>
-
-                <div className="flex items-center gap-1.5">
-                  <HugeiconsIcon
-                    icon={Calendar01Icon}
-                    className="h-4 w-4 text-gray-400 dark:text-slate-500"
-                  />
-                  <span>{item.date || item.created_at}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {isUrgent && (
-            <p className="mb-3 text-xs font-bold uppercase tracking-wide text-red-700 dark:text-red-400">
-              High-priority advisory requiring immediate resident attention
-            </p>
-          )}
-
-          <div
-            className={`text-sm leading-relaxed ${
-              isUrgent ? "text-gray-800 dark:text-slate-300" : "text-gray-600 dark:text-slate-300"
+      {/* Top Advisory Pill Header */}
+      <div className="flex flex-wrap items-center justify-between gap-2 pb-3 mb-3 border-b border-gray-100 dark:border-slate-800">
+        <div className="flex items-center gap-2">
+          {/* Simple Clean Pill: Advisory # with New indicator */}
+          <span
+            className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold ${
+              isNew
+                ? "bg-red-50 text-red-700 border border-red-200 dark:bg-red-950/40 dark:text-red-300 dark:border-red-800"
+                : "bg-gray-100 text-gray-700 border border-gray-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700"
             }`}
           >
-            {item.content}
-          </div>
+            <span
+              className={`h-1.5 w-1.5 rounded-full ${
+                isNew ? "bg-red-600 animate-pulse" : "bg-gray-400"
+              }`}
+            />
+            {advisoryLabel} {isNew && "• New"}
+          </span>
+
+          {/* Urgent Badge */}
+          {isUrgent && (
+            <span className="inline-flex items-center gap-1 rounded-full bg-red-600 px-2.5 py-0.5 text-[11px] font-bold text-white uppercase tracking-wider">
+              <HugeiconsIcon icon={Alert01Icon} className="h-3 w-3" />
+              Urgent
+            </span>
+          )}
         </div>
+
+        {/* Date */}
+        {formattedDate && (
+          <div className="flex items-center gap-1.5 text-xs text-gray-400">
+            <HugeiconsIcon icon={Calendar01Icon} className="w-3.5 h-3.5" />
+            <time dateTime={item?.date || item?.created_at}>{formattedDate}</time>
+          </div>
+        )}
       </div>
-    </div>
+
+      {/* Title & Body (Author/Issuer footer intentionally removed) */}
+      <div className="space-y-1.5">
+        <h2 className="text-lg font-bold text-gray-900 dark:text-white leading-snug">
+          {item?.title}
+        </h2>
+        <p className="text-sm text-gray-600 dark:text-slate-300 leading-relaxed whitespace-pre-line">
+          {item?.content}
+        </p>
+      </div>
+    </article>
   );
 });
 

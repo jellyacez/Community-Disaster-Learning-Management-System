@@ -203,7 +203,7 @@ class ModuleService {
     }
 
     const levelsRes = await pool.query(
-      `SELECT level_id, level_order, level_title, level_description, passing_threshold, is_locked_by_default
+      `SELECT level_id, level_order, level_title, level_description, passing_threshold, is_locked_by_default, cover_image
        FROM public.levels
        WHERE mod_id = $1
        ORDER BY level_order ASC`,
@@ -245,20 +245,25 @@ class ModuleService {
       const mod_id = moduleCreation.rows[0].mod_id;
 
       for (const lvl of levels) {
-        const finalAssessmentsCount = lvl.steps.filter(s => s.is_final_assessment).length;
+        // Guard against multiple final assessments per level
+        const finalAssessmentsCount = (lvl.steps || []).filter(s => s.is_final_assessment).length;
         if (finalAssessmentsCount > 1) {
           throw new Error(`Validation Error: Level "${lvl.levelTitle || lvl.levelOrder}" contains multiple Final Assessments. Only one final assessment is permitted per level.`);
         }
+
+        const coverImage = lvl.cover_image || lvl.coverImage || null;
+
         const levelRes = await client.query(
-          `INSERT INTO public.levels (mod_id, level_order, level_title, level_description, passing_threshold, is_locked_by_default)
-           VALUES ($1, $2, $3, $4, $5, $6) RETURNING level_id`,
-          [mod_id, lvl.levelOrder, lvl.levelTitle, cleanRichText(lvl.levelDescription || ""), lvl.passing_threshold || 80, lvl.is_locked_by_default ?? true]
+          `INSERT INTO public.levels (mod_id, level_order, level_title, level_description, passing_threshold, is_locked_by_default, cover_image)
+           VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING level_id`,
+          [mod_id, lvl.levelOrder, lvl.levelTitle, cleanRichText(lvl.levelDescription || ""), lvl.passing_threshold || 80, lvl.is_locked_by_default ?? true, coverImage]
         );
         const level_id = levelRes.rows[0].level_id;
 
         let lastLearningStepId = null;
 
-        for (const step of lvl.steps) {
+        for (const step of (lvl.steps || [])) {
+          // Calculate loop_back_step_id if it's a quiz
           let loopBackId = null;
           if ((step.stepType === 'quiz' || step.stepType === 'situational') && lastLearningStepId) {
              loopBackId = lastLearningStepId;
@@ -396,10 +401,12 @@ class ModuleService {
           throw new Error(`Validation Error: Level "${lvl.levelTitle || lvl.levelOrder}" contains multiple Final Assessments. Only one final assessment is permitted per level.`);
         }
 
+        const coverImage = lvl.cover_image || lvl.coverImage || null;
+
         const levelRes = await client.query(
-          `INSERT INTO public.levels (mod_id, level_order, level_title, level_description, passing_threshold, is_locked_by_default)
-           VALUES ($1, $2, $3, $4, $5, $6) RETURNING level_id`,
-          [mod_id, lvl.levelOrder, lvl.levelTitle, cleanRichText(lvl.levelDescription || ""), lvl.passing_threshold || 80, lvl.is_locked_by_default ?? true]
+          `INSERT INTO public.levels (mod_id, level_order, level_title, level_description, passing_threshold, is_locked_by_default, cover_image)
+           VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING level_id`,
+          [mod_id, lvl.levelOrder, lvl.levelTitle, cleanRichText(lvl.levelDescription || ""), lvl.passing_threshold || 80, lvl.is_locked_by_default ?? true, coverImage]
         );
         const level_id = levelRes.rows[0].level_id;
 
@@ -542,7 +549,7 @@ class ModuleService {
     if (moduleResult.rowCount === 0) return null;
 
     const levelsResult = await pool.query(
-      `SELECT level_id as id, level_order, level_title as title, level_description as description, passing_threshold, is_locked_by_default
+      `SELECT level_id as id, level_order, level_title as title, level_description as description, passing_threshold, is_locked_by_default, cover_image
        FROM levels WHERE mod_id = $1 ORDER BY level_order ASC`,
       [mod_id]
     );
@@ -639,7 +646,7 @@ class ModuleService {
     const moduleData = modRes.rows[0];
 
     const levelsRes = await pool.query(
-      `SELECT level_id, level_order, level_title, level_description, passing_threshold, is_locked_by_default
+      `SELECT level_id, level_order, level_title, level_description, passing_threshold, is_locked_by_default, cover_image
        FROM public.levels
        WHERE mod_id = $1
        ORDER BY level_order ASC`,
@@ -723,6 +730,8 @@ class ModuleService {
         levelDescription: lvl.level_description,
         passing_threshold: lvl.passing_threshold,
         is_locked_by_default: lvl.is_locked_by_default,
+        cover_image: lvl.cover_image,
+        coverImage: lvl.cover_image,
         steps: lvlSteps
       };
     });

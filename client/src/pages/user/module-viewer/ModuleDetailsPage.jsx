@@ -104,10 +104,11 @@ export default function ModuleDetailsPage() {
     }
   };
 
+  const moduleLevels = data?.levels;
   const totalSteps = useMemo(() => {
-    if (!data?.levels) return 0;
-    return data.levels.reduce((acc, lvl) => acc + (lvl.steps?.length || 0), 0);
-  }, [data?.levels]);
+    if (!moduleLevels) return 0;
+    return moduleLevels.reduce((acc, lvl) => acc + (lvl.steps?.length || 0), 0);
+  }, [moduleLevels]);
 
   if (isLoading) {
     return (

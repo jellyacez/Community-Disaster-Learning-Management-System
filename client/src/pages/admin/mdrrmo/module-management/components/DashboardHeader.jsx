@@ -40,6 +40,7 @@ export default function DashboardHeader({
           <h1 className="text-3xl font-black text-gray-900 tracking-tight">Training Modules</h1>
           <p className="text-sm font-medium text-gray-500 mt-1">Create, edit, and manage training curriculum</p>
         </div>
+          {handleOpenWizard && (
         <button 
           onClick={handleOpenWizard}
           className="flex items-center gap-2 px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl transition-all shadow-sm"
@@ -47,6 +48,7 @@ export default function DashboardHeader({
           <HugeiconsIcon icon={Add01Icon} className="w-5 h-5" />
           Create New Module
         </button>
+        )}
       </div>
 
       {/* Search & Filters Grid */}
