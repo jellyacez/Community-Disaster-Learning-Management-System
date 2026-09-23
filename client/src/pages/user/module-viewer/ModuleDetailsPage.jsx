@@ -7,6 +7,8 @@ import Spinner from "../../../components/ui/Spinner";
 import { authClient } from "../../../lib/auth-client";
 import { ADMIN_ROLES } from "../../../constants/roles";
 import PublishedModulePreviewModal from "../../../components/ui/modules/viewer/PublishedModulePreviewModal";
+import ConfirmationModal from "../../../components/ui/modals/ConfirmationModal";
+import { Book02Icon } from "@hugeicons/core-free-icons";
 import { decodeHtml } from "../../../utils/textUtils";
 import toast from "react-hot-toast";
 
@@ -64,6 +66,7 @@ export default function ModuleDetailsPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const [showEnrollModal, setShowEnrollModal] = useState(false);
   const [isEnrolling, setIsEnrolling] = useState(false);
   const queryClient = useQueryClient();
   
@@ -81,11 +84,12 @@ export default function ModuleDetailsPage() {
     setIsEnrolling(true);
     try {
       const res = await apiClient.post(`/modules/${id}/enroll`);
-      if (res.data?.success) {
+      if (res.data?.success || res.status === 200) {
         toast.success(`Enrollment Success! You are now enrolled in ${decodeHtml(data?.module?.modname) || "this module"}.`);
         queryClient.invalidateQueries({ queryKey: ["moduleDetails", id] });
         queryClient.invalidateQueries({ queryKey: ["availableModules"] });
         queryClient.invalidateQueries({ queryKey: ["userDashboard"] });
+        setShowEnrollModal(false);
         navigate("/user/enrolled");
       }
     } catch (err) {
@@ -270,23 +274,13 @@ export default function ModuleDetailsPage() {
                 </div>
               ) : !isEnrolled ? (
                 <button 
-                  onClick={handleEnroll}
-                  disabled={isEnrolling}
-                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-2.5 bg-red-600 hover:bg-red-700 disabled:opacity-70 text-white font-semibold rounded-xl text-sm transition-colors shadow-sm hover:shadow cursor-pointer disabled:cursor-not-allowed"
+                  onClick={() => setShowEnrollModal(true)}
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-2.5 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-xl text-sm transition-colors shadow-sm hover:shadow cursor-pointer"
                 >
-                  {isEnrolling ? (
-                    <>
-                      <Spinner className="w-4 h-4 text-white" />
-                      <span>Enrolling...</span>
-                    </>
-                  ) : (
-                    <>
-                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-                      </svg>
-                      <span>Enroll in Module</span>
-                    </>
-                  )}
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                  </svg>
+                  <span>Enroll in Module</span>
                 </button>
               ) : (
                 <button 
@@ -423,6 +417,19 @@ export default function ModuleDetailsPage() {
         isOpen={isPreviewOpen} 
         onClose={() => setIsPreviewOpen(false)} 
         moduleId={module.mod_id || module.id} 
+      />
+
+      <ConfirmationModal
+        isOpen={showEnrollModal}
+        onClose={() => !isEnrolling && setShowEnrollModal(false)}
+        onConfirm={handleEnroll}
+        title="Confirm Module Enrollment"
+        description={`Are you sure you want to enroll in "${decodeHtml(module?.modname)}"? You will be able to start learning immediately.`}
+        confirmText="Confirm & Enroll"
+        cancelText="Cancel"
+        type="primary"
+        icon={Book02Icon}
+        isLoading={isEnrolling}
       />
     </div>
   );

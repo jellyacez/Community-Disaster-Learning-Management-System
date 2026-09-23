@@ -21,8 +21,21 @@
     -->
     <meta
       http-equiv="Content-Security-Policy"
-      content="default-src 'self'; img-src 'self' data: http://localhost:* https: blob:; font-src 'self' data: https:; style-src 'self' 'unsafe-inline' https:; script-src 'self' 'wasm-unsafe-eval' blob:; worker-src 'self' blob:; connect-src 'self' data: http://localhost:* ws://localhost:* https:; media-src 'self' data: blob: http://localhost:* https:; frame-src 'self' data: blob: http://localhost:* https:; object-src 'self' blob:;"
+      content="default-src 'self'; img-src 'self' data: http://localhost:* https: blob:; font-src 'self' data: https:; style-src 'self' 'unsafe-inline' https:; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' blob:; worker-src 'self' blob:; connect-src 'self' data: http://localhost:* ws://localhost:* https:; media-src 'self' data: blob: http://localhost:* https:; frame-src 'self' data: blob: http://localhost:* https:; object-src 'self' blob:;"
     />
+
+    <script>
+      (function () {
+        try {
+          var saved = localStorage.getItem("bacolor_theme");
+          if (saved === "dark") {
+            document.documentElement.classList.add("dark");
+          } else {
+            document.documentElement.classList.remove("dark");
+          }
+        } catch (e) {}
+      })();
+    </script>
 
     <meta
       name="description"

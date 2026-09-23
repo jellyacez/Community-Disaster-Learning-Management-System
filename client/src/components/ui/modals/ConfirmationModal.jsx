@@ -1,6 +1,6 @@
 import { memo, useEffect } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { Alert01Icon, Cancel01Icon, CheckmarkBadge01Icon } from "@hugeicons/core-free-icons";
+import { Alert01Icon, Cancel01Icon, CheckmarkBadge01Icon, Book02Icon } from "@hugeicons/core-free-icons";
 
 const ConfirmationModal = memo(function ConfirmationModal({ 
   isOpen, 
@@ -12,7 +12,9 @@ const ConfirmationModal = memo(function ConfirmationModal({
   cancelText = "Cancel",
   alternateText,
   onAlternateAction,
-  type = "warning", // "warning" | "success" | "danger"
+  type = "warning", // "warning" | "success" | "danger" | "primary"
+  icon,
+  children,
   isLoading = false
 }) {
   // Keyboard shortcut: Escape to cancel
@@ -30,9 +32,11 @@ const ConfirmationModal = memo(function ConfirmationModal({
   if (!isOpen) return null;
 
   const getIcon = () => {
+    if (icon) return icon;
     switch (type) {
       case "success": return CheckmarkBadge01Icon;
       case "danger": return Alert01Icon;
+      case "primary": return Book02Icon;
       default: return Alert01Icon;
     }
   };
@@ -41,6 +45,7 @@ const ConfirmationModal = memo(function ConfirmationModal({
     switch (type) {
       case "success": return { bg: "bg-green-100", text: "text-green-600", button: "bg-green-600 hover:bg-green-700 focus:ring-green-500" };
       case "danger": return { bg: "bg-red-100", text: "text-red-600", button: "bg-red-600 hover:bg-red-700 focus:ring-red-500" };
+      case "primary": return { bg: "bg-red-50", text: "text-red-600", button: "bg-red-600 hover:bg-red-700 focus:ring-red-500" };
       default: return { bg: "bg-yellow-100", text: "text-yellow-600", button: "bg-yellow-600 hover:bg-yellow-700 focus:ring-yellow-500" };
     }
   };
@@ -70,20 +75,25 @@ const ConfirmationModal = memo(function ConfirmationModal({
           </div>
           
           <h3 id="confirmation-modal-title" className="mb-2 text-xl font-bold text-gray-900">{title}</h3>
-          <p id="confirmation-modal-desc" className="mb-6 text-sm leading-relaxed text-gray-500">{description}</p>
+          {description && (
+            <p id="confirmation-modal-desc" className="mb-6 text-sm leading-relaxed text-gray-500">{description}</p>
+          )}
+          {children && (
+            <div className="w-full mb-6 text-left">{children}</div>
+          )}
           
           <div className="flex w-full gap-3">
             <button
               onClick={onClose}
               disabled={isLoading}
-              className="w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-bold text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-200 disabled:opacity-50 transition-colors"
+              className="w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-bold text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-200 disabled:opacity-50 transition-colors cursor-pointer disabled:cursor-not-allowed"
             >
               {cancelText}
             </button>
             <button
               onClick={onConfirm}
               disabled={isLoading}
-              className={`w-full rounded-xl px-4 py-2.5 text-sm font-bold text-white focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 transition-colors ${colors.button}`}
+              className={`w-full rounded-xl px-4 py-2.5 text-sm font-bold text-white focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 transition-colors cursor-pointer disabled:cursor-not-allowed ${colors.button}`}
             >
               {isLoading ? "Processing..." : confirmText}
             </button>
