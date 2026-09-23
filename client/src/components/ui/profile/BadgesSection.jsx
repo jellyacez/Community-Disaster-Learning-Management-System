@@ -100,7 +100,7 @@ export default function BadgesSection({ enrolledModules = [], categoryTotals = {
         type: "achievement",
         title: "On Fire!",
         description: "Complete 5 or more total modules",
-        icon: "/onfirebadge.png", // Direct path to public/onfirebadge.png
+        icon: "/onfirebadge.png",
         isUnlocked: totalCompleted >= 5,
         progressText: `${Math.min(5, totalCompleted)}/5 Completed`,
         theme: {
@@ -203,7 +203,7 @@ export default function BadgesSection({ enrolledModules = [], categoryTotals = {
           </span>
         </div>
 
-        {/* --- ACHIEVEMENTS SECTION (STEAM STYLE) --- */}
+
         <div className="mb-6">
           <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Global Achievements</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -214,7 +214,7 @@ export default function BadgesSection({ enrolledModules = [], categoryTotals = {
                 return (
                   <div key={item.id} className={`relative p-3 rounded-2xl border ${item.theme.border} ${item.theme.bg} transition-all duration-300 hover:shadow-md hover:-translate-y-0.5`}>
                     <div className="flex items-center gap-3">
-                      {/* Steam-Style Achievement Graphic */}
+
                       <div className={`w-12 h-12 rounded-lg shrink-0 shadow-sm ring-2 ${item.theme.ring} overflow-hidden bg-black/5 flex items-center justify-center`}>
                         {typeof Icon === "string" ? (
                           <img src={Icon} alt={item.title} className="w-full h-full object-cover" />
