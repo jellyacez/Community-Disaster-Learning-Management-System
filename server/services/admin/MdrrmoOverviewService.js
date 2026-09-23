@@ -263,7 +263,6 @@ class MdrrmoOverviewService {
         SELECT 
           c.cert_id,
           CASE 
-            WHEN c.status = 'revoked' THEN 'revoked'
             WHEN c.expires_at < NOW() THEN 'expired'
             WHEN c.expires_at <= NOW() + INTERVAL '30 days' THEN 'expiring_soon'
             ELSE 'active'
@@ -275,8 +274,7 @@ class MdrrmoOverviewService {
         COUNT(*)::int AS total_certified,
         COUNT(CASE WHEN computed_status = 'active' THEN 1 END)::int AS active_count,
         COUNT(CASE WHEN computed_status = 'expiring_soon' THEN 1 END)::int AS expiring_soon_count,
-        COUNT(CASE WHEN computed_status = 'expired' THEN 1 END)::int AS expired_count,
-        COUNT(CASE WHEN computed_status = 'revoked' THEN 1 END)::int AS revoked_count
+        COUNT(CASE WHEN computed_status = 'expired' THEN 1 END)::int AS expired_count
       FROM municipal_certs;
     `;
     const summaryRes = await pool.query(summaryQuery);
@@ -285,7 +283,6 @@ class MdrrmoOverviewService {
       active_count: 0,
       expiring_soon_count: 0,
       expired_count: 0,
-      revoked_count: 0,
     };
 
     const barangayQuery = `
@@ -294,7 +291,6 @@ class MdrrmoOverviewService {
           c.cert_id,
           c.user_id,
           CASE 
-            WHEN c.status = 'revoked' THEN 'revoked'
             WHEN c.expires_at < NOW() THEN 'expired'
             WHEN c.expires_at <= NOW() + INTERVAL '30 days' THEN 'expiring_soon'
             ELSE 'active'
@@ -308,7 +304,6 @@ class MdrrmoOverviewService {
         COUNT(DISTINCT CASE WHEN u.role = 'resident' AND cs.computed_status = 'active' THEN u.id END)::int AS active_certified_count,
         COUNT(DISTINCT CASE WHEN cs.computed_status = 'expiring_soon' THEN cs.cert_id END)::int AS expiring_soon_count,
         COUNT(DISTINCT CASE WHEN cs.computed_status = 'expired' THEN cs.cert_id END)::int AS expired_count,
-        COUNT(DISTINCT CASE WHEN cs.computed_status = 'revoked' THEN cs.cert_id END)::int AS revoked_count,
         COUNT(DISTINCT cs.cert_id)::int AS total_certs,
         COALESCE(
           ROUND(
@@ -331,7 +326,6 @@ class MdrrmoOverviewService {
           c.cert_id,
           c.module_id,
           CASE 
-            WHEN c.status = 'revoked' THEN 'revoked'
             WHEN c.expires_at < NOW() THEN 'expired'
             WHEN c.expires_at <= NOW() + INTERVAL '30 days' THEN 'expiring_soon'
             ELSE 'active'
@@ -413,7 +407,6 @@ class MdrrmoOverviewService {
           m.modname AS module_title,
           m.modcat AS module_category,
           CASE 
-            WHEN c.status = 'revoked' THEN 'revoked'
             WHEN c.expires_at < NOW() THEN 'expired'
             WHEN c.expires_at <= NOW() + INTERVAL '30 days' THEN 'expiring_soon'
             ELSE 'active'
@@ -427,7 +420,7 @@ class MdrrmoOverviewService {
     `;
 
     let statusFilter = "";
-    if (status && ["active", "expiring_soon", "expired", "revoked"].includes(status)) {
+    if (status && ["active", "expiring_soon", "expired"].includes(status)) {
       params.push(status);
       statusFilter = `WHERE computed_status = $${params.length}`;
     }
@@ -453,8 +446,7 @@ class MdrrmoOverviewService {
           WHEN 'expiring_soon' THEN 1
           WHEN 'expired' THEN 2
           WHEN 'active' THEN 3
-          WHEN 'revoked' THEN 4
-          ELSE 5
+          ELSE 4
         END,
         expires_at ASC,
         completion_date DESC

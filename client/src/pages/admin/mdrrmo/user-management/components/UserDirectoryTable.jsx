@@ -2,8 +2,9 @@ import { SkeletonTableRow } from "../../../../../components/ui/Skeleton.jsx";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { MoreHorizontalIcon, Archive02Icon, UserBlock01Icon } from "@hugeicons/core-free-icons";
 import { useState, useRef, useEffect } from "react";
+import AdminTablePagination from "../../../../../components/ui/pagination/AdminTablePagination";
 
-export default function UserDirectoryTable({ users, isLoading, meta, setPage }) {
+export default function UserDirectoryTable({ users, isLoading, meta, setPage, limit = 10, setLimit }) {
   const [openDropdownId, setOpenDropdownId] = useState(null);
   const dropdownRef = useRef(null);
 
@@ -20,7 +21,7 @@ export default function UserDirectoryTable({ users, isLoading, meta, setPage }) 
   return (
     <div className="w-full">
       
-      <div className="overflow-x-auto min-h-[280px]">
+      <div className="overflow-x-auto min-h-[280px] rounded-t-2xl">
         <table className="w-full text-left border-collapse">
           <thead className="bg-gray-50">
             <tr className="text-xs text-gray-500 border-b border-gray-200">
@@ -103,34 +104,19 @@ export default function UserDirectoryTable({ users, isLoading, meta, setPage }) 
         </table>
       </div>
 
-      {/* Pagination Controls */}
-      {!isLoading && meta.totalPages > 1 && (
-        <div className="p-4 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-3 bg-gray-50/30">
-          <span className="text-xs sm:text-sm text-gray-500 font-medium">
-            Showing <span className="font-bold text-gray-800">{(meta.page - 1) * 10 + 1}</span> to{" "}
-            <span className="font-bold text-gray-800">{Math.min(meta.page * 10, meta.total)}</span> of{" "}
-            <span className="font-bold text-gray-800">{meta.total}</span> users
-          </span>
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-              disabled={meta.page === 1}
-              className="min-h-[44px] px-4 py-2 border border-gray-200 bg-white rounded-xl text-xs sm:text-sm font-bold text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all cursor-pointer shadow-2xs"
-            >
-              Previous
-            </button>
-            <button
-              type="button"
-              onClick={() => setPage((p) => Math.min(meta.totalPages, p + 1))}
-              disabled={meta.page === meta.totalPages}
-              className="min-h-[44px] px-4 py-2 border border-gray-200 bg-white rounded-xl text-xs sm:text-sm font-bold text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all cursor-pointer shadow-2xs"
-            >
-              Next
-            </button>
-          </div>
-        </div>
-      )}
+      {/* Sticky Pagination Controls */}
+      <AdminTablePagination
+        page={meta?.page || 1}
+        totalPages={meta?.totalPages || 1}
+        total={meta?.total || 0}
+        limit={limit}
+        onPageChange={setPage}
+        onLimitChange={setLimit}
+        isLoading={isLoading}
+        itemName="users"
+        sticky={true}
+        className="rounded-b-2xl"
+      />
     </div>
   );
 }

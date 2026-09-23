@@ -8,13 +8,13 @@ export const useUserManagement = () => {
   const queryClient = useQueryClient();
   const [userForm, setUserForm] = useState({ name: "", email: "", role: "barangay_admin" });
   const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState("");
   const debouncedSearch = useDebounce(search, 300);
-  const limit = 10;
 
   const { data: usersData, isLoading, isError } = useQuery({
-    queryKey: ["adminUsers", page, debouncedSearch, roleFilter],
+    queryKey: ["adminUsers", page, limit, debouncedSearch, roleFilter],
     queryFn: async () => {
       const params = new URLSearchParams({ page, limit });
       if (debouncedSearch.trim()) params.append("search", debouncedSearch.trim());
@@ -97,6 +97,10 @@ export const useUserManagement = () => {
     actions: {
       setUserForm,
       setPage,
+      setLimit: (newLimit) => {
+        setLimit(newLimit);
+        setPage(1);
+      },
       setSearch,
       setRoleFilter,
       handleUserSubmit,

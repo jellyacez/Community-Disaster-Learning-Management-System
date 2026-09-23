@@ -3,8 +3,7 @@
 import AnnouncementCard from "../../../components/ui/announcements/AnnouncementCard";
 import useDocumentTitle from "../../../hooks/useDocumentTitle";
 import { usePaginatedAnnouncements } from "../hooks/usePaginatedAnnouncements";
-import { HugeiconsIcon } from '@hugeicons/react';
-import { ArrowLeft01Icon, ArrowRight01Icon } from '@hugeicons/core-free-icons';
+import PaginationControls from "../../../components/ui/PaginationControls";
 
 export default function UserAnnouncements() {
   useDocumentTitle("Announcements | Bacolor LMS");
@@ -14,9 +13,9 @@ export default function UserAnnouncements() {
     isLoading,
     isError,
     currentPage,
+    setCurrentPage,
     totalPages,
-    nextPage,
-    prevPage,
+    totalAnnouncements,
   } = usePaginatedAnnouncements(5);
 
   return (
@@ -61,29 +60,14 @@ export default function UserAnnouncements() {
             </div>
 
             {/* Pagination Controls */}
-            {totalPages > 1 && (
-              <div className="flex items-center justify-between pt-4 border-t border-gray-200 mt-2">
-                <button
-                  onClick={prevPage}
-                  disabled={currentPage === 1}
-                  className="flex items-center gap-2 px-4 py-2 text-sm font-bold text-gray-700 bg-white border border-gray-300 rounded-xl hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >
-                  <HugeiconsIcon icon={ArrowLeft01Icon} className="w-4 h-4" />
-                  Previous
-                </button>
-                <span className="text-sm font-medium text-gray-600">
-                  Page {currentPage} of {totalPages}
-                </span>
-                <button
-                  onClick={nextPage}
-                  disabled={currentPage === totalPages}
-                  className="flex items-center gap-2 px-4 py-2 text-sm font-bold text-gray-700 bg-white border border-gray-300 rounded-xl hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >
-                  Next
-                  <HugeiconsIcon icon={ArrowRight01Icon} className="w-4 h-4" />
-                </button>
-              </div>
-            )}
+            <PaginationControls
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
+              totalItems={totalAnnouncements}
+              itemsPerPage={5}
+              itemName="announcements"
+            />
           </div>
         )}
       </div>

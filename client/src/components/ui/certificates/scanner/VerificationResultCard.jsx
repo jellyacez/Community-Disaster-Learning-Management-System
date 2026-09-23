@@ -39,7 +39,7 @@ export default function VerificationResultCard({
           wrapper: "bg-gray-100 border-gray-200 text-gray-800",
           iconBg: "bg-gray-500 text-white",
           icon: Alert02Icon,
-          title: "Revoked Certificate",
+          title: "Inactive / Expired Credential",
         };
     }
   };

@@ -35,7 +35,9 @@ export function usePaginatedAnnouncements(initialLimit = 5) {
     isLoading,
     isError,
     currentPage,
+    setCurrentPage,
     totalPages: pagination.totalPages,
+    totalAnnouncements: pagination.total || pagination.totalAnnouncements,
     nextPage,
     prevPage,
   };

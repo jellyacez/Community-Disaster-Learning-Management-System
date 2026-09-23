@@ -129,7 +129,6 @@ class UserService {
          (SELECT COUNT(*)::int 
           FROM certificates c 
           WHERE c.user_id = u.id 
-            AND c.status != 'revoked'
          ) AS "modulesCompleted"
        FROM "user" u 
        LEFT JOIN barangays b ON u.barangay_id = b.id ${where}
@@ -232,7 +231,7 @@ class UserService {
       JOIN module_data m ON c.module_id = m.mod_id
       LEFT JOIN public."user" u ON c.user_id = u.id
       LEFT JOIN barangays b ON u.barangay_id = b.id
-      WHERE (c.user_id = $1 OR c.user_id IS NULL) AND c.verification_token = $2 AND c.status != 'revoked'
+      WHERE (c.user_id = $1 OR c.user_id IS NULL) AND c.verification_token = $2
     `;
     const { rows } = await pool.query(query, [userId, token]);
     

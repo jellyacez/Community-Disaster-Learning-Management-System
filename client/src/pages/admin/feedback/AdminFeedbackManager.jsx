@@ -49,6 +49,8 @@ export default function AdminFeedbackManager() {
     sortOrder,
     currentPage,
     setCurrentPage,
+    pageSize,
+    setPageSize,
     PAGE_SIZE,
     filteredSubmissions,
     totalPages,
@@ -86,7 +88,8 @@ export default function AdminFeedbackManager() {
           paginatedSubmissions={paginatedSubmissions}
           activeTab={activeTab}
           currentPage={currentPage}
-          PAGE_SIZE={PAGE_SIZE}
+          pageSize={pageSize}
+          setPageSize={setPageSize}
           totalPages={totalPages}
           setCurrentPage={setCurrentPage}
           expandedIds={expandedIds}

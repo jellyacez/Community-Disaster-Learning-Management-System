@@ -2,6 +2,7 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import { Note01Icon, Folder01Icon } from "@hugeicons/core-free-icons";
 import RoleBadge from "./RoleBadge";
 import { getActionColor } from "./logUtils";
+import AdminTablePagination from "../pagination/AdminTablePagination";
 
 function SkeletonRow() {
   return (
@@ -17,8 +18,8 @@ function SkeletonRow() {
 
 export default function ActivityLogTable({ logs, isLoading, meta, setPage, limit, setLimit, hideRoleColumn = false }) {
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-      <div className="overflow-x-auto">
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm">
+      <div className="overflow-x-auto rounded-t-2xl">
         <table className="w-full text-left">
           <thead>
             <tr className="bg-gray-50 text-gray-500 text-xs uppercase tracking-wider">
@@ -83,48 +84,20 @@ export default function ActivityLogTable({ logs, isLoading, meta, setPage, limit
         </table>
       </div>
 
-      {/* Pagination */}
-      {!isLoading && meta.totalPages > 1 && (
-        <div className="px-6 py-4 border-t border-gray-50 flex flex-wrap gap-4 items-center justify-between">
-          <div className="flex items-center gap-6">
-            <span className="text-sm text-gray-500">
-              Page {meta.page} of {meta.totalPages}
-            </span>
-            <div className="flex items-center gap-2">
-              <label htmlFor="rowsPerPage" className="text-sm text-gray-500">
-                Rows per page:
-              </label>
-              <select
-                id="rowsPerPage"
-                value={limit}
-                onChange={(e) => setLimit(Number(e.target.value))}
-                className="px-2 py-1 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-900/10 cursor-pointer"
-              >
-                <option value={10}>10</option>
-                <option value={25}>25</option>
-                <option value={50}>50</option>
-                <option value={100}>100</option>
-              </select>
-            </div>
-          </div>
-          <div className="flex gap-2">
-            <button
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-              disabled={meta.page === 1}
-              className="px-3 py-1.5 border border-gray-200 rounded-lg text-sm font-medium hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              Previous
-            </button>
-            <button
-              onClick={() => setPage((p) => Math.min(meta.totalPages, p + 1))}
-              disabled={meta.page === meta.totalPages}
-              className="px-3 py-1.5 border border-gray-200 rounded-lg text-sm font-medium hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              Next
-            </button>
-          </div>
-        </div>
-      )}
+      {/* Sticky Pagination */}
+      <AdminTablePagination
+        page={meta?.page || 1}
+        totalPages={meta?.totalPages || 1}
+        total={meta?.total || 0}
+        limit={limit}
+        onPageChange={setPage}
+        onLimitChange={setLimit}
+        limitOptions={[10, 25, 50, 100]}
+        isLoading={isLoading}
+        itemName="activity logs"
+        sticky={true}
+        className="rounded-b-2xl"
+      />
     </div>
   );
 }

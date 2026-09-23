@@ -6,14 +6,13 @@ import ModuleSkeleton from "../../../components/ui/modules/ModuleSkeleton.jsx";
 import useDocumentTitle from "../../../hooks/useDocumentTitle";
 import SearchBar from "../../../components/ui/inputs/SearchBar.jsx";
 import ConfirmationModal from "../../../components/ui/modals/ConfirmationModal.jsx";
+import PaginationControls from "../../../components/ui/PaginationControls.jsx";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import apiClient from "../../../lib/apiClient";
 import continuousLearningImg from "../../../assets/continuous-learning.svg";
 import useDebounce from "../../../hooks/useDebounce";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
-  ArrowLeft01Icon,
-  ArrowRight01Icon,
   Search01Icon,
   Book02Icon,
 } from "@hugeicons/core-free-icons";
@@ -201,48 +200,14 @@ export default function UserModuleCatalog() {
           </div>
 
           {/* Pagination Controls */}
-          {filteredModules.length > itemsPerPage && (
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-6 py-4 bg-white rounded-2xl border border-gray-200 shadow-sm">
-              <span className="text-xs text-gray-500 font-medium">
-                Showing{" "}
-                <span className="font-bold text-gray-700">
-                  {(currentPage - 1) * itemsPerPage + 1}
-                </span>{" "}
-                to{" "}
-                <span className="font-bold text-gray-700">
-                  {Math.min(currentPage * itemsPerPage, filteredModules.length)}
-                </span>{" "}
-                of{" "}
-                <span className="font-bold text-gray-700">
-                  {filteredModules.length}
-                </span>{" "}
-                modules
-              </span>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
-                  disabled={currentPage <= 1}
-                  className="px-3 py-1.5 text-xs font-semibold text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm cursor-pointer flex items-center gap-1"
-                >
-                  <HugeiconsIcon icon={ArrowLeft01Icon} className="w-3.5 h-3.5" />
-                  Previous
-                </button>
-                <span className="text-xs font-medium text-gray-600 px-2">
-                  Page {currentPage} of {totalPages}
-                </span>
-                <button
-                  onClick={() =>
-                    setCurrentPage((p) => Math.min(p + 1, totalPages))
-                  }
-                  disabled={currentPage >= totalPages}
-                  className="px-3 py-1.5 text-xs font-semibold text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm cursor-pointer flex items-center gap-1"
-                >
-                  Next
-                  <HugeiconsIcon icon={ArrowRight01Icon} className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            </div>
-          )}
+          <PaginationControls
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={setCurrentPage}
+            totalItems={filteredModules.length}
+            itemsPerPage={itemsPerPage}
+            itemName="modules"
+          />
         </div>
       ) : (
         <div className="flex flex-col items-center justify-center py-16 text-center bg-white rounded-3xl border border-gray-200 shadow-sm">

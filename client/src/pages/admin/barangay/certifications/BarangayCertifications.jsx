@@ -29,12 +29,12 @@ export default function BarangayCertifications() {
   const [isVerifyModalOpen, setIsVerifyModalOpen] = useState(false);
 
   const debouncedSearch = useDebounce(searchInput, 350);
-  const limit = 10;
+  const [limit, setLimit] = useState(10);
 
-  // Reset pagination to page 1 whenever filters change
+  // Reset pagination to page 1 whenever filters or limit change
   useEffect(() => {
     setPage(1);
-  }, [debouncedSearch, selectedModule, selectedStatus]);
+  }, [debouncedSearch, selectedModule, selectedStatus, limit]);
 
   const { data, isLoading, isError, error, refetch, isFetching } = useQuery({
     queryKey: ["barangayCertifications", page, limit, debouncedSearch, selectedModule, selectedStatus],
@@ -140,6 +140,7 @@ export default function BarangayCertifications() {
         page={page}
         limit={limit}
         onPageChange={setPage}
+        onLimitChange={setLimit}
         hasActiveFilters={Boolean(searchInput || selectedModule || selectedStatus)}
         onResetFilters={handleResetFilters}
       />

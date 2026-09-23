@@ -3,7 +3,6 @@ import {
   CheckmarkCircle01Icon,
   Clock01Icon,
   CancelCircleIcon,
-  UnavailableIcon,
 } from "@hugeicons/core-free-icons";
 import StatusBadge from "../StatusBadge";
 
@@ -22,11 +21,6 @@ const STATUS_MAP = {
     color: "red",
     label: "Expired",
     icon: CancelCircleIcon,
-  },
-  revoked: {
-    color: "gray",
-    label: "Revoked",
-    icon: UnavailableIcon,
   },
 };
 

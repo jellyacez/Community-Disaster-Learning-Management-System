@@ -23,18 +23,18 @@ const fetchResidents = async ({ page, limit, search, status }) => {
 
 export default function ResidentRegistry() {
   const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
   const [searchInput, setSearchInput] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("");
   const [modalConfig, setModalConfig] = useState({ isOpen: false, userId: null, action: null });
 
   const debouncedSearch = useDebounce(searchInput, 350);
-  const limit = 10;
   const queryClient = useQueryClient();
 
-  // Reset pagination to page 1 on filter changes
+  // Reset pagination to page 1 on filter or limit changes
   useEffect(() => {
     setPage(1);
-  }, [debouncedSearch, selectedStatus]);
+  }, [debouncedSearch, selectedStatus, limit]);
 
   const { data, isLoading, isError, refetch, isFetching } = useQuery({
     queryKey: ["adminResidents", page, limit, debouncedSearch, selectedStatus],
@@ -139,6 +139,7 @@ export default function ResidentRegistry() {
         page={page}
         limit={limit}
         onPageChange={setPage}
+        onLimitChange={setLimit}
         onOpenActionModal={handleOpenActionModal}
       />
 

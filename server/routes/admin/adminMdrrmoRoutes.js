@@ -36,25 +36,31 @@ router.get(
 );
 
 // @route   PATCH /api/admin/certificates/:certId/revoke
-// @desc    Revoke a certificate
+// @desc    [DEPRECATED] Revocation deprecated in favor of annual recertification
 // @access  Private (admin only)
 router.patch(
   "/certificates/:certId/revoke",
   requireRole(ADMIN_ROLES),
-  adminWriteLimiter,
-  requirePermission("revoke_certificates"),
-  certificateManagementController.revokeCertificate
+  (req, res) => {
+    return res.status(410).json({
+      success: false,
+      message: "Certificate revocation has been deprecated. The system uses annual recertification to track competency currency.",
+    });
+  }
 );
 
 // @route   PATCH /api/admin/certificates/:certId/reinstate
-// @desc    Reinstate a previously revoked certificate (explicit admin action only)
+// @desc    [DEPRECATED] Reinstatement deprecated along with revocation
 // @access  Private (admin only)
 router.patch(
   "/certificates/:certId/reinstate",
   requireRole(ADMIN_ROLES),
-  adminWriteLimiter,
-  requirePermission("revoke_certificates"),
-  certificateManagementController.reinstateCertificate
+  (req, res) => {
+    return res.status(410).json({
+      success: false,
+      message: "Certificate reinstatement has been deprecated. Residents recertify by retaking module assessments.",
+    });
+  }
 );
 
 // ==========================================

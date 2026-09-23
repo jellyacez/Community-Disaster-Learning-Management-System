@@ -4,11 +4,10 @@ import {
   MoreHorizontalIcon,
   Archive02Icon,
   UserBlock01Icon,
-  ArrowLeft01Icon,
-  ArrowRight01Icon,
 } from "@hugeicons/core-free-icons";
 import StatusBadge from "../../../../../components/ui/StatusBadge";
 import { SkeletonTableRow } from "../../../../../components/ui/Skeleton";
+import AdminTablePagination from "../../../../../components/ui/pagination/AdminTablePagination";
 
 export default function ResidentRegistryTable({
   residents = [],
@@ -18,6 +17,7 @@ export default function ResidentRegistryTable({
   page = 1,
   limit = 10,
   onPageChange,
+  onLimitChange,
   onOpenActionModal,
 }) {
   const [openDropdownId, setOpenDropdownId] = useState(null);
@@ -35,8 +35,8 @@ export default function ResidentRegistryTable({
   }, []);
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden animate-in fade-in duration-150">
-      <div className="overflow-x-auto">
+    <div className="bg-white rounded-2xl border border-gray-200 shadow-sm animate-in fade-in duration-150">
+      <div className="overflow-x-auto rounded-t-2xl">
         <table className="w-full text-left border-collapse">
           <thead className="bg-gray-50/75 border-b border-gray-200 text-xs font-semibold text-gray-500 uppercase tracking-wider">
             <tr>
@@ -167,38 +167,19 @@ export default function ResidentRegistryTable({
         </table>
       </div>
 
-      {/* Standardized Pagination Footer */}
-      {!isLoading && !isError && meta.total > 0 && (
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-6 py-4 border-t border-gray-200 bg-gray-50/50">
-          <span className="text-xs text-gray-500 font-medium">
-            Showing <span className="font-bold text-gray-700">{meta.total > 0 ? (page - 1) * limit + 1 : 0}</span> to{" "}
-            <span className="font-bold text-gray-700">{Math.min(page * limit, meta.total)}</span> of{" "}
-            <span className="font-bold text-gray-700">{meta.total}</span> residents
-          </span>
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => onPageChange(Math.max(page - 1, 1))}
-              disabled={page <= 1}
-              className="px-3 py-1.5 text-xs font-semibold text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm cursor-pointer flex items-center gap-1"
-            >
-              <HugeiconsIcon icon={ArrowLeft01Icon} className="w-3.5 h-3.5" />
-              Previous
-            </button>
-            <span className="text-xs font-medium text-gray-600 px-2">
-              Page {page} of {meta.totalPages || 1}
-            </span>
-            <button
-              type="button"
-              onClick={() => onPageChange(Math.min(page + 1, meta.totalPages || 1))}
-              disabled={page >= (meta.totalPages || 1)}
-              className="px-3 py-1.5 text-xs font-semibold text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm cursor-pointer flex items-center gap-1"
-            >
-              Next
-              <HugeiconsIcon icon={ArrowRight01Icon} className="w-3.5 h-3.5" />
-            </button>
-          </div>
-        </div>
+      {/* Standardized Sticky Pagination Footer */}
+      {!isLoading && !isError && (
+        <AdminTablePagination
+          page={page}
+          totalPages={meta.totalPages || 1}
+          total={meta.total || 0}
+          limit={limit}
+          onPageChange={onPageChange}
+          onLimitChange={onLimitChange}
+          itemName="residents"
+          sticky={true}
+          className="rounded-b-2xl"
+        />
       )}
     </div>
   );

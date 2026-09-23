@@ -265,21 +265,10 @@ class ModuleProgressService {
           // Existing Certificate — Handle Renewal / Recertification
           const existingCert = certCheck.rows[0];
           const isExpired = new Date(existingCert.expires_at) < new Date();
-          const isRevoked = existingCert.status === "revoked";
           const isExpiringSoon = new Date(existingCert.expires_at) <= new Date(Date.now() + 30 * 86400 * 1000);
 
-          if (isRevoked) {
-            // V-02 FIX: A revoked certificate must NOT be reinstated by module completion.
-            // Return the existing (revoked) token so the client can still display cert status,
-            // but do NOT update any certificate fields. Reinstatement requires an explicit
-            // admin action via PATCH /api/admin/certificates/:certId/reinstate.
-            await logger.logActivity(
-              user_id,
-              `Completed module ${modTitle} while holding a revoked certificate (ID: CERT-${existingCert.cert_id}). Certificate remains revoked pending admin reinstatement.`
-            );
-            verificationToken = existingCert.verification_token;
-          } else if (isExpired || isExpiringSoon) {
-            // Non-revoked expired/expiring-soon certificates are eligible for renewal
+          if (isExpired || isExpiringSoon) {
+            // Expired/expiring-soon certificates are eligible for renewal/recertification
             await logger.logActivity(
               user_id,
               `Recertified module: ${modTitle} (Extended validity for ${RECERTIFICATION_INTERVAL_YEARS} year)`
@@ -356,7 +345,6 @@ class ModuleProgressService {
         c.completion_date,
         c.expires_at,
         CASE 
-          WHEN c.status = 'revoked' THEN 'revoked'
           WHEN c.expires_at < NOW() THEN 'expired'
           ELSE c.status 
         END as status
@@ -403,7 +391,7 @@ class ModuleProgressService {
 
     if (statusFilter) {
       if (statusFilter === 'expired') {
-        conditions.push(`c.expires_at < NOW() AND c.status != 'revoked'`);
+        conditions.push(`c.expires_at < NOW()`);
       } else if (statusFilter === 'active') {
         conditions.push(`c.expires_at >= NOW() AND c.status = 'active'`);
       } else {
@@ -437,7 +425,6 @@ class ModuleProgressService {
         c.revoked_at,
         c.revoked_by,
         CASE 
-          WHEN c.status = 'revoked' THEN 'revoked'
           WHEN c.expires_at < NOW() THEN 'expired'
           ELSE c.status 
         END as status,

@@ -220,7 +220,6 @@ class BarangayAdminService {
         SELECT 
           c.cert_id,
           CASE 
-            WHEN c.status = 'revoked' THEN 'revoked'
             WHEN c.expires_at < NOW() THEN 'expired'
             WHEN c.expires_at <= NOW() + INTERVAL '30 days' THEN 'expiring_soon'
             ELSE 'active'
@@ -233,8 +232,7 @@ class BarangayAdminService {
         COUNT(*)::int AS total,
         COUNT(*) FILTER (WHERE computed_status = 'active')::int AS active,
         COUNT(*) FILTER (WHERE computed_status = 'expiring_soon')::int AS expiring_soon,
-        COUNT(*) FILTER (WHERE computed_status = 'expired')::int AS expired,
-        COUNT(*) FILTER (WHERE computed_status = 'revoked')::int AS revoked
+        COUNT(*) FILTER (WHERE computed_status = 'expired')::int AS expired
       FROM scoped_certs
     `;
     const summaryRes = await pool.query(summaryQuery, [barangayId]);
@@ -243,7 +241,6 @@ class BarangayAdminService {
       active: 0,
       expiring_soon: 0,
       expired: 0,
-      revoked: 0,
     };
 
     const modulesQuery = `
@@ -274,7 +271,7 @@ class BarangayAdminService {
 
     if (
       status &&
-      ["active", "expiring_soon", "expired", "revoked"].includes(
+      ["active", "expiring_soon", "expired"].includes(
         status.toLowerCase()
       )
     ) {
@@ -304,7 +301,6 @@ class BarangayAdminService {
           m.modname AS module_title,
           m.modcat AS module_category,
           CASE 
-            WHEN c.status = 'revoked' THEN 'revoked'
             WHEN c.expires_at < NOW() THEN 'expired'
             WHEN c.expires_at <= NOW() + INTERVAL '30 days' THEN 'expiring_soon'
             ELSE 'active'
