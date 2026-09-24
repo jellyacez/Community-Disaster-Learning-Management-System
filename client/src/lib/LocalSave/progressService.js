@@ -3,30 +3,15 @@ import { localDb } from '../localDb';
 import apiClient from '../apiClient'; // Ensure this points to your standard axios client
 export const saveOfflineModuleProgress = async (userId, moduleId, newProgress) => {
   try {
-    // FIX: Use localDb consistently
-    await localDb.transaction('rw', localDb.module_activity, localDb.sync_queue, async () => {
-
-      await localDb.module_activity.put({
-        modact_id: `${userId}_${moduleId}`, // Use a composite string if missing actual ID
-        user_id: userId,
-        mod_id: moduleId,
-        progress: newProgress,
-        updated_at: Date.now()
-      });
-
-      await localDb.sync_queue.add({
-        action_type: 'UPDATE_PROGRESS',
-        status: 'pending',
-        payload: {
-          user_id: userId,
-          mod_id: moduleId,
-          progress: newProgress
-        }
-      });
-
+    await localDb.module_activity.put({
+      modact_id: `${userId}_${moduleId}`, // Use a composite string if missing actual ID
+      user_id: userId,
+      mod_id: moduleId,
+      progress: newProgress,
+      updated_at: Date.now()
     });
 
-    console.log("Progress saved locally and queued for sync.");
+    console.log("Progress saved locally.");
   } catch (error) {
     console.error("Failed to save progress offline:", error);
   }
