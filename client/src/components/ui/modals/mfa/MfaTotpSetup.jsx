@@ -106,8 +106,8 @@ export default function MfaTotpSetup({
         <p className="text-xs text-gray-500 mb-4">
           Open your Authenticator app and scan this code, or enter the text key manually.
         </p>
-        <div className="bg-white p-3 rounded-xl shadow-sm inline-block border border-gray-100 mb-3">
-          <QRCodeSVG value={totpURI} size={160} />
+        <div className="qr-isolated bg-white p-3 rounded-xl shadow-sm inline-block border border-gray-100 mb-3">
+          <QRCodeSVG value={totpURI} size={160} bgColor="#ffffff" fgColor="#000000" />
         </div>
         <div className="bg-gray-200/50 px-4 py-2 rounded-lg mt-2 w-full max-w-full">
           <p className="text-[10px] text-gray-500 uppercase font-bold tracking-wider mb-1">Manual Entry Key</p>

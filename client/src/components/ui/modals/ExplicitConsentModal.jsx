@@ -10,7 +10,7 @@ export default function ExplicitConsentModal({ isOpen, onCancel, onConfirm, isSu
         role="dialog"
         aria-modal="true"
         aria-labelledby="consent-modal-title"
-        className="bg-white rounded-2xl shadow-xl w-full max-w-lg flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200"
+        className="auth-isolated bg-white rounded-2xl shadow-xl w-full max-w-lg flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200"
       >
         <div className="flex items-center justify-between p-6 border-b border-gray-100">
           <div className="flex items-center gap-2">

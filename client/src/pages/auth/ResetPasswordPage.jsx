@@ -68,8 +68,8 @@ export default function ResetPasswordPage() {
   }
   if (!token) {
     return (
-      <div className="min-h-screen `bg-linear-to-br from-gray-100 to-red-50 flex items-center justify-center px-4 py-10">
-        <div className="w-full max-w-md bg-white rounded-2xl shadow-xl border border-gray-100 p-8 text-center">
+      <div className="min-h-screen bg-gray-50 dark:bg-slate-950 flex items-center justify-center px-4 py-10 transition-colors">
+        <div className="auth-isolated w-full max-w-md bg-white rounded-2xl shadow-xl border border-gray-100 dark:border-slate-800 p-8 text-center">
           <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-red-100 text-red-600">
             <HugeiconsIcon aria-hidden="true" icon={Alert01Icon} className="w-8 h-8" />
           </div>

@@ -22,15 +22,9 @@ import { useTheme } from "../../../../hooks/context/themeContext";
 export default function SystemSettings() {
   useDocumentTitle("System Settings | Admin Console");
   const queryClient = useQueryClient();
-  const { theme, setTheme } = useTheme();
+  const { themeMode, setTheme } = useTheme();
 
   const handleSetTheme = (mode) => {
-    if (mode === "system") {
-      const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-      setTheme(prefersDark ? "dark" : "light");
-      localStorage.removeItem("bacolor_theme");
-      return;
-    }
     setTheme(mode);
   };
 
@@ -166,14 +160,14 @@ export default function SystemSettings() {
                 type="button"
                 onClick={() => handleSetTheme("light")}
                 className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                  theme === "light"
+                  themeMode === "light"
                     ? "bg-white shadow-sm border border-gray-200/80 text-gray-900"
                     : "text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-white"
                 }`}
               >
                 <HugeiconsIcon
                   icon={Sun01Icon}
-                  className={`w-4 h-4 ${theme === "light" ? "text-amber-500" : "text-gray-400"}`}
+                  className={`w-4 h-4 ${themeMode === "light" ? "text-amber-500" : "text-gray-400 dark:text-slate-400"}`}
                 />
                 Light
               </button>
@@ -182,14 +176,14 @@ export default function SystemSettings() {
                 type="button"
                 onClick={() => handleSetTheme("dark")}
                 className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                  theme === "dark"
+                  themeMode === "dark"
                     ? "bg-slate-950 text-white shadow-sm border border-slate-700"
                     : "text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-white"
                 }`}
               >
                 <HugeiconsIcon
                   icon={Moon02Icon}
-                  className={`w-4 h-4 ${theme === "dark" ? "text-indigo-400" : "text-gray-400"}`}
+                  className={`w-4 h-4 ${themeMode === "dark" ? "text-indigo-400" : "text-gray-400 dark:text-slate-400"}`}
                 />
                 Dark
               </button>
@@ -197,9 +191,16 @@ export default function SystemSettings() {
               <button
                 type="button"
                 onClick={() => handleSetTheme("system")}
-                className="flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-medium text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-white transition-colors cursor-pointer"
+                className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                  themeMode === "system"
+                    ? "bg-white dark:bg-slate-950 text-gray-900 dark:text-white shadow-sm border border-gray-200/80 dark:border-slate-700"
+                    : "text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-white"
+                }`}
               >
-                <HugeiconsIcon icon={ComputerIcon} className="w-4 h-4 text-gray-400" />
+                <HugeiconsIcon
+                  icon={ComputerIcon}
+                  className={`w-4 h-4 ${themeMode === "system" ? "text-blue-500 dark:text-blue-400" : "text-gray-400 dark:text-slate-400"}`}
+                />
                 System
               </button>
             </div>

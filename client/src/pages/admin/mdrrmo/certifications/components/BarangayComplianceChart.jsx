@@ -48,23 +48,23 @@ export default function BarangayComplianceChart({ barangays = [], isLoading }) {
   };
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-[0_2px_12px_-3px_rgba(0,0,0,0.06)] p-6 flex flex-col h-full min-h-[420px]">
+    <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-[0_2px_12px_-3px_rgba(0,0,0,0.06)] p-6 flex flex-col h-full min-h-[420px]">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
         <div>
-          <h2 className="text-lg font-bold text-gray-900">Barangay Compliance Leaderboard</h2>
-          <p className="text-xs text-gray-500 font-medium mt-0.5">
+          <h2 className="text-lg font-bold text-gray-900 dark:text-white">Barangay Compliance Leaderboard</h2>
+          <p className="text-xs text-gray-500 dark:text-slate-400 font-medium mt-0.5">
             Active certified responders vs. total registered residents across all 21 barangays
           </p>
         </div>
 
         {/* View Toggle Tabs */}
-        <div className="flex items-center bg-gray-100 p-1 rounded-xl text-xs font-semibold self-start sm:self-auto">
+        <div className="flex items-center bg-gray-100 dark:bg-slate-800 p-1 rounded-xl text-xs font-semibold self-start sm:self-auto">
           <button
             onClick={() => handleTabChange("top")}
             className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
               activeTab === "top"
-                ? "bg-white text-gray-900 shadow-xs"
-                : "text-gray-500 hover:text-gray-800"
+                ? "bg-white dark:bg-slate-900 text-gray-900 dark:text-white shadow-xs"
+                : "text-gray-500 dark:text-slate-400 hover:text-gray-800 dark:hover:text-white"
             }`}
           >
             Top 5
@@ -73,8 +73,8 @@ export default function BarangayComplianceChart({ barangays = [], isLoading }) {
             onClick={() => handleTabChange("attention")}
             className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
               activeTab === "attention"
-                ? "bg-white text-gray-900 shadow-xs"
-                : "text-gray-500 hover:text-gray-800"
+                ? "bg-white dark:bg-slate-900 text-gray-900 dark:text-white shadow-xs"
+                : "text-gray-500 dark:text-slate-400 hover:text-gray-800 dark:hover:text-white"
             }`}
           >
             Needs Attention
@@ -83,8 +83,8 @@ export default function BarangayComplianceChart({ barangays = [], isLoading }) {
             onClick={() => handleTabChange("all")}
             className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
               activeTab === "all"
-                ? "bg-white text-gray-900 shadow-xs"
-                : "text-gray-500 hover:text-gray-800"
+                ? "bg-white dark:bg-slate-900 text-gray-900 dark:text-white shadow-xs"
+                : "text-gray-500 dark:text-slate-400 hover:text-gray-800 dark:hover:text-white"
             }`}
           >
             All 21
@@ -119,33 +119,33 @@ export default function BarangayComplianceChart({ barangays = [], isLoading }) {
                 ) : activeTab === "top" && itemGlobalRank === 2 ? (
                   <HugeiconsIcon icon={Medal03Icon} className="w-5 h-5 text-amber-700" />
                 ) : (
-                  <span className="text-xs font-bold text-gray-400">{itemGlobalRank + 1}.</span>
+                  <span className="text-xs font-bold text-gray-400 dark:text-slate-500">{itemGlobalRank + 1}.</span>
                 );
 
               return (
                 <div
                   key={item.barangay_id}
-                  className="p-2.5 rounded-xl bg-gray-50/50 hover:bg-gray-50 border border-gray-100 transition-colors"
+                  className="p-2.5 rounded-xl bg-gray-50/50 dark:bg-slate-800/40 hover:bg-gray-50 dark:hover:bg-slate-800/70 border border-gray-100 dark:border-slate-800 transition-colors"
                 >
                   <div className="flex items-center justify-between text-xs mb-1.5">
                     <div className="flex items-center gap-2">
                       <div className="w-5 flex justify-center">{medal}</div>
-                      <span className="font-bold text-gray-900 text-sm">
+                      <span className="font-bold text-gray-900 dark:text-white text-sm">
                         {item.barangay_name}
                       </span>
                     </div>
                     <div className="text-right">
-                      <span className="font-extrabold text-gray-900 text-sm">
+                      <span className="font-extrabold text-gray-900 dark:text-white text-sm">
                         {item.compliance_rate}%
                       </span>
-                      <span className="text-[11px] text-gray-500 font-medium ml-1.5">
+                      <span className="text-[11px] text-gray-500 dark:text-slate-400 font-medium ml-1.5">
                         ({item.active_certified_count} / {item.resident_count} residents)
                       </span>
                     </div>
                   </div>
 
                   {/* Progress Track */}
-                  <div className="h-2 w-full bg-gray-200 rounded-full overflow-hidden">
+                  <div className="h-2 w-full bg-gray-200 dark:bg-slate-700 border border-gray-300/80 dark:border-slate-500 rounded-full overflow-hidden">
                     <div
                       className={`h-full rounded-full transition-all duration-500 ${getBarColor(
                         item.compliance_rate
@@ -160,7 +160,7 @@ export default function BarangayComplianceChart({ barangays = [], isLoading }) {
 
           {/* Pagination Controls for Needs Attention & All 21 */}
           {isPaginated && (
-            <div className="mt-4 pt-3 border-t border-gray-100 flex items-center justify-between">
+            <div className="mt-4 pt-3 border-t border-gray-100 dark:border-slate-800 flex items-center justify-between">
               <span className="text-xs text-gray-500 font-medium">
                 Showing{" "}
                 <span className="font-semibold text-gray-900">

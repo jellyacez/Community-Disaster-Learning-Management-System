@@ -3,7 +3,6 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import apiClient from "../../../lib/apiClient";
 import { useState, useMemo } from "react";
 import DOMPurify from "dompurify";
-import Spinner from "../../../components/ui/Spinner";
 import { authClient } from "../../../lib/auth-client";
 import { ADMIN_ROLES } from "../../../constants/roles";
 import PublishedModulePreviewModal from "../../../components/ui/modules/viewer/PublishedModulePreviewModal";
@@ -117,24 +116,24 @@ export default function ModuleDetailsPage() {
   if (isLoading) {
     return (
       <div className="max-w-7xl mx-auto space-y-6 animate-pulse">
-        <div className="h-4 w-24 bg-gray-200 rounded" />
-        <div className="bg-white rounded-2xl border border-gray-200/80 p-6 md:p-8 grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
-          <div className="md:col-span-4 h-48 sm:h-52 w-full bg-gray-100 rounded-xl" />
+        <div className="h-4 w-24 bg-gray-200 dark:bg-slate-800 rounded" />
+        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-200/80 dark:border-slate-800 p-6 md:p-8 grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
+          <div className="md:col-span-4 h-48 sm:h-52 w-full bg-gray-100 dark:bg-slate-800 rounded-xl" />
           <div className="md:col-span-8 space-y-4">
-            <div className="h-4 w-32 bg-gray-200 rounded" />
-            <div className="h-7 w-3/4 bg-gray-200 rounded" />
-            <div className="h-3 w-full bg-gray-100 rounded-full" />
-            <div className="h-10 w-44 bg-gray-200 rounded-lg" />
+            <div className="h-4 w-32 bg-gray-200 dark:bg-slate-800 rounded" />
+            <div className="h-7 w-3/4 bg-gray-200 dark:bg-slate-800 rounded" />
+            <div className="h-3 w-full bg-gray-100 dark:bg-slate-800 rounded-full" />
+            <div className="h-10 w-44 bg-gray-200 dark:bg-slate-800 rounded-lg" />
           </div>
         </div>
-        <div className="bg-white rounded-2xl border border-gray-200/80 p-6 space-y-3">
-          <div className="h-4 w-28 bg-gray-200 rounded" />
-          <div className="h-4 w-full bg-gray-100 rounded" />
-          <div className="h-4 w-5/6 bg-gray-100 rounded" />
+        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-200/80 dark:border-slate-800 p-6 space-y-3">
+          <div className="h-4 w-28 bg-gray-200 dark:bg-slate-800 rounded" />
+          <div className="h-4 w-full bg-gray-100 dark:bg-slate-800 rounded" />
+          <div className="h-4 w-5/6 bg-gray-100 dark:bg-slate-800 rounded" />
         </div>
         <div className="space-y-4">
-          <div className="h-5 w-40 bg-gray-200 rounded" />
-          <div className="h-40 bg-white rounded-2xl border border-gray-200/80" />
+          <div className="h-5 w-40 bg-gray-200 dark:bg-slate-800 rounded" />
+          <div className="h-40 bg-white dark:bg-slate-900 rounded-2xl border border-gray-200/80 dark:border-slate-800" />
         </div>
       </div>
     );
@@ -142,7 +141,7 @@ export default function ModuleDetailsPage() {
 
   if (isError || !data) {
     return (
-      <div className="p-6 bg-red-50 text-red-700 rounded-xl border border-red-100 max-w-2xl mx-auto mt-8">
+      <div className="p-6 bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-300 rounded-xl border border-red-100 dark:border-red-900/50 max-w-2xl mx-auto mt-8">
         <p className="font-bold">Error loading module syllabus details.</p>
         <p className="text-sm mt-1">Please check your connection or return to the catalog.</p>
         <button 
@@ -167,7 +166,7 @@ export default function ModuleDetailsPage() {
       <div>
         <button 
           onClick={handleBack}
-          className="inline-flex items-center gap-1.5 text-xs font-medium text-gray-500 hover:text-gray-900 transition-colors"
+          className="inline-flex items-center gap-1.5 text-xs font-medium text-gray-500 dark:text-slate-400 hover:text-gray-900 dark:hover:text-white transition-colors"
         >
           <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
             <path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
@@ -176,8 +175,8 @@ export default function ModuleDetailsPage() {
         </button>
       </div>
 
-      <div className="bg-white rounded-2xl border border-gray-200/80 shadow-sm overflow-hidden grid grid-cols-1 md:grid-cols-12 gap-6 p-6 md:p-8 items-center">
-        <div className="md:col-span-4 h-48 sm:h-52 w-full bg-gray-50 border border-gray-100 rounded-xl overflow-hidden relative flex items-center justify-center text-gray-400 shrink-0">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-200/80 dark:border-slate-800 shadow-sm overflow-hidden grid grid-cols-1 md:grid-cols-12 gap-6 p-6 md:p-8 items-center">
+        <div className="md:col-span-4 h-48 sm:h-52 w-full bg-gray-50 dark:bg-slate-800/50 border border-gray-100 dark:border-slate-800 rounded-xl overflow-hidden relative flex items-center justify-center text-gray-400 dark:text-slate-500 shrink-0">
           {module.image_url ? (
             <img 
               src={resolveImageUrl(module.image_url)} 
@@ -187,16 +186,16 @@ export default function ModuleDetailsPage() {
             />
           ) : (
             <div className="flex flex-col items-center justify-center p-4 text-center">
-              <svg className="w-10 h-10 mb-1.5 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
+              <svg className="w-10 h-10 mb-1.5 text-gray-300 dark:text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
               </svg>
-              <span className="text-xs font-medium text-gray-400">Course Resource</span>
+              <span className="text-xs font-medium text-gray-400 dark:text-slate-500">Course Resource</span>
             </div>
           )}
 
           {isLocked && (
             <div className="absolute inset-0 bg-gray-950/40 backdrop-blur-[2px] flex items-center justify-center">
-              <div className="w-12 h-12 rounded-full bg-white/90 text-gray-700 flex items-center justify-center shadow-lg">
+              <div className="w-12 h-12 rounded-full bg-white/90 dark:bg-slate-800/90 text-gray-700 dark:text-slate-200 flex items-center justify-center shadow-lg">
                 <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                   <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
                   <path d="M7 11V7a5 5 0 0110 0v4" />
@@ -208,17 +207,17 @@ export default function ModuleDetailsPage() {
 
         <div className="md:col-span-8 flex flex-col justify-between space-y-4">
           <div className="space-y-2">
-            <div className="flex flex-wrap items-center gap-2 text-xs text-gray-500">
-              <span className="font-semibold text-gray-800">{module.modcat || "General"}</span>
-              <span className="text-gray-300">·</span>
-              <span className="font-medium text-gray-600">{module.level || "Beginner"}</span>
-              <span className="text-gray-300">·</span>
+            <div className="flex flex-wrap items-center gap-2 text-xs text-gray-500 dark:text-slate-400">
+              <span className="font-semibold text-gray-800 dark:text-slate-200">{module.modcat || "General"}</span>
+              <span className="text-gray-300 dark:text-slate-600">·</span>
+              <span className="font-medium text-gray-600 dark:text-slate-300">{module.level || "Beginner"}</span>
+              <span className="text-gray-300 dark:text-slate-600">·</span>
               <span>{module.duration || "Self-paced"}</span>
               {isCompleted && (
                 <>
-                  <span className="text-gray-300">·</span>
-                  <span className="inline-flex items-center gap-1 font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200/60 px-2 py-0.5 rounded text-[11px]">
-                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                  <span className="text-gray-300 dark:text-slate-600">·</span>
+                  <span className="inline-flex items-center gap-1 font-semibold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200/60 dark:border-emerald-800/60 px-2 py-0.5 rounded text-[11px]">
+                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                     </svg>
                     Completed
@@ -226,7 +225,7 @@ export default function ModuleDetailsPage() {
                 </>
               )}
             </div>
-            <h1 className="text-2xl md:text-3xl font-bold text-gray-900 leading-tight tracking-tight">
+            <h1 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white leading-tight tracking-tight">
               {decodeHtml(module.modname)}
             </h1>
           </div>
@@ -234,15 +233,15 @@ export default function ModuleDetailsPage() {
           <div className="space-y-3.5">
             <div className="w-full space-y-1.5">
               <div className="flex justify-between items-center text-xs">
-                <span className="font-medium text-gray-500">Course Progress</span>
-                <span className={`font-semibold ${isCompleted ? "text-emerald-600" : isEnrolled ? "text-gray-700" : "text-gray-400"}`}>
+                <span className="font-medium text-gray-500 dark:text-slate-400">Course Progress</span>
+                <span className={`font-semibold ${isCompleted ? "text-emerald-600 dark:text-emerald-400" : isEnrolled ? "text-gray-700 dark:text-slate-300" : "text-gray-400 dark:text-slate-500"}`}>
                   {isEnrolled ? `${currentProgress}%` : isLocked ? "Locked" : "Not Enrolled"}
                 </span>
               </div>
-              <div className="h-2 w-full overflow-hidden rounded-full bg-gray-100">
+              <div className="h-2 w-full overflow-hidden rounded-full bg-gray-100 dark:bg-slate-800">
                 <div
                   className={`h-full rounded-full transition-all duration-500 ease-out ${
-                    isCompleted ? "bg-emerald-500" : isEnrolled ? "bg-red-600" : "bg-gray-200"
+                    isCompleted ? "bg-emerald-500" : isEnrolled ? "bg-red-600" : "bg-gray-200 dark:bg-slate-700"
                   }`}
                   style={{ width: `${isEnrolled ? currentProgress : 0}%` }}
                 />
@@ -253,7 +252,7 @@ export default function ModuleDetailsPage() {
               {isAdmin ? (
                 <button 
                   onClick={() => setIsPreviewOpen(true)}
-                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-gray-900 hover:bg-black text-white font-medium rounded-xl text-sm transition-colors shadow-sm cursor-pointer"
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-gray-900 hover:bg-black dark:bg-slate-800 dark:hover:bg-slate-700 text-white font-medium rounded-xl text-sm transition-colors shadow-sm cursor-pointer"
                 >
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -262,15 +261,15 @@ export default function ModuleDetailsPage() {
                   <span>Preview Module (Read-Only)</span>
                 </button>
               ) : isLocked ? (
-                <div className="inline-flex flex-col sm:flex-row sm:items-center gap-2.5 bg-amber-50 border border-amber-200 px-4 py-3 rounded-xl">
-                  <div className="flex items-center gap-2 text-amber-800 text-sm font-semibold">
-                    <svg className="w-4 h-4 text-amber-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                <div className="inline-flex flex-col sm:flex-row sm:items-center gap-2.5 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/50 px-4 py-3 rounded-xl">
+                  <div className="flex items-center gap-2 text-amber-800 dark:text-amber-300 text-sm font-semibold">
+                    <svg className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                       <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
                       <path d="M7 11V7a5 5 0 0110 0v4" />
                     </svg>
                     <span>Prerequisite Required</span>
                   </div>
-                  <span className="text-xs text-amber-700">{module.lock_reason || "Complete foundational modules to unlock."}</span>
+                  <span className="text-xs text-amber-700 dark:text-amber-400">{module.lock_reason || "Complete foundational modules to unlock."}</span>
                 </div>
               ) : !isEnrolled ? (
                 <button 
@@ -298,22 +297,22 @@ export default function ModuleDetailsPage() {
         </div>
       </div>
 
-      <div className="bg-white p-6 rounded-2xl border border-gray-200/80 shadow-sm space-y-3">
-        <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+      <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-gray-200/80 dark:border-slate-800 shadow-sm space-y-3">
+        <h2 className="text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wider">
           Course Synopsis
         </h2>
         <div 
-          className="text-gray-600 text-sm leading-relaxed prose prose-sm max-w-none"
+          className="text-gray-600 dark:text-slate-300 text-sm leading-relaxed prose prose-sm dark:prose-invert max-w-none"
           dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(module.description || "No curriculum synopsis provided.") }}
         />
       </div>
 
       <div className="space-y-4">
-        <div className="flex items-center justify-between pb-1 border-b border-gray-200">
-          <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wider">
+        <div className="flex items-center justify-between pb-1 border-b border-gray-200 dark:border-slate-800">
+          <h2 className="text-sm font-semibold text-gray-900 dark:text-white uppercase tracking-wider">
             Curriculum Roadmap
           </h2>
-          <span className="text-xs text-gray-500 font-medium">
+          <span className="text-xs text-gray-500 dark:text-slate-400 font-medium">
             {levels.length} {levels.length === 1 ? 'level' : 'levels'} · {totalSteps} {totalSteps === 1 ? 'step' : 'steps'}
           </span>
         </div>
@@ -322,35 +321,35 @@ export default function ModuleDetailsPage() {
           {levels.map((lvl) => (
             <div 
               key={lvl.level_id} 
-              className="bg-white border border-gray-200/80 rounded-2xl overflow-hidden shadow-sm"
+              className="bg-white dark:bg-slate-900 border border-gray-200/80 dark:border-slate-800 rounded-2xl overflow-hidden shadow-sm"
             >
-              <div className="bg-gray-50/70 px-5 py-4 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <div className="bg-gray-50/70 dark:bg-slate-800/60 px-5 py-4 border-b border-gray-100 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                 <div className="min-w-0 space-y-0.5">
                   <div className="flex items-center gap-2.5 min-w-0">
-                    <span className="shrink-0 whitespace-nowrap text-xs font-semibold text-gray-700 bg-gray-200/70 border border-gray-300/60 px-2.5 py-1 rounded-md">
+                    <span className="shrink-0 whitespace-nowrap text-xs font-semibold text-gray-700 dark:text-slate-300 bg-gray-200/70 dark:bg-slate-700/60 border border-gray-300/60 dark:border-slate-600/60 px-2.5 py-1 rounded-md">
                       Level {lvl.level_order}
                     </span>
-                    <h3 className="text-sm md:text-base font-bold text-gray-900 truncate">
+                    <h3 className="text-sm md:text-base font-bold text-gray-900 dark:text-white truncate">
                       {decodeHtml(lvl.level_title)}
                     </h3>
                   </div>
                   {lvl.level_description && (
                     <div 
-                      className="text-xs text-gray-500 font-normal pl-0.5 prose prose-xs max-w-none [&>p]:m-0"
+                      className="text-xs text-gray-500 dark:text-slate-400 font-normal pl-0.5 prose prose-xs dark:prose-invert max-w-none [&>p]:m-0"
                       dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(lvl.level_description) }}
                     />
                   )}
                 </div>
 
-                <div className="flex items-center gap-3 text-xs text-gray-500 shrink-0">
+                <div className="flex items-center gap-3 text-xs text-gray-500 dark:text-slate-400 shrink-0">
                   <span className="flex items-center gap-1">
-                    Passing score: <strong className="font-semibold text-gray-700">{lvl.passing_threshold || 80}%</strong>
+                    Passing score: <strong className="font-semibold text-gray-700 dark:text-slate-300">{lvl.passing_threshold || 80}%</strong>
                   </span>
                   {lvl.is_locked_by_default ? (
                     <>
-                      <span className="text-gray-300">·</span>
-                      <span className="inline-flex items-center gap-1 text-amber-700 font-medium">
-                        <svg className="w-3.5 h-3.5 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                      <span className="text-gray-300 dark:text-slate-600">·</span>
+                      <span className="inline-flex items-center gap-1 text-amber-700 dark:text-amber-400 font-medium">
+                        <svg className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                           <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
                           <path d="M7 11V7a5 5 0 0110 0v4" />
                         </svg>
@@ -361,34 +360,34 @@ export default function ModuleDetailsPage() {
                 </div>
               </div>
 
-              <div className="divide-y divide-gray-100 bg-white">
+              <div className="divide-y divide-gray-100 dark:divide-slate-800 bg-white dark:bg-slate-900">
                 {lvl.steps && lvl.steps.length > 0 ? (
                   lvl.steps.map((step) => {
                     const typeMeta = getStepTypeBadge(step.step_type);
                     return (
                       <div 
                         key={step.step_id} 
-                        className="px-5 py-3.5 flex items-center justify-between hover:bg-gray-50/60 transition-colors gap-3"
+                        className="px-5 py-3.5 flex items-center justify-between hover:bg-gray-50/60 dark:hover:bg-slate-800/40 transition-colors gap-3"
                       >
                         <div className="flex items-center gap-3 min-w-0">
-                          <span className="shrink-0 text-xs font-mono text-gray-400 bg-gray-100 w-6 h-6 flex items-center justify-center rounded-full font-medium">
+                          <span className="shrink-0 text-xs font-mono text-gray-400 dark:text-slate-400 bg-gray-100 dark:bg-slate-800 w-6 h-6 flex items-center justify-center rounded-full font-medium">
                             {step.step_order}
                           </span>
                           
                           <div className="min-w-0">
-                            <p className="text-sm font-medium text-gray-900 truncate">
+                            <p className="text-sm font-medium text-gray-900 dark:text-slate-200 truncate">
                               {decodeHtml(step.step_title)}
                             </p>
                             
                             {(step.is_final_assessment || step.loop_back_step_id) && (
                               <div className="flex items-center gap-1.5 mt-1">
                                 {step.is_final_assessment && (
-                                  <span className="text-[10px] font-semibold text-red-700 bg-red-50 border border-red-100 px-1.5 py-0.5 rounded">
+                                  <span className="text-[10px] font-semibold text-red-700 dark:text-red-300 bg-red-50 dark:bg-red-950/40 border border-red-100 dark:border-red-900/50 px-1.5 py-0.5 rounded">
                                     Final Exam
                                   </span>
                                 )}
                                 {step.loop_back_step_id && (
-                                  <span className="text-[10px] font-semibold text-amber-700 bg-amber-50 border border-amber-100 px-1.5 py-0.5 rounded">
+                                  <span className="text-[10px] font-semibold text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/40 border border-amber-100 dark:border-amber-900/50 px-1.5 py-0.5 rounded">
                                     Retake required on fail
                                   </span>
                                 )}
@@ -397,7 +396,7 @@ export default function ModuleDetailsPage() {
                           </div>
                         </div>
 
-                        <div className="shrink-0 flex items-center gap-1.5 text-xs text-gray-500 font-medium">
+                        <div className="shrink-0 flex items-center gap-1.5 text-xs text-gray-500 dark:text-slate-400 font-medium">
                           <StepIcon type={step.step_type} />
                           <span>{typeMeta.label}</span>
                         </div>
@@ -405,7 +404,7 @@ export default function ModuleDetailsPage() {
                     );
                   })
                 ) : (
-                  <p className="text-xs text-gray-400 italic p-5">No content steps configured in this level.</p>
+                  <p className="text-xs text-gray-400 dark:text-slate-500 italic p-5">No content steps configured in this level.</p>
                 )}
               </div>
             </div>
