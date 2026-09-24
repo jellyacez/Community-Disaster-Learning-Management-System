@@ -20,19 +20,19 @@ export default function UserManagement() {
   return (
     <div className="max-w-7xl mx-auto animate-in fade-in duration-150 px-6 md:px-12 pt-2 md:pt-2 pb-12 space-y-4">
       <div className="mb-8">
-        <nav className="flex text-sm text-gray-500 mb-2" aria-label="Breadcrumb">
+        <nav className="flex text-sm text-gray-500 dark:text-slate-400 mb-2" aria-label="Breadcrumb">
           <ol className="inline-flex items-center space-x-1 md:space-x-2">
             <li className="inline-flex items-center">Admin Portal</li>
             <li>
               <div className="flex items-center">
-                <span className="mx-2 text-gray-400">&gt;</span>
-                <span className="text-gray-900 font-semibold">User Management</span>
+                <span className="mx-2 text-gray-400 dark:text-slate-500">&gt;</span>
+                <span className="text-gray-900 dark:text-slate-100 font-semibold">User Management</span>
               </div>
             </li>
           </ol>
         </nav>
-        <h1 className="text-3xl font-black text-gray-900 tracking-tight">User Management</h1>
-        <p className="text-sm font-medium text-gray-500 mt-1">
+        <h1 className="text-3xl font-black text-gray-900 dark:text-slate-100 tracking-tight">User Management</h1>
+        <p className="text-sm font-medium text-gray-500 dark:text-slate-400 mt-1">
           Platform-wide control, access provisioning, and user administration
         </p>
       </div>
@@ -69,13 +69,13 @@ export default function UserManagement() {
       />
 
       {/* Table Area */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm">
-        <div className="px-6 py-4 border-b border-gray-50 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm">
+        <div className="px-6 py-4 border-b border-gray-50 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <h2 className="text-base font-bold text-gray-900">
+            <h2 className="text-base font-bold text-gray-900 dark:text-slate-100">
               User Directory
             </h2>
-            <span className="text-xs text-gray-500 font-mono">
+            <span className="text-xs text-gray-500 dark:text-slate-400 font-mono">
               {state.meta.total} total
             </span>
           </div>

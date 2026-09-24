@@ -561,18 +561,22 @@ This document tracks identified technical debt, architectural decisions, missing
 
 ---
 
-### Resolved: Progressive Web App (PWA) Manifest & Production Asset Precaching
-- **Location:** `client/public/manifest.json`, `client/index.html`, `client/public/service-worker.js`, `client/vite.config.js`
-- **Description:**
-  - **Missing Web App Manifest:** No `manifest.json` or `manifest.webmanifest` exists in `client/public/`. The application lacks `theme_color`, `background_color`, `display: "standalone"`, `start_url`, and high-resolution PWA app icon definitions (`192x192`, `512x512`, `maskable`).
-  - **Missing HTML Mobile & PWA Headers:** `index.html` lacks `<link rel="manifest">`, `<meta name="theme-color">`, and Apple touch icon tags (`<link rel="apple-touch-icon">`, `<meta name="apple-mobile-web-app-capable">`).
-  - **Manual Service Worker vs. Vite Chunk Precaching:** `service-worker.js` manually hardcodes `urlsToCache = ["/", "/index.html"]`. It does not automatically precache hashed Vite build bundles (`dist/assets/*.js`, `dist/assets/*.css`), meaning full offline navigation to unvisited views fails unless previously visited.
-  - **Missing Installation Hook:** No `beforeinstallprompt` event listener or custom in-app install prompt banner exists to encourage mobile/desktop installation.
-- **Architectural Impact:** Mobile and desktop users cannot install the LMS as a standalone offline PWA application, and offline reliability is limited to previously cached network responses.
-- **Recommended Action:**
-  - Integrate `vite-plugin-pwa` in `client/vite.config.js` with auto-update service worker strategy and Workbox precaching for all production assets.
-  - Generate canonical PWA icons (`icon-192.png`, `icon-512.png`, `icon-maskable.png`) and create `manifest.webmanifest`.
-  - Add an in-app `InstallAppPrompt` component listening to the window `beforeinstallprompt` event.
+### Resolved: Progressive Web App (PWA) Manifest, Production Precaching & Installability
+- **Location:** `client/vite.config.js`, `client/index.html`, `client/src/components/pwa/InstallAppPrompt.jsx`, `dist/manifest.webmanifest`, `dist/sw.js`
+- **Issue:**
+  1. **Missing Web App Manifest & HTML Headers:** No `manifest.webmanifest` existed, and HTML lacked mobile install headers (`apple-touch-icon`, `theme-color`, `apple-mobile-web-app-capable`).
+  2. **Manual Service Worker:** Legacy `service-worker.js` manually hardcoded routes and did not precache hashed production chunks.
+  3. **Manifest Icon Path Mismatch (Audited & Fixed):** An audit identified that `vite.config.js` and `index.html` referenced non-existent paths (`/icon-192.png`, `/icon-512.png`, `/icon-maskable.png`, `/apple-touch-icon.png`), while physical assets on disk in `public/` were `pwa-192x192.png`, `pwa-512x512.png`, `maskable-icon-512x512.png`, and `apple-touch-icon-180x180.png`. Chrome rejected the manifest icons as invalid images (returning SPA HTML fallback) with `errorId: "no-acceptable-icon"`.
+  4. **Preview Mode Proxy Gap (Audited & Fixed):** `vite preview` lacked an Express `/api` proxy, causing preview mode authentication and API calls to hit Vite's SPA fallback server.
+- **Resolution:**
+  - Integrated `vite-plugin-pwa` with auto-update strategy, Workbox bundle precaching (`precacheAndRoute`), SPA navigation fallback (`/index.html` denylisting `/^\/api/`), `clientsClaim: true`, and `skipWaiting: true`.
+  - Built and mounted global `InstallAppPrompt.jsx` listening to `beforeinstallprompt` with offline ready and update notifications.
+  - Aligned manifest icon declarations in `client/vite.config.js` and `client/index.html` to physical files: `/pwa-192x192.png`, `/pwa-512x512.png`, `/maskable-icon-512x512.png`, and `/apple-touch-icon-180x180.png`.
+  - Added `preview.proxy: { "/api": { target: "http://localhost:5000", changeOrigin: true } }` in `client/vite.config.js` and added `http://localhost:4173` to `trustedOrigins` in `server/utils/auth.js`.
+- **Verification:**
+  - **CDP Engine Installability:** Executed Chrome DevTools Protocol `Page.getInstallabilityErrors` against `http://localhost:4173`: confirmed **`installabilityErrors: []`** (0 errors).
+  - **Offline Navigation:** Executed CDP network disconnect (`offline: true`) and performed hard reload: confirmed HTTP 200 delivered from Workbox cache with full landing page DOM intact.
+  - **Authenticated Dexie Replay & Wakeup Mutex:** Executed full end-to-end replay with authenticated resident session cookies: queued feedback mutation while offline in Dexie `LMS_OfflineDB.sync_queue`, reconnected network, dispatched concurrent wakeup events (`online`, `trigger-offline-sync`, `visibilitychange`), confirmed `isSyncing` mutex in `syncManager.js` prevented overlapping execution (`[SyncManager] Sync already in progress. Flagging pending rerun.`), verified background flush, confirmed Dexie queue drained to 0, and confirmed exactly 1 row inserted in PostgreSQL `feedbacks` table.
 
 ---
 

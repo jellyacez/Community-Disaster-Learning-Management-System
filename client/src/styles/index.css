@@ -222,36 +222,36 @@ html.dark .text-emerald-800:not([class*="dark:text-"]) {
 }
 
 
-:where(.dark, .dark *) .border-gray-100,
-:where(.dark, .dark *) .border-gray-200,
-:where(.dark, .dark *) .border-gray-300,
-:where(.dark, .dark *) .border-slate-100,
-:where(.dark, .dark *) .border-slate-200,
-:where(.dark, .dark *) .border-gray-100\/50,
-:where(.dark, .dark *) .border-gray-200\/60,
-:where(.dark, .dark *) .border-gray-200\/70,
-:where(.dark, .dark *) .border-gray-200\/80,
-:where(.dark, .dark *) .border-slate-100\/50,
-:where(.dark, .dark *) .border-slate-200\/60,
-html.dark .border-gray-100,
-html.dark .border-gray-200,
-html.dark .border-gray-300,
-html.dark .border-slate-100,
-html.dark .border-slate-200,
-html.dark .border-gray-100\/50,
-html.dark .border-gray-200\/60,
-html.dark .border-gray-200\/70,
-html.dark .border-gray-200\/80,
-html.dark .border-slate-100\/50,
-html.dark .border-slate-200\/60 {
-  border-color: #1e293b !important;
+:where(.dark, .dark *) .border-gray-100:not([class*="dark:border-"]),
+:where(.dark, .dark *) .border-gray-200:not([class*="dark:border-"]),
+:where(.dark, .dark *) .border-gray-300:not([class*="dark:border-"]),
+:where(.dark, .dark *) .border-slate-100:not([class*="dark:border-"]),
+:where(.dark, .dark *) .border-slate-200:not([class*="dark:border-"]),
+:where(.dark, .dark *) .border-gray-100\/50:not([class*="dark:border-"]),
+:where(.dark, .dark *) .border-gray-200\/60:not([class*="dark:border-"]),
+:where(.dark, .dark *) .border-gray-200\/70:not([class*="dark:border-"]),
+:where(.dark, .dark *) .border-gray-200\/80:not([class*="dark:border-"]),
+:where(.dark, .dark *) .border-slate-100\/50:not([class*="dark:border-"]),
+:where(.dark, .dark *) .border-slate-200\/60:not([class*="dark:border-"]),
+html.dark .border-gray-100:not([class*="dark:border-"]),
+html.dark .border-gray-200:not([class*="dark:border-"]),
+html.dark .border-gray-300:not([class*="dark:border-"]),
+html.dark .border-slate-100:not([class*="dark:border-"]),
+html.dark .border-slate-200:not([class*="dark:border-"]),
+html.dark .border-gray-100\/50:not([class*="dark:border-"]),
+html.dark .border-gray-200\/60:not([class*="dark:border-"]),
+html.dark .border-gray-200\/70:not([class*="dark:border-"]),
+html.dark .border-gray-200\/80:not([class*="dark:border-"]),
+html.dark .border-slate-100\/50:not([class*="dark:border-"]),
+html.dark .border-slate-200\/60:not([class*="dark:border-"]) {
+  border-color: #1e293b;
 }
 
-:where(.dark, .dark *) .divide-gray-100 > :not([hidden]) ~ :not([hidden]),
-:where(.dark, .dark *) .divide-gray-200 > :not([hidden]) ~ :not([hidden]),
-html.dark .divide-gray-100 > :not([hidden]) ~ :not([hidden]),
-html.dark .divide-gray-200 > :not([hidden]) ~ :not([hidden]) {
-  border-color: #1e293b !important;
+:where(.dark, .dark *) .divide-gray-100:not([class*="dark:divide-"]) > :not([hidden]) ~ :not([hidden]),
+:where(.dark, .dark *) .divide-gray-200:not([class*="dark:divide-"]) > :not([hidden]) ~ :not([hidden]),
+html.dark .divide-gray-100:not([class*="dark:divide-"]) > :not([hidden]) ~ :not([hidden]),
+html.dark .divide-gray-200:not([class*="dark:divide-"]) > :not([hidden]) ~ :not([hidden]) {
+  border-color: #1e293b;
 }
 
 

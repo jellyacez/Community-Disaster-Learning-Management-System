@@ -8,7 +8,7 @@ export default function ResidentRegistryFilterBar({
   onStatusChange,
 }) {
   return (
-    <div className="bg-white p-4 rounded-2xl border border-gray-200 shadow-sm flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
+    <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-gray-200 dark:border-slate-800 shadow-sm flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
       {/* Reusable SearchBar Component */}
       <SearchBar
         value={searchInput}
@@ -26,7 +26,7 @@ export default function ResidentRegistryFilterBar({
           <select
             value={selectedStatus}
             onChange={(e) => onStatusChange(e.target.value)}
-            className="w-full py-2 pl-3 pr-8 text-sm bg-white border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-colors cursor-pointer"
+            className="w-full py-2 pl-3 pr-8 text-sm bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 border border-gray-300 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-colors cursor-pointer"
           >
             <option value="">All Statuses</option>
             <option value="active">Active</option>

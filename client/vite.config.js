@@ -9,7 +9,7 @@ export default defineConfig(({ mode }) => ({
     tailwindcss(),
     VitePWA({
       registerType: "autoUpdate",
-      includeAssets: ["favicon.svg", "icons.svg", "apple-touch-icon.png"],
+      includeAssets: ["favicon.svg", "icons.svg", "apple-touch-icon-180x180.png"],
       manifest: {
         name: "Bacolor LMS",
         short_name: "Bacolor LMS",
@@ -22,17 +22,17 @@ export default defineConfig(({ mode }) => ({
         scope: "/",
         icons: [
           {
-            src: "/icon-192.png",
+            src: "/pwa-192x192.png",
             sizes: "192x192",
             type: "image/png",
           },
           {
-            src: "/icon-512.png",
+            src: "/pwa-512x512.png",
             sizes: "512x512",
             type: "image/png",
           },
           {
-            src: "/icon-maskable.png",
+            src: "/maskable-icon-512x512.png",
             sizes: "512x512",
             type: "image/png",
             purpose: "maskable",
@@ -72,6 +72,14 @@ export default defineConfig(({ mode }) => ({
     hmr: {
       host: "localhost",
       port: 5173,
+    },
+  },
+  preview: {
+    proxy: {
+      "/api": {
+        target: "http://localhost:5000",
+        changeOrigin: true,
+      },
     },
   },
 }));

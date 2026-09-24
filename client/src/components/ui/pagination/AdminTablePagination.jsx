@@ -82,8 +82,8 @@ const AdminTablePagination = memo(function AdminTablePagination({
   const pageNumbers = getPageNumbers(page, totalPages);
 
   const stickyStyles = sticky
-    ? "sticky bottom-0 z-10 bg-white/95 backdrop-blur-xs shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.04)] border-t border-gray-200"
-    : "border-t border-gray-200 bg-gray-50/50";
+    ? "sticky bottom-0 z-10 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xs shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.04)] border-t border-gray-200 dark:border-slate-800"
+    : "border-t border-gray-200 dark:border-slate-800 bg-gray-50/50 dark:bg-slate-900/50";
 
   return (
     <nav
@@ -91,23 +91,23 @@ const AdminTablePagination = memo(function AdminTablePagination({
       className={`px-6 py-3.5 flex flex-col md:flex-row items-center justify-between gap-4 transition-all duration-200 ${stickyStyles} ${className}`}
     >
       {/* Left: Summary and Rows per page */}
-      <div className="flex flex-wrap items-center gap-4 text-xs font-medium text-gray-500">
+      <div className="flex flex-wrap items-center gap-4 text-xs font-medium text-gray-500 dark:text-slate-400">
         <span>
-          Showing <span className="font-bold text-gray-900">{start}</span> to{" "}
-          <span className="font-bold text-gray-900">{end}</span> of{" "}
-          <span className="font-bold text-gray-900">{total}</span> {itemName}
+          Showing <span className="font-bold text-gray-900 dark:text-slate-100">{start}</span> to{" "}
+          <span className="font-bold text-gray-900 dark:text-slate-100">{end}</span> of{" "}
+          <span className="font-bold text-gray-900 dark:text-slate-100">{total}</span> {itemName}
         </span>
 
         {onLimitChange && (
-          <div className="flex items-center gap-2 border-l border-gray-200 pl-4">
-            <label htmlFor="admin-table-limit" className="text-gray-500">
+          <div className="flex items-center gap-2 border-l border-gray-200 dark:border-slate-800 pl-4">
+            <label htmlFor="admin-table-limit" className="text-gray-500 dark:text-slate-400">
               Rows per page:
             </label>
             <select
               id="admin-table-limit"
               value={limit}
               onChange={handleLimitChange}
-              className="text-xs font-bold text-gray-700 bg-white border border-gray-300 rounded-lg px-2.5 py-1 outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 cursor-pointer shadow-2xs transition-colors"
+              className="text-xs font-bold text-gray-700 dark:text-slate-200 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-lg px-2.5 py-1 outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 cursor-pointer shadow-2xs transition-colors"
             >
               {limitOptions.map((opt) => (
                 <option key={opt} value={opt}>
@@ -127,7 +127,7 @@ const AdminTablePagination = memo(function AdminTablePagination({
             onClick={() => handlePageChange(page - 1)}
             disabled={page <= 1}
             aria-label="Go to previous page"
-            className="min-h-[34px] px-3 py-1.5 text-xs font-semibold text-gray-700 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 hover:border-gray-300 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-2xs cursor-pointer flex items-center gap-1"
+            className="min-h-[34px] px-3 py-1.5 text-xs font-semibold text-gray-700 dark:text-slate-200 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl hover:bg-gray-50 dark:hover:bg-slate-700/60 hover:border-gray-300 dark:hover:border-slate-600 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-2xs cursor-pointer flex items-center gap-1"
           >
             <HugeiconsIcon icon={ArrowLeft01Icon} className="w-3.5 h-3.5" />
             <span className="hidden sm:inline">Previous</span>
@@ -140,7 +140,7 @@ const AdminTablePagination = memo(function AdminTablePagination({
                 return (
                   <span
                     key={`ellipsis-${idx}`}
-                    className="w-8 h-8 flex items-center justify-center text-xs font-bold text-gray-400 select-none"
+                    className="w-8 h-8 flex items-center justify-center text-xs font-bold text-gray-400 dark:text-slate-500 select-none"
                   >
                     …
                   </span>
@@ -158,7 +158,7 @@ const AdminTablePagination = memo(function AdminTablePagination({
                   className={`min-w-[34px] h-[34px] px-2 flex items-center justify-center rounded-xl text-xs font-bold transition-all cursor-pointer select-none ${
                     isActive
                       ? "bg-red-600 text-white shadow-sm ring-2 ring-red-600/20"
-                      : "bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300 shadow-2xs"
+                      : "bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-gray-700 dark:text-slate-200 hover:bg-gray-50 dark:hover:bg-slate-700/60 hover:border-gray-300 dark:hover:border-slate-600 shadow-2xs"
                   }`}
                 >
                   {p}
@@ -172,7 +172,7 @@ const AdminTablePagination = memo(function AdminTablePagination({
             onClick={() => handlePageChange(page + 1)}
             disabled={page >= totalPages}
             aria-label="Go to next page"
-            className="min-h-[34px] px-3 py-1.5 text-xs font-semibold text-gray-700 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 hover:border-gray-300 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-2xs cursor-pointer flex items-center gap-1"
+            className="min-h-[34px] px-3 py-1.5 text-xs font-semibold text-gray-700 dark:text-slate-200 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl hover:bg-gray-50 dark:hover:bg-slate-700/60 hover:border-gray-300 dark:hover:border-slate-600 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-2xs cursor-pointer flex items-center gap-1"
           >
             <span className="hidden sm:inline">Next</span>
             <HugeiconsIcon icon={ArrowRight01Icon} className="w-3.5 h-3.5" />

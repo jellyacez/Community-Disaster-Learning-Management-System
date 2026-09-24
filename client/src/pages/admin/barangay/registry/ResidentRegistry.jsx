@@ -33,6 +33,7 @@ export default function ResidentRegistry() {
 
   // Reset pagination to page 1 on filter or limit changes
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setPage(1);
   }, [debouncedSearch, selectedStatus, limit]);
 
@@ -79,19 +80,19 @@ export default function ResidentRegistry() {
     <div className="space-y-6">
       {/* Header & Breadcrumbs */}
       <div>
-        <nav className="flex text-sm text-gray-500 mb-2" aria-label="Breadcrumb">
+        <nav className="flex text-sm text-gray-500 dark:text-slate-400 mb-2" aria-label="Breadcrumb">
           <ol className="inline-flex items-center space-x-1 md:space-x-2">
             <li className="inline-flex items-center">Dashboard</li>
             <li>
               <div className="flex items-center">
-                <span className="mx-2 text-gray-400">&gt;</span>
+                <span className="mx-2 text-gray-400 dark:text-slate-500">&gt;</span>
                 <span>Resident Management</span>
               </div>
             </li>
             <li>
               <div className="flex items-center">
-                <span className="mx-2 text-gray-400">&gt;</span>
-                <span className="text-gray-900 font-semibold">Residential Compliance Registry</span>
+                <span className="mx-2 text-gray-400 dark:text-slate-500">&gt;</span>
+                <span className="text-gray-900 dark:text-slate-100 font-semibold">Residential Compliance Registry</span>
               </div>
             </li>
           </ol>
@@ -99,10 +100,10 @@ export default function ResidentRegistry() {
 
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-black text-gray-900 tracking-tight">
+            <h1 className="text-3xl font-black text-gray-900 dark:text-slate-100 tracking-tight">
               Residential Compliance Registry
             </h1>
-            <p className="text-sm font-medium text-gray-500 mt-1">
+            <p className="text-sm font-medium text-gray-500 dark:text-slate-400 mt-1">
               Monitor and manage resident training compliance in your barangay
             </p>
           </div>
@@ -110,11 +111,11 @@ export default function ResidentRegistry() {
             type="button"
             onClick={() => refetch()}
             disabled={isFetching}
-            className="inline-flex items-center gap-2 px-3.5 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-xl hover:bg-gray-50 transition-colors shadow-sm self-start md:self-auto cursor-pointer"
+            className="inline-flex items-center gap-2 px-3.5 py-2 text-sm font-medium text-gray-700 dark:text-slate-200 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors shadow-sm self-start md:self-auto cursor-pointer"
           >
             <HugeiconsIcon
               icon={RefreshIcon}
-              className={`w-4 h-4 ${isFetching ? "animate-spin text-red-600" : "text-gray-500"}`}
+              className={`w-4 h-4 ${isFetching ? "animate-spin text-red-600" : "text-gray-500 dark:text-slate-400"}`}
             />
             <span>Refresh</span>
           </button>

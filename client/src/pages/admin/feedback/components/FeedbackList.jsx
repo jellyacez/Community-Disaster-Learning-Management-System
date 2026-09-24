@@ -29,15 +29,15 @@ export default function FeedbackList({
           ))}
         </div>
       ) : filteredSubmissions.length === 0 ? (
-        <div className="rounded-3xl border border-dashed border-gray-200 bg-gray-50 p-10 text-center">
+        <div className="rounded-3xl border border-dashed border-gray-200 dark:border-slate-800 bg-gray-50 dark:bg-slate-800/40 p-10 text-center">
           <HugeiconsIcon
             icon={Message01Icon}
-            className="w-12 h-12 text-gray-300 mx-auto mb-3"
+            className="w-12 h-12 text-gray-300 dark:text-slate-600 mx-auto mb-3"
           />
-          <p className="text-lg font-bold text-gray-800">
+          <p className="text-lg font-bold text-gray-800 dark:text-slate-200">
             No tickets found in this queue
           </p>
-          <p className="text-sm text-gray-500 mt-1">
+          <p className="text-sm text-gray-500 dark:text-slate-400 mt-1">
             There are no {activeTab === "all" ? "" : activeTab} resident communications matching your filter.
           </p>
         </div>
@@ -67,7 +67,7 @@ export default function FeedbackList({
           onLimitChange={setPageSize}
           itemName="tickets"
           sticky={true}
-          className="mt-6 rounded-2xl border border-gray-200"
+          className="mt-6 rounded-2xl border border-gray-200 dark:border-slate-800"
         />
       )}
     </>

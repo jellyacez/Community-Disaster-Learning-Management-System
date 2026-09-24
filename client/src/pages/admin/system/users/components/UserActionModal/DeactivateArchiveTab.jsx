@@ -35,32 +35,32 @@ export default function DeactivateArchiveTab({ user, onSave }) {
     <>
       <div className="space-y-4 pb-2">
         {/* Ban / Unban */}
-        <form onSubmit={handleBanSubmit} className="p-5 rounded-2xl border border-red-100 bg-red-50 space-y-3">
+        <form onSubmit={handleBanSubmit} className="p-5 rounded-2xl border border-red-100 dark:border-red-900/40 bg-red-50 dark:bg-red-950/30 space-y-3">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-bold text-red-900">
+              <p className="text-sm font-bold text-red-900 dark:text-red-300">
                 {user.banned ? "This account is currently deactivated" : "Deactivate this account"}
               </p>
               {user.banReason && (
-                <p className="text-xs text-red-700 mt-0.5">Reason: {user.banReason}</p>
+                <p className="text-xs text-red-700 dark:text-red-400 mt-0.5">Reason: {user.banReason}</p>
               )}
             </div>
           </div>
           {!user.banned && (
             <div>
-              <label className="block text-xs font-semibold text-red-800 mb-1">Deactivation Reason</label>
+              <label className="block text-xs font-semibold text-red-800 dark:text-red-300 mb-1">Deactivation Reason</label>
               <input
                 type="text"
                 value={banReason}
                 onChange={e => setBanReason(e.target.value)}
                 placeholder="Enter reason for deactivation..."
-                className="w-full px-3 py-2 border border-red-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-red-300 bg-white"
+                className="w-full px-3 py-2 border border-red-200 dark:border-red-800/80 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-red-300 dark:focus:ring-red-900 bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-500"
               />
             </div>
           )}
           <button
             type="submit"
-            className={`w-full rounded-xl py-2.5 text-sm font-bold transition-colors ${
+            className={`w-full rounded-xl py-2.5 text-sm font-bold transition-colors cursor-pointer ${
               user.banned
                 ? "bg-emerald-600 text-white hover:bg-emerald-700"
                 : "bg-red-600 text-white hover:bg-red-700"
@@ -71,13 +71,13 @@ export default function DeactivateArchiveTab({ user, onSave }) {
         </form>
 
         {/* Archive / Restore */}
-        <div className={`p-5 rounded-2xl border space-y-3 ${user.archived ? "border-emerald-100 bg-emerald-50" : "border-gray-100 bg-gray-50"}`}>
+        <div className={`p-5 rounded-2xl border space-y-3 ${user.archived ? "border-emerald-100 dark:border-emerald-900/40 bg-emerald-50 dark:bg-emerald-950/30" : "border-gray-100 dark:border-slate-800 bg-gray-50 dark:bg-slate-800/50"}`}>
           <div className="flex items-center justify-between">
             <div>
-              <p className={`text-sm font-bold ${user.archived ? "text-emerald-900" : "text-gray-900"}`}>
+              <p className={`text-sm font-bold ${user.archived ? "text-emerald-900 dark:text-emerald-300" : "text-gray-900 dark:text-slate-100"}`}>
                 {user.archived ? "Account is archived" : "Archive this account"}
               </p>
-              <p className={`text-xs mt-0.5 ${user.archived ? "text-emerald-700" : "text-gray-500"}`}>
+              <p className={`text-xs mt-0.5 ${user.archived ? "text-emerald-700 dark:text-emerald-400" : "text-gray-500 dark:text-slate-400"}`}>
                 {user.archived ? "Restore to allow login." : "Soft-delete to block access."}
               </p>
             </div>
@@ -85,10 +85,10 @@ export default function DeactivateArchiveTab({ user, onSave }) {
           <button
             type="button"
             onClick={handleArchive}
-            className={`w-full rounded-xl py-2.5 text-sm font-bold transition-colors ${
+            className={`w-full rounded-xl py-2.5 text-sm font-bold transition-colors cursor-pointer ${
               user.archived
                 ? "bg-emerald-600 text-white hover:bg-emerald-700"
-                : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                : "bg-gray-200 dark:bg-slate-700 text-gray-700 dark:text-slate-200 hover:bg-gray-300 dark:hover:bg-slate-600"
             }`}
           >
             {user.archived ? "Restore Account" : "Archive Account"}
@@ -96,13 +96,13 @@ export default function DeactivateArchiveTab({ user, onSave }) {
         </div>
 
         {/* Hard Delete */}
-        <div className="p-5 rounded-2xl border border-red-200 bg-red-50 space-y-3">
+        <div className="p-5 rounded-2xl border border-red-200 dark:border-red-900/60 bg-red-50 dark:bg-red-950/40 space-y-3">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-bold text-red-900">
+              <p className="text-sm font-bold text-red-900 dark:text-red-300">
                 Permanently Delete Account
               </p>
-              <p className="text-xs mt-0.5 text-red-700">
+              <p className="text-xs mt-0.5 text-red-700 dark:text-red-400">
                 This action is irreversible. It will purge all data for this user.
               </p>
             </div>
@@ -110,7 +110,7 @@ export default function DeactivateArchiveTab({ user, onSave }) {
           <button
             type="button"
             onClick={() => setModalConfig({ isOpen: true, action: "hard_delete" })}
-            className="w-full rounded-xl py-2.5 text-sm font-bold transition-colors bg-red-600 text-white hover:bg-red-700"
+            className="w-full rounded-xl py-2.5 text-sm font-bold transition-colors bg-red-600 text-white hover:bg-red-700 cursor-pointer"
           >
             Permanently Delete
           </button>

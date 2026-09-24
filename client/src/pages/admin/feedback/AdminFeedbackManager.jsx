@@ -51,7 +51,6 @@ export default function AdminFeedbackManager() {
     setCurrentPage,
     pageSize,
     setPageSize,
-    PAGE_SIZE,
     filteredSubmissions,
     totalPages,
     paginatedSubmissions,
@@ -71,7 +70,7 @@ export default function AdminFeedbackManager() {
       />
 
       {/* Main Inbox */}
-      <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6">
+      <div className="bg-white dark:bg-slate-900 rounded-3xl border border-gray-100 dark:border-slate-800 shadow-sm p-6">
         <FeedbackFilters
           tabs={tabs}
           activeTab={activeTab}

@@ -80,20 +80,20 @@ const PaginationControls = memo(function PaginationControls({
   return (
     <nav
       aria-label="Pagination Navigation"
-      className={`flex flex-col sm:flex-row items-center justify-between gap-4 px-6 py-4 bg-white rounded-2xl border border-gray-200 shadow-sm ${className}`}
+      className={`flex flex-col sm:flex-row items-center justify-between gap-4 px-6 py-4 bg-white dark:bg-slate-900 rounded-2xl border border-gray-200 dark:border-slate-800 shadow-sm ${className}`}
     >
       {/* Left Item Counter / Page Label */}
-      <div className="text-xs text-gray-500 font-medium">
+      <div className="text-xs text-gray-500 dark:text-slate-400 font-medium">
         {totalItems !== undefined && itemsPerPage ? (
           <span>
-            Showing <span className="font-bold text-gray-800">{startItem}</span> to{" "}
-            <span className="font-bold text-gray-800">{endItem}</span> of{" "}
-            <span className="font-bold text-gray-800">{totalItems}</span> {itemName}
+            Showing <span className="font-bold text-gray-800 dark:text-slate-200">{startItem}</span> to{" "}
+            <span className="font-bold text-gray-800 dark:text-slate-200">{endItem}</span> of{" "}
+            <span className="font-bold text-gray-800 dark:text-slate-200">{totalItems}</span> {itemName}
           </span>
         ) : (
           <span>
-            Page <span className="font-bold text-gray-800">{currentPage}</span> of{" "}
-            <span className="font-bold text-gray-800">{totalPages}</span>
+            Page <span className="font-bold text-gray-800 dark:text-slate-200">{currentPage}</span> of{" "}
+            <span className="font-bold text-gray-800 dark:text-slate-200">{totalPages}</span>
           </span>
         )}
       </div>
@@ -105,7 +105,7 @@ const PaginationControls = memo(function PaginationControls({
           onClick={() => handlePageChange(currentPage - 1)}
           disabled={currentPage <= 1}
           aria-label="Go to previous page"
-          className="min-h-[36px] px-3 py-1.5 text-xs font-semibold text-gray-700 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 hover:border-gray-300 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-2xs cursor-pointer flex items-center gap-1"
+          className="min-h-[36px] px-3 py-1.5 text-xs font-semibold text-gray-700 dark:text-slate-200 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl hover:bg-gray-50 dark:hover:bg-slate-700/60 hover:border-gray-300 dark:hover:border-slate-600 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-2xs cursor-pointer flex items-center gap-1"
         >
           <HugeiconsIcon icon={ArrowLeft01Icon} className="w-3.5 h-3.5" />
           <span className="hidden xs:inline">Previous</span>
@@ -118,7 +118,7 @@ const PaginationControls = memo(function PaginationControls({
               return (
                 <span
                   key={`ellipsis-${idx}`}
-                  className="w-8 h-8 flex items-center justify-center text-xs font-bold text-gray-400 select-none"
+                  className="w-8 h-8 flex items-center justify-center text-xs font-bold text-gray-400 dark:text-slate-500 select-none"
                 >
                   …
                 </span>
@@ -136,7 +136,7 @@ const PaginationControls = memo(function PaginationControls({
                 className={`min-w-[36px] h-9 px-2 flex items-center justify-center rounded-xl text-xs font-bold transition-all cursor-pointer select-none ${
                   isActive
                     ? "bg-red-600 text-white shadow-sm ring-2 ring-red-600/20"
-                    : "bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300 shadow-2xs"
+                    : "bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-gray-700 dark:text-slate-200 hover:bg-gray-50 dark:hover:bg-slate-700/60 hover:border-gray-300 dark:hover:border-slate-600 shadow-2xs"
                 }`}
               >
                 {page}
@@ -150,7 +150,7 @@ const PaginationControls = memo(function PaginationControls({
           onClick={() => handlePageChange(currentPage + 1)}
           disabled={currentPage >= totalPages}
           aria-label="Go to next page"
-          className="min-h-[36px] px-3 py-1.5 text-xs font-semibold text-gray-700 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 hover:border-gray-300 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-2xs cursor-pointer flex items-center gap-1"
+          className="min-h-[36px] px-3 py-1.5 text-xs font-semibold text-gray-700 dark:text-slate-200 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl hover:bg-gray-50 dark:hover:bg-slate-700/60 hover:border-gray-300 dark:hover:border-slate-600 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-2xs cursor-pointer flex items-center gap-1"
         >
           <span className="hidden xs:inline">Next</span>
           <HugeiconsIcon icon={ArrowRight01Icon} className="w-3.5 h-3.5" />

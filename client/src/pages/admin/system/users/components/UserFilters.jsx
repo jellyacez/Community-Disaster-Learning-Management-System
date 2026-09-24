@@ -14,16 +14,16 @@ export default function UserFilters({
   setPage,
 }) {
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
+    <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm p-5 flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
       <div className="relative flex-1">
-        <HugeiconsIcon icon={Search01Icon} className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+        <HugeiconsIcon icon={Search01Icon} className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-slate-500" />
         <input
           type="text"
           placeholder="Search by name or email..."
           aria-label="Search users"
           value={search}
           onChange={e => setSearch(e.target.value)}
-          className="w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10"
+          className="w-full pl-9 pr-4 py-2.5 border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-500 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10 dark:focus:ring-slate-700"
         />
       </div>
       <div className="flex gap-2 flex-wrap">
@@ -33,7 +33,7 @@ export default function UserFilters({
           value={barangayFilter}
           aria-label="Filter by barangay"
           onChange={e => { setBarangayFilter(e.target.value); setPage(1); }}
-          className="px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10 bg-white"
+          className="px-3 py-2.5 border border-gray-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10 dark:focus:ring-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100"
         >
           <option value="">All Barangays</option>
           {[...BARANGAY_LIST]
@@ -48,7 +48,7 @@ export default function UserFilters({
           value={roleFilter}
           aria-label="Filter by role"
           onChange={e => { setRoleFilter(e.target.value); setPage(1); }}
-          className="px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10 bg-white"
+          className="px-3 py-2.5 border border-gray-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10 dark:focus:ring-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100"
         >
           <option value="">All Roles</option>
           <option value="resident">Resident</option>
@@ -62,7 +62,7 @@ export default function UserFilters({
           value={statusFilter}
           aria-label="Filter by status"
           onChange={e => { setStatusFilter(e.target.value); setPage(1); }}
-          className="px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10 bg-white"
+          className="px-3 py-2.5 border border-gray-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10 dark:focus:ring-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100"
         >
           <option value="">All Status</option>
           <option value="active">Active</option>
