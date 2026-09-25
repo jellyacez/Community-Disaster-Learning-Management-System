@@ -53,6 +53,7 @@ export const extractErrorMessage = (error) => {
   if (error.response?.status === 401) return 'Session expired. Please log in again.';
   if (error.response?.status === 403) return 'Permission denied for this action.';
   if (error.response?.status === 404) return 'The requested resource no longer exists.';
+  if (error.response?.status === 409) return error.response?.data?.message || error.response?.data?.error || 'State conflict: resource was modified while offline.';
   if (error.response?.status === 422) return 'Validation error: data was rejected by the server.';
   if (error.response?.status >= 500) return 'Server error. The service is temporarily unavailable.';
   if (error.message) return error.message;
@@ -89,24 +90,126 @@ export const getActionDescription = (task) => {
   }
 };
 
+export let memorySyncQueue = [];
+
+export const clearMemoryQueue = () => {
+  memorySyncQueue = [];
+};
+
+export const enqueueMemoryTask = (action_type, payload) => {
+  const memoryId = `mem_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
+  const task = {
+    sync_id: memoryId,
+    action_type,
+    status: 'pending',
+    payload,
+    retry_count: 0,
+    created_at: new Date().toISOString(),
+    is_memory_only: true
+  };
+  memorySyncQueue.push(task);
+  window.dispatchEvent(new CustomEvent('offline-sync-queue-updated'));
+  return {
+    success: true,
+    task,
+    warning: 'Storage restricted (Private Browsing / Quota Exceeded). Action queued in memory for this session only — do not close this tab.'
+  };
+};
+
+export const enqueueSyncTask = async (action_type, payload) => {
+  const task = {
+    action_type,
+    status: 'pending',
+    payload,
+    retry_count: 0,
+    created_at: new Date().toISOString(),
+  };
+
+  try {
+    const id = await localDb.sync_queue.add(task);
+    window.dispatchEvent(new CustomEvent('offline-sync-queue-updated'));
+    return { status: 'queued', storageType: 'idb', id };
+  } catch (error) {
+    console.warn('[SyncManager] IndexedDB write failed; falling back to in-memory queue:', error);
+    const memRes = enqueueMemoryTask(action_type, payload);
+    return {
+      status: 'queued_memory_only',
+      storageType: 'memory',
+      id: memRes.task.sync_id,
+      warning: memRes.warning
+    };
+  }
+};
+
+export const updateTaskRecord = async (syncId, updates) => {
+  if (typeof syncId === 'string' && syncId.startsWith('mem_')) {
+    const item = memorySyncQueue.find((t) => t.sync_id === syncId);
+    if (item) {
+      Object.assign(item, updates);
+    }
+    return;
+  }
+  try {
+    await localDb.sync_queue.update(syncId, updates);
+  } catch (err) {
+    console.warn('[SyncManager] Failed to update task in Dexie:', err);
+  }
+};
+
 export const getAllPendingWrites = async () => {
   const now = Date.now();
-  const all = await localDb.sync_queue.toArray();
-  return all.filter(
+  let dbTasks = [];
+  try {
+    const all = await localDb.sync_queue.toArray();
+    dbTasks = all.filter(
+      (t) => t.status === 'pending' || (t.status === 'retrying' && (!t.next_retry_at || t.next_retry_at <= now))
+    );
+  } catch (err) {
+    console.warn('[SyncManager] Failed to read from Dexie sync_queue:', err);
+  }
+
+  const memTasks = memorySyncQueue.filter(
     (t) => t.status === 'pending' || (t.status === 'retrying' && (!t.next_retry_at || t.next_retry_at <= now))
   );
+
+  return [...dbTasks, ...memTasks];
 };
 
 export const getFailedTasks = async () => {
-  return await localDb.sync_queue.where('status').equals('failed').toArray();
+  let dbFailed = [];
+  try {
+    dbFailed = await localDb.sync_queue.where('status').equals('failed').toArray();
+  } catch (err) {
+    console.warn('[SyncManager] Failed to read failed tasks from Dexie:', err);
+  }
+  const memFailed = memorySyncQueue.filter((t) => t.status === 'failed');
+  return [...dbFailed, ...memFailed];
+};
+
+export const getAllSyncQueueItems = async () => {
+  let dbItems = [];
+  try {
+    dbItems = await localDb.sync_queue.toArray();
+  } catch (err) {
+    console.warn('[SyncManager] Failed to read sync_queue from Dexie:', err);
+  }
+  return [...dbItems, ...memorySyncQueue];
 };
 
 export const dequeueWrite = async (syncId) => {
-  return await localDb.sync_queue.delete(syncId);
+  if (typeof syncId === 'string' && syncId.startsWith('mem_')) {
+    memorySyncQueue = memorySyncQueue.filter((t) => t.sync_id !== syncId);
+    return true;
+  }
+  try {
+    return await localDb.sync_queue.delete(syncId);
+  } catch (err) {
+    console.warn('[SyncManager] Failed to delete from Dexie sync_queue:', err);
+  }
 };
 
 export const retryFailedTask = async (syncId) => {
-  await localDb.sync_queue.update(syncId, {
+  await updateTaskRecord(syncId, {
     status: 'pending',
     retry_count: 0,
     next_retry_at: null,
@@ -238,7 +341,7 @@ export const processOfflineQueue = async () => {
             errorMessage
           );
 
-          await localDb.sync_queue.update(task.sync_id, {
+          await updateTaskRecord(task.sync_id, {
             status: 'retrying',
             retry_count: currentRetries,
             next_retry_at: nextRetryAt,
@@ -247,30 +350,41 @@ export const processOfflineQueue = async () => {
             last_attempt_at: Date.now()
           });
         } else {
-          // Terminal error OR exhausted retry budget
+          // Terminal error OR 409 Conflict OR exhausted retry budget
+          const isConflict = error.response?.status === 409;
           const errorType = isAuthError
             ? 'auth_expired'
-            : isTransient
-              ? 'transient_exhausted'
-              : 'terminal';
+            : isConflict
+              ? 'conflict'
+              : isTransient
+                ? 'transient_exhausted'
+                : 'terminal';
 
           console.error(
             `[SyncManager] Task ${task.sync_id} failed (${errorType}). Total attempts: ${currentRetries}.`,
             errorMessage
           );
 
-          await localDb.sync_queue.update(task.sync_id, {
-            status: 'failed',
+          await updateTaskRecord(task.sync_id, {
+            status: isConflict ? 'conflict' : 'failed',
             retry_count: currentRetries,
             last_error: errorMessage,
             error_type: errorType,
+            conflict_type: error.response?.data?.conflict_type || (isConflict ? 'TICKET_CLOSED' : null),
             failed_at: Date.now(),
             next_retry_at: null
           });
 
-          toast.error(`Could not sync ${getActionDescription(task)}: ${errorMessage}`, {
-            duration: 6000
-          });
+          if (isConflict) {
+            toast.error(`Sync conflict on ${getActionDescription(task)}: ${errorMessage}`, {
+              duration: 7000,
+              icon: '⚠️'
+            });
+          } else {
+            toast.error(`Could not sync ${getActionDescription(task)}: ${errorMessage}`, {
+              duration: 6000
+            });
+          }
         }
 
         window.dispatchEvent(new CustomEvent('offline-sync-queue-updated'));
@@ -293,17 +407,25 @@ export const processOfflineQueue = async () => {
 const scheduleNextRetryIfNeeded = async () => {
   if (!navigator.onLine) return;
 
-  const retryingTasks = await localDb.sync_queue
-    .where('status')
-    .equals('retrying')
-    .toArray();
+  let retryingTasks = [];
+  try {
+    retryingTasks = await localDb.sync_queue
+      .where('status')
+      .equals('retrying')
+      .toArray();
+  } catch (err) {
+    console.warn('[SyncManager] Failed to read retrying tasks from Dexie:', err);
+  }
 
-  if (retryingTasks.length === 0) return;
+  const memRetrying = memorySyncQueue.filter((t) => t.status === 'retrying');
+  const allRetrying = [...retryingTasks, ...memRetrying];
+
+  if (allRetrying.length === 0) return;
 
   const now = Date.now();
   let earliest = Infinity;
 
-  for (const t of retryingTasks) {
+  for (const t of allRetrying) {
     if (t.next_retry_at && t.next_retry_at < earliest) {
       earliest = t.next_retry_at;
     }

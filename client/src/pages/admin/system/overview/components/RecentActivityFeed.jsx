@@ -11,7 +11,7 @@ export default function RecentActivityFeed() {
       const res = await apiClient.get("/admin/activity-log?limit=5&page=1");
       return res.data.data;
     },
-    refetchInterval: 15000, // Poll every 15s as suggested
+    refetchInterval: 60000,
   });
 
   const getLogIcon = (logText) => {

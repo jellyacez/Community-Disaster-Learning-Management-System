@@ -27,8 +27,11 @@ export function useNotificationPreferences() {
       if (!userId) throw new Error("User not authenticated");
 
       if (!navigator.onLine) {
-        await saveOfflineNotification(userId, newSettings);
-        return newSettings;
+        const res = await saveOfflineNotification(userId, newSettings);
+        if (res?.status === 'failed') {
+          throw new Error(res.error || "Storage failed. Notification preferences could not be saved offline.");
+        }
+        return { settings: newSettings, ...res };
       }
 
       try {
@@ -36,9 +39,13 @@ export function useNotificationPreferences() {
         return response.data.settings;
       } catch (error) {
         if (!error.response || error.code === "ERR_NETWORK") {
-          await saveOfflineNotification(userId, newSettings);
-          return newSettings
-        } throw error;
+          const res = await saveOfflineNotification(userId, newSettings);
+          if (res?.status === 'failed') {
+            throw new Error(res.error || "Storage failed. Notification preferences could not be saved offline.");
+          }
+          return { settings: newSettings, ...res };
+        }
+        throw error;
       }
     },
 
@@ -49,9 +56,19 @@ export function useNotificationPreferences() {
       queryClient.setQueryData(["userSettings"], newSettings);
       return { previousSettings };
     },
+    onSuccess: (data) => {
+      if (data?.status === 'queued_memory_only') {
+        toast(data.warning || "Storage restricted: Preferences saved in memory for this session only.", {
+          icon: "⚠️",
+          duration: 6000,
+        });
+      } else if (data?.status === 'queued') {
+        toast.success("Notification preferences saved locally.", { icon: "📦" });
+      }
+    },
     onError: (err, newSettings, context) => {
       queryClient.setQueryData(["userSettings"], context.previousSettings);
-      toast.error("Failed to save preference.");
+      toast.error(err.message || "Failed to save preference.");
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["userSettings"] });

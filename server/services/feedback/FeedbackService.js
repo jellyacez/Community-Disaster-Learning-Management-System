@@ -90,7 +90,8 @@ class FeedbackService {
       if (checkRes.rows[0].status === "Closed") {
         await client.query("ROLLBACK");
         const error = new Error("Cannot reply to a closed ticket.");
-        error.statusCode = 400;
+        error.statusCode = 409;
+        error.conflictType = "TICKET_CLOSED";
         throw error;
       }
 
@@ -233,7 +234,8 @@ class FeedbackService {
       if (ticket.status === "Closed") {
         await client.query("ROLLBACK");
         const error = new Error("Cannot reply to a closed ticket.");
-        error.statusCode = 400;
+        error.statusCode = 409;
+        error.conflictType = "TICKET_CLOSED";
         throw error;
       }
 

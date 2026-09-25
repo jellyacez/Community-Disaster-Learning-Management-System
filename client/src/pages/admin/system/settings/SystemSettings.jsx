@@ -42,7 +42,7 @@ export default function SystemSettings() {
       const res = await apiClient.get("/admin/health");
       return res.data.data;
     },
-    refetchInterval: 15000,
+    refetchInterval: 60000,
   });
 
   const [isToggling, setIsToggling] = useState(false);

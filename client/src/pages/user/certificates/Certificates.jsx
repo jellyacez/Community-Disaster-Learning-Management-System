@@ -23,7 +23,7 @@ export default function UserCertificates() {
       const response = await apiClient.get("/user/dashboard");
       return response.data;
     },
-    refetchInterval: 30000,
+    refetchInterval: 60000,
   });
 
   const certificates = useMemo(() => {

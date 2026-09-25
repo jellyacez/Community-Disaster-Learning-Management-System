@@ -21,26 +21,26 @@ const ActiveDeviceItem = memo(function ActiveDeviceItem({ session, isCurrent, on
   };
 
   return (
-    <div className="flex items-center justify-between py-4 border-b border-gray-100 last:border-0">
+    <div className="flex items-center justify-between py-4 border-b border-gray-100 dark:border-slate-800/80 last:border-0 transition-colors">
       <div className="flex items-start gap-4">
-        <div className="pt-1 text-gray-500">
+        <div className="pt-1 text-gray-500 dark:text-slate-400">
           <HugeiconsIcon aria-hidden="true" icon={device.icon} className="w-6 h-6" />
         </div>
         <div>
-          <p className="font-semibold text-gray-900 text-sm flex items-center gap-2">
+          <p className="font-semibold text-gray-900 dark:text-white text-sm flex items-center gap-2">
             {device.name} • {session.ipAddress || "Unknown Location"}
             {isCurrent && (
-              <span className="text-[10px] uppercase tracking-wider font-bold bg-red-100 text-red-600 px-2 py-0.5 rounded-full">
+              <span className="text-[10px] uppercase tracking-wider font-bold bg-red-100 dark:bg-red-950/70 text-red-600 dark:text-red-400 px-2 py-0.5 rounded-full">
                 This Device
               </span>
             )}
           </p>
-          <p className="text-sm text-gray-500 mt-0.5">
+          <p className="text-sm text-gray-500 dark:text-slate-400 mt-0.5">
             {getBrowser(session.userAgent)}
             {isCurrent ? (
               <>
                 {" • "}
-                <span className="text-green-600 font-medium">Active now</span>
+                <span className="text-emerald-600 dark:text-emerald-400 font-medium">Active now</span>
               </>
             ) : (
               ` • ${formatDate(session.updatedAt || session.createdAt)}`
@@ -48,13 +48,17 @@ const ActiveDeviceItem = memo(function ActiveDeviceItem({ session, isCurrent, on
           </p>
         </div>
       </div>
-      {!isOnlySession && (
+      {!isOnlySession ? (
         <button
           onClick={() => onSignOut(session.token)}
-          className="rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-bold text-gray-700 hover:bg-gray-50 transition"
+          className="rounded-lg border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-1.5 text-xs font-bold text-gray-700 dark:text-slate-200 hover:bg-gray-50 dark:hover:bg-slate-700/60 transition cursor-pointer"
         >
           Sign Out
         </button>
+      ) : (
+        <span className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 px-2.5 py-1 rounded-full border border-emerald-200 dark:border-emerald-900/60">
+          Current Session
+        </span>
       )}
     </div>
   );

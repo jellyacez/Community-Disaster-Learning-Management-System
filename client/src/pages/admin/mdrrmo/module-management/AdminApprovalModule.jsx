@@ -38,7 +38,7 @@ export default function AdminModuleApprovals() {
       const response = await apiClient.get("/admin/mdrrmo/approvals");
       return response.data.data || [];
     },
-    refetchInterval: 30000, // Poll every 30s for new approval requests
+    refetchInterval: 60000, // Poll every 60s for new approval requests
   });
 
   const actionMutation = useMutation({

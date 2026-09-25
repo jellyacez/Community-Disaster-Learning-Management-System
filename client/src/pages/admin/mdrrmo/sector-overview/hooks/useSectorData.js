@@ -22,7 +22,7 @@ export function useSectorData(selectedBarangayId) {
     queryKey: ["sectorOverview"],
     queryFn: fetchSectorOverview,
     retry: 1,
-    refetchInterval: 15000 // Automatically refresh every 15 seconds
+    refetchInterval: 60000 // Automatically refresh every 60 seconds
   });
 
   const sectorData = sectorResponse?.data || [];
@@ -32,7 +32,7 @@ export function useSectorData(selectedBarangayId) {
     queryKey: ["categoryBreakdown", selectedBarangayId],
     queryFn: () => fetchCategoryBreakdown(selectedBarangayId),
     retry: 1,
-    refetchInterval: 15000 // Automatically refresh every 15 seconds
+    refetchInterval: 60000 // Automatically refresh every 60 seconds
   });
 
   const totalResidents = sectorData.reduce((acc, curr) => acc + curr.resident_count, 0);

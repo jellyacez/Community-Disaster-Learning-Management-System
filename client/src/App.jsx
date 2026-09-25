@@ -46,6 +46,9 @@
   const AdminFeedbackManager = lazy(
     () => import("./pages/admin/feedback/AdminFeedbackManager"),
   );
+  const AdminSettings = lazy(
+    () => import("./pages/admin/shared/AdminSettings"),
+  );
   const UserFeedback = lazy(() => import("./pages/user/feedback/UserFeedback"));
 
   const UserDashboard = lazy(() => import("./pages/user/dashboard/Dashboard"));
@@ -318,6 +321,7 @@
                     <Route path="users" element={<MdrrmoUserManagement />} />
                     <Route path="alerts" element={<LiveAlerts />} />
                     <Route path="feedback" element={<AdminFeedbackManager />} />
+                    <Route path="settings" element={<AdminSettings />} />
                     <Route
                       path="overview"
                       element={<Navigate to="dashboard" replace />}
@@ -347,6 +351,7 @@
                     />
                     <Route path="logs" element={<BarangaySystemLogs />} />
                     <Route path="feedback" element={<AdminFeedbackManager />} />
+                    <Route path="settings" element={<AdminSettings />} />
                     <Route
                       path="workspace"
                       element={<Navigate to="dashboard" replace />}

@@ -35,7 +35,7 @@ export default function UserEnrolledModules() {
       const response = await apiClient.get('/user/dashboard');
       return response.data;
     },
-    refetchInterval: 30000, // Background polling every 30s
+    refetchInterval: 60000, // Background polling every 60s
   });
 
   // Normalize dataset

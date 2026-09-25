@@ -131,16 +131,26 @@ export function useModuleViewer(moduleId) {
 
       // 1. OFFLINE HANDLING
       if (!navigator.onLine) {
+        let result;
         if (isQuiz) {
-          await saveOfflineResult(moduleId, userId, true, answers);
+          result = await saveOfflineResult(moduleId, userId, true, answers);
           await recalculateModuleProgress(moduleId, userId);
         } else {
-          await saveOfflineStepProgress(moduleId, stepId, userId);
+          result = await saveOfflineStepProgress(moduleId, stepId, userId);
+        }
+
+        if (result?.status === 'failed') {
+          throw new Error(result.error || "Storage failed. Progress could not be saved offline.");
         }
 
         return {
           queuedOffline: true,
+          status: result?.status,
+          storageType: result?.storageType,
+          warning: result?.warning,
           message:
+            result?.warning ||
+            result?.message ||
             "You are offline. Progress saved locally and will sync when reconnected.",
         };
       }
@@ -156,15 +166,26 @@ export function useModuleViewer(moduleId) {
           error.response?.data?.error === "Network Error / Offline";
 
         if (isNetworkFailure || isServiceWorkerOffline) {
+          let result;
           if (isQuiz) {
-            await saveOfflineResult(moduleId, userId, true, answers);
+            result = await saveOfflineResult(moduleId, userId, true, answers);
             await recalculateModuleProgress(moduleId, userId);
           } else {
-            await saveOfflineStepProgress(moduleId, stepId, userId);
+            result = await saveOfflineStepProgress(moduleId, stepId, userId);
           }
+
+          if (result?.status === 'failed') {
+            throw new Error(result.error || "Storage failed. Progress could not be saved offline.");
+          }
+
           return {
             queuedOffline: true,
+            status: result?.status,
+            storageType: result?.storageType,
+            warning: result?.warning,
             message:
+              result?.warning ||
+              result?.message ||
               "Connection lost. Progress saved locally and will sync when reconnected.",
           };
         }
@@ -173,7 +194,15 @@ export function useModuleViewer(moduleId) {
     },
     onSuccess: (responseData) => {
       if (responseData.queuedOffline) {
-        toast.success(responseData.message, { icon: "📦", duration: 4000 });
+        if (responseData.status === 'queued_memory_only' || responseData.storageType === 'memory') {
+          toast(
+            responseData.warning ||
+              "Storage restricted: Progress saved in memory for this session only. Do not close tab until reconnected.",
+            { icon: "⚠️", duration: 7000 }
+          );
+        } else {
+          toast.success(responseData.message, { icon: "📦", duration: 4000 });
+        }
 
         queryClient.invalidateQueries({ queryKey: ["userDashboard"] });
         queryClient.invalidateQueries({ queryKey: ["moduleDetails", moduleId] });
@@ -228,7 +257,7 @@ export function useModuleViewer(moduleId) {
       }
     },
     onError: (error) => {
-      toast.error(error.response?.data?.message || "Failed to complete step.");
+      toast.error(error.response?.data?.message || error.message || "Failed to complete step.");
     },
   });
 

@@ -16,6 +16,9 @@ import toast from "react-hot-toast";
 import App from "./App";
 import "../src/styles/index.css";
 import { ThemeProvider } from "./hooks/context/themeContext";
+import * as syncManager from "./lib/LocalSave/syncManager";
+import * as progressService from "./lib/LocalSave/progressService";
+import { localDb } from "./lib/localDb";
 
 const queryClient = new QueryClient({
   queryCache: new QueryCache({
@@ -34,19 +37,29 @@ const queryClient = new QueryClient({
     queries: {
       staleTime: 1000 * 60,
       retry: 1,
-      refetchOnWindowFocus: true,
+      refetchOnWindowFocus: false,
     },
   },
 });
 
+if (typeof window !== "undefined") {
+  window.__offlineSync__ = {
+    syncManager,
+    progressService,
+    localDb,
+    queryClient,
+    toast,
+  };
+}
+
 ReactDOM.createRoot(document.getElementById("root")).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
-      <ThemeProvider>
-        <BrowserRouter>
+      <BrowserRouter>
+        <ThemeProvider>
           <App />
-        </BrowserRouter>
-      </ThemeProvider>
+        </ThemeProvider>
+      </BrowserRouter>
     </QueryClientProvider>
   </StrictMode>,
 );

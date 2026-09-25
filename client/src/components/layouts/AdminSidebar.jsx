@@ -9,6 +9,7 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import { Cancel01Icon, Logout01Icon, ArrowRight01Icon, ArrowDown01Icon } from "@hugeicons/core-free-icons";
 import { ROLE_BASED_LINKS } from "../../constants/adminNavLinks";
 import useDocumentTitle from "../../hooks/useDocumentTitle";
+import { useTheme } from "../../hooks/context/themeContext";
 
 // Clean label mapping for all admin roles
 const ROLE_DISPLAY_NAMES = {
@@ -37,12 +38,14 @@ export default function AdminSidebar({ sidebarOpen, setSidebarOpen }) {
   useDocumentTitle(activeLink ? `${activeLink.name} | DRRM Bacolor` : "Admin Portal | DRRM Bacolor");
 
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
+  const { resetTheme } = useTheme();
 
   const confirmLogout = async () => {
     try {
       sessionStorage.setItem("isLoggingOut", "true");
       queryClient.cancelQueries();
       queryClient.clear();
+      resetTheme();
       await authClient.signOut({
         fetchOptions: {
           onSuccess: () => {

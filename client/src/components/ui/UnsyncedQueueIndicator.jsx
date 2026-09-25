@@ -10,12 +10,11 @@ import {
   Message01Icon,
   Delete02Icon,
 } from "@hugeicons/core-free-icons";
-import { localDb } from "../../lib/localDb";
 import {
   retryFailedTask,
   discardFailedTask,
   getActionDescription,
-  processOfflineQueue,
+  getAllSyncQueueItems,
 } from "../../lib/LocalSave/syncManager";
 import toast from "react-hot-toast";
 import Spinner from "./Spinner";
@@ -34,7 +33,7 @@ export default function UnsyncedQueueIndicator() {
     let isMounted = true;
     const fetchQueue = async () => {
       try {
-        const items = await localDb.sync_queue.toArray();
+        const items = await getAllSyncQueueItems();
         if (isMounted) {
           setQueueItems(items);
         }
@@ -63,7 +62,15 @@ export default function UnsyncedQueueIndicator() {
     return () => clearInterval(interval);
   }, [isOpen]);
 
-  const failedItems = queueItems.filter((i) => i.status === "failed");
+  const conflictItems = queueItems.filter(
+    (i) => i.status === "conflict" || i.error_type === "conflict"
+  );
+  const failedItems = queueItems.filter(
+    (i) => i.status === "failed" && i.error_type !== "conflict"
+  );
+  const attentionItems = queueItems.filter(
+    (i) => i.status === "failed" || i.status === "conflict" || i.error_type === "conflict"
+  );
   const retryingItems = queueItems.filter((i) => i.status === "retrying");
 
   if (queueItems.length === 0) return null;
@@ -85,20 +92,13 @@ export default function UnsyncedQueueIndicator() {
   };
 
   const handleRetryAll = async () => {
-    if (isRetryingAll || retryingIds.size > 0) return;
+    if (isRetryingAll || retryingIds.size > 0 || failedItems.length === 0) return;
     setIsRetryingAll(true);
     toast.loading("Retrying all failed syncs...", { id: "retry-all" });
     try {
       for (const item of failedItems) {
-        await localDb.sync_queue.update(item.sync_id, {
-          status: "pending",
-          retry_count: 0,
-          next_retry_at: null,
-          last_error: null,
-        });
+        await retryFailedTask(item.sync_id);
       }
-      window.dispatchEvent(new CustomEvent("offline-sync-queue-updated"));
-      await processOfflineQueue();
       toast.success("Sync triggered.", { id: "retry-all" });
     } finally {
       setIsRetryingAll(false);
@@ -113,11 +113,11 @@ export default function UnsyncedQueueIndicator() {
   };
 
   const executeDiscardAll = async () => {
-    for (const item of failedItems) {
+    for (const item of attentionItems) {
       await discardFailedTask(item.sync_id);
     }
     setConfirmDiscardAllModal(false);
-    toast.success("Discarded all failed actions.");
+    toast.success("Discarded all items requiring attention.");
   };
 
   const getItemIcon = (actionType) => {
@@ -147,7 +147,9 @@ export default function UnsyncedQueueIndicator() {
         onClick={() => setIsOpen(true)}
         aria-label="View unsynced offline actions"
         className={`min-h-[44px] flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-2xs ${
-          failedItems.length > 0
+          conflictItems.length > 0 && failedItems.length === 0
+            ? "bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-300 dark:border-amber-800 hover:bg-amber-100 dark:hover:bg-amber-900/60"
+            : failedItems.length > 0
             ? "bg-red-50 dark:bg-red-950/60 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-900/60 hover:bg-red-100 dark:hover:bg-red-900/60 animate-pulse"
             : retryingItems.length > 0
             ? "bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-900/60 hover:bg-amber-100 dark:hover:bg-amber-900/60"
@@ -155,11 +157,13 @@ export default function UnsyncedQueueIndicator() {
         }`}
       >
         <HugeiconsIcon
-          icon={failedItems.length > 0 ? AlertCircleIcon : RefreshIcon}
+          icon={conflictItems.length > 0 || failedItems.length > 0 ? AlertCircleIcon : RefreshIcon}
           className={`w-4 h-4 ${retryingItems.length > 0 ? "animate-spin" : ""}`}
         />
         <span>
-          {failedItems.length > 0
+          {conflictItems.length > 0 && failedItems.length === 0
+            ? `${conflictItems.length} Conflict${conflictItems.length !== 1 ? "s" : ""}`
+            : failedItems.length > 0
             ? `${failedItems.length} Sync Failed`
             : `${queueItems.length} Queued`}
         </span>
@@ -167,18 +171,27 @@ export default function UnsyncedQueueIndicator() {
 
       {/* Slide-Over Drawer / Modal */}
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-xs p-4 animate-in fade-in duration-200">
           <div className="bg-white dark:bg-slate-900 w-full max-w-lg rounded-3xl shadow-2xl border border-gray-100 dark:border-slate-800 overflow-hidden flex flex-col max-h-[85vh] animate-in fade-in zoom-in-95 duration-150">
             {/* Header */}
             <div className="px-6 py-5 border-b border-gray-100 dark:border-slate-800 flex items-center justify-between bg-gray-50/50 dark:bg-slate-900">
               <div>
                 <h3 className="font-extrabold text-lg text-gray-900 dark:text-white flex items-center gap-2">
-                  <HugeiconsIcon icon={RefreshIcon} className="w-5 h-5 text-red-600 dark:text-red-400" />
+                  <HugeiconsIcon
+                    icon={conflictItems.length > 0 || failedItems.length > 0 ? AlertCircleIcon : RefreshIcon}
+                    className={`w-5 h-5 ${
+                      conflictItems.length > 0 && failedItems.length === 0
+                        ? "text-amber-600 dark:text-amber-400"
+                        : failedItems.length > 0
+                        ? "text-red-600 dark:text-red-400"
+                        : "text-blue-600 dark:text-blue-400"
+                    }`}
+                  />
                   Offline Sync Queue
                 </h3>
                 <p className="text-xs text-gray-500 dark:text-slate-400 mt-0.5">
                   {queueItems.length} total queued action{queueItems.length !== 1 ? "s" : ""}
-                  {failedItems.length > 0 && ` · ${failedItems.length} require attention`}
+                  {attentionItems.length > 0 && ` · ${attentionItems.length} require attention`}
                 </p>
               </div>
 
@@ -196,7 +209,8 @@ export default function UnsyncedQueueIndicator() {
             <div className="p-6 overflow-y-auto space-y-3 flex-1">
               {queueItems.map((task) => {
                 const ItemIcon = getItemIcon(task.action_type);
-                const isFailed = task.status === "failed";
+                const isConflict = task.status === "conflict" || task.error_type === "conflict";
+                const isFailed = task.status === "failed" && !isConflict;
                 const isRetrying = task.status === "retrying";
                 const isThisRetrying = retryingIds.has(task.sync_id) || isRetryingAll;
 
@@ -204,7 +218,9 @@ export default function UnsyncedQueueIndicator() {
                   <div
                     key={task.sync_id}
                     className={`p-4 rounded-2xl border transition-all ${
-                      isFailed
+                      isConflict
+                        ? "bg-amber-50/40 dark:bg-amber-950/30 border-amber-300 dark:border-amber-800/70"
+                        : isFailed
                         ? "bg-red-50/40 dark:bg-red-950/30 border-red-200 dark:border-red-900/50"
                         : isRetrying
                         ? "bg-amber-50/40 dark:bg-amber-950/30 border-amber-200 dark:border-amber-900/50"
@@ -215,14 +231,16 @@ export default function UnsyncedQueueIndicator() {
                       <div className="flex items-center gap-3">
                         <div
                           className={`p-2.5 rounded-xl ${
-                            isFailed
+                            isConflict
+                              ? "bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300"
+                              : isFailed
                               ? "bg-red-100 dark:bg-red-900/50 text-red-700 dark:text-red-300"
                               : isRetrying
                               ? "bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300"
                               : "bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300"
                           }`}
                         >
-                          <HugeiconsIcon icon={ItemIcon} className="w-4 h-4" />
+                          <HugeiconsIcon icon={isConflict ? AlertCircleIcon : ItemIcon} className="w-4 h-4" />
                         </div>
                         <div>
                           <p className="text-sm font-bold text-gray-900 dark:text-slate-100">
@@ -234,26 +252,54 @@ export default function UnsyncedQueueIndicator() {
                         </div>
                       </div>
 
-                      {/* Status Tag */}
-                      <span
-                        className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider ${
-                          isFailed
-                            ? "bg-red-200 dark:bg-red-900/60 text-red-800 dark:text-red-200"
+                      {/* Status Tag & Session Badge */}
+                      <div className="flex items-center gap-1.5 flex-wrap justify-end">
+                        {task.is_memory_only && (
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 dark:bg-amber-950/70 text-amber-800 dark:text-amber-300 border border-amber-300/80 dark:border-amber-800">
+                            Session Only
+                          </span>
+                        )}
+                        <span
+                          className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider ${
+                            isConflict
+                              ? "bg-amber-200 dark:bg-amber-900/60 text-amber-900 dark:text-amber-200 border border-amber-300 dark:border-amber-800"
+                              : isFailed
+                              ? "bg-red-200 dark:bg-red-900/60 text-red-800 dark:text-red-200"
+                              : isRetrying
+                              ? "bg-amber-200 dark:bg-amber-900/60 text-amber-800 dark:text-amber-200"
+                              : "bg-blue-200 dark:bg-blue-900/60 text-blue-800 dark:text-blue-200"
+                          }`}
+                        >
+                          {isConflict
+                            ? "Conflict"
+                            : isFailed
+                            ? "Failed"
                             : isRetrying
-                            ? "bg-amber-200 dark:bg-amber-900/60 text-amber-800 dark:text-amber-200"
-                            : "bg-blue-200 dark:bg-blue-900/60 text-blue-800 dark:text-blue-200"
-                        }`}
-                      >
-                        {isFailed
-                          ? "Failed"
-                          : isRetrying
-                          ? `Retry ${task.retry_count || 1}/5`
-                          : "Pending"}
-                      </span>
+                            ? `Retry ${task.retry_count || 1}/5`
+                            : "Pending"}
+                        </span>
+                      </div>
                     </div>
 
-                    {/* Error / Backoff details if any */}
-                    {task.last_error && (
+                    {/* Conflict Explanation */}
+                    {isConflict && (
+                      <div className="mt-2.5 p-2.5 bg-amber-50/70 dark:bg-amber-950/40 rounded-xl border border-amber-200/80 dark:border-amber-900/60 text-xs">
+                        <div className="flex items-center gap-1.5 text-amber-900 dark:text-amber-300 font-semibold text-[11px]">
+                          <span>State Conflict</span>
+                          {task.conflict_type && (
+                            <span className="px-1.5 py-0.5 rounded bg-amber-200/70 dark:bg-amber-900/70 text-[10px] font-mono">
+                              {task.conflict_type}
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-amber-800 dark:text-amber-200 text-[11px] mt-1 break-words leading-relaxed">
+                          {task.last_error || "The ticket was closed on the server while you were offline. Your reply cannot be appended."}
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Error / Backoff details if any (and not conflict) */}
+                    {task.last_error && !isConflict && (
                       <div className="mt-2.5 p-2.5 bg-white dark:bg-slate-900/80 rounded-xl border border-gray-200/80 dark:border-slate-700 text-xs">
                         <p className="text-gray-500 dark:text-slate-400 font-semibold text-[11px]">
                           {isFailed ? "Permanent Failure Reason:" : "Last Attempt Note:"}
@@ -270,42 +316,55 @@ export default function UnsyncedQueueIndicator() {
                       </div>
                     )}
 
-                    {/* Action buttons (Separated & Protected) */}
-                    <div className="mt-3 flex items-center justify-end gap-3 border-t border-gray-100/80 dark:border-slate-800 pt-3">
-                      <button
-                        type="button"
-                        onClick={() => handleRetryItem(task.sync_id)}
-                        disabled={isThisRetrying}
-                        className="min-h-[38px] px-3.5 py-1.5 bg-red-600 hover:bg-red-700 disabled:bg-red-400 text-white rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5 cursor-pointer disabled:cursor-not-allowed shadow-2xs"
-                      >
-                        {isThisRetrying ? (
-                          <>
-                            <Spinner className="w-3.5 h-3.5 text-white" />
-                            <span>Retrying...</span>
-                          </>
-                        ) : (
-                          <>
-                            <HugeiconsIcon icon={RefreshIcon} className="w-3.5 h-3.5" />
-                            <span>Retry Now</span>
-                          </>
-                        )}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setConfirmDiscardTask(task)}
-                        disabled={isThisRetrying}
-                        className="min-h-[38px] px-3.5 py-1.5 bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-700 dark:text-slate-300 hover:text-red-700 dark:hover:text-red-400 border border-gray-200 dark:border-slate-700 rounded-xl text-xs font-bold transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        Discard
-                      </button>
-                    </div>
+                    {/* Action buttons (Suppress Retry for Conflicts) */}
+                    {isConflict ? (
+                      <div className="mt-3 flex items-center justify-end gap-3 border-t border-amber-200/60 dark:border-amber-900/40 pt-3">
+                        <button
+                          type="button"
+                          onClick={() => setConfirmDiscardTask(task)}
+                          className="min-h-[38px] px-3.5 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                        >
+                          <HugeiconsIcon icon={Delete02Icon} className="w-3.5 h-3.5" />
+                          <span>Dismiss Conflict</span>
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="mt-3 flex items-center justify-end gap-3 border-t border-gray-100/80 dark:border-slate-800 pt-3">
+                        <button
+                          type="button"
+                          onClick={() => handleRetryItem(task.sync_id)}
+                          disabled={isThisRetrying}
+                          className="min-h-[38px] px-3.5 py-1.5 bg-red-600 hover:bg-red-700 disabled:bg-red-400 text-white rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5 cursor-pointer disabled:cursor-not-allowed shadow-2xs"
+                        >
+                          {isThisRetrying ? (
+                            <>
+                              <Spinner className="w-3.5 h-3.5 text-white" />
+                              <span>Retrying...</span>
+                            </>
+                          ) : (
+                            <>
+                              <HugeiconsIcon icon={RefreshIcon} className="w-3.5 h-3.5" />
+                              <span>Retry Now</span>
+                            </>
+                          )}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setConfirmDiscardTask(task)}
+                          disabled={isThisRetrying}
+                          className="min-h-[38px] px-3.5 py-1.5 bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-700 dark:text-slate-300 hover:text-red-700 dark:hover:text-red-400 border border-gray-200 dark:border-slate-700 rounded-xl text-xs font-bold transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          Discard
+                        </button>
+                      </div>
+                    )}
                   </div>
                 );
               })}
             </div>
 
             {/* Footer Bulk Actions */}
-            {failedItems.length > 1 && (
+            {attentionItems.length > 1 && (
               <div className="px-6 py-4 bg-gray-50 dark:bg-slate-900 border-t border-gray-100 dark:border-slate-800 flex items-center justify-between">
                 <button
                   type="button"
@@ -314,27 +373,29 @@ export default function UnsyncedQueueIndicator() {
                   className="min-h-[44px] px-3 text-xs text-gray-600 dark:text-slate-400 hover:text-red-600 dark:hover:text-red-400 font-bold flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <HugeiconsIcon icon={Delete02Icon} className="w-4 h-4" />
-                  <span>Discard All Failed ({failedItems.length})</span>
+                  <span>Discard All ({attentionItems.length})</span>
                 </button>
 
-                <button
-                  type="button"
-                  onClick={handleRetryAll}
-                  disabled={isRetryingAll || retryingIds.size > 0}
-                  className="min-h-[44px] px-4 py-2 bg-red-600 hover:bg-red-700 disabled:bg-red-400 text-white text-xs font-bold rounded-xl transition-colors cursor-pointer disabled:cursor-not-allowed flex items-center gap-2 shadow-sm"
-                >
-                  {isRetryingAll ? (
-                    <>
-                      <Spinner className="w-3.5 h-3.5 text-white" />
-                      <span>Retrying All...</span>
-                    </>
-                  ) : (
-                    <>
-                      <HugeiconsIcon icon={RefreshIcon} className="w-3.5 h-3.5" />
-                      <span>Retry All Failed</span>
-                    </>
-                  )}
-                </button>
+                {failedItems.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={handleRetryAll}
+                    disabled={isRetryingAll || retryingIds.size > 0}
+                    className="min-h-[44px] px-4 py-2 bg-red-600 hover:bg-red-700 disabled:bg-red-400 text-white text-xs font-bold rounded-xl transition-colors cursor-pointer disabled:cursor-not-allowed flex items-center gap-2 shadow-sm"
+                  >
+                    {isRetryingAll ? (
+                      <>
+                        <Spinner className="w-3.5 h-3.5 text-white" />
+                        <span>Retrying All...</span>
+                      </>
+                    ) : (
+                      <>
+                        <HugeiconsIcon icon={RefreshIcon} className="w-3.5 h-3.5" />
+                        <span>Retry All Failed ({failedItems.length})</span>
+                      </>
+                    )}
+                  </button>
+                )}
               </div>
             )}
           </div>
@@ -346,10 +407,26 @@ export default function UnsyncedQueueIndicator() {
         isOpen={Boolean(confirmDiscardTask)}
         onClose={() => setConfirmDiscardTask(null)}
         onConfirm={executeDiscardItem}
-        title="Discard Unsynced Action"
-        description="Are you sure you want to discard this offline action? Any pending submissions or progress changes in this action will be permanently lost."
-        confirmText="Discard Action"
-        type="danger"
+        title={
+          confirmDiscardTask?.status === "conflict" || confirmDiscardTask?.error_type === "conflict"
+            ? "Dismiss Conflict"
+            : "Discard Unsynced Action"
+        }
+        description={
+          confirmDiscardTask?.status === "conflict" || confirmDiscardTask?.error_type === "conflict"
+            ? "Dismiss this conflicting action? It will be removed from your offline queue."
+            : "Are you sure you want to discard this offline action? Any pending submissions or progress changes in this action will be permanently lost."
+        }
+        confirmText={
+          confirmDiscardTask?.status === "conflict" || confirmDiscardTask?.error_type === "conflict"
+            ? "Dismiss Conflict"
+            : "Discard Action"
+        }
+        type={
+          confirmDiscardTask?.status === "conflict" || confirmDiscardTask?.error_type === "conflict"
+            ? "warning"
+            : "danger"
+        }
       />
 
       {/* Confirmation Modal for Discard All */}
@@ -357,9 +434,9 @@ export default function UnsyncedQueueIndicator() {
         isOpen={confirmDiscardAllModal}
         onClose={() => setConfirmDiscardAllModal(false)}
         onConfirm={executeDiscardAll}
-        title="Discard All Failed Actions"
-        description={`Are you sure you want to discard all ${failedItems.length} failed offline actions? This action cannot be undone.`}
-        confirmText="Discard All Failed"
+        title="Discard All Items"
+        description={`Are you sure you want to discard all ${attentionItems.length} failed/conflicting offline actions? This action cannot be undone.`}
+        confirmText="Discard All"
         type="danger"
       />
     </>

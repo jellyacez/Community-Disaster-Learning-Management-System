@@ -49,7 +49,7 @@ export default function SystemCharts({ stats = {}, loading }) {
       const res = await apiClient.get("/admin/analytics/traffic");
       return res.data.data;
     },
-    refetchInterval: 15000,
+    refetchInterval: 60000,
   });
 
   // Premium Gradient Palette

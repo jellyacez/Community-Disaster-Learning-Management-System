@@ -3,7 +3,12 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import apiClient from "../../../../lib/apiClient";
 import { localDb } from "../../../../lib/localDb";
-import { retryFailedTask, discardFailedTask } from "../../../../lib/LocalSave/syncManager";
+import {
+  enqueueSyncTask,
+  getAllSyncQueueItems,
+  retryFailedTask,
+  discardFailedTask
+} from "../../../../lib/LocalSave/syncManager";
 
 export function useFeedbackHistory(userId, activeTab) {
   const queryClient = useQueryClient();
@@ -15,12 +20,13 @@ export function useFeedbackHistory(userId, activeTab) {
   const [offlineFeedbackItems, setOfflineFeedbackItems] = useState([]);
   const PAGE_SIZE = 10;
 
-  // Load offline feedback items and replies from Dexie
+  // Load offline feedback items and replies from Dexie and in-memory queue
   const loadOfflineFeedbacks = async () => {
     try {
-      const items = await localDb.sync_queue
-        .filter((t) => t.action_type === "SUBMIT_FEEDBACK" || t.action_type === "REPLY_FEEDBACK")
-        .toArray();
+      const allItems = await getAllSyncQueueItems();
+      const items = allItems.filter(
+        (t) => t.action_type === "SUBMIT_FEEDBACK" || t.action_type === "REPLY_FEEDBACK"
+      );
       setOfflineFeedbackItems(items);
     } catch (e) {
       console.error("Error loading offline feedback from Dexie:", e);
@@ -128,17 +134,11 @@ export function useFeedbackHistory(userId, activeTab) {
 
       // OFFLINE GUARD: Queue in localDb if disconnected
       if (!navigator.onLine) {
-        await localDb.transaction("rw", localDb.sync_queue, async () => {
-          await localDb.sync_queue.add({
-            action_type: "REPLY_FEEDBACK",
-            status: "pending",
-            payload: { feedback_id: id, reply, user_id: userId },
-            retry_count: 0,
-            created_at: new Date().toISOString(),
-          });
-        });
-        window.dispatchEvent(new CustomEvent("offline-sync-queue-updated"));
-        return { queuedOffline: true, id };
+        const res = await enqueueSyncTask("REPLY_FEEDBACK", { feedback_id: id, reply, user_id: userId });
+        if (res?.status === 'failed') {
+          throw new Error(res.error || "Storage failed. Reply could not be queued offline.");
+        }
+        return { queuedOffline: true, id, ...res };
       }
 
       try {
@@ -151,23 +151,23 @@ export function useFeedbackHistory(userId, activeTab) {
             err.response?.data?.error === "Network Error / Offline");
 
         if (isNetworkFailure) {
-          await localDb.transaction("rw", localDb.sync_queue, async () => {
-            await localDb.sync_queue.add({
-              action_type: "REPLY_FEEDBACK",
-              status: "pending",
-              payload: { feedback_id: id, reply, user_id: userId },
-              retry_count: 0,
-              created_at: new Date().toISOString(),
-            });
-          });
-          window.dispatchEvent(new CustomEvent("offline-sync-queue-updated"));
-          return { queuedOffline: true, id };
+          const res = await enqueueSyncTask("REPLY_FEEDBACK", { feedback_id: id, reply, user_id: userId });
+          if (res?.status === 'failed') {
+            throw new Error(res.error || "Storage failed. Reply could not be queued offline.");
+          }
+          return { queuedOffline: true, id, ...res };
         }
         throw err;
       }
     },
     onSuccess: (data, variables) => {
-      if (data?.queuedOffline) {
+      if (data?.status === 'queued_memory_only') {
+        toast(data.warning || "Offline: Storage restricted. Reply queued in memory only.", {
+          icon: "⚠️",
+          duration: 6000,
+        });
+        loadOfflineFeedbacks();
+      } else if (data?.queuedOffline) {
         toast.success("Offline: Reply queued and will send when connected.", {
           icon: "📦",
         });

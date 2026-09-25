@@ -62,7 +62,7 @@ export default function InstallAppPrompt() {
   }
 
   return (
-    <div className="fixed bottom-4 right-4 z-50 max-w-sm w-[calc(100%-2rem)] sm:w-full">
+    <div className="fixed bottom-4 right-4 left-4 sm:left-auto z-40 max-w-sm w-auto sm:w-full">
       <div className="rounded-2xl border border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xl p-4 animate-in fade-in slide-in-from-bottom-3 duration-300">
         <div className="flex items-start gap-3">
           <div className="mt-0.5">

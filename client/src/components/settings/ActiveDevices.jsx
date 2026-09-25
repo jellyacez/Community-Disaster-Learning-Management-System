@@ -74,17 +74,17 @@ export default function ActiveDevices() {
 
   return (
     <div className="p-6 md:p-8 w-full flex flex-col space-y-2">
-      <div className="flex flex-col md:flex-row gap-8 md:gap-16 p-4 -mx-4 rounded-2xl hover:bg-gray-50/80 transition-colors group">
+      <div className="flex flex-col md:flex-row gap-8 md:gap-16 p-4 -mx-4 rounded-2xl hover:bg-gray-50/80 dark:hover:bg-slate-800/40 transition-colors group">
         <div className="md:w-1/3 shrink-0">
-          <h4 className="text-base font-bold text-gray-900 flex items-center gap-2">
+          <h4 className="text-base font-bold text-gray-900 dark:text-white flex items-center gap-2">
             <HugeiconsIcon icon={LaptopProgrammingIcon} className="w-5 h-5 text-red-500" />
             Active Devices
           </h4>
-          <p className="text-sm text-gray-500 mt-1">Review and manage the devices currently logged into your account.</p>
+          <p className="text-sm text-gray-500 dark:text-slate-400 mt-1">Review and manage the devices currently logged into your account.</p>
         </div>
         <div className="md:w-2/3 max-w-md">
           {loading ? (
-            <p className="text-sm text-gray-500">Loading devices...</p>
+            <p className="text-sm text-gray-500 dark:text-slate-400">Loading devices...</p>
           ) : (
             <div className="flex flex-col space-y-3">
               {sessions.map((session) => (
@@ -107,7 +107,7 @@ export default function ActiveDevices() {
             <div className="mt-6 flex justify-end">
               <button
                 onClick={() => initiateRevoke("ALL")}
-                className="rounded-xl border border-red-200 bg-red-50 px-6 py-2.5 text-sm font-bold text-red-600 hover:bg-red-100 transition whitespace-nowrap"
+                className="rounded-xl border border-red-200 dark:border-red-900/60 bg-red-50 dark:bg-red-950/40 px-6 py-2.5 text-sm font-bold text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/50 transition whitespace-nowrap cursor-pointer"
               >
                 Sign Out All Other Devices
               </button>

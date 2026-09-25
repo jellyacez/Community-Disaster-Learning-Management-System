@@ -24,8 +24,17 @@ export default function ProfileAvatar({ currentUser, userInitials }) {
 
 
       if (!navigator.onLine) {
-        await saveOfflineAvatarChange(currentUser.id, compressedBase64);
-        toast.success("Offline: Profile picture saved locally.");
+        const res = await saveOfflineAvatarChange(currentUser.id, compressedBase64);
+        if (res?.status === 'queued_memory_only') {
+          toast(res.warning || "Storage restricted: Profile picture saved in memory for this session only.", {
+            icon: "⚠️",
+            duration: 6000,
+          });
+        } else if (res?.status === 'failed') {
+          toast.error(res.error || "Failed to save profile picture offline.");
+        } else {
+          toast.success("Offline: Profile picture saved locally.");
+        }
 
         // Force TanStack Query to refresh the UI with the local Dexie data
         queryClient.invalidateQueries({ queryKey: ["userDashboard"] });
@@ -40,8 +49,17 @@ export default function ProfileAvatar({ currentUser, userInitials }) {
       if (error) {
         // Fallback in case of mid-upload network drop
         if (error.message?.includes('network') || error.code === 'ERR_NETWORK') {
-          await saveOfflineAvatarChange(currentUser.id, compressedBase64);
-          toast.success("Network dropped. Saved locally instead.");
+          const res = await saveOfflineAvatarChange(currentUser.id, compressedBase64);
+          if (res?.status === 'queued_memory_only') {
+            toast(res.warning || "Storage restricted: Profile picture saved in memory for this session only.", {
+              icon: "⚠️",
+              duration: 6000,
+            });
+          } else if (res?.status === 'failed') {
+            toast.error(res.error || "Failed to save profile picture offline.");
+          } else {
+            toast.success("Network dropped. Saved locally instead.");
+          }
           queryClient.invalidateQueries({ queryKey: ["userDashboard"] });
         } else {
           toast.error(error.message || "Failed to update profile picture.");

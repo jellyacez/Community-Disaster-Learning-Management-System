@@ -55,7 +55,12 @@ exports.replyToFeedback = async (req, res) => {
   } catch (err) {
     console.error("Reply error:", err);
     if (err.statusCode) {
-      return res.status(err.statusCode).json({ success: false, error: err.message });
+      return res.status(err.statusCode).json({
+        success: false,
+        error: err.message,
+        message: err.message,
+        conflict_type: err.conflictType,
+      });
     }
     res.status(500).json({ success: false, error: "Failed to submit reply." });
   }

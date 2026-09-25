@@ -11,7 +11,7 @@ export default function MdrrmoRecentActivity() {
       const res = await apiClient.get("/admin/mdrrmo/recent-activity");
       return res.data.data;
     },
-    refetchInterval: 15000,
+    refetchInterval: 60000,
   });
 
   return (

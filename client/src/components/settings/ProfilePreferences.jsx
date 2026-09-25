@@ -27,14 +27,39 @@ export default function ProfilePreferences({ currentUser }) {
     setIsUpdating(true);
 
     if (!navigator.onLine) {
-      await saveOfflineUserName(currentUser.id, name);
-      toast.success("Profile Updated Locally!");
+      const res = await saveOfflineUserName(currentUser.id, name);
+      setIsUpdating(false);
+      if (res?.status === 'queued_memory_only') {
+        toast(res.warning || "Storage restricted: Profile name saved in memory for this session only.", {
+          icon: "⚠️",
+          duration: 6000,
+        });
+      } else if (res?.status === 'failed') {
+        toast.error(res.error || "Failed to update profile offline.");
+      } else {
+        toast.success("Profile Updated Locally!");
+      }
+      return;
     }
 
     const { error } = await authClient.updateUser({ name });
     setIsUpdating(false);
 
     if (error) {
+      if (error.message?.includes('network') || error.code === 'ERR_NETWORK') {
+        const res = await saveOfflineUserName(currentUser.id, name);
+        if (res?.status === 'queued_memory_only') {
+          toast(res.warning || "Storage restricted: Profile name saved in memory for this session only.", {
+            icon: "⚠️",
+            duration: 6000,
+          });
+        } else if (res?.status === 'failed') {
+          toast.error(res.error || "Failed to update profile offline.");
+        } else {
+          toast.success("Network dropped. Saved locally instead.");
+        }
+        return;
+      }
       toast.error(error.message || "Failed to update profile.");
     } else {
       toast.success("Profile updated successfully!");

@@ -6,7 +6,6 @@ import {
   Megaphone01Icon,
   BookOpen01Icon,
   Book01Icon,
-  UserIcon,
   Settings01Icon,
   Logout01Icon,
   ArrowRight01Icon,
@@ -19,6 +18,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { authClient } from "../../lib/auth-client";
 import toast from "react-hot-toast";
 import { useQueryClient } from "@tanstack/react-query";
+import { useTheme } from "../../hooks/context/themeContext";
 
 const navItems = [
   {
@@ -73,12 +73,14 @@ export default function UserSidebar({
   const [pillStyle, setPillStyle] = useState({ transform: 'translateY(0px)', height: '48px', opacity: 0 });
 
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
+  const { resetTheme } = useTheme();
 
   const confirmLogout = async () => {
     try {
       sessionStorage.setItem("isLoggingOut", "true");
       queryClient.cancelQueries();
       queryClient.clear();
+      resetTheme();
       await authClient.signOut({
         fetchOptions: {
           onSuccess: () => {

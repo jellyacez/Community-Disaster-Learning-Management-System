@@ -58,6 +58,8 @@ export default function SignInPage() {
     if (sessionStorage.getItem("isLoggingOut") === "true") {
       if (!session && !isPending) {
         sessionStorage.removeItem("isLoggingOut");
+        localStorage.removeItem("bacolor_theme");
+        document.documentElement.classList.remove("dark");
       }
       return;
     }
@@ -115,6 +117,7 @@ export default function SignInPage() {
   const handleSuccess = () => {
     queryClient.invalidateQueries({ queryKey: ["session"] });
     queryClient.invalidateQueries({ queryKey: ["userDashboard"] });
+    queryClient.invalidateQueries({ queryKey: ["userSettings"] });
     toast.success("Successfully logged in!");
   };
 

@@ -27,12 +27,15 @@
     <script>
       (function () {
         try {
+          var path = window.location.pathname;
+          var isPortal = path.startsWith("/user") || path.startsWith("/admin");
           var saved = localStorage.getItem("bacolor_theme");
           var isDark =
-            saved === "dark" ||
-            (saved === "system" &&
-              window.matchMedia &&
-              window.matchMedia("(prefers-color-scheme: dark)").matches);
+            isPortal &&
+            (saved === "dark" ||
+              (saved === "system" &&
+                window.matchMedia &&
+                window.matchMedia("(prefers-color-scheme: dark)").matches));
           if (isDark) {
             document.documentElement.classList.add("dark");
           } else {

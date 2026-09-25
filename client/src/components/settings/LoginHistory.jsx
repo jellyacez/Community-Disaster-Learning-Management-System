@@ -5,7 +5,7 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import { Clock01Icon, LaptopIcon, SmartPhone01Icon } from "@hugeicons/core-free-icons";
 
 function parseDevice(userAgent = "") {
-  const ua = userAgent.toLowerCase();
+  const ua = (userAgent || "").toLowerCase();
   if (/mobile|android|iphone|ipad|ipod/.test(ua)) {
     return {
       name: "Mobile Device",
@@ -57,13 +57,13 @@ export default function LoginHistory() {
 
   return (
     <div className="p-6 md:p-8 w-full flex flex-col space-y-2">
-      <div className="flex flex-col md:flex-row gap-8 md:gap-16 p-4 -mx-4 rounded-2xl hover:bg-gray-50/80 transition-colors group">
+      <div className="flex flex-col md:flex-row gap-8 md:gap-16 p-4 -mx-4 rounded-2xl hover:bg-gray-50/80 dark:hover:bg-slate-800/40 transition-colors group">
         <div className="md:w-1/3 shrink-0">
-          <h4 className="text-base font-bold text-gray-900 flex items-center gap-2">
+          <h4 className="text-base font-bold text-gray-900 dark:text-white flex items-center gap-2">
             <HugeiconsIcon icon={Clock01Icon} className="w-5 h-5 text-red-500" />
             Login History
           </h4>
-          <p className="text-sm text-gray-500 mt-1">
+          <p className="text-sm text-gray-500 dark:text-slate-400 mt-1">
             Review recent account activity and active device sessions.
           </p>
         </div>
@@ -74,20 +74,20 @@ export default function LoginHistory() {
               {[1, 2, 3].map((n) => (
                 <div
                   key={n}
-                  className="h-20 animate-pulse rounded-2xl border border-gray-100 bg-gray-50/70"
+                  className="h-20 animate-pulse rounded-2xl border border-gray-100 dark:border-slate-800 bg-gray-50/70 dark:bg-slate-800/40"
                 />
               ))}
             </div>
           )}
 
           {isError && (
-            <div className="p-4 rounded-2xl border border-gray-100 bg-gray-50/50 text-sm text-gray-500">
+            <div className="p-4 rounded-2xl border border-gray-100 dark:border-slate-800 bg-gray-50/50 dark:bg-slate-800/40 text-sm text-gray-500 dark:text-slate-400">
               Unable to load login history. Please check back later.
             </div>
           )}
 
           {!isLoading && !isError && sessions.length === 0 && (
-            <div className="p-4 rounded-2xl border border-gray-100 bg-gray-50/50 text-sm text-gray-500">
+            <div className="p-4 rounded-2xl border border-gray-100 dark:border-slate-800 bg-gray-50/50 dark:bg-slate-800/40 text-sm text-gray-500 dark:text-slate-400">
               No recent session history found.
             </div>
           )}
@@ -101,9 +101,9 @@ export default function LoginHistory() {
                 return (
                   <div
                     key={record.id || index}
-                    className="flex items-start gap-4 p-4 rounded-2xl border border-gray-100 bg-gray-50/50"
+                    className="flex items-start gap-4 p-4 rounded-2xl border border-gray-100 dark:border-slate-800/80 bg-gray-50/50 dark:bg-slate-800/40 transition-colors"
                   >
-                    <div className="mt-1 text-gray-500">
+                    <div className="mt-1 text-gray-500 dark:text-slate-400">
                       <HugeiconsIcon
                         icon={deviceInfo.type === "laptop" ? LaptopIcon : SmartPhone01Icon}
                         className="w-5 h-5"
@@ -112,20 +112,20 @@ export default function LoginHistory() {
                     <div className="flex-1">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
-                          <p className="text-sm font-bold text-gray-900">
+                          <p className="text-sm font-bold text-gray-900 dark:text-white">
                             {deviceInfo.name}
                           </p>
                           {isCurrent && (
-                            <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 border border-emerald-200">
+                            <span className="rounded-full bg-emerald-50 dark:bg-emerald-950/50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900/60">
                               Current
                             </span>
                           )}
                         </div>
-                        <span className="text-xs font-medium text-gray-500 whitespace-nowrap ml-2">
+                        <span className="text-xs font-medium text-gray-500 dark:text-slate-400 whitespace-nowrap ml-2">
                           {formatRelativeTime(record.updated_at || record.created_at)}
                         </span>
                       </div>
-                      <p className="text-xs text-gray-500 mt-1">
+                      <p className="text-xs text-gray-500 dark:text-slate-400 mt-1">
                         {deviceInfo.browser} &bull; IP: {record.ip_address || "Protected"}
                       </p>
                     </div>
