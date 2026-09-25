@@ -1,4 +1,3 @@
-import React from "react";
 import PropTypes from "prop-types";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { 
@@ -18,13 +17,13 @@ export default function CurriculumReadinessCard({
   moduleLimit,
 }) {
   return (
-    <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm lg:col-span-5 flex flex-col justify-between">
-      <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+    <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm lg:col-span-5 flex flex-col justify-between">
+      <div className="flex items-center justify-between border-b border-gray-100 dark:border-slate-800 pb-3">
         <div>
-          <h3 className="text-sm font-bold text-gray-900">Curriculum Readiness</h3>
-          <p className="text-xs text-gray-400 mt-0.5">Disaster module completions</p>
+          <h3 className="text-sm font-bold text-gray-900 dark:text-white">Curriculum Readiness</h3>
+          <p className="text-xs text-gray-400 dark:text-slate-400 mt-0.5">Disaster module completions</p>
         </div>
-        <span className="text-[10px] font-mono font-bold bg-gray-100 text-gray-600 px-2 py-0.5 rounded-md">
+        <span className="text-[10px] font-mono font-bold bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-slate-300 px-2 py-0.5 rounded-md">
           MDRRMO Scoped
         </span>
       </div>
@@ -32,8 +31,8 @@ export default function CurriculumReadinessCard({
       <div className="space-y-4 my-auto py-3">
         {modulePerformance.length === 0 ? (
           <div className="text-center py-8">
-            <HugeiconsIcon icon={Folder01Icon} className="w-8 h-8 text-gray-300 mx-auto mb-2" />
-            <p className="text-xs text-gray-400 italic">No syllabus engagement recorded yet for this barangay.</p>
+            <HugeiconsIcon icon={Folder01Icon} className="w-8 h-8 text-gray-300 dark:text-slate-600 mx-auto mb-2" />
+            <p className="text-xs text-gray-400 dark:text-slate-500 italic">No syllabus engagement recorded yet for this barangay.</p>
           </div>
         ) : (
           paginatedModules.map((mod) => {
@@ -44,10 +43,10 @@ export default function CurriculumReadinessCard({
             return (
               <div key={mod.module_id} className="space-y-1.5">
                 <div className="flex justify-between text-xs">
-                  <span className="font-semibold text-gray-800">{decodeHtml(mod.module_title)}</span>
-                  <span className="font-mono text-gray-500">{completed}/{enrolled} ({rate}%)</span>
+                  <span className="font-semibold text-gray-800 dark:text-slate-200">{decodeHtml(mod.module_title)}</span>
+                  <span className="font-mono text-gray-500 dark:text-slate-400">{completed}/{enrolled} ({rate}%)</span>
                 </div>
-                <div className="w-full bg-gray-100 h-2 rounded-full overflow-hidden">
+                <div className="w-full bg-gray-100 dark:bg-slate-700 border border-gray-200 dark:border-slate-500 h-2 rounded-full overflow-hidden">
                   <div
                     className="bg-red-600 h-full rounded-full transition-all duration-300"
                     style={{ width: `${rate}%` }}
@@ -60,34 +59,34 @@ export default function CurriculumReadinessCard({
       </div>
 
       {/* Table / List Pagination Footer */}
-      <div className="pt-3 border-t border-gray-100 space-y-2.5">
+      <div className="pt-3 border-t border-gray-100 dark:border-slate-800 space-y-2.5">
         {totalModules > 0 && (
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-            <p className="text-xs text-gray-500">
-              Showing <span className="font-medium text-gray-900">{(modulePage - 1) * moduleLimit + 1}</span> to{" "}
-              <span className="font-medium text-gray-900">
+            <p className="text-xs text-gray-500 dark:text-slate-400">
+              Showing <span className="font-medium text-gray-900 dark:text-white">{(modulePage - 1) * moduleLimit + 1}</span> to{" "}
+              <span className="font-medium text-gray-900 dark:text-white">
                 {Math.min(modulePage * moduleLimit, totalModules)}
               </span>{" "}
-              of <span className="font-medium text-gray-900">{totalModules}</span> modules
+              of <span className="font-medium text-gray-900 dark:text-white">{totalModules}</span> modules
             </p>
             <div className="flex items-center gap-1.5 self-end sm:self-auto">
               <button
                 type="button"
                 onClick={() => setModulePage((p) => Math.max(p - 1, 1))}
                 disabled={modulePage <= 1}
-                className="px-2.5 py-1 text-xs font-semibold text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm cursor-pointer flex items-center gap-1"
+                className="px-2.5 py-1 text-xs font-semibold text-gray-700 dark:text-slate-200 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-700/80 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm cursor-pointer flex items-center gap-1"
               >
                 <HugeiconsIcon icon={ArrowLeft01Icon} className="w-3 h-3" />
                 Previous
               </button>
-              <span className="text-xs font-medium text-gray-600 px-1">
+              <span className="text-xs font-medium text-gray-600 dark:text-slate-400 px-1">
                 Page {modulePage} of {totalModulePages}
               </span>
               <button
                 type="button"
                 onClick={() => setModulePage((p) => Math.min(p + 1, totalModulePages))}
                 disabled={modulePage >= totalModulePages}
-                className="px-2.5 py-1 text-xs font-semibold text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm cursor-pointer flex items-center gap-1"
+                className="px-2.5 py-1 text-xs font-semibold text-gray-700 dark:text-slate-200 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-700/80 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm cursor-pointer flex items-center gap-1"
               >
                 Next
                 <HugeiconsIcon icon={ArrowRight01Icon} className="w-3 h-3" />
@@ -95,7 +94,7 @@ export default function CurriculumReadinessCard({
             </div>
           </div>
         )}
-        <div className="text-[11px] text-gray-400 flex justify-between">
+        <div className="text-[11px] text-gray-400 dark:text-slate-500 flex justify-between">
           <span>Minimum Passing: 80%</span>
           <span>Accredited DRRM Standard</span>
         </div>

@@ -5,7 +5,6 @@ import { decodeHtml } from "../../../../../utils/textUtils";
 
 export default function StepContent({
   activeStep,
-  totalSteps,
   isVideoMedia,
   isAssessment,
   assessmentData,
@@ -110,7 +109,7 @@ export default function StepContent({
 
   return (
     <div className="max-w-3xl mx-auto w-full pb-12">
-      <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-6 leading-tight">
+      <h1 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-6 leading-tight">
         {decodeHtml(activeStep.title)}
       </h1>
 
@@ -120,12 +119,12 @@ export default function StepContent({
           {isPdf ? (
             <div className="w-full mb-8">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-medium text-gray-500">Document Guide</span>
+                <span className="text-xs font-medium text-gray-500 dark:text-slate-400">Document Guide</span>
                 <a
                   href={mediaUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 text-xs font-semibold text-gray-600 hover:text-red-600 transition-colors"
+                  className="inline-flex items-center gap-1 text-xs font-semibold text-gray-600 dark:text-slate-400 hover:text-red-600 dark:hover:text-red-400 transition-colors"
                 >
                   <span>View document</span>
                   <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -133,7 +132,7 @@ export default function StepContent({
                   </svg>
                 </a>
               </div>
-              <div className="w-full h-[620px] bg-gray-100 rounded-lg overflow-hidden border border-gray-200">
+              <div className="w-full h-[620px] bg-gray-100 dark:bg-slate-900 rounded-lg overflow-hidden border border-gray-200 dark:border-slate-800">
                 <iframe
                   src={mediaUrl}
                   title={decodeHtml(activeStep.title) || "PDF Document"}
@@ -160,7 +159,7 @@ export default function StepContent({
               </video>
             </div>
           ) : isImage ? (
-            <div className="w-full rounded-lg overflow-hidden mb-8 border border-gray-100">
+            <div className="w-full rounded-lg overflow-hidden mb-8 border border-gray-100 dark:border-slate-800">
               <img
                 src={mediaUrl}
                 alt={activeStep.title || "Step Media"}
@@ -168,13 +167,13 @@ export default function StepContent({
               />
             </div>
           ) : (
-            <div className="w-full py-3.5 px-4 rounded-lg bg-gray-50 border border-gray-200 flex items-center justify-between mb-8">
-              <span className="text-sm font-medium text-gray-700">Reference Material Attachment</span>
+            <div className="w-full py-3.5 px-4 rounded-lg bg-gray-50 border border-gray-200 dark:bg-slate-900 dark:border-slate-800 flex items-center justify-between mb-8">
+              <span className="text-sm font-medium text-gray-700 dark:text-slate-300">Reference Material Attachment</span>
               <a
                 href={mediaUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 text-xs font-semibold text-red-600 hover:text-red-700 transition-colors"
+                className="inline-flex items-center gap-1 text-xs font-semibold text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 transition-colors"
               >
                 <span>Open document</span>
                 <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -189,7 +188,7 @@ export default function StepContent({
       {/* RICH TEXT CONTENT */}
       {activeStep.content && activeStep.content !== "<p></p>" && (
         <div
-          className="prose prose-neutral max-w-none text-gray-800 leading-relaxed font-normal mb-8 prose-headings:font-bold prose-headings:text-gray-900 prose-p:text-base prose-p:leading-relaxed prose-li:marker:text-gray-400 prose-a:text-red-600 hover:prose-a:text-red-700"
+          className="prose prose-neutral dark:prose-invert max-w-none text-gray-800 dark:text-slate-200 leading-relaxed font-normal mb-8 prose-headings:font-bold prose-headings:text-gray-900 dark:prose-headings:text-white prose-p:text-base prose-p:leading-relaxed prose-li:marker:text-gray-400 dark:prose-li:marker:text-slate-500 prose-a:text-red-600 dark:prose-a:text-red-400 hover:prose-a:text-red-700 dark:hover:prose-a:text-red-300"
           dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(activeStep.content) }}
         />
       )}
@@ -198,14 +197,14 @@ export default function StepContent({
       {isAssessment && (
         <div className="mt-6">
           {!isPreviewMode && completedStepIds.includes(activeStep.id) ? (
-            <div className="border border-emerald-200 bg-emerald-50/60 rounded-lg p-6 text-center">
-              <div className="w-10 h-10 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-3">
+            <div className="border border-emerald-200 dark:border-emerald-800/60 bg-emerald-50/60 dark:bg-emerald-950/30 rounded-lg p-6 text-center">
+              <div className="w-10 h-10 bg-emerald-100 dark:bg-emerald-900/50 text-emerald-600 dark:text-emerald-400 rounded-full flex items-center justify-center mx-auto mb-3">
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                 </svg>
               </div>
-              <h3 className="text-base font-semibold text-emerald-900 mb-1">Assessment Completed</h3>
-              <p className="text-sm text-emerald-700">You have completed this assessment.</p>
+              <h3 className="text-base font-semibold text-emerald-900 dark:text-emerald-200 mb-1">Assessment Completed</h3>
+              <p className="text-sm text-emerald-700 dark:text-emerald-300">You have completed this assessment.</p>
             </div>
           ) : (
             <InteractiveQuiz

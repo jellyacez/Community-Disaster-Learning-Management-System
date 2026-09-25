@@ -232,7 +232,7 @@ export default function UserDashboard() {
   );
 
   return (
-    <div className="animate-in fade-in duration-300 relative">
+    <div className="animate-in fade-in duration-300 relative w-full max-w-full">
       <OnboardingModal currentUser={currentUser} />
 
       <WelcomeModal
@@ -245,213 +245,202 @@ export default function UserDashboard() {
         }}
       />
 
-      <div className="space-y-8">
-        {/* =========================================================================
-            HERO PORTION: Announcements on Top, Welcome Remarks on Bottom
-           ========================================================================= */}
-        <div
-          className="relative overflow-hidden rounded-3xl bg-red-600 p-6 sm:p-8 text-white shadow-lg space-y-6"
-          onMouseEnter={() => setIsPaused(true)}
-          onMouseLeave={() => setIsPaused(false)}
-        >
-          {/* TOP SECTION: Seamless Announcement Slider with Controls */}
-          {announcementsLoading ? (
-            <div className="h-28 animate-pulse bg-white/10 rounded-xl" />
-          ) : sortedAnnouncements.length > 0 ? (
-            <div className="w-full overflow-hidden">
-              {/* Carousel Track Viewport */}
-              <div className="relative w-full overflow-hidden min-h-[105px]">
-                <div
-                  onTransitionEnd={handleTransitionEnd}
-                  className={`flex w-full ${
-                    isTransitioning
-                      ? "transition-transform duration-700 ease-in-out"
-                      : "transition-none"
-                  }`}
-                  style={{
-                    transform: `translateX(-${currentSlide * 100}%)`,
-                  }}
-                >
-                  {carouselItems.map((item, index) => {
-                    const rawTitle = item.title || item.headline || item.subject || "Notice";
-                    const itemTitle = rawTitle.replace(/^Advisory\s*\d*[:\-]?\s*/i, "");
-                    const itemContent = item.content || item.description || item.body || "";
-                    const itemDate = item.created_at || item.createdAt || item.date;
-
-                    // 48-Hour Recency Check for the "New" indicator
-                    const postTime = new Date(itemDate || Date.now()).getTime();
-                    const isNew = (Date.now() - postTime) / (1000 * 60 * 60) <= 48;
-                    const isUrgent = item.isUrgent || item.priority === "urgent";
-
-                    return (
-                      <div
-                        key={`${item.id || itemTitle}-${index}`}
-                        onClick={() => navigate("/user/announcements")}
-                        className="w-full min-w-full max-w-full basis-full shrink-0 overflow-hidden cursor-pointer flex flex-col justify-center space-y-1.5 text-left group box-border pr-2"
-                      >
-                        {/* Top Advisory Pill Header */}
-                        <div className="flex items-center gap-2 flex-wrap">
-                          {isUrgent ? (
-                            /* Urgent Advisory Pill */
-                            <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-400/25 backdrop-blur-md px-3.5 py-1 text-xs font-black tracking-wide text-amber-300 border border-amber-400/40 shadow-xs shrink-0">
-                              <HugeiconsIcon icon={AlertCircleIcon} className="w-3.5 h-3.5 text-amber-300 shrink-0" />
-                              <span>URGENT ADVISORY #{item.seq}</span>
-                              {isNew && (
-                                <>
-                                  <span className="text-amber-400/60">•</span>
-                                  <span className="inline-flex items-center gap-1 text-white font-bold">
-                                    <span className="h-1.5 w-1.5 rounded-full bg-amber-300 animate-ping" />
-                                    New
-                                  </span>
-                                </>
-                              )}
-                            </span>
-                          ) : (
-                            /* Standard Advisory Pill */
-                            <span className="inline-flex items-center gap-1.5 rounded-full bg-black/25 backdrop-blur-md px-3.5 py-1 text-xs font-semibold text-white border border-white/15 shadow-xs shrink-0">
-                              <HugeiconsIcon icon={Megaphone01Icon} className="w-3.5 h-3.5 text-red-200 shrink-0" />
-                              <span>Advisory #{item.seq}</span>
-                              {isNew && (
-                                <>
-                                  <span className="text-white/40">•</span>
-                                  <span className="inline-flex items-center gap-1 text-emerald-300 font-bold">
-                                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                                    New
-                                  </span>
-                                </>
-                              )}
-                            </span>
-                          )}
-
-                          {/* Date Stamp */}
-                          {itemDate && (
-                            <span className="text-xs font-medium text-red-100/90 whitespace-nowrap">
-                              • {new Date(itemDate).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
-                            </span>
-                          )}
-                        </div>
-
-                        {/* Title: truncated to single line with break-words */}
-                        <h2 className="text-xl sm:text-2xl lg:text-3xl font-extrabold tracking-tight text-white truncate group-hover:underline w-full">
-                          {itemTitle}
-                        </h2>
-
-                        {/* Content: clamped to 2 lines */}
-                        {itemContent ? (
-                          <p className="text-xs sm:text-sm text-red-100 line-clamp-2 max-w-4xl leading-relaxed break-words">
-                            {itemContent}
-                          </p>
-                        ) : null}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Slider Controls: Left/Right Arrow Buttons, Dots in Middle, and View All */}
-              <div className="relative flex items-center justify-between pt-3 gap-2">
-                {/* Left/Right Navigation Arrows */}
-                <div className="flex items-center gap-1.5">
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handlePrevSlide();
-                    }}
-                    disabled={sortedAnnouncements.length <= 1}
-                    className="p-1.5 rounded-full bg-black/20 hover:bg-black/40 text-white disabled:opacity-30 disabled:cursor-not-allowed transition cursor-pointer"
-                    aria-label="Previous announcement"
-                  >
-                    <HugeiconsIcon icon={ArrowLeft01Icon} className="w-4 h-4" />
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleNextSlide();
-                    }}
-                    disabled={sortedAnnouncements.length <= 1}
-                    className="p-1.5 rounded-full bg-black/20 hover:bg-black/40 text-white disabled:opacity-30 disabled:cursor-not-allowed transition cursor-pointer"
-                    aria-label="Next announcement"
-                  >
-                    <HugeiconsIcon icon={ArrowRight01Icon} className="w-4 h-4" />
-                  </button>
-                </div>
-
-                {/* Centered Pagination Dots */}
-                {sortedAnnouncements.length > 1 ? (
-                  <div className="flex items-center justify-center gap-1.5 sm:absolute sm:left-1/2 sm:-translate-x-1/2">
-                    {sortedAnnouncements.map((_, index) => (
-                      <button
-                        key={index}
-                        type="button"
-                        onClick={() => {
-                          setIsTransitioning(true);
-                          setCurrentSlide(index);
-                        }}
-                        className={`h-1.5 rounded-full transition-all cursor-pointer ${
-                          index === (currentSlide % sortedAnnouncements.length)
-                            ? "w-6 bg-white"
-                            : "w-1.5 bg-white/40 hover:bg-white/70"
-                        }`}
-                        aria-label={`Announcement slide ${index + 1}`}
-                      />
-                    ))}
-                  </div>
-                ) : <div />}
-
-                {/* View All Link */}
-                <div className="flex items-center">
-                  <button
-                    type="button"
-                    onClick={() => navigate("/user/announcements")}
-                    className="text-xs font-bold text-red-100 hover:text-white transition-colors cursor-pointer"
-                  >
-                    View All &rarr;
-                  </button>
-                </div>
-              </div>
-            </div>
-          ) : null}
-
-          {/* BOTTOM SECTION: Welcome Remarks & Action Button */}
-          <div className="pt-5 border-t border-red-500/40 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div className="space-y-1.5 text-left">
-              <div className="flex items-center">
-                <span className="inline-block rounded-full bg-red-800/60 px-3 py-0.5 text-[11px] font-bold tracking-wider uppercase text-red-100">
-                  WELCOME BACK, {currentUser?.name || "Resident"}
-                </span>
-              </div>
-              <p className="text-sm text-red-100 max-w-2xl leading-relaxed">
-                Continue your disaster preparedness training, stay updated with municipal announcements, and track your learning progress in one place.
-              </p>
-            </div>
-
-            <button
-              type="button"
-              onClick={activeModules.length > 0 ? () => topActiveModule && handleResume(topActiveModule.id) : () => navigate("/user/modules")}
-              className="self-start sm:self-auto shrink-0 rounded-xl bg-white px-5 py-2.5 text-sm font-bold text-red-600 shadow-sm hover:bg-red-50 transition-colors cursor-pointer"
+      <div className="space-y-6 sm:space-y-8">
+      {/* =========================================================================
+                HERO PORTION: Announcements on Top, Welcome Remarks on Bottom
+                ========================================================================= */}
+            <div
+              className="relative overflow-hidden rounded-2xl sm:rounded-3xl bg-white dark:bg-slate-900 border border-neutral-200 dark:border-white/[0.06] shadow-sm dark:shadow-none p-[clamp(1rem,2vw+0.5rem,2rem)] space-y-[clamp(1rem,1.5vw,1.5rem)]"
+              onMouseEnter={() => setIsPaused(true)}
+              onMouseLeave={() => setIsPaused(false)}
             >
-              {activeModules.length > 0 ? "Resume Module" : "Browse Modules"}
-            </button>
-          </div>
-        </div>
+              {announcementsLoading ? (
+                <div className="h-28 sm:h-32 animate-pulse bg-neutral-100 dark:bg-slate-800 rounded-2xl" />
+              ) : sortedAnnouncements.length > 0 ? (
+                <div className="w-full overflow-hidden">
+                  {/* Carousel Track Viewport */}
+                  <div className="relative w-full overflow-hidden min-h-[110px] sm:min-h-[120px]">
+                    <div
+                      onTransitionEnd={handleTransitionEnd}
+                      className={`flex w-full ${
+                        isTransitioning
+                          ? "transition-transform duration-700 ease-in-out"
+                          : "transition-none"
+                      }`}
+                      style={{ transform: `translateX(-${currentSlide * 100}%)` }}
+                    >
+                      {carouselItems.map((item, index) => {
+                        const rawTitle = item.title || item.headline || item.subject || "Notice";
+                        const itemTitle = rawTitle.replace(/^Advisory\s*\d*[:\-]?\s*/i, "");
+                        const itemContent = item.content || item.description || item.body || "";
+                        const itemDate = item.created_at || item.createdAt || item.date;
+
+                        const postTime = new Date(itemDate || Date.now()).getTime();
+                        const isNew = (Date.now() - postTime) / (1000 * 60 * 60) <= 48;
+                        const isUrgent = item.isUrgent || item.priority === "urgent";
+
+                        return (
+                          <div
+                            key={`${item.id || itemTitle}-${index}`}
+                            onClick={() => navigate("/user/announcements")}
+                            className={`w-full min-w-full max-w-full basis-full shrink-0 overflow-hidden cursor-pointer flex gap-3 sm:gap-4 group box-border pr-1 sm:pr-3 pl-3 sm:pl-4 border-l-4 ${
+                              isUrgent
+                                ? "border-amber-500"
+                                : "border-red-500"
+                            }`}
+                          >
+                            <div className="flex flex-col justify-center space-y-2 text-left w-full">
+                              {/* Top Advisory Pill Header */}
+                              <div className="flex items-center gap-2 flex-wrap">
+                                {isUrgent ? (
+                                  <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 dark:bg-amber-500/10 px-2.5 sm:px-3.5 py-1 text-[11px] sm:text-xs font-bold tracking-wide text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-500/30 shrink-0">
+                                    <HugeiconsIcon icon={AlertCircleIcon} className="w-3.5 h-3.5 shrink-0" />
+                                    <span>URGENT ADVISORY #{item.seq}</span>
+                                    {isNew && (
+                                      <>
+                                        <span className="text-amber-400 select-none">•</span>
+                                        <span className="inline-flex items-center gap-1 font-bold">
+                                          <span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-ping" />
+                                          New
+                                        </span>
+                                      </>
+                                    )}
+                                  </span>
+                                ) : (
+                                  <span className="inline-flex items-center gap-1.5 rounded-full bg-red-50 dark:bg-red-500/10 px-2.5 sm:px-3.5 py-1 text-[11px] sm:text-xs font-semibold text-red-700 dark:text-red-400 border border-red-200 dark:border-red-500/30 shrink-0">
+                                    <HugeiconsIcon icon={Megaphone01Icon} className="w-3.5 h-3.5 shrink-0" />
+                                    <span>Advisory #{item.seq}</span>
+                                    {isNew && (
+                                      <>
+                                        <span className="text-neutral-300 dark:text-neutral-600 select-none">•</span>
+                                        <span className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-bold">
+                                          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                                          New
+                                        </span>
+                                      </>
+                                    )}
+                                  </span>
+                                )}
+
+                                {itemDate && (
+                                  <span className="text-[11px] sm:text-xs font-medium text-neutral-400 dark:text-neutral-500 whitespace-nowrap">
+                                    • {new Date(itemDate).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                                  </span>
+                                )}
+                              </div>
+
+                              {/* Title */}
+                              <h2 className="text-[clamp(1.125rem,1.2vw+0.9rem,1.875rem)] font-extrabold tracking-tight text-neutral-900 dark:text-white truncate group-hover:text-red-600 dark:group-hover:text-red-400 transition-colors w-full leading-snug">
+                                {itemTitle}
+                              </h2>
+
+                              {/* Content */}
+                              {itemContent ? (
+                                <p className="text-xs sm:text-sm text-neutral-500 dark:text-neutral-400 line-clamp-2 max-w-4xl leading-relaxed break-words">
+                                  {itemContent}
+                                </p>
+                              ) : null}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Slider Controls */}
+                  <div className="relative flex flex-wrap sm:flex-nowrap items-center justify-between pt-3 gap-2.5">
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); handlePrevSlide(); }}
+                        disabled={sortedAnnouncements.length <= 1}
+                        className="p-1.5 rounded-full bg-neutral-100 hover:bg-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 text-neutral-600 dark:text-neutral-300 disabled:opacity-30 disabled:cursor-not-allowed transition-all active:scale-95 cursor-pointer"
+                        aria-label="Previous announcement"
+                      >
+                        <HugeiconsIcon icon={ArrowLeft01Icon} className="w-4 h-4" />
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); handleNextSlide(); }}
+                        disabled={sortedAnnouncements.length <= 1}
+                        className="p-1.5 rounded-full bg-neutral-100 hover:bg-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 text-neutral-600 dark:text-neutral-300 disabled:opacity-30 disabled:cursor-not-allowed transition-all active:scale-95 cursor-pointer"
+                        aria-label="Next announcement"
+                      >
+                        <HugeiconsIcon icon={ArrowRight01Icon} className="w-4 h-4" />
+                      </button>
+                    </div>
+
+                    {sortedAnnouncements.length > 1 ? (
+                      <div className="order-3 sm:order-2 flex items-center justify-center gap-1.5 w-full sm:w-auto sm:absolute sm:left-1/2 sm:-translate-x-1/2 py-1">
+                        {sortedAnnouncements.map((_, index) => (
+                          <button
+                            key={index}
+                            type="button"
+                            onClick={() => { setIsTransitioning(true); setCurrentSlide(index); }}
+                            className={`h-1.5 rounded-full transition-all duration-200 cursor-pointer ${
+                              index === (currentSlide % sortedAnnouncements.length)
+                                ? "w-6 bg-red-500"
+                                : "w-1.5 bg-neutral-300 dark:bg-neutral-700 hover:bg-neutral-400 dark:hover:bg-neutral-600"
+                            }`}
+                            aria-label={`Announcement slide ${index + 1}`}
+                          />
+                        ))}
+                      </div>
+                    ) : <div className="order-2" />}
+
+                    <div className="order-2 sm:order-3 flex items-center shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => navigate("/user/announcements")}
+                        className="text-xs font-bold text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 transition-colors cursor-pointer py-1"
+                      >
+                        View All &rarr;
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ) : null}
+
+              {/* BOTTOM SECTION: Welcome Remarks & Action Button */}
+              <div className="pt-[clamp(1rem,1.5vw,1.25rem)] border-t border-neutral-100 dark:border-white/[0.06] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div className="space-y-1.5 text-left">
+                  <div className="flex items-center">
+                    <span className="inline-block rounded-full bg-neutral-100 dark:bg-white/[0.06] px-3 py-0.5 text-[10px] sm:text-[11px] font-bold tracking-wider uppercase text-neutral-500 dark:text-neutral-400">
+                      Welcome back, {currentUser?.name || "Resident"}
+                    </span>
+                  </div>
+                  <p className="text-xs sm:text-sm text-neutral-500 dark:text-neutral-400 max-w-2xl leading-relaxed">
+                    Continue your disaster preparedness training, stay updated with municipal announcements, and track your learning progress in one place.
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={activeModules.length > 0 ? () => topActiveModule && handleResume(topActiveModule.id) : () => navigate("/user/modules")}
+                  className="w-full sm:w-auto shrink-0 rounded-xl bg-red-600 px-5 py-2.5 text-xs sm:text-sm font-bold text-white shadow-sm hover:bg-red-700 active:scale-[0.98] transition-all cursor-pointer text-center"
+                >
+                  {activeModules.length > 0 ? "Resume Module" : "Browse Modules"}
+                </button>
+              </div>
+            </div>
 
         {/* Dashboard Stats */}
         <DashboardStats displayData={displayData} loading={loading} navigate={navigate} />
 
         {/* Lower Main Content Section */}
-        <section className="grid gap-6 lg:grid-cols-3">
-          <DashboardEnrolledList
-            displayData={displayData}
-            loading={loading}
-            navigate={navigate}
-            handleResume={handleResume}
-          />
+        <section className="grid gap-6 lg:grid-cols-3 items-start">
+          <div className="lg:col-span-2 min-w-0">
+            <DashboardEnrolledList
+              displayData={displayData}
+              loading={loading}
+              navigate={navigate}
+              handleResume={handleResume}
+            />
+          </div>
 
           {/* Lower Right Column: Emergency Contacts & Support */}
-          <div className="space-y-6 sticky top-24 self-start">
+          <div className="space-y-6 lg:sticky lg:top-24 self-start min-w-0">
             <DashboardEmergencyContacts />
 
             <div
@@ -464,22 +453,22 @@ export default function UserDashboard() {
                   navigate("/user/feedback");
                 }
               }}
-              className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm flex items-center justify-between hover:border-gray-300 hover:shadow-md transition-all cursor-pointer group focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 outline-hidden"
+              className="rounded-2xl border border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 shadow-sm flex items-center justify-between hover:border-gray-300 dark:hover:border-slate-700 hover:shadow-md active:scale-[0.99] transition-all cursor-pointer group focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 outline-hidden"
             >
               <div className="flex items-center gap-3 min-w-0 pr-2">
-                <div className="w-9 h-9 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600 shrink-0">
+                <div className="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-950/40 border border-blue-100 dark:border-blue-900/50 flex items-center justify-center text-blue-600 dark:text-blue-400 shrink-0">
                   <HugeiconsIcon icon={InformationCircleIcon} className="w-5 h-5 stroke-[2]" />
                 </div>
                 <div className="min-w-0">
-                  <h3 className="text-xs sm:text-sm font-bold text-gray-900 group-hover:text-red-600 transition-colors">
+                  <h3 className="text-xs sm:text-sm font-bold text-gray-900 dark:text-slate-100 group-hover:text-red-600 dark:group-hover:text-red-400 transition-colors truncate">
                     MDRRMO Help Desk & Support
                   </h3>
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs text-gray-500 dark:text-slate-400 truncate">
                     Submit inquiries & LMS feedback
                   </p>
                 </div>
               </div>
-              <span className="text-xs font-bold text-red-600 group-hover:text-red-700 shrink-0">
+              <span className="text-xs font-bold text-red-600 dark:text-red-400 group-hover:text-red-700 dark:group-hover:text-red-300 shrink-0 whitespace-nowrap">
                 Contact &rarr;
               </span>
             </div>

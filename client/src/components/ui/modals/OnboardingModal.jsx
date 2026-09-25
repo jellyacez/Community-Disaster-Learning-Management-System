@@ -103,20 +103,20 @@ export default function OnboardingModal({ currentUser }) {
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="bg-white rounded-3xl shadow-2xl p-8 max-w-md w-full relative border-t-[8px] border-red-600"
+        className="bg-white dark:bg-slate-900 border border-transparent dark:border-slate-800 rounded-3xl shadow-2xl p-8 max-w-md w-full relative border-t-[8px] border-t-red-600"
       >
-        <div className="h-16 w-16 bg-red-50 rounded-2xl flex items-center justify-center mb-6">
-          <HugeiconsIcon aria-hidden="true" icon={CheckmarkBadge01Icon} className="w-8 h-8 text-red-600" />
+        <div className="h-16 w-16 bg-red-50 dark:bg-red-950/60 rounded-2xl flex items-center justify-center mb-6">
+          <HugeiconsIcon aria-hidden="true" icon={CheckmarkBadge01Icon} className="w-8 h-8 text-red-600 dark:text-red-400" />
         </div>
 
-        <h2 className="text-2xl font-black text-gray-900 mb-2">Welcome to Bacolor DRRM!</h2>
-        <p className="text-gray-500 mb-6">
+        <h2 className="text-2xl font-black text-gray-900 dark:text-white mb-2">Welcome to Bacolor DRRM!</h2>
+        <p className="text-gray-500 dark:text-slate-400 mb-6">
           Since you signed in with Google, we just need one more piece of information before you can access your dashboard.
         </p>
 
         <form onSubmit={handleOnboardingSubmit} className="space-y-4">
           <div>
-            <label htmlFor="onboardingName" className="block text-sm font-bold text-gray-700 mb-2">
+            <label htmlFor="onboardingName" className="block text-sm font-bold text-gray-700 dark:text-slate-300 mb-2">
               Full Name
             </label>
             <input
@@ -126,12 +126,12 @@ export default function OnboardingModal({ currentUser }) {
               value={onboardingName}
               onChange={(e) => setOnboardingName(e.target.value)}
               placeholder="Confirm your full name"
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-red-500 outline-none transition"
+              className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-500 focus:ring-2 focus:ring-red-500 outline-none transition"
             />
           </div>
 
           <div className="relative">
-            <label htmlFor="onboardingBarangay" className="block text-sm font-bold text-gray-700 mb-2">
+            <label htmlFor="onboardingBarangay" className="block text-sm font-bold text-gray-700 dark:text-slate-300 mb-2">
               Which Barangay do you live in?
             </label>
             <div className="relative">
@@ -139,14 +139,14 @@ export default function OnboardingModal({ currentUser }) {
                 type="button"
                 id="onboardingBarangay"
                 onClick={() => setIsDropdownOpen((prev) => !prev)}
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-left focus:ring-2 focus:ring-red-500 outline-none transition flex items-center justify-between"
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-left focus:ring-2 focus:ring-red-500 outline-none transition flex items-center justify-between cursor-pointer"
               >
-                <span className={selectedBarangay ? "text-gray-900 font-medium" : "text-gray-400"}>
+                <span className={selectedBarangay ? "text-gray-900 dark:text-slate-100 font-medium" : "text-gray-400 dark:text-slate-500"}>
                   {selectedBarangay ? selectedBarangay.name : "Select your Barangay"}
                 </span>
                 <HugeiconsIcon
                   icon={ArrowDown01Icon}
-                  className={`w-5 h-5 text-gray-400 transition-transform duration-200 ${isDropdownOpen ? "rotate-180" : ""}`}
+                  className={`w-5 h-5 text-gray-400 dark:text-slate-500 transition-transform duration-200 ${isDropdownOpen ? "rotate-180" : ""}`}
                 />
               </button>
 
@@ -157,12 +157,12 @@ export default function OnboardingModal({ currentUser }) {
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -10 }}
                     transition={{ duration: 0.15 }}
-                    className="absolute top-full mt-2 z-50 w-full bg-white border border-gray-200 rounded-xl shadow-2xl overflow-hidden max-h-56 overflow-y-auto"
+                    className="absolute top-full mt-2 z-50 w-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl shadow-2xl overflow-hidden max-h-56 overflow-y-auto"
                   >
                     {isLoading ? (
-                      <div className="px-4 py-3 text-gray-500 text-sm">Loading barangays...</div>
+                      <div className="px-4 py-3 text-gray-500 dark:text-slate-400 text-sm">Loading barangays...</div>
                     ) : barangays.length === 0 ? (
-                      <div className="px-4 py-3 text-gray-400 text-sm">No barangays found</div>
+                      <div className="px-4 py-3 text-gray-400 dark:text-slate-400 text-sm">No barangays found</div>
                     ) : (
                       barangays.map((brgy) => (
                         <button
@@ -172,10 +172,10 @@ export default function OnboardingModal({ currentUser }) {
                             setSelectedBarangay(brgy);
                             setIsDropdownOpen(false);
                           }}
-                          className={`w-full text-left px-4 py-3 hover:bg-red-50 transition-colors text-sm ${
+                          className={`w-full text-left px-4 py-3 transition-colors text-sm cursor-pointer ${
                             selectedBarangay?.id === brgy.id || selectedBarangay?.name === brgy.name
-                              ? "bg-red-50 text-red-700 font-semibold"
-                              : "text-gray-700"
+                              ? "bg-red-50 dark:bg-red-950/50 text-red-700 dark:text-red-300 font-semibold"
+                              : "text-gray-700 dark:text-slate-200 hover:bg-red-50 dark:hover:bg-slate-700"
                           }`}
                         >
                           {brgy.name}

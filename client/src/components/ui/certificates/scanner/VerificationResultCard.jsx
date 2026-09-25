@@ -15,31 +15,31 @@ export default function VerificationResultCard({
     switch (status) {
       case "active":
         return {
-          wrapper: "bg-emerald-50/80 border-emerald-200 text-emerald-900",
+          wrapper: "bg-emerald-50/80 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800 text-emerald-900 dark:text-emerald-200",
           iconBg: "bg-emerald-500 text-white",
           icon: CheckmarkBadge01Icon,
           title: "Valid & Active Credential",
         };
       case "expiring_soon":
         return {
-          wrapper: "bg-amber-50/80 border-amber-200 text-amber-900",
+          wrapper: "bg-amber-50/80 dark:bg-amber-950/40 border-amber-200 dark:border-amber-800 text-amber-900 dark:text-amber-200",
           iconBg: "bg-amber-500 text-white",
           icon: Alert02Icon,
           title: "Expiring Soon",
         };
       case "expired":
         return {
-          wrapper: "bg-red-50/80 border-red-200 text-red-900",
+          wrapper: "bg-red-50/80 dark:bg-red-950/40 border-red-200 dark:border-red-800 text-red-900 dark:text-red-200",
           iconBg: "bg-red-500 text-white",
           icon: Alert02Icon,
           title: "Expired Certificate",
         };
       default:
         return {
-          wrapper: "bg-gray-100 border-gray-200 text-gray-800",
+          wrapper: "bg-gray-100 dark:bg-slate-800 border-gray-200 dark:border-slate-700 text-gray-800 dark:text-slate-200",
           iconBg: "bg-gray-500 text-white",
           icon: Alert02Icon,
-          title: "Revoked Certificate",
+          title: "Inactive / Expired Credential",
         };
     }
   };
@@ -65,19 +65,19 @@ export default function VerificationResultCard({
       </div>
 
       {/* Certificate Details */}
-      <div className="bg-gray-50 rounded-xl p-4 border border-gray-200/80 space-y-3">
+      <div className="bg-gray-50 dark:bg-slate-800/60 rounded-xl p-4 border border-gray-200/80 dark:border-slate-700/80 space-y-3">
         <div className="grid grid-cols-2 gap-3 text-xs">
           <div>
-            <span className="text-gray-400 font-medium block">Learner Name</span>
-            <span className="text-gray-900 font-bold text-sm block mt-0.5">{certData.learner_name || "N/A"}</span>
+            <span className="text-gray-400 dark:text-slate-400 font-medium block">Learner Name</span>
+            <span className="text-gray-900 dark:text-slate-100 font-bold text-sm block mt-0.5">{certData.learner_name || "N/A"}</span>
           </div>
           <div>
-            <span className="text-gray-400 font-medium block">Module Completed</span>
-            <span className="text-gray-900 font-bold text-sm block mt-0.5">{certData.module_title || "N/A"}</span>
+            <span className="text-gray-400 dark:text-slate-400 font-medium block">Module Completed</span>
+            <span className="text-gray-900 dark:text-slate-100 font-bold text-sm block mt-0.5">{certData.module_title || "N/A"}</span>
           </div>
           <div>
-            <span className="text-gray-400 font-medium block">Completion Date</span>
-            <span className="text-gray-700 font-semibold block mt-0.5">
+            <span className="text-gray-400 dark:text-slate-400 font-medium block">Completion Date</span>
+            <span className="text-gray-700 dark:text-slate-200 font-semibold block mt-0.5">
               {certData.completion_date
                 ? new Date(certData.completion_date).toLocaleDateString("en-US", {
                     year: "numeric",
@@ -88,8 +88,8 @@ export default function VerificationResultCard({
             </span>
           </div>
           <div>
-            <span className="text-gray-400 font-medium block">Expiration Date</span>
-            <span className="text-gray-700 font-semibold block mt-0.5">
+            <span className="text-gray-400 dark:text-slate-400 font-medium block">Expiration Date</span>
+            <span className="text-gray-700 dark:text-slate-200 font-semibold block mt-0.5">
               {certData.expires_at
                 ? new Date(certData.expires_at).toLocaleDateString("en-US", {
                     year: "numeric",

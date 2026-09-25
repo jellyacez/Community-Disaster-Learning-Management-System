@@ -49,12 +49,13 @@ export default function FeedbackTicketCard({
   };
 
   return (
-    <div className={`rounded-2xl border border-gray-100 bg-gray-50/60 overflow-hidden ${isExpanded ? "border-b-2 border-gray-200 pb-6 mb-6" : ""}`}>
+    <div className={`rounded-2xl border border-gray-100 dark:border-slate-800 bg-gray-50/60 dark:bg-slate-900/60 overflow-hidden ${isExpanded ? "border-b-2 border-gray-200 dark:border-slate-700 pb-6 mb-6" : ""}`}>
       {/* Summary row */}
       <button
         type="button"
+        aria-expanded={isExpanded}
         onClick={() => toggleExpand(ticketId)}
-        className="w-full text-left px-5 py-4 flex items-center gap-3 hover:bg-gray-100/60 transition-colors"
+        className="w-full text-left px-5 py-4 flex items-center gap-3 hover:bg-gray-100/60 dark:hover:bg-slate-800/50 transition-colors cursor-pointer"
       >
         <div className="flex items-center gap-2 shrink-0">
           <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${getTypeBadgeClasses(item.type)}`}>
@@ -67,15 +68,15 @@ export default function FeedbackTicketCard({
         </div>
 
         <div className="flex-1 min-w-0">
-          <p className="font-semibold text-gray-900 text-sm truncate">{item.subject}</p>
-          <p className="text-sm text-gray-500 truncate mt-0.5">
+          <p className="font-semibold text-gray-900 dark:text-slate-100 text-sm truncate">{item.subject}</p>
+          <p className="text-sm text-gray-500 dark:text-slate-400 truncate mt-0.5">
             {item.resident_name || item.user_id}
             {(item.barangay_name || item.barangay) && ` · Bgry. ${item.barangay_name || item.barangay}`}
             {!isExpanded && lastMsg && ` · ${lastMsg.sender_type === "admin" ? "You: " : "Resident: "}${lastMsg.message}`}
           </p>
         </div>
 
-        <div className="flex items-center gap-2 shrink-0 text-gray-400">
+        <div className="flex items-center gap-2 shrink-0 text-gray-400 dark:text-slate-500">
           <span className="text-xs hidden sm:block">
             {new Date(item.created_at || item.createdAt).toLocaleDateString()}
           </span>
@@ -85,25 +86,25 @@ export default function FeedbackTicketCard({
 
       {/* Expanded content */}
       {isExpanded && (
-        <div className="border-t border-gray-100">
+        <div className="border-t border-gray-100 dark:border-slate-800">
           {/* Metadata header — flush left */}
           <div className="px-5 pt-3">
-            <div className="flex flex-wrap items-center gap-2 text-xs font-bold text-gray-500">
-              <HugeiconsIcon icon={UserCircleIcon} className="w-4 h-4 text-gray-400" />
+            <div className="flex flex-wrap items-center gap-2 text-xs font-bold text-gray-500 dark:text-slate-400">
+              <HugeiconsIcon icon={UserCircleIcon} className="w-4 h-4 text-gray-400 dark:text-slate-500" />
               <span>{item.resident_name || item.user_id}</span>
               {(item.barangay_name || item.barangay) && (
-                <span className="bg-gray-200 text-gray-700 px-2 py-0.5 rounded-md">
+                <span className="bg-gray-200 dark:bg-slate-800 text-gray-700 dark:text-slate-300 px-2 py-0.5 rounded-md">
                   Barangay {item.barangay_name || item.barangay}
                 </span>
               )}
-              <span className="text-gray-400">
+              <span className="text-gray-400 dark:text-slate-500">
                 · Routed to: {item.recipient === "mdrrmo" ? "MDRRMO" : "Barangay"}
               </span>
-              <span className="text-gray-400">
+              <span className="text-gray-400 dark:text-slate-500">
                 · {new Date(item.created_at || item.createdAt).toLocaleString()}
               </span>
             </div>
-            <hr className="my-3 border-gray-100" />
+            <hr className="my-3 border-gray-100 dark:border-slate-800" />
           </div>
 
           {/* Message Thread — grouped consecutive messages */}
@@ -121,10 +122,10 @@ export default function FeedbackTicketCard({
                   {/* Metadata: only show for first message in a consecutive group */}
                   {isFirstInGroup && (
                     <div className={`flex items-center gap-2 mb-1 ${isAdmin ? "flex-row-reverse" : "flex-row"}`}>
-                      <span className={`text-xs font-bold uppercase tracking-wide ${isAdmin ? "text-blue-700" : "text-gray-500"}`}>
+                      <span className={`text-xs font-bold uppercase tracking-wide ${isAdmin ? "text-blue-700 dark:text-blue-400" : "text-gray-500 dark:text-slate-400"}`}>
                         {isAdmin ? "Official Response" : "Resident"}
                       </span>
-                      <span className="text-[10px] text-gray-400 font-medium whitespace-nowrap">
+                      <span className="text-[10px] text-gray-400 dark:text-slate-500 font-medium whitespace-nowrap">
                         {formatMessageTimestamp(msg.created_at, prevMsg?.created_at, idx)}
                       </span>
                     </div>
@@ -134,12 +135,12 @@ export default function FeedbackTicketCard({
                   <div
                     className={`w-fit max-w-[80%] rounded-2xl border px-4 py-2.5 ${
                       isAdmin
-                        ? "bg-blue-50 border-blue-100"
-                        : "bg-gray-50 border-gray-200"
+                        ? "bg-blue-50 dark:bg-blue-950/40 border-blue-100 dark:border-blue-900/50"
+                        : "bg-gray-50 dark:bg-slate-800/60 border-gray-200 dark:border-slate-700"
                     }`}
                   >
                     <p className={`text-sm whitespace-pre-line leading-relaxed ${
-                      isAdmin ? "text-blue-900" : "text-gray-700"
+                      isAdmin ? "text-blue-900 dark:text-blue-200" : "text-gray-700 dark:text-slate-200"
                     }`}>
                       {msg.message}
                     </p>
@@ -151,22 +152,22 @@ export default function FeedbackTicketCard({
 
           {/* Inline Reply + Close Actions */}
           {item.status !== "Closed" && (
-            <div className="px-5 mt-4 pt-4 border-t border-gray-100 space-y-2">
+            <div className="px-5 mt-4 pt-4 border-t border-gray-100 dark:border-slate-800 space-y-2">
               {confirmingClose ? (
                 /* ── Close confirmation banner ── */
-                <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex justify-between items-center gap-4">
+                <div className="bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/50 rounded-lg p-4 flex justify-between items-center gap-4">
                   <div className="flex items-center gap-3">
-                    <HugeiconsIcon icon={Alert01Icon} className="w-5 h-5 text-red-600 shrink-0" />
+                    <HugeiconsIcon icon={Alert01Icon} className="w-5 h-5 text-red-600 dark:text-red-400 shrink-0" />
                     <div className="flex flex-col">
-                      <span className="font-semibold text-red-900 text-sm">Close this ticket?</span>
-                      <span className="text-sm text-red-700">The resident will no longer be able to reply to this thread.</span>
+                      <span className="font-semibold text-red-900 dark:text-red-300 text-sm">Close this ticket?</span>
+                      <span className="text-sm text-red-700 dark:text-red-400">The resident will no longer be able to reply to this thread.</span>
                     </div>
                   </div>
                   <div className="flex gap-2 shrink-0">
                     <button
                       type="button"
                       onClick={() => setConfirmingClose(false)}
-                      className="px-4 py-2 rounded-xl bg-white border border-gray-200 text-gray-700 font-bold text-sm hover:bg-gray-50 transition-colors"
+                      className="px-4 py-2 rounded-xl bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-gray-700 dark:text-slate-200 font-bold text-sm hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors cursor-pointer"
                     >
                       Cancel
                     </button>
@@ -174,7 +175,7 @@ export default function FeedbackTicketCard({
                       type="button"
                       onClick={handleConfirmClose}
                       disabled={closeMutation.isPending}
-                      className="px-4 py-2 rounded-xl bg-red-600 hover:bg-red-700 disabled:bg-red-400 text-white font-bold text-sm transition-colors"
+                      className="px-4 py-2 rounded-xl bg-red-600 hover:bg-red-700 disabled:bg-red-400 text-white font-bold text-sm transition-colors cursor-pointer"
                     >
                       {closeMutation.isPending ? "Closing..." : "Confirm Close"}
                     </button>
@@ -192,10 +193,10 @@ export default function FeedbackTicketCard({
                         if (replyError) setReplyError(false);
                       }}
                       onClick={() => { if (replyError) setReplyError(false); }}
-                      className={`w-full px-4 py-3 border rounded-2xl text-sm resize-none focus:outline-none focus:ring-2 bg-white transition-colors ${
+                      className={`w-full px-4 py-3 border rounded-2xl text-sm resize-none focus:outline-none focus:ring-2 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-500 transition-colors ${
                         replyError
                           ? "border-red-400 focus:ring-red-300 ring-1 ring-red-300"
-                          : "border-gray-200 focus:ring-blue-400"
+                          : "border-gray-200 dark:border-slate-700 focus:ring-blue-400 dark:focus:ring-blue-600"
                       }`}
                     />
                     {replyError && (
@@ -208,7 +209,7 @@ export default function FeedbackTicketCard({
                     <button
                       type="button"
                       onClick={() => setConfirmingClose(true)}
-                      className="px-4 py-2 bg-gray-100 text-gray-700 hover:bg-gray-200 text-sm font-bold rounded-xl transition-colors flex items-center gap-2 border border-gray-200"
+                      className="px-4 py-2 bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-200 hover:bg-gray-200 dark:hover:bg-slate-700 text-sm font-bold rounded-xl transition-colors flex items-center gap-2 border border-gray-200 dark:border-slate-700 cursor-pointer"
                     >
                       <HugeiconsIcon icon={CancelCircleIcon} className="w-4 h-4" />
                       Close Ticket
@@ -217,7 +218,7 @@ export default function FeedbackTicketCard({
                       type="button"
                       onClick={handleSubmitReply}
                       disabled={replyMutation.isPending}
-                      className="px-4 py-2 bg-slate-800 text-white text-sm font-bold rounded-xl hover:bg-slate-700 transition-colors flex items-center gap-2 disabled:bg-slate-400"
+                      className="px-4 py-2 bg-slate-800 dark:bg-slate-700 text-white text-sm font-bold rounded-xl hover:bg-slate-700 dark:hover:bg-slate-600 transition-colors flex items-center gap-2 disabled:bg-slate-400 cursor-pointer"
                     >
                       <HugeiconsIcon icon={MailReply01Icon} className="w-4 h-4" />
                       {replyMutation.isPending ? "Sending..." : "Reply"}

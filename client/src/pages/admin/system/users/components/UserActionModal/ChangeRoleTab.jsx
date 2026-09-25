@@ -20,13 +20,13 @@ export default function ChangeRoleTab({ user, onSave }) {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
-        <label className="block text-sm font-semibold text-gray-700 mb-1.5">Assign Role</label>
+        <label className="block text-sm font-semibold text-gray-700 dark:text-slate-300 mb-1.5">Assign Role</label>
         <div className="relative">
-          <HugeiconsIcon icon={UserGroupIcon} className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <HugeiconsIcon icon={UserGroupIcon} className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-slate-500" />
           <select
             value={role}
             onChange={e => setRole(e.target.value)}
-            className="w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10 appearance-none bg-white"
+            className="w-full pl-9 pr-4 py-2.5 border border-gray-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10 dark:focus:ring-slate-700 appearance-none bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100"
           >
             {ROLES.map(r => (
               <option key={r.value} value={r.value}>{r.label}</option>
@@ -34,14 +34,14 @@ export default function ChangeRoleTab({ user, onSave }) {
           </select>
         </div>
       </div>
-      <div className="bg-amber-50 border border-amber-100 rounded-xl p-4 flex gap-3">
-        <HugeiconsIcon icon={Notification01Icon} className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
-        <p className="text-sm text-amber-800">
+      <div className="bg-amber-50 dark:bg-amber-950/40 border border-amber-100 dark:border-amber-800/60 rounded-xl p-4 flex gap-3">
+        <HugeiconsIcon icon={Notification01Icon} className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+        <p className="text-sm text-amber-800 dark:text-amber-300">
           Assigning <strong>system_admin</strong> grants full platform control. Assign with caution.
         </p>
       </div>
       <div className="pt-2">
-        <button type="submit" className="w-full rounded-xl bg-gray-900 text-white py-3 text-sm font-bold hover:bg-black transition-colors">
+        <button type="submit" className="w-full rounded-xl bg-gray-900 dark:bg-slate-800 dark:hover:bg-slate-700 text-white py-3 text-sm font-bold hover:bg-black transition-colors cursor-pointer">
           Update Role
         </button>
       </div>

@@ -3,6 +3,7 @@ import { Menu01Icon } from '@hugeicons/core-free-icons';
 import { useLocation, useNavigate } from 'react-router-dom';
 import NotificationDropdown from './NotificationDropdown';
 import UnsyncedQueueIndicator from '../ui/UnsyncedQueueIndicator';
+import ThemeToggle from '../ui/globalTheme';
 
 export default function UserNavbar({
   currentUser,
@@ -26,6 +27,7 @@ export default function UserNavbar({
     return 'Resident Portal';
   };
 
+  // eslint-disable-next-line no-unused-vars
   const currentTitle = getPageTitle(location.pathname);
 
   return (
@@ -50,6 +52,7 @@ export default function UserNavbar({
         <div className="flex items-center gap-3">
           <UnsyncedQueueIndicator />
           <NotificationDropdown />
+          <ThemeToggle />
 
           <button
             onClick={() => navigate('/user/profile')}

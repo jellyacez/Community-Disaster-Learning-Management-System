@@ -1,24 +1,26 @@
 import { useState, useMemo, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
 import ModuleCard from "../../../components/ui/modules/ModuleCard.jsx";
 import ModuleSkeleton from "../../../components/ui/modules/ModuleSkeleton.jsx";
 import useDocumentTitle from "../../../hooks/useDocumentTitle";
 import SearchBar from "../../../components/ui/inputs/SearchBar.jsx";
+import ConfirmationModal from "../../../components/ui/modals/ConfirmationModal.jsx";
+import PaginationControls from "../../../components/ui/PaginationControls.jsx";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import apiClient from "../../../lib/apiClient";
 import continuousLearningImg from "../../../assets/continuous-learning.svg";
 import useDebounce from "../../../hooks/useDebounce";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
-  ArrowLeft01Icon,
-  ArrowRight01Icon,
   Search01Icon,
   Book02Icon,
-  AlertCircleIcon,
 } from "@hugeicons/core-free-icons";
 import { decodeHtml } from "../../../utils/textUtils";
 
 export default function UserModuleCatalog() {
   useDocumentTitle("Module Catalog | Bacolor LMS");
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
 
   const [searchInput, setSearchInput] = useState("");
@@ -29,7 +31,6 @@ export default function UserModuleCatalog() {
   // Confirmation Modal State
   const [pendingEnrollModule, setPendingEnrollModule] = useState(null);
   const [isEnrolling, setIsEnrolling] = useState(false);
-  const [enrollError, setEnrollError] = useState("");
 
   const debouncedSearch = useDebounce(searchInput, 350);
 
@@ -107,23 +108,26 @@ export default function UserModuleCatalog() {
 
   // Open confirmation modal
   const handleOpenEnrollConfirm = (module) => {
-    setEnrollError("");
     setPendingEnrollModule(module);
   };
 
   // Process enrollment upon user confirmation
   const handleConfirmEnroll = async () => {
-    if (!pendingEnrollModule) return;
+    if (!pendingEnrollModule || isEnrolling) return;
 
     try {
       setIsEnrolling(true);
-      setEnrollError("");
-      await apiClient.post(`/modules/${pendingEnrollModule.id}/enroll`);
-      
-      handleEnrollSuccess();
-      setPendingEnrollModule(null);
+      const res = await apiClient.post(`/modules/${pendingEnrollModule.id}/enroll`);
+      if (res.data?.success || res.status === 200) {
+        toast.success(
+          `Enrollment Success! You are now enrolled in ${decodeHtml(pendingEnrollModule.title)}.`
+        );
+        handleEnrollSuccess();
+        setPendingEnrollModule(null);
+        navigate("/user/enrolled");
+      }
     } catch (err) {
-      setEnrollError(
+      toast.error(
         err?.response?.data?.message ||
           "Failed to enroll in the module. Please try again."
       );
@@ -196,48 +200,14 @@ export default function UserModuleCatalog() {
           </div>
 
           {/* Pagination Controls */}
-          {filteredModules.length > itemsPerPage && (
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-6 py-4 bg-white rounded-2xl border border-gray-200 shadow-sm">
-              <span className="text-xs text-gray-500 font-medium">
-                Showing{" "}
-                <span className="font-bold text-gray-700">
-                  {(currentPage - 1) * itemsPerPage + 1}
-                </span>{" "}
-                to{" "}
-                <span className="font-bold text-gray-700">
-                  {Math.min(currentPage * itemsPerPage, filteredModules.length)}
-                </span>{" "}
-                of{" "}
-                <span className="font-bold text-gray-700">
-                  {filteredModules.length}
-                </span>{" "}
-                modules
-              </span>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
-                  disabled={currentPage <= 1}
-                  className="px-3 py-1.5 text-xs font-semibold text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm cursor-pointer flex items-center gap-1"
-                >
-                  <HugeiconsIcon icon={ArrowLeft01Icon} className="w-3.5 h-3.5" />
-                  Previous
-                </button>
-                <span className="text-xs font-medium text-gray-600 px-2">
-                  Page {currentPage} of {totalPages}
-                </span>
-                <button
-                  onClick={() =>
-                    setCurrentPage((p) => Math.min(p + 1, totalPages))
-                  }
-                  disabled={currentPage >= totalPages}
-                  className="px-3 py-1.5 text-xs font-semibold text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm cursor-pointer flex items-center gap-1"
-                >
-                  Next
-                  <HugeiconsIcon icon={ArrowRight01Icon} className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            </div>
-          )}
+          <PaginationControls
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={setCurrentPage}
+            totalItems={filteredModules.length}
+            itemsPerPage={itemsPerPage}
+            itemName="modules"
+          />
         </div>
       ) : (
         <div className="flex flex-col items-center justify-center py-16 text-center bg-white rounded-3xl border border-gray-200 shadow-sm">
@@ -274,74 +244,23 @@ export default function UserModuleCatalog() {
         </div>
       )}
 
-      {/* Enrollment Confirmation Modal */}
-      {pendingEnrollModule && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
-          <div className="bg-white rounded-3xl p-6 sm:p-7 max-w-md w-full shadow-2xl space-y-5 border border-gray-100">
-            <div className="flex items-start gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-red-50 border border-red-100 flex items-center justify-center text-red-600 shrink-0">
-                <HugeiconsIcon icon={Book02Icon} className="w-6 h-6 stroke-[2]" />
-              </div>
-              <div className="space-y-1">
-                <h3 className="text-lg font-extrabold text-gray-900">
-                  Confirm Module Enrollment
-                </h3>
-                <p className="text-xs text-gray-500">
-                  Are you sure you want to enroll in this training module?
-                </p>
-              </div>
-            </div>
-
-            {/* Target Module Preview */}
-            <div className="bg-gray-50 p-3.5 rounded-xl border border-gray-100 space-y-1">
-              <span className="text-[10px] font-bold text-red-600 uppercase tracking-wider">
-                {pendingEnrollModule.category} • {pendingEnrollModule.level}
-              </span>
-              <p className="text-sm font-bold text-gray-800 line-clamp-2">
-                {pendingEnrollModule.title}
-              </p>
-              <span className="text-xs text-gray-500 block">
-                Estimated Duration: {pendingEnrollModule.duration}
-              </span>
-            </div>
-
-            {/* Error Message if API fails */}
-            {enrollError && (
-              <div className="flex items-center gap-2 text-xs text-red-600 bg-red-50 p-3 rounded-xl border border-red-100">
-                <HugeiconsIcon icon={AlertCircleIcon} className="w-4 h-4 shrink-0" />
-                <span>{enrollError}</span>
-              </div>
-            )}
-
-            {/* Action Buttons */}
-            <div className="flex items-center justify-end gap-3 pt-2">
-              <button
-                type="button"
-                disabled={isEnrolling}
-                onClick={() => setPendingEnrollModule(null)}
-                className="px-4 py-2.5 text-xs font-bold text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-xl transition-colors cursor-pointer disabled:opacity-50"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                disabled={isEnrolling}
-                onClick={handleConfirmEnroll}
-                className="px-5 py-2.5 text-xs font-bold text-white bg-red-600 hover:bg-red-700 rounded-xl shadow-sm transition-all cursor-pointer disabled:opacity-50 flex items-center gap-2"
-              >
-                {isEnrolling ? (
-                  <>
-                    <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    Enrolling...
-                  </>
-                ) : (
-                  "Confirm & Enroll"
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Preexisting Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={Boolean(pendingEnrollModule)}
+        onClose={() => !isEnrolling && setPendingEnrollModule(null)}
+        onConfirm={handleConfirmEnroll}
+        title="Confirm Module Enrollment"
+        description={
+          pendingEnrollModule
+            ? `Are you sure you want to enroll in "${decodeHtml(pendingEnrollModule.title)}"? You can start learning immediately.`
+            : ""
+        }
+        confirmText="Confirm & Enroll"
+        cancelText="Cancel"
+        type="primary"
+        icon={Book02Icon}
+        isLoading={isEnrolling}
+      />
     </div>
   );
 }

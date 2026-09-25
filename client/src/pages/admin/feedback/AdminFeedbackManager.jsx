@@ -49,7 +49,8 @@ export default function AdminFeedbackManager() {
     sortOrder,
     currentPage,
     setCurrentPage,
-    PAGE_SIZE,
+    pageSize,
+    setPageSize,
     filteredSubmissions,
     totalPages,
     paginatedSubmissions,
@@ -69,7 +70,7 @@ export default function AdminFeedbackManager() {
       />
 
       {/* Main Inbox */}
-      <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6">
+      <div className="bg-white dark:bg-slate-900 rounded-3xl border border-gray-100 dark:border-slate-800 shadow-sm p-6">
         <FeedbackFilters
           tabs={tabs}
           activeTab={activeTab}
@@ -86,7 +87,8 @@ export default function AdminFeedbackManager() {
           paginatedSubmissions={paginatedSubmissions}
           activeTab={activeTab}
           currentPage={currentPage}
-          PAGE_SIZE={PAGE_SIZE}
+          pageSize={pageSize}
+          setPageSize={setPageSize}
           totalPages={totalPages}
           setCurrentPage={setCurrentPage}
           expandedIds={expandedIds}

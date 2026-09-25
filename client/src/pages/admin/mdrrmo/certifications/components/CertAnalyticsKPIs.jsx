@@ -4,7 +4,6 @@ import {
   CheckmarkCircle01Icon,
   Clock01Icon,
   CancelCircleIcon,
-  AlertCircleIcon,
 } from "@hugeicons/core-free-icons";
 
 export default function CertAnalyticsKPIs({ summary, isLoading }) {
@@ -26,28 +25,21 @@ export default function CertAnalyticsKPIs({ summary, isLoading }) {
     {
       label: "Expiring Soon",
       value: summary?.expiring_soon_count ?? 0,
-      sub: "Expires in < 30 days",
+      sub: "Renew within 30 days",
       icon: Clock01Icon,
       color: "amber",
     },
     {
       label: "Expired",
       value: summary?.expired_count ?? 0,
-      sub: "Action required / re-train",
+      sub: "Needs recertification",
       icon: CancelCircleIcon,
       color: "red",
-    },
-    {
-      label: "Revoked",
-      value: summary?.revoked_count ?? 0,
-      sub: "Admin revoked credentials",
-      icon: AlertCircleIcon,
-      color: "gray",
     },
   ];
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
       {cards.map((card, idx) => (
         <StatCard
           key={idx}

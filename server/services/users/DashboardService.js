@@ -126,7 +126,6 @@ class DashboardService {
     const certificatesQuery = await pool.query(
       `SELECT c.cert_rec, c.verification_token, c.completion_date, c.expires_at, c.module_id, m.modname as module_title,
         CASE 
-          WHEN c.status = 'revoked' THEN 'revoked'
           WHEN c.expires_at < NOW() THEN 'expired'
           ELSE c.status 
         END as status

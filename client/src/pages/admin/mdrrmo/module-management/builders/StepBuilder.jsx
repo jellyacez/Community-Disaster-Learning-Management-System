@@ -54,20 +54,20 @@ export default function StepBuilder({
   };
 
   return (
-    <div className="bg-white rounded-[2rem] border border-gray-100 shadow-xl shadow-gray-200/50 flex flex-col overflow-hidden sticky top-8 max-h-[calc(100vh-6rem)]">
-      <div className="bg-gray-50 border-b border-gray-100 p-5 shrink-0 flex items-center justify-between">
+    <div className="bg-white dark:bg-slate-900 rounded-[2rem] border border-gray-100 dark:border-slate-800 shadow-xl shadow-gray-200/50 dark:shadow-none flex flex-col overflow-hidden sticky top-8 max-h-[calc(100vh-6rem)]">
+      <div className="bg-gray-50 dark:bg-slate-800/50 border-b border-gray-100 dark:border-slate-800 p-5 shrink-0 flex items-center justify-between">
          <div>
-            <h3 className="text-base font-bold text-gray-900 tracking-tight flex items-center gap-2">
+            <h3 className="text-base font-bold text-gray-900 dark:text-slate-100 tracking-tight flex items-center gap-2">
                <HugeiconsIcon icon={Edit01Icon} className="w-5 h-5 text-red-500" />
                Step Configurator
             </h3>
-            <p className="text-xs text-gray-500 font-medium mt-0.5 ml-7">Drafting for Level {activeLevelOrder}</p>
+            <p className="text-xs text-gray-500 dark:text-slate-400 font-medium mt-0.5 ml-7">Drafting for Level {activeLevelOrder}</p>
          </div>
       </div>
       
       <div id="step-builder-scroll-container" className="p-6 space-y-6 overflow-y-auto flex-1 relative scroll-smooth">
         <div>
-          <label className="block text-xs font-bold text-gray-600 uppercase tracking-wide mb-2">
+          <label className="block text-xs font-bold text-gray-600 dark:text-slate-400 uppercase tracking-wide mb-2">
             Step Title Name
           </label>
           <input 
@@ -75,14 +75,14 @@ export default function StepBuilder({
             placeholder="Enter a descriptive step title..." 
             value={currentFlowStep.title} 
             onChange={(e) => handleFieldChange('title', e.target.value)} 
-            className={`w-full p-3.5 bg-gray-50 hover:bg-gray-100 border ${formErrors.stepTitle ? 'border-red-500 ring-2 ring-red-500/10' : 'border-transparent focus:border-red-200 focus:bg-white focus:ring-4 focus:ring-red-500/10'} rounded-xl text-sm font-bold text-gray-900 outline-none transition-all placeholder-gray-400`} 
+            className={`w-full p-3.5 bg-gray-50 hover:bg-gray-100 dark:bg-slate-800 dark:hover:bg-slate-800/80 border ${formErrors.stepTitle ? 'border-red-500 ring-2 ring-red-500/10' : 'border-transparent focus:border-red-200 dark:focus:border-red-500/30 focus:bg-white dark:focus:bg-slate-800 focus:ring-4 focus:ring-red-500/10'} rounded-xl text-sm font-bold text-gray-900 dark:text-slate-100 outline-none transition-all placeholder-gray-400 dark:placeholder-slate-500`} 
           />
           {formErrors.stepTitle && <p className="text-red-500 text-xs mt-1.5 font-bold flex items-center gap-1"><HugeiconsIcon icon={Alert01Icon} className="w-4 h-4" />{formErrors.stepTitle}</p>}
         </div>
 
         {/* Step Type Selector */}
         <div>
-          <label className="block text-xs font-bold text-gray-600 uppercase tracking-wide mb-2">
+          <label className="block text-xs font-bold text-gray-600 dark:text-slate-400 uppercase tracking-wide mb-2">
              Content Type
           </label>
           <div className="flex flex-col gap-2">
@@ -97,11 +97,11 @@ export default function StepBuilder({
                 onClick={() => handleFieldChange('builderStepType', tab.id)}
                 className={`flex items-center gap-3 w-full p-3.5 rounded-xl transition-all font-bold text-sm text-left border ${
                   currentFlowStep.builderStepType === tab.id 
-                    ? "bg-red-50 border-red-200 text-red-700 shadow-sm ring-1 ring-red-500" 
-                    : "bg-white border-gray-200 text-gray-600 hover:bg-gray-50 hover:border-gray-300"
+                    ? "bg-red-50 dark:bg-red-950/40 border-red-200 dark:border-red-800/60 text-red-700 dark:text-red-400 shadow-sm ring-1 ring-red-500" 
+                    : "bg-white dark:bg-slate-800/50 border-gray-200 dark:border-slate-700 text-gray-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-800 hover:border-gray-300 dark:hover:border-slate-600"
                 }`}
               >
-                <HugeiconsIcon icon={tab.icon} className={`w-5 h-5 ${currentFlowStep.builderStepType === tab.id ? 'text-red-600' : 'text-gray-400'}`} />
+                <HugeiconsIcon icon={tab.icon} className={`w-5 h-5 ${currentFlowStep.builderStepType === tab.id ? 'text-red-600 dark:text-red-400' : 'text-gray-400 dark:text-slate-500'}`} />
                 {tab.label}
               </button>
             ))}
@@ -109,7 +109,7 @@ export default function StepBuilder({
         </div>
 
         {currentFlowStep.builderStepType === "learning_material" && (
-          <div className="pt-2 border-t border-gray-100">
+          <div className="pt-2 border-t border-gray-100 dark:border-slate-800">
              <LearningContentEditor 
                currentFlowStep={currentFlowStep}
                handleFieldChange={handleFieldChange}
@@ -121,7 +121,7 @@ export default function StepBuilder({
         )}
 
         {(currentFlowStep.builderStepType === "quiz" || currentFlowStep.builderStepType === "situational") && (
-          <div className="pt-2 border-t border-gray-100">
+          <div className="pt-2 border-t border-gray-100 dark:border-slate-800">
              <AssessmentEditor 
                currentFlowStep={currentFlowStep}
                setCurrentFlowStep={setCurrentFlowStep}
@@ -141,11 +141,11 @@ export default function StepBuilder({
         )}
       </div>
 
-      <div className="p-5 border-t border-gray-100 bg-gray-50 shrink-0">
+      <div className="p-5 border-t border-gray-100 dark:border-slate-800 bg-gray-50 dark:bg-slate-800/50 shrink-0">
          <button 
            type="button" 
            onClick={handleSaveClick} 
-           className={`w-full py-3.5 text-white text-sm font-bold rounded-xl shadow-md transition-all outline-none flex items-center justify-center gap-2 ${editingStepId ? 'bg-blue-600 hover:bg-blue-700' : 'bg-gray-900 hover:bg-black'}`}
+           className={`w-full py-3.5 text-white text-sm font-bold rounded-xl shadow-md transition-all outline-none flex items-center justify-center gap-2 ${editingStepId ? 'bg-blue-600 hover:bg-blue-700' : 'bg-gray-900 hover:bg-black dark:bg-red-600 dark:hover:bg-red-500'}`}
          >
            {editingStepId ? (
              <>

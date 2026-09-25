@@ -18,9 +18,9 @@ import {
 const CustomTooltip = ({ active, payload }) => {
   if (active && payload && payload.length) {
     return (
-      <div className="bg-white/80 backdrop-blur-md border border-white/50 shadow-xl rounded-xl p-3 px-4">
-        <p className="text-sm font-bold text-gray-900">{payload[0].name}</p>
-        <p className="text-xs font-semibold text-gray-600 mt-1">Count: {payload[0].value}</p>
+      <div className="bg-white/90 dark:bg-slate-900/95 backdrop-blur-md border border-gray-200/50 dark:border-slate-800 shadow-xl rounded-xl p-3 px-4">
+        <p className="text-sm font-bold text-gray-900 dark:text-white">{payload[0].name}</p>
+        <p className="text-xs font-semibold text-gray-600 dark:text-slate-400 mt-1">Count: {payload[0].value}</p>
       </div>
     );
   }
@@ -65,8 +65,8 @@ export default function SystemCharts({ stats = {}, loading }) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full h-full">
       {/* User Distribution */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-[0_2px_12px_-3px_rgba(0,0,0,0.06)] p-6 flex flex-col h-full min-h-[350px] transition-all hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)]">
-        <h2 className="text-base font-bold text-gray-900 mb-6">User Distribution</h2>
+      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-[0_2px_12px_-3px_rgba(0,0,0,0.06)] p-6 flex flex-col h-full min-h-[350px] transition-all hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)]">
+        <h2 className="text-base font-bold text-gray-900 dark:text-white mb-6">User Distribution</h2>
         
         {loading ? (
           <div className="flex-1 flex items-center justify-center">
@@ -77,8 +77,8 @@ export default function SystemCharts({ stats = {}, loading }) {
             No user data available.
           </div>
         ) : (
-          <div className="flex-1 min-h-[250px]">
-            <ResponsiveContainer width="100%" height="100%">
+          <div className="w-full h-[270px]">
+            <ResponsiveContainer width="100%" height={270}>
               <PieChart>
                 <defs>
                   {filteredPieData.map((entry, index) => (
@@ -96,7 +96,8 @@ export default function SystemCharts({ stats = {}, loading }) {
                   outerRadius={85}
                   paddingAngle={6}
                   dataKey="value"
-                  stroke="#ffffff"
+                  stroke="currentColor"
+                  className="text-white dark:text-[#0b1329]"
                   strokeWidth={3}
                   animationBegin={200}
                   animationDuration={1200}
@@ -121,7 +122,7 @@ export default function SystemCharts({ stats = {}, loading }) {
                                 className="w-3 h-3 rounded-full shrink-0 shadow-inner group-hover:scale-125 transition-transform" 
                                 style={{ backgroundColor: dataItem.dotColor }} 
                               />
-                              <span className="text-xs font-semibold text-gray-600 truncate group-hover:text-gray-900 transition-colors">
+                              <span className="text-xs font-semibold text-gray-600 dark:text-slate-400 truncate group-hover:text-gray-900 dark:group-hover:text-white transition-colors">
                                 {dataItem.value} {dataItem.name.split(' ')[0]}
                               </span>
                             </div>
@@ -138,10 +139,10 @@ export default function SystemCharts({ stats = {}, loading }) {
       </div>
 
       {/* Traffic Chart */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-[0_2px_12px_-3px_rgba(0,0,0,0.06)] p-6 flex flex-col h-full min-h-[350px] transition-all hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)]">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-[0_2px_12px_-3px_rgba(0,0,0,0.06)] p-6 flex flex-col h-full min-h-[350px] transition-all hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)]">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-base font-bold text-gray-900">Active Users Trend</h2>
-          <span className="text-[10px] font-bold uppercase tracking-widest text-red-600 bg-red-50 px-2 py-1 rounded-full animate-pulse">Live 24h</span>
+          <h2 className="text-base font-bold text-gray-900 dark:text-white">Active Users Trend</h2>
+          <span className="text-[10px] font-bold uppercase tracking-widest text-red-600 bg-red-50 dark:bg-red-950/40 dark:text-red-300 px-2 py-1 rounded-full animate-pulse">Live 24h</span>
         </div>
 
         {trafficLoading ? (
@@ -153,8 +154,8 @@ export default function SystemCharts({ stats = {}, loading }) {
             No traffic data available.
           </div>
         ) : (
-          <div className="flex-1 min-h-[250px]">
-            <ResponsiveContainer width="100%" height="100%">
+          <div className="w-full h-[270px]">
+            <ResponsiveContainer width="100%" height={270}>
               <AreaChart data={trafficData} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
                 <defs>
                   <linearGradient id="colorTraffic" x1="0" y1="0" x2="0" y2="1">
@@ -163,7 +164,7 @@ export default function SystemCharts({ stats = {}, loading }) {
                     <stop offset="100%" stopColor="#fef2f2" stopOpacity={0}/>
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="4 4" vertical={false} stroke="#f3f4f6" />
+                <CartesianGrid strokeDasharray="4 4" vertical={false} stroke="currentColor" className="text-gray-100 dark:text-slate-800/80" />
                 <XAxis 
                   dataKey="time" 
                   tick={{fontSize: 10, fill: '#9ca3af', fontWeight: 600}} 

@@ -4,15 +4,15 @@ export default function AdminRoleSelection({ formData, setFormData }) {
   return (
     <>
       <div>
-        <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+        <label className="block text-sm font-semibold text-gray-700 dark:text-slate-300 mb-1.5">
           Admin Role
         </label>
         <div className="grid grid-cols-2 gap-3">
           <label
             className={`relative flex items-center justify-center px-4 py-3 border rounded-xl cursor-pointer transition-all ${
               formData.role === "mdrrmo_admin"
-                ? "border-blue-500 bg-blue-50/50 text-blue-700 ring-1 ring-blue-500"
-                : "border-gray-200 text-gray-600 hover:bg-gray-50"
+                ? "border-blue-500 dark:border-blue-500 bg-blue-50/50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 ring-1 ring-blue-500"
+                : "border-gray-200 dark:border-slate-700 text-gray-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-800"
             }`}
           >
             <input
@@ -33,8 +33,8 @@ export default function AdminRoleSelection({ formData, setFormData }) {
           <label
             className={`relative flex items-center justify-center px-4 py-3 border rounded-xl cursor-pointer transition-all ${
               formData.role === "barangay_admin"
-                ? "border-emerald-500 bg-emerald-50/50 text-emerald-700 ring-1 ring-emerald-500"
-                : "border-gray-200 text-gray-600 hover:bg-gray-50"
+                ? "border-emerald-500 dark:border-emerald-500 bg-emerald-50/50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 ring-1 ring-emerald-500"
+                : "border-gray-200 dark:border-slate-700 text-gray-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-800"
             }`}
           >
             <input

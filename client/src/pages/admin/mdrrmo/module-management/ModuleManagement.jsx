@@ -10,7 +10,7 @@ import useDebounce from "../../../../hooks/useDebounce";
 import { decodeHtml } from "../../../../utils/textUtils";
 
 const fetchModules = async () => {
-  const res = await apiClient.get("/admin/modules?limit=1000"); 
+  const res = await apiClient.get("/admin/modules?limit=1000");
   const data = res.data.data || [];
   return data.map((mod) => ({
     id: mod.mod_id,
@@ -32,7 +32,7 @@ const fetchModules = async () => {
 export default function ModuleManagement() {
   const { data: session } = authClient.useSession();
   const userRole = session?.user?.role;
-  
+
   // Only standard MDRRMO Admin can create/author modules (excludes head_mdrrmo_admin)
   const canCreateModule = userRole === "mdrrmo_admin";
 
@@ -47,7 +47,7 @@ export default function ModuleManagement() {
 
   const [isWizardOpen, setIsWizardOpen] = useState(false);
   const [showPreviewModal, setShowPreviewModal] = useState(false);
-  
+
   // Dashboard UI State
   const [searchQuery, setSearchQuery] = useState("");
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
@@ -63,7 +63,7 @@ export default function ModuleManagement() {
       const matchesSearch = mod.title.toLowerCase().includes(debouncedSearchQuery.toLowerCase());
       const matchesCat = filterCategory === "All" || mod.category === filterCategory;
       const matchesLevel = filterLevel === "All" || mod.level === filterLevel;
-      
+
       let matchesStatus = true;
       if (filterStatus === "All") matchesStatus = mod.status !== "archived";
       if (filterStatus === "Published") matchesStatus = mod.status === "published";
@@ -80,7 +80,7 @@ export default function ModuleManagement() {
         if (aIsRejected && !bIsRejected) return -1;
         if (!aIsRejected && bIsRejected) return 1;
       }
-      
+
       return (b.id || 0) - (a.id || 0);
     });
   }, [rawModules, debouncedSearchQuery, filterCategory, filterLevel, filterStatus, sortOption]);
@@ -105,8 +105,8 @@ export default function ModuleManagement() {
 
   return (
     <>
-      <div className="max-w-7xl mx-auto animate-in fade-in duration-150 px-6 md:px-12 pt-2 md:pt-2 pb-12">
-        <DashboardHeader 
+      <div id="training-modules-top" className="max-w-7xl mx-auto animate-in fade-in duration-150 px-6 md:px-12 pt-2 md:pt-2 pb-12">
+        <DashboardHeader
           searchQuery={searchQuery}
           setSearchQuery={setSearchQuery}
           setCurrentPage={setCurrentPage}
@@ -121,7 +121,7 @@ export default function ModuleManagement() {
           handleOpenWizard={canCreateModule ? handleOpenWizard : null}
         />
 
-        <ModuleGrid 
+        <ModuleGrid
           isLoading={isLoading}
           isError={isError}
           rawModules={rawModules}
@@ -138,7 +138,7 @@ export default function ModuleManagement() {
       </div>
 
       {canCreateModule && (
-        <ModuleBuilderWizard 
+        <ModuleBuilderWizard
           isOpen={isWizardOpen}
           onClose={() => {
             setIsWizardOpen(false);

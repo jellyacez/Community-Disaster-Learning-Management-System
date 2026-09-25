@@ -4,11 +4,10 @@ import {
   MoreHorizontalIcon,
   Archive02Icon,
   UserBlock01Icon,
-  ArrowLeft01Icon,
-  ArrowRight01Icon,
 } from "@hugeicons/core-free-icons";
 import StatusBadge from "../../../../../components/ui/StatusBadge";
 import { SkeletonTableRow } from "../../../../../components/ui/Skeleton";
+import AdminTablePagination from "../../../../../components/ui/pagination/AdminTablePagination";
 
 export default function ResidentRegistryTable({
   residents = [],
@@ -18,6 +17,7 @@ export default function ResidentRegistryTable({
   page = 1,
   limit = 10,
   onPageChange,
+  onLimitChange,
   onOpenActionModal,
 }) {
   const [openDropdownId, setOpenDropdownId] = useState(null);
@@ -35,10 +35,10 @@ export default function ResidentRegistryTable({
   }, []);
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden animate-in fade-in duration-150">
-      <div className="overflow-x-auto">
+    <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-200 dark:border-slate-800 shadow-sm animate-in fade-in duration-150">
+      <div className="overflow-x-auto rounded-t-2xl">
         <table className="w-full text-left border-collapse">
-          <thead className="bg-gray-50/75 border-b border-gray-200 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+          <thead className="bg-gray-50/75 dark:bg-slate-800/80 border-b border-gray-200 dark:border-slate-800 text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wider">
             <tr>
               <th className="py-3.5 px-6">Resident</th>
               <th className="py-3.5 px-6">Barangay</th>
@@ -47,7 +47,7 @@ export default function ResidentRegistryTable({
               <th className="py-3.5 px-6 text-right">Actions</th>
             </tr>
           </thead>
-          <tbody className="text-sm divide-y divide-gray-100">
+          <tbody className="text-sm divide-y divide-gray-100 dark:divide-slate-800/60">
             {isLoading ? (
               Array.from({ length: 6 }).map((_, i) => (
                 <SkeletonTableRow key={i} columns={5} hasAvatar={true} padding="py-4 px-6" />
@@ -60,7 +60,7 @@ export default function ResidentRegistryTable({
               </tr>
             ) : residents.length === 0 ? (
               <tr>
-                <td colSpan="5" className="py-12 text-center text-gray-400 italic">
+                <td colSpan="5" className="py-12 text-center text-gray-400 dark:text-slate-500 italic">
                   No resident profiles found matching your search.
                 </td>
               </tr>
@@ -70,18 +70,18 @@ export default function ResidentRegistryTable({
                 const isDropdownOpen = openDropdownId === residentId;
 
                 return (
-                  <tr key={residentId} className="hover:bg-gray-50/60 transition-colors">
+                  <tr key={residentId} className="hover:bg-gray-50/60 dark:hover:bg-slate-800/40 transition-colors">
                     {/* Resident Info: Avatar + Name + Email subtitle */}
                     <td className="py-4 px-6">
                       <div className="flex items-center gap-3">
-                        <div className="h-9 w-9 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0 text-blue-700 font-bold text-xs">
+                        <div className="h-9 w-9 rounded-full bg-blue-100 dark:bg-blue-950/60 flex items-center justify-center flex-shrink-0 text-blue-700 dark:text-blue-300 font-bold text-xs border border-blue-200/50 dark:border-blue-800/50">
                           {r.name?.charAt(0).toUpperCase() || "R"}
                         </div>
                         <div>
-                          <span className="font-bold text-gray-900 leading-tight block">
+                          <span className="font-bold text-gray-900 dark:text-slate-100 leading-tight block">
                             {r.name}
                           </span>
-                          <span className="text-xs text-gray-500 font-normal block mt-0.5">
+                          <span className="text-xs text-gray-500 dark:text-slate-400 font-normal block mt-0.5">
                             {r.email}
                           </span>
                         </div>
@@ -89,12 +89,12 @@ export default function ResidentRegistryTable({
                     </td>
 
                     {/* Barangay */}
-                    <td className="py-4 px-6 text-sm font-medium text-gray-600">
+                    <td className="py-4 px-6 text-sm font-medium text-gray-600 dark:text-slate-300">
                       {r.barangay || "N/A"}
                     </td>
 
                     {/* Modules Completed */}
-                    <td className="py-4 px-6 text-center font-bold text-gray-900 text-sm">
+                    <td className="py-4 px-6 text-center font-bold text-gray-900 dark:text-slate-100 text-sm">
                       {r.modulesCompleted ?? 0} {r.modulesCompleted === 1 ? "Module" : "Modules"} Completed
                     </td>
 
@@ -117,7 +117,7 @@ export default function ResidentRegistryTable({
                           e.stopPropagation();
                           setOpenDropdownId(isDropdownOpen ? null : residentId);
                         }}
-                        className="w-11 h-11 min-w-[44px] min-h-[44px] inline-flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-xl transition-colors cursor-pointer"
+                        className="w-11 h-11 min-w-[44px] min-h-[44px] inline-flex items-center justify-center text-gray-400 hover:text-gray-600 dark:hover:text-slate-200 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-xl transition-colors cursor-pointer"
                         aria-label="Manage resident actions"
                       >
                         <HugeiconsIcon icon={MoreHorizontalIcon} size={18} />
@@ -126,10 +126,10 @@ export default function ResidentRegistryTable({
                       {isDropdownOpen && (
                         <div
                           ref={dropdownRef}
-                          className="absolute right-6 top-14 w-48 bg-white border border-gray-100 rounded-xl shadow-lg shadow-gray-200/50 p-1.5 z-50 text-left animate-in zoom-in-95 duration-100"
+                          className="absolute right-6 top-14 w-48 bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-xl shadow-lg dark:shadow-black/50 p-1.5 z-50 text-left animate-in zoom-in-95 duration-100"
                         >
-                          <div className="px-3 py-1.5 border-b border-gray-50 mb-1">
-                            <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Manage Resident</p>
+                          <div className="px-3 py-1.5 border-b border-gray-50 dark:border-slate-800 mb-1">
+                            <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-slate-500">Manage Resident</p>
                           </div>
                           <button
                             type="button"
@@ -137,13 +137,13 @@ export default function ResidentRegistryTable({
                               onOpenActionModal(residentId, "archive");
                               setOpenDropdownId(null);
                             }}
-                            className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition-colors cursor-pointer"
+                            className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-gray-700 dark:text-slate-200 hover:bg-gray-50 dark:hover:bg-slate-800 rounded-lg transition-colors cursor-pointer"
                           >
                             <HugeiconsIcon icon={Archive02Icon} size={16} />
                             <span>Archive Record</span>
                           </button>
                           
-                          <div className="my-1 border-t border-gray-100" />
+                          <div className="my-1 border-t border-gray-100 dark:border-slate-800" />
 
                           <button
                             type="button"
@@ -151,7 +151,7 @@ export default function ResidentRegistryTable({
                               onOpenActionModal(residentId, "ban");
                               setOpenDropdownId(null);
                             }}
-                            className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
+                            className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-lg transition-colors cursor-pointer"
                           >
                             <HugeiconsIcon icon={UserBlock01Icon} size={16} />
                             <span>Ban Resident</span>
@@ -167,38 +167,19 @@ export default function ResidentRegistryTable({
         </table>
       </div>
 
-      {/* Standardized Pagination Footer */}
-      {!isLoading && !isError && meta.total > 0 && (
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-6 py-4 border-t border-gray-200 bg-gray-50/50">
-          <span className="text-xs text-gray-500 font-medium">
-            Showing <span className="font-bold text-gray-700">{meta.total > 0 ? (page - 1) * limit + 1 : 0}</span> to{" "}
-            <span className="font-bold text-gray-700">{Math.min(page * limit, meta.total)}</span> of{" "}
-            <span className="font-bold text-gray-700">{meta.total}</span> residents
-          </span>
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => onPageChange(Math.max(page - 1, 1))}
-              disabled={page <= 1}
-              className="px-3 py-1.5 text-xs font-semibold text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm cursor-pointer flex items-center gap-1"
-            >
-              <HugeiconsIcon icon={ArrowLeft01Icon} className="w-3.5 h-3.5" />
-              Previous
-            </button>
-            <span className="text-xs font-medium text-gray-600 px-2">
-              Page {page} of {meta.totalPages || 1}
-            </span>
-            <button
-              type="button"
-              onClick={() => onPageChange(Math.min(page + 1, meta.totalPages || 1))}
-              disabled={page >= (meta.totalPages || 1)}
-              className="px-3 py-1.5 text-xs font-semibold text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm cursor-pointer flex items-center gap-1"
-            >
-              Next
-              <HugeiconsIcon icon={ArrowRight01Icon} className="w-3.5 h-3.5" />
-            </button>
-          </div>
-        </div>
+      {/* Standardized Sticky Pagination Footer */}
+      {!isLoading && !isError && (
+        <AdminTablePagination
+          page={page}
+          totalPages={meta.totalPages || 1}
+          total={meta.total || 0}
+          limit={limit}
+          onPageChange={onPageChange}
+          onLimitChange={onLimitChange}
+          itemName="residents"
+          sticky={true}
+          className="rounded-b-2xl"
+        />
       )}
     </div>
   );

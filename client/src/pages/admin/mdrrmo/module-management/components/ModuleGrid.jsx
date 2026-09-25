@@ -29,7 +29,7 @@ export default function ModuleGrid({
 
   if (isError) {
     return (
-      <div className="p-6 bg-red-50 text-red-600 rounded-2xl border border-red-100 text-center">
+      <div className="p-6 bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-300 rounded-2xl border border-red-100 dark:border-red-900/50 text-center">
         <p className="font-bold text-lg">Error loading modules.</p>
         <p className="text-sm">Please ensure the backend routes are connected.</p>
       </div>
@@ -38,15 +38,15 @@ export default function ModuleGrid({
 
   if (rawModules.length === 0) {
     return (
-      <div className="text-center py-24 bg-white rounded-3xl border border-gray-200 border-dashed">
-        <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-          <HugeiconsIcon icon={Folder01Icon} className="w-8 h-8 text-gray-400" />
+      <div className="text-center py-24 bg-white dark:bg-slate-900 rounded-3xl border border-gray-200 dark:border-slate-800 border-dashed">
+        <div className="w-16 h-16 bg-gray-100 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4">
+          <HugeiconsIcon icon={Folder01Icon} className="w-8 h-8 text-gray-400 dark:text-slate-500" />
         </div>
-        <h3 className="text-xl font-bold text-gray-900 mb-2">No Learning Paths Yet</h3>
-        <p className="text-gray-500 mb-6 max-w-md mx-auto">
+        <h3 className="text-xl font-bold text-gray-900 dark:text-slate-100 mb-2">No Learning Paths Yet</h3>
+        <p className="text-gray-500 dark:text-slate-400 mb-6 max-w-md mx-auto">
           You haven't created any training modules yet. Click the button above to start building your first learning path.
         </p>
-        <button onClick={handleOpenWizard} className="px-5 py-2.5 bg-gray-900 text-white rounded-xl font-bold hover:bg-black transition-colors">
+        <button onClick={handleOpenWizard} className="px-5 py-2.5 bg-gray-900 dark:bg-red-600 text-white rounded-xl font-bold hover:bg-black dark:hover:bg-red-700 transition-colors cursor-pointer shadow-sm">
           Start Building
         </button>
       </div>
@@ -56,10 +56,10 @@ export default function ModuleGrid({
   if (paginatedModules.length === 0) {
     return (
       <div className="text-center py-16">
-        <p className="text-gray-500 font-medium">No learning paths match your filters.</p>
+        <p className="text-gray-500 dark:text-slate-400 font-medium">No learning paths match your filters.</p>
         <button 
           onClick={() => { setSearchQuery(""); setFilterCategory("All"); setFilterLevel("All"); }} 
-          className="mt-4 text-red-600 font-bold hover:underline"
+          className="mt-4 text-red-600 dark:text-red-400 font-bold hover:underline cursor-pointer"
         >
           Clear Filters
         </button>
@@ -83,35 +83,58 @@ export default function ModuleGrid({
       </div>
 
       {/* Pagination Controls */}
-      {totalPages > 1 && (
-        <div className="flex items-center justify-center gap-2 pt-4">
-          <button 
-            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-            disabled={currentPage === 1}
-            className="min-h-[44px] px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm font-bold text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all cursor-pointer shadow-2xs"
-          >
-            Previous
-          </button>
-          <div className="flex items-center gap-2">
-            {Array.from({ length: totalPages }).map((_, i) => (
-              <button
-                key={i}
-                onClick={() => setCurrentPage(i + 1)}
-                className={`min-w-[44px] min-h-[44px] w-11 h-11 flex items-center justify-center rounded-xl text-sm font-bold transition-all cursor-pointer ${currentPage === i + 1 ? 'bg-red-600 text-white shadow-md' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 shadow-2xs'}`}
-              >
-                {i + 1}
-              </button>
-            ))}
+      {totalPages > 1 && (() => {
+        const handlePageChange = (newPage) => {
+          if (newPage < 1 || newPage > totalPages || newPage === currentPage) return;
+          setCurrentPage(newPage);
+
+          requestAnimationFrame(() => {
+            try {
+              const scrollEl = document.querySelector("main .overflow-y-auto") || document.querySelector("main");
+              if (scrollEl) {
+                scrollEl.scrollTo({ top: 0, behavior: "smooth" });
+              }
+              const topAnchor = document.getElementById("training-modules-top");
+              if (topAnchor) {
+                topAnchor.scrollIntoView({ behavior: "smooth", block: "start" });
+              }
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            } catch {
+              window.scrollTo(0, 0);
+            }
+          });
+        };
+
+        return (
+          <div className="flex items-center justify-center gap-2 pt-4">
+            <button 
+              onClick={() => handlePageChange(currentPage - 1)}
+              disabled={currentPage === 1}
+              className="min-h-[44px] px-4 py-2.5 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl text-sm font-bold text-gray-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all cursor-pointer shadow-2xs"
+            >
+              Previous
+            </button>
+            <div className="flex items-center gap-2">
+              {Array.from({ length: totalPages }).map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => handlePageChange(i + 1)}
+                  className={`min-w-[44px] min-h-[44px] w-11 h-11 flex items-center justify-center rounded-xl text-sm font-bold transition-all cursor-pointer ${currentPage === i + 1 ? 'bg-red-600 text-white shadow-md' : 'bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-gray-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700 shadow-2xs'}`}
+                >
+                  {i + 1}
+                </button>
+              ))}
+            </div>
+            <button 
+              onClick={() => handlePageChange(currentPage + 1)}
+              disabled={currentPage === totalPages}
+              className="min-h-[44px] px-4 py-2.5 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl text-sm font-bold text-gray-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all cursor-pointer shadow-2xs"
+            >
+              Next
+            </button>
           </div>
-          <button 
-            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-            disabled={currentPage === totalPages}
-            className="min-h-[44px] px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm font-bold text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all cursor-pointer shadow-2xs"
-          >
-            Next
-          </button>
-        </div>
-      )}
+        );
+      })()}
     </div>
   );
 }

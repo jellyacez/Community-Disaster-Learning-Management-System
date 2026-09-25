@@ -63,19 +63,19 @@ export default function AdminProvisionModal({ onClose }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/40 backdrop-blur-sm sm:p-6">
       <div
-        className="w-full max-w-md max-h-[90vh] flex flex-col bg-white rounded-2xl shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-200"
+        className="w-full max-w-md max-h-[90vh] flex flex-col bg-white dark:bg-slate-900 border border-transparent dark:border-slate-800 rounded-2xl shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-200"
         role="dialog"
       >
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 shrink-0">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-slate-800 shrink-0">
           <div className="flex items-center gap-2">
-            <div className="p-2 bg-blue-50 text-blue-600 rounded-lg">
+            <div className="p-2 bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 rounded-lg">
               <HugeiconsIcon icon={UserAdd01Icon} size={20} />
             </div>
-            <h2 className="text-lg font-bold text-gray-900">Provision Admin</h2>
+            <h2 className="text-lg font-bold text-gray-900 dark:text-white">Provision Admin</h2>
           </div>
           <button
             onClick={onClose}
-            className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-lg transition-colors"
+            className="p-2 text-gray-400 hover:text-gray-600 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-gray-50 dark:hover:bg-slate-800 rounded-lg transition-colors cursor-pointer"
           >
             <HugeiconsIcon icon={Cancel01Icon} size={20} />
           </button>
@@ -94,11 +94,11 @@ export default function AdminProvisionModal({ onClose }) {
           />
 
           {/* Actions */}
-          <div className="flex items-center gap-3 pt-4 border-t border-gray-100">
+          <div className="flex items-center gap-3 pt-4 border-t border-gray-100 dark:border-slate-800">
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-200 transition-colors"
+              className="flex-1 px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-slate-200 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl hover:bg-gray-50 dark:hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-gray-200 dark:focus:ring-slate-600 transition-colors cursor-pointer"
             >
               Cancel
             </button>

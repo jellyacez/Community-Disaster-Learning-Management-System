@@ -77,3 +77,46 @@ exports.getModuleProgress = async (req, res) => {
     }
 };
 
+// @desc    Synchronize/recalculate overall progress percentage for a module
+// @access  Private
+exports.syncModuleProgress = async (req, res) => {
+  const userId = req.user?.id;
+  const modId = req.body?.mod_id || req.body?.moduleId;
+
+  if (!modId) {
+    return res.status(400).json({ success: false, message: "mod_id is required." });
+  }
+
+  try {
+    const progressData = await ModuleProgressService.getModuleProgress(userId, modId);
+    const pool = require("../../config/db");
+    const percentage = parseInt(progressData.completion_percentage, 10) || 0;
+    const isCompleted = percentage >= 100 && parseInt(progressData.total_steps, 10) > 0;
+    const modStatus = isCompleted ? 'Completed' : 'In Progress';
+
+    await pool.query(
+      `UPDATE module_activity 
+       SET progress = $1, modstatus = $2::varchar, 
+           completed_at = CASE WHEN $2::varchar = 'Completed' AND completed_at IS NULL THEN CURRENT_TIMESTAMP ELSE completed_at END 
+       WHERE user_id = $3 AND mod_id = $4`,
+      [percentage, modStatus, userId, modId]
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: "Module progress synced successfully.",
+      data: {
+        ...progressData,
+        modstatus: modStatus,
+        progress: percentage
+      }
+    });
+  } catch (error) {
+    if (error.message === "NOT_FOUND") {
+      return res.status(404).json({ success: false, message: "Module not found." });
+    }
+    console.error("Error syncing module progress:", error);
+    return res.status(500).json({ success: false, message: "Internal server error occurred." });
+  }
+};
+

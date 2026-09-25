@@ -2,12 +2,11 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import {
   Award01Icon,
   CancelCircleIcon,
-  ArrowLeft01Icon,
-  ArrowRight01Icon,
 } from "@hugeicons/core-free-icons";
 import { SkeletonTableRow } from "../../../../../components/ui/Skeleton";
 import CertificateLifecycleBadge from "../../../../../components/ui/certificates/CertificateLifecycleBadge";
 import { decodeHtml } from "../../../../../utils/textUtils";
+import AdminTablePagination from "../../../../../components/ui/pagination/AdminTablePagination";
 
 export default function CertificationsTable({
   certificates = [],
@@ -18,6 +17,7 @@ export default function CertificationsTable({
   page = 1,
   limit = 10,
   onPageChange,
+  onLimitChange,
   hasActiveFilters = false,
   onResetFilters,
 }) {
@@ -34,7 +34,7 @@ export default function CertificationsTable({
   };
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm">
       {isError ? (
         <div className="p-8 text-center bg-red-50/50">
           <HugeiconsIcon icon={CancelCircleIcon} className="w-10 h-10 text-red-500 mx-auto mb-2" />
@@ -63,7 +63,7 @@ export default function CertificationsTable({
           )}
         </div>
       ) : (
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto rounded-t-2xl">
           <table className="w-full text-left">
             <thead>
               <tr className="bg-gray-50 text-gray-500 text-xs uppercase tracking-wider">
@@ -126,14 +126,6 @@ export default function CertificationsTable({
                       {/* Status Badge */}
                       <td className="px-6 py-4 text-center whitespace-nowrap">
                         <CertificateLifecycleBadge status={cert.computed_status} />
-                        {cert.computed_status === "revoked" && cert.revocation_reason && (
-                          <div
-                            className="text-[10px] text-gray-400 mt-1 max-w-[150px] truncate mx-auto"
-                            title={cert.revocation_reason}
-                          >
-                            {cert.revocation_reason}
-                          </div>
-                        )}
                       </td>
                     </tr>
                   ))}
@@ -142,40 +134,19 @@ export default function CertificationsTable({
         </div>
       )}
 
-      {/* Pagination Footer */}
+      {/* Standardized Sticky Pagination Footer */}
       {!isLoading && !isError && certificates.length > 0 && (
-        <div className="px-6 py-4 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-3 bg-gray-50/50">
-          <p className="text-xs text-gray-500">
-            Showing <span className="font-medium text-gray-900">{(page - 1) * limit + 1}</span> to{" "}
-            <span className="font-medium text-gray-900">
-              {Math.min(page * limit, meta.total)}
-            </span>{" "}
-            of <span className="font-medium text-gray-900">{meta.total}</span> certificates
-          </p>
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => onPageChange(Math.max(page - 1, 1))}
-              disabled={page <= 1}
-              className="px-3 py-1.5 text-xs font-semibold text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm cursor-pointer flex items-center gap-1"
-            >
-              <HugeiconsIcon icon={ArrowLeft01Icon} className="w-3.5 h-3.5" />
-              Previous
-            </button>
-            <span className="text-xs font-medium text-gray-600 px-2">
-              Page {page} of {meta.totalPages}
-            </span>
-            <button
-              type="button"
-              onClick={() => onPageChange(Math.min(page + 1, meta.totalPages))}
-              disabled={page >= meta.totalPages}
-              className="px-3 py-1.5 text-xs font-semibold text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm cursor-pointer flex items-center gap-1"
-            >
-              Next
-              <HugeiconsIcon icon={ArrowRight01Icon} className="w-3.5 h-3.5" />
-            </button>
-          </div>
-        </div>
+        <AdminTablePagination
+          page={page}
+          totalPages={meta.totalPages || 1}
+          total={meta.total || 0}
+          limit={limit}
+          onPageChange={onPageChange}
+          onLimitChange={onLimitChange}
+          itemName="certificates"
+          sticky={true}
+          className="rounded-b-2xl"
+        />
       )}
     </div>
   );

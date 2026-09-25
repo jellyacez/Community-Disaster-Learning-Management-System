@@ -8,7 +8,7 @@ import FeedbackHistory from "./components/FeedbackHistory";
 
 export default function UserFeedback() {
   useDocumentTitle("Feedback | Bacolor LMS");
-  
+
   const { data: session } = authClient.useSession();
   const userId = session?.user?.id;
 
@@ -16,23 +16,32 @@ export default function UserFeedback() {
   const [showForm, setShowForm] = useState(false);
 
   return (
-    <div className="animate-in fade-in duration-300">
-      <div className="space-y-6">
-        <FeedbackHeader onNewTicket={() => setShowForm((v) => !v)} showForm={showForm} />
+    <div className="w-full max-w-full min-w-0 pb-6 sm:pb-10 animate-in fade-in duration-200">
+      <div className="flex flex-col space-y-4 sm:space-y-6 w-full">
+        <div className="w-full min-w-0">
+          <FeedbackHeader
+            onNewTicket={() => setShowForm((v) => !v)}
+            showForm={showForm}
+          />
+        </div>
 
         {showForm && (
-          <FeedbackForm
-            userId={userId}
-            setActiveTab={setActiveTab}
-            onDone={() => setShowForm(false)}
-          />
+          <div className="w-full min-w-0 animate-in fade-in slide-in-from-top-2 duration-200">
+            <FeedbackForm
+              userId={userId}
+              setActiveTab={setActiveTab}
+              onDone={() => setShowForm(false)}
+            />
+          </div>
         )}
-        
-        <FeedbackHistory 
-          userId={userId} 
-          activeTab={activeTab} 
-          setActiveTab={setActiveTab} 
-        />
+
+        <div className="w-full min-w-0">
+          <FeedbackHistory
+            userId={userId}
+            activeTab={activeTab}
+            setActiveTab={setActiveTab}
+          />
+        </div>
       </div>
     </div>
   );

@@ -24,10 +24,10 @@ export default function PriorityActionEditor({
             id={`situational-option-${oIdx}-anchor`}
             className={`p-4 rounded-xl text-sm transition-all ${
               correctIdx === oIdx 
-                ? "bg-red-50/50 border-2 border-red-500 shadow-sm" 
+                ? "bg-red-50/50 dark:bg-red-950/30 border-2 border-red-500 shadow-sm" 
                 : formErrors.situationalOptions 
-                  ? "bg-white border-2 border-red-400" 
-                  : "bg-slate-50 border border-slate-200 hover:border-slate-300"
+                  ? "bg-white dark:bg-slate-800 border-2 border-red-400" 
+                  : "bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600"
             }`}
           >
             <div className="flex items-center justify-between mb-2">
@@ -39,7 +39,7 @@ export default function PriorityActionEditor({
                   onChange={() => handleCorrectAnswerChange(oIdx)}
                   className="w-4 h-4 text-red-600 focus:ring-red-500"
                 />
-                <span className={`text-xs font-bold uppercase tracking-wide ${correctIdx === oIdx ? 'text-red-700' : 'text-slate-600'}`}>
+                <span className={`text-xs font-bold uppercase tracking-wide ${correctIdx === oIdx ? 'text-red-700 dark:text-red-400' : 'text-slate-600 dark:text-slate-400'}`}>
                   Choice {String.fromCharCode(65 + oIdx)} {correctIdx === oIdx && "(Correct Action)"}
                 </span>
               </label>
@@ -50,14 +50,14 @@ export default function PriorityActionEditor({
               placeholder={`Scenario Option ${String.fromCharCode(65 + oIdx)}`} 
               value={opt.text} 
               onChange={(e) => handleOptionChange(oIdx, 'text', e.target.value)} 
-              className="w-full p-2.5 bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500/20 text-sm font-medium placeholder:text-slate-400 mb-2 transition-colors"
+              className="w-full p-2.5 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500/20 text-sm font-medium text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 mb-2 transition-colors"
             />
             <textarea 
               rows="2"
               placeholder="Immediate outcome & consequences of this decision" 
               value={opt.rationale} 
               onChange={(e) => handleOptionChange(oIdx, 'rationale', e.target.value)} 
-              className="w-full p-2.5 bg-white border border-slate-200 rounded-lg focus:outline-none text-xs resize-none placeholder:text-slate-400"
+              className="w-full p-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none text-xs text-slate-900 dark:text-slate-100 resize-none placeholder:text-slate-400 dark:placeholder:text-slate-500"
             />
           </div>
         ))}

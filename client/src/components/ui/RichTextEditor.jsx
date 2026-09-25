@@ -11,15 +11,15 @@ const MenuBar = ({ editor }) => {
   }
 
   const toggleStyle = (action, isActiveAction) => {
-    return `p-2 rounded-md transition-colors ${
+    return `p-2 rounded-md transition-colors cursor-pointer ${
       editor.isActive(isActiveAction)
-        ? 'bg-red-100 text-red-700'
-        : 'text-gray-500 hover:bg-gray-100 hover:text-gray-900'
+        ? 'bg-red-100 text-red-700 dark:bg-red-950/70 dark:text-red-300'
+        : 'text-gray-500 hover:bg-gray-100 hover:text-gray-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200'
     }`;
   };
 
   return (
-    <div className="flex flex-wrap gap-1 p-2 border-b border-gray-200 bg-gray-50 rounded-t-xl">
+    <div className="flex flex-wrap gap-1 p-2 border-b border-gray-200 dark:border-slate-800 bg-gray-50 dark:bg-slate-900 rounded-t-xl">
       <button
         type="button"
         onClick={() => editor.chain().focus().toggleBold().run()}
@@ -48,7 +48,7 @@ const MenuBar = ({ editor }) => {
         <HugeiconsIcon icon={TextUnderlineIcon} className="w-4 h-4" />
       </button>
       
-      <div className="w-px h-6 bg-gray-300 mx-1 self-center" />
+      <div className="w-px h-6 bg-gray-300 dark:bg-slate-700 mx-1 self-center" />
 
       <button
         type="button"
@@ -81,7 +81,7 @@ export default function RichTextEditor({ value, onChange, placeholder, className
     content: value,
     editorProps: {
       attributes: {
-        class: `prose prose-sm max-w-none focus:outline-none p-4 ${className}`,
+        class: `prose prose-sm dark:prose-invert max-w-none focus:outline-none p-4 text-gray-900 dark:text-slate-100 ${className}`,
         placeholder: placeholder || "Start typing...",
       },
     },
@@ -104,7 +104,7 @@ export default function RichTextEditor({ value, onChange, placeholder, className
   }, [value, editor]);
 
   return (
-    <div className="border border-gray-200 rounded-xl overflow-hidden focus-within:ring-2 focus-within:ring-red-500 focus-within:border-transparent transition-all bg-white">
+    <div className="border border-gray-200 dark:border-slate-800 rounded-xl overflow-hidden focus-within:ring-2 focus-within:ring-red-500 focus-within:border-transparent transition-all bg-white dark:bg-slate-950">
       <MenuBar editor={editor} />
       <EditorContent editor={editor} />
     </div>

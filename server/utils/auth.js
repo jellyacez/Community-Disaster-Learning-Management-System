@@ -201,7 +201,7 @@ const auth = betterAuth({
       }
       return [process.env.FRONTEND_URL];
     }
-    return ["http://localhost:5173", "http://localhost:5174"];
+    return ["http://localhost:5173", "http://localhost:5174", "http://localhost:4173"];
   })(),
   autoSignIn: true,
 });

@@ -18,9 +18,9 @@ import {
 const CustomTooltip = ({ active, payload }) => {
   if (active && payload && payload.length) {
     return (
-      <div className="bg-white/90 backdrop-blur-md border border-gray-100 shadow-xl rounded-xl p-3 px-4">
-        <p className="text-sm font-bold text-gray-900">{payload[0].name}</p>
-        <p className="text-xs font-semibold text-gray-600 mt-1">Modules: {payload[0].value}</p>
+      <div className="bg-white/90 dark:bg-slate-900/95 backdrop-blur-md border border-gray-100 dark:border-slate-800 shadow-xl rounded-xl p-3 px-4">
+        <p className="text-sm font-bold text-gray-900 dark:text-white">{payload[0].name}</p>
+        <p className="text-xs font-semibold text-gray-600 dark:text-slate-400 mt-1">Modules: {payload[0].value}</p>
       </div>
     );
   }
@@ -30,7 +30,7 @@ const CustomTooltip = ({ active, payload }) => {
 const TrendTooltip = ({ active, payload, label }) => {
   if (active && payload && payload.length) {
     return (
-      <div className="bg-red-900/90 backdrop-blur-md shadow-xl rounded-xl p-3 px-4 border border-red-800/50">
+      <div className="bg-red-900/90 dark:bg-red-950/95 backdrop-blur-md shadow-xl rounded-xl p-3 px-4 border border-red-800/50 dark:border-red-900/60">
         <p className="text-xs font-semibold text-red-200 uppercase tracking-widest">{label}</p>
         <p className="text-sm font-bold text-white mt-1">
           <span className="text-red-400 mr-2">●</span>
@@ -66,10 +66,10 @@ export function MdrrmoModuleDistributionChart({ onCategoryClick, selectedCategor
   }));
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-[0_2px_12px_-3px_rgba(0,0,0,0.06)] p-6 flex flex-col h-full min-h-[360px] transition-all hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)]">
-      <div className="flex items-center justify-between pb-3 border-b border-gray-100 mb-3">
+    <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-[0_2px_12px_-3px_rgba(0,0,0,0.06)] p-6 flex flex-col h-full min-h-[380px] transition-all hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)]">
+      <div className="flex items-center justify-between pb-3 border-b border-gray-100 dark:border-slate-800 mb-3">
         <div>
-          <h2 className="text-base font-bold text-gray-900">Module Distribution</h2>
+          <h2 className="text-base font-bold text-gray-900 dark:text-white">Module Distribution</h2>
           <p className="text-xs text-gray-400 mt-0.5">Published syllabus breakdown</p>
         </div>
         {selectedCategory && (
@@ -107,7 +107,8 @@ export function MdrrmoModuleDistributionChart({ onCategoryClick, selectedCategor
                 outerRadius={75}
                 paddingAngle={6}
                 dataKey="value"
-                stroke="#ffffff"
+                stroke="currentColor"
+                className="text-white dark:text-[#0b1329]"
                 strokeWidth={3}
                 animationBegin={200}
                 animationDuration={1200}
@@ -183,12 +184,12 @@ export function MdrrmoEnrollmentTrendChart() {
     : 0;
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-[0_2px_12px_-3px_rgba(0,0,0,0.06)] p-6 flex flex-col h-full min-h-[360px] transition-all hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)]">
-      <div className="flex items-center justify-between pb-3 border-b border-gray-100 mb-4">
+    <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-[0_2px_12px_-3px_rgba(0,0,0,0.06)] p-6 flex flex-col h-full min-h-[380px] transition-all hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)]">
+      <div className="flex items-center justify-between pb-3 border-b border-gray-100 dark:border-slate-800 mb-3">
         <div>
           <div className="flex items-center gap-2">
-            <h2 className="text-base font-bold text-gray-900">Enrollment & Activity Trend</h2>
-            <span className="text-[11px] font-semibold text-gray-500 bg-gray-100 px-2 py-0.5 rounded-md">
+            <h2 className="text-base font-bold text-gray-900 dark:text-white">Enrollment & Activity Trend</h2>
+            <span className="text-[11px] font-semibold text-gray-500 dark:text-slate-400 bg-gray-100 dark:bg-slate-800 px-2 py-0.5 rounded-md">
               7 Days
             </span>
           </div>
@@ -216,7 +217,7 @@ export function MdrrmoEnrollmentTrendChart() {
                   <stop offset="95%" stopColor="#ef4444" stopOpacity={0}/>
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="currentColor" className="text-gray-100 dark:text-slate-800/80" />
               <XAxis 
                 dataKey="name" 
                 axisLine={false}

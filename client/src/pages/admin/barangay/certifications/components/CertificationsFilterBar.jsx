@@ -57,7 +57,6 @@ export default function CertificationsFilterBar({
             <option value="active">Active</option>
             <option value="expiring_soon">Expiring Soon</option>
             <option value="expired">Expired</option>
-            <option value="revoked">Revoked</option>
           </select>
         </div>
 

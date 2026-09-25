@@ -1,4 +1,4 @@
-import { useTheme } from "../../context/themeContext";
+import { useTheme } from "../../hooks/context/themeContext";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Sun01Icon, Moon02Icon } from "@hugeicons/core-free-icons";
 

@@ -24,27 +24,27 @@ export default function GlobalBroadcastBanner() {
   
   const styles = {
     warning: {
-      bg: "bg-amber-50",
-      text: "text-amber-900",
-      border: "border-amber-200",
-      icon: "text-amber-600",
-      pillBg: "bg-amber-200",
-      pillText: "text-amber-900"
+      bg: "bg-amber-50 dark:bg-amber-950/60",
+      text: "text-amber-900 dark:text-amber-200",
+      border: "border-amber-200 dark:border-amber-900/60",
+      icon: "text-amber-600 dark:text-amber-400",
+      pillBg: "bg-amber-200 dark:bg-amber-900/80",
+      pillText: "text-amber-900 dark:text-amber-100"
     },
     critical: {
-      bg: "bg-red-600",
+      bg: "bg-red-600 dark:bg-red-700",
       text: "text-white",
-      border: "border-red-700",
+      border: "border-red-700 dark:border-red-800",
       icon: "text-white",
-      pillBg: "bg-red-800",
+      pillBg: "bg-red-800 dark:bg-red-900",
       pillText: "text-white"
     },
     info: {
-      bg: "bg-blue-600",
+      bg: "bg-blue-600 dark:bg-blue-700",
       text: "text-white",
-      border: "border-blue-700",
+      border: "border-blue-700 dark:border-blue-800",
       icon: "text-blue-100",
-      pillBg: "bg-blue-800",
+      pillBg: "bg-blue-800 dark:bg-blue-900",
       pillText: "text-blue-100"
     }
   };

@@ -31,8 +31,6 @@ export default function SituationalEditor({
   const [scenarioToDelete, setScenarioToDelete] = useState(null);
   const [isDescriptionOpen, setIsDescriptionOpen] = useState(true);
   const [isInteractionOpen, setIsInteractionOpen] = useState(true);
-  const [isConfigOpen, setIsConfigOpen] = useState(true);
-  const [isCommitOpen, setIsCommitOpen] = useState(true);
 
   useEffect(() => {
     if (
@@ -83,6 +81,7 @@ export default function SituationalEditor({
       }, 10);
       return () => clearTimeout(timer);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [formErrors._scrollTrigger]);
 
   const handleInteractionTypeChange = (type) => {
@@ -116,23 +115,23 @@ export default function SituationalEditor({
   return (
     <div className="space-y-4 pt-2">
       {/* 1. Scenario Context & Description Accordion */}
-      <div className="border border-slate-200 rounded-xl bg-white overflow-hidden shadow-sm animate-in fade-in slide-in-from-bottom-2 duration-300">
+      <div className="border border-slate-200 dark:border-slate-800 rounded-xl bg-white dark:bg-slate-900 overflow-hidden shadow-sm animate-in fade-in slide-in-from-bottom-2 duration-300">
         <button
           type="button"
           onClick={() => setIsDescriptionOpen(!isDescriptionOpen)}
-          className="w-full flex items-center justify-between p-4 bg-slate-50 hover:bg-slate-100 transition-colors text-left"
+          className="w-full flex items-center justify-between p-4 bg-slate-50 hover:bg-slate-100 dark:bg-slate-800/60 dark:hover:bg-slate-800 transition-colors text-left"
         >
-          <span className="text-xs font-bold text-slate-700 uppercase tracking-wide">
+          <span className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wide">
             1. Scenario Prompt & Scene
           </span>
-          <span className="text-slate-400 font-bold">
+          <span className="text-slate-400 dark:text-slate-500 font-bold">
             {isDescriptionOpen ? "−" : "+"}
           </span>
         </button>
         {isDescriptionOpen && (
-          <div className="p-4 border-t border-slate-200 space-y-4 bg-slate-50">
+          <div className="p-4 border-t border-slate-200 dark:border-slate-800 space-y-4 bg-slate-50 dark:bg-slate-900/40">
             <div id="situational-description-anchor">
-              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5">
+              <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1.5">
                 Scenario Prompt / Context <span className="text-red-500">*</span>
               </label>
               <textarea
@@ -152,7 +151,7 @@ export default function SituationalEditor({
                   }
                 }}
                 placeholder="Describe the unfolding crisis scene (e.g. Rising floodwaters trap several families on a rooftop with severed power lines nearby)..."
-                className={`w-full p-3 bg-white border ${formErrors.scenarioDescription ? "border-red-500 ring-2 ring-red-500/10" : "border-slate-300"} rounded-xl text-sm font-medium focus:outline-none focus:border-red-500 transition-all placeholder:text-slate-400`}
+                className={`w-full p-3 bg-white dark:bg-slate-800 border ${formErrors.scenarioDescription ? "border-red-500 ring-2 ring-red-500/10" : "border-slate-300 dark:border-slate-700"} rounded-xl text-sm font-medium text-slate-900 dark:text-slate-100 focus:outline-none focus:border-red-500 transition-all placeholder:text-slate-400 dark:placeholder:text-slate-500`}
               />
               {formErrors.scenarioDescription && (
                 <p className="text-red-500 text-xs mt-1.5 font-bold">
@@ -163,7 +162,7 @@ export default function SituationalEditor({
 
             {/* Scenario Scene Image Upload */}
             <div>
-              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5">
+              <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1.5">
                 Attach Scenario Illustration / Diagram (Optional)
               </label>
               <input
@@ -176,11 +175,11 @@ export default function SituationalEditor({
                     toast.success(`Image staged: ${file.name}`);
                   }
                 }}
-                className="text-xs text-slate-600 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border file:border-slate-300 file:text-xs file:font-bold file:bg-white file:text-slate-700 hover:file:bg-slate-100 cursor-pointer transition-colors"
+                className="text-xs text-slate-600 dark:text-slate-400 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border file:border-slate-300 dark:file:border-slate-700 file:text-xs file:font-bold file:bg-white dark:file:bg-slate-800 file:text-slate-700 dark:file:text-slate-300 hover:file:bg-slate-100 dark:hover:file:bg-slate-700 cursor-pointer transition-colors"
               />
               {situationalImage && (
-                <div className="mt-2 flex items-center gap-2 p-2 bg-emerald-50 rounded-lg border border-emerald-100">
-                  <span className="text-xs text-emerald-800 font-bold">
+                <div className="mt-2 flex items-center gap-2 p-2 bg-emerald-50 dark:bg-emerald-950/40 rounded-lg border border-emerald-100 dark:border-emerald-900/50">
+                  <span className="text-xs text-emerald-800 dark:text-emerald-300 font-bold">
                     Staged: {situationalImage.name}
                   </span>
                 </div>
@@ -191,23 +190,23 @@ export default function SituationalEditor({
       </div>
 
       {/* 2. Interaction Mechanism Accordion */}
-      <div className="border border-slate-200 rounded-xl bg-white overflow-hidden shadow-sm animate-in fade-in slide-in-from-bottom-2 duration-300">
+      <div className="border border-slate-200 dark:border-slate-800 rounded-xl bg-white dark:bg-slate-900 overflow-hidden shadow-sm animate-in fade-in slide-in-from-bottom-2 duration-300">
         <button
           type="button"
           onClick={() => setIsInteractionOpen(!isInteractionOpen)}
-          className="w-full flex items-center justify-between p-4 bg-slate-50 hover:bg-slate-100 transition-colors text-left"
+          className="w-full flex items-center justify-between p-4 bg-slate-50 hover:bg-slate-100 dark:bg-slate-800/60 dark:hover:bg-slate-800 transition-colors text-left"
         >
-          <span className="text-xs font-bold text-slate-700 uppercase tracking-wide">
+          <span className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wide">
             2. Scenario Interaction & Configuration
           </span>
-          <span className="text-slate-400 font-bold">
+          <span className="text-slate-400 dark:text-slate-500 font-bold">
             {isInteractionOpen ? "−" : "+"}
           </span>
         </button>
         {isInteractionOpen && (
-          <div className="p-4 border-t border-slate-200 space-y-4 bg-slate-50">
+          <div className="p-4 border-t border-slate-200 dark:border-slate-800 space-y-4 bg-slate-50 dark:bg-slate-900/40">
             <div>
-              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">
+              <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-2">
                 Interaction Mechanics
               </label>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
@@ -234,13 +233,13 @@ export default function SituationalEditor({
                     onClick={() => handleInteractionTypeChange(type.id)}
                     className={`flex items-center gap-2 p-3 rounded-xl border text-xs font-bold transition-all ${
                       currentSituationalData.interactionType === type.id
-                        ? "bg-red-50 border-red-200 text-red-700 shadow-sm ring-1 ring-red-500"
-                        : "bg-white border-slate-200 text-slate-600 hover:bg-slate-100/70"
+                        ? "bg-red-50 dark:bg-red-950/40 border-red-200 dark:border-red-800/60 text-red-700 dark:text-red-400 shadow-sm ring-1 ring-red-500"
+                        : "bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100/70 dark:hover:bg-slate-700/60"
                     }`}
                   >
                     <HugeiconsIcon
                       icon={type.icon}
-                      className={`w-4 h-4 ${currentSituationalData.interactionType === type.id ? "text-red-600" : "text-slate-400"}`}
+                      className={`w-4 h-4 ${currentSituationalData.interactionType === type.id ? "text-red-600 dark:text-red-400" : "text-slate-400 dark:text-slate-500"}`}
                     />
                     {type.label}
                   </button>
@@ -291,9 +290,9 @@ export default function SituationalEditor({
 
       {/* 4. Staged Scenarios List */}
       {currentFlowStep.situationalScenarios?.length > 0 && (
-        <div className="pt-4 border-t border-slate-200 space-y-3">
+        <div className="pt-4 border-t border-slate-200 dark:border-slate-800 space-y-3">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-700 uppercase tracking-wide">
+            <span className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wide">
               Staged Scenarios ({currentFlowStep.situationalScenarios.length})
             </span>
           </div>
@@ -302,13 +301,13 @@ export default function SituationalEditor({
             {currentFlowStep.situationalScenarios.map((s, idx) => (
               <div
                 key={idx}
-                className="p-3 bg-white border border-slate-200 rounded-xl flex items-center justify-between gap-3 text-xs shadow-sm hover:border-slate-300 transition-all"
+                className="p-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl flex items-center justify-between gap-3 text-xs shadow-sm hover:border-slate-300 dark:hover:border-slate-600 transition-all"
               >
                 <div className="flex items-center gap-2 flex-1 min-w-0">
                   <span className="font-bold text-red-600 shrink-0">
                     S{idx + 1}.
                   </span>
-                  <p className="truncate font-medium text-slate-800">
+                  <p className="truncate font-medium text-slate-800 dark:text-slate-200">
                     {s.scenarioDescription}
                   </p>
                 </div>
@@ -318,7 +317,7 @@ export default function SituationalEditor({
                     type="button"
                     disabled={idx === 0}
                     onClick={() => moveScenario(idx, "up")}
-                    className="p-1 hover:bg-slate-100 rounded text-slate-500 disabled:opacity-30 transition-colors"
+                    className="p-1 hover:bg-slate-100 dark:hover:bg-slate-700 rounded text-slate-500 dark:text-slate-400 disabled:opacity-30 transition-colors"
                   >
                     <HugeiconsIcon
                       icon={ArrowUp01Icon}
@@ -328,10 +327,10 @@ export default function SituationalEditor({
                   <button
                     type="button"
                     disabled={
-                      idx === currentFlowStep.situationalScenarios.length - 1
+                    idx === currentFlowStep.situationalScenarios.length - 1
                     }
                     onClick={() => moveScenario(idx, "down")}
-                    className="p-1 hover:bg-slate-100 rounded text-slate-500 disabled:opacity-30 transition-colors"
+                    className="p-1 hover:bg-slate-100 dark:hover:bg-slate-700 rounded text-slate-500 dark:text-slate-400 disabled:opacity-30 transition-colors"
                   >
                     <HugeiconsIcon
                       icon={ArrowDown01Icon}
@@ -346,7 +345,7 @@ export default function SituationalEditor({
                         title: s.scenarioDescription,
                       })
                     }
-                    className="p-1 hover:bg-red-50 text-red-500 rounded transition-colors ml-1"
+                    className="p-1 hover:bg-red-50 dark:hover:bg-red-950/40 text-red-500 rounded transition-colors ml-1"
                   >
                     <HugeiconsIcon icon={Delete01Icon} className="w-3.5 h-3.5" />
                   </button>

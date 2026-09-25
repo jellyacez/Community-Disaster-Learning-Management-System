@@ -43,7 +43,7 @@ export default function UserManagement() {
         <p className="text-sm font-medium text-gray-500 mt-1">Manage MDRRMO and Barangay Admins</p>
       </div>
 
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm">
         <div className="px-6 py-4 border-b border-gray-50 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <h2 className="text-base font-bold text-gray-900">
@@ -106,6 +106,8 @@ export default function UserManagement() {
           isLoading={state.isLoading}
           meta={state.meta}
           setPage={actions.setPage}
+          limit={state.limit}
+          setLimit={actions.setLimit}
         />
         
         {isAddModalOpen && (

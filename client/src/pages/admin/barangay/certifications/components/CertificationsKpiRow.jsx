@@ -3,18 +3,17 @@ import {
   CheckmarkCircle01Icon,
   Clock01Icon,
   CancelCircleIcon,
-  UnavailableIcon,
 } from "@hugeicons/core-free-icons";
 import StatCard from "../../../../../components/ui/StatCard";
 
 export default function CertificationsKpiRow({
-  summary = { total: 0, active: 0, expiring_soon: 0, expired: 0, revoked: 0 },
+  summary = { total: 0, active: 0, expiring_soon: 0, expired: 0 },
   isLoading = false,
   selectedStatus = "",
   onStatusFilterChange,
 }) {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
       {/* Total Certified */}
       <StatCard
         icon={Award01Icon}
@@ -45,7 +44,7 @@ export default function CertificationsKpiRow({
         color="amber"
         label="Expiring Soon"
         value={summary.expiring_soon}
-        sub="Expires in < 30 days"
+        sub="Renew within 30 days"
         loading={isLoading}
         onClick={() => onStatusFilterChange("expiring_soon")}
         isActive={selectedStatus === "expiring_soon"}
@@ -57,22 +56,10 @@ export default function CertificationsKpiRow({
         color="red"
         label="Expired"
         value={summary.expired}
-        sub="Action required / re-train"
+        sub="Needs recertification"
         loading={isLoading}
         onClick={() => onStatusFilterChange("expired")}
         isActive={selectedStatus === "expired"}
-      />
-
-      {/* Revoked */}
-      <StatCard
-        icon={UnavailableIcon}
-        color="gray"
-        label="Revoked"
-        value={summary.revoked}
-        sub="Admin revoked"
-        loading={isLoading}
-        onClick={() => onStatusFilterChange("revoked")}
-        isActive={selectedStatus === "revoked"}
       />
     </div>
   );

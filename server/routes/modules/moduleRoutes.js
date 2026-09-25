@@ -66,6 +66,11 @@ router.get("/steps/:stepId/assessment", moduleController.getStepAssessment);
 // @access  Private
 router.get("/:id/progress", moduleProgressController.getModuleProgress);
 
+// @route   POST /api/modules/progress
+// @desc    Synchronize module progress percentage
+// @access  Private
+router.post("/progress", moduleProgressController.syncModuleProgress);
+
 // @route   POST /api/modules/:id/steps/:stepId/complete
 // @desc    Mark a step as complete
 // @access  Private

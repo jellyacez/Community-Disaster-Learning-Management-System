@@ -51,16 +51,16 @@ export default function ExpiringCredentialsFeed({
     <div className="space-y-4">
       {/* Header & Description */}
       <div>
-        <h2 className="text-xl font-bold text-gray-900 tracking-tight">
+        <h2 className="text-xl font-bold text-gray-900 dark:text-slate-100 tracking-tight">
           Expiring Credentials & Municipal Compliance Feed
         </h2>
-        <p className="text-xs text-gray-500 font-medium mt-0.5">
+        <p className="text-xs text-gray-500 dark:text-slate-400 font-medium mt-0.5">
           Live monitor of certifications needing renewal, expired credentials, and compliance actions across Bacolor
         </p>
       </div>
 
       {/* Tactical Deployment Filters Bar */}
-      <div className="bg-white p-4 rounded-2xl border border-gray-200 shadow-sm flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
+      <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-gray-200 dark:border-slate-800 shadow-sm flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
         {/* Reusable SearchBar Component */}
         <SearchBar
           value={searchInput}
@@ -78,7 +78,7 @@ export default function ExpiringCredentialsFeed({
             <select
               value={selectedBarangay}
               onChange={(e) => setSelectedBarangay(e.target.value)}
-              className="w-full py-2 pl-3 pr-8 text-sm bg-white border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-colors"
+              className="w-full py-2 pl-3 pr-8 text-sm bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 border border-gray-300 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-colors"
             >
               <option value="">All Barangays</option>
               {[...BARANGAY_LIST]
@@ -96,7 +96,7 @@ export default function ExpiringCredentialsFeed({
             <select
               value={selectedModule}
               onChange={(e) => setSelectedModule(e.target.value)}
-              className="w-full py-2 pl-3 pr-8 text-sm bg-white border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-colors"
+              className="w-full py-2 pl-3 pr-8 text-sm bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 border border-gray-300 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-colors"
             >
               <option value="">All Training Modules</option>
               {[...modules]
@@ -114,7 +114,7 @@ export default function ExpiringCredentialsFeed({
             <select
               value={selectedStatus}
               onChange={(e) => setSelectedStatus(e.target.value)}
-              className="w-full py-2 pl-3 pr-8 text-sm bg-white border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-colors"
+              className="w-full py-2 pl-3 pr-8 text-sm bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 border border-gray-300 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-colors"
             >
               <option value="">All Statuses</option>
               <option value="active">Active</option>
@@ -128,7 +128,7 @@ export default function ExpiringCredentialsFeed({
           {hasActiveFilters && (
             <button
               onClick={handleResetFilters}
-              className="px-3 py-2 text-xs font-semibold text-red-600 hover:text-red-800 bg-red-50 rounded-xl hover:bg-red-100 transition-colors cursor-pointer whitespace-nowrap"
+              className="px-3 py-2 text-xs font-semibold text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 bg-red-50 dark:bg-red-950/40 rounded-xl hover:bg-red-100 dark:hover:bg-red-950/60 transition-colors cursor-pointer whitespace-nowrap"
             >
               Reset Filters
             </button>
@@ -137,20 +137,20 @@ export default function ExpiringCredentialsFeed({
       </div>
 
       {/* Action Table Shell (Matches ActivityLogTable.jsx exactly) */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm overflow-hidden">
         {isError ? (
-          <div className="p-8 text-center bg-red-50/50">
+          <div className="p-8 text-center bg-red-50/50 dark:bg-red-950/20">
             <HugeiconsIcon icon={CancelCircleIcon} className="w-10 h-10 text-red-500 mx-auto mb-2" />
-            <p className="font-semibold text-red-800">Failed to load certification feed</p>
-            <p className="text-xs text-red-600 mt-1">{error?.response?.data?.error || error?.message}</p>
+            <p className="font-semibold text-red-800 dark:text-red-300">Failed to load certification feed</p>
+            <p className="text-xs text-red-600 dark:text-red-400 mt-1">{error?.response?.data?.error || error?.message}</p>
           </div>
         ) : !isLoading && certificates.length === 0 ? (
           <div className="p-12 text-center">
-            <div className="w-14 h-14 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-3">
-              <HugeiconsIcon icon={Award01Icon} className="w-7 h-7 text-gray-300" />
+            <div className="w-14 h-14 bg-gray-50 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-3">
+              <HugeiconsIcon icon={Award01Icon} className="w-7 h-7 text-gray-300 dark:text-slate-600" />
             </div>
-            <p className="font-semibold text-gray-900 text-base">No certificates found</p>
-            <p className="text-xs text-gray-500 mt-1 max-w-sm mx-auto">
+            <p className="font-semibold text-gray-900 dark:text-slate-100 text-base">No certificates found</p>
+            <p className="text-xs text-gray-500 dark:text-slate-400 mt-1 max-w-sm mx-auto">
               {hasActiveFilters
                 ? "No certification records match the selected filters or search terms."
                 : "No certificates found in the municipal registry."}
@@ -158,7 +158,7 @@ export default function ExpiringCredentialsFeed({
             {hasActiveFilters && (
               <button
                 onClick={handleResetFilters}
-                className="mt-4 px-4 py-2 text-xs font-semibold text-red-600 bg-red-50 rounded-xl hover:bg-red-100 transition-colors cursor-pointer"
+                className="mt-4 px-4 py-2 text-xs font-semibold text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/40 rounded-xl hover:bg-red-100 dark:hover:bg-red-950/60 transition-colors cursor-pointer"
               >
                 Clear all filters
               </button>
@@ -168,7 +168,7 @@ export default function ExpiringCredentialsFeed({
           <div className="overflow-x-auto">
             <table className="w-full text-left">
               <thead>
-                <tr className="bg-gray-50 text-gray-500 text-xs uppercase tracking-wider">
+                <tr className="bg-gray-50 dark:bg-slate-800/80 text-gray-500 dark:text-slate-400 text-xs uppercase tracking-wider">
                   <th scope="col" className="px-6 py-4 font-semibold text-sm">Resident & Barangay</th>
                   <th scope="col" className="px-6 py-4 font-semibold text-sm">Module Details</th>
                   <th scope="col" className="px-6 py-4 font-semibold text-sm">Control No.</th>
@@ -177,19 +177,19 @@ export default function ExpiringCredentialsFeed({
                   <th scope="col" className="px-6 py-4 font-semibold text-sm text-center">Lifecycle Status</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-50">
+              <tbody className="divide-y divide-gray-50 dark:divide-slate-800/60">
                 {isLoading
                   ? [1, 2, 3, 4, 5, 6].map((i) => (
                       <SkeletonTableRow key={i} columns={6} hasAvatar={true} />
                     ))
                   : certificates.map((cert) => (
-                      <tr key={cert.cert_id} className="hover:bg-gray-50/60 transition-colors">
+                      <tr key={cert.cert_id} className="hover:bg-gray-50/60 dark:hover:bg-slate-800/40 transition-colors">
                         {/* Resident & Barangay */}
                         <td className="px-6 py-4">
-                          <div className="font-semibold text-gray-900 text-sm">{cert.resident_name}</div>
-                          <div className="text-xs text-gray-500">{cert.resident_email}</div>
+                          <div className="font-semibold text-gray-900 dark:text-slate-100 text-sm">{cert.resident_name}</div>
+                          <div className="text-xs text-gray-500 dark:text-slate-400">{cert.resident_email}</div>
                           <div className="mt-1">
-                            <span className="inline-block text-[11px] font-semibold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-md border border-blue-100">
+                            <span className="inline-block text-[11px] font-semibold text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/60 px-2 py-0.5 rounded-md border border-blue-100 dark:border-blue-800/60">
                               {cert.barangay_name || "Unassigned"}
                             </span>
                           </div>
@@ -197,21 +197,21 @@ export default function ExpiringCredentialsFeed({
 
                         {/* Module */}
                         <td className="px-6 py-4">
-                          <div className="font-medium text-gray-900 text-sm">{decodeHtml(cert.module_title)}</div>
+                          <div className="font-medium text-gray-900 dark:text-slate-100 text-sm">{decodeHtml(cert.module_title)}</div>
                           {cert.module_category && (
-                            <span className="inline-block mt-0.5 text-[11px] font-medium text-gray-500 bg-gray-100 px-2 py-0.5 rounded">
+                            <span className="inline-block mt-0.5 text-[11px] font-medium text-gray-500 dark:text-slate-400 bg-gray-100 dark:bg-slate-800 px-2 py-0.5 rounded">
                               {cert.module_category}
                             </span>
                           )}
                         </td>
 
                         {/* Control No */}
-                        <td className="px-6 py-4 font-mono text-xs text-gray-700 font-semibold">
+                        <td className="px-6 py-4 font-mono text-xs text-gray-700 dark:text-slate-300 font-semibold">
                           {cert.cert_rec}
                         </td>
 
                         {/* Issued Date */}
-                        <td className="px-6 py-4 text-sm text-gray-600 whitespace-nowrap">
+                        <td className="px-6 py-4 text-sm text-gray-600 dark:text-slate-400 whitespace-nowrap">
                           {formatDate(cert.completion_date)}
                         </td>
 
@@ -220,10 +220,10 @@ export default function ExpiringCredentialsFeed({
                           <span
                             className={
                               cert.computed_status === "expiring_soon"
-                                ? "text-amber-700 font-semibold"
+                                ? "text-amber-700 dark:text-amber-400 font-semibold"
                                 : cert.computed_status === "expired"
-                                ? "text-red-700 font-semibold"
-                                : "text-gray-600"
+                                ? "text-red-700 dark:text-red-400 font-semibold"
+                                : "text-gray-600 dark:text-slate-400"
                             }
                           >
                             {formatDate(cert.expires_at)}
@@ -234,7 +234,7 @@ export default function ExpiringCredentialsFeed({
                         <td className="px-6 py-4 text-center">
                           <CertificateLifecycleBadge status={cert.computed_status} />
                           {cert.computed_status === "revoked" && cert.revocation_reason && (
-                            <p className="text-[10px] text-gray-400 mt-1 italic truncate max-w-[180px] mx-auto">
+                            <p className="text-[10px] text-gray-400 dark:text-slate-500 mt-1 italic truncate max-w-[180px] mx-auto">
                               {cert.revocation_reason}
                             </p>
                           )}
@@ -248,35 +248,35 @@ export default function ExpiringCredentialsFeed({
 
         {/* Table Pagination Footer */}
         {!isLoading && !isError && certificates.length > 0 && (
-          <div className="px-6 py-4 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-3 bg-gray-50/50">
-            <div className="text-xs text-gray-500 font-medium">
+          <div className="px-6 py-4 border-t border-gray-100 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3 bg-gray-50/50 dark:bg-slate-800/50">
+            <div className="text-xs text-gray-500 dark:text-slate-400 font-medium">
               Showing{" "}
-              <span className="font-semibold text-gray-900">
+              <span className="font-semibold text-gray-900 dark:text-slate-100">
                 {(pagination.page - 1) * pagination.limit + 1}
               </span>{" "}
               to{" "}
-              <span className="font-semibold text-gray-900">
+              <span className="font-semibold text-gray-900 dark:text-slate-100">
                 {Math.min(pagination.page * pagination.limit, pagination.total)}
               </span>{" "}
-              of <span className="font-semibold text-gray-900">{pagination.total}</span> certificates
+              of <span className="font-semibold text-gray-900 dark:text-slate-100">{pagination.total}</span> certificates
             </div>
 
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setPage(Math.max(page - 1, 1))}
                 disabled={page <= 1}
-                className="px-3 py-1.5 text-xs font-semibold rounded-lg border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer flex items-center gap-1"
+                className="px-3 py-1.5 text-xs font-semibold rounded-lg border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-700 dark:text-slate-200 hover:bg-gray-50 dark:hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer flex items-center gap-1"
               >
                 <HugeiconsIcon icon={ArrowLeft01Icon} className="w-3.5 h-3.5" />
                 Previous
               </button>
-              <span className="text-xs font-semibold text-gray-600 px-2">
+              <span className="text-xs font-semibold text-gray-600 dark:text-slate-400 px-2">
                 Page {pagination.page} of {pagination.totalPages}
               </span>
               <button
                 onClick={() => setPage(Math.min(page + 1, pagination.totalPages))}
                 disabled={page >= pagination.totalPages}
-                className="px-3 py-1.5 text-xs font-semibold rounded-lg border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer flex items-center gap-1"
+                className="px-3 py-1.5 text-xs font-semibold rounded-lg border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-700 dark:text-slate-200 hover:bg-gray-50 dark:hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer flex items-center gap-1"
               >
                 Next
                 <HugeiconsIcon icon={ArrowRight01Icon} className="w-3.5 h-3.5" />

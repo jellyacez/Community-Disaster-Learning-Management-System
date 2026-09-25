@@ -5,7 +5,7 @@ export function useFeedbackFilters(submissions) {
   const [searchQuery, setSearchQuery] = useState("");
   const [sortOrder, setSortOrder] = useState("newest"); // "newest" | "oldest" | "status"
   const [currentPage, setCurrentPage] = useState(1);
-  const PAGE_SIZE = 10;
+  const [pageSize, setPageSize] = useState(10);
 
   const filteredSubmissions = useMemo(() => {
     let result = submissions;
@@ -44,12 +44,12 @@ export function useFeedbackFilters(submissions) {
     return result;
   }, [activeTab, submissions, searchQuery, sortOrder]);
 
-  const totalPages = Math.max(1, Math.ceil(filteredSubmissions.length / PAGE_SIZE));
+  const totalPages = Math.max(1, Math.ceil(filteredSubmissions.length / pageSize));
 
   const paginatedSubmissions = useMemo(() => {
-    const start = (currentPage - 1) * PAGE_SIZE;
-    return filteredSubmissions.slice(start, start + PAGE_SIZE);
-  }, [filteredSubmissions, currentPage, PAGE_SIZE]);
+    const start = (currentPage - 1) * pageSize;
+    return filteredSubmissions.slice(start, start + pageSize);
+  }, [filteredSubmissions, currentPage, pageSize]);
 
   const tabs = useMemo(
     () => [
@@ -78,13 +78,20 @@ export function useFeedbackFilters(submissions) {
   const handleSearchChange = (e) => { setSearchQuery(e.target.value); setCurrentPage(1); };
   const handleSortChange = (e) => { setSortOrder(e.target.value); setCurrentPage(1); };
 
+  const handlePageSizeChange = (newSize) => {
+    setPageSize(newSize);
+    setCurrentPage(1);
+  };
+
   return {
     activeTab,
     searchQuery,
     sortOrder,
     currentPage,
     setCurrentPage,
-    PAGE_SIZE,
+    pageSize,
+    PAGE_SIZE: pageSize,
+    setPageSize: handlePageSizeChange,
     filteredSubmissions,
     totalPages,
     paginatedSubmissions,

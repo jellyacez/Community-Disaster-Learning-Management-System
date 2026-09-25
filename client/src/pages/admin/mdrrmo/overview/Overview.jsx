@@ -71,14 +71,14 @@ export default function Overview() {
 
   if (metricsError) {
     return (
-      <div className="p-6 bg-red-50 text-red-600 rounded-xl border border-red-100 space-y-2">
-        <p className="font-bold">Error loading overview data.</p>
-        <p className="text-xs bg-red-100 p-2 rounded font-mono">
+      <div className="p-4 sm:p-6 bg-red-50 text-red-600 rounded-2xl border border-red-100 space-y-2">
+        <p className="font-bold text-sm sm:text-base">Error loading overview data.</p>
+        <p className="text-xs bg-red-100 p-2 sm:p-3 rounded-xl font-mono break-words">
           {error?.response?.data?.message ||
             error?.message ||
             "Unknown Connection Failure"}
         </p>
-        <p className="text-sm">
+        <p className="text-xs sm:text-sm text-red-500">
           Please inspect your Node.js backend terminal for details.
         </p>
       </div>
@@ -88,52 +88,53 @@ export default function Overview() {
   const m = metricsData || {};
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-150 pb-10">
+    <div className="space-y-4 sm:space-y-6 animate-in fade-in duration-150 pb-8 sm:pb-12 max-w-full">
       {/* Header Row */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-gray-100 shadow-[0_2px_12px_-3px_rgba(0,0,0,0.06)]">
-        <div>
-          <h1 className="text-3xl font-black text-gray-900 tracking-tight">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 sm:gap-6 bg-white dark:bg-slate-900 p-4 sm:p-6 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-[0_2px_12px_-3px_rgba(0,0,0,0.06)]">
+        <div className="min-w-0">
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-black text-gray-900 dark:text-slate-100 tracking-tight leading-snug break-words">
             Municipal Disaster Risk Reduction and Management Office
           </h1>
-          <p className="text-[14px] text-gray-500 font-medium mt-1">
+          <p className="text-xs sm:text-sm text-gray-500 dark:text-slate-400 font-medium mt-1">
             Staff & Responder Training Hub
           </p>
         </div>
-        <div className="flex items-center gap-3 shrink-0">
+
+        <div className="flex flex-wrap sm:flex-nowrap items-center gap-2.5 sm:gap-3 shrink-0 w-full sm:w-auto">
           <button
             type="button"
-            className="h-10 px-4 bg-white border border-gray-200 text-gray-700 text-[12px] font-bold tracking-wide uppercase rounded-xl flex items-center gap-2 hover:bg-gray-50 transition-colors whitespace-nowrap shadow-sm cursor-pointer"
+            className="flex-1 sm:flex-initial h-10 px-3.5 sm:px-4 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-gray-700 dark:text-slate-200 text-xs font-bold tracking-wide uppercase rounded-xl flex items-center justify-center gap-2 hover:bg-gray-50 dark:hover:bg-slate-700 active:scale-[0.98] transition-all whitespace-nowrap shadow-sm cursor-pointer"
           >
             <HugeiconsIcon
               icon={Download02Icon}
               className="w-4 h-4 text-red-600 shrink-0"
             />
-            Export Report
+            <span>Export Report</span>
           </button>
 
           <button
             type="button"
             onClick={() => setIsModalOpen(true)}
-            className="h-10 px-4 bg-red-600 text-white text-[12px] font-bold tracking-wide uppercase rounded-xl flex items-center gap-2 hover:bg-red-700 transition-colors shadow-sm whitespace-nowrap cursor-pointer"
+            className="flex-1 sm:flex-initial h-10 px-3.5 sm:px-4 bg-red-600 hover:bg-red-700 active:scale-[0.98] text-white text-xs font-bold tracking-wide uppercase rounded-xl flex items-center justify-center gap-2 transition-all shadow-sm whitespace-nowrap cursor-pointer"
           >
-            + Broadcast Advisory
+            <span>+ Broadcast Advisory</span>
           </button>
 
           {/* Rendered strictly for standard MDRRMO Admin */}
           {isStandardMdrrmo && (
             <Link
               to="/admin/mdrrmo/modules"
-              className="h-10 px-4 bg-gray-900 text-white text-[12px] font-bold tracking-wide uppercase rounded-xl flex items-center gap-2 hover:bg-gray-800 transition-colors shadow-sm whitespace-nowrap"
+              className="w-full sm:w-auto h-10 px-3.5 sm:px-4 bg-gray-900 dark:bg-slate-800 text-white text-xs font-bold tracking-wide uppercase rounded-xl flex items-center justify-center gap-2 hover:bg-gray-800 dark:hover:bg-slate-700 active:scale-[0.98] transition-all shadow-sm whitespace-nowrap"
             >
-              + Create Module
+              <span>+ Create Module</span>
             </Link>
           )}
         </div>
       </div>
 
-      {/* Metrics Row (5 Columns) */}
+      {/* Metrics Row (Fluid 5-card layout) */}
       <div>
-        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3.5 sm:gap-4">
           <StatCard
             icon={FolderAddIcon}
             label="Total Active Modules"
@@ -194,11 +195,11 @@ export default function Overview() {
       </div>
 
       {/* Row 2: Operational & Curriculum Triad */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
-        <div className="lg:col-span-1">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 items-stretch">
+        <div className="w-full">
           <MdrrmoRecentActivity />
         </div>
-        <div className="lg:col-span-1">
+        <div className="w-full">
           <MdrrmoModuleDistributionChart
             selectedCategory={selectedCategory}
             onCategoryClick={(cat) => {
@@ -207,7 +208,7 @@ export default function Overview() {
             }}
           />
         </div>
-        <div className="lg:col-span-1">
+        <div className="w-full md:col-span-2 lg:col-span-1">
           <MdrrmoQuickActions
             pendingReviewsCount={m.pending_reviews}
           />
@@ -215,11 +216,11 @@ export default function Overview() {
       </div>
 
       {/* Row 3: Management Catalog & Activity Analytics */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
-        <div className="lg:col-span-1">
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6 items-stretch">
+        <div className="w-full min-w-0 overflow-hidden">
           <MdrrmoEnrollmentTrendChart />
         </div>
-        <div className="lg:col-span-1">
+        <div className="w-full min-w-0 overflow-hidden">
           <ActiveModulesTable
             modules={modules}
             isLoading={isLoadingModules}

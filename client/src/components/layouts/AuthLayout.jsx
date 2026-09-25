@@ -12,8 +12,8 @@ export default function AuthLayout({
   onBackClick,
 }) {
   return (
-    <div className="auth-isolated min-h-screen bg-gradient-to-br from-gray-100 to-red-50 flex items-center justify-center px-4 py-10">
-      <div className="w-full max-w-md bg-white rounded-2xl shadow-xl border border-gray-100 p-8">
+    <div className="min-h-screen bg-gray-50 dark:bg-slate-950 flex items-center justify-center px-4 py-10 transition-colors">
+      <div className="auth-isolated w-full max-w-md bg-white rounded-2xl shadow-xl border border-gray-100 dark:border-slate-800 p-8">
         {onBackClick ? (
           <button
             onClick={onBackClick}

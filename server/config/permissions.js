@@ -12,7 +12,6 @@ const ROLE_PERMISSIONS = {
     "manage_security",
     "manage_modules",
     "view_users",
-    "revoke_certificates",
   ],
   mdrrmo_admin: [
     "provision_admins",
@@ -20,7 +19,6 @@ const ROLE_PERMISSIONS = {
     "view_activity_logs",
     "manage_modules",
     "view_users",
-    "revoke_certificates",
   ],
   head_mdrrmo_admin: [
     "approve_modules",
@@ -29,14 +27,12 @@ const ROLE_PERMISSIONS = {
     "view_activity_logs",
     "manage_modules",
     "view_users",
-    "revoke_certificates",
   ],
   barangay_admin: [
     "ban_users",
     "archive_users",
     "view_system_stats",
     "view_users",
-    "revoke_certificates",
   ],
 };
 

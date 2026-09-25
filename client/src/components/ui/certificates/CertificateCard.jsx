@@ -7,12 +7,10 @@ import {
   Download01Icon,
   Calendar03Icon,
   Clock01Icon,
-  QrCodeIcon,
 } from "@hugeicons/core-free-icons";
 
 /** Derive a display-level status that includes "expiring_soon" */
 function resolveStatus(cert) {
-  if (cert.status === "revoked") return "revoked";
   if (cert.status === "expired") return "expired";
   if (cert.expires_at) {
     const msLeft = new Date(cert.expires_at) - Date.now();
@@ -38,11 +36,6 @@ const STATUS_CONFIG = {
     badge: "bg-red-50 text-red-700 border-red-200",
     border: "border-red-200 hover:border-red-300",
   },
-  revoked: {
-    label: "Revoked",
-    badge: "bg-gray-100 text-gray-700 border-gray-200",
-    border: "border-gray-200 opacity-60",
-  },
 };
 
 const fmt = (dateStr) =>
@@ -57,8 +50,7 @@ const fmt = (dateStr) =>
 const CertificateCard = memo(function CertificateCard({ cert }) {
   const displayStatus = resolveStatus(cert);
   const cfg = STATUS_CONFIG[displayStatus] ?? STATUS_CONFIG.active;
-  const isRevoked = cert.status === "revoked";
-  const isInactive = cert.status === "expired" || isRevoked;
+  const isExpired = displayStatus === "expired";
   const viewUrl = `/user/certificates/view?token=${cert.verification_token}`;
 
   return (
@@ -86,9 +78,7 @@ const CertificateCard = memo(function CertificateCard({ cert }) {
         {/* Certificate Title & Subject */}
         <div>
           <h3
-            className={`text-lg font-black leading-snug ${
-              isRevoked ? "text-gray-400 line-through" : "text-gray-900"
-            }`}
+            className="text-lg font-black leading-snug text-gray-900"
             title={cert.module_title}
           >
             {cert.module_title}
@@ -130,13 +120,22 @@ const CertificateCard = memo(function CertificateCard({ cert }) {
 
       {/* Action Buttons */}
       <div className="flex items-center gap-3 pt-2">
-        {isRevoked ? (
-          <button
-            disabled
-            className="w-full py-2.5 bg-gray-100 text-gray-400 text-xs font-bold rounded-xl cursor-not-allowed text-center"
-          >
-            Credential Revoked
-          </button>
+        {isExpired ? (
+          <>
+            <Link
+              to={`/user/modules/${cert.module_id}/details`}
+              className="flex-1 inline-flex items-center justify-center gap-2 py-2.5 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded-xl shadow-xs transition-colors"
+            >
+              <span>Recertify Module</span>
+            </Link>
+            <Link
+              to={viewUrl}
+              className="inline-flex items-center justify-center gap-2 py-2.5 px-4 border border-gray-300 hover:bg-gray-50 text-gray-700 bg-white text-xs font-bold rounded-xl shadow-xs transition-colors"
+            >
+              <HugeiconsIcon icon={EyeIcon} className="w-4 h-4" />
+              <span>View</span>
+            </Link>
+          </>
         ) : (
           <>
             <Link
@@ -149,11 +148,7 @@ const CertificateCard = memo(function CertificateCard({ cert }) {
 
             <Link
               to={viewUrl}
-              className={`flex-1 inline-flex items-center justify-center gap-2 py-2.5 border text-xs font-bold rounded-xl transition-colors ${
-                isInactive
-                  ? "bg-gray-50 border-gray-200 text-gray-400 pointer-events-none"
-                  : "bg-white border-gray-300 hover:bg-gray-50 text-gray-700 shadow-xs"
-              }`}
+              className="flex-1 inline-flex items-center justify-center gap-2 py-2.5 border border-gray-300 hover:bg-gray-50 text-gray-700 bg-white text-xs font-bold rounded-xl shadow-xs transition-colors"
             >
               <HugeiconsIcon icon={Download01Icon} className="w-4 h-4" />
               <span>Download PDF</span>

@@ -70,20 +70,54 @@ html.dark *::-webkit-scrollbar-thumb:hover {
 }
 
 
-:where(.dark, .dark *) .bg-white,
-:where(.dark, .dark *) .bg-gray-50,
-:where(.dark, .dark *) .bg-gray-100,
-:where(.dark, .dark *) .bg-gray-200,
-:where(.dark, .dark *) .bg-slate-50,
-:where(.dark, .dark *) .bg-slate-100,
-:where(.dark, .dark *) .bg-slate-200,
-html.dark .bg-white,
-html.dark .bg-gray-50,
-html.dark .bg-gray-100,
-html.dark .bg-gray-200,
-html.dark .bg-slate-50,
-html.dark .bg-slate-100,
-html.dark .bg-slate-200 {
+:where(.dark, .dark *) .bg-white:not([class*="dark:bg-"]),
+:where(.dark, .dark *) .bg-gray-50:not([class*="dark:bg-"]),
+:where(.dark, .dark *) .bg-gray-100:not([class*="dark:bg-"]),
+:where(.dark, .dark *) .bg-gray-200:not([class*="dark:bg-"]),
+:where(.dark, .dark *) .bg-slate-50:not([class*="dark:bg-"]),
+:where(.dark, .dark *) .bg-slate-100:not([class*="dark:bg-"]),
+:where(.dark, .dark *) .bg-slate-200:not([class*="dark:bg-"]),
+:where(.dark, .dark *) .bg-white\/80:not([class*="dark:bg-"]),
+:where(.dark, .dark *) .bg-white\/90:not([class*="dark:bg-"]),
+:where(.dark, .dark *) .bg-white\/95:not([class*="dark:bg-"]),
+:where(.dark, .dark *) .bg-gray-50\/30:not([class*="dark:bg-"]),
+:where(.dark, .dark *) .bg-gray-50\/40:not([class*="dark:bg-"]),
+:where(.dark, .dark *) .bg-gray-50\/50:not([class*="dark:bg-"]),
+:where(.dark, .dark *) .bg-gray-50\/60:not([class*="dark:bg-"]),
+:where(.dark, .dark *) .bg-gray-50\/70:not([class*="dark:bg-"]),
+:where(.dark, .dark *) .bg-gray-50\/75:not([class*="dark:bg-"]),
+:where(.dark, .dark *) .bg-gray-50\/80:not([class*="dark:bg-"]),
+:where(.dark, .dark *) .bg-gray-50\/95:not([class*="dark:bg-"]),
+:where(.dark, .dark *) .bg-gray-100\/50:not([class*="dark:bg-"]),
+:where(.dark, .dark *) .bg-gray-100\/70:not([class*="dark:bg-"]),
+:where(.dark, .dark *) .bg-gray-100\/80:not([class*="dark:bg-"]),
+:where(.dark, .dark *) .bg-gray-200\/70:not([class*="dark:bg-"]),
+:where(.dark, .dark *) .bg-slate-50\/50:not([class*="dark:bg-"]),
+:where(.dark, .dark *) .bg-slate-50\/70:not([class*="dark:bg-"]),
+html.dark .bg-white:not([class*="dark:bg-"]),
+html.dark .bg-gray-50:not([class*="dark:bg-"]),
+html.dark .bg-gray-100:not([class*="dark:bg-"]),
+html.dark .bg-gray-200:not([class*="dark:bg-"]),
+html.dark .bg-slate-50:not([class*="dark:bg-"]),
+html.dark .bg-slate-100:not([class*="dark:bg-"]),
+html.dark .bg-slate-200:not([class*="dark:bg-"]),
+html.dark .bg-white\/80:not([class*="dark:bg-"]),
+html.dark .bg-white\/90:not([class*="dark:bg-"]),
+html.dark .bg-white\/95:not([class*="dark:bg-"]),
+html.dark .bg-gray-50\/30:not([class*="dark:bg-"]),
+html.dark .bg-gray-50\/40:not([class*="dark:bg-"]),
+html.dark .bg-gray-50\/50:not([class*="dark:bg-"]),
+html.dark .bg-gray-50\/60:not([class*="dark:bg-"]),
+html.dark .bg-gray-50\/70:not([class*="dark:bg-"]),
+html.dark .bg-gray-50\/75:not([class*="dark:bg-"]),
+html.dark .bg-gray-50\/80:not([class*="dark:bg-"]),
+html.dark .bg-gray-50\/95:not([class*="dark:bg-"]),
+html.dark .bg-gray-100\/50:not([class*="dark:bg-"]),
+html.dark .bg-gray-100\/70:not([class*="dark:bg-"]),
+html.dark .bg-gray-100\/80:not([class*="dark:bg-"]),
+html.dark .bg-gray-200\/70:not([class*="dark:bg-"]),
+html.dark .bg-slate-50\/50:not([class*="dark:bg-"]),
+html.dark .bg-slate-50\/70:not([class*="dark:bg-"]) {
   background-color: #0b1329 !important; /* deep card navy matching charts */
 }
 
@@ -95,61 +129,129 @@ html.dark .bg-slate-300 {
   background-color: #111c38 !important;
 }
 
-/* Text inversion */
+/* Hover background contrast for dark mode */
+:where(.dark, .dark *) .hover\:bg-gray-50\/50:hover,
+:where(.dark, .dark *) .hover\:bg-gray-50\/60:hover,
+:where(.dark, .dark *) .hover\:bg-gray-50\/70:hover,
+:where(.dark, .dark *) .hover\:bg-gray-50\/80:hover,
+:where(.dark, .dark *) .hover\:bg-gray-50:hover,
+:where(.dark, .dark *) .hover\:bg-gray-100:hover,
+html.dark .hover\:bg-gray-50\/50:hover,
+html.dark .hover\:bg-gray-50\/60:hover,
+html.dark .hover\:bg-gray-50\/70:hover,
+html.dark .hover\:bg-gray-50\/80:hover,
+html.dark .hover\:bg-gray-50:hover,
+html.dark .hover\:bg-gray-100:hover {
+  background-color: #16203a !important;
+}
+
+/* Text inversion (Gray & Slate) */
 :where(.dark, .dark *) .text-gray-900,
-html.dark .text-gray-900 {
+:where(.dark, .dark *) .text-slate-900,
+html.dark .text-gray-900,
+html.dark .text-slate-900 {
   color: #f8fafc !important;
 }
 
 :where(.dark, .dark *) .text-gray-800,
-html.dark .text-gray-800 {
+:where(.dark, .dark *) .text-slate-800,
+html.dark .text-gray-800,
+html.dark .text-slate-800 {
   color: #f1f5f9 !important;
 }
 
 :where(.dark, .dark *) .text-gray-700,
-html.dark .text-gray-700 {
+:where(.dark, .dark *) .text-slate-700,
+html.dark .text-gray-700,
+html.dark .text-slate-700 {
   color: #e2e8f0 !important;
 }
 
 :where(.dark, .dark *) .text-gray-600,
-html.dark .text-gray-600 {
+:where(.dark, .dark *) .text-slate-600,
+html.dark .text-gray-600,
+html.dark .text-slate-600 {
   color: #cbd5e1 !important;
 }
 
 :where(.dark, .dark *) .text-gray-500,
 :where(.dark, .dark *) .text-gray-400,
+:where(.dark, .dark *) .text-slate-500,
+:where(.dark, .dark *) .text-slate-400,
 html.dark .text-gray-500,
-html.dark .text-gray-400 {
+html.dark .text-gray-400,
+html.dark .text-slate-500,
+html.dark .text-slate-400 {
   color: #94a3b8 !important;
 }
 
 
-:where(.dark, .dark *) .text-red-700,
-:where(.dark, .dark *) .text-red-600,
-html.dark .text-red-700,
-html.dark .text-red-600 {
+/* Red/Maroon Text Inversion */
+:where(.dark, .dark *) .text-red-950:not([class*="dark:text-"]),
+:where(.dark, .dark *) .text-red-900:not([class*="dark:text-"]),
+:where(.dark, .dark *) .text-red-800:not([class*="dark:text-"]),
+html.dark .text-red-950:not([class*="dark:text-"]),
+html.dark .text-red-900:not([class*="dark:text-"]),
+html.dark .text-red-800:not([class*="dark:text-"]) {
+  color: #fca5a5 !important; /* Accessible high-contrast coral on dark red/navy */
+}
+
+:where(.dark, .dark *) .text-red-700:not([class*="dark:text-"]),
+:where(.dark, .dark *) .text-red-600:not([class*="dark:text-"]),
+html.dark .text-red-700:not([class*="dark:text-"]),
+html.dark .text-red-600:not([class*="dark:text-"]) {
   color: #f87171 !important;
 }
 
-
-:where(.dark, .dark *) .border-gray-100,
-:where(.dark, .dark *) .border-gray-200,
-:where(.dark, .dark *) .border-gray-300,
-:where(.dark, .dark *) .border-slate-100,
-:where(.dark, .dark *) .border-slate-200,
-html.dark .border-gray-100,
-html.dark .border-gray-200,
-html.dark .border-gray-300,
-html.dark .border-slate-100,
-html.dark .border-slate-200 {
-  border-color: #1e293b !important;
+/* Emerald Text & Background Inversion for Success/Quiz States */
+:where(.dark, .dark *) .bg-emerald-50:not([class*="dark:bg-"]),
+:where(.dark, .dark *) .bg-emerald-50\/70:not([class*="dark:bg-"]),
+html.dark .bg-emerald-50:not([class*="dark:bg-"]),
+html.dark .bg-emerald-50\/70:not([class*="dark:bg-"]) {
+  background-color: rgba(6, 78, 59, 0.3) !important;
+  border-color: rgba(16, 185, 129, 0.35) !important;
 }
 
-:where(.dark, .dark *) .divide-gray-100 > :not([hidden]) ~ :not([hidden]),
-:where(.dark, .dark *) .divide-gray-200 > :not([hidden]) ~ :not([hidden]),
-html.dark .divide-gray-100 > :not([hidden]) ~ :not([hidden]),
-html.dark .divide-gray-200 > :not([hidden]) ~ :not([hidden]) {
-  border-color: #1e293b !important;
+:where(.dark, .dark *) .text-emerald-950:not([class*="dark:text-"]),
+:where(.dark, .dark *) .text-emerald-900:not([class*="dark:text-"]),
+:where(.dark, .dark *) .text-emerald-800:not([class*="dark:text-"]),
+html.dark .text-emerald-950:not([class*="dark:text-"]),
+html.dark .text-emerald-900:not([class*="dark:text-"]),
+html.dark .text-emerald-800:not([class*="dark:text-"]) {
+  color: #86efac !important;
+}
+
+
+:where(.dark, .dark *) .border-gray-100:not([class*="dark:border-"]),
+:where(.dark, .dark *) .border-gray-200:not([class*="dark:border-"]),
+:where(.dark, .dark *) .border-gray-300:not([class*="dark:border-"]),
+:where(.dark, .dark *) .border-slate-100:not([class*="dark:border-"]),
+:where(.dark, .dark *) .border-slate-200:not([class*="dark:border-"]),
+:where(.dark, .dark *) .border-gray-100\/50:not([class*="dark:border-"]),
+:where(.dark, .dark *) .border-gray-200\/60:not([class*="dark:border-"]),
+:where(.dark, .dark *) .border-gray-200\/70:not([class*="dark:border-"]),
+:where(.dark, .dark *) .border-gray-200\/80:not([class*="dark:border-"]),
+:where(.dark, .dark *) .border-slate-100\/50:not([class*="dark:border-"]),
+:where(.dark, .dark *) .border-slate-200\/60:not([class*="dark:border-"]),
+html.dark .border-gray-100:not([class*="dark:border-"]),
+html.dark .border-gray-200:not([class*="dark:border-"]),
+html.dark .border-gray-300:not([class*="dark:border-"]),
+html.dark .border-slate-100:not([class*="dark:border-"]),
+html.dark .border-slate-200:not([class*="dark:border-"]),
+html.dark .border-gray-100\/50:not([class*="dark:border-"]),
+html.dark .border-gray-200\/60:not([class*="dark:border-"]),
+html.dark .border-gray-200\/70:not([class*="dark:border-"]),
+html.dark .border-gray-200\/80:not([class*="dark:border-"]),
+html.dark .border-slate-100\/50:not([class*="dark:border-"]),
+html.dark .border-slate-200\/60:not([class*="dark:border-"]) {
+  border-color: #1e293b;
+}
+
+:where(.dark, .dark *) .divide-gray-100:not([class*="dark:divide-"]) > :not([hidden]) ~ :not([hidden]),
+:where(.dark, .dark *) .divide-gray-200:not([class*="dark:divide-"]) > :not([hidden]) ~ :not([hidden]),
+html.dark .divide-gray-100:not([class*="dark:divide-"]) > :not([hidden]) ~ :not([hidden]),
+html.dark .divide-gray-200:not([class*="dark:divide-"]) > :not([hidden]) ~ :not([hidden]) {
+  border-color: #1e293b;
 }
 
 
@@ -165,8 +267,18 @@ html.dark textarea {
 }
 
 
-:where(.dark, .dark *) .bg-red-50,
-html.dark .bg-red-50 {
+:where(.dark, .dark *) .bg-red-50:not([class*="dark:bg-"]),
+:where(.dark, .dark *) .bg-red-50\/30:not([class*="dark:bg-"]),
+:where(.dark, .dark *) .bg-red-50\/40:not([class*="dark:bg-"]),
+:where(.dark, .dark *) .bg-red-50\/50:not([class*="dark:bg-"]),
+:where(.dark, .dark *) .bg-red-50\/60:not([class*="dark:bg-"]),
+:where(.dark, .dark *) .bg-red-50\/70:not([class*="dark:bg-"]),
+html.dark .bg-red-50:not([class*="dark:bg-"]),
+html.dark .bg-red-50\/30:not([class*="dark:bg-"]),
+html.dark .bg-red-50\/40:not([class*="dark:bg-"]),
+html.dark .bg-red-50\/50:not([class*="dark:bg-"]),
+html.dark .bg-red-50\/60:not([class*="dark:bg-"]),
+html.dark .bg-red-50\/70:not([class*="dark:bg-"]) {
   background-color: rgba(69, 10, 10, 0.4) !important;
   border-color: rgba(220, 38, 38, 0.35) !important;
 }
@@ -177,12 +289,34 @@ html.dark .bg-red-100 {
 }
 
 .auth-isolated,
-.auth-isolated * {
+.auth-isolated *,
+.qr-isolated,
+.qr-isolated * {
   color-scheme: light !important;
 }
 
-html.dark .auth-isolated .bg-white {
+html.dark .auth-isolated .bg-white,
+html.dark .auth-isolated.bg-white,
+html.dark .qr-isolated,
+html.dark .qr-isolated.bg-white,
+html.dark .qr-isolated .bg-white {
   background-color: #ffffff !important;
+}
+
+html.dark .auth-isolated .bg-gray-50 {
+  background-color: #f9fafb !important;
+}
+
+html.dark .auth-isolated .bg-gray-100 {
+  background-color: #f3f4f6 !important;
+}
+
+html.dark .auth-isolated .bg-gray-200 {
+  background-color: #e5e7eb !important;
+}
+
+html.dark .auth-isolated .bg-gray-300 {
+  background-color: #d1d5db !important;
 }
 
 html.dark .auth-isolated .text-gray-900 {
@@ -209,6 +343,17 @@ html.dark .auth-isolated .text-gray-400 {
   color: #9ca3af !important;
 }
 
+html.dark .auth-isolated .text-red-600,
+html.dark .auth-isolated .text-red-700 {
+  color: #dc2626 !important;
+}
+
+html.dark .auth-isolated .text-red-800,
+html.dark .auth-isolated .text-red-900,
+html.dark .auth-isolated .text-red-950 {
+  color: #991b1b !important;
+}
+
 html.dark .auth-isolated .border-gray-100 {
   border-color: #f3f4f6 !important;
 }
@@ -227,3 +372,12 @@ html.dark .auth-isolated input:not([type="checkbox"]):not([type="radio"]) {
 html.dark .auth-isolated input::placeholder {
   color: #9ca3af !important;
 }
+
+/* Recharts Dark Theme Integration */
+html.dark .recharts-cartesian-grid line {
+  stroke: #1e293b !important;
+}
+
+html.dark .recharts-pie-sector {
+  stroke: #0b1329 !important;
+}

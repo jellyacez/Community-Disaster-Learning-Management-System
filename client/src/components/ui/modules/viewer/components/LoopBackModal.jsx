@@ -3,17 +3,17 @@ export default function LoopBackModal({ loopBackData, acknowledgeLoopBack }) {
 
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in">
-      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md p-8 text-center animate-in zoom-in-95 duration-200 border border-red-100">
-        <div className="w-20 h-20 bg-red-50 text-red-600 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner">
+      <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl w-full max-w-md p-8 text-center animate-in zoom-in-95 duration-200 border border-red-100 dark:border-slate-800">
+        <div className="w-20 h-20 bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner">
           <svg className="w-10 h-10" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
         </div>
-        <h2 className="text-2xl font-black text-gray-900 mb-2">
+        <h2 className="text-2xl font-black text-gray-900 dark:text-white mb-2">
           {loopBackData.isFinalAssessment ? "Assessment Failed" : "Quiz Failed"}
         </h2>
-        <p className="text-gray-600 mb-6 text-sm leading-relaxed">{loopBackData.message}</p>
-        <div className="bg-red-50 text-red-900 py-3 px-4 rounded-xl mb-8 font-bold flex justify-between items-center border border-red-100">
+        <p className="text-gray-600 dark:text-slate-300 mb-6 text-sm leading-relaxed">{loopBackData.message}</p>
+        <div className="bg-red-50 dark:bg-red-950/40 text-red-900 dark:text-red-200 py-3 px-4 rounded-xl mb-8 font-bold flex justify-between items-center border border-red-100 dark:border-red-900/50">
           <span>Your Score</span>
           <span className="text-xl">
             {loopBackData.score} <span className="text-sm font-medium opacity-70">({Number(loopBackData.percentage).toFixed(2).replace(/\.00$/, '')}%)</span>

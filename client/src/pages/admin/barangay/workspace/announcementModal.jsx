@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
@@ -63,6 +63,7 @@ export default function AnnouncementModal({
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, title, content]);
 
   const mutation = useMutation({
@@ -106,22 +107,22 @@ export default function AnnouncementModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-gray-100 space-y-5 animate-in zoom-in-95 duration-150">
-        <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-gray-100 dark:border-slate-800 space-y-5 animate-in zoom-in-95 duration-150">
+        <div className="flex items-center justify-between border-b border-gray-100 dark:border-slate-800 pb-3">
           <div className="flex items-center gap-2.5">
-            <div className="p-2 bg-red-50 text-red-600 rounded-xl">
+            <div className="p-2 bg-red-50 dark:bg-red-950/60 text-red-600 dark:text-red-400 rounded-xl">
               <HugeiconsIcon icon={Notification01Icon} className="w-5 h-5" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="text-base font-bold text-gray-900">
+                <h3 className="text-base font-bold text-gray-900 dark:text-white">
                   Broadcast Advisory
                 </h3>
-                <span className="text-[10px] font-mono font-bold bg-red-50 text-red-700 px-2 py-0.5 rounded">
+                <span className="text-[10px] font-mono font-bold bg-red-50 dark:bg-red-950/60 text-red-700 dark:text-red-300 px-2 py-0.5 rounded">
                   {isHighTierAdmin ? "MDRRMO / HQ" : barangayName}
                 </span>
               </div>
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-gray-500 dark:text-slate-400">
                 {isHighTierAdmin
                   ? "Publish municipal alerts or sector-specific bulletins"
                   : `Publish notices strictly to Barangay ${barangayName} residents`}
@@ -132,7 +133,7 @@ export default function AnnouncementModal({
           <button
             type="button"
             onClick={handleSafeClose}
-            className="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition cursor-pointer"
+            className="p-1.5 text-gray-400 hover:text-gray-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-lg transition cursor-pointer"
           >
             <HugeiconsIcon icon={Cancel01Icon} className="w-4 h-4" />
           </button>
@@ -142,13 +143,13 @@ export default function AnnouncementModal({
           {/* Audience selection for High-tier Admins */}
           {isHighTierAdmin && (
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-gray-600 mb-1.5 font-mono">
+              <label className="block text-xs font-bold uppercase tracking-wider text-gray-600 dark:text-slate-300 mb-1.5 font-mono">
                 Target Sector / Audience
               </label>
               <select
                 value={targetBarangayId}
                 onChange={(e) => setTargetBarangayId(e.target.value)}
-                className="w-full px-3.5 py-2.5 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 focus:bg-white transition"
+                className="w-full px-3.5 py-2.5 text-sm bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-gray-900 dark:text-slate-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 focus:bg-white dark:focus:bg-slate-800 transition"
               >
                 <option value="">All Barangays (Municipality-Wide Broadcast)</option>
                 {barangays.map((b) => (
@@ -161,7 +162,7 @@ export default function AnnouncementModal({
           )}
 
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-gray-600 mb-1.5 font-mono">
+            <label className="block text-xs font-bold uppercase tracking-wider text-gray-600 dark:text-slate-300 mb-1.5 font-mono">
               Advisory Title
             </label>
             <input
@@ -169,13 +170,13 @@ export default function AnnouncementModal({
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="e.g., Flood Drill Schedule / Heavy Rain Advisory"
-              className="w-full px-3.5 py-2.5 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 focus:bg-white transition"
+              className="w-full px-3.5 py-2.5 text-sm bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-gray-900 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-500 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 focus:bg-white dark:focus:bg-slate-800 transition"
               required
             />
           </div>
 
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-gray-600 mb-1.5 font-mono">
+            <label className="block text-xs font-bold uppercase tracking-wider text-gray-600 dark:text-slate-300 mb-1.5 font-mono">
               Content & Safety Instructions
             </label>
             <textarea
@@ -183,13 +184,13 @@ export default function AnnouncementModal({
               value={content}
               onChange={(e) => setContent(e.target.value)}
               placeholder="Enter specific guidelines, evacuation assembly locations, or safety reminders..."
-              className="w-full px-3.5 py-2.5 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 focus:bg-white transition resize-none"
+              className="w-full px-3.5 py-2.5 text-sm bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-gray-900 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-500 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 focus:bg-white dark:focus:bg-slate-800 transition resize-none"
               required
             />
           </div>
 
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-gray-600 mb-2 font-mono">
+            <label className="block text-xs font-bold uppercase tracking-wider text-gray-600 dark:text-slate-300 mb-2 font-mono">
               Priority Level
             </label>
 
@@ -199,12 +200,12 @@ export default function AnnouncementModal({
                 onClick={() => setPriority("standard")}
                 className={`rounded-xl border p-3 text-left transition cursor-pointer ${
                   priority === "standard"
-                    ? "border-gray-900 bg-gray-50 shadow-sm"
-                    : "border-gray-200 bg-white hover:border-gray-300"
+                    ? "border-gray-900 dark:border-slate-600 bg-gray-50 dark:bg-slate-800 shadow-sm"
+                    : "border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800/40 hover:border-gray-300 dark:hover:border-slate-600"
                 }`}
               >
-                <p className="text-sm font-bold text-gray-900">Standard</p>
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-sm font-bold text-gray-900 dark:text-white">Standard</p>
+                <p className="text-xs text-gray-500 dark:text-slate-400 mt-1">
                   Regular advisory or informational post
                 </p>
               </button>
@@ -214,22 +215,22 @@ export default function AnnouncementModal({
                 onClick={() => setPriority("urgent")}
                 className={`rounded-xl border p-3 text-left transition cursor-pointer ${
                   priority === "urgent"
-                    ? "border-red-600 bg-red-50 shadow-sm"
-                    : "border-gray-200 bg-white hover:border-gray-300"
+                    ? "border-red-600 dark:border-red-500 bg-red-50 dark:bg-red-950/40 shadow-sm"
+                    : "border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800/40 hover:border-gray-300 dark:hover:border-slate-600"
                 }`}
               >
-                <p className="text-sm font-bold text-red-700">Urgent</p>
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-sm font-bold text-red-700 dark:text-red-400">Urgent</p>
+                <p className="text-xs text-gray-500 dark:text-slate-400 mt-1">
                   High-priority advisory requiring immediate attention
                 </p>
               </button>
             </div>
           </div>
 
-          <div className="bg-amber-50 border border-amber-200 text-amber-800 p-3 rounded-xl flex items-start gap-2.5 text-xs">
+          <div className="bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/60 text-amber-800 dark:text-amber-300 p-3 rounded-xl flex items-start gap-2.5 text-xs">
             <HugeiconsIcon
               icon={Alert01Icon}
-              className="w-4 h-4 shrink-0 mt-0.5 text-amber-600"
+              className="w-4 h-4 shrink-0 mt-0.5 text-amber-600 dark:text-amber-400"
             />
             <span>
               {isHighTierAdmin && !targetBarangayId
@@ -246,7 +247,7 @@ export default function AnnouncementModal({
             <button
               type="button"
               onClick={handleSafeClose}
-              className="px-4 py-2 text-xs font-semibold text-gray-600 hover:bg-gray-100 rounded-xl transition cursor-pointer"
+              className="px-4 py-2 text-xs font-semibold text-gray-600 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-xl transition cursor-pointer"
             >
               Cancel
             </button>

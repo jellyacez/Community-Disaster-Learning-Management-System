@@ -139,10 +139,17 @@
           position="top-center"
           toastOptions={{
             duration: 3000,
+            className: "dark:!bg-slate-800 dark:!text-slate-100 dark:!border dark:!border-slate-700 shadow-xl",
             style: {
               fontWeight: "bold",
               padding: "16px",
               borderRadius: "16px",
+            },
+            loading: {
+              style: {
+                background: "#1e293b",
+                color: "#f8fafc",
+              },
             },
             success: {
               style: {
@@ -171,10 +178,10 @@
         <Suspense
           fallback={
             <div
-              className="min-h-screen flex items-center justify-center bg-white"
+              className="min-h-screen flex items-center justify-center bg-white dark:bg-[#030712]"
               aria-hidden="true"
             >
-              <div className="w-10 h-10 border-4 border-red-200 border-t-red-600 rounded-full animate-spin"></div>
+              <div className="w-10 h-10 border-4 border-red-200 dark:border-red-950 border-t-red-600 rounded-full animate-spin"></div>
             </div>
           }
         >

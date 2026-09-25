@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="manifest" href="/manifest.webmanifest" />
-    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon-180x180.png" />
 
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#dc2626" />
@@ -21,8 +21,26 @@
     -->
     <meta
       http-equiv="Content-Security-Policy"
-      content="default-src 'self'; img-src 'self' data: http://localhost:* https: blob:; font-src 'self' data: https:; style-src 'self' 'unsafe-inline' https:; script-src 'self' 'wasm-unsafe-eval' blob:; worker-src 'self' blob:; connect-src 'self' data: http://localhost:* ws://localhost:* https:; media-src 'self' data: blob: http://localhost:* https:; frame-src 'self' data: blob: http://localhost:* https:; object-src 'self' blob:;"
+      content="default-src 'self'; img-src 'self' data: http://localhost:* https: blob:; font-src 'self' data: https:; style-src 'self' 'unsafe-inline' https:; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' blob:; worker-src 'self' blob:; connect-src 'self' data: http://localhost:* ws://localhost:* https:; media-src 'self' data: blob: http://localhost:* https:; frame-src 'self' data: blob: http://localhost:* https:; object-src 'self' blob:;"
     />
+
+    <script>
+      (function () {
+        try {
+          var saved = localStorage.getItem("bacolor_theme");
+          var isDark =
+            saved === "dark" ||
+            (saved === "system" &&
+              window.matchMedia &&
+              window.matchMedia("(prefers-color-scheme: dark)").matches);
+          if (isDark) {
+            document.documentElement.classList.add("dark");
+          } else {
+            document.documentElement.classList.remove("dark");
+          }
+        } catch (e) {}
+      })();
+    </script>
 
     <meta
       name="description"

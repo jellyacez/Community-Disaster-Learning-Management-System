@@ -8,6 +8,8 @@ export const BASE_DELAY_MS = 10000; // 10 seconds
 export const MAX_DELAY_MS = 1800000; // 30 minutes
 
 let retryTimeoutId = null;
+let isSyncing = false;
+let pendingRerun = false;
 
 /**
  * Full-jitter exponential backoff calculation:
@@ -170,102 +172,119 @@ const dispatchTask = async (task) => {
 export const processOfflineQueue = async () => {
   if (!navigator.onLine) return;
 
-  if (retryTimeoutId) {
-    clearTimeout(retryTimeoutId);
-    retryTimeoutId = null;
-  }
-
-  const tasksToProcess = await getAllPendingWrites();
-  if (tasksToProcess.length === 0) {
-    scheduleNextRetryIfNeeded();
+  if (isSyncing) {
+    console.log('[SyncManager] Sync already in progress. Flagging pending rerun.');
+    pendingRerun = true;
     return;
   }
 
-  console.log(`[SyncManager] Processing ${tasksToProcess.length} queued offline actions...`);
+  isSyncing = true;
+  pendingRerun = false;
 
-  for (const task of tasksToProcess) {
-    // Abort loop immediately if device goes offline mid-batch
-    if (!navigator.onLine) {
-      console.warn('[SyncManager] Network disconnected mid-sync. Pausing queue.');
-      break;
+  try {
+    if (retryTimeoutId) {
+      clearTimeout(retryTimeoutId);
+      retryTimeoutId = null;
     }
 
-    try {
-      await dispatchTask(task);
+    const tasksToProcess = await getAllPendingWrites();
+    if (tasksToProcess.length === 0) {
+      scheduleNextRetryIfNeeded();
+      return;
+    }
 
-      // Successfully synced: delete from localDb
-      await dequeueWrite(task.sync_id);
-      console.log(`[SyncManager] Successfully synced task ${task.sync_id} (${task.action_type})`);
+    console.log(`[SyncManager] Processing ${tasksToProcess.length} queued offline actions...`);
 
-      window.dispatchEvent(
-        new CustomEvent('offline-sync-item-success', { detail: { syncId: task.sync_id, task } })
-      );
-      window.dispatchEvent(new CustomEvent('offline-sync-queue-updated'));
-    } catch (error) {
-      // If network dropped mid-request, pause without burning a retry attempt
+    for (const task of tasksToProcess) {
+      // Abort loop immediately if device goes offline mid-batch
       if (!navigator.onLine) {
-        console.warn(`[SyncManager] Network lost during task ${task.sync_id}. Retaining attempt budget.`);
+        console.warn('[SyncManager] Network disconnected mid-sync. Pausing queue.');
         break;
       }
 
-      const isAuthError = error.response?.status === 401;
-      const currentRetries = (task.retry_count || 0) + 1;
-      const maxAllowedRetries = isAuthError ? MAX_AUTH_RETRY_COUNT : MAX_RETRY_COUNT;
-      const errorMessage = extractErrorMessage(error);
-      const isTransient = isTransientError(error, task.retry_count || 0);
+      try {
+        await dispatchTask(task);
 
-      if (isTransient && currentRetries < maxAllowedRetries) {
-        // Schedule next exponential backoff
-        const backoffDelay = calculateBackoff(currentRetries);
-        const nextRetryAt = Date.now() + backoffDelay;
+        // Successfully synced: delete from localDb
+        await dequeueWrite(task.sync_id);
+        console.log(`[SyncManager] Successfully synced task ${task.sync_id} (${task.action_type})`);
 
-        console.warn(
-          `[SyncManager] Task ${task.sync_id} encountered transient ${isAuthError ? 'auth (401)' : 'network/server'} error (Attempt ${currentRetries}/${maxAllowedRetries}). Next retry in ${(
-            backoffDelay / 1000
-          ).toFixed(0)}s.`,
-          errorMessage
+        window.dispatchEvent(
+          new CustomEvent('offline-sync-item-success', { detail: { syncId: task.sync_id, task } })
         );
+        window.dispatchEvent(new CustomEvent('offline-sync-queue-updated'));
+      } catch (error) {
+        // If network dropped mid-request, pause without burning a retry attempt
+        if (!navigator.onLine) {
+          console.warn(`[SyncManager] Network lost during task ${task.sync_id}. Retaining attempt budget.`);
+          break;
+        }
 
-        await localDb.sync_queue.update(task.sync_id, {
-          status: 'retrying',
-          retry_count: currentRetries,
-          next_retry_at: nextRetryAt,
-          last_error: errorMessage,
-          error_type: isAuthError ? 'auth_retry' : 'transient',
-          last_attempt_at: Date.now()
-        });
-      } else {
-        // Terminal error OR exhausted retry budget
-        const errorType = isAuthError
-          ? 'auth_expired'
-          : isTransient
-            ? 'transient_exhausted'
-            : 'terminal';
+        const isAuthError = error.response?.status === 401;
+        const currentRetries = (task.retry_count || 0) + 1;
+        const maxAllowedRetries = isAuthError ? MAX_AUTH_RETRY_COUNT : MAX_RETRY_COUNT;
+        const errorMessage = extractErrorMessage(error);
+        const isTransient = isTransientError(error, task.retry_count || 0);
 
-        console.error(
-          `[SyncManager] Task ${task.sync_id} failed (${errorType}). Total attempts: ${currentRetries}.`,
-          errorMessage
-        );
+        if (isTransient && currentRetries < maxAllowedRetries) {
+          // Schedule next exponential backoff
+          const backoffDelay = calculateBackoff(currentRetries);
+          const nextRetryAt = Date.now() + backoffDelay;
 
-        await localDb.sync_queue.update(task.sync_id, {
-          status: 'failed',
-          retry_count: currentRetries,
-          last_error: errorMessage,
-          error_type: errorType,
-          failed_at: Date.now(),
-          next_retry_at: null
-        });
+          console.warn(
+            `[SyncManager] Task ${task.sync_id} encountered transient ${isAuthError ? 'auth (401)' : 'network/server'} error (Attempt ${currentRetries}/${maxAllowedRetries}). Next retry in ${(
+              backoffDelay / 1000
+            ).toFixed(0)}s.`,
+            errorMessage
+          );
 
-        toast.error(`Could not sync ${getActionDescription(task)}: ${errorMessage}`, {
-          duration: 6000
-        });
+          await localDb.sync_queue.update(task.sync_id, {
+            status: 'retrying',
+            retry_count: currentRetries,
+            next_retry_at: nextRetryAt,
+            last_error: errorMessage,
+            error_type: isAuthError ? 'auth_retry' : 'transient',
+            last_attempt_at: Date.now()
+          });
+        } else {
+          // Terminal error OR exhausted retry budget
+          const errorType = isAuthError
+            ? 'auth_expired'
+            : isTransient
+              ? 'transient_exhausted'
+              : 'terminal';
+
+          console.error(
+            `[SyncManager] Task ${task.sync_id} failed (${errorType}). Total attempts: ${currentRetries}.`,
+            errorMessage
+          );
+
+          await localDb.sync_queue.update(task.sync_id, {
+            status: 'failed',
+            retry_count: currentRetries,
+            last_error: errorMessage,
+            error_type: errorType,
+            failed_at: Date.now(),
+            next_retry_at: null
+          });
+
+          toast.error(`Could not sync ${getActionDescription(task)}: ${errorMessage}`, {
+            duration: 6000
+          });
+        }
+
+        window.dispatchEvent(new CustomEvent('offline-sync-queue-updated'));
       }
+    }
 
-      window.dispatchEvent(new CustomEvent('offline-sync-queue-updated'));
+    scheduleNextRetryIfNeeded();
+  } finally {
+    isSyncing = false;
+    if (pendingRerun && navigator.onLine) {
+      pendingRerun = false;
+      processOfflineQueue();
     }
   }
-
-  scheduleNextRetryIfNeeded();
 };
 
 /**

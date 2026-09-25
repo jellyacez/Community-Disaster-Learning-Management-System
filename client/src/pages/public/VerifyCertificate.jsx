@@ -7,7 +7,6 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import {
   CheckmarkBadge01Icon,
   Alert02Icon,
-  Cancel01Icon,
   Shield01Icon,
 } from "@hugeicons/core-free-icons";
 import Spinner from "../../components/ui/Spinner";
@@ -149,13 +148,7 @@ export default function VerifyCertificate() {
         statusIcon = <HugeiconsIcon icon={Alert02Icon} className="w-7 h-7 text-amber-600 shrink-0" />;
         statusBadge = "bg-amber-100 text-amber-800 border-amber-200";
         statusText = "Expired Credential";
-        statusDesc = "This certificate was legitimately earned but has passed its validity period.";
-      } else if (status === "revoked") {
-        statusColor = "bg-red-50 text-red-900 border-red-200";
-        statusIcon = <HugeiconsIcon icon={Cancel01Icon} className="w-7 h-7 text-red-600 shrink-0" />;
-        statusBadge = "bg-red-100 text-red-800 border-red-200";
-        statusText = "Certificate Revoked";
-        statusDesc = "This certificate was formally revoked by municipal administrative authority.";
+        statusDesc = "This certificate was legitimately earned but has passed its validity period. Recertification is required.";
       }
 
       return (

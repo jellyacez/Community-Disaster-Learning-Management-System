@@ -45,8 +45,8 @@ export default function VerifyEmail() {
   }, [searchParams, navigate]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
-      <div className="max-w-md w-full bg-white rounded-2xl shadow-sm p-8 text-center border border-gray-100">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-slate-950 p-4 transition-colors">
+      <div className="auth-isolated max-w-md w-full bg-white rounded-2xl shadow-sm p-8 text-center border border-gray-100 dark:border-slate-800">
         {status === "verifying" && (
           <div className="animate-pulse">
             <div className="w-16 h-16 mx-auto mb-4 border-4 border-red-100 border-t-red-600 rounded-full animate-spin"></div>

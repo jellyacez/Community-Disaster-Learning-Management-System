@@ -45,14 +45,14 @@ export default function OrganizationDetailsPanel({ settingsData }) {
   };
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-      <div className="p-6 border-b border-gray-50 flex items-center gap-3">
-        <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center shrink-0">
-          <HugeiconsIcon icon={ContactBookIcon} className="w-5 h-5 text-blue-600" />
+    <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm overflow-hidden">
+      <div className="p-6 border-b border-gray-50 dark:border-slate-800 flex items-center gap-3">
+        <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-950/40 flex items-center justify-center shrink-0">
+          <HugeiconsIcon icon={ContactBookIcon} className="w-5 h-5 text-blue-600 dark:text-blue-400" />
         </div>
         <div>
-          <h2 className="text-base font-bold text-gray-900">Organization Details</h2>
-          <p className="text-xs text-gray-500 mt-0.5">
+          <h2 className="text-base font-bold text-gray-900 dark:text-white">Organization Details</h2>
+          <p className="text-xs text-gray-500 dark:text-slate-400 mt-0.5">
             Public-facing contact information and footer texts.
           </p>
         </div>
@@ -60,48 +60,48 @@ export default function OrganizationDetailsPanel({ settingsData }) {
 
       <form onSubmit={handleSubmit} className="p-6 space-y-5">
         <div>
-          <label className="block text-sm font-semibold text-gray-900 mb-1">
+          <label className="block text-sm font-semibold text-gray-900 dark:text-white mb-1">
             Public Support Email
           </label>
-          <p className="text-xs text-gray-500 mb-2">
+          <p className="text-xs text-gray-500 dark:text-slate-400 mb-2">
             The email address displayed to users for inquiries and support.
           </p>
           <div className="relative">
-            <HugeiconsIcon icon={Mail01Icon} className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <HugeiconsIcon icon={Mail01Icon} className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-slate-500" />
             <input
               type="email"
               value={supportEmail}
               onChange={(e) => setSupportEmail(e.target.value)}
               placeholder="e.g. support@drrmbacolor.gov.ph"
-              className="w-full pl-9 pr-4 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-colors"
+              className="w-full pl-9 pr-4 py-2 border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800/80 text-gray-900 dark:text-white rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-colors"
             />
           </div>
         </div>
 
         <div>
-          <label className="block text-sm font-semibold text-gray-900 mb-1">
+          <label className="block text-sm font-semibold text-gray-900 dark:text-white mb-1">
             Email Footer Text
           </label>
-          <p className="text-xs text-gray-500 mb-2">
+          <p className="text-xs text-gray-500 dark:text-slate-400 mb-2">
             The copyright/organization name displayed at the bottom of all automated system emails.
           </p>
           <div className="relative">
-            <HugeiconsIcon icon={TextFontIcon} className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <HugeiconsIcon icon={TextFontIcon} className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-slate-500" />
             <input
               type="text"
               value={orgFooterText}
               onChange={(e) => setOrgFooterText(e.target.value)}
               placeholder="e.g. Community DRRM System - Bacolor, Pampanga."
-              className="w-full pl-9 pr-4 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-colors"
+              className="w-full pl-9 pr-4 py-2 border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800/80 text-gray-900 dark:text-white rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-colors"
             />
           </div>
         </div>
 
-        <div className="pt-2 border-t border-gray-100/50 mt-2">
+        <div className="pt-2 border-t border-gray-100/50 dark:border-slate-800 mt-2">
           <button
             type="submit"
             disabled={!hasChanges || updateDetails.isLoading}
-            className="flex items-center justify-center px-4 py-2 bg-gray-900 text-white text-sm font-semibold rounded-xl hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex items-center justify-center px-4 py-2 bg-gray-900 dark:bg-brand-600 text-white text-sm font-semibold rounded-xl hover:bg-gray-800 dark:hover:bg-brand-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {updateDetails.isLoading && <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2" />}
             {updateDetails.isLoading ? "Saving..." : "Save Details"}

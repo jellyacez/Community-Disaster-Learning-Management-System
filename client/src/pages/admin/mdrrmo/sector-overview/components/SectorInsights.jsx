@@ -92,34 +92,52 @@ export default function SectorInsights({ kpiData, top5, bottom5, sectorData, set
 
   if (insights.length === 0) return null;
 
+  const isSingle = insights.length === 1;
+  const isDouble = insights.length === 2;
+
+  const gridClass = isSingle 
+    ? "grid-cols-1" 
+    : isDouble 
+      ? "grid-cols-1 md:grid-cols-2" 
+      : "grid-cols-1 md:grid-cols-3";
+
   return (
-    <div className="mb-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+    <div className={`mb-6 grid ${gridClass} gap-4`}>
       {insights.map((insight, idx) => (
         <div 
           key={idx} 
           onClick={insight.onClick}
-          className={`p-5 rounded-2xl border ${insight.bg} ${insight.border} flex flex-col justify-between transition-all duration-200 ${insight.filterable ? 'cursor-pointer hover:scale-[1.01] hover:shadow-md' : ''}`}
+          className={`p-5 rounded-2xl border ${insight.bg} ${insight.border} flex ${isSingle ? 'flex-col sm:flex-row sm:items-center sm:justify-between gap-4' : 'flex-col justify-between'} transition-all duration-200 ${insight.filterable ? 'cursor-pointer hover:scale-[1.01] hover:shadow-md' : ''}`}
         >
-          <div>
-            <div className="flex items-center gap-3 mb-3">
+          <div className={isSingle ? "flex items-start sm:items-center gap-3.5 min-w-0" : ""}>
+            <div className={`flex items-center gap-3 ${isSingle ? "mb-0 shrink-0" : "mb-3"}`}>
               <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-transparent dark:border-slate-800 ${insight.iconBg} ${insight.color}`}>
                 <HugeiconsIcon icon={insight.icon} className="w-5 h-5" />
               </div>
-              <span className={`text-[10px] font-extrabold tracking-widest uppercase ${insight.color}`}>
-                {insight.badge}
-              </span>
+              {!isSingle && (
+                <span className={`text-[10px] font-extrabold tracking-widest uppercase ${insight.color}`}>
+                  {insight.badge}
+                </span>
+              )}
             </div>
             
-            <h3 className="text-gray-900 dark:text-white font-bold text-base leading-tight mb-1.5">
-              {insight.title}
-            </h3>
-            <p className="text-xs font-medium text-gray-600/80 dark:text-slate-400 leading-relaxed">
-              {insight.text}
-            </p>
+            <div className="min-w-0">
+              {isSingle && (
+                <span className={`text-[10px] font-extrabold tracking-widest uppercase ${insight.color} block mb-0.5`}>
+                  {insight.badge}
+                </span>
+              )}
+              <h3 className="text-gray-900 dark:text-white font-bold text-base leading-tight mb-1">
+                {insight.title}
+              </h3>
+              <p className="text-xs font-medium text-gray-600/80 dark:text-slate-400 leading-relaxed">
+                {insight.text}
+              </p>
+            </div>
           </div>
 
           {insight.filterable && (
-            <div className={`mt-4 pt-4 border-t ${insight.border} text-xs font-extrabold ${insight.color} flex items-center gap-1 group`}>
+            <div className={`${isSingle ? 'pt-0 border-t-0 sm:self-center shrink-0' : 'mt-4 pt-4 border-t ' + insight.border} text-xs font-extrabold ${insight.color} flex items-center gap-1 group`}>
               Filter Table 
               <span className="group-hover:translate-x-1 transition-transform">→</span>
             </div>
