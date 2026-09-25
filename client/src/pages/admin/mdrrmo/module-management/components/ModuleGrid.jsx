@@ -29,7 +29,7 @@ export default function ModuleGrid({
 
   if (isError) {
     return (
-      <div className="p-6 bg-red-50 text-red-600 rounded-2xl border border-red-100 text-center">
+      <div className="p-6 bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-300 rounded-2xl border border-red-100 dark:border-red-900/50 text-center">
         <p className="font-bold text-lg">Error loading modules.</p>
         <p className="text-sm">Please ensure the backend routes are connected.</p>
       </div>
@@ -38,15 +38,15 @@ export default function ModuleGrid({
 
   if (rawModules.length === 0) {
     return (
-      <div className="text-center py-24 bg-white rounded-3xl border border-gray-200 border-dashed">
-        <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-          <HugeiconsIcon icon={Folder01Icon} className="w-8 h-8 text-gray-400" />
+      <div className="text-center py-24 bg-white dark:bg-slate-900 rounded-3xl border border-gray-200 dark:border-slate-800 border-dashed">
+        <div className="w-16 h-16 bg-gray-100 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4">
+          <HugeiconsIcon icon={Folder01Icon} className="w-8 h-8 text-gray-400 dark:text-slate-500" />
         </div>
-        <h3 className="text-xl font-bold text-gray-900 mb-2">No Learning Paths Yet</h3>
-        <p className="text-gray-500 mb-6 max-w-md mx-auto">
+        <h3 className="text-xl font-bold text-gray-900 dark:text-slate-100 mb-2">No Learning Paths Yet</h3>
+        <p className="text-gray-500 dark:text-slate-400 mb-6 max-w-md mx-auto">
           You haven't created any training modules yet. Click the button above to start building your first learning path.
         </p>
-        <button onClick={handleOpenWizard} className="px-5 py-2.5 bg-gray-900 text-white rounded-xl font-bold hover:bg-black transition-colors">
+        <button onClick={handleOpenWizard} className="px-5 py-2.5 bg-gray-900 dark:bg-red-600 text-white rounded-xl font-bold hover:bg-black dark:hover:bg-red-700 transition-colors cursor-pointer shadow-sm">
           Start Building
         </button>
       </div>
@@ -56,10 +56,10 @@ export default function ModuleGrid({
   if (paginatedModules.length === 0) {
     return (
       <div className="text-center py-16">
-        <p className="text-gray-500 font-medium">No learning paths match your filters.</p>
+        <p className="text-gray-500 dark:text-slate-400 font-medium">No learning paths match your filters.</p>
         <button 
           onClick={() => { setSearchQuery(""); setFilterCategory("All"); setFilterLevel("All"); }} 
-          className="mt-4 text-red-600 font-bold hover:underline"
+          className="mt-4 text-red-600 dark:text-red-400 font-bold hover:underline cursor-pointer"
         >
           Clear Filters
         </button>

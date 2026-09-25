@@ -19,7 +19,7 @@ export default function ManualTokenForm({
       <div>
         <label
           htmlFor="token-input"
-          className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2"
+          className="block text-xs font-bold text-gray-700 dark:text-slate-300 uppercase tracking-wider mb-2"
         >
           Verification Token or URL
         </label>
@@ -30,12 +30,12 @@ export default function ManualTokenForm({
             value={tokenInput}
             onChange={(e) => setTokenInput(e.target.value)}
             placeholder="e.g. 123e4567-e89b-12d3-a456-426614174000"
-            className="w-full rounded-xl border border-gray-300 px-4 py-3 text-sm text-gray-900 font-mono focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none"
+            className="w-full rounded-xl border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-4 py-3 text-sm text-gray-900 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-500 font-mono focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none"
             required
             autoFocus
           />
         </div>
-        <p className="text-xs text-gray-400 mt-1.5">
+        <p className="text-xs text-gray-400 dark:text-slate-400 mt-1.5">
           Paste the 36-character UUID token or the full QR verification URL.
         </p>
       </div>

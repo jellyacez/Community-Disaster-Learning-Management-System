@@ -7,7 +7,6 @@ import {
   Download01Icon,
   Calendar03Icon,
   Clock01Icon,
-  QrCodeIcon,
 } from "@hugeicons/core-free-icons";
 
 /** Derive a display-level status that includes "expiring_soon" */

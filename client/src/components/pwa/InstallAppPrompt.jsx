@@ -63,19 +63,19 @@ export default function InstallAppPrompt() {
 
   return (
     <div className="fixed bottom-4 right-4 z-50 max-w-sm w-[calc(100%-2rem)] sm:w-full">
-      <div className="rounded-2xl border border-gray-200 bg-white shadow-2xl p-4 animate-in fade-in slide-in-from-bottom-3 duration-300">
+      <div className="rounded-2xl border border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xl p-4 animate-in fade-in slide-in-from-bottom-3 duration-300">
         <div className="flex items-start gap-3">
           <div className="mt-0.5">
             {needRefresh ? (
-              <div className="p-2 rounded-xl bg-amber-100 text-amber-700">
+              <div className="p-2 rounded-xl bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300">
                 <HugeiconsIcon icon={RefreshIcon} className="w-5 h-5" />
               </div>
             ) : showInstall ? (
-              <div className="p-2 rounded-xl bg-red-100 text-red-700">
+              <div className="p-2 rounded-xl bg-red-100 dark:bg-red-950/60 text-red-700 dark:text-red-300">
                 <HugeiconsIcon icon={Download01Icon} className="w-5 h-5" />
               </div>
             ) : (
-              <div className="p-2 rounded-xl bg-emerald-100 text-emerald-700">
+              <div className="p-2 rounded-xl bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300">
                 <HugeiconsIcon icon={WifiOff01Icon} className="w-5 h-5" />
               </div>
             )}
@@ -84,30 +84,30 @@ export default function InstallAppPrompt() {
           <div className="flex-1">
             {needRefresh ? (
               <>
-                <h3 className="text-sm font-black text-gray-900">
+                <h3 className="text-sm font-black text-gray-900 dark:text-white">
                   Update Available
                 </h3>
-                <p className="mt-1 text-sm text-gray-600">
+                <p className="mt-1 text-sm text-gray-600 dark:text-slate-300">
                   A newer version of Bacolor LMS is ready. Update now to get the
                   latest improvements.
                 </p>
               </>
             ) : showInstall ? (
               <>
-                <h3 className="text-sm font-black text-gray-900">
+                <h3 className="text-sm font-black text-gray-900 dark:text-white">
                   Install Bacolor LMS
                 </h3>
-                <p className="mt-1 text-sm text-gray-600">
+                <p className="mt-1 text-sm text-gray-600 dark:text-slate-300">
                   Install this app on your device for a faster, more app-like
                   experience and improved offline support.
                 </p>
               </>
             ) : (
               <>
-                <h3 className="text-sm font-black text-gray-900">
+                <h3 className="text-sm font-black text-gray-900 dark:text-white">
                   App Ready Offline
                 </h3>
-                <p className="mt-1 text-sm text-gray-600">
+                <p className="mt-1 text-sm text-gray-600 dark:text-slate-300">
                   Bacolor LMS is now cached and can work better even with limited
                   connectivity.
                 </p>
@@ -118,14 +118,14 @@ export default function InstallAppPrompt() {
               {needRefresh ? (
                 <button
                   onClick={() => updateServiceWorker(true)}
-                  className="px-4 py-2 rounded-xl bg-red-600 text-white text-sm font-bold hover:bg-red-700 transition-colors"
+                  className="px-4 py-2 rounded-xl bg-red-600 text-white text-sm font-bold hover:bg-red-700 transition-colors cursor-pointer"
                 >
                   Update
                 </button>
               ) : showInstall ? (
                 <button
                   onClick={handleInstall}
-                  className="px-4 py-2 rounded-xl bg-red-600 text-white text-sm font-bold hover:bg-red-700 transition-colors"
+                  className="px-4 py-2 rounded-xl bg-red-600 text-white text-sm font-bold hover:bg-red-700 transition-colors cursor-pointer"
                 >
                   Install App
                 </button>
@@ -133,7 +133,7 @@ export default function InstallAppPrompt() {
 
               <button
                 onClick={closePrompt}
-                className="px-4 py-2 rounded-xl border border-gray-200 text-gray-700 text-sm font-bold hover:bg-gray-50 transition-colors"
+                className="px-4 py-2 rounded-xl border border-gray-200 dark:border-slate-700 bg-transparent text-gray-700 dark:text-slate-200 text-sm font-bold hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
               >
                 Dismiss
               </button>
@@ -142,7 +142,7 @@ export default function InstallAppPrompt() {
 
           <button
             onClick={closePrompt}
-            className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition"
+            className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-gray-100 dark:hover:bg-slate-800 transition cursor-pointer"
             aria-label="Close install prompt"
           >
             <HugeiconsIcon icon={Cancel01Icon} className="w-4 h-4" />

@@ -58,14 +58,14 @@ export default function MfaSetupModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-      <div className="w-full max-w-md bg-white rounded-3xl shadow-xl overflow-hidden flex flex-col max-h-[90vh]">
-        <div className="px-6 py-5 border-b border-gray-100 flex items-center justify-between bg-white sticky top-0 z-10">
-          <h3 className="text-lg font-bold text-gray-900">
+      <div className="w-full max-w-md bg-white dark:bg-slate-900 border border-transparent dark:border-slate-800 rounded-3xl shadow-xl overflow-hidden flex flex-col max-h-[90vh]">
+        <div className="px-6 py-5 border-b border-gray-100 dark:border-slate-800 flex items-center justify-between bg-white dark:bg-slate-900 sticky top-0 z-10">
+          <h3 className="text-lg font-bold text-gray-900 dark:text-white">
             {modalMode === "enable" ? "Set up Two-Factor Auth" : "Disable Two-Factor Auth"}
           </h3>
           <button 
             onClick={handleClose} 
-            className="text-gray-400 hover:text-gray-600 rounded-full p-1 hover:bg-gray-100 transition-colors"
+            className="text-gray-400 hover:text-gray-600 dark:text-slate-400 dark:hover:text-slate-200 rounded-full p-1 hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
           >
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />

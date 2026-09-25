@@ -169,27 +169,27 @@ export default function AdminModuleApprovals() {
   return (
     <div className="animate-in fade-in duration-300 space-y-6">
       <div className="mb-8">
-        <nav className="flex text-sm text-gray-500 mb-2" aria-label="Breadcrumb">
+        <nav className="flex text-sm text-gray-500 dark:text-slate-400 mb-2" aria-label="Breadcrumb">
           <ol className="inline-flex items-center space-x-1 md:space-x-2">
             <li className="inline-flex items-center">Dashboard</li>
             <li>
               <div className="flex items-center">
-                <span className="mx-2 text-gray-400">&gt;</span>
+                <span className="mx-2 text-gray-400 dark:text-slate-500">&gt;</span>
                 <span>Curriculum & Content</span>
               </div>
             </li>
             <li>
               <div className="flex items-center">
-                <span className="mx-2 text-gray-400">&gt;</span>
-                <span className="text-gray-900 font-semibold">Approval Desk</span>
+                <span className="mx-2 text-gray-400 dark:text-slate-500">&gt;</span>
+                <span className="text-gray-900 dark:text-slate-100 font-semibold">Approval Desk</span>
               </div>
             </li>
           </ol>
         </nav>
-        <h1 className="text-3xl font-extrabold text-gray-900">
+        <h1 className="text-3xl font-extrabold text-gray-900 dark:text-slate-100">
           Module Approval Desk
         </h1>
-        <p className="mt-1 text-sm text-gray-600">
+        <p className="mt-1 text-sm text-gray-600 dark:text-slate-400">
           Review, approve, or reject training modules submitted for publication.
         </p>
       </div>
@@ -405,17 +405,17 @@ export default function AdminModuleApprovals() {
       {/* REJECTION MODAL */}
       {selectedModule && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm animate-in fade-in">
-          <div className="w-full max-w-md bg-white rounded-3xl border border-gray-100 shadow-2xl p-6">
-            <h3 className="text-xl font-black text-gray-900">
+          <div className="w-full max-w-md bg-white dark:bg-slate-900 rounded-3xl border border-gray-100 dark:border-slate-800 shadow-2xl p-6">
+            <h3 className="text-xl font-black text-gray-900 dark:text-slate-100">
               Reject Module
             </h3>
-            <p className="text-sm text-gray-500 mt-1 mb-4">
-              Module: <span className="font-semibold text-gray-800">{decodeHtml(selectedModule.title)}</span>
+            <p className="text-sm text-gray-500 dark:text-slate-400 mt-1 mb-4">
+              Module: <span className="font-semibold text-gray-800 dark:text-slate-200">{decodeHtml(selectedModule.title)}</span>
             </p>
 
             <form onSubmit={handleRejectSubmit} className="space-y-4">
               <div>
-                <label className="block text-sm font-bold text-gray-700 mb-1">
+                <label className="block text-sm font-bold text-gray-700 dark:text-slate-300 mb-1">
                   Reason for Rejection
                 </label>
                 <textarea
@@ -427,29 +427,31 @@ export default function AdminModuleApprovals() {
                   }}
                   placeholder="Explain what needs to be fixed before approval..."
                   className={`w-full px-4 py-3 border rounded-2xl text-sm resize-none focus:outline-none focus:ring-2 ${
-                    rejectError ? "border-red-500 focus:ring-red-500 bg-red-50" : "border-gray-200 focus:ring-emerald-500"
+                    rejectError 
+                      ? "border-red-500 focus:ring-red-500 bg-red-50 dark:bg-red-950/40 text-red-900 dark:text-red-200" 
+                      : "border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-500 focus:ring-emerald-500"
                   }`}
                 />
                 {rejectError && (
-                  <p className="mt-1 text-xs font-bold text-red-500">{rejectError}</p>
+                  <p className="mt-1 text-xs font-bold text-red-500 dark:text-red-400">{rejectError}</p>
                 )}
               </div>
 
-              <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-100">
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-100 dark:border-slate-800">
                 <button
                   type="button"
                   onClick={() => {
                     setSelectedModule(null);
                     setRejectReason("");
                   }}
-                  className="px-5 py-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-sm"
+                  className="px-5 py-2.5 rounded-xl bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-700 dark:text-slate-300 font-bold text-sm cursor-pointer transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={actionMutation.isPending}
-                  className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 disabled:bg-red-400 text-white font-bold text-sm shadow-sm transition-colors"
+                  className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 disabled:bg-red-400 text-white font-bold text-sm shadow-sm transition-colors cursor-pointer"
                 >
                   {actionMutation.isPending ? "Processing..." : "Confirm Rejection"}
                 </button>

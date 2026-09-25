@@ -39,7 +39,7 @@ export default function CertificateVerificationModal({ isOpen, onClose }) {
         const tokenParam = url.searchParams.get("token");
         if (tokenParam) return tokenParam.trim();
       }
-    } catch (_) {
+    } catch {
       // Not a valid URL, treat as direct string
     }
 
@@ -126,7 +126,7 @@ export default function CertificateVerificationModal({ isOpen, onClose }) {
     if (scannerRef.current && scannerStarted) {
       try {
         await scannerRef.current.stop();
-      } catch (_) {
+      } catch {
         // Ignored
       }
       setScannerStarted(false);
@@ -167,6 +167,7 @@ export default function CertificateVerificationModal({ isOpen, onClose }) {
     } else {
       stopScanner();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, activeTab, certData, isVerifying]);
 
   // Clean up scanner on unmount
@@ -174,6 +175,7 @@ export default function CertificateVerificationModal({ isOpen, onClose }) {
     return () => {
       stopScanner();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleClose = () => {
@@ -191,6 +193,7 @@ export default function CertificateVerificationModal({ isOpen, onClose }) {
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
 
   if (!isOpen) return null;
@@ -208,26 +211,26 @@ export default function CertificateVerificationModal({ isOpen, onClose }) {
         role="dialog"
         aria-modal="true"
         aria-labelledby="verify-modal-title"
-        className="relative w-full max-w-lg rounded-2xl bg-white shadow-2xl overflow-hidden border border-gray-100 animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]"
+        className="relative w-full max-w-lg rounded-2xl bg-white dark:bg-slate-900 shadow-2xl overflow-hidden border border-gray-100 dark:border-slate-800 animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]"
       >
         {/* Modal Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-gray-50/50">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-slate-800 bg-gray-50/50 dark:bg-slate-900">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-red-100 text-red-600 shadow-sm">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-red-100 dark:bg-red-950/60 text-red-600 dark:text-red-400 shadow-sm">
               <HugeiconsIcon icon={QrCodeIcon} className="w-5 h-5" />
             </div>
             <div>
-              <h2 id="verify-modal-title" className="text-lg font-bold text-gray-900 leading-tight">
+              <h2 id="verify-modal-title" className="text-lg font-bold text-gray-900 dark:text-white leading-tight">
                 Verify Certificate
               </h2>
-              <p className="text-xs font-medium text-gray-500">
+              <p className="text-xs font-medium text-gray-500 dark:text-slate-400">
                 Scan QR or lookup token to verify validity
               </p>
             </div>
           </div>
           <button
             onClick={handleClose}
-            className="rounded-xl p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-700 transition-colors focus:outline-none cursor-pointer"
+            className="rounded-xl p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-700 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200 transition-colors focus:outline-none cursor-pointer"
             aria-label="Close modal"
           >
             <HugeiconsIcon icon={Cancel01Icon} className="w-5 h-5" />
@@ -238,14 +241,14 @@ export default function CertificateVerificationModal({ isOpen, onClose }) {
         <div className="p-6 overflow-y-auto space-y-5">
           {/* Mode Tabs (only visible when not displaying a finished result) */}
           {!certData && !verifyError && (
-            <div className="flex p-1 bg-gray-100 rounded-xl">
+            <div className="flex p-1 bg-gray-100 dark:bg-slate-800 rounded-xl border border-transparent dark:border-slate-700/60">
               <button
                 type="button"
                 onClick={() => handleTabChange("camera")}
                 className={`flex-1 flex items-center justify-center gap-2 py-2 text-xs font-bold rounded-lg transition-all cursor-pointer ${
                   activeTab === "camera"
-                    ? "bg-white text-red-600 shadow-sm"
-                    : "text-gray-600 hover:text-gray-900"
+                    ? "bg-white dark:bg-slate-700 text-red-600 dark:text-red-400 shadow-sm"
+                    : "text-gray-600 dark:text-slate-400 hover:text-gray-900 dark:hover:text-slate-200"
                 }`}
               >
                 <HugeiconsIcon icon={Camera01Icon} className="w-4 h-4" />
@@ -256,8 +259,8 @@ export default function CertificateVerificationModal({ isOpen, onClose }) {
                 onClick={() => handleTabChange("manual")}
                 className={`flex-1 flex items-center justify-center gap-2 py-2 text-xs font-bold rounded-lg transition-all cursor-pointer ${
                   activeTab === "manual"
-                    ? "bg-white text-red-600 shadow-sm"
-                    : "text-gray-600 hover:text-gray-900"
+                    ? "bg-white dark:bg-slate-700 text-red-600 dark:text-red-400 shadow-sm"
+                    : "text-gray-600 dark:text-slate-400 hover:text-gray-900 dark:hover:text-slate-200"
                 }`}
               >
                 <HugeiconsIcon icon={Search01Icon} className="w-4 h-4" />
@@ -270,7 +273,7 @@ export default function CertificateVerificationModal({ isOpen, onClose }) {
           {isVerifying && (
             <div className="py-12 flex flex-col items-center justify-center text-center space-y-3">
               <Spinner className="w-8 h-8 text-red-600" />
-              <p className="text-sm font-semibold text-gray-700">Verifying credential against registry...</p>
+              <p className="text-sm font-semibold text-gray-700 dark:text-slate-300">Verifying credential against registry...</p>
             </div>
           )}
 

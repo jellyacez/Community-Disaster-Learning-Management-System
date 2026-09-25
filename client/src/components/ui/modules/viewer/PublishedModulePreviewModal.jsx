@@ -39,7 +39,7 @@ export default function PublishedModulePreviewModal({
         title: decodeHtml(s.title),
       })),
     }));
-  }, [data?.levels]);
+  }, [data]);
 
   const module = useMemo(() => {
     if (!data?.module) return null;
@@ -47,7 +47,7 @@ export default function PublishedModulePreviewModal({
       ...data.module,
       title: decodeHtml(data.module.title),
     };
-  }, [data?.module]);
+  }, [data]);
 
   const allSteps = useMemo(() => {
     return levels ? levels.reduce((acc, lvl) => [...acc, ...(lvl.steps || [])], []) : [];
@@ -95,20 +95,20 @@ export default function PublishedModulePreviewModal({
 
   if (isLoading) {
     return (
-      <div className="fixed inset-0 z-[100] flex bg-gray-50 items-center justify-center flex-col">
+      <div className="fixed inset-0 z-[100] flex bg-gray-50 dark:bg-[#030712] items-center justify-center flex-col">
          <Spinner className="w-12 h-12 text-red-600 mb-4" />
-         <p className="text-gray-500 font-bold animate-pulse">Loading preview module data...</p>
+         <p className="text-gray-500 dark:text-slate-400 font-bold animate-pulse">Loading preview module data...</p>
       </div>
     );
   }
 
   if (isError || !data) {
     return (
-      <div className="fixed inset-0 z-[100] flex bg-gray-50 items-center justify-center">
-         <div className="text-center p-8 bg-white rounded-2xl shadow-sm border border-red-100 max-w-md">
-            <h2 className="text-xl font-bold text-gray-900 mb-2">Preview Unavailable</h2>
-            <p className="text-gray-500 mb-6 text-sm">Failed to fetch module data for preview.</p>
-            <button onClick={onClose} className="px-6 py-2.5 bg-gray-900 text-white rounded-xl font-bold hover:bg-black transition">Close Preview</button>
+      <div className="fixed inset-0 z-[100] flex bg-gray-50 dark:bg-[#030712] items-center justify-center">
+         <div className="text-center p-8 bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-red-100 dark:border-slate-800 max-w-md">
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Preview Unavailable</h2>
+            <p className="text-gray-500 dark:text-slate-400 mb-6 text-sm">Failed to fetch module data for preview.</p>
+            <button onClick={onClose} className="px-6 py-2.5 bg-gray-900 dark:bg-slate-800 text-white rounded-xl font-bold hover:bg-black dark:hover:bg-slate-700 transition cursor-pointer">Close Preview</button>
          </div>
       </div>
     );
@@ -147,17 +147,17 @@ export default function PublishedModulePreviewModal({
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex bg-gray-50 overflow-hidden text-left">
+    <div className="fixed inset-0 z-[100] flex bg-gray-50 dark:bg-[#030712] overflow-hidden text-left">
       
       {/* Mobile Header */}
-      <div className="md:hidden absolute top-0 left-0 right-0 flex items-center justify-between bg-white border-b border-gray-200 p-4 z-[120] shadow-sm">
-        <button onClick={onClose} className="text-gray-500 hover:text-gray-900 transition flex items-center gap-2 text-sm font-semibold">
+      <div className="md:hidden absolute top-0 left-0 right-0 flex items-center justify-between bg-white dark:bg-slate-900 border-b border-gray-200 dark:border-slate-800 p-4 z-[120] shadow-sm">
+        <button onClick={onClose} className="text-gray-500 dark:text-slate-400 hover:text-gray-900 dark:hover:text-slate-100 transition flex items-center gap-2 text-sm font-semibold cursor-pointer">
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
             <path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
           </svg>
           Exit Preview
         </button>
-        <button onClick={() => setIsSidebarOpen(true)} className="p-2 bg-gray-100 rounded-lg text-gray-700 hover:bg-gray-200 transition">
+        <button onClick={() => setIsSidebarOpen(true)} className="p-2 bg-gray-100 dark:bg-slate-800 rounded-lg text-gray-700 dark:text-slate-300 hover:bg-gray-200 dark:hover:bg-slate-700 transition cursor-pointer">
           <MenuIcon />
         </button>
       </div>
@@ -185,13 +185,13 @@ export default function PublishedModulePreviewModal({
         />
 
         {/* Content Wrapper */}
-        <div className="flex-1 flex flex-col min-w-0 bg-white relative">
+        <div className="flex-1 flex flex-col min-w-0 bg-white dark:bg-slate-900 relative">
           
           {/* Admin Notice Banner */}
-          <div className="bg-amber-100 text-amber-800 px-4 py-2 text-center text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 shadow-sm z-[110]">
+          <div className="bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border-b border-transparent dark:border-amber-900/50 px-4 py-2 text-center text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 shadow-sm z-[110]">
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
             Live Player Preview Mode (Read-Only)
-            <button onClick={onClose} className="ml-2 bg-amber-900 text-amber-50 px-2 py-0.5 rounded-full hover:bg-amber-950 transition">Close Preview</button>
+            <button onClick={onClose} className="ml-2 bg-amber-900 text-amber-50 px-2 py-0.5 rounded-full hover:bg-amber-950 transition cursor-pointer">Close Preview</button>
           </div>
 
           <ModuleViewerContent 

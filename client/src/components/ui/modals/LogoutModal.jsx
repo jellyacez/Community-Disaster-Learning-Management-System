@@ -28,33 +28,33 @@ export default function LogoutModal({ isOpen, onClose, onConfirm }) {
             animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 0.9, opacity: 0, y: 20 }}
             transition={{ type: "spring", damping: 25, stiffness: 300 }}
-            className="relative w-full max-w-sm rounded-3xl bg-white p-8 shadow-2xl"
+            className="relative w-full max-w-sm rounded-3xl bg-white dark:bg-slate-900 border border-transparent dark:border-slate-800 p-8 shadow-2xl"
             role="alertdialog"
             aria-modal="true"
             aria-labelledby="logout-modal-title"
           >
             <button
               onClick={onClose}
-              className="absolute right-5 top-5 rounded-full p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition cursor-pointer"
+              className="absolute right-5 top-5 rounded-full p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200 transition cursor-pointer"
             >
               <HugeiconsIcon aria-hidden="true" icon={Cancel01Icon} className="w-6 h-6" />
             </button>
 
-            <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-red-100 text-red-600">
+            <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-red-100 dark:bg-red-950/60 text-red-600 dark:text-red-400">
               <HugeiconsIcon aria-hidden="true" icon={Logout01Icon} className="w-8 h-8 translate-x-1" />
             </div>
 
-            <h2 id="logout-modal-title" className="text-center text-2xl font-extrabold text-gray-900">
+            <h2 id="logout-modal-title" className="text-center text-2xl font-extrabold text-gray-900 dark:text-white">
               Confirm Logout
             </h2>
-            <p className="mt-2 text-center text-sm text-gray-500">
+            <p className="mt-2 text-center text-sm text-gray-500 dark:text-slate-400">
               Are you sure you want to log out of your account? You will need to sign in again to access the portal.
             </p>
 
             <div className="mt-8 flex gap-3">
               <button
                 onClick={onClose}
-                className="flex-1 rounded-xl bg-gray-100 px-5 py-3 text-sm font-bold text-gray-700 hover:bg-gray-200 transition cursor-pointer"
+                className="flex-1 rounded-xl bg-gray-100 dark:bg-slate-800 px-5 py-3 text-sm font-bold text-gray-700 dark:text-slate-200 hover:bg-gray-200 dark:hover:bg-slate-700 border border-transparent dark:border-slate-700 transition cursor-pointer"
               >
                 Cancel
               </button>

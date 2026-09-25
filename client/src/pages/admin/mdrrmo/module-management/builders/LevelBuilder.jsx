@@ -69,13 +69,13 @@ export default function LevelSelector({
   );
 
   return (
-    <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm space-y-4 animate-in fade-in duration-150">
-      <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+    <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm space-y-4 animate-in fade-in duration-150">
+      <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
         <div>
-          <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wide">
+          <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100 uppercase tracking-wide">
             Curriculum Phases & Levels
           </h3>
-          <p className="text-[11px] text-slate-500 font-medium mt-0.5">
+          <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium mt-0.5">
             Organize items into separate level blocks linked to this module.
           </p>
         </div>
@@ -88,7 +88,7 @@ export default function LevelSelector({
                 const lvl = stagedLevels.find((l) => l.levelOrder === 1);
                 if (lvl) setLevelToDelete(lvl);
               }}
-              className="px-3 py-1.5 text-[11px] font-bold text-slate-600 bg-white border border-slate-200 hover:bg-slate-50 rounded-lg shadow-sm transition-colors uppercase tracking-wide"
+              className="px-3 py-1.5 text-[11px] font-bold text-slate-600 dark:text-slate-200 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 rounded-lg shadow-sm transition-colors uppercase tracking-wide cursor-pointer"
             >
               Clear Level 1
             </button>
@@ -102,7 +102,7 @@ export default function LevelSelector({
                   );
                   if (lvl) setLevelToDelete(lvl);
                 }}
-                className="px-3 py-1.5 text-[11px] font-bold text-red-600 bg-white border border-red-200 hover:bg-red-50 rounded-lg shadow-sm transition-colors uppercase tracking-wide"
+                className="px-3 py-1.5 text-[11px] font-bold text-red-600 dark:text-red-400 bg-white dark:bg-red-950/40 border border-red-200 dark:border-red-900/50 hover:bg-red-50 dark:hover:bg-red-900/60 rounded-lg shadow-sm transition-colors uppercase tracking-wide cursor-pointer"
               >
                 Delete Active Level
               </button>
@@ -112,7 +112,7 @@ export default function LevelSelector({
           <button
             type="button"
             onClick={handleAddLevel}
-            className="px-3 py-1.5 text-[11px] font-bold text-white bg-red-600 hover:bg-red-700 rounded-lg shadow-sm transition-colors uppercase tracking-wide"
+            className="px-3 py-1.5 text-[11px] font-bold text-white bg-red-600 hover:bg-red-700 rounded-lg shadow-sm transition-colors uppercase tracking-wide cursor-pointer"
           >
             + Append New Level
           </button>
@@ -131,10 +131,10 @@ export default function LevelSelector({
               key={lvl.levelOrder}
               type="button"
               onClick={() => setActiveLevelOrder(lvl.levelOrder)}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                 activeLevelOrder === lvl.levelOrder
-                  ? "bg-slate-800 text-white shadow-sm scale-105"
-                  : "bg-slate-50 text-slate-600 border border-slate-200 hover:bg-slate-100"
+                  ? "bg-slate-800 dark:bg-slate-700 text-white shadow-sm scale-105 border border-transparent dark:border-slate-600"
+                  : "bg-slate-50 dark:bg-slate-800/60 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800"
               }`}
             >
               Level {lvl.levelOrder} ({stepCount}{" "}
@@ -148,11 +148,11 @@ export default function LevelSelector({
       {activeLevelData && (
         <div
           key={activeLevelData.levelOrder}
-          className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-slate-50 border border-slate-200 rounded-xl animate-in fade-in duration-200"
+          className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700/60 rounded-xl animate-in fade-in duration-200"
         >
           <div className="space-y-4 md:col-span-2">
             <div>
-              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5">
+              <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1.5">
                 Level Container Custom Title
               </label>
               <input
@@ -167,11 +167,11 @@ export default function LevelSelector({
                   )
                 }
                 placeholder="e.g. Phase 1: Basic Awareness"
-                className={`w-full px-4 py-3 bg-white border ${
+                className={`w-full px-4 py-3 bg-white dark:bg-slate-900 border ${
                   formErrors.levelTitle
                     ? "border-red-500 ring-1 ring-red-500"
-                    : "border-slate-200"
-                } rounded-xl text-sm font-medium text-slate-900 focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 transition-all placeholder:text-slate-400`}
+                    : "border-slate-200 dark:border-slate-700"
+                } rounded-xl text-sm font-medium text-slate-900 dark:text-slate-100 focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 transition-all placeholder:text-slate-400 dark:placeholder:text-slate-500`}
               />
               {formErrors.levelTitle && (
                 <p className="text-red-500 text-xs mt-1.5 font-bold">
@@ -181,7 +181,7 @@ export default function LevelSelector({
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5">
+              <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1.5">
                 Level Container Description
               </label>
               <input
@@ -195,13 +195,13 @@ export default function LevelSelector({
                   )
                 }
                 placeholder="e.g. Fundamental concepts container."
-                className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-medium text-slate-900 focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 transition-all placeholder:text-slate-400"
+                className="w-full px-4 py-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-medium text-slate-900 dark:text-slate-100 focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 transition-all placeholder:text-slate-400 dark:placeholder:text-slate-500"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5">
+            <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1.5">
               Passing Threshold (%)
             </label>
             <input
@@ -216,7 +216,7 @@ export default function LevelSelector({
                   e.target.value
                 )
               }
-              className="w-full p-3 bg-white border border-slate-200 rounded-xl text-sm font-semibold text-slate-900 focus:outline-none focus:ring-1 focus:ring-red-500 transition-all"
+              className="w-full p-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-semibold text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-red-500 transition-all"
             />
           </div>
 
@@ -232,11 +232,11 @@ export default function LevelSelector({
                   e.target.checked
                 )
               }
-              className="w-5 h-5 text-red-600 border-slate-300 rounded focus:ring-red-500 cursor-pointer"
+              className="w-5 h-5 text-red-600 border-slate-300 dark:border-slate-600 rounded focus:ring-red-500 cursor-pointer"
             />
             <label
               htmlFor={`lock-default-${activeLevelData.levelOrder}`}
-              className="text-sm font-bold text-slate-700 cursor-pointer select-none"
+              className="text-sm font-bold text-slate-700 dark:text-slate-300 cursor-pointer select-none"
             >
               Lock by default (Unlock sequentially)
             </label>

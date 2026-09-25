@@ -69,7 +69,7 @@ export default function MfaEmailSetup({
       <button 
         type="button" 
         onClick={() => setSetupStep(0)}
-        className="text-sm text-red-600 font-bold mb-2 hover:underline"
+        className="text-sm text-red-600 dark:text-red-400 font-bold mb-2 hover:underline cursor-pointer"
       >
         &larr; Back to options
       </button>
@@ -78,7 +78,7 @@ export default function MfaEmailSetup({
         <>
           {!isGoogleUser ? (
             <>
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-gray-600 dark:text-slate-300">
                 To enable Email Authentication, please verify your current password. We will send a 6-digit code to your email.
               </p>
               <PasswordInput
@@ -91,31 +91,31 @@ export default function MfaEmailSetup({
               />
             </>
           ) : (
-            <div className="bg-gray-50 p-5 rounded-2xl border border-gray-100 text-center">
-              <h4 className="font-bold text-gray-900 mb-2">Verify Your Identity</h4>
-              <p className="text-sm text-gray-600 leading-relaxed mb-2">
+            <div className="bg-gray-50 dark:bg-slate-800/60 p-5 rounded-2xl border border-gray-100 dark:border-slate-700 text-center">
+              <h4 className="font-bold text-gray-900 dark:text-white mb-2">Verify Your Identity</h4>
+              <p className="text-sm text-gray-600 dark:text-slate-300 leading-relaxed mb-2">
                 Since you signed in with Google, we need to verify your identity before enabling Two-Factor Authentication. 
               </p>
-              <p className="text-sm text-gray-600 leading-relaxed">
-                Click below to send a secure 6-digit code to your registered email address <strong className="text-gray-900">({maskEmail(userEmail)})</strong>.
+              <p className="text-sm text-gray-600 dark:text-slate-300 leading-relaxed">
+                Click below to send a secure 6-digit code to your registered email address <strong className="text-gray-900 dark:text-white">({maskEmail(userEmail)})</strong>.
               </p>
             </div>
           )}
           <button
             type="submit"
             disabled={isSendingOtp}
-            className="w-full rounded-xl bg-red-600 text-white px-6 py-3.5 text-sm font-bold hover:bg-red-700 transition-colors active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed"
+            className="w-full rounded-xl bg-red-600 text-white px-6 py-3.5 text-sm font-bold hover:bg-red-700 transition-colors active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed cursor-pointer"
           >
             {isSendingOtp ? "Sending Code..." : "Send Verification Code"}
           </button>
         </>
       ) : (
         <>
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-gray-600 dark:text-slate-300">
             We've sent a 6-digit verification code to your email. Please enter it below to confirm and enable Email OTP.
           </p>
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-3 text-center">
+            <label className="block text-sm font-semibold text-gray-700 dark:text-slate-300 mb-3 text-center">
               6-Digit Code
             </label>
             <OtpInput value={otpCode} onChange={setOtpCode} />
@@ -125,7 +125,7 @@ export default function MfaEmailSetup({
                 type="button"
                 onClick={() => handleSendOtp()}
                 disabled={countdown > 0 || isSendingOtp}
-                className="text-xs font-semibold text-gray-500 hover:text-gray-800 disabled:opacity-50 disabled:hover:text-gray-500 transition-colors"
+                className="text-xs font-semibold text-gray-500 dark:text-slate-400 hover:text-gray-800 dark:hover:text-slate-200 disabled:opacity-50 disabled:hover:text-gray-500 dark:disabled:hover:text-slate-400 transition-colors cursor-pointer"
               >
                 {countdown > 0 ? `Send again in 00:${countdown.toString().padStart(2, '0')}` : "Send code again"}
               </button>

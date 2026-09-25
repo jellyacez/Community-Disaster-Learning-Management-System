@@ -27,29 +27,30 @@ export default function LearningContentEditor({
       }, 10);
       return () => clearTimeout(timer);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [formErrors._scrollTrigger]);
 
   return (
     <div className="space-y-4 pt-2">
       
       {/* 1. Learning Content Instructions Accordion */}
-      <div className="border border-slate-200 rounded-xl bg-white overflow-hidden shadow-sm animate-in fade-in slide-in-from-bottom-2 duration-300">
+      <div className="border border-slate-200 dark:border-slate-800 rounded-xl bg-white dark:bg-slate-900 overflow-hidden shadow-sm animate-in fade-in slide-in-from-bottom-2 duration-300">
         <button 
           type="button" 
           onClick={() => setIsInstructionsOpen(!isInstructionsOpen)}
-          className="w-full flex items-center justify-between p-4 bg-slate-50 hover:bg-slate-100 transition-colors text-left"
+          className="w-full flex items-center justify-between p-4 bg-slate-50 hover:bg-slate-100 dark:bg-slate-800/60 dark:hover:bg-slate-800 transition-colors text-left"
         >
-          <span className="text-xs font-bold text-slate-700 uppercase tracking-wide">1. Learning Content Instructions</span>
-          <span className="text-slate-400 font-bold">{isInstructionsOpen ? '−' : '+'}</span>
+          <span className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wide">1. Learning Content Instructions</span>
+          <span className="text-slate-400 dark:text-slate-500 font-bold">{isInstructionsOpen ? '−' : '+'}</span>
         </button>
         {isInstructionsOpen && (
-          <div className="p-4 border-t border-slate-200 space-y-2 bg-slate-50">
-            <div id="learning-content-anchor" className="text-sm bg-white rounded-xl shadow-sm">
+          <div className="p-4 border-t border-slate-200 dark:border-slate-800 space-y-2 bg-slate-50 dark:bg-slate-900/40">
+            <div id="learning-content-anchor" className="text-sm bg-white dark:bg-slate-900 rounded-xl shadow-sm">
               <RichTextEditor 
                 placeholder="Type detailed learning steps or instructional summary text..." 
                 value={currentFlowStep.textContent} 
                 onChange={(content) => handleFieldChange('textContent', content)} 
-                className={`min-h-[140px] text-sm border ${formErrors.stepContent ? 'border-red-500 ring-2 ring-red-500/10' : 'border-slate-300'}`}
+                className={`min-h-[140px] text-sm border ${formErrors.stepContent ? 'border-red-500 ring-2 ring-red-500/10' : 'border-slate-300 dark:border-slate-700'}`}
               />
             </div>
             {formErrors.stepContent && <p className="text-red-500 text-xs mt-1.5 font-bold">{formErrors.stepContent}</p>}
@@ -58,19 +59,19 @@ export default function LearningContentEditor({
       </div>
 
       {/* 2. Media & Document Upload Accordion */}
-      <div className="border border-slate-200 rounded-xl bg-white overflow-hidden shadow-sm animate-in fade-in slide-in-from-bottom-2 duration-300">
+      <div className="border border-slate-200 dark:border-slate-800 rounded-xl bg-white dark:bg-slate-900 overflow-hidden shadow-sm animate-in fade-in slide-in-from-bottom-2 duration-300">
         <button 
           type="button" 
           onClick={() => setIsMediaOpen(!isMediaOpen)}
-          className="w-full flex items-center justify-between p-4 bg-slate-50 hover:bg-slate-100 transition-colors text-left"
+          className="w-full flex items-center justify-between p-4 bg-slate-50 hover:bg-slate-100 dark:bg-slate-800/60 dark:hover:bg-slate-800 transition-colors text-left"
         >
-          <span className="text-xs font-bold text-slate-700 uppercase tracking-wide">2. Media & Document Upload</span>
-          <span className="text-slate-400 font-bold">{isMediaOpen ? '−' : '+'}</span>
+          <span className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wide">2. Media & Document Upload</span>
+          <span className="text-slate-400 dark:text-slate-500 font-bold">{isMediaOpen ? '−' : '+'}</span>
         </button>
         {isMediaOpen && (
-          <div className="p-4 border-t border-slate-200 bg-slate-50">
-            <div className="flex flex-col gap-2.5 bg-white p-4 border border-slate-200 rounded-xl shadow-sm">
-              <span className="text-xs font-bold text-slate-600 uppercase tracking-wide">
+          <div className="p-4 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/40">
+            <div className="flex flex-col gap-2.5 bg-white dark:bg-slate-800/80 p-4 border border-slate-200 dark:border-slate-700 rounded-xl shadow-sm">
+              <span className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wide">
                 Select Reference File (Video, PDF, DOCX)
               </span>
               <input 
@@ -92,16 +93,16 @@ export default function LearningContentEditor({
                     }
                   }
                 }}
-                className="text-xs text-slate-600 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border file:border-slate-300 file:text-xs file:font-bold file:bg-slate-50 file:text-slate-700 hover:file:bg-slate-100 cursor-pointer transition-colors" 
+                className="text-xs text-slate-600 dark:text-slate-400 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border file:border-slate-300 dark:file:border-slate-700 file:text-xs file:font-bold file:bg-slate-50 dark:file:bg-slate-800 file:text-slate-700 dark:file:text-slate-300 hover:file:bg-slate-100 dark:hover:file:bg-slate-700 cursor-pointer transition-colors" 
               />
               {writtenMaterialFile && (
-                <div className="mt-3 p-3 bg-emerald-50 rounded-xl border border-emerald-100">
-                  <p className="text-xs text-emerald-800 font-bold">Staged File: {writtenMaterialFile.name}</p>
+                <div className="mt-3 p-3 bg-emerald-50 dark:bg-emerald-950/40 rounded-xl border border-emerald-100 dark:border-emerald-900/50">
+                  <p className="text-xs text-emerald-800 dark:text-emerald-300 font-bold">Staged File: {writtenMaterialFile.name}</p>
                   {writtenMaterialFile.type.startsWith("video/") && (
                     <video 
                       controls 
                       preload="metadata" 
-                      className="w-full max-h-64 object-cover rounded-xl border border-slate-200 mt-2 shadow-sm"
+                      className="w-full max-h-64 object-cover rounded-xl border border-slate-200 dark:border-slate-700 mt-2 shadow-sm"
                       src={URL.createObjectURL(writtenMaterialFile)}
                     />
                   )}

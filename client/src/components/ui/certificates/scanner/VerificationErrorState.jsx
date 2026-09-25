@@ -33,20 +33,20 @@ export default function VerificationErrorState({
   const { title, description } = getErrorContent();
 
   return (
-    <div className="text-center py-6 px-4 bg-red-50 rounded-2xl border border-red-200 space-y-3 animate-in fade-in zoom-in-95 duration-200">
-      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-100 text-red-600 mx-auto">
+    <div className="text-center py-6 px-4 bg-red-50 dark:bg-red-950/40 rounded-2xl border border-red-200 dark:border-red-900/50 space-y-3 animate-in fade-in zoom-in-95 duration-200">
+      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-100 dark:bg-red-950/60 text-red-600 dark:text-red-400 mx-auto">
         <HugeiconsIcon icon={Alert02Icon} className="w-6 h-6" />
       </div>
       <div>
-        <h3 className="text-sm font-bold text-red-900">{title}</h3>
-        <p className="text-xs text-red-600 mt-1 max-w-xs mx-auto leading-relaxed">
+        <h3 className="text-sm font-bold text-red-900 dark:text-red-200">{title}</h3>
+        <p className="text-xs text-red-600 dark:text-red-300 mt-1 max-w-xs mx-auto leading-relaxed">
           {description}
         </p>
       </div>
       <button
         type="button"
         onClick={onTryAnother}
-        className="mt-2 inline-flex items-center gap-1.5 px-4 py-2 bg-white border border-red-300 text-red-700 hover:bg-red-50 font-bold rounded-xl text-xs transition cursor-pointer shadow-sm"
+        className="mt-2 inline-flex items-center gap-1.5 px-4 py-2 bg-white dark:bg-slate-800 border border-red-300 dark:border-red-800 text-red-700 dark:text-red-300 hover:bg-red-50 dark:hover:bg-slate-700 font-bold rounded-xl text-xs transition cursor-pointer shadow-sm"
       >
         <HugeiconsIcon icon={RefreshIcon} className="w-3.5 h-3.5" />
         <span>Try Another Token</span>

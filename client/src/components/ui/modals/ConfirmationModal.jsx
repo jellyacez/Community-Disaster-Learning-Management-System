@@ -43,10 +43,10 @@ const ConfirmationModal = memo(function ConfirmationModal({
 
   const getColors = () => {
     switch (type) {
-      case "success": return { bg: "bg-green-100", text: "text-green-600", button: "bg-green-600 hover:bg-green-700 focus:ring-green-500" };
-      case "danger": return { bg: "bg-red-100", text: "text-red-600", button: "bg-red-600 hover:bg-red-700 focus:ring-red-500" };
-      case "primary": return { bg: "bg-red-50", text: "text-red-600", button: "bg-red-600 hover:bg-red-700 focus:ring-red-500" };
-      default: return { bg: "bg-yellow-100", text: "text-yellow-600", button: "bg-yellow-600 hover:bg-yellow-700 focus:ring-yellow-500" };
+      case "success": return { bg: "bg-green-100 dark:bg-emerald-950/60", text: "text-green-600 dark:text-emerald-400", button: "bg-green-600 hover:bg-green-700 dark:bg-emerald-600 dark:hover:bg-emerald-700 focus:ring-green-500" };
+      case "danger": return { bg: "bg-red-100 dark:bg-red-950/60", text: "text-red-600 dark:text-red-400", button: "bg-red-600 hover:bg-red-700 dark:bg-red-600 dark:hover:bg-red-700 focus:ring-red-500" };
+      case "primary": return { bg: "bg-red-50 dark:bg-red-950/40", text: "text-red-600 dark:text-red-400", button: "bg-red-600 hover:bg-red-700 dark:bg-red-600 dark:hover:bg-red-700 focus:ring-red-500" };
+      default: return { bg: "bg-yellow-100 dark:bg-amber-950/60", text: "text-yellow-600 dark:text-amber-400", button: "bg-yellow-600 hover:bg-yellow-700 dark:bg-amber-600 dark:hover:bg-amber-700 focus:ring-yellow-500" };
     }
   };
 
@@ -59,12 +59,12 @@ const ConfirmationModal = memo(function ConfirmationModal({
         aria-modal="true"
         aria-labelledby="confirmation-modal-title"
         aria-describedby="confirmation-modal-desc"
-        className="relative w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl animate-in zoom-in-95 duration-200"
+        className="relative w-full max-w-sm rounded-2xl bg-white dark:bg-slate-900 border border-transparent dark:border-slate-800 p-6 shadow-2xl animate-in zoom-in-95 duration-200"
       >
         <button
           onClick={onClose}
           disabled={isLoading}
-          className="absolute right-4 top-4 text-gray-400 hover:text-gray-600 transition-colors focus:outline-none"
+          className="absolute right-4 top-4 text-gray-400 hover:text-gray-600 dark:text-slate-400 dark:hover:text-slate-200 transition-colors focus:outline-none"
         >
           <HugeiconsIcon aria-hidden="true" icon={Cancel01Icon} className="w-5 h-5" />
         </button>
@@ -74,9 +74,9 @@ const ConfirmationModal = memo(function ConfirmationModal({
             <HugeiconsIcon aria-hidden="true" icon={getIcon()} className={`w-6 h-6 ${colors.text}`} />
           </div>
           
-          <h3 id="confirmation-modal-title" className="mb-2 text-xl font-bold text-gray-900">{title}</h3>
+          <h3 id="confirmation-modal-title" className="mb-2 text-xl font-bold text-gray-900 dark:text-white">{title}</h3>
           {description && (
-            <p id="confirmation-modal-desc" className="mb-6 text-sm leading-relaxed text-gray-500">{description}</p>
+            <p id="confirmation-modal-desc" className="mb-6 text-sm leading-relaxed text-gray-500 dark:text-slate-400">{description}</p>
           )}
           {children && (
             <div className="w-full mb-6 text-left">{children}</div>
@@ -86,7 +86,7 @@ const ConfirmationModal = memo(function ConfirmationModal({
             <button
               onClick={onClose}
               disabled={isLoading}
-              className="w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-bold text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-200 disabled:opacity-50 transition-colors cursor-pointer disabled:cursor-not-allowed"
+              className="w-full rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-slate-200 hover:bg-gray-50 dark:hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-gray-200 dark:focus:ring-slate-600 disabled:opacity-50 transition-colors cursor-pointer disabled:cursor-not-allowed"
             >
               {cancelText}
             </button>
@@ -103,7 +103,7 @@ const ConfirmationModal = memo(function ConfirmationModal({
               <button
                 onClick={onAlternateAction}
                 disabled={isLoading}
-                className="w-full rounded-xl border-2 border-emerald-500 bg-white px-4 py-2.5 text-sm font-bold text-emerald-600 hover:bg-emerald-50 focus:outline-none focus:ring-2 focus:ring-emerald-200 disabled:opacity-50 transition-colors"
+                className="w-full rounded-xl border-2 border-emerald-500 bg-white dark:bg-slate-800 px-4 py-2.5 text-sm font-bold text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 focus:outline-none focus:ring-2 focus:ring-emerald-200 disabled:opacity-50 transition-colors"
               >
                 {alternateText}
               </button>

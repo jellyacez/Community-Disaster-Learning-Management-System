@@ -28,29 +28,43 @@ export default function UnsyncedQueueIndicator() {
   const [isRetryingAll, setIsRetryingAll] = useState(false);
   const [confirmDiscardTask, setConfirmDiscardTask] = useState(null);
   const [confirmDiscardAllModal, setConfirmDiscardAllModal] = useState(false);
-
-  const loadQueue = async () => {
-    try {
-      const items = await localDb.sync_queue.toArray();
-      setQueueItems(items);
-    } catch (err) {
-      console.error("Failed to read sync_queue:", err);
-    }
-  };
+  const [now, setNow] = useState(() => Date.now());
 
   useEffect(() => {
-    loadQueue();
-    window.addEventListener("offline-sync-queue-updated", loadQueue);
-    window.addEventListener("offline-sync-item-success", loadQueue);
+    let isMounted = true;
+    const fetchQueue = async () => {
+      try {
+        const items = await localDb.sync_queue.toArray();
+        if (isMounted) {
+          setQueueItems(items);
+        }
+      } catch (err) {
+        console.error("Failed to read sync_queue:", err);
+      }
+    };
+
+    const handleUpdate = () => {
+      void fetchQueue();
+    };
+
+    void fetchQueue();
+    window.addEventListener("offline-sync-queue-updated", handleUpdate);
+    window.addEventListener("offline-sync-item-success", handleUpdate);
     return () => {
-      window.removeEventListener("offline-sync-queue-updated", loadQueue);
-      window.removeEventListener("offline-sync-item-success", loadQueue);
+      isMounted = false;
+      window.removeEventListener("offline-sync-queue-updated", handleUpdate);
+      window.removeEventListener("offline-sync-item-success", handleUpdate);
     };
   }, []);
 
+  useEffect(() => {
+    if (!isOpen) return;
+    const interval = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(interval);
+  }, [isOpen]);
+
   const failedItems = queueItems.filter((i) => i.status === "failed");
   const retryingItems = queueItems.filter((i) => i.status === "retrying");
-  const pendingItems = queueItems.filter((i) => i.status === "pending");
 
   if (queueItems.length === 0) return null;
 
@@ -134,10 +148,10 @@ export default function UnsyncedQueueIndicator() {
         aria-label="View unsynced offline actions"
         className={`min-h-[44px] flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-2xs ${
           failedItems.length > 0
-            ? "bg-red-50 text-red-700 border border-red-200 hover:bg-red-100 animate-pulse"
+            ? "bg-red-50 dark:bg-red-950/60 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-900/60 hover:bg-red-100 dark:hover:bg-red-900/60 animate-pulse"
             : retryingItems.length > 0
-            ? "bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100"
-            : "bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100"
+            ? "bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-900/60 hover:bg-amber-100 dark:hover:bg-amber-900/60"
+            : "bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-900/60 hover:bg-blue-100 dark:hover:bg-blue-900/60"
         }`}
       >
         <HugeiconsIcon
@@ -154,15 +168,15 @@ export default function UnsyncedQueueIndicator() {
       {/* Slide-Over Drawer / Modal */}
       {isOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4">
-          <div className="bg-white w-full max-w-lg rounded-3xl shadow-2xl border border-gray-100 overflow-hidden flex flex-col max-h-[85vh] animate-in fade-in zoom-in-95 duration-150">
+          <div className="bg-white dark:bg-slate-900 w-full max-w-lg rounded-3xl shadow-2xl border border-gray-100 dark:border-slate-800 overflow-hidden flex flex-col max-h-[85vh] animate-in fade-in zoom-in-95 duration-150">
             {/* Header */}
-            <div className="px-6 py-5 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
+            <div className="px-6 py-5 border-b border-gray-100 dark:border-slate-800 flex items-center justify-between bg-gray-50/50 dark:bg-slate-900">
               <div>
-                <h3 className="font-extrabold text-lg text-gray-900 flex items-center gap-2">
-                  <HugeiconsIcon icon={RefreshIcon} className="w-5 h-5 text-red-600" />
+                <h3 className="font-extrabold text-lg text-gray-900 dark:text-white flex items-center gap-2">
+                  <HugeiconsIcon icon={RefreshIcon} className="w-5 h-5 text-red-600 dark:text-red-400" />
                   Offline Sync Queue
                 </h3>
-                <p className="text-xs text-gray-500 mt-0.5">
+                <p className="text-xs text-gray-500 dark:text-slate-400 mt-0.5">
                   {queueItems.length} total queued action{queueItems.length !== 1 ? "s" : ""}
                   {failedItems.length > 0 && ` · ${failedItems.length} require attention`}
                 </p>
@@ -171,7 +185,7 @@ export default function UnsyncedQueueIndicator() {
               <button
                 type="button"
                 onClick={() => setIsOpen(false)}
-                className="w-11 h-11 min-w-[44px] min-h-[44px] flex items-center justify-center text-gray-400 hover:text-gray-600 rounded-xl hover:bg-gray-100 transition-colors cursor-pointer"
+                className="w-11 h-11 min-w-[44px] min-h-[44px] flex items-center justify-center text-gray-400 hover:text-gray-600 dark:text-slate-400 dark:hover:text-slate-200 rounded-xl hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
                 aria-label="Close offline sync queue modal"
               >
                 <HugeiconsIcon icon={Cancel01Icon} className="w-5 h-5" />
@@ -191,10 +205,10 @@ export default function UnsyncedQueueIndicator() {
                     key={task.sync_id}
                     className={`p-4 rounded-2xl border transition-all ${
                       isFailed
-                        ? "bg-red-50/40 border-red-200"
+                        ? "bg-red-50/40 dark:bg-red-950/30 border-red-200 dark:border-red-900/50"
                         : isRetrying
-                        ? "bg-amber-50/40 border-amber-200"
-                        : "bg-gray-50/80 border-gray-200"
+                        ? "bg-amber-50/40 dark:bg-amber-950/30 border-amber-200 dark:border-amber-900/50"
+                        : "bg-gray-50/80 dark:bg-slate-800/60 border-gray-200 dark:border-slate-700"
                     }`}
                   >
                     <div className="flex items-start justify-between gap-3">
@@ -202,19 +216,19 @@ export default function UnsyncedQueueIndicator() {
                         <div
                           className={`p-2.5 rounded-xl ${
                             isFailed
-                              ? "bg-red-100 text-red-700"
+                              ? "bg-red-100 dark:bg-red-900/50 text-red-700 dark:text-red-300"
                               : isRetrying
-                              ? "bg-amber-100 text-amber-700"
-                              : "bg-blue-100 text-blue-700"
+                              ? "bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300"
+                              : "bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300"
                           }`}
                         >
                           <HugeiconsIcon icon={ItemIcon} className="w-4 h-4" />
                         </div>
                         <div>
-                          <p className="text-sm font-bold text-gray-900">
+                          <p className="text-sm font-bold text-gray-900 dark:text-slate-100">
                             {getActionDescription(task)}
                           </p>
-                          <p className="text-[11px] text-gray-400 font-mono">
+                          <p className="text-[11px] text-gray-400 dark:text-slate-400 font-mono">
                             Type: {task.action_type}
                           </p>
                         </div>
@@ -224,10 +238,10 @@ export default function UnsyncedQueueIndicator() {
                       <span
                         className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider ${
                           isFailed
-                            ? "bg-red-200 text-red-800"
+                            ? "bg-red-200 dark:bg-red-900/60 text-red-800 dark:text-red-200"
                             : isRetrying
-                            ? "bg-amber-200 text-amber-800"
-                            : "bg-blue-200 text-blue-800"
+                            ? "bg-amber-200 dark:bg-amber-900/60 text-amber-800 dark:text-amber-200"
+                            : "bg-blue-200 dark:bg-blue-900/60 text-blue-800 dark:text-blue-200"
                         }`}
                       >
                         {isFailed
@@ -240,24 +254,24 @@ export default function UnsyncedQueueIndicator() {
 
                     {/* Error / Backoff details if any */}
                     {task.last_error && (
-                      <div className="mt-2.5 p-2.5 bg-white rounded-xl border border-gray-200/80 text-xs">
-                        <p className="text-gray-500 font-semibold text-[11px]">
+                      <div className="mt-2.5 p-2.5 bg-white dark:bg-slate-900/80 rounded-xl border border-gray-200/80 dark:border-slate-700 text-xs">
+                        <p className="text-gray-500 dark:text-slate-400 font-semibold text-[11px]">
                           {isFailed ? "Permanent Failure Reason:" : "Last Attempt Note:"}
                         </p>
-                        <p className="text-gray-800 font-mono text-[11px] mt-0.5 break-words">
+                        <p className="text-gray-800 dark:text-slate-200 font-mono text-[11px] mt-0.5 break-words">
                           {task.last_error}
                         </p>
                         {isRetrying && task.next_retry_at && (
-                          <p className="text-[10px] text-amber-700 font-semibold mt-1">
+                          <p className="text-[10px] text-amber-700 dark:text-amber-400 font-semibold mt-1">
                             Scheduled retry in{" "}
-                            {Math.max(1, Math.round((task.next_retry_at - Date.now()) / 1000))}s
+                            {Math.max(1, Math.round((task.next_retry_at - now) / 1000))}s
                           </p>
                         )}
                       </div>
                     )}
 
                     {/* Action buttons (Separated & Protected) */}
-                    <div className="mt-3 flex items-center justify-end gap-3 border-t border-gray-100/80 pt-3">
+                    <div className="mt-3 flex items-center justify-end gap-3 border-t border-gray-100/80 dark:border-slate-800 pt-3">
                       <button
                         type="button"
                         onClick={() => handleRetryItem(task.sync_id)}
@@ -280,7 +294,7 @@ export default function UnsyncedQueueIndicator() {
                         type="button"
                         onClick={() => setConfirmDiscardTask(task)}
                         disabled={isThisRetrying}
-                        className="min-h-[38px] px-3.5 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 hover:text-red-700 border border-gray-200 rounded-xl text-xs font-bold transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="min-h-[38px] px-3.5 py-1.5 bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-700 dark:text-slate-300 hover:text-red-700 dark:hover:text-red-400 border border-gray-200 dark:border-slate-700 rounded-xl text-xs font-bold transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         Discard
                       </button>
@@ -292,12 +306,12 @@ export default function UnsyncedQueueIndicator() {
 
             {/* Footer Bulk Actions */}
             {failedItems.length > 1 && (
-              <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex items-center justify-between">
+              <div className="px-6 py-4 bg-gray-50 dark:bg-slate-900 border-t border-gray-100 dark:border-slate-800 flex items-center justify-between">
                 <button
                   type="button"
                   onClick={() => setConfirmDiscardAllModal(true)}
                   disabled={isRetryingAll || retryingIds.size > 0}
-                  className="min-h-[44px] px-3 text-xs text-gray-600 hover:text-red-600 font-bold flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="min-h-[44px] px-3 text-xs text-gray-600 dark:text-slate-400 hover:text-red-600 dark:hover:text-red-400 font-bold flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <HugeiconsIcon icon={Delete02Icon} className="w-4 h-4" />
                   <span>Discard All Failed ({failedItems.length})</span>

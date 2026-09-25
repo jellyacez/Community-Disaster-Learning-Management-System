@@ -34,25 +34,25 @@ export default function WelcomeModal({ isOpen, onClose, userName, onGoToCatalog 
             animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 0.9, opacity: 0, y: 20 }}
             transition={{ type: "spring", damping: 25, stiffness: 300 }}
-            className="relative w-full max-w-lg rounded-3xl bg-white p-8 shadow-2xl"
+            className="relative w-full max-w-lg rounded-3xl bg-white dark:bg-slate-900 border border-transparent dark:border-slate-800 p-8 shadow-2xl"
           >
             <button
               onClick={onClose}
-              className="absolute right-5 top-5 rounded-full p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition"
+              className="absolute right-5 top-5 rounded-full p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200 transition cursor-pointer"
             >
               <HugeiconsIcon aria-hidden="true" icon={Cancel01Icon} className="w-6 h-6" />
             </button>
 
-            <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-green-100 text-green-600">
+            <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-green-100 dark:bg-emerald-950/60 text-green-600 dark:text-emerald-400">
               <HugeiconsIcon aria-hidden="true" icon={CheckmarkBadge01Icon} className="w-8 h-8" />
             </div>
 
-            <h2 className="text-center text-2xl font-extrabold text-gray-900">
+            <h2 className="text-center text-2xl font-extrabold text-gray-900 dark:text-white">
               Successfully Registered!
             </h2>
-            <p className="mt-2 text-center text-sm text-gray-500">
+            <p className="mt-2 text-center text-sm text-gray-500 dark:text-slate-400">
               Welcome to the Disaster Risk Reduction and Management Portal,{" "}
-              <span className="font-semibold text-gray-900">{userName}</span>!
+              <span className="font-semibold text-gray-900 dark:text-slate-200">{userName}</span>!
               Here is how to get started:
             </p>
 
@@ -63,27 +63,27 @@ export default function WelcomeModal({ isOpen, onClose, userName, onGoToCatalog 
               className="mt-8 space-y-6"
             >
               <motion.div variants={itemVariants} className="flex items-start gap-4">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-red-100 text-red-600 shadow-sm">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-red-100 dark:bg-red-950/60 text-red-600 dark:text-red-400 shadow-sm">
                   <span className="text-sm font-bold">1</span>
                 </div>
                 <div>
-                  <h3 className="font-bold text-gray-900">Browse the Module Catalog</h3>
-                  <p className="mt-1 text-sm text-gray-500">
-                    Click on <span className="font-semibold">Module Catalog</span> in
+                  <h3 className="font-bold text-gray-900 dark:text-white">Browse the Module Catalog</h3>
+                  <p className="mt-1 text-sm text-gray-500 dark:text-slate-400">
+                    Click on <span className="font-semibold text-gray-900 dark:text-slate-200">Module Catalog</span> in
                     the left sidebar to explore all available DRRM training topics.
                   </p>
                 </div>
               </motion.div>
 
               <motion.div variants={itemVariants} className="flex items-start gap-4">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-red-100 text-red-600 shadow-sm">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-red-100 dark:bg-red-950/60 text-red-600 dark:text-red-400 shadow-sm">
                   <span className="text-sm font-bold">2</span>
                 </div>
                 <div>
-                  <h3 className="font-bold text-gray-900">Enroll in a Module</h3>
-                  <p className="mt-1 text-sm text-gray-500">
+                  <h3 className="font-bold text-gray-900 dark:text-white">Enroll in a Module</h3>
+                  <p className="mt-1 text-sm text-gray-500 dark:text-slate-400">
                     Find a topic that interests you and click{" "}
-                    <span className="font-semibold">Enroll</span> to add it to your
+                    <span className="font-semibold text-gray-900 dark:text-slate-200">Enroll</span> to add it to your
                     personal learning queue.
                   </p>
                 </div>
