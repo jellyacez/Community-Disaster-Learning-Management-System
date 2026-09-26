@@ -1,5 +1,5 @@
 --
--- PostgreSQL database dump
+-- lms_adminQL database dump
 --
 
 \restrict g7LnI8266YBBnbmTkg9C9GuqufRvPuSe7RassMw2axRz6h4Jn4ZwEfofPm09sgP
@@ -23,18 +23,18 @@ SET row_security = off;
 
 --
 -- TOC entry 7 (class 2615 OID 41796)
--- Name: public; Type: SCHEMA; Schema: -; Owner: postgres
+-- Name: public; Type: SCHEMA; Schema: -; Owner: lms_admin
 --
 
 -- *not* creating schema, since initdb creates it
 
 
-ALTER SCHEMA public OWNER TO postgres;
+ALTER SCHEMA public OWNER TO lms_admin;
 
 --
 -- TOC entry 5312 (class 0 OID 0)
 -- Dependencies: 7
--- Name: SCHEMA public; Type: COMMENT; Schema: -; Owner: postgres
+-- Name: SCHEMA public; Type: COMMENT; Schema: -; Owner: lms_admin
 --
 
 COMMENT ON SCHEMA public IS '';
@@ -42,13 +42,13 @@ COMMENT ON SCHEMA public IS '';
 
 --
 -- TOC entry 6 (class 2615 OID 41797)
--- Name: rate_limit; Type: SCHEMA; Schema: -; Owner: postgres
+-- Name: rate_limit; Type: SCHEMA; Schema: -; Owner: lms_admin
 --
 
 CREATE SCHEMA rate_limit;
 
 
-ALTER SCHEMA rate_limit OWNER TO postgres;
+ALTER SCHEMA rate_limit OWNER TO lms_admin;
 
 --
 -- TOC entry 2 (class 3079 OID 41798)
@@ -61,7 +61,7 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp" WITH SCHEMA public;
 --
 -- TOC entry 5314 (class 0 OID 0)
 -- Dependencies: 2
--- Name: EXTENSION "uuid-ossp"; Type: COMMENT; Schema: -; Owner: 
+-- Name: EXTENSION "uuid-ossp"; Type: COMMENT; Schema: -; Owner:
 --
 
 COMMENT ON EXTENSION "uuid-ossp" IS 'generate universally unique identifiers (UUIDs)';
@@ -69,7 +69,7 @@ COMMENT ON EXTENSION "uuid-ossp" IS 'generate universally unique identifiers (UU
 
 --
 -- TOC entry 915 (class 1247 OID 41810)
--- Name: user_role; Type: TYPE; Schema: public; Owner: postgres
+-- Name: user_role; Type: TYPE; Schema: public; Owner: lms_admin
 --
 
 CREATE TYPE public.user_role AS ENUM (
@@ -81,21 +81,21 @@ CREATE TYPE public.user_role AS ENUM (
 );
 
 
-ALTER TYPE public.user_role OWNER TO postgres;
+ALTER TYPE public.user_role OWNER TO lms_admin;
 
 --
 -- TOC entry 263 (class 1255 OID 41821)
--- Name: agg_decrement(text, text, timestamp with time zone); Type: FUNCTION; Schema: rate_limit; Owner: postgres
+-- Name: agg_decrement(text, text, timestamp with time zone); Type: FUNCTION; Schema: rate_limit; Owner: lms_admin
 --
 
 CREATE FUNCTION rate_limit.agg_decrement(key_ text, prefix text, reference_time timestamp with time zone DEFAULT now()) RETURNS void
     LANGUAGE plpgsql
     AS $_$
-    DECLARE 
+    DECLARE
         in_session_id uuid;
         session_type text = 'aggregated';
     BEGIN
-    
+
 	select id
     FROM rate_limit.session_select($2, session_type)
     WHERE expires_at > $3
@@ -108,11 +108,11 @@ CREATE FUNCTION rate_limit.agg_decrement(key_ text, prefix text, reference_time 
 $_$;
 
 
-ALTER FUNCTION rate_limit.agg_decrement(key_ text, prefix text, reference_time timestamp with time zone) OWNER TO postgres;
+ALTER FUNCTION rate_limit.agg_decrement(key_ text, prefix text, reference_time timestamp with time zone) OWNER TO lms_admin;
 
 --
 -- TOC entry 285 (class 1255 OID 41822)
--- Name: agg_increment(text, text, double precision, timestamp with time zone); Type: FUNCTION; Schema: rate_limit; Owner: postgres
+-- Name: agg_increment(text, text, double precision, timestamp with time zone); Type: FUNCTION; Schema: rate_limit; Owner: lms_admin
 --
 
 CREATE FUNCTION rate_limit.agg_increment(key_ text, prefix text, window_ms double precision, reference_time timestamp with time zone DEFAULT now()) RETURNS record
@@ -127,18 +127,18 @@ CREATE FUNCTION rate_limit.agg_increment(key_ text, prefix text, window_ms doubl
     BEGIN
 
 	Lock table rate_limit.sessions;
-	    
+
     SELECT id, expires_at
     FROM rate_limit.session_select($2, session_type)
     WHERE expires_at > $4
     INTO in_session_id, in_session_expiration;
-  
+
     IF in_session_id is null THEN
         in_session_expiration = to_timestamp(extract (epoch from $4)+ $3/1000.0);
         SELECT id, in_session_expiration
         FROM rate_limit.session_reset(
             $2, session_type, in_session_expiration
-        ) 
+        )
         INTO in_session_id;
     END IF;
 
@@ -148,29 +148,29 @@ CREATE FUNCTION rate_limit.agg_increment(key_ text, prefix text, window_ms doubl
     ON CONFLICT ON CONSTRAINT unique_session_key DO UPDATE
     SET count = records_aggregated.count + 1
     RETURNING count INTO record_count;
-   
+
    	ret:= (record_count, in_session_expiration);
 
     RETURN ret;
-    END; 
+    END;
 $_$;
 
 
-ALTER FUNCTION rate_limit.agg_increment(key_ text, prefix text, window_ms double precision, reference_time timestamp with time zone) OWNER TO postgres;
+ALTER FUNCTION rate_limit.agg_increment(key_ text, prefix text, window_ms double precision, reference_time timestamp with time zone) OWNER TO lms_admin;
 
 --
 -- TOC entry 286 (class 1255 OID 41823)
--- Name: agg_reset_key(text, text, timestamp with time zone); Type: FUNCTION; Schema: rate_limit; Owner: postgres
+-- Name: agg_reset_key(text, text, timestamp with time zone); Type: FUNCTION; Schema: rate_limit; Owner: lms_admin
 --
 
 CREATE FUNCTION rate_limit.agg_reset_key(key_ text, prefix text, reference_time timestamp with time zone DEFAULT now()) RETURNS void
     LANGUAGE plpgsql
     AS $_$
-    DECLARE 
+    DECLARE
         in_session_id uuid;
         session_type text = 'aggregated';
     BEGIN
-    
+
     SELECT id
     FROM rate_limit.session_select($2, session_type)
     WHERE expires_at > $3
@@ -182,21 +182,21 @@ CREATE FUNCTION rate_limit.agg_reset_key(key_ text, prefix text, reference_time 
 $_$;
 
 
-ALTER FUNCTION rate_limit.agg_reset_key(key_ text, prefix text, reference_time timestamp with time zone) OWNER TO postgres;
+ALTER FUNCTION rate_limit.agg_reset_key(key_ text, prefix text, reference_time timestamp with time zone) OWNER TO lms_admin;
 
 --
 -- TOC entry 287 (class 1255 OID 41824)
--- Name: agg_reset_session(text, timestamp with time zone); Type: FUNCTION; Schema: rate_limit; Owner: postgres
+-- Name: agg_reset_session(text, timestamp with time zone); Type: FUNCTION; Schema: rate_limit; Owner: lms_admin
 --
 
 CREATE FUNCTION rate_limit.agg_reset_session(prefix text, reference_time timestamp with time zone DEFAULT now()) RETURNS void
     LANGUAGE plpgsql
     AS $_$
-    DECLARE 
+    DECLARE
         in_session_id uuid;
         session_type text = 'aggregated';
     BEGIN
-    
+
     SELECT id
     FROM rate_limit.session_select($1, session_type)
     WHERE expires_at > $2
@@ -208,42 +208,42 @@ CREATE FUNCTION rate_limit.agg_reset_session(prefix text, reference_time timesta
 $_$;
 
 
-ALTER FUNCTION rate_limit.agg_reset_session(prefix text, reference_time timestamp with time zone) OWNER TO postgres;
+ALTER FUNCTION rate_limit.agg_reset_session(prefix text, reference_time timestamp with time zone) OWNER TO lms_admin;
 
 --
 -- TOC entry 288 (class 1255 OID 41825)
--- Name: ind_decrement(text, text, timestamp with time zone); Type: FUNCTION; Schema: rate_limit; Owner: postgres
+-- Name: ind_decrement(text, text, timestamp with time zone); Type: FUNCTION; Schema: rate_limit; Owner: lms_admin
 --
 
 CREATE FUNCTION rate_limit.ind_decrement(key_ text, prefix text, reference_time timestamp with time zone DEFAULT now()) RETURNS void
     LANGUAGE plpgsql
     AS $_$
-    DECLARE 
+    DECLARE
         in_session_id uuid;
         session_type text = 'individual';
     BEGIN
-    
+
     SELECT id
     FROM rate_limit.session_select($2, session_type)
     WHERE expires_at > $3
     INTO in_session_id;
 
-    WITH 
+    WITH
     rows_to_delete AS (
         SELECT id FROM rate_limit.individual_records
         WHERE key = $1 and session_id = in_session_id ORDER BY event_time LIMIT 1
         )
-    DELETE FROM rate_limit.individual_records 
+    DELETE FROM rate_limit.individual_records
     USING rows_to_delete WHERE individual_records.id = rows_to_delete.id;
     END;
 $_$;
 
 
-ALTER FUNCTION rate_limit.ind_decrement(key_ text, prefix text, reference_time timestamp with time zone) OWNER TO postgres;
+ALTER FUNCTION rate_limit.ind_decrement(key_ text, prefix text, reference_time timestamp with time zone) OWNER TO lms_admin;
 
 --
 -- TOC entry 289 (class 1255 OID 41826)
--- Name: ind_increment(text, text, double precision, timestamp with time zone); Type: FUNCTION; Schema: rate_limit; Owner: postgres
+-- Name: ind_increment(text, text, double precision, timestamp with time zone); Type: FUNCTION; Schema: rate_limit; Owner: lms_admin
 --
 
 CREATE FUNCTION rate_limit.ind_increment(key_ text, prefix text, window_ms double precision, reference_time timestamp with time zone DEFAULT now()) RETURNS record
@@ -258,49 +258,49 @@ CREATE FUNCTION rate_limit.ind_increment(key_ text, prefix text, window_ms doubl
     BEGIN
 
     LOCK TABLE rate_limit.sessions;
-    
+
     SELECT id, expires_at
     FROM rate_limit.session_select($2, session_type)
     WHERE expires_at > $4
     INTO in_session_id, in_session_expiration;
-  
+
     IF in_session_id is null THEN
         in_session_expiration = to_timestamp(extract (epoch from $4)+ $3/1000.0);
         SELECT id, in_session_expiration
         FROM rate_limit.session_reset(
             $2, session_type, in_session_expiration
-        ) 
+        )
         INTO in_session_id;
     END IF;
 
 
     INSERT INTO rate_limit.individual_records(key, session_id) VALUES ($1, in_session_id);
-    
+
     SELECT count(id)::int AS count FROM rate_limit.individual_records WHERE key = $1 AND session_id = in_session_id
     INTO record_count;
-   
+
    	ret:= (record_count, in_session_expiration);
 
     RETURN ret;
-    END; 
+    END;
 $_$;
 
 
-ALTER FUNCTION rate_limit.ind_increment(key_ text, prefix text, window_ms double precision, reference_time timestamp with time zone) OWNER TO postgres;
+ALTER FUNCTION rate_limit.ind_increment(key_ text, prefix text, window_ms double precision, reference_time timestamp with time zone) OWNER TO lms_admin;
 
 --
 -- TOC entry 290 (class 1255 OID 41827)
--- Name: ind_reset_key(text, text, timestamp with time zone); Type: FUNCTION; Schema: rate_limit; Owner: postgres
+-- Name: ind_reset_key(text, text, timestamp with time zone); Type: FUNCTION; Schema: rate_limit; Owner: lms_admin
 --
 
 CREATE FUNCTION rate_limit.ind_reset_key(key_ text, prefix text, reference_time timestamp with time zone DEFAULT now()) RETURNS void
     LANGUAGE plpgsql
     AS $_$
-    DECLARE 
+    DECLARE
         in_session_id uuid;
         session_type text = 'individual';
     BEGIN
-    
+
     SELECT id
     FROM rate_limit.session_select($2, session_type)
     WHERE expires_at > $3
@@ -312,21 +312,21 @@ CREATE FUNCTION rate_limit.ind_reset_key(key_ text, prefix text, reference_time 
 $_$;
 
 
-ALTER FUNCTION rate_limit.ind_reset_key(key_ text, prefix text, reference_time timestamp with time zone) OWNER TO postgres;
+ALTER FUNCTION rate_limit.ind_reset_key(key_ text, prefix text, reference_time timestamp with time zone) OWNER TO lms_admin;
 
 --
 -- TOC entry 291 (class 1255 OID 41828)
--- Name: ind_reset_session(text, timestamp with time zone); Type: FUNCTION; Schema: rate_limit; Owner: postgres
+-- Name: ind_reset_session(text, timestamp with time zone); Type: FUNCTION; Schema: rate_limit; Owner: lms_admin
 --
 
 CREATE FUNCTION rate_limit.ind_reset_session(prefix text, reference_time timestamp with time zone DEFAULT now()) RETURNS void
     LANGUAGE plpgsql
     AS $_$
-    DECLARE 
+    DECLARE
         in_session_id uuid;
         session_type text = 'individual';
     BEGIN
-    
+
     SELECT id
     FROM rate_limit.session_select($1, session_type)
     WHERE expires_at > $2
@@ -338,30 +338,30 @@ CREATE FUNCTION rate_limit.ind_reset_session(prefix text, reference_time timesta
 $_$;
 
 
-ALTER FUNCTION rate_limit.ind_reset_session(prefix text, reference_time timestamp with time zone) OWNER TO postgres;
+ALTER FUNCTION rate_limit.ind_reset_session(prefix text, reference_time timestamp with time zone) OWNER TO lms_admin;
 
 --
 -- TOC entry 292 (class 1255 OID 41829)
--- Name: session_reset(text, text, timestamp with time zone); Type: FUNCTION; Schema: rate_limit; Owner: postgres
+-- Name: session_reset(text, text, timestamp with time zone); Type: FUNCTION; Schema: rate_limit; Owner: lms_admin
 --
 
 CREATE FUNCTION rate_limit.session_reset(name_ text, type_ text, expires_at_ timestamp with time zone) RETURNS TABLE(id uuid, name_ text, type_ text)
     LANGUAGE sql
     AS $_$
-    DELETE FROM rate_limit.sessions 
+    DELETE FROM rate_limit.sessions
     WHERE name_ = $1 AND type_ = $2;
 
-    INSERT INTO rate_limit.sessions(name_, type_, expires_at) 
-    SELECT $1, $2, $3 
+    INSERT INTO rate_limit.sessions(name_, type_, expires_at)
+    SELECT $1, $2, $3
     RETURNING id, name_, type_;
 $_$;
 
 
-ALTER FUNCTION rate_limit.session_reset(name_ text, type_ text, expires_at_ timestamp with time zone) OWNER TO postgres;
+ALTER FUNCTION rate_limit.session_reset(name_ text, type_ text, expires_at_ timestamp with time zone) OWNER TO lms_admin;
 
 --
 -- TOC entry 293 (class 1255 OID 41830)
--- Name: session_select(text, text); Type: FUNCTION; Schema: rate_limit; Owner: postgres
+-- Name: session_select(text, text); Type: FUNCTION; Schema: rate_limit; Owner: lms_admin
 --
 
 CREATE FUNCTION rate_limit.session_select(name_ text, type_ text) RETURNS TABLE(id uuid, name_ text, type_ text, expires_at timestamp with time zone)
@@ -374,7 +374,7 @@ CREATE FUNCTION rate_limit.session_select(name_ text, type_ text) RETURNS TABLE(
 $_$;
 
 
-ALTER FUNCTION rate_limit.session_select(name_ text, type_ text) OWNER TO postgres;
+ALTER FUNCTION rate_limit.session_select(name_ text, type_ text) OWNER TO lms_admin;
 
 SET default_tablespace = '';
 
@@ -382,7 +382,7 @@ SET default_table_access_method = heap;
 
 --
 -- TOC entry 221 (class 1259 OID 41831)
--- Name: account; Type: TABLE; Schema: public; Owner: postgres
+-- Name: account; Type: TABLE; Schema: public; Owner: lms_admin
 --
 
 CREATE TABLE public.account (
@@ -402,11 +402,11 @@ CREATE TABLE public.account (
 );
 
 
-ALTER TABLE public.account OWNER TO postgres;
+ALTER TABLE public.account OWNER TO lms_admin;
 
 --
 -- TOC entry 222 (class 1259 OID 41843)
--- Name: activity_log; Type: TABLE; Schema: public; Owner: postgres
+-- Name: activity_log; Type: TABLE; Schema: public; Owner: lms_admin
 --
 
 CREATE TABLE public.activity_log (
@@ -417,11 +417,11 @@ CREATE TABLE public.activity_log (
 );
 
 
-ALTER TABLE public.activity_log OWNER TO postgres;
+ALTER TABLE public.activity_log OWNER TO lms_admin;
 
 --
 -- TOC entry 223 (class 1259 OID 41851)
--- Name: activity_log_act_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+-- Name: activity_log_act_id_seq; Type: SEQUENCE; Schema: public; Owner: lms_admin
 --
 
 ALTER TABLE public.activity_log ALTER COLUMN act_id ADD GENERATED ALWAYS AS IDENTITY (
@@ -436,7 +436,7 @@ ALTER TABLE public.activity_log ALTER COLUMN act_id ADD GENERATED ALWAYS AS IDEN
 
 --
 -- TOC entry 224 (class 1259 OID 41852)
--- Name: announcements; Type: TABLE; Schema: public; Owner: postgres
+-- Name: announcements; Type: TABLE; Schema: public; Owner: lms_admin
 --
 
 CREATE TABLE public.announcements (
@@ -449,11 +449,11 @@ CREATE TABLE public.announcements (
 );
 
 
-ALTER TABLE public.announcements OWNER TO postgres;
+ALTER TABLE public.announcements OWNER TO lms_admin;
 
 --
 -- TOC entry 225 (class 1259 OID 41863)
--- Name: announcements_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+-- Name: announcements_id_seq; Type: SEQUENCE; Schema: public; Owner: lms_admin
 --
 
 ALTER TABLE public.announcements ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
@@ -468,7 +468,7 @@ ALTER TABLE public.announcements ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTIT
 
 --
 -- TOC entry 226 (class 1259 OID 41864)
--- Name: barangays; Type: TABLE; Schema: public; Owner: postgres
+-- Name: barangays; Type: TABLE; Schema: public; Owner: lms_admin
 --
 
 CREATE TABLE public.barangays (
@@ -477,11 +477,11 @@ CREATE TABLE public.barangays (
 );
 
 
-ALTER TABLE public.barangays OWNER TO postgres;
+ALTER TABLE public.barangays OWNER TO lms_admin;
 
 --
 -- TOC entry 227 (class 1259 OID 41869)
--- Name: barangays_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+-- Name: barangays_id_seq; Type: SEQUENCE; Schema: public; Owner: lms_admin
 --
 
 CREATE SEQUENCE public.barangays_id_seq
@@ -493,12 +493,12 @@ CREATE SEQUENCE public.barangays_id_seq
     CACHE 1;
 
 
-ALTER SEQUENCE public.barangays_id_seq OWNER TO postgres;
+ALTER SEQUENCE public.barangays_id_seq OWNER TO lms_admin;
 
 --
 -- TOC entry 5315 (class 0 OID 0)
 -- Dependencies: 227
--- Name: barangays_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+-- Name: barangays_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: lms_admin
 --
 
 ALTER SEQUENCE public.barangays_id_seq OWNED BY public.barangays.id;
@@ -506,7 +506,7 @@ ALTER SEQUENCE public.barangays_id_seq OWNED BY public.barangays.id;
 
 --
 -- TOC entry 228 (class 1259 OID 41870)
--- Name: blocked_ips; Type: TABLE; Schema: public; Owner: postgres
+-- Name: blocked_ips; Type: TABLE; Schema: public; Owner: lms_admin
 --
 
 CREATE TABLE public.blocked_ips (
@@ -517,11 +517,11 @@ CREATE TABLE public.blocked_ips (
 );
 
 
-ALTER TABLE public.blocked_ips OWNER TO postgres;
+ALTER TABLE public.blocked_ips OWNER TO lms_admin;
 
 --
 -- TOC entry 229 (class 1259 OID 41878)
--- Name: blocked_ips_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+-- Name: blocked_ips_id_seq; Type: SEQUENCE; Schema: public; Owner: lms_admin
 --
 
 CREATE SEQUENCE public.blocked_ips_id_seq
@@ -533,12 +533,12 @@ CREATE SEQUENCE public.blocked_ips_id_seq
     CACHE 1;
 
 
-ALTER SEQUENCE public.blocked_ips_id_seq OWNER TO postgres;
+ALTER SEQUENCE public.blocked_ips_id_seq OWNER TO lms_admin;
 
 --
 -- TOC entry 5316 (class 0 OID 0)
 -- Dependencies: 229
--- Name: blocked_ips_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+-- Name: blocked_ips_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: lms_admin
 --
 
 ALTER SEQUENCE public.blocked_ips_id_seq OWNED BY public.blocked_ips.id;
@@ -546,7 +546,7 @@ ALTER SEQUENCE public.blocked_ips_id_seq OWNED BY public.blocked_ips.id;
 
 --
 -- TOC entry 230 (class 1259 OID 41879)
--- Name: certificates; Type: TABLE; Schema: public; Owner: postgres
+-- Name: certificates; Type: TABLE; Schema: public; Owner: lms_admin
 --
 
 CREATE TABLE public.certificates (
@@ -569,11 +569,11 @@ CREATE TABLE public.certificates (
 );
 
 
-ALTER TABLE public.certificates OWNER TO postgres;
+ALTER TABLE public.certificates OWNER TO lms_admin;
 
 --
 -- TOC entry 231 (class 1259 OID 41890)
--- Name: certificates_cert_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+-- Name: certificates_cert_id_seq; Type: SEQUENCE; Schema: public; Owner: lms_admin
 --
 
 ALTER TABLE public.certificates ALTER COLUMN cert_id ADD GENERATED ALWAYS AS IDENTITY (
@@ -588,7 +588,7 @@ ALTER TABLE public.certificates ALTER COLUMN cert_id ADD GENERATED ALWAYS AS IDE
 
 --
 -- TOC entry 232 (class 1259 OID 41891)
--- Name: choices; Type: TABLE; Schema: public; Owner: postgres
+-- Name: choices; Type: TABLE; Schema: public; Owner: lms_admin
 --
 
 CREATE TABLE public.choices (
@@ -601,11 +601,11 @@ CREATE TABLE public.choices (
 );
 
 
-ALTER TABLE public.choices OWNER TO postgres;
+ALTER TABLE public.choices OWNER TO lms_admin;
 
 --
 -- TOC entry 233 (class 1259 OID 41901)
--- Name: choices_choice_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+-- Name: choices_choice_id_seq; Type: SEQUENCE; Schema: public; Owner: lms_admin
 --
 
 ALTER TABLE public.choices ALTER COLUMN choice_id ADD GENERATED ALWAYS AS IDENTITY (
@@ -620,7 +620,7 @@ ALTER TABLE public.choices ALTER COLUMN choice_id ADD GENERATED ALWAYS AS IDENTI
 
 --
 -- TOC entry 262 (class 1259 OID 42317)
--- Name: feedback_messages; Type: TABLE; Schema: public; Owner: postgres
+-- Name: feedback_messages; Type: TABLE; Schema: public; Owner: lms_admin
 --
 
 CREATE TABLE public.feedback_messages (
@@ -634,11 +634,11 @@ CREATE TABLE public.feedback_messages (
 );
 
 
-ALTER TABLE public.feedback_messages OWNER TO postgres;
+ALTER TABLE public.feedback_messages OWNER TO lms_admin;
 
 --
 -- TOC entry 261 (class 1259 OID 42316)
--- Name: feedback_messages_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+-- Name: feedback_messages_id_seq; Type: SEQUENCE; Schema: public; Owner: lms_admin
 --
 
 CREATE SEQUENCE public.feedback_messages_id_seq
@@ -650,12 +650,12 @@ CREATE SEQUENCE public.feedback_messages_id_seq
     CACHE 1;
 
 
-ALTER SEQUENCE public.feedback_messages_id_seq OWNER TO postgres;
+ALTER SEQUENCE public.feedback_messages_id_seq OWNER TO lms_admin;
 
 --
 -- TOC entry 5317 (class 0 OID 0)
 -- Dependencies: 261
--- Name: feedback_messages_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+-- Name: feedback_messages_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: lms_admin
 --
 
 ALTER SEQUENCE public.feedback_messages_id_seq OWNED BY public.feedback_messages.id;
@@ -663,7 +663,7 @@ ALTER SEQUENCE public.feedback_messages_id_seq OWNED BY public.feedback_messages
 
 --
 -- TOC entry 234 (class 1259 OID 41902)
--- Name: feedbacks; Type: TABLE; Schema: public; Owner: postgres
+-- Name: feedbacks; Type: TABLE; Schema: public; Owner: lms_admin
 --
 
 CREATE TABLE public.feedbacks (
@@ -682,11 +682,11 @@ CREATE TABLE public.feedbacks (
 );
 
 
-ALTER TABLE public.feedbacks OWNER TO postgres;
+ALTER TABLE public.feedbacks OWNER TO lms_admin;
 
 --
 -- TOC entry 235 (class 1259 OID 41913)
--- Name: feedbacks_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+-- Name: feedbacks_id_seq; Type: SEQUENCE; Schema: public; Owner: lms_admin
 --
 
 CREATE SEQUENCE public.feedbacks_id_seq
@@ -698,12 +698,12 @@ CREATE SEQUENCE public.feedbacks_id_seq
     CACHE 1;
 
 
-ALTER SEQUENCE public.feedbacks_id_seq OWNER TO postgres;
+ALTER SEQUENCE public.feedbacks_id_seq OWNER TO lms_admin;
 
 --
 -- TOC entry 5318 (class 0 OID 0)
 -- Dependencies: 235
--- Name: feedbacks_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+-- Name: feedbacks_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: lms_admin
 --
 
 ALTER SEQUENCE public.feedbacks_id_seq OWNED BY public.feedbacks.id;
@@ -711,7 +711,7 @@ ALTER SEQUENCE public.feedbacks_id_seq OWNED BY public.feedbacks.id;
 
 --
 -- TOC entry 236 (class 1259 OID 41914)
--- Name: levels; Type: TABLE; Schema: public; Owner: postgres
+-- Name: levels; Type: TABLE; Schema: public; Owner: lms_admin
 --
 
 CREATE TABLE public.levels (
@@ -725,11 +725,11 @@ CREATE TABLE public.levels (
 );
 
 
-ALTER TABLE public.levels OWNER TO postgres;
+ALTER TABLE public.levels OWNER TO lms_admin;
 
 --
 -- TOC entry 237 (class 1259 OID 41925)
--- Name: levels_level_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+-- Name: levels_level_id_seq; Type: SEQUENCE; Schema: public; Owner: lms_admin
 --
 
 ALTER TABLE public.levels ALTER COLUMN level_id ADD GENERATED ALWAYS AS IDENTITY (
@@ -744,7 +744,7 @@ ALTER TABLE public.levels ALTER COLUMN level_id ADD GENERATED ALWAYS AS IDENTITY
 
 --
 -- TOC entry 238 (class 1259 OID 41926)
--- Name: migrations; Type: TABLE; Schema: public; Owner: postgres
+-- Name: migrations; Type: TABLE; Schema: public; Owner: lms_admin
 --
 
 CREATE TABLE public.migrations (
@@ -755,11 +755,11 @@ CREATE TABLE public.migrations (
 );
 
 
-ALTER TABLE public.migrations OWNER TO postgres;
+ALTER TABLE public.migrations OWNER TO lms_admin;
 
 --
 -- TOC entry 239 (class 1259 OID 41933)
--- Name: module_activity; Type: TABLE; Schema: public; Owner: postgres
+-- Name: module_activity; Type: TABLE; Schema: public; Owner: lms_admin
 --
 
 CREATE TABLE public.module_activity (
@@ -773,11 +773,11 @@ CREATE TABLE public.module_activity (
 );
 
 
-ALTER TABLE public.module_activity OWNER TO postgres;
+ALTER TABLE public.module_activity OWNER TO lms_admin;
 
 --
 -- TOC entry 240 (class 1259 OID 41945)
--- Name: module_activity_modact_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+-- Name: module_activity_modact_id_seq; Type: SEQUENCE; Schema: public; Owner: lms_admin
 --
 
 ALTER TABLE public.module_activity ALTER COLUMN modact_id ADD GENERATED ALWAYS AS IDENTITY (
@@ -792,7 +792,7 @@ ALTER TABLE public.module_activity ALTER COLUMN modact_id ADD GENERATED ALWAYS A
 
 --
 -- TOC entry 241 (class 1259 OID 41946)
--- Name: module_data; Type: TABLE; Schema: public; Owner: postgres
+-- Name: module_data; Type: TABLE; Schema: public; Owner: lms_admin
 --
 
 CREATE TABLE public.module_data (
@@ -815,11 +815,11 @@ CREATE TABLE public.module_data (
 );
 
 
-ALTER TABLE public.module_data OWNER TO postgres;
+ALTER TABLE public.module_data OWNER TO lms_admin;
 
 --
 -- TOC entry 242 (class 1259 OID 41960)
--- Name: module_data_mod_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+-- Name: module_data_mod_id_seq; Type: SEQUENCE; Schema: public; Owner: lms_admin
 --
 
 ALTER TABLE public.module_data ALTER COLUMN mod_id ADD GENERATED ALWAYS AS IDENTITY (
@@ -834,7 +834,7 @@ ALTER TABLE public.module_data ALTER COLUMN mod_id ADD GENERATED ALWAYS AS IDENT
 
 --
 -- TOC entry 243 (class 1259 OID 41961)
--- Name: module_steps; Type: TABLE; Schema: public; Owner: postgres
+-- Name: module_steps; Type: TABLE; Schema: public; Owner: lms_admin
 --
 
 CREATE TABLE public.module_steps (
@@ -850,11 +850,11 @@ CREATE TABLE public.module_steps (
 );
 
 
-ALTER TABLE public.module_steps OWNER TO postgres;
+ALTER TABLE public.module_steps OWNER TO lms_admin;
 
 --
 -- TOC entry 244 (class 1259 OID 41971)
--- Name: module_steps_step_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+-- Name: module_steps_step_id_seq; Type: SEQUENCE; Schema: public; Owner: lms_admin
 --
 
 ALTER TABLE public.module_steps ALTER COLUMN step_id ADD GENERATED ALWAYS AS IDENTITY (
@@ -869,7 +869,7 @@ ALTER TABLE public.module_steps ALTER COLUMN step_id ADD GENERATED ALWAYS AS IDE
 
 --
 -- TOC entry 245 (class 1259 OID 41972)
--- Name: questions; Type: TABLE; Schema: public; Owner: postgres
+-- Name: questions; Type: TABLE; Schema: public; Owner: lms_admin
 --
 
 CREATE TABLE public.questions (
@@ -883,11 +883,11 @@ CREATE TABLE public.questions (
 );
 
 
-ALTER TABLE public.questions OWNER TO postgres;
+ALTER TABLE public.questions OWNER TO lms_admin;
 
 --
 -- TOC entry 246 (class 1259 OID 41983)
--- Name: questions_question_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+-- Name: questions_question_id_seq; Type: SEQUENCE; Schema: public; Owner: lms_admin
 --
 
 ALTER TABLE public.questions ALTER COLUMN question_id ADD GENERATED ALWAYS AS IDENTITY (
@@ -902,7 +902,7 @@ ALTER TABLE public.questions ALTER COLUMN question_id ADD GENERATED ALWAYS AS ID
 
 --
 -- TOC entry 247 (class 1259 OID 41984)
--- Name: results; Type: TABLE; Schema: public; Owner: postgres
+-- Name: results; Type: TABLE; Schema: public; Owner: lms_admin
 --
 
 CREATE TABLE public.results (
@@ -918,11 +918,11 @@ CREATE TABLE public.results (
 );
 
 
-ALTER TABLE public.results OWNER TO postgres;
+ALTER TABLE public.results OWNER TO lms_admin;
 
 --
 -- TOC entry 248 (class 1259 OID 41996)
--- Name: results_result_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+-- Name: results_result_id_seq; Type: SEQUENCE; Schema: public; Owner: lms_admin
 --
 
 ALTER TABLE public.results ALTER COLUMN result_id ADD GENERATED ALWAYS AS IDENTITY (
@@ -937,7 +937,7 @@ ALTER TABLE public.results ALTER COLUMN result_id ADD GENERATED ALWAYS AS IDENTI
 
 --
 -- TOC entry 249 (class 1259 OID 41997)
--- Name: session; Type: TABLE; Schema: public; Owner: postgres
+-- Name: session; Type: TABLE; Schema: public; Owner: lms_admin
 --
 
 CREATE TABLE public.session (
@@ -953,11 +953,11 @@ CREATE TABLE public.session (
 );
 
 
-ALTER TABLE public.session OWNER TO postgres;
+ALTER TABLE public.session OWNER TO lms_admin;
 
 --
 -- TOC entry 250 (class 1259 OID 42009)
--- Name: system_settings; Type: TABLE; Schema: public; Owner: postgres
+-- Name: system_settings; Type: TABLE; Schema: public; Owner: lms_admin
 --
 
 CREATE TABLE public.system_settings (
@@ -967,11 +967,11 @@ CREATE TABLE public.system_settings (
 );
 
 
-ALTER TABLE public.system_settings OWNER TO postgres;
+ALTER TABLE public.system_settings OWNER TO lms_admin;
 
 --
 -- TOC entry 251 (class 1259 OID 42018)
--- Name: twoFactor; Type: TABLE; Schema: public; Owner: postgres
+-- Name: twoFactor; Type: TABLE; Schema: public; Owner: lms_admin
 --
 
 CREATE TABLE public."twoFactor" (
@@ -985,11 +985,11 @@ CREATE TABLE public."twoFactor" (
 );
 
 
-ALTER TABLE public."twoFactor" OWNER TO postgres;
+ALTER TABLE public."twoFactor" OWNER TO lms_admin;
 
 --
 -- TOC entry 252 (class 1259 OID 42027)
--- Name: user; Type: TABLE; Schema: public; Owner: postgres
+-- Name: user; Type: TABLE; Schema: public; Owner: lms_admin
 --
 
 CREATE TABLE public."user" (
@@ -1015,12 +1015,12 @@ CREATE TABLE public."user" (
 );
 
 
-ALTER TABLE public."user" OWNER TO postgres;
+ALTER TABLE public."user" OWNER TO lms_admin;
 
 --
 -- TOC entry 5319 (class 0 OID 0)
 -- Dependencies: 252
--- Name: COLUMN "user".consent_given_at; Type: COMMENT; Schema: public; Owner: postgres
+-- Name: COLUMN "user".consent_given_at; Type: COMMENT; Schema: public; Owner: lms_admin
 --
 
 COMMENT ON COLUMN public."user".consent_given_at IS 'Timestamp when the user explicitly clicked the consent button during registration. NULL for accounts created before this migration.';
@@ -1029,7 +1029,7 @@ COMMENT ON COLUMN public."user".consent_given_at IS 'Timestamp when the user exp
 --
 -- TOC entry 5320 (class 0 OID 0)
 -- Dependencies: 252
--- Name: COLUMN "user".consent_version; Type: COMMENT; Schema: public; Owner: postgres
+-- Name: COLUMN "user".consent_version; Type: COMMENT; Schema: public; Owner: lms_admin
 --
 
 COMMENT ON COLUMN public."user".consent_version IS 'Version identifier of the consent text the user agreed to (e.g. 1-2026). NULL for pre-migration accounts.';
@@ -1037,7 +1037,7 @@ COMMENT ON COLUMN public."user".consent_version IS 'Version identifier of the co
 
 --
 -- TOC entry 260 (class 1259 OID 42290)
--- Name: user_notification; Type: TABLE; Schema: public; Owner: postgres
+-- Name: user_notification; Type: TABLE; Schema: public; Owner: lms_admin
 --
 
 CREATE TABLE public.user_notification (
@@ -1050,11 +1050,11 @@ CREATE TABLE public.user_notification (
 );
 
 
-ALTER TABLE public.user_notification OWNER TO postgres;
+ALTER TABLE public.user_notification OWNER TO lms_admin;
 
 --
 -- TOC entry 259 (class 1259 OID 42289)
--- Name: user_notification_notification_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+-- Name: user_notification_notification_id_seq; Type: SEQUENCE; Schema: public; Owner: lms_admin
 --
 
 CREATE SEQUENCE public.user_notification_notification_id_seq
@@ -1066,12 +1066,12 @@ CREATE SEQUENCE public.user_notification_notification_id_seq
     CACHE 1;
 
 
-ALTER SEQUENCE public.user_notification_notification_id_seq OWNER TO postgres;
+ALTER SEQUENCE public.user_notification_notification_id_seq OWNER TO lms_admin;
 
 --
 -- TOC entry 5321 (class 0 OID 0)
 -- Dependencies: 259
--- Name: user_notification_notification_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+-- Name: user_notification_notification_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: lms_admin
 --
 
 ALTER SEQUENCE public.user_notification_notification_id_seq OWNED BY public.user_notification.notification_id;
@@ -1079,7 +1079,7 @@ ALTER SEQUENCE public.user_notification_notification_id_seq OWNED BY public.user
 
 --
 -- TOC entry 253 (class 1259 OID 42043)
--- Name: user_step_progress; Type: TABLE; Schema: public; Owner: postgres
+-- Name: user_step_progress; Type: TABLE; Schema: public; Owner: lms_admin
 --
 
 CREATE TABLE public.user_step_progress (
@@ -1090,11 +1090,11 @@ CREATE TABLE public.user_step_progress (
 );
 
 
-ALTER TABLE public.user_step_progress OWNER TO postgres;
+ALTER TABLE public.user_step_progress OWNER TO lms_admin;
 
 --
 -- TOC entry 254 (class 1259 OID 42052)
--- Name: user_step_progress_progress_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+-- Name: user_step_progress_progress_id_seq; Type: SEQUENCE; Schema: public; Owner: lms_admin
 --
 
 ALTER TABLE public.user_step_progress ALTER COLUMN progress_id ADD GENERATED ALWAYS AS IDENTITY (
@@ -1109,7 +1109,7 @@ ALTER TABLE public.user_step_progress ALTER COLUMN progress_id ADD GENERATED ALW
 
 --
 -- TOC entry 255 (class 1259 OID 42053)
--- Name: verification; Type: TABLE; Schema: public; Owner: postgres
+-- Name: verification; Type: TABLE; Schema: public; Owner: lms_admin
 --
 
 CREATE TABLE public.verification (
@@ -1122,11 +1122,11 @@ CREATE TABLE public.verification (
 );
 
 
-ALTER TABLE public.verification OWNER TO postgres;
+ALTER TABLE public.verification OWNER TO lms_admin;
 
 --
 -- TOC entry 256 (class 1259 OID 42066)
--- Name: individual_records; Type: TABLE; Schema: rate_limit; Owner: postgres
+-- Name: individual_records; Type: TABLE; Schema: rate_limit; Owner: lms_admin
 --
 
 CREATE TABLE rate_limit.individual_records (
@@ -1137,11 +1137,11 @@ CREATE TABLE rate_limit.individual_records (
 );
 
 
-ALTER TABLE rate_limit.individual_records OWNER TO postgres;
+ALTER TABLE rate_limit.individual_records OWNER TO lms_admin;
 
 --
 -- TOC entry 257 (class 1259 OID 42074)
--- Name: records_aggregated; Type: TABLE; Schema: rate_limit; Owner: postgres
+-- Name: records_aggregated; Type: TABLE; Schema: rate_limit; Owner: lms_admin
 --
 
 CREATE TABLE rate_limit.records_aggregated (
@@ -1151,11 +1151,11 @@ CREATE TABLE rate_limit.records_aggregated (
 );
 
 
-ALTER TABLE rate_limit.records_aggregated OWNER TO postgres;
+ALTER TABLE rate_limit.records_aggregated OWNER TO lms_admin;
 
 --
 -- TOC entry 258 (class 1259 OID 42081)
--- Name: sessions; Type: TABLE; Schema: rate_limit; Owner: postgres
+-- Name: sessions; Type: TABLE; Schema: rate_limit; Owner: lms_admin
 --
 
 CREATE TABLE rate_limit.sessions (
@@ -1167,11 +1167,11 @@ CREATE TABLE rate_limit.sessions (
 );
 
 
-ALTER TABLE rate_limit.sessions OWNER TO postgres;
+ALTER TABLE rate_limit.sessions OWNER TO lms_admin;
 
 --
 -- TOC entry 4998 (class 2604 OID 42089)
--- Name: barangays id; Type: DEFAULT; Schema: public; Owner: postgres
+-- Name: barangays id; Type: DEFAULT; Schema: public; Owner: lms_admin
 --
 
 ALTER TABLE ONLY public.barangays ALTER COLUMN id SET DEFAULT nextval('public.barangays_id_seq'::regclass);
@@ -1179,7 +1179,7 @@ ALTER TABLE ONLY public.barangays ALTER COLUMN id SET DEFAULT nextval('public.ba
 
 --
 -- TOC entry 4999 (class 2604 OID 42090)
--- Name: blocked_ips id; Type: DEFAULT; Schema: public; Owner: postgres
+-- Name: blocked_ips id; Type: DEFAULT; Schema: public; Owner: lms_admin
 --
 
 ALTER TABLE ONLY public.blocked_ips ALTER COLUMN id SET DEFAULT nextval('public.blocked_ips_id_seq'::regclass);
@@ -1187,7 +1187,7 @@ ALTER TABLE ONLY public.blocked_ips ALTER COLUMN id SET DEFAULT nextval('public.
 
 --
 -- TOC entry 5037 (class 2604 OID 42320)
--- Name: feedback_messages id; Type: DEFAULT; Schema: public; Owner: postgres
+-- Name: feedback_messages id; Type: DEFAULT; Schema: public; Owner: lms_admin
 --
 
 ALTER TABLE ONLY public.feedback_messages ALTER COLUMN id SET DEFAULT nextval('public.feedback_messages_id_seq'::regclass);
@@ -1195,7 +1195,7 @@ ALTER TABLE ONLY public.feedback_messages ALTER COLUMN id SET DEFAULT nextval('p
 
 --
 -- TOC entry 5003 (class 2604 OID 42091)
--- Name: feedbacks id; Type: DEFAULT; Schema: public; Owner: postgres
+-- Name: feedbacks id; Type: DEFAULT; Schema: public; Owner: lms_admin
 --
 
 ALTER TABLE ONLY public.feedbacks ALTER COLUMN id SET DEFAULT nextval('public.feedbacks_id_seq'::regclass);
@@ -1203,7 +1203,7 @@ ALTER TABLE ONLY public.feedbacks ALTER COLUMN id SET DEFAULT nextval('public.fe
 
 --
 -- TOC entry 5034 (class 2604 OID 42293)
--- Name: user_notification notification_id; Type: DEFAULT; Schema: public; Owner: postgres
+-- Name: user_notification notification_id; Type: DEFAULT; Schema: public; Owner: lms_admin
 --
 
 ALTER TABLE ONLY public.user_notification ALTER COLUMN notification_id SET DEFAULT nextval('public.user_notification_notification_id_seq'::regclass);
@@ -1211,7 +1211,7 @@ ALTER TABLE ONLY public.user_notification ALTER COLUMN notification_id SET DEFAU
 
 --
 -- TOC entry 5044 (class 2606 OID 42093)
--- Name: account account_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: account account_pkey; Type: CONSTRAINT; Schema: public; Owner: lms_admin
 --
 
 ALTER TABLE ONLY public.account
@@ -1220,7 +1220,7 @@ ALTER TABLE ONLY public.account
 
 --
 -- TOC entry 5047 (class 2606 OID 42095)
--- Name: activity_log activity_log_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: activity_log activity_log_pkey; Type: CONSTRAINT; Schema: public; Owner: lms_admin
 --
 
 ALTER TABLE ONLY public.activity_log
@@ -1229,7 +1229,7 @@ ALTER TABLE ONLY public.activity_log
 
 --
 -- TOC entry 5052 (class 2606 OID 42097)
--- Name: announcements announcements_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: announcements announcements_pkey; Type: CONSTRAINT; Schema: public; Owner: lms_admin
 --
 
 ALTER TABLE ONLY public.announcements
@@ -1238,7 +1238,7 @@ ALTER TABLE ONLY public.announcements
 
 --
 -- TOC entry 5054 (class 2606 OID 42099)
--- Name: barangays barangays_name_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: barangays barangays_name_key; Type: CONSTRAINT; Schema: public; Owner: lms_admin
 --
 
 ALTER TABLE ONLY public.barangays
@@ -1247,7 +1247,7 @@ ALTER TABLE ONLY public.barangays
 
 --
 -- TOC entry 5056 (class 2606 OID 42101)
--- Name: barangays barangays_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: barangays barangays_pkey; Type: CONSTRAINT; Schema: public; Owner: lms_admin
 --
 
 ALTER TABLE ONLY public.barangays
@@ -1256,7 +1256,7 @@ ALTER TABLE ONLY public.barangays
 
 --
 -- TOC entry 5058 (class 2606 OID 42103)
--- Name: blocked_ips blocked_ips_ip_address_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: blocked_ips blocked_ips_ip_address_key; Type: CONSTRAINT; Schema: public; Owner: lms_admin
 --
 
 ALTER TABLE ONLY public.blocked_ips
@@ -1265,7 +1265,7 @@ ALTER TABLE ONLY public.blocked_ips
 
 --
 -- TOC entry 5060 (class 2606 OID 42105)
--- Name: blocked_ips blocked_ips_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: blocked_ips blocked_ips_pkey; Type: CONSTRAINT; Schema: public; Owner: lms_admin
 --
 
 ALTER TABLE ONLY public.blocked_ips
@@ -1274,7 +1274,7 @@ ALTER TABLE ONLY public.blocked_ips
 
 --
 -- TOC entry 5062 (class 2606 OID 42107)
--- Name: certificates certificates_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: certificates certificates_pkey; Type: CONSTRAINT; Schema: public; Owner: lms_admin
 --
 
 ALTER TABLE ONLY public.certificates
@@ -1283,7 +1283,7 @@ ALTER TABLE ONLY public.certificates
 
 --
 -- TOC entry 5068 (class 2606 OID 42109)
--- Name: choices choices_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: choices choices_pkey; Type: CONSTRAINT; Schema: public; Owner: lms_admin
 --
 
 ALTER TABLE ONLY public.choices
@@ -1292,7 +1292,7 @@ ALTER TABLE ONLY public.choices
 
 --
 -- TOC entry 5132 (class 2606 OID 42330)
--- Name: feedback_messages feedback_messages_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: feedback_messages feedback_messages_pkey; Type: CONSTRAINT; Schema: public; Owner: lms_admin
 --
 
 ALTER TABLE ONLY public.feedback_messages
@@ -1301,7 +1301,7 @@ ALTER TABLE ONLY public.feedback_messages
 
 --
 -- TOC entry 5070 (class 2606 OID 42111)
--- Name: feedbacks feedbacks_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: feedbacks feedbacks_pkey; Type: CONSTRAINT; Schema: public; Owner: lms_admin
 --
 
 ALTER TABLE ONLY public.feedbacks
@@ -1310,7 +1310,7 @@ ALTER TABLE ONLY public.feedbacks
 
 --
 -- TOC entry 5072 (class 2606 OID 42113)
--- Name: levels levels_mod_id_level_order_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: levels levels_mod_id_level_order_key; Type: CONSTRAINT; Schema: public; Owner: lms_admin
 --
 
 ALTER TABLE ONLY public.levels
@@ -1319,7 +1319,7 @@ ALTER TABLE ONLY public.levels
 
 --
 -- TOC entry 5074 (class 2606 OID 42115)
--- Name: levels levels_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: levels levels_pkey; Type: CONSTRAINT; Schema: public; Owner: lms_admin
 --
 
 ALTER TABLE ONLY public.levels
@@ -1328,7 +1328,7 @@ ALTER TABLE ONLY public.levels
 
 --
 -- TOC entry 5076 (class 2606 OID 42117)
--- Name: migrations migrations_name_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: migrations migrations_name_key; Type: CONSTRAINT; Schema: public; Owner: lms_admin
 --
 
 ALTER TABLE ONLY public.migrations
@@ -1337,7 +1337,7 @@ ALTER TABLE ONLY public.migrations
 
 --
 -- TOC entry 5078 (class 2606 OID 42119)
--- Name: migrations migrations_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: migrations migrations_pkey; Type: CONSTRAINT; Schema: public; Owner: lms_admin
 --
 
 ALTER TABLE ONLY public.migrations
@@ -1346,7 +1346,7 @@ ALTER TABLE ONLY public.migrations
 
 --
 -- TOC entry 5083 (class 2606 OID 42121)
--- Name: module_activity module_activity_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: module_activity module_activity_pkey; Type: CONSTRAINT; Schema: public; Owner: lms_admin
 --
 
 ALTER TABLE ONLY public.module_activity
@@ -1355,7 +1355,7 @@ ALTER TABLE ONLY public.module_activity
 
 --
 -- TOC entry 5086 (class 2606 OID 42123)
--- Name: module_data module_data_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: module_data module_data_pkey; Type: CONSTRAINT; Schema: public; Owner: lms_admin
 --
 
 ALTER TABLE ONLY public.module_data
@@ -1364,7 +1364,7 @@ ALTER TABLE ONLY public.module_data
 
 --
 -- TOC entry 5088 (class 2606 OID 42125)
--- Name: module_steps module_steps_level_id_step_order_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: module_steps module_steps_level_id_step_order_key; Type: CONSTRAINT; Schema: public; Owner: lms_admin
 --
 
 ALTER TABLE ONLY public.module_steps
@@ -1373,7 +1373,7 @@ ALTER TABLE ONLY public.module_steps
 
 --
 -- TOC entry 5090 (class 2606 OID 42127)
--- Name: module_steps module_steps_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: module_steps module_steps_pkey; Type: CONSTRAINT; Schema: public; Owner: lms_admin
 --
 
 ALTER TABLE ONLY public.module_steps
@@ -1382,7 +1382,7 @@ ALTER TABLE ONLY public.module_steps
 
 --
 -- TOC entry 5092 (class 2606 OID 42129)
--- Name: questions questions_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: questions questions_pkey; Type: CONSTRAINT; Schema: public; Owner: lms_admin
 --
 
 ALTER TABLE ONLY public.questions
@@ -1391,7 +1391,7 @@ ALTER TABLE ONLY public.questions
 
 --
 -- TOC entry 5094 (class 2606 OID 42131)
--- Name: results results_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: results results_pkey; Type: CONSTRAINT; Schema: public; Owner: lms_admin
 --
 
 ALTER TABLE ONLY public.results
@@ -1400,7 +1400,7 @@ ALTER TABLE ONLY public.results
 
 --
 -- TOC entry 5096 (class 2606 OID 42133)
--- Name: session session_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: session session_pkey; Type: CONSTRAINT; Schema: public; Owner: lms_admin
 --
 
 ALTER TABLE ONLY public.session
@@ -1409,7 +1409,7 @@ ALTER TABLE ONLY public.session
 
 --
 -- TOC entry 5098 (class 2606 OID 42135)
--- Name: session session_token_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: session session_token_key; Type: CONSTRAINT; Schema: public; Owner: lms_admin
 --
 
 ALTER TABLE ONLY public.session
@@ -1418,7 +1418,7 @@ ALTER TABLE ONLY public.session
 
 --
 -- TOC entry 5101 (class 2606 OID 42137)
--- Name: system_settings system_settings_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: system_settings system_settings_pkey; Type: CONSTRAINT; Schema: public; Owner: lms_admin
 --
 
 ALTER TABLE ONLY public.system_settings
@@ -1427,7 +1427,7 @@ ALTER TABLE ONLY public.system_settings
 
 --
 -- TOC entry 5103 (class 2606 OID 42139)
--- Name: twoFactor twoFactor_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: twoFactor twoFactor_pkey; Type: CONSTRAINT; Schema: public; Owner: lms_admin
 --
 
 ALTER TABLE ONLY public."twoFactor"
@@ -1436,7 +1436,7 @@ ALTER TABLE ONLY public."twoFactor"
 
 --
 -- TOC entry 5115 (class 2606 OID 42141)
--- Name: user_step_progress unique_user_step; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: user_step_progress unique_user_step; Type: CONSTRAINT; Schema: public; Owner: lms_admin
 --
 
 ALTER TABLE ONLY public.user_step_progress
@@ -1445,7 +1445,7 @@ ALTER TABLE ONLY public.user_step_progress
 
 --
 -- TOC entry 5064 (class 2606 OID 42143)
--- Name: certificates uq_certificates_user_module; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: certificates uq_certificates_user_module; Type: CONSTRAINT; Schema: public; Owner: lms_admin
 --
 
 ALTER TABLE ONLY public.certificates
@@ -1454,7 +1454,7 @@ ALTER TABLE ONLY public.certificates
 
 --
 -- TOC entry 5066 (class 2606 OID 42145)
--- Name: certificates uq_certificates_verification_token; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: certificates uq_certificates_verification_token; Type: CONSTRAINT; Schema: public; Owner: lms_admin
 --
 
 ALTER TABLE ONLY public.certificates
@@ -1463,7 +1463,7 @@ ALTER TABLE ONLY public.certificates
 
 --
 -- TOC entry 5111 (class 2606 OID 42147)
--- Name: user user_email_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: user user_email_key; Type: CONSTRAINT; Schema: public; Owner: lms_admin
 --
 
 ALTER TABLE ONLY public."user"
@@ -1472,7 +1472,7 @@ ALTER TABLE ONLY public."user"
 
 --
 -- TOC entry 5130 (class 2606 OID 42303)
--- Name: user_notification user_notification_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: user_notification user_notification_pkey; Type: CONSTRAINT; Schema: public; Owner: lms_admin
 --
 
 ALTER TABLE ONLY public.user_notification
@@ -1481,7 +1481,7 @@ ALTER TABLE ONLY public.user_notification
 
 --
 -- TOC entry 5113 (class 2606 OID 42149)
--- Name: user user_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: user user_pkey; Type: CONSTRAINT; Schema: public; Owner: lms_admin
 --
 
 ALTER TABLE ONLY public."user"
@@ -1490,7 +1490,7 @@ ALTER TABLE ONLY public."user"
 
 --
 -- TOC entry 5117 (class 2606 OID 42151)
--- Name: user_step_progress user_step_progress_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: user_step_progress user_step_progress_pkey; Type: CONSTRAINT; Schema: public; Owner: lms_admin
 --
 
 ALTER TABLE ONLY public.user_step_progress
@@ -1499,7 +1499,7 @@ ALTER TABLE ONLY public.user_step_progress
 
 --
 -- TOC entry 5120 (class 2606 OID 42153)
--- Name: verification verification_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: verification verification_pkey; Type: CONSTRAINT; Schema: public; Owner: lms_admin
 --
 
 ALTER TABLE ONLY public.verification
@@ -1508,7 +1508,7 @@ ALTER TABLE ONLY public.verification
 
 --
 -- TOC entry 5122 (class 2606 OID 42155)
--- Name: individual_records individual_records_pkey; Type: CONSTRAINT; Schema: rate_limit; Owner: postgres
+-- Name: individual_records individual_records_pkey; Type: CONSTRAINT; Schema: rate_limit; Owner: lms_admin
 --
 
 ALTER TABLE ONLY rate_limit.individual_records
@@ -1517,7 +1517,7 @@ ALTER TABLE ONLY rate_limit.individual_records
 
 --
 -- TOC entry 5126 (class 2606 OID 42157)
--- Name: sessions sessions_name__key; Type: CONSTRAINT; Schema: rate_limit; Owner: postgres
+-- Name: sessions sessions_name__key; Type: CONSTRAINT; Schema: rate_limit; Owner: lms_admin
 --
 
 ALTER TABLE ONLY rate_limit.sessions
@@ -1526,7 +1526,7 @@ ALTER TABLE ONLY rate_limit.sessions
 
 --
 -- TOC entry 5128 (class 2606 OID 42159)
--- Name: sessions sessions_pkey; Type: CONSTRAINT; Schema: rate_limit; Owner: postgres
+-- Name: sessions sessions_pkey; Type: CONSTRAINT; Schema: rate_limit; Owner: lms_admin
 --
 
 ALTER TABLE ONLY rate_limit.sessions
@@ -1535,7 +1535,7 @@ ALTER TABLE ONLY rate_limit.sessions
 
 --
 -- TOC entry 5124 (class 2606 OID 42161)
--- Name: records_aggregated unique_session_key; Type: CONSTRAINT; Schema: rate_limit; Owner: postgres
+-- Name: records_aggregated unique_session_key; Type: CONSTRAINT; Schema: rate_limit; Owner: lms_admin
 --
 
 ALTER TABLE ONLY rate_limit.records_aggregated
@@ -1544,7 +1544,7 @@ ALTER TABLE ONLY rate_limit.records_aggregated
 
 --
 -- TOC entry 5045 (class 1259 OID 42162)
--- Name: account_userId_idx; Type: INDEX; Schema: public; Owner: postgres
+-- Name: account_userId_idx; Type: INDEX; Schema: public; Owner: lms_admin
 --
 
 CREATE INDEX "account_userId_idx" ON public.account USING btree ("userId");
@@ -1552,7 +1552,7 @@ CREATE INDEX "account_userId_idx" ON public.account USING btree ("userId");
 
 --
 -- TOC entry 5048 (class 1259 OID 42163)
--- Name: idx_activity_log_act_date; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_activity_log_act_date; Type: INDEX; Schema: public; Owner: lms_admin
 --
 
 CREATE INDEX idx_activity_log_act_date ON public.activity_log USING btree (act_date DESC);
@@ -1560,7 +1560,7 @@ CREATE INDEX idx_activity_log_act_date ON public.activity_log USING btree (act_d
 
 --
 -- TOC entry 5049 (class 1259 OID 42164)
--- Name: idx_activity_log_user_date; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_activity_log_user_date; Type: INDEX; Schema: public; Owner: lms_admin
 --
 
 CREATE INDEX idx_activity_log_user_date ON public.activity_log USING btree (user_id, act_date DESC);
@@ -1568,7 +1568,7 @@ CREATE INDEX idx_activity_log_user_date ON public.activity_log USING btree (user
 
 --
 -- TOC entry 5133 (class 1259 OID 42336)
--- Name: idx_feedback_messages_feedback_id_created_at; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_feedback_messages_feedback_id_created_at; Type: INDEX; Schema: public; Owner: lms_admin
 --
 
 CREATE INDEX idx_feedback_messages_feedback_id_created_at ON public.feedback_messages USING btree (feedback_id, created_at);
@@ -1576,7 +1576,7 @@ CREATE INDEX idx_feedback_messages_feedback_id_created_at ON public.feedback_mes
 
 --
 -- TOC entry 5079 (class 1259 OID 42166)
--- Name: idx_module_activity_mod; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_module_activity_mod; Type: INDEX; Schema: public; Owner: lms_admin
 --
 
 CREATE INDEX idx_module_activity_mod ON public.module_activity USING btree (mod_id);
@@ -1584,7 +1584,7 @@ CREATE INDEX idx_module_activity_mod ON public.module_activity USING btree (mod_
 
 --
 -- TOC entry 5080 (class 1259 OID 42167)
--- Name: idx_module_activity_status; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_module_activity_status; Type: INDEX; Schema: public; Owner: lms_admin
 --
 
 CREATE INDEX idx_module_activity_status ON public.module_activity USING btree (modstatus);
@@ -1592,7 +1592,7 @@ CREATE INDEX idx_module_activity_status ON public.module_activity USING btree (m
 
 --
 -- TOC entry 5084 (class 1259 OID 42169)
--- Name: idx_module_data_cat; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_module_data_cat; Type: INDEX; Schema: public; Owner: lms_admin
 --
 
 CREATE INDEX idx_module_data_cat ON public.module_data USING btree (modcat);
@@ -1600,7 +1600,7 @@ CREATE INDEX idx_module_data_cat ON public.module_data USING btree (modcat);
 
 --
 -- TOC entry 5106 (class 1259 OID 42170)
--- Name: idx_user_archived; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_user_archived; Type: INDEX; Schema: public; Owner: lms_admin
 --
 
 CREATE INDEX idx_user_archived ON public."user" USING btree (archived);
@@ -1608,7 +1608,7 @@ CREATE INDEX idx_user_archived ON public."user" USING btree (archived);
 
 --
 -- TOC entry 5107 (class 1259 OID 42171)
--- Name: idx_user_banned; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_user_banned; Type: INDEX; Schema: public; Owner: lms_admin
 --
 
 CREATE INDEX idx_user_banned ON public."user" USING btree (banned);
@@ -1616,7 +1616,7 @@ CREATE INDEX idx_user_banned ON public."user" USING btree (banned);
 
 --
 -- TOC entry 5108 (class 1259 OID 42172)
--- Name: idx_user_last_active; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_user_last_active; Type: INDEX; Schema: public; Owner: lms_admin
 --
 
 CREATE INDEX idx_user_last_active ON public."user" USING btree (last_active);
@@ -1624,7 +1624,7 @@ CREATE INDEX idx_user_last_active ON public."user" USING btree (last_active);
 
 --
 -- TOC entry 5109 (class 1259 OID 42173)
--- Name: idx_user_role; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_user_role; Type: INDEX; Schema: public; Owner: lms_admin
 --
 
 CREATE INDEX idx_user_role ON public."user" USING btree (role);
@@ -1632,7 +1632,7 @@ CREATE INDEX idx_user_role ON public."user" USING btree (role);
 
 --
 -- TOC entry 5104 (class 1259 OID 42175)
--- Name: twoFactor_secret_idx; Type: INDEX; Schema: public; Owner: postgres
+-- Name: twoFactor_secret_idx; Type: INDEX; Schema: public; Owner: lms_admin
 --
 
 CREATE INDEX "twoFactor_secret_idx" ON public."twoFactor" USING btree (secret);
@@ -1640,7 +1640,7 @@ CREATE INDEX "twoFactor_secret_idx" ON public."twoFactor" USING btree (secret);
 
 --
 -- TOC entry 5105 (class 1259 OID 42176)
--- Name: twoFactor_userId_idx; Type: INDEX; Schema: public; Owner: postgres
+-- Name: twoFactor_userId_idx; Type: INDEX; Schema: public; Owner: lms_admin
 --
 
 CREATE INDEX "twoFactor_userId_idx" ON public."twoFactor" USING btree ("userId");
@@ -1648,7 +1648,7 @@ CREATE INDEX "twoFactor_userId_idx" ON public."twoFactor" USING btree ("userId")
 
 --
 -- TOC entry 5118 (class 1259 OID 42177)
--- Name: verification_identifier_idx; Type: INDEX; Schema: public; Owner: postgres
+-- Name: verification_identifier_idx; Type: INDEX; Schema: public; Owner: lms_admin
 --
 
 CREATE INDEX verification_identifier_idx ON public.verification USING btree (identifier);
@@ -1661,14 +1661,14 @@ CREATE INDEX verification_identifier_idx ON public.verification USING btree (ide
 --
 
 --
--- Name: idx_certificates_user_status; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_certificates_user_status; Type: INDEX; Schema: public; Owner: lms_admin
 --
 
 CREATE INDEX IF NOT EXISTS idx_certificates_user_status ON public.certificates USING btree (user_id, status);
 
 
 --
--- Name: idx_certificates_expiry_sweep; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_certificates_expiry_sweep; Type: INDEX; Schema: public; Owner: lms_admin
 -- Partial index used by the daily 1:00 AM recertification cron sweep.
 --
 
@@ -1676,7 +1676,7 @@ CREATE INDEX IF NOT EXISTS idx_certificates_expiry_sweep ON public.certificates 
 
 
 --
--- Name: idx_certificates_user_non_revoked; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_certificates_user_non_revoked; Type: INDEX; Schema: public; Owner: lms_admin
 -- Optimizes the historical completion count scalar subquery in UserService.getAllUsers.
 --
 
@@ -1684,7 +1684,7 @@ CREATE INDEX IF NOT EXISTS idx_certificates_user_non_revoked ON public.certifica
 
 
 --
--- Name: idx_module_activity_user_modstatus; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_module_activity_user_modstatus; Type: INDEX; Schema: public; Owner: lms_admin
 -- Composite index replacing the two separate single-column indexes (idx_module_activity_user, idx_module_activity_status).
 --
 
@@ -1692,7 +1692,7 @@ CREATE INDEX IF NOT EXISTS idx_module_activity_user_modstatus ON public.module_a
 
 
 --
--- Name: idx_feedbacks_user_status_created; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_feedbacks_user_status_created; Type: INDEX; Schema: public; Owner: lms_admin
 -- Optimizes feedback queue filtering by resident and status with chronological ordering.
 --
 
@@ -1700,19 +1700,19 @@ CREATE INDEX IF NOT EXISTS idx_feedbacks_user_status_created ON public.feedbacks
 
 
 --
--- Name: idx_certificates_revoked_at; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_certificates_revoked_at; Type: INDEX; Schema: public; Owner: lms_admin
 --
 CREATE INDEX IF NOT EXISTS idx_certificates_revoked_at ON public.certificates USING btree (revoked_at);
 
 
 --
--- Name: idx_user_consent_version; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_user_consent_version; Type: INDEX; Schema: public; Owner: lms_admin
 --
 CREATE INDEX IF NOT EXISTS idx_user_consent_version ON public."user" USING btree (consent_version);
 
 
 --
--- Name: idx_certificates_recert_notified_at; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_certificates_recert_notified_at; Type: INDEX; Schema: public; Owner: lms_admin
 --
 CREATE INDEX IF NOT EXISTS idx_certificates_recert_notified_at ON public.certificates USING btree (recert_notified_at) WHERE recert_notified_at IS NULL;
 
@@ -1762,7 +1762,7 @@ CREATE INDEX IF NOT EXISTS idx_user_notification_user_id ON public.user_notifica
 
 --
 -- TOC entry 5134 (class 2606 OID 42178)
--- Name: account account_userId_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: account account_userId_fkey; Type: FK CONSTRAINT; Schema: public; Owner: lms_admin
 --
 
 ALTER TABLE ONLY public.account
@@ -1771,7 +1771,7 @@ ALTER TABLE ONLY public.account
 
 --
 -- TOC entry 5136 (class 2606 OID 42337)
--- Name: announcements announcements_barangay_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: announcements announcements_barangay_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: lms_admin
 --
 
 ALTER TABLE ONLY public.announcements
@@ -1780,7 +1780,7 @@ ALTER TABLE ONLY public.announcements
 
 --
 -- TOC entry 5159 (class 2606 OID 42331)
--- Name: feedback_messages feedback_messages_feedback_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: feedback_messages feedback_messages_feedback_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: lms_admin
 --
 
 ALTER TABLE ONLY public.feedback_messages
@@ -1789,7 +1789,7 @@ ALTER TABLE ONLY public.feedback_messages
 
 --
 -- TOC entry 5142 (class 2606 OID 42183)
--- Name: feedbacks feedbacks_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: feedbacks feedbacks_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: lms_admin
 --
 
 ALTER TABLE ONLY public.feedbacks
@@ -1798,7 +1798,7 @@ ALTER TABLE ONLY public.feedbacks
 
 --
 -- TOC entry 5137 (class 2606 OID 42188)
--- Name: announcements fk_author; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: announcements fk_author; Type: FK CONSTRAINT; Schema: public; Owner: lms_admin
 --
 
 ALTER TABLE ONLY public.announcements
@@ -1807,7 +1807,7 @@ ALTER TABLE ONLY public.announcements
 
 --
 -- TOC entry 5138 (class 2606 OID 42193)
--- Name: certificates fk_certificates_revoked_by; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: certificates fk_certificates_revoked_by; Type: FK CONSTRAINT; Schema: public; Owner: lms_admin
 --
 
 ALTER TABLE ONLY public.certificates
@@ -1816,7 +1816,7 @@ ALTER TABLE ONLY public.certificates
 
 --
 -- TOC entry 5143 (class 2606 OID 42198)
--- Name: levels fk_level_module; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: levels fk_level_module; Type: FK CONSTRAINT; Schema: public; Owner: lms_admin
 --
 
 ALTER TABLE ONLY public.levels
@@ -1825,7 +1825,7 @@ ALTER TABLE ONLY public.levels
 
 --
 -- TOC entry 5147 (class 2606 OID 42203)
--- Name: module_steps fk_level_steps; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: module_steps fk_level_steps; Type: FK CONSTRAINT; Schema: public; Owner: lms_admin
 --
 
 ALTER TABLE ONLY public.module_steps
@@ -1834,7 +1834,7 @@ ALTER TABLE ONLY public.module_steps
 
 --
 -- TOC entry 5139 (class 2606 OID 42208)
--- Name: certificates fk_modact; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: certificates fk_modact; Type: FK CONSTRAINT; Schema: public; Owner: lms_admin
 --
 
 ALTER TABLE ONLY public.certificates
@@ -1843,7 +1843,7 @@ ALTER TABLE ONLY public.certificates
 
 --
 -- TOC entry 5144 (class 2606 OID 42203)
--- Name: module_activity fk_module_activity_mod_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: module_activity fk_module_activity_mod_id; Type: FK CONSTRAINT; Schema: public; Owner: lms_admin
 --
 
 ALTER TABLE ONLY public.module_activity
@@ -1852,7 +1852,7 @@ ALTER TABLE ONLY public.module_activity
 
 --
 -- TOC entry 5148 (class 2606 OID 42218)
--- Name: questions fk_questions_mod_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: questions fk_questions_mod_id; Type: FK CONSTRAINT; Schema: public; Owner: lms_admin
 --
 
 ALTER TABLE ONLY public.questions
@@ -1861,7 +1861,7 @@ ALTER TABLE ONLY public.questions
 
 --
 -- TOC entry 5141 (class 2606 OID 42223)
--- Name: choices fk_question; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: choices fk_question; Type: FK CONSTRAINT; Schema: public; Owner: lms_admin
 --
 
 ALTER TABLE ONLY public.choices
@@ -1870,7 +1870,7 @@ ALTER TABLE ONLY public.choices
 
 --
 -- TOC entry 5149 (class 2606 OID 42228)
--- Name: results fk_quiz_module; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: results fk_quiz_module; Type: FK CONSTRAINT; Schema: public; Owner: lms_admin
 --
 
 ALTER TABLE ONLY public.results
@@ -1879,7 +1879,7 @@ ALTER TABLE ONLY public.results
 
 --
 -- TOC entry 5150 (class 2606 OID 42233)
--- Name: results fk_quiz_user; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: results fk_quiz_user; Type: FK CONSTRAINT; Schema: public; Owner: lms_admin
 --
 
 ALTER TABLE ONLY public.results
@@ -1888,7 +1888,7 @@ ALTER TABLE ONLY public.results
 
 --
 -- TOC entry 5135 (class 2606 OID 42238)
--- Name: activity_log fk_user; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: activity_log fk_user; Type: FK CONSTRAINT; Schema: public; Owner: lms_admin
 --
 
 ALTER TABLE ONLY public.activity_log
@@ -1897,7 +1897,7 @@ ALTER TABLE ONLY public.activity_log
 
 --
 -- TOC entry 5140 (class 2606 OID 42243)
--- Name: certificates fk_certificates_user_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: certificates fk_certificates_user_id; Type: FK CONSTRAINT; Schema: public; Owner: lms_admin
 --
 
 ALTER TABLE ONLY public.certificates
@@ -1906,7 +1906,7 @@ ALTER TABLE ONLY public.certificates
 
 --
 -- TOC entry 5145 (class 2606 OID 42248)
--- Name: module_activity fk_module_activity_user_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: module_activity fk_module_activity_user_id; Type: FK CONSTRAINT; Schema: public; Owner: lms_admin
 --
 
 ALTER TABLE ONLY public.module_activity
@@ -1915,7 +1915,7 @@ ALTER TABLE ONLY public.module_activity
 
 --
 -- TOC entry 5154 (class 2606 OID 42253)
--- Name: user_step_progress fk_user_step_progress_user_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: user_step_progress fk_user_step_progress_user_id; Type: FK CONSTRAINT; Schema: public; Owner: lms_admin
 --
 
 ALTER TABLE ONLY public.user_step_progress
@@ -1924,7 +1924,7 @@ ALTER TABLE ONLY public.user_step_progress
 
 --
 -- TOC entry 5158 (class 2606 OID 42304)
--- Name: user_notification fk_user_notification_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: user_notification fk_user_notification_id; Type: FK CONSTRAINT; Schema: public; Owner: lms_admin
 --
 
 ALTER TABLE ONLY public.user_notification
@@ -1933,7 +1933,7 @@ ALTER TABLE ONLY public.user_notification
 
 --
 -- TOC entry 5146 (class 2606 OID 42309)
--- Name: module_data module_data_author_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: module_data module_data_author_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: lms_admin
 --
 
 ALTER TABLE ONLY public.module_data
@@ -1941,7 +1941,7 @@ ALTER TABLE ONLY public.module_data
 
 
 --
--- Name: module_data fk_parent_mod_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: module_data fk_parent_mod_id; Type: FK CONSTRAINT; Schema: public; Owner: lms_admin
 --
 
 ALTER TABLE ONLY public.module_data
@@ -1950,7 +1950,7 @@ ALTER TABLE ONLY public.module_data
 
 --
 -- TOC entry 5151 (class 2606 OID 42258)
--- Name: session session_userId_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: session session_userId_fkey; Type: FK CONSTRAINT; Schema: public; Owner: lms_admin
 --
 
 ALTER TABLE ONLY public.session
@@ -1959,7 +1959,7 @@ ALTER TABLE ONLY public.session
 
 --
 -- TOC entry 5152 (class 2606 OID 42263)
--- Name: twoFactor twoFactor_userId_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: twoFactor twoFactor_userId_fkey; Type: FK CONSTRAINT; Schema: public; Owner: lms_admin
 --
 
 ALTER TABLE ONLY public."twoFactor"
@@ -1968,7 +1968,7 @@ ALTER TABLE ONLY public."twoFactor"
 
 --
 -- TOC entry 5153 (class 2606 OID 42268)
--- Name: user user_barangay_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: user user_barangay_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: lms_admin
 --
 
 ALTER TABLE ONLY public."user"
@@ -1977,7 +1977,7 @@ ALTER TABLE ONLY public."user"
 
 --
 -- TOC entry 5155 (class 2606 OID 42273)
--- Name: user_step_progress user_step_progress_step_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: user_step_progress user_step_progress_step_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: lms_admin
 --
 
 ALTER TABLE ONLY public.user_step_progress
@@ -1986,7 +1986,7 @@ ALTER TABLE ONLY public.user_step_progress
 
 --
 -- TOC entry 5156 (class 2606 OID 42278)
--- Name: individual_records individual_records_session_id_fkey; Type: FK CONSTRAINT; Schema: rate_limit; Owner: postgres
+-- Name: individual_records individual_records_session_id_fkey; Type: FK CONSTRAINT; Schema: rate_limit; Owner: lms_admin
 --
 
 ALTER TABLE ONLY rate_limit.individual_records
@@ -1995,7 +1995,7 @@ ALTER TABLE ONLY rate_limit.individual_records
 
 --
 -- TOC entry 5157 (class 2606 OID 42283)
--- Name: records_aggregated records_aggregated_session_id_fkey; Type: FK CONSTRAINT; Schema: rate_limit; Owner: postgres
+-- Name: records_aggregated records_aggregated_session_id_fkey; Type: FK CONSTRAINT; Schema: rate_limit; Owner: lms_admin
 --
 
 ALTER TABLE ONLY rate_limit.records_aggregated
@@ -2005,7 +2005,7 @@ ALTER TABLE ONLY rate_limit.records_aggregated
 --
 -- TOC entry 5313 (class 0 OID 0)
 -- Dependencies: 7
--- Name: SCHEMA public; Type: ACL; Schema: -; Owner: postgres
+-- Name: SCHEMA public; Type: ACL; Schema: -; Owner: lms_admin
 --
 
 ALTER TABLE public.announcements ADD COLUMN priority VARCHAR(20) NOT NULL DEFAULT 'standard';
@@ -2026,10 +2026,9 @@ CHECK (modcat IN ('Fundamentals', 'Flood', 'Earthquake', 'Fire', 'General'));
 -- Completed on 2026-08-21 15:49:58
 
 --
--- PostgreSQL database dump complete
+-- lms_adminQL database dump complete
 --
 
 
 
 \unrestrict g7LnI8266YBBnbmTkg9C9GuqufRvPuSe7RassMw2axRz6h4Jn4ZwEfofPm09sgP
-

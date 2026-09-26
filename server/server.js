@@ -43,7 +43,7 @@ if (process.env.NODE_ENV === "production") {
   app.set("trust proxy", 1);
 }
 
-app.use(express.json({ limit: "500kb" }));
+app.use(express.json({ limit: "800kb" }));
 app.use(
   "/uploads",
   express.static(path.join(__dirname, "uploads"), {

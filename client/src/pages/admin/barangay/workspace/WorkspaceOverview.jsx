@@ -50,14 +50,14 @@ export default function WorkspaceOverview() {
 
   if (isError) {
     return (
-      <div className="p-6 bg-red-50 border border-red-200 text-red-700 rounded-2xl flex items-center gap-3">
+      <div className="p-4 sm:p-6 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900/50 text-red-700 dark:text-red-300 rounded-2xl flex items-start sm:items-center gap-3">
         <HugeiconsIcon
           icon={Alert01Icon}
-          className="w-5 h-5 shrink-0 text-red-600"
+          className="w-5 h-5 shrink-0 text-red-600 dark:text-red-400 mt-0.5 sm:mt-0"
         />
-        <div>
-          <p className="font-bold text-sm">Failed to load barangay workspace</p>
-          <p className="text-xs text-red-500">
+        <div className="min-w-0">
+          <p className="font-bold text-xs sm:text-sm">Failed to load barangay workspace</p>
+          <p className="text-xs text-red-500 dark:text-red-400 mt-0.5">
             Ensure your administrative account is assigned to an active sector
             jurisdiction.
           </p>
@@ -145,89 +145,101 @@ export default function WorkspaceOverview() {
   };
 
   return (
-    <div className="space-y-6 font-sans animate-in fade-in duration-150 pb-10">
+    <div className="w-full max-w-full space-y-4 sm:space-y-6 font-sans animate-in fade-in duration-150 pb-8 sm:pb-12">
       {/* Header Row */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-gray-100 shadow-[0_2px_12px_-3px_rgba(0,0,0,0.06)]">
-        <div>
-          <h1 className="text-3xl font-black text-gray-900 tracking-tight">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 p-4 sm:p-6 bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-[0_2px_12px_-3px_rgba(0,0,0,0.06)]">
+        <div className="min-w-0">
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-black text-gray-900 dark:text-slate-100 tracking-tight leading-snug break-words">
             {formattedBarangayName} Community Portal
           </h1>
-          <p className="text-[14px] text-gray-500 font-medium mt-1">
-            Disaster Preparedness & Local Oversight Hub
+          <p className="text-xs sm:text-sm text-gray-500 dark:text-slate-400 font-medium mt-1">
+            Disaster Preparedness &amp; Local Oversight Hub
           </p>
         </div>
-        <div className="flex items-center gap-4 shrink-0">
+
+        <div className="flex flex-wrap sm:flex-nowrap items-center gap-2.5 sm:gap-3 shrink-0 w-full lg:w-auto">
           <button
             type="button"
             onClick={handleExportReport}
-            className="h-10 px-4 bg-white border border-gray-200 text-gray-700 text-[12px] font-bold tracking-wide uppercase rounded-xl flex items-center gap-2 hover:bg-gray-50 transition-colors whitespace-nowrap shadow-sm cursor-pointer"
+            className="flex-1 sm:flex-initial h-10 px-3.5 sm:px-4 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-gray-700 dark:text-slate-200 text-xs font-bold tracking-wide uppercase rounded-xl inline-flex items-center justify-center gap-2 hover:bg-gray-50 dark:hover:bg-slate-750 active:scale-[0.98] transition-all whitespace-nowrap shadow-xs cursor-pointer"
           >
             <HugeiconsIcon
               icon={Download02Icon}
               className="w-4 h-4 text-red-600 shrink-0"
             />
-            Export Report
+            <span>Export Report</span>
           </button>
+
           <button
             type="button"
             onClick={() => setIsAnnouncementModalOpen(true)}
-            className="h-10 px-4 bg-red-600 text-white text-[12px] font-bold tracking-wide uppercase rounded-xl flex items-center gap-2 hover:bg-red-700 transition-colors shadow-sm whitespace-nowrap cursor-pointer"
+            className="flex-1 sm:flex-initial h-10 px-3.5 sm:px-4 bg-red-600 hover:bg-red-700 active:scale-[0.98] text-white text-xs font-bold tracking-wide uppercase rounded-xl inline-flex items-center justify-center gap-2 transition-all shadow-xs whitespace-nowrap cursor-pointer"
           >
-            + Broadcast Advisory
+            <span>+ Broadcast Advisory</span>
           </button>
         </div>
       </div>
 
-      {/* Row 1: 5 Metric Cards */}
-      <WorkspaceKpiGrid
-        totalResidents={totalResidents}
-        certifiedCount={certifiedCount}
-        activeLearners={activeLearners}
-        pendingCount={pendingCount}
-        localAlertsCount={localAlertsCount}
-        loading={isLoading || isFetching}
-      />
-
-      {/* Row 2: Analytics Visualizers */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
-        <CommunityComplianceCard
-          preparednessRate={preparednessRate}
+      {/* Row 1: KPI Metrics Grid */}
+      <div className="w-full min-w-0">
+        <WorkspaceKpiGrid
+          totalResidents={totalResidents}
           certifiedCount={certifiedCount}
+          activeLearners={activeLearners}
           pendingCount={pendingCount}
-        />
-
-        <CurriculumReadinessCard
-          modulePerformance={modulePerformance}
-          paginatedModules={paginatedModules}
-          modulePage={modulePage}
-          setModulePage={setModulePage}
-          totalModules={totalModules}
-          totalModulePages={totalModulePages}
-          moduleLimit={moduleLimit}
-        />
-
-        <WorkspaceQuickActions
-          onOpenVerifyModal={handleVerifyCertificate}
-          onOpenAnnouncementModal={() => setIsAnnouncementModalOpen(true)}
+          localAlertsCount={localAlertsCount}
+          loading={isLoading || isFetching}
         />
       </div>
 
-      {/* Row 3: High Density Resident Table & Live Selection Inspector */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        <MonitoredCitizenTable
-          filteredResidents={filteredResidents}
-          selectedResident={selectedResident}
-          setSelectedResident={setSelectedResident}
-          searchFilter={searchFilter}
-          setSearchFilter={setSearchFilter}
-        />
+      {/* Row 2: Analytics Visualizers */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-4 sm:gap-6 items-stretch w-full min-w-0">
+        <div className="lg:col-span-4 min-w-0">
+          <CommunityComplianceCard
+            preparednessRate={preparednessRate}
+            certifiedCount={certifiedCount}
+            pendingCount={pendingCount}
+          />
+        </div>
 
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm lg:col-span-4 min-h-[350px]">
-          <div className="border-b border-gray-100 pb-3 mb-4">
-            <h3 className="text-sm font-bold text-gray-900">
+        <div className="lg:col-span-5 min-w-0">
+          <CurriculumReadinessCard
+            modulePerformance={modulePerformance}
+            paginatedModules={paginatedModules}
+            modulePage={modulePage}
+            setModulePage={setModulePage}
+            totalModules={totalModules}
+            totalModulePages={totalModulePages}
+            moduleLimit={moduleLimit}
+          />
+        </div>
+
+        <div className="md:col-span-2 lg:col-span-3 min-w-0">
+          <WorkspaceQuickActions
+            onOpenVerifyModal={handleVerifyCertificate}
+            onOpenAnnouncementModal={() => setIsAnnouncementModalOpen(true)}
+          />
+        </div>
+      </div>
+
+      {/* Row 3: High Density Resident Table & Live Selection Inspector */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 items-start w-full min-w-0">
+        <div className="lg:col-span-8 min-w-0 overflow-x-auto">
+          <MonitoredCitizenTable
+            filteredResidents={filteredResidents}
+            selectedResident={selectedResident}
+            setSelectedResident={setSelectedResident}
+            searchFilter={searchFilter}
+            setSearchFilter={setSearchFilter}
+          />
+        </div>
+
+        <div className="bg-white dark:bg-slate-900 p-4 sm:p-6 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-xs lg:col-span-4 min-h-[350px] w-full min-w-0">
+          <div className="border-b border-gray-100 dark:border-slate-800 pb-3 mb-4">
+            <h3 className="text-xs sm:text-sm font-bold text-gray-900 dark:text-slate-100">
               Active Profile Inspector
             </h3>
-            <p className="text-xs text-gray-400">
+            <p className="text-[11px] sm:text-xs text-gray-400 dark:text-slate-500">
               Citizen compliance audit details
             </p>
           </div>
