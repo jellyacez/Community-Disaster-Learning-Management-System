@@ -22,6 +22,8 @@ jobs:
 
             echo "1. Navigating to project directory and pulling latest code..."
             cd /var/www/lms/Community-Disaster-Learning-Management-System
+            git fetch origin main
+            git reset --hard origin/main
             git pull origin main
 
             echo "2. Updating and building Frontend (React Vite)..."
@@ -29,16 +31,14 @@ jobs:
             PUPPETEER_SKIP_DOWNLOAD=true npm install
             npm run build
 
-            echo "3. Updating Backend dependencies and restarting PM2..."
+            echo "3. Updating Backend dependencies..."
             cd /var/www/lms/Community-Disaster-Learning-Management-System/server
             PUPPETEER_SKIP_DOWNLOAD=true npm install
 
             export $(grep -v '^#' .env | xargs)
             psql "$DATABASE_URL" -f migrations/migrations.sql
 
-            echo "4. restarting PM2..."
+            echo "4. Restarting PM2..."
             pm2 restart all --update-env
-
-
 
             echo "Deployment completed successfully!"
