@@ -32,6 +32,8 @@ const { startLogRetentionCron } = require("./utils/logRetention");
 const { startCertificateExpiryCron } = require("./utils/certificateExpiryCron");
 const { startAlertMonitor } = require("./services/alertMonitorService");
 
+const verifyTurnstile = require("./middleware/verifyTurnstile");
+
 const app = express();
 
 // Start background cron jobs
@@ -70,13 +72,24 @@ app.use(
     contentSecurityPolicy: {
       directives: {
         defaultSrc: ["'self'"],
-        scriptSrc: ["'self'", "'wasm-unsafe-eval'", "blob:"],
+        scriptSrc: [
+          "'self'",
+          "'wasm-unsafe-eval'",
+          "blob:",
+          "https://challenges.cloudflare.com",
+        ],
         workerSrc: ["'self'", "blob:"],
-        connectSrc: ["'self'"],
+        connectSrc: [
+          "'self'",
+          "https://challenges.cloudflare.com",
+        ],
         styleSrc: ["'self'", "'unsafe-inline'"],
         imgSrc: ["'self'", "data:", "https:", "blob:"],
         mediaSrc: ["'self'", "https:", "blob:"], // Allow HTML5 <video> from AWS S3 and blob: previews
-        frameSrc: ["'self'"], // Removed youtube and vimeo
+        frameSrc: [
+          "'self'",
+          "https://challenges.cloudflare.com",
+        ], // Removed youtube and vimeo
         frameAncestors: ["'none'"],
         objectSrc: ["'none'"],
         upgradeInsecureRequests: [],
@@ -118,6 +131,9 @@ const apiCacheMiddleware = require("./middleware/apiCacheMiddleware");
 // Apply no-store caching globally to all API routes to prevent 304 ghost caching
 app.use("/api", apiCacheMiddleware);
 
+app.post("/api/auth/sign-in/email", verifyTurnstile);
+app.post("/api/auth/sign-up/email", verifyTurnstile);
+
 app.use("/api/auth", authRateLimiter);
 app.use("/api/auth", customAuthRoutes);
 app.use("/api/auth", toNodeHandler(auth));
@@ -138,7 +154,7 @@ const mediaUploadRoutes = require("./routes/modules/mediaUploadRoutes");
 const apiSecurityMiddleware = require("./middleware/apiSecurityMiddleware");
 
 // Notif Route
-app.use("/api/notif", require("./routes/notif/sseRoutes"))
+app.use("/api/notif", require("./routes/notif/sseRoutes"));
 
 // API Routes (Business logic protected by security middleware)
 app.use("/api/public", publicRoutes);

@@ -2,6 +2,7 @@ import { useState, useRef, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Alert01Icon } from "@hugeicons/core-free-icons";
+import { Turnstile } from "@marsidev/react-turnstile";
 import toast from "react-hot-toast";
 import { authClient } from "../../lib/auth-client";
 import PasswordInput from "../ui/inputs/PasswordInput";
@@ -12,7 +13,9 @@ export default function EmailSignInForm({ errorMessage, clearGlobalError, onRequ
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
+  const [turnstileToken, setTurnstileToken] = useState("");
   const isSubmittingRef = useRef(false);
+  const turnstileRef = useRef(null);
 
   const validateField = (name, value) => {
     let error = null;
@@ -70,6 +73,10 @@ export default function EmailSignInForm({ errorMessage, clearGlobalError, onRequ
       if (error) newErrors[key] = error;
     });
 
+    if (!turnstileToken) {
+      newErrors.turnstile = "Please complete the security challenge.";
+    }
+
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       return;
@@ -77,10 +84,17 @@ export default function EmailSignInForm({ errorMessage, clearGlobalError, onRequ
 
     isSubmittingRef.current = true;
     setIsLoading(true);
+
     const { data, error } = await authClient.signIn.email({
       email: formData.email,
       password: formData.password,
+      fetchOptions: {
+        headers: {
+          "x-turnstile-token": turnstileToken,
+        },
+      },
     });
+
     if (error) {
       console.error("Sign in failed:", error);
       let errorMsg = "Invalid email or password. Please try again.";
@@ -95,10 +109,14 @@ export default function EmailSignInForm({ errorMessage, clearGlobalError, onRequ
       ) {
         errorMsg = "Please verify your email address before signing in. Check your inbox!";
       } else if (error.status === 403 || rawMsg.includes("archived") || rawMsg.includes("banned")) {
-        errorMsg = error.message; // Preserve the backend's custom message for archived/banned accounts
+        errorMsg = error.message;
       }
 
       setErrors({ form: errorMsg });
+
+      // Reset Turnstile challenge on auth failure
+      turnstileRef.current?.reset();
+      setTurnstileToken("");
 
       setTimeout(() => {
         isSubmittingRef.current = false;
@@ -182,9 +200,26 @@ export default function EmailSignInForm({ errorMessage, clearGlobalError, onRequ
         </Link>
       </div>
 
+      {/* Cloudflare Turnstile */}
+      <div className="flex flex-col items-center justify-center pt-1">
+        <Turnstile
+          ref={turnstileRef}
+          siteKey={import.meta.env.VITE_TURNSTILE_SITE_KEY}
+          onSuccess={(token) => {
+            setTurnstileToken(token);
+            setErrors((prev) => ({ ...prev, turnstile: null }));
+          }}
+          onError={() => setTurnstileToken("")}
+          onExpire={() => setTurnstileToken("")}
+        />
+        {errors.turnstile && (
+          <p className="text-red-500 text-xs mt-1 font-medium text-center">{errors.turnstile}</p>
+        )}
+      </div>
+
       <button
         type="submit"
-        disabled={isLoading}
+        disabled={isLoading || !turnstileToken}
         className="w-full py-3 rounded-xl bg-red-600 text-white font-bold hover:bg-red-700 transition-colors disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
       >
         {isLoading ? <><Spinner /> Signing In...</> : "Sign In"}

@@ -1,12 +1,10 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
 import { authClient } from "../../../lib/auth-client";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import apiClient from "../../../lib/apiClient";
-import { VALID_BARANGAY_NAMES } from "../../../constants/barangays";
-export const useRegisterForm = () => {
+
+export function useRegisterForm({ turnstileToken, onResetTurnstile } = {}) {
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
 
   const [formData, setFormData] = useState({
     fullName: "",
@@ -16,99 +14,66 @@ export const useRegisterForm = () => {
     confirmPassword: "",
   });
 
+  const [errors, setErrors] = useState({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [showTermsModal, setShowTermsModal] = useState(false);
   const [showPrivacyModal, setShowPrivacyModal] = useState(false);
   const [showConsentModal, setShowConsentModal] = useState(false);
 
-  const [errors, setErrors] = useState({});
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const isSubmittingRef = useRef(false);
+  const validateField = (name, value, allData = formData) => {
+    let error = null;
+    switch (name) {
+      case "fullName":
+        if (!value.trim()) error = "Full name is required.";
+        break;
+      case "email":
+        if (!value.trim()) error = "Email address is required.";
+        else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) error = "Invalid email address format.";
+        break;
+      case "barangay":
+        if (!value) error = "Please select a barangay.";
+        break;
+      case "password":
+        if (!value) error = "Password is required.";
+        else if (value.length < 8) error = "Password must be at least 8 characters.";
+        break;
+      case "confirmPassword":
+        if (!value) error = "Please confirm your password.";
+        else if (value !== allData.password) error = "Passwords do not match.";
+        break;
+      default:
+        break;
+    }
+    return error;
+  };
 
-  const { data: barangays = [] } = useQuery({
-    queryKey: ["barangays"],
-    queryFn: async () => {
-      const res = await apiClient.get("/public/barangays");
-      return res.data;
-    },
-  });
-
-  const validateField = useCallback(
-    (name, value, currentFormData = formData) => {
-      let error = null;
-      switch (name) {
-        case "fullName":
-          if (!value.trim()) error = "Full name is required.";
-          break;
-        case "email": {
-          const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-          if (!emailRegex.test(value))
-            error = "Please enter a valid email address.";
-          break;
+  const handleChange = useCallback((e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => {
+      const next = { ...prev, [name]: value };
+      setErrors((prevErrors) => {
+        const nextErrors = { ...prevErrors };
+        if (nextErrors.form) nextErrors.form = null;
+        if (nextErrors[name]) {
+          nextErrors[name] = validateField(name, value, next);
         }
-        case "password": {
-          const passwordRegex = /^(?=.*[A-Z])(?=.*[!@#$%^&*_=+\-/.]).{8,}$/;
-          if (!passwordRegex.test(value)) {
-            error =
-              "Must be 8+ characters and include an uppercase letter and a symbol.";
-          }
-          break;
-        }
-        case "confirmPassword":
-          if (value !== currentFormData.password) {
-            error = "Passwords do not match.";
-          }
-          break;
-        case "barangay":
-          if (!value) {
-            error = "Please select a barangay.";
-          } else if (!VALID_BARANGAY_NAMES.includes(value.trim())) {
-            error = "Plea  se select a valid barangay from the list.";
-          }
-          break;
-      }
-      return error;
-    },
-    [formData],
-  );
-
-  const handleChange = useCallback(
-    (e) => {
-      const { name, value } = e.target;
-      setFormData((prev) => {
-        const newData = { ...prev, [name]: value };
-
-        // If there's already an error, run live validation so it clears immediately when fixed
-        setErrors((prevErrors) => {
-          if (prevErrors[name]) {
-            const newError = validateField(name, value, newData);
-            return { ...prevErrors, [name]: newError };
-          }
-          return prevErrors;
-        });
-
-        return newData;
+        return nextErrors;
       });
-    },
-    [validateField],
-  );
+      return next;
+    });
+  }, []);
 
-  const handleBlur = useCallback(
-    (e) => {
-      const { name, value } = e.target;
-      const error = validateField(name, value);
-      setErrors((prev) => ({ ...prev, [name]: error }));
-    },
-    [validateField],
-  );
+  const handleBlur = useCallback((e) => {
+    const { name, value } = e.target;
+    const error = validateField(name, value);
+    setErrors((prev) => ({ ...prev, [name]: error }));
+  }, [formData]);
 
   const handleSubmit = (e) => {
-    e.preventDefault();
-    if (isSubmittingRef.current) return;
-
+    if (e) e.preventDefault();
     setErrors({});
 
-    let newErrors = {};
-
+    const newErrors = {};
     Object.keys(formData).forEach((key) => {
       const error = validateField(key, formData[key]);
       if (error) newErrors[key] = error;
@@ -119,57 +84,56 @@ export const useRegisterForm = () => {
       return;
     }
 
-    // Instead of calling the API, we intercept and show the Explicit Consent Modal
     setShowConsentModal(true);
   };
 
   const confirmRegistration = async () => {
-    isSubmittingRef.current = true;
+    if (!turnstileToken) {
+      setErrors({ form: "Please complete the security challenge." });
+      setShowConsentModal(false);
+      return;
+    }
+
     setIsSubmitting(true);
 
-    const selectedBarangay = barangays.find(
-      (b) => b.name === formData.barangay,
-    );
-
-    const { error } = await authClient.signUp.email({
-      email: formData.email,
-      password: formData.password,
-      name: formData.fullName,
-      barangay_id: selectedBarangay?.id,
-    });
-
-    if (error) {
-      console.error("Registration failed:", error);
-      setErrors({
-        form: error.message || "Registration failed. Please try again.",
+    try {
+      const { data, error } = await authClient.signUp.email({
+        email: formData.email,
+        password: formData.password,
+        name: formData.fullName,
+        barangay: formData.barangay,
+        fetchOptions: {
+          headers: {
+            "x-turnstile-token": turnstileToken,
+          },
+        },
       });
 
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-      isSubmittingRef.current = false;
-      setIsSubmitting(false);
+      if (error) {
+        console.error("Registration failed:", error);
+        setErrors({ form: error.message || "Registration failed. Please try again." });
+        onResetTurnstile?.();
+        setShowConsentModal(false);
+      } else {
+        toast.success("Account created successfully! Please verify your email.");
+        setShowConsentModal(false);
+        navigate("/signin", { replace: true });
+      }
+    } catch (err) {
+      console.error("Registration exception:", err);
+      setErrors({ form: "An unexpected error occurred. Please try again later." });
+      onResetTurnstile?.();
       setShowConsentModal(false);
-    } else {
-      // Clear specific cached queries to prevent stale data (like userDashboard from a previous test user)
-      // from appearing on the profile page right after registration.
-      queryClient.invalidateQueries({ queryKey: ["session"] });
-      queryClient.invalidateQueries({ queryKey: ["userDashboard"] });
-
-      // Flag for UserDashboard: show WelcomeModal on first login after registration.
-      // sessionStorage is cleared when the browser tab closes, so it only fires once per session.
-      sessionStorage.setItem("newlyRegistered", "true");
-
-      isSubmittingRef.current = false;
+    } finally {
       setIsSubmitting(false);
-      setShowConsentModal(false);
-      navigate("/verify-email-prompt", { state: { email: formData.email } });
     }
   };
 
   const getInputClass = (fieldName) => {
-    const baseClass =
-      "w-full px-4 py-3 rounded-xl border outline-none transition-colors";
+    const baseClass = "w-full px-4 py-3 rounded-xl border outline-none transition-colors";
+    const hasError = errors[fieldName] || errors.form;
     return `${baseClass} ${
-      errors[fieldName]
+      hasError
         ? "border-red-500 focus:ring-2 focus:ring-red-500 bg-red-50 text-red-900"
         : "border-gray-200 focus:ring-2 focus:ring-red-500"
     }`;
@@ -195,4 +159,4 @@ export const useRegisterForm = () => {
       setShowConsentModal,
     },
   };
-};
+}
