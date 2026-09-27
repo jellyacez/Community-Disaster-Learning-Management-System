@@ -1,6 +1,8 @@
+import { useState, useRef } from "react";
 import { Link } from "react-router-dom";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Alert01Icon } from "@hugeicons/core-free-icons";
+import { Turnstile } from "@marsidev/react-turnstile";
 import PasswordInput from "../ui/inputs/PasswordInput";
 import BarangayDropdown from "../ui/inputs/BarangayDropdown";
 import TermsModal from "../ui/modals/TermsModal";
@@ -11,12 +13,35 @@ import { useRegisterForm } from "./hooks/useRegisterForm";
 import PasswordRequirements from "./PasswordRequirements";
 
 export default function RegisterForm() {
-  const { state, actions } = useRegisterForm();
+  const [turnstileToken, setTurnstileToken] = useState("");
+  const [turnstileError, setTurnstileError] = useState("");
+  const turnstileRef = useRef(null);
+
+  const resetTurnstile = () => {
+    turnstileRef.current?.reset();
+    setTurnstileToken("");
+  };
+
+  const { state, actions } = useRegisterForm({
+    turnstileToken,
+    onResetTurnstile: resetTurnstile,
+  });
+
   const { formData, errors, isSubmitting, showTermsModal, showPrivacyModal, showConsentModal } = state;
+
+  const handleFormSubmit = (e) => {
+    e.preventDefault();
+    if (!turnstileToken) {
+      setTurnstileError("Please complete the security challenge.");
+      return;
+    }
+    setTurnstileError("");
+    actions.handleSubmit(e);
+  };
 
   return (
     <>
-      <form onSubmit={actions.handleSubmit} noValidate className="space-y-4">
+      <form onSubmit={handleFormSubmit} noValidate className="space-y-4">
         {errors.form && (
           <div className="flex items-center justify-center gap-2 bg-red-50 text-red-600 p-3 rounded-lg text-sm font-semibold mb-4 border border-red-100">
             <HugeiconsIcon aria-hidden="true" icon={Alert01Icon} className="w-5 h-5 shrink-0" />
@@ -100,6 +125,28 @@ export default function RegisterForm() {
           autoComplete="new-password"
         />
 
+        <div className="flex flex-col items-center justify-center pt-2">
+          <Turnstile
+            ref={turnstileRef}
+            siteKey={import.meta.env.VITE_TURNSTILE_SITE_KEY}
+            onSuccess={(token) => {
+              setTurnstileToken(token);
+              setTurnstileError("");
+            }}
+            onError={() => {
+              setTurnstileToken("");
+              setTurnstileError("Verification failed. Please retry.");
+            }}
+            onExpire={() => {
+              setTurnstileToken("");
+              setTurnstileError("Challenge expired. Please verify again.");
+            }}
+          />
+          {turnstileError && (
+            <p className="text-red-500 text-xs mt-1 font-medium text-center">{turnstileError}</p>
+          )}
+        </div>
+
         <div className="text-xs text-gray-500 text-center mt-2 leading-relaxed">
           By clicking Create Account, you will be prompted to explicitly consent to our{" "}
           <button
@@ -122,7 +169,7 @@ export default function RegisterForm() {
 
         <button
           type="submit"
-          disabled={isSubmitting}
+          disabled={isSubmitting || !turnstileToken}
           className="w-full flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 text-white py-3 rounded-xl font-bold transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-md shadow-red-600/20 mt-2"
         >
           {isSubmitting ? (
