@@ -36,7 +36,7 @@ jobs:
             PUPPETEER_SKIP_DOWNLOAD=true npm install
 
             export $(grep -v '^#' .env | xargs)
-            psql "$DATABASE_URL" -f migrations/migrations.sql
+            psql "$DATABASE_URL" -f migrations/migration.sql
 
             echo "4. Restarting PM2..."
             pm2 restart all --update-env
