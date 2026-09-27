@@ -32,6 +32,13 @@ jobs:
             echo "3. Updating Backend dependencies and restarting PM2..."
             cd /var/www/lms/Community-Disaster-Learning-Management-System/server
             PUPPETEER_SKIP_DOWNLOAD=true npm install
+
+            export $(grep -v '^#' .env | xargs)
+            psql "$DATABASE_URL" -f migrations/migrations.sql
+
+            echo "4. restarting PM2..."
             pm2 restart all --update-env
+
+
 
             echo "Deployment completed successfully!"
