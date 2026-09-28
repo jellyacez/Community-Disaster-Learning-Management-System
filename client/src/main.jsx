@@ -19,6 +19,7 @@ import { ThemeProvider } from "./hooks/context/themeContext";
 import * as syncManager from "./lib/LocalSave/syncManager";
 import * as progressService from "./lib/LocalSave/progressService";
 import { localDb } from "./lib/localDb";
+import apiClient from "./lib/apiClient";
 
 const queryClient = new QueryClient({
   queryCache: new QueryCache({
@@ -49,6 +50,7 @@ if (typeof window !== "undefined") {
     localDb,
     queryClient,
     toast,
+    apiClient,
   };
 }
 

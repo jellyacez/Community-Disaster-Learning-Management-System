@@ -53,7 +53,7 @@ export const extractErrorMessage = (error) => {
   if (error.response?.status === 401) return 'Session expired. Please log in again.';
   if (error.response?.status === 403) return 'Permission denied for this action.';
   if (error.response?.status === 404) return 'The requested resource no longer exists.';
-  if (error.response?.status === 409) return error.response?.data?.message || error.response?.data?.error || 'State conflict: resource was modified while offline.';
+  if (error.response?.status === 409) return error.response?.data?.message || error.response?.data?.error || "This action conflicts with the current server state and can't be applied.";
   if (error.response?.status === 422) return 'Validation error: data was rejected by the server.';
   if (error.response?.status >= 500) return 'Server error. The service is temporarily unavailable.';
   if (error.message) return error.message;
@@ -370,7 +370,7 @@ export const processOfflineQueue = async () => {
             retry_count: currentRetries,
             last_error: errorMessage,
             error_type: errorType,
-            conflict_type: error.response?.data?.conflict_type || (isConflict ? 'TICKET_CLOSED' : null),
+            conflict_type: error.response?.data?.conflict_type || (isConflict ? 'STALE_DATA' : null),
             failed_at: Date.now(),
             next_retry_at: null
           });

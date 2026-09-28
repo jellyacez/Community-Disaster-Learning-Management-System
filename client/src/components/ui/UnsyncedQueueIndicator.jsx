@@ -293,7 +293,9 @@ export default function UnsyncedQueueIndicator() {
                           )}
                         </div>
                         <p className="text-amber-800 dark:text-amber-200 text-[11px] mt-1 break-words leading-relaxed">
-                          {task.last_error || "The ticket was closed on the server while you were offline. Your reply cannot be appended."}
+                          {task.conflict_type === "TICKET_CLOSED"
+                            ? (task.last_error || "The ticket was closed on the server while you were offline. Your reply cannot be appended.")
+                            : (task.last_error || "This action conflicts with the current server state and can't be applied.")}
                         </p>
                       </div>
                     )}

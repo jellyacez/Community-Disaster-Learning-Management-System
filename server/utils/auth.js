@@ -25,7 +25,7 @@ const parseSecrets = () => {
 const isGoogleAuthValid = Boolean(
   process.env.GOOGLE_CLIENT_ID &&
   process.env.GOOGLE_CLIENT_SECRET &&
-  !process.env.GOOGLE_CLIENT_ID.includes("YOUR_CLIENT_ID")
+  !process.env.GOOGLE_CLIENT_ID.includes("YOUR_CLIENT_ID"),
 );
 
 const auth = betterAuth({
@@ -165,7 +165,7 @@ const auth = betterAuth({
         mdrrmo_admin: {},
       },
     }),
-    /*twoFactor({
+    twoFactor({
       otpOptions: {
         sendOTP: async ({ user, otp }) => {
           const { orgFooterText, supportEmail } = await getOrgSettings();
@@ -178,7 +178,7 @@ const auth = betterAuth({
           await transporter.sendMail(mailOptions);
         },
       },
-    }),*/
+    }),
   ],
   advanced: {
     ...(process.env.NODE_ENV === "production"
@@ -201,7 +201,11 @@ const auth = betterAuth({
       }
       return [process.env.FRONTEND_URL];
     }
-    return ["http://localhost:5173", "http://localhost:5174", "http://localhost:4173"];
+    return [
+      "http://localhost:5173",
+      "http://localhost:5174",
+      "http://localhost:4173",
+    ];
   })(),
   autoSignIn: true,
 });

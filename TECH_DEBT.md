@@ -621,6 +621,57 @@ This document tracks identified technical debt, architectural decisions, missing
 
 ---
 
+### Resolved: Phantom UPDATE_PROGRESS and COMPLETE_MODULE Offline Sync Dispatch Gap (`syncManager.js`, `progressService.js`)
+- **Location:** `client/src/lib/LocalSave/syncManager.js`, `client/src/lib/LocalSave/progressService.js`, `server/routes/modules/`
+- **Issue:** 
+  1. `syncManager.js` included dispatch handling for `UPDATE_PROGRESS` (`PUT /api/modules/:id/progress`) and `COMPLETE_MODULE` (`POST /api/modules/:id/complete`), which targeted unmounted, non-existent backend endpoints, resulting in 404 errors during offline queue replays.
+  2. Investigation verified that this was an unmounted redundant side-effect call rather than lost module completions. The source of truth for learner progress and certification has always been `MARK_STEP_COMPLETE` and `SUBMIT_QUIZ` (`POST /api/modules/:id/steps/:stepId/complete`), which are fully mounted, idempotent via PostgreSQL `ON CONFLICT (user_id, step_id) DO NOTHING`, and automatically issue certificates upon completing the final step.
+- **Resolution:**
+  - Removed phantom dispatch branches for `UPDATE_PROGRESS` and `COMPLETE_MODULE` from `syncManager.js`.
+  - Updated `saveOfflineModuleProgress` and `markModuleCompletedOffline` in `progressService.js` to update local Dexie cache (`module_activity`) without queueing orphaned sync tasks for phantom endpoints.
+- **Verification:** Verified that step completions and quiz submissions continue to advance module progress and issue official certificates seamlessly offline and online without triggering 404 sync failures.
+
+---
+
+### Resolved: Offline Queue Safari / iOS Storage Fallback & Honest Failure Propagation (D6 Part 1)
+- **Location:** `client/src/lib/LocalSave/syncManager.js`, `client/src/lib/LocalSave/progressService.js`, calling UI hooks and components (`useModuleViewer.js`, `ProfilePreferences.jsx`, `ProfileAvatar.jsx`, `useNotificationPreferences.js`, `useFeedbackSubmit.js`, `useFeedbackHistory.js`)
+- **Issue:**
+  1. In restricted environments (Safari Private Browsing which blocks IndexedDB access, or quota exhaustion), Dexie calls threw `SecurityError` or `QuotaExceededError`.
+  2. Sibling storage functions in `progressService.js` (`saveOfflineStepProgress`, `saveOfflineResult`, `saveOfflineAvatarChange`, `saveOfflineUserName`, `saveOfflineNotification`, `markModuleCompletedOffline`, `saveOfflineModuleProgress`) swallowed errors in silent try/catch blocks and dishonestly reported `{ status: 'queued' }` back to the UI, leading the resident to believe their actions were safely persisted when they were lost.
+- **Resolution:**
+  - **In-Memory Queue Fallback (`memorySyncQueue`):** Introduced `enqueueMemoryTask` and unified `enqueueSyncTask` in `syncManager.js`. When IndexedDB writes fail with `SecurityError` or `QuotaExceededError`, tasks are safely buffered in an in-memory queue (`memorySyncQueue`) for the current tab session, annotated with `is_memory_only: true`.
+  - **Honest Status Propagation:** Refactored all 7 storage-layer methods in `progressService.js` to return honest status contracts: `{ status: 'queued', storageType: 'idb' }`, `{ status: 'queued_memory_only', storageType: 'memory', warning: ... }`, or `{ status: 'failed', error: ... }`.
+  - **UI Branching & Warning Banners:** Updated all calling UI components and hooks to branch on the returned status, displaying amber warning toasts informing the resident that data is held in memory for the active session only and advising them not to close or refresh the tab until reconnected.
+- **Verification:** Automated verification script (`scratch/verify_safari_fallback.js`) simulated Safari Private Browsing by monkey-patching IndexedDB methods with `DOMException('The operation is insecure.', 'SecurityError')`:
+  1. Confirmed all 7 functions fall back cleanly to `memorySyncQueue` with status `'queued_memory_only'` or report honest failure.
+  2. Captured live UI screenshot (`safari_private_mode_warning_toast.png`) confirming the warning toast is rendered.
+  3. Reconnected and verified background sync drains the memory queue cleanly.
+
+---
+
+### Resolved: Offline State Conflict Lifecycle & Resolution Surface (D6 Part 2)
+- **Location:** `server/services/feedback/FeedbackService.js`, `server/controllers/users/feedbackController.js`, `server/controllers/admin/adminFeedbacks.js`, `client/src/lib/LocalSave/syncManager.js`, `client/src/components/ui/UnsyncedQueueIndicator.jsx`, `client/src/pages/user/feedback/components/FeedbackHistoryCard.jsx`
+- **Issue:**
+  1. Replying to a feedback ticket that was closed on the server while the resident was offline returned a generic `400 Bad Request`.
+  2. The offline sync manager treated 400 as an unspecified terminal failure, missing structured conflict semantics and lacking an interactive resolution surface for state divergence.
+  3. **Architectural Scope Analysis:** An audit evaluated whether module completion required a 409 conflict guard if a module was archived while offline. This was deliberately rejected and excluded because adding an archived-module 409 guard would directly regress the verified draft/versioning model (`TECH_DEBT.md:511-531`), which guarantees completion integrity for enrollees on parent versions. Step progress is naturally idempotent (`ON CONFLICT DO NOTHING`). Hence, Part 2 was cleanly scoped to the genuine state-conflict scenario: `REPLY_FEEDBACK` on closed tickets.
+- **Resolution:**
+  - **Backend 409 Semantics:** Updated `FeedbackService.js` and controllers (`feedbackController.js`, `adminFeedbacks.js`) to reject replies to closed tickets with `HTTP 409 Conflict` and structured metadata: `{ success: false, error: "Cannot reply to a closed ticket.", message: "Cannot reply to a closed ticket.", conflict_type: "TICKET_CLOSED" }`.
+  - **Client Conflict Trap & Retry Suppression:** Updated `syncManager.js` to trap 409 status codes, mark tasks as `status: 'conflict'`, `error_type: 'conflict'`, and preserve `conflict_type` (defaulting to generic `'STALE_DATA'` if unspecified). Suppressed pointless retries and backoff schedules for conflicts.
+  - **Resolution Surface (`UnsyncedQueueIndicator.jsx` & `FeedbackHistoryCard.jsx`):**
+    - Rendered distinct amber conflict badges and cards with `State Conflict` headers, `conflict_type` tags (`TICKET_CLOSED`, `STALE_DATA`), and explanatory messages.
+    - Suppressed the "Retry Now" button for conflict items and provided a dedicated "Dismiss Conflict" action with confirmation modal.
+    - Updated feedback thread cards to style conflicting offline replies with amber conflict notices and suppress in-thread retry.
+- **Verification:** Verified via automated Puppeteer test (`scratch/verify_conflict_handling.cjs`):
+  1. Direct API call to closed ticket returned `HTTP 409 { conflict_type: "TICKET_CLOSED" }`.
+  2. Queued offline task transitioned to `status: 'conflict'`.
+  3. Drawer rendered amber Conflict card with `TICKET_CLOSED` badge, suppressed "Retry Now", and rendered "Dismiss Conflict".
+  4. Dismissal confirmed and verified task purged from queue.
+  5. Verified generic 409 fallback (`STALE_DATA`) renders neutral conflict explanation.
+  6. Visual artifacts captured: `conflict_drawer_open.png` and `conflict_dismiss_modal.png`.
+
+---
+
 ## 🟡 Open / Active Technical Debt & Optimization Items
 
 ### 1. Server-Side Pagination & Cursor Querying for High-Scale Endpoints
@@ -672,6 +723,7 @@ This document tracks identified technical debt, architectural decisions, missing
 - **Location:** `client/src/lib/LocalSave/syncManager.js`, `server/controllers/feedback/feedbackController.js`, `server/controllers/admin/barangayController.js`
 - **Description:**
   - **Context:** The application is an offline-first PWA with a background sync queue (`syncManager.js` replaying queued writes via Dexie on reconnect). Any `POST` endpoint without a unique constraint is vulnerable to duplicate creation if the server processes a request successfully but the HTTP 200 OK never reaches the client before the connection drops — the client re-queues and replays the same write on the next reconnect.
+  - **Client Mutex Nuance:** An in-memory `isSyncing` guard was added in `syncManager.js` to prevent concurrent execution among overlapping wakeup events (`online`, `visibilitychange`, `trigger-offline-sync`) within a single page instance. However, this mutex is strictly in-memory per-tab. It prevents intra-tab duplication races, but cannot prevent duplicates if a resident has the application active in multiple tabs or across multiple devices syncing concurrently. Full defense-in-depth requires server-side idempotency keys.
   - **Confirmed Vulnerable (verified against real code):**
     - `POST /api/feedbacks` (`feedbackController.js`) — raw `INSERT INTO feedbacks`, no deduplication key or unique constraint.
     - Future: `POST /api/announcements` — same pattern, and this endpoint does not exist as a real feature yet (Item 7, deferred).

@@ -1,9 +1,13 @@
+import { useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Notification02Icon } from "@hugeicons/core-free-icons";
 import apiClient from "../../lib/apiClient";
 
 export default function GlobalBroadcastBanner() {
+  const location = useLocation();
+  const isResidentLayout = location.pathname.startsWith("/user") || location.pathname === "/userDashboard";
+
   const { data, isLoading, error } = useQuery({
     queryKey: ["globalBroadcast"],
     queryFn: async () => {
@@ -52,15 +56,21 @@ export default function GlobalBroadcastBanner() {
   const theme = styles[severity] || styles.warning;
 
   return (
-    <div className={`w-full px-4 py-3 flex items-center justify-center shadow-sm relative z-50 border-b ${theme.bg} ${theme.text} ${theme.border}`}>
-      <div className="flex items-center gap-3 max-w-7xl mx-auto px-4">
-        <HugeiconsIcon icon={Notification02Icon} className={`w-5 h-5 flex-shrink-0 animate-pulse ${theme.icon}`} />
-        <p className="text-sm font-bold text-center">
-          <span className={`uppercase tracking-wider mr-3 font-mono text-[10px] px-2 py-0.5 rounded ${theme.pillBg} ${theme.pillText}`}>
+    <div
+      role="region"
+      aria-label="Global System Broadcast"
+      className={`w-full px-4 py-2.5 flex items-center justify-center shadow-sm relative z-40 border-b transition-all duration-150 ${isResidentLayout ? "lg:pl-72" : ""} ${theme.bg} ${theme.text} ${theme.border}`}
+    >
+      <div className="flex items-center justify-center gap-2.5 max-w-6xl mx-auto w-full min-w-0">
+        <HugeiconsIcon icon={Notification02Icon} className={`w-4 h-4 shrink-0 animate-pulse ${theme.icon}`} />
+        <div className="flex flex-wrap sm:flex-nowrap items-center justify-center gap-2 min-w-0 text-center">
+          <span className={`inline-flex shrink-0 items-center uppercase tracking-wider font-mono text-[10px] font-bold px-2 py-0.5 rounded whitespace-nowrap ${theme.pillBg} ${theme.pillText}`}>
             System Broadcast
           </span>
-          <span>{data.message}</span>
-        </p>
+          <p className="text-xs sm:text-sm font-semibold break-words min-w-0 leading-snug text-center">
+            {data.message}
+          </p>
+        </div>
       </div>
     </div>
   );

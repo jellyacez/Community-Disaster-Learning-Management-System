@@ -128,7 +128,7 @@ export default function UserSidebar({
   return (
     <>
       <aside
-        className={`fixed left-0 top-0 z-50 flex h-screen w-72 flex-col border-r border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-950 transition-colors duration-200 transition-transform duration-300 lg:translate-x-0 ${
+        className={`fixed left-0 top-0 z-50 flex h-screen w-72 flex-col overflow-x-hidden border-r border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-950 transition-colors duration-200 transition-transform duration-300 lg:translate-x-0 ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
@@ -164,9 +164,9 @@ export default function UserSidebar({
           </button>
         </div>
 
-        <div className="border-b border-gray-200 dark:border-slate-800 px-6 py-5">
-          <p className="text-sm font-bold text-gray-900 dark:text-white">{currentUser.name}</p>
-          <p className="text-sm text-gray-500 dark:text-slate-400">{currentUser.email}</p>
+        <div className="border-b border-gray-200 dark:border-slate-800 px-6 py-5 min-w-0">
+          <p className="text-sm font-bold text-gray-900 dark:text-white truncate">{currentUser.name}</p>
+          <p className="text-sm text-gray-500 dark:text-slate-400 truncate">{currentUser.email}</p>
           <p className="mt-2 inline-block rounded-full bg-red-50 dark:bg-red-950/60 border border-red-100 dark:border-red-900/40 px-3 py-1 text-xs font-bold text-red-700 dark:text-red-400">
             {currentUser.role}
           </p>
