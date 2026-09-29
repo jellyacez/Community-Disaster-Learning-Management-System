@@ -105,21 +105,32 @@ export const saveOfflineStepProgress = async (moduleId, stepId, userId) => {
   }
 };
 
-export const saveOfflineResult = async (moduleId, userId, isPassed, newAnswersArray) => {
+export const saveOfflineResult = async (moduleId, userId, isPassed, newAnswersArray, stepId = null) => {
   try {
-    await localDb.transaction("rw", localDb.results, localDb.sync_queue, async () => {
+    await localDb.transaction("rw", localDb.results, localDb.user_step_progress, localDb.sync_queue, async () => {
       await localDb.results.put({
         mod_id: moduleId,
+        step_id: stepId,
         user_id: userId,
         passed: isPassed,
         date_taken: Date.now()
       });
+
+      if (stepId) {
+        await localDb.user_step_progress.put({
+          mod_id: moduleId,
+          step_id: stepId,
+          user_id: userId,
+          completed_at: Date.now()
+        });
+      }
 
       await localDb.sync_queue.add({
         action_type: "SUBMIT_QUIZ",
         status: 'pending',
         payload: {
           mod_id: moduleId,
+          step_id: stepId,
           user_id: userId,
           passed: isPassed,
           answer: newAnswersArray
@@ -139,6 +150,7 @@ export const saveOfflineResult = async (moduleId, userId, isPassed, newAnswersAr
     try {
       const memRes = enqueueMemoryTask("SUBMIT_QUIZ", {
         mod_id: moduleId,
+        step_id: stepId,
         user_id: userId,
         passed: isPassed,
         answer: newAnswersArray

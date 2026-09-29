@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { authClient } from "../lib/auth-client"; 
+import { API_BASE_URL } from "../lib/apiClient";
 
 export function useRealtimeEvents() {
   const queryClient = useQueryClient();
@@ -12,10 +13,7 @@ export function useRealtimeEvents() {
       return;
     }
 
-    const sseUrl =
-      import.meta.env.VITE_API_URL
-        ? `${import.meta.env.VITE_API_URL}/api/notif/stream`
-        : "http://localhost:5000/api/notif/stream";
+    const sseUrl = `${API_BASE_URL.replace(/\/$/, "")}/notif/stream`;
 
     const eventSource = new EventSource(sseUrl, {
       withCredentials: true,

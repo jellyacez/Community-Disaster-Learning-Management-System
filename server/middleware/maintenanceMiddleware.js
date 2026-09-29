@@ -33,16 +33,18 @@ const clearMaintenanceCache = () => {
 
 const maintenanceMiddleware = async (req, res, next) => {
   // 1. Auth routes must remain accessible so admins can sign in
-  // 2. Broadcast and status endpoints must remain accessible
+  // 2. Public read endpoints (broadcast, status, barangays) and certificates must remain accessible
+  // 3. Notification SSE stream must remain accessible for live updates
   if (
     req.originalUrl.startsWith('/api/auth') ||
-    req.originalUrl === '/api/public/broadcast' ||
-    req.originalUrl === '/api/public/status'
+    req.originalUrl.startsWith('/api/public') ||
+    req.originalUrl.startsWith('/api/certificates') ||
+    req.originalUrl.startsWith('/api/notif')
   ) {
     return next();
   }
 
-  // 3. Admin routes pass through to admin router, which enforces system_admin role
+  // 4. Admin routes pass through to admin router, which enforces system_admin role
   if (req.originalUrl.startsWith('/api/admin')) {
     return next();
   }

@@ -41,8 +41,8 @@ class SystemStatsService {
     const query = `
       WITH hours AS (
         SELECT generate_series(
-          date_trunc('hour', NOW() - INTERVAL '23 hours'),
-          date_trunc('hour', NOW()),
+          date_trunc('hour', (NOW() AT TIME ZONE 'Asia/Manila') - INTERVAL '23 hours'),
+          date_trunc('hour', NOW() AT TIME ZONE 'Asia/Manila'),
           '1 hour'::interval
         ) AS hour
       )
@@ -50,7 +50,8 @@ class SystemStatsService {
         h.hour,
         COUNT(DISTINCT al.user_id) AS active_users
       FROM hours h
-      LEFT JOIN activity_log al ON date_trunc('hour', al.act_date) = h.hour
+      LEFT JOIN activity_log al
+        ON date_trunc('hour', al.act_date AT TIME ZONE 'Asia/Manila') = h.hour
       GROUP BY h.hour
       ORDER BY h.hour ASC;
     `;
@@ -58,10 +59,16 @@ class SystemStatsService {
     const result = await pool.query(query);
 
     return result.rows.map((row) => {
-      const d = new Date(row.hour);
-      const timeStr = d.toLocaleTimeString([], {
+      // row.hour is already a PHT wall-clock value (no tz offset from postgres)
+      // Treat it as a local PHT time by appending +08:00 before parsing
+      const isoString = row.hour instanceof Date
+        ? row.hour.toISOString().replace('Z', '+08:00')
+        : String(row.hour).replace(' ', 'T') + '+08:00';
+      const d = new Date(isoString);
+      const timeStr = d.toLocaleTimeString("en-PH", {
         hour: "2-digit",
         minute: "2-digit",
+        timeZone: "Asia/Manila",
       });
       return {
         time: timeStr,
