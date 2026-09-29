@@ -62,6 +62,31 @@ export default defineConfig(({ mode }) => ({
   },
   build: {
     sourcemap: false,
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (
+            id.includes("@react-pdf") ||
+            id.includes("pdfkit") ||
+            id.includes("fontkit") ||
+            id.includes("png-js") ||
+            id.includes("restructure")
+          ) {
+            return "react-pdf-vendor";
+          }
+          if (id.includes("html5-qrcode")) {
+            return "html5-qrcode-vendor";
+          }
+          if (
+            id.includes("recharts") ||
+            id.includes("victory-vendor") ||
+            id.includes("d3-")
+          ) {
+            return "recharts-vendor";
+          }
+        },
+      },
+    },
   },
   esbuild: {
     drop: mode === "production" ? ["console", "debugger"] : [],

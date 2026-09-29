@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, lazy, Suspense } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import apiClient from "../../../../lib/apiClient";
@@ -15,14 +15,22 @@ import {
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import StatCard from "../../system/overview/components/StatCard";
-import {
-  MdrrmoModuleDistributionChart,
-  MdrrmoEnrollmentTrendChart,
-} from "./components/MdrrmoCharts";
 import ActiveModulesTable from "./components/ActiveModulesTable";
 import MdrrmoRecentActivity from "./components/MdrrmoRecentActivity";
 import MdrrmoQuickActions from "./components/MdrrmoQuickActions";
 import AnnouncementModal from "../../barangay/workspace/announcementModal";
+import { SkeletonChart } from "../../../../components/ui/Skeleton";
+
+const MdrrmoModuleDistributionChart = lazy(() =>
+  import("./components/MdrrmoCharts").then((module) => ({
+    default: module.MdrrmoModuleDistributionChart,
+  }))
+);
+const MdrrmoEnrollmentTrendChart = lazy(() =>
+  import("./components/MdrrmoCharts").then((module) => ({
+    default: module.MdrrmoEnrollmentTrendChart,
+  }))
+);
 
 export default function Overview() {
   useDocumentTitle("MDRRMO Overview | Admin Console");
@@ -278,13 +286,21 @@ export default function Overview() {
           <MdrrmoRecentActivity />
         </div>
         <div className="w-full">
-          <MdrrmoModuleDistributionChart
-            selectedCategory={selectedCategory}
-            onCategoryClick={(cat) => {
-              setSelectedCategory(cat);
-              setStatusFilter(null);
-            }}
-          />
+          <Suspense
+            fallback={
+              <div className="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-gray-100 dark:border-slate-800 shadow-[0_2px_12px_-3px_rgba(0,0,0,0.06)] flex flex-col justify-between h-[360px] items-center justify-center">
+                <SkeletonChart type="donut" height={200} />
+              </div>
+            }
+          >
+            <MdrrmoModuleDistributionChart
+              selectedCategory={selectedCategory}
+              onCategoryClick={(cat) => {
+                setSelectedCategory(cat);
+                setStatusFilter(null);
+              }}
+            />
+          </Suspense>
         </div>
         <div className="w-full md:col-span-2 lg:col-span-1">
           <MdrrmoQuickActions
@@ -296,7 +312,15 @@ export default function Overview() {
       {/* Row 3: Management Catalog & Activity Analytics */}
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6 items-stretch">
         <div className="w-full min-w-0 overflow-hidden">
-          <MdrrmoEnrollmentTrendChart />
+          <Suspense
+            fallback={
+              <div className="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-gray-100 dark:border-slate-800 shadow-[0_2px_12px_-3px_rgba(0,0,0,0.06)] flex flex-col justify-between h-[340px] items-center justify-center">
+                <SkeletonChart type="area" height={220} />
+              </div>
+            }
+          >
+            <MdrrmoEnrollmentTrendChart />
+          </Suspense>
         </div>
         <div className="w-full min-w-0 overflow-hidden">
           <ActiveModulesTable

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, lazy, Suspense } from "react";
 import useDocumentTitle from "../../../../hooks/useDocumentTitle";
 import { useSectorData } from "./hooks/useSectorData";
 import { useSectorTable } from "./hooks/useSectorTable";
@@ -7,8 +7,10 @@ import SectorHeader from "./components/SectorHeader";
 import SectorInsights from "./components/SectorInsights";
 import SectorKPIs from "./components/SectorKPIs";
 import SectorLeaderboard from "./components/SectorLeaderboard";
-import SectorCategoryChart from "./components/SectorCategoryChart";
 import SectorDataTable from "./components/SectorDataTable";
+import { SkeletonChart } from "../../../../components/ui/Skeleton";
+
+const SectorCategoryChart = lazy(() => import("./components/SectorCategoryChart"));
 
 export default function SectorOverview() {
   useDocumentTitle("Sector Overview | Admin Console");
@@ -81,19 +83,27 @@ export default function SectorOverview() {
               isLoading={isLoading}
             />
 
-            <SectorCategoryChart
-              selectedBarangayId={selectedBarangayId}
-              selectedBarangayName={
-                selectedBarangayId
-                  ? selectedBarangayId === "unassigned"
-                    ? "Unassigned"
-                    : sectorData.find((b) => b.id === selectedBarangayId)?.barangay
-                  : "Municipality-Wide"
+            <Suspense
+              fallback={
+                <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-800 p-6 shadow-sm flex flex-col h-full min-h-[380px] items-center justify-center">
+                  <SkeletonChart type="donut" height={200} />
+                </div>
               }
-              setSelectedBarangayId={setSelectedBarangayId}
-              isBreakdownLoading={isLoading || isBreakdownLoading}
-              breakdownData={breakdownData}
-            />
+            >
+              <SectorCategoryChart
+                selectedBarangayId={selectedBarangayId}
+                selectedBarangayName={
+                  selectedBarangayId
+                    ? selectedBarangayId === "unassigned"
+                      ? "Unassigned"
+                      : sectorData.find((b) => b.id === selectedBarangayId)?.barangay
+                    : "Municipality-Wide"
+                }
+                setSelectedBarangayId={setSelectedBarangayId}
+                isBreakdownLoading={isLoading || isBreakdownLoading}
+                breakdownData={breakdownData}
+              />
+            </Suspense>
           </div>
 
           <SectorDataTable
