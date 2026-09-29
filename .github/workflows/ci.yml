@@ -11,6 +11,8 @@ on:
 jobs:
   lint-and-build:
     runs-on: ubuntu-latest
+    env:
+      PUPPETEER_SKIP_DOWNLOAD: "true"
 
     steps:
       - name: Checkout code
@@ -27,7 +29,7 @@ jobs:
 
       - name: Install client dependencies
         working-directory: client
-        run: PUPPETEER_SKIP_DOWNLOAD=true npm ci
+        run: npm ci
 
       - name: Lint client
         working-directory: client
@@ -39,7 +41,7 @@ jobs:
 
       - name: Install server dependencies
         working-directory: server
-        run: PUPPETEER_SKIP_DOWNLOAD=true npm ci
+        run: npm ci
 
       - name: Lint server
         working-directory: server
