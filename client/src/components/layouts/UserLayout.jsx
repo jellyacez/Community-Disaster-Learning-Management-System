@@ -12,6 +12,7 @@ function formatRole(role) {
     case "barangay_admin":
       return "Barangay Administrator";
     case "user":
+    case "resident":
       return "Resident / Learner";
     default:
       return role || "Resident / Learner";
@@ -23,19 +24,30 @@ export default function UserLayout() {
   const { data: session } = authClient.useSession();
   const location = useLocation();
 
+  // Read impersonation profile if active
+  const impersonatedTargetRaw = sessionStorage.getItem("impersonated_target_user");
+  let impersonatedUser = null;
+  try {
+    impersonatedUser = impersonatedTargetRaw ? JSON.parse(impersonatedTargetRaw) : null;
+  } catch {
+    impersonatedUser = null;
+  }
+
+  const activeUser = impersonatedUser || session?.user;
+
   const currentUser = {
     name:
-      session?.user?.name ||
-      session?.user?.fullName ||
-      session?.user?.username ||
+      activeUser?.name ||
+      activeUser?.fullName ||
+      activeUser?.username ||
       "User",
-    email: session?.user?.email || "No email available",
-    barangay_id: session?.user?.barangay_id,
-    role: formatRole(session?.user?.role),
-    image: session?.user?.image,
+    email: activeUser?.email || "No email available",
+    barangay_id: activeUser?.barangay_id || activeUser?.barangayId,
+    role: formatRole(activeUser?.role),
+    image: activeUser?.image,
   };
 
-  const userInitials = currentUser.name
+  const userInitials = (currentUser.name || "U")
     .split(" ")
     .map((part) => part[0])
     .join("")

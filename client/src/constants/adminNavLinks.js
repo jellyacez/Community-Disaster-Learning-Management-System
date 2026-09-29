@@ -14,6 +14,96 @@ import {
 } from "@hugeicons/core-free-icons";
 
 export const ROLE_BASED_LINKS = {
+      super_admin: [
+          {
+            category: "Super Administration",
+            items: [
+              {
+                name: "Dashboard",
+                path: "/admin/super/dashboard",
+                icon: DashboardSquare01Icon,
+              },
+              {
+                name: "Audited Sector Data",
+                icon: Database01Icon,
+                subItems: [
+                  { name: "Sector Overview", path: "/admin/mdrrmo/sector-overview" },
+                  { name: "System Logs", path: "/admin/super/logs" },
+                  { name: "Certification Analytics", path: "/admin/mdrrmo/certifications" },
+                  { name: "Activity & Monitoring Logs", path: "/admin/mdrrmo/logs" },
+                ],
+              },
+              {
+                name: "User Management",
+                path: "/admin/super/users",
+                icon: UserGroupIcon,
+              },
+              {
+                name: "Barangay Operations",
+                icon: Award01Icon,
+                subItems: [
+                  {
+                    name: "Barangay Dashboard",
+                    path: "/admin/barangay/dashboard",
+                  },
+                  {
+                    name: "Resident Registry",
+                    path: "/admin/barangay/residents",
+                  },
+                  {
+                    name: "Barangay Certifications",
+                    path: "/admin/barangay/certifications",
+                  },
+                  {
+                    name: "Barangay Logs",
+                    path: "/admin/barangay/logs",
+                  },
+                ],
+              },
+            ],
+          },
+          {
+            category: "Content & Operations",
+            items: [
+              {
+                name: "Training Modules",
+                path: "/admin/mdrrmo/modules",
+                icon: FolderAddIcon,
+              },
+              {
+                name: "Module Approvals",
+                path: "/admin/mdrrmo/approvals",
+                icon: CheckmarkBadge01Icon,
+              },
+              {
+                name: "System Announcements",
+                path: "/admin/mdrrmo/alerts",
+                icon: Notification01Icon,
+              },
+            ],
+          },
+          {
+            category: "System & Infrastructure",
+            items: [
+              {
+                name: "System Settings",
+                path: "/admin/super/settings",
+                icon: Settings01Icon,
+              },
+              {
+                name: "System Health",
+                path: "/admin/super/health",
+                icon: Activity01Icon,
+              },
+              {
+                name: "Security",
+                path: "/admin/super/security",
+                icon: Shield01Icon,
+              },
+            ],
+          },
+        ],
+  
   system_admin: [
     {
       category: "System Administration",
@@ -28,7 +118,7 @@ export const ROLE_BASED_LINKS = {
           path: "/admin/system/users",
           icon: UserGroupIcon,
         },
-        { name: "Activity Log", path: "/admin/system/logs", icon: Note01Icon },
+        { name: "Activity Log", path: "/admin/super/logs", icon: Note01Icon },
       ],
     },
     {

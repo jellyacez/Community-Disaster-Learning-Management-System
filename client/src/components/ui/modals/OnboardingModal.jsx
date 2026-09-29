@@ -38,6 +38,12 @@ export default function OnboardingModal({ currentUser }) {
   const [isSubmittingOnboarding, setIsSubmittingOnboarding] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
 
+
+  const isImpersonating = Boolean(
+    sessionStorage.getItem("impersonated_target_user") ||
+    localStorage.getItem("impersonated_target_user")
+  );
+
   const { data: barangays = DEFAULT_BACOLOR_BARANGAYS, isLoading } = useQuery({
     queryKey: ["barangays"],
     queryFn: async () => {
@@ -57,10 +63,29 @@ export default function OnboardingModal({ currentUser }) {
         };
       });
     },
-    enabled: !isSuccess && !!currentUser && (!currentUser.name || !currentUser.barangay_id)
+    enabled: !isImpersonating && !isSuccess && !!currentUser && (!currentUser.name || !currentUser.barangay_id)
   });
 
-  if (isSuccess || !currentUser || (currentUser.name && currentUser.barangay_id)) return null;
+  // 1. Never show if impersonation is active
+  // 2. Never show to any admin role (super_admin, system_admin, etc.)
+  // 3. Never show if user already has a barangay
+  const isAdminRole = [
+    "super_admin",
+    "system_admin",
+    "mdrrmo_admin",
+    "head_mdrrmo_admin",
+    "barangay_admin",
+  ].includes(currentUser?.role);
+
+  if (
+    isImpersonating ||
+    isAdminRole ||
+    isSuccess ||
+    !currentUser ||
+    (currentUser.name && (currentUser.barangay_id || currentUser.barangayId || currentUser.barangay))
+  ) {
+    return null;
+  }
 
   const handleOnboardingSubmit = async (e) => {
     e.preventDefault();
@@ -75,7 +100,6 @@ export default function OnboardingModal({ currentUser }) {
 
     setIsSubmittingOnboarding(true);
     try {
-      // Sends all expected shape variations (name, barangay_id, barangayId)
       await apiClient.post("/users/onboarding", {
         name: onboardingName.trim(),
         barangay: selectedBarangay.name,

@@ -1,4 +1,19 @@
 const ROLE_PERMISSIONS = {
+  super_admin: [
+    "provision_admins",
+    "update_user_details",
+    "reset_passwords",
+    "update_user_roles",
+    "ban_users",
+    "archive_users",
+    "view_system_stats",
+    "view_activity_logs",
+    "manage_system_settings",
+    "manage_security",
+    "manage_modules",
+    "approve_modules",
+    "view_users",
+  ],
   system_admin: [
     "provision_admins",
     "update_user_details",
@@ -37,15 +52,17 @@ const ROLE_PERMISSIONS = {
 };
 
 const MFA_REQUIRED_ROLES = [
+  "super_admin",
   "system_admin",
   "mdrrmo_admin",
   "barangay_admin",
   "head_mdrrmo_admin",
 ];
-const UNSCOPED_ACCESS_ROLES = ["system_admin", "mdrrmo_admin", "head_mdrrmo_admin"];
+const UNSCOPED_ACCESS_ROLES = ["system_admin", "mdrrmo_admin", "head_mdrrmo_admin", "super_admin"];
 
 // Keep in sync with client/src/constants/roles.js ADMIN_ROLES
 const ADMIN_ROLES = [
+  "super_admin",
   "system_admin",
   "mdrrmo_admin",
   "barangay_admin",
@@ -57,6 +74,7 @@ const MODULE_VIEWER_ROLES = [
   "system_admin",
   "mdrrmo_admin",
   "head_mdrrmo_admin",
+  "super_admin"
 ];
 
 module.exports = {

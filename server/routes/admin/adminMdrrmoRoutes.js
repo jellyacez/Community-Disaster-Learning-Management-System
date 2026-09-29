@@ -18,7 +18,7 @@ const barangayController = require("../../controllers/admin/barangayController")
 // @access  Private (admin/system_admin only)
 router.get(
   "/modules",
-  requireRole(["system_admin", "mdrrmo_admin", "head_mdrrmo_admin"]),
+  requireRole(["super_admin","system_admin", "mdrrmo_admin", "head_mdrrmo_admin"]),
   adminDataLimiter,
   requirePermission("manage_modules"),
   moduleController.getAllModules
@@ -181,7 +181,7 @@ router.put(
 
 router.get(
   "/mdrrmo/approvals",
-  requireRole(["head_mdrrmo_admin"]),
+  requireRole(["super_admin","head_mdrrmo_admin"]),
   adminWriteLimiter,
   requirePermission("approve_modules"),
   moduleController.getPendingModulesReview
@@ -189,7 +189,7 @@ router.get(
 
 router.put(
   "/mdrrmo/module/:id/review",
-  requireRole(["head_mdrrmo_admin"]),
+  requireRole(["super_admin","head_mdrrmo_admin"]),
   adminWriteLimiter,
   requirePermission("approve_modules"),
   moduleController.updateModuleStatus
@@ -200,7 +200,7 @@ router.put(
 // @access  Private (mdrrmo_admin, system_admin)
 router.get(
   "/mdrrmo/certifications/analytics",
-  requireRole(["system_admin", "mdrrmo_admin", "head_mdrrmo_admin"]),
+  requireRole(["super_admin","system_admin", "mdrrmo_admin", "head_mdrrmo_admin"]),
   adminDataLimiter,
   mdrrmoOverviewController.getMunicipalCertAnalytics
 );
@@ -210,7 +210,7 @@ router.get(
 // @access  Private (mdrrmo_admin, system_admin)
 router.get(
   "/mdrrmo/certifications/feed",
-  requireRole(["system_admin", "mdrrmo_admin", "head_mdrrmo_admin"]),
+  requireRole(["super_admin","system_admin", "mdrrmo_admin", "head_mdrrmo_admin"]),
   adminDataLimiter,
   mdrrmoOverviewController.getMunicipalCertFeed
 );
@@ -220,7 +220,7 @@ router.get(
 // @access  Private (mdrrmo_admin, head_mdrrmo_admin, system_admin)
 router.post(
   "/mdrrmo/announcements",
-  requireRole(["system_admin", "mdrrmo_admin", "head_mdrrmo_admin"]),
+  requireRole(["super_admin","system_admin", "mdrrmo_admin", "head_mdrrmo_admin"]),
   adminWriteLimiter,
   barangayController.createBarangayAnnouncement
 );

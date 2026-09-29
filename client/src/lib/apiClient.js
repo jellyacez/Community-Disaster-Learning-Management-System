@@ -44,6 +44,14 @@ apiClient.interceptors.response.use(
   }
 );
 
+apiClient.interceptors.request.use((config) => {
+  const superBarangayScope = localStorage.getItem("super_admin_barangay_scope");
+  if (superBarangayScope) {
+    config.headers["x-barangay-scope"] = superBarangayScope;
+  }
+  return config;
+});
+
 
 apiClient.interceptors.request.use((config) => {
   config.headers["Cache-Control"] = "no-cache";

@@ -10,5 +10,6 @@ router.use("/", require("./adminUserRoutes"));
 router.use("/", require("./adminSystemRoutes"));
 router.use("/", require("./adminMdrrmoRoutes"));
 router.use("/", require("./adminBarangayRoutes"));
+router.use("/", require("./superAdminRoutes"));
 
 module.exports = router;

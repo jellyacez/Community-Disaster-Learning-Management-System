@@ -3,14 +3,27 @@ const { cleanRichText } = require("../../utils/sanitizeHtml");
 const { UNSCOPED_ACCESS_ROLES } = require("../../config/permissions");
 const sseService = require("../../services/notif/sseService");
 
+function resolveBarangayId(req) {
+  const userRole = req.user?.role;
+  const isUnscoped = UNSCOPED_ACCESS_ROLES.includes(userRole);
+
+  if (isUnscoped) {
+    const rawId = req.headers["x-barangay-scope"] || req.query.barangay_id;
+    return rawId ? parseInt(rawId, 10) : null;
+  }
+
+  return req.user?.barangay_id || null;
+}
+
 // 1. GET /api/admin/barangay/analytics
 exports.getBarangayAnalytics = async (req, res) => {
   try {
-    const barangayId = req.user?.barangay_id;
+    const barangayId = resolveBarangayId(req);
 
     if (!barangayId) {
       return res.status(400).json({
-        error: "SECURITY_FAULT: No barangay associated with this administrator account.",
+        error: "NO_BARANGAY_SELECTED",
+        message: "A target barangay must be selected to view this dashboard.",
       });
     }
 
@@ -28,19 +41,13 @@ exports.getBarangayAnalytics = async (req, res) => {
 // 2. GET /api/admin/barangay/announcements
 exports.getBarangayAnnouncements = async (req, res) => {
   try {
+    const barangayId = resolveBarangayId(req);
     const userRole = req.user?.role;
-    let barangayId = req.user?.barangay_id;
 
-    if (UNSCOPED_ACCESS_ROLES.includes(userRole)) {
-      // MDRRMO and System Admin view all announcements or optionally filter by query param
-      barangayId = req.query.barangay_id ? parseInt(req.query.barangay_id, 10) : null;
-    } else {
-      // Barangay admin is strictly locked to their barangay
-      if (!barangayId) {
-        return res.status(400).json({
-          error: "No barangay assigned to this administrator account.",
-        });
-      }
+    if (!UNSCOPED_ACCESS_ROLES.includes(userRole) && !barangayId) {
+      return res.status(400).json({
+        error: "No barangay assigned to this administrator account.",
+      });
     }
 
     const data = await barangayAdminService.getBarangayAnnouncements(barangayId);
@@ -70,7 +77,6 @@ exports.createBarangayAnnouncement = async (req, res) => {
       });
     }
 
-    // Determine scope
     let targetBarangay = null;
     const isUnscoped = UNSCOPED_ACCESS_ROLES.includes(userRole);
 
@@ -82,18 +88,19 @@ exports.createBarangayAnnouncement = async (req, res) => {
         });
       }
     } else if (isUnscoped) {
-      targetBarangay = target_barangay_id ? parseInt(target_barangay_id, 10) : null;
+      targetBarangay = target_barangay_id 
+        ? parseInt(target_barangay_id, 10) 
+        : resolveBarangayId(req);
     }
 
     const data = await barangayAdminService.createBarangayAnnouncement(
       title,
-      content,
+      cleanRichText(content),
       priority,
       authorId,
       targetBarangay
     );
 
-    // SSE Realtime push
     if (targetBarangay) {
       sseService.broadcastToBarangay(targetBarangay, "ANNOUNCEMENT_CREATED", data);
     } else {
@@ -110,11 +117,12 @@ exports.createBarangayAnnouncement = async (req, res) => {
 // 4. GET /api/admin/barangay/activity-log
 exports.getBarangayActivityLog = async (req, res) => {
   try {
-    const barangayId = req.user?.barangay_id;
+    const barangayId = resolveBarangayId(req);
 
     if (!barangayId) {
       return res.status(400).json({
-        error: "No barangay assigned to this administrator account.",
+        error: "NO_BARANGAY_SELECTED",
+        message: "A target barangay must be selected to view logs.",
       });
     }
 
@@ -130,15 +138,15 @@ exports.getBarangayActivityLog = async (req, res) => {
 };
 
 // 5. GET /api/admin/barangay/certifications
-// @desc    Get scoped resident certification roster with tactical filters and computed status
-// @access  Private (barangay_admin only)
 exports.getBarangayCertifications = async (req, res) => {
   try {
-    const barangayId = req.user?.barangay_id;
+    const barangayId = resolveBarangayId(req);
+
     if (!barangayId) {
-      return res.status(403).json({
+      return res.status(400).json({
         success: false,
-        error: "SECURITY_FAULT: No barangay associated with this account.",
+        error: "NO_BARANGAY_SELECTED",
+        message: "A target barangay must be selected to view certifications.",
       });
     }
 

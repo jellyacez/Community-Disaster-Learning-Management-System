@@ -18,6 +18,7 @@ const ROLE_DISPLAY_NAMES = {
   mdrrmo_admin: "MDRRMO Admin",
   head_mdrrmo_admin: "Head MDRRMO Admin",
   system_admin: "System Admin",
+  super_admin: "Super Admin",
 };
 
 export default function AdminSidebar({ sidebarOpen, setSidebarOpen }) {

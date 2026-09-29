@@ -7,12 +7,13 @@ import CriticalAlertBanner from "./CriticalAlertBanner";
 import PortalFooter from "../ui/PortalFooter";
 import { authClient } from "../../lib/auth-client";
 import { useTheme } from "../../hooks/context/themeContext";
+import SuperBarangayScopeModal from "../admin/SuperBarangayScopeModal";
 
 export default function AdminLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { data: session } = authClient.useSession();
   const userRole = session?.user?.role;
-  const isSystemAdmin = userRole === "system_admin";
+  const isSystemAdmin = userRole === "system_admin" || userRole === "super_admin";
   const isMdrrmoAdmin = userRole === "mdrrmo_admin" || userRole === "head_mdrrmo_admin";
   const { theme, toggleTheme } = useTheme();
 
@@ -81,6 +82,8 @@ export default function AdminLayout() {
             className="flex-1 overflow-y-auto bg-gray-50 dark:bg-slate-950 flex flex-col transition-colors"
           >
             <div className="flex-1 p-4 lg:p-8">
+              {/* Mounted here so it renders on top of all admin views */}
+              <SuperBarangayScopeModal />
               <Outlet />
             </div>
 

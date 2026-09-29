@@ -2023,6 +2023,8 @@ ADD CONSTRAINT valid_modcat
 CHECK (modcat IN ('Fundamentals', 'Flood', 'Earthquake', 'Fire', 'General'));
 
 
+ALTER TYPE public.user_role ADD VALUE 'super_admin';
+
 -- Completed on 2026-08-21 15:49:58
 
 --

@@ -4,7 +4,22 @@ const fs = require("fs");
 
 class SystemStatsService {
   async getSystemStats() {
-    const [userStats, otherStats] = await Promise.all([
+    const [brgyStats, certStats, userStats, logStats, alertStats] = await Promise.all([
+      // 0. Barangays
+      pool.query(`
+        SELECT COUNT(*) AS total_barangays FROM public.barangays
+      `).catch(() => ({ rows: [{ total_barangays: 0 }] })),
+
+      // 1. Certificates
+      pool.query(`
+        SELECT COUNT(*) AS total_certificates
+        FROM public.certificates
+        WHERE status = 'active'
+      `).catch(() => 
+        pool.query(`SELECT COUNT(*) AS total_certificates FROM public.certificates`)
+      ).catch(() => ({ rows: [{ total_certificates: 0 }] })),
+
+      // 2. Users
       pool.query(`
         SELECT
           COUNT(*) AS total_users,
@@ -16,23 +31,40 @@ class SystemStatsService {
           COUNT(*) FILTER (WHERE role = 'system_admin') AS system_admin_users,
           COUNT(*) FILTER (WHERE banned = true) AS banned_users,
           COUNT(*) FILTER (WHERE archived = true) AS archived_users
-        FROM "user"
+        FROM public."user"
       `),
+
+      // 3. Activity Logs
       pool.query(`
-        SELECT
-          (SELECT COUNT(*) FROM activity_log) AS total_log_entries
+        SELECT COUNT(*) AS total_log_entries FROM public.activity_log
+      `),
+
+      // 4. Alerts
+      pool.query(`
+        SELECT COUNT(*) AS active_alerts
+        FROM public.announcements
+        WHERE LOWER(priority) IN ('urgent', 'critical', 'emergency')
       `),
     ]);
 
     const data = {
       ...userStats.rows[0],
-      ...otherStats.rows[0],
+      ...logStats.rows[0],
+      ...alertStats.rows[0],
+      ...certStats.rows[0],
+      ...brgyStats.rows[0],
     };
 
     for (let key in data) {
       const parsed = parseInt(data[key], 10);
       data[key] = Number.isNaN(parsed) ? 0 : parsed;
     }
+
+    // Supply frontend aliases
+    data.totalUsers = data.total_users;
+    data.activeAlerts = data.active_alerts;
+    data.totalCertificates = data.total_certificates;
+    data.totalBarangays = data.total_barangays;
 
     return data;
   }
@@ -50,7 +82,7 @@ class SystemStatsService {
         h.hour,
         COUNT(DISTINCT al.user_id) AS active_users
       FROM hours h
-      LEFT JOIN activity_log al ON date_trunc('hour', al.act_date) = h.hour
+      LEFT JOIN public.activity_log al ON date_trunc('hour', al.act_date) = h.hour
       GROUP BY h.hour
       ORDER BY h.hour ASC;
     `;

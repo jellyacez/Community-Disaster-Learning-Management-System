@@ -13,18 +13,45 @@ import { Alert01Icon } from "@hugeicons/core-free-icons";
 import { ADMIN_ROLES } from "../../constants/roles";
 
 export default function ProtectedRoute({ allowedRoles = [] }) {
+  // 1. Declare all standard hooks first
   const { data: session, isPending } = authClient.useSession();
   const [searchParams] = useSearchParams();
   const location = useLocation();
   const [isMaintenanceChecked, setIsMaintenanceChecked] = useState(false);
   const [sessionFailed, setSessionFailed] = useState(false);
 
-  const isAdmin = session?.user?.role && ADMIN_ROLES.includes(session.user.role);
+  // 2. Read impersonation context from storage
+  const impersonatedTargetRaw =
+    sessionStorage.getItem("impersonated_target_user") ||
+    localStorage.getItem("impersonated_target_user");
 
+  let impersonatedUser = null;
+  try {
+    impersonatedUser = impersonatedTargetRaw ? JSON.parse(impersonatedTargetRaw) : null;
+  } catch {
+    impersonatedUser = null;
+  }
+
+  const isSuperAdmin = session?.user?.role === "super_admin";
+  const isAdmin = (session?.user?.role && ADMIN_ROLES.includes(session.user.role)) || isSuperAdmin;
+
+  // 3. Clear ghost impersonation cookies if storage was lost when navigating to user routes
+  useEffect(() => {
+    const hasStorage = Boolean(impersonatedUser);
+
+    if (session?.user?.role === "super_admin" && !hasStorage) {
+      if (location.pathname.startsWith("/user")) {
+        apiClient.post("/admin/super/stop-impersonating").catch(() => {});
+        window.location.href = "/admin/super/dashboard";
+      }
+    }
+  }, [session, location.pathname, impersonatedUser]);
+
+  // 4. Maintenance / health check
   useEffect(() => {
     let isMounted = true;
 
-    if (session && !isPending && !isAdmin) {
+    if (session && !isPending && !isAdmin && !impersonatedUser) {
       apiClient
         .get("/public/status")
         .then(() => {
@@ -33,16 +60,13 @@ export default function ProtectedRoute({ allowedRoles = [] }) {
         .catch((err) => {
           if (!isMounted) return;
           if (err.response && err.response.status === 503) {
-            // Global interceptor handles maintenance redirect
             return;
           }
-          // If 401, session is invalid on this port/host
           if (err.response && err.response.status === 401) {
             authClient.signOut();
             setSessionFailed(true);
             return;
           }
-          // Always mark checked on other network errors so user isn't stuck spinning
           setIsMaintenanceChecked(true);
         });
     } else if (session && !isPending) {
@@ -54,19 +78,22 @@ export default function ProtectedRoute({ allowedRoles = [] }) {
     return () => {
       isMounted = false;
     };
-  }, [session, isPending, isAdmin]);
+  }, [session, isPending, isAdmin, impersonatedUser]);
 
   if (sessionFailed) {
-    return <Navigate to="/signin" replace state={{ error: "Session expired. Please sign in again." }} />;
+    return (
+      <Navigate
+        to="/signin"
+        replace
+        state={{ error: "Session expired. Please sign in again." }}
+      />
+    );
   }
 
-  if (
-    isPending ||
-    (session && !isAdmin && !isMaintenanceChecked)
-  ) {
+  if (isPending || (session && !isAdmin && !isMaintenanceChecked && !impersonatedUser)) {
     return (
       <div
-        className="min-h-screen flex items-center justify-center bg-white"
+        className="min-h-screen flex items-center justify-center bg-white dark:bg-slate-950"
         aria-hidden="true"
       >
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600"></div>
@@ -80,7 +107,6 @@ export default function ProtectedRoute({ allowedRoles = [] }) {
     }
 
     const errorParam = searchParams.get("error");
-
     if (errorParam) {
       return (
         <Navigate
@@ -94,62 +120,67 @@ export default function ProtectedRoute({ allowedRoles = [] }) {
       <Navigate
         to="/signin"
         state={{
-          error:
-            "You must be signed in to access this page. Please log in to continue.",
+          error: "You must be signed in to access this page. Please log in to continue.",
         }}
         replace
       />
     );
   }
 
+  // MFA check only for actual admin sessions when not masquerading
+  const mfaBypass = import.meta.env.VITE_DISABLE_MFA === "true";
+  if (
+    ADMIN_ROLES.includes(session.user.role) &&
+    !session.user.twoFactorEnabled &&
+    !mfaBypass &&
+    !impersonatedUser
+  ) {
+    if (location.pathname !== "/admin/mfa-setup") {
+      return <Navigate to="/admin/mfa-setup" replace />;
+    }
+  }
+
+  // Role verification block
   if (allowedRoles && allowedRoles.length > 0) {
-    const userRole = session.user?.role;
-    if (!userRole) {
-      return (
-        <div
-          className="min-h-screen flex items-center justify-center bg-white"
-          aria-hidden="true"
-        >
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600"></div>
-        </div>
-      );
+    // Unrestricted access for Super Admin
+    if (isSuperAdmin) {
+      return <Outlet />;
     }
 
-    const mfaBypass = import.meta.env.VITE_DISABLE_MFA === "true";
-    if (
-      ADMIN_ROLES.includes(userRole) &&
-      !session.user.twoFactorEnabled &&
-      !mfaBypass
-    ) {
-      if (location.pathname !== "/admin/mfa-setup") {
-        return <Navigate to="/admin/mfa-setup" replace />;
-      }
-    }
+    // Treat 'resident' and 'user' identically
+    const normalizedAllowed = allowedRoles.flatMap((r) =>
+      r === "resident" ? ["resident", "user"] : [r]
+    );
 
-    if (!allowedRoles.includes(userRole)) {
+    const effectiveRole = impersonatedUser?.role || session.user.role;
+    const hasPermission =
+      normalizedAllowed.includes(effectiveRole) ||
+      normalizedAllowed.includes(session.user.role);
+
+    if (!hasPermission) {
       let homePath = "/";
-      if (userRole === "system_admin") homePath = "/admin/dashboard";
-      else if (userRole === "mdrrmo_admin" || userRole === "head_mdrrmo_admin")
+      if (session.user.role === "system_admin") homePath = "/admin/dashboard";
+      else if (session.user.role === "mdrrmo_admin" || session.user.role === "head_mdrrmo_admin")
         homePath = "/admin/mdrrmo/dashboard";
-      else if (userRole === "barangay_admin")
+      else if (session.user.role === "barangay_admin")
         homePath = "/admin/barangay/dashboard";
-      else if (userRole === "resident" || userRole === "user")
+      else if (session.user.role === "resident" || session.user.role === "user")
         homePath = "/userDashboard";
 
       return (
-        <div className="fixed inset-0 z-100 flex items-center justify-center bg-white px-4">
-          <div className="bg-white p-8 rounded-2xl shadow-xl max-w-sm w-full text-center border border-gray-100">
-            <div className="w-16 h-16 bg-red-100 text-red-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+        <div className="fixed inset-0 z-100 flex items-center justify-center bg-white dark:bg-slate-950 px-4">
+          <div className="bg-white dark:bg-slate-900 p-8 rounded-2xl shadow-xl max-w-sm w-full text-center border border-gray-100 dark:border-slate-800">
+            <div className="w-16 h-16 bg-red-100 dark:bg-red-950/50 text-red-600 dark:text-red-400 rounded-2xl flex items-center justify-center mx-auto mb-4">
               <HugeiconsIcon
                 aria-hidden="true"
                 icon={Alert01Icon}
                 className="w-8 h-8"
               />
             </div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
               Access Denied
             </h2>
-            <p className="text-gray-500 text-sm mb-6">
+            <p className="text-gray-500 dark:text-slate-400 text-sm mb-6">
               You do not have the required permissions to view this page.
             </p>
             <Link

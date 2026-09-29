@@ -2,6 +2,8 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import { UserAdd01Icon } from "@hugeicons/core-free-icons";
 
 import useDocumentTitle from "../../../../hooks/useDocumentTitle";
+import { authClient } from "../../../../lib/auth-client";
+import apiClient from "../../../../lib/apiClient";
 
 import UserActionModal from "./components/UserActionModal/UserActionModal";
 import AdminProvisionModal from "./components/AdminProvisionModal";
@@ -16,6 +18,34 @@ import { useUserManagement } from "./hooks/useUserManagement";
 export default function UserManagement() {
   useDocumentTitle("User Management | Admin Console");
   const { state, actions } = useUserManagement();
+  const { data: session } = authClient.useSession();
+
+  const isSuperAdmin = session?.user?.role === "super_admin";
+
+  const handleImpersonate = async (targetUser) => {
+    try {
+      const res = await apiClient.post(`/admin/super/impersonate/${targetUser.id}`);
+      if (res.data?.success) {
+        const userPayload = JSON.stringify(targetUser);
+        sessionStorage.setItem("impersonated_target_user", userPayload);
+        localStorage.setItem("impersonated_target_user", userPayload);
+
+        // Normalize resident vs user role redirect
+        if (targetUser.role === "resident" || targetUser.role === "user") {
+          window.location.href = "/userDashboard";
+        } else if (targetUser.role === "barangay_admin") {
+          window.location.href = "/admin/barangay/dashboard";
+        } else if (targetUser.role && targetUser.role.includes("mdrrmo")) {
+          window.location.href = "/admin/mdrrmo/dashboard";
+        } else {
+          window.location.href = "/admin/system/dashboard";
+        }
+      }
+    } catch (err) {
+      console.error("Impersonation failed:", err);
+      alert(err.response?.data?.error || "Could not switch identity to this user.");
+    }
+  };
 
   return (
     <div className="max-w-7xl mx-auto animate-in fade-in duration-150 px-6 md:px-12 pt-2 md:pt-2 pb-12 space-y-4">
@@ -36,6 +66,7 @@ export default function UserManagement() {
           Platform-wide control, access provisioning, and user administration
         </p>
       </div>
+
       <UserFilters
         search={state.search}
         setSearch={actions.setSearch}
@@ -97,6 +128,9 @@ export default function UserManagement() {
           setSelectedUserIds={actions.setSelectedUserIds}
           handleManageClick={actions.handleManageClick}
           handleToggleSelect={actions.handleToggleSelect}
+          isSuperAdmin={isSuperAdmin}
+          currentUserId={session?.user?.id}
+          onImpersonate={handleImpersonate}
         />
 
         {/* Pagination */}
