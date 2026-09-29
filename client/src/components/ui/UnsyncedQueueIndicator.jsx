@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   AlertCircleIcon,
@@ -60,6 +61,15 @@ export default function UnsyncedQueueIndicator() {
     if (!isOpen) return;
     const interval = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(interval);
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prevOverflow;
+    };
   }, [isOpen]);
 
   const conflictItems = queueItems.filter(
@@ -170,13 +180,20 @@ export default function UnsyncedQueueIndicator() {
       </button>
 
       {/* Slide-Over Drawer / Modal */}
-      {isOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-xs p-4 animate-in fade-in duration-200">
-          <div className="bg-white dark:bg-slate-900 w-full max-w-lg rounded-3xl shadow-2xl border border-gray-100 dark:border-slate-800 overflow-hidden flex flex-col max-h-[85vh] animate-in fade-in zoom-in-95 duration-150">
-            {/* Header */}
+      {isOpen &&
+        typeof document !== "undefined" &&
+        createPortal(
+          <div
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-xs p-4 animate-in fade-in duration-200"
+            onClick={(e) => {
+              if (e.target === e.currentTarget) setIsOpen(false);
+            }}
+          >
+            <div className="bg-white dark:bg-slate-900 w-full max-w-lg rounded-3xl shadow-2xl border border-gray-100 dark:border-slate-800 overflow-hidden flex flex-col max-h-[85vh] animate-in fade-in zoom-in-95 duration-150">
+              {/* Header */}
             <div className="px-6 py-5 border-b border-gray-100 dark:border-slate-800 flex items-center justify-between bg-gray-50/50 dark:bg-slate-900">
               <div>
-                <h3 className="font-extrabold text-lg text-gray-900 dark:text-white flex items-center gap-2">
+                <h3 className="font-bold text-lg text-gray-900 dark:text-white flex items-center gap-2">
                   <HugeiconsIcon
                     icon={conflictItems.length > 0 || failedItems.length > 0 ? AlertCircleIcon : RefreshIcon}
                     className={`w-5 h-5 ${
@@ -246,8 +263,8 @@ export default function UnsyncedQueueIndicator() {
                           <p className="text-sm font-bold text-gray-900 dark:text-slate-100">
                             {getActionDescription(task)}
                           </p>
-                          <p className="text-[11px] text-gray-400 dark:text-slate-400 font-mono">
-                            Type: {task.action_type}
+                          <p className="text-xs text-gray-500 dark:text-slate-400 font-medium mt-0.5">
+                            Type: {task.action_type.replace(/_/g, " ")}
                           </p>
                         </div>
                       </div>
@@ -260,7 +277,7 @@ export default function UnsyncedQueueIndicator() {
                           </span>
                         )}
                         <span
-                          className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider ${
+                          className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wide uppercase ${
                             isConflict
                               ? "bg-amber-200 dark:bg-amber-900/60 text-amber-900 dark:text-amber-200 border border-amber-300 dark:border-amber-800"
                               : isFailed
@@ -287,7 +304,7 @@ export default function UnsyncedQueueIndicator() {
                         <div className="flex items-center gap-1.5 text-amber-900 dark:text-amber-300 font-semibold text-[11px]">
                           <span>State Conflict</span>
                           {task.conflict_type && (
-                            <span className="px-1.5 py-0.5 rounded bg-amber-200/70 dark:bg-amber-900/70 text-[10px] font-mono">
+                            <span className="px-1.5 py-0.5 rounded bg-amber-200/70 dark:bg-amber-900/70 text-[10px] font-semibold tracking-wide">
                               {task.conflict_type}
                             </span>
                           )}
@@ -303,10 +320,10 @@ export default function UnsyncedQueueIndicator() {
                     {/* Error / Backoff details if any (and not conflict) */}
                     {task.last_error && !isConflict && (
                       <div className="mt-2.5 p-2.5 bg-white dark:bg-slate-900/80 rounded-xl border border-gray-200/80 dark:border-slate-700 text-xs">
-                        <p className="text-gray-500 dark:text-slate-400 font-semibold text-[11px]">
+                        <p className="text-gray-500 dark:text-slate-400 font-semibold text-xs">
                           {isFailed ? "Permanent Failure Reason:" : "Last Attempt Note:"}
                         </p>
-                        <p className="text-gray-800 dark:text-slate-200 font-mono text-[11px] mt-0.5 break-words">
+                        <p className="text-gray-800 dark:text-slate-200 text-xs mt-1 break-words font-medium leading-relaxed">
                           {task.last_error}
                         </p>
                         {isRetrying && task.next_retry_at && (
@@ -400,9 +417,10 @@ export default function UnsyncedQueueIndicator() {
                 )}
               </div>
             )}
-          </div>
-        </div>
-      )}
+            </div>
+          </div>,
+          document.body
+        )}
 
       {/* Confirmation Modal for Single Discard */}
       <ConfirmationModal
