@@ -4,7 +4,7 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import { Menu01Icon, Sun01Icon, Moon02Icon } from "@hugeicons/core-free-icons";
 import AdminSidebar from "./AdminSidebar";
 import CriticalAlertBanner from "./CriticalAlertBanner";
-import PortalFooter from "../ui/PortalFooter";
+
 import { authClient } from "../../lib/auth-client";
 import { useTheme } from "../../hooks/context/themeContext";
 
@@ -26,23 +26,7 @@ export default function AdminLayout() {
   }, [pathname]);
 
   // Determine if the footer should flow naturally with content (non-sticky)
-  const isScrollableFooter = useMemo(() => {
-    if (!isMdrrmoAdmin) return false;
 
-    const currentPath = (pathname || "").toLowerCase();
-    const scrollKeywords = [
-      "dashboard",
-      "sector-overview",
-      "certifications",
-      "logs",
-      "feedback",
-    ];
-
-    return (
-      currentPath.includes("/admin/mdrrmo") &&
-      scrollKeywords.some((keyword) => currentPath.includes(keyword))
-    );
-  }, [isMdrrmoAdmin, pathname]);
 
   return (
     <div className="flex flex-col h-screen bg-gray-50 dark:bg-slate-950 overflow-hidden transition-colors duration-200">
@@ -84,12 +68,10 @@ export default function AdminLayout() {
               <Outlet />
             </div>
 
-            {/* Non-sticky footer flows naturally at the end of the scrollable content */}
-            {isScrollableFooter && <PortalFooter />}
+
           </div>
 
-          {/* Pinned/Sticky footer for other pages */}
-          {!isScrollableFooter && <PortalFooter />}
+
         </main>
       </div>
     </div>

@@ -38,15 +38,27 @@ export default function ModuleGrid({
 
   if (rawModules.length === 0) {
     return (
-      <div className="text-center py-24 bg-white dark:bg-slate-900 rounded-3xl border border-gray-200 dark:border-slate-800 border-dashed">
-        <div className="w-16 h-16 bg-gray-100 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4">
-          <HugeiconsIcon icon={Folder01Icon} className="w-8 h-8 text-gray-400 dark:text-slate-500" />
+      <div className="w-full text-center px-4 sm:px-6 py-10 sm:py-14 bg-white dark:bg-slate-900 rounded-2xl sm:rounded-3xl border border-dashed border-gray-200 dark:border-slate-800 shadow-2xs">
+        <div className="w-12 h-12 sm:w-14 sm:h-14 bg-gray-100 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-3.5">
+          <HugeiconsIcon
+            icon={Folder01Icon}
+            className="w-6 h-6 sm:w-7 sm:h-7 text-gray-400 dark:text-slate-500 shrink-0"
+          />
         </div>
-        <h3 className="text-xl font-bold text-gray-900 dark:text-slate-100 mb-2">No Learning Paths Yet</h3>
-        <p className="text-gray-500 dark:text-slate-400 mb-6 max-w-md mx-auto">
-          You haven't created any training modules yet. Click the button above to start building your first learning path.
+
+        <h3 className="text-base sm:text-lg font-bold text-gray-900 dark:text-slate-100 mb-1.5 tracking-tight">
+          No Learning Paths Yet
+        </h3>
+
+        <p className="text-xs sm:text-sm text-gray-500 dark:text-slate-400 mb-5 max-w-md mx-auto leading-relaxed">
+          You haven&apos;t created any training modules yet. Click the button above to start building your first learning path.
         </p>
-        <button onClick={handleOpenWizard} className="px-5 py-2.5 bg-gray-900 dark:bg-red-600 text-white rounded-xl font-bold hover:bg-black dark:hover:bg-red-700 transition-colors cursor-pointer shadow-sm">
+
+        <button
+          type="button"
+          onClick={handleOpenWizard}
+          className="w-full sm:w-auto inline-flex items-center justify-center px-5 py-2.5 min-h-[42px] bg-gray-900 dark:bg-red-600 text-white text-xs sm:text-sm rounded-xl font-bold hover:bg-black dark:hover:bg-red-700 active:scale-[0.98] transition-all cursor-pointer shadow-xs select-none"
+        >
           Start Building
         </button>
       </div>
@@ -57,8 +69,8 @@ export default function ModuleGrid({
     return (
       <div className="text-center py-16">
         <p className="text-gray-500 dark:text-slate-400 font-medium">No learning paths match your filters.</p>
-        <button 
-          onClick={() => { setSearchQuery(""); setFilterCategory("All"); setFilterLevel("All"); }} 
+        <button
+          onClick={() => { setSearchQuery(""); setFilterCategory("All"); setFilterLevel("All"); }}
           className="mt-4 text-red-600 dark:text-red-400 font-bold hover:underline cursor-pointer"
         >
           Clear Filters
@@ -71,13 +83,13 @@ export default function ModuleGrid({
     <div className="space-y-8">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {paginatedModules.map((mod) => (
-          <ModuleCard 
-            key={mod.id} 
-            module={mod} 
-            enrolled={false} 
+          <ModuleCard
+            key={mod.id}
+            module={mod}
+            enrolled={false}
             isAdminView={true}
             onManageClick={() => handleEditModule(mod.id)}
-            onPreviewClick={() => {}} 
+            onPreviewClick={() => {}}
           />
         ))}
       </div>
@@ -107,7 +119,7 @@ export default function ModuleGrid({
 
         return (
           <div className="flex items-center justify-center gap-2 pt-4">
-            <button 
+            <button
               onClick={() => handlePageChange(currentPage - 1)}
               disabled={currentPage === 1}
               className="min-h-[44px] px-4 py-2.5 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl text-sm font-bold text-gray-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all cursor-pointer shadow-2xs"
@@ -125,7 +137,7 @@ export default function ModuleGrid({
                 </button>
               ))}
             </div>
-            <button 
+            <button
               onClick={() => handlePageChange(currentPage + 1)}
               disabled={currentPage === totalPages}
               className="min-h-[44px] px-4 py-2.5 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl text-sm font-bold text-gray-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all cursor-pointer shadow-2xs"
