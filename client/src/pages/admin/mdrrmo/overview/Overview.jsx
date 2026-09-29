@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import apiClient from "../../../../lib/apiClient";
 import { authClient } from "../../../../lib/auth-client";
 import useDocumentTitle from "../../../../hooks/useDocumentTitle";
+import toast from "react-hot-toast";
 import {
   FolderAddIcon,
   UserGroupIcon,
@@ -87,6 +88,81 @@ export default function Overview() {
 
   const m = metricsData || {};
 
+  const handleExportReport = () => {
+    if (metricsLoading || isLoadingModules) {
+      toast.error("Please wait while report data finishes loading.");
+      return;
+    }
+
+    const reportDate = new Date().toISOString().split("T")[0];
+    const generatedTimestamp = new Date().toLocaleString();
+
+    // Section 1: Executive KPI Summary
+    const kpiHeaders = ["KPI Metric", "Value", "Description"];
+    const kpiRows = [
+      ["Registered Responders", m.registered_responders ?? 0, "Total resident learner accounts registered in the system"],
+      ["Active Modules", m.active_modules ?? 0, "Currently published and accessible training curriculum"],
+      ["Total Enrollments", m.total_enrollments ?? 0, "Total module participation and attempts recorded"],
+      ["Certificates Issued", m.certificates_issued ?? 0, "Active certificates of competency earned by residents"],
+      ["Pending Approvals", m.pending_reviews ?? 0, "Curriculum modules awaiting administrative review"],
+    ];
+
+    // Section 2: Curriculum & Training Modules Inventory
+    const moduleHeaders = [
+      "Module ID",
+      "Module Title",
+      "Category",
+      "Status",
+      "Steps Inside",
+      "Difficulty Level",
+      "Duration",
+    ];
+    const moduleRows = (modules || []).map((mod) => [
+      mod.id || "",
+      `"${(mod.title || "").replace(/"/g, '""')}"`,
+      `"${(mod.category || "Uncategorized").replace(/"/g, '""')}"`,
+      `"${(mod.status || "draft").replace(/"/g, '""')}"`,
+      mod.step_count ?? 0,
+      `"${(mod.level || "Level 1").replace(/"/g, '""')}"`,
+      `"${(mod.duration || "Varies").replace(/"/g, '""')}"`,
+    ]);
+
+    const csvLines = [
+      `"MUNICIPAL DISASTER RISK REDUCTION AND MANAGEMENT OFFICE (MDRRMO)"`,
+      `"EXECUTIVE TRAINING & DISASTER PREPAREDNESS SUMMARY REPORT"`,
+      `"Generated At:","${generatedTimestamp}"`,
+      "",
+      `"--- SECTION 1: KEY PERFORMANCE INDICATORS ---"`,
+      kpiHeaders.join(","),
+      ...kpiRows.map((r) =>
+        r
+          .map((c) =>
+            typeof c === "string" && !c.startsWith('"')
+              ? `"${c.replace(/"/g, '""')}"`
+              : c,
+          )
+          .join(","),
+      ),
+      "",
+      `"--- SECTION 2: CURRICULUM & TRAINING MODULES INVENTORY ---"`,
+      moduleHeaders.join(","),
+      ...moduleRows.map((r) => r.join(",")),
+    ];
+
+    const csvContent = csvLines.join("\r\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const downloadUrl = window.URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = downloadUrl;
+    link.download = `MDRRMO_Training_Summary_Report_${reportDate}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(downloadUrl);
+
+    toast.success("MDRRMO Training Summary Report exported successfully!");
+  };
+
   return (
     <div className="space-y-4 sm:space-y-6 animate-in fade-in duration-150 pb-8 sm:pb-12 max-w-full">
       {/* Header Row */}
@@ -103,7 +179,9 @@ export default function Overview() {
         <div className="flex flex-wrap sm:flex-nowrap items-center gap-2.5 sm:gap-3 shrink-0 w-full sm:w-auto">
           <button
             type="button"
-            className="flex-1 sm:flex-initial h-10 px-3.5 sm:px-4 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-gray-700 dark:text-slate-200 text-xs font-bold tracking-wide uppercase rounded-xl flex items-center justify-center gap-2 hover:bg-gray-50 dark:hover:bg-slate-700 active:scale-[0.98] transition-all whitespace-nowrap shadow-sm cursor-pointer"
+            onClick={handleExportReport}
+            disabled={metricsLoading || isLoadingModules}
+            className="flex-1 sm:flex-initial h-10 px-3.5 sm:px-4 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-gray-700 dark:text-slate-200 text-xs font-bold tracking-wide uppercase rounded-xl flex items-center justify-center gap-2 hover:bg-gray-50 dark:hover:bg-slate-700 active:scale-[0.98] transition-all whitespace-nowrap shadow-sm cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <HugeiconsIcon
               icon={Download02Icon}

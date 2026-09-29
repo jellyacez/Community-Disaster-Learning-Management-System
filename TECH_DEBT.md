@@ -621,15 +621,17 @@ This document tracks identified technical debt, architectural decisions, missing
 
 ---
 
-### Resolved: Phantom UPDATE_PROGRESS and COMPLETE_MODULE Offline Sync Dispatch Gap (`syncManager.js`, `progressService.js`)
-- **Location:** `client/src/lib/LocalSave/syncManager.js`, `client/src/lib/LocalSave/progressService.js`, `server/routes/modules/`
+### Resolved: Phantom UPDATE_PROGRESS and COMPLETE_MODULE Offline Sync Dispatch Gap (`syncManager.js`, `progressService.js`, `moduleRoutes.js`)
+- **Location:** `server/routes/modules/moduleRoutes.js`, `server/controllers/modules/moduleProgressController.js`, `client/src/lib/LocalSave/syncManager.js`, `client/src/lib/LocalSave/progressService.js`
 - **Issue:** 
-  1. `syncManager.js` included dispatch handling for `UPDATE_PROGRESS` (`PUT /api/modules/:id/progress`) and `COMPLETE_MODULE` (`POST /api/modules/:id/complete`), which targeted unmounted, non-existent backend endpoints, resulting in 404 errors during offline queue replays.
-  2. Investigation verified that this was an unmounted redundant side-effect call rather than lost module completions. The source of truth for learner progress and certification has always been `MARK_STEP_COMPLETE` and `SUBMIT_QUIZ` (`POST /api/modules/:id/steps/:stepId/complete`), which are fully mounted, idempotent via PostgreSQL `ON CONFLICT (user_id, step_id) DO NOTHING`, and automatically issue certificates upon completing the final step.
+  1. `syncManager.js` previously dispatched `UPDATE_PROGRESS` and `COMPLETE_MODULE` to unmounted path patterns (`/api/modules/:id/progress` and `/api/modules/:id/complete`), producing HTTP 404 errors during background replay.
+  2. Investigation confirmed that the primary source of truth for learner progression is step completion (`POST /api/modules/:id/steps/:stepId/complete`), which atomically updates step status, recalculates overall module percentage, and issues certificates upon completion. However, client-side progress updates and completions still required a legitimate, mounted sync route.
 - **Resolution:**
-  - Removed phantom dispatch branches for `UPDATE_PROGRESS` and `COMPLETE_MODULE` from `syncManager.js`.
-  - Updated `saveOfflineModuleProgress` and `markModuleCompletedOffline` in `progressService.js` to update local Dexie cache (`module_activity`) without queueing orphaned sync tasks for phantom endpoints.
-- **Verification:** Verified that step completions and quiz submissions continue to advance module progress and issue official certificates seamlessly offline and online without triggering 404 sync failures.
+  - **Mounted Dedicated Sync Route:** Implemented and mounted `POST /api/modules/progress` (`router.post("/progress", moduleProgressController.syncModuleProgress)` in `moduleRoutes.js`). The controller recalculates completion percentage from step completions and updates `module_activity` (`modstatus`, `progress`, `completed_at`).
+  - **Re-routed Sync Manager Dispatches:** In `syncManager.js`, routed both `UPDATE_PROGRESS` and `COMPLETE_MODULE` to `POST /api/modules/progress` with `task.payload` (`{ mod_id, user_id, ... }`).
+  - **Cache vs. Sync Segregation in Progress Service:** Updated `saveOfflineModuleProgress` in `progressService.js` to update the local Dexie `module_activity` store directly without enqueueing orphaned tasks to the sync queue (acting as an immediate local progress-bar cache).
+  - **Maintained Backward Compatibility:** `markModuleCompletedOffline` still enqueues `COMPLETE_MODULE`, but it now replays safely against the mounted `POST /api/modules/progress` route instead of failing with 404.
+- **Verification:** Verified that step completions and offline sync replays cleanly succeed against `POST /api/modules/progress` without 404 errors or orphaned tasks.
 
 ---
 

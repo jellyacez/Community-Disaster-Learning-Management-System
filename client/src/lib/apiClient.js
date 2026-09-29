@@ -35,8 +35,8 @@ apiClient.interceptors.response.use(
 
     // Handle 503 Maintenance Mode
     if (error.response && error.response.status === 503 && error.response.data?.error === 'MAINTENANCE_MODE') {
-      // Prevent redirect loop
-      if (window.location.pathname !== '/maintenance') {
+      // Prevent redirect loop and never redirect away from /signin so admins can log in
+      if (window.location.pathname !== '/maintenance' && window.location.pathname !== '/signin') {
         window.location.href = '/maintenance';
       }
     }

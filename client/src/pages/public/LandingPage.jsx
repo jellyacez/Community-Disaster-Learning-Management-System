@@ -39,24 +39,32 @@ export default function LandingPage() {
         return;
       }
 
-      if (userRole === "system_admin")
+      if (userRole === "system_admin") {
         navigate("/admin/dashboard", { replace: true });
-      else if (userRole === "mdrrmo_admin")
-        navigate("/admin/mdrrmo/dashboard", { replace: true });
-      else if (userRole === "barangay_admin")
-        navigate("/admin/barangay/dashboard", { replace: true });
-      else {
-        apiClient
-          .get("/user/dashboard")
-          .then(() => {
-            navigate("/userDashboard", { replace: true });
-          })
-          .catch((err) => {
-            if (err.response?.status === 401) {
-              authClient.signOut();
-            }
-          });
+        return;
       }
+
+      // Check maintenance status for all other roles
+      apiClient
+        .get("/public/status")
+        .then(() => {
+          if (userRole === "mdrrmo_admin" || userRole === "head_mdrrmo_admin") {
+            navigate("/admin/mdrrmo/dashboard", { replace: true });
+          } else if (userRole === "barangay_admin") {
+            navigate("/admin/barangay/dashboard", { replace: true });
+          } else {
+            navigate("/userDashboard", { replace: true });
+          }
+        })
+        .catch((err) => {
+          if (err.response?.status === 503) {
+            navigate("/maintenance", { replace: true });
+          } else if (err.response?.status === 401) {
+            authClient.signOut();
+          } else {
+            navigate("/userDashboard", { replace: true });
+          }
+        });
     }
   }, [session, isPending, navigate]);
 

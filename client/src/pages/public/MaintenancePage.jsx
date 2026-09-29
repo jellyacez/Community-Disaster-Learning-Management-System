@@ -1,7 +1,6 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Settings02Icon, ArrowRight01Icon } from "@hugeicons/core-free-icons";
-import { useQueryClient } from "@tanstack/react-query";
 import apiClient from "../../lib/apiClient";
 import { authClient } from "../../lib/auth-client";
 import { useNavigate, Link } from "react-router-dom";
@@ -13,34 +12,25 @@ export default function MaintenancePage() {
   const navigate = useNavigate();
   const [isChecking, setIsChecking] = useState(false);
   const { data: session } = authClient.useSession();
-  const queryClient = useQueryClient();
-
-  // Force logout if resident session exists
-  useEffect(() => {
-    if (session?.user && session.user.role === "resident") {
-      queryClient.cancelQueries();
-      queryClient.clear();
-      authClient.signOut();
-    }
-  }, [session, queryClient]);
 
   // Verify if maintenance mode is disabled
   const checkStatus = async () => {
     setIsChecking(true);
     try {
-      // Ping protected route to check system status
-      const res = await apiClient.get("/user/dashboard");
+      const res = await apiClient.get("/public/status");
       if (res.status === 200) {
         toast.success("System is back online!");
-        navigate("/");
+        if (session?.user?.role === "system_admin") {
+          navigate("/admin/dashboard");
+        } else {
+          navigate("/signin");
+        }
       }
     } catch (error) {
       if (error.response?.status === 503) {
         toast.error("System is still undergoing maintenance. Please try again later.");
       } else {
-        // If it's 401 Unauthorized, that actually means maintenance is OFF and they just aren't logged in
-        toast.success("System is back online!");
-        navigate("/");
+        toast.error("Could not reach the server. Please check your connection.");
       }
     } finally {
       setIsChecking(false);
@@ -70,7 +60,7 @@ export default function MaintenancePage() {
           <button
             onClick={checkStatus}
             disabled={isChecking}
-            className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3.5 px-6 rounded-xl transition-all shadow-sm shadow-red-200 hover:shadow-md hover:shadow-red-200 flex items-center justify-center gap-2 disabled:opacity-70"
+            className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3.5 px-6 rounded-xl transition-all shadow-sm shadow-red-200 hover:shadow-md hover:shadow-red-200 flex items-center justify-center gap-2 disabled:opacity-70 cursor-pointer"
           >
             {isChecking ? (
               <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -82,9 +72,18 @@ export default function MaintenancePage() {
             )}
           </button>
           
-          {session?.user && session.user.role !== "resident" && (
-            <p className="text-sm text-gray-500 font-medium mt-4">
-              You are signed in. <Link to="/signin" className="text-red-600 hover:underline hover:text-red-700">Return to Dashboard</Link>
+          {session?.user && session.user.role === "system_admin" && (
+            <p className="text-sm text-gray-600 font-medium mt-4">
+              Signed in as System Admin.{" "}
+              <Link to="/admin/dashboard" className="text-red-600 font-bold hover:underline hover:text-red-700">
+                Go to Admin Console &rarr;
+              </Link>
+            </p>
+          )}
+
+          {session?.user && session.user.role !== "system_admin" && (
+            <p className="text-xs text-gray-400 font-medium mt-4">
+              Signed in as {session.user.name || session.user.email} ({session.user.role}). Access will resume automatically once upgrades finish.
             </p>
           )}
         </div>

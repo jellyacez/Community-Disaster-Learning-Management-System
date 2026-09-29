@@ -43,7 +43,7 @@ const queryClient = new QueryClient({
   },
 });
 
-if (typeof window !== "undefined") {
+if (typeof window !== "undefined" && (import.meta.env.DEV || window.__E2E__)) {
   window.__offlineSync__ = {
     syncManager,
     progressService,

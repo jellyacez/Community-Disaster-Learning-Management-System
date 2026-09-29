@@ -5,6 +5,7 @@ import {
   Link,
   useSearchParams,
   useLocation,
+  useNavigate,
 } from "react-router-dom";
 import { authClient } from "../../lib/auth-client";
 import apiClient from "../../lib/apiClient";
@@ -16,15 +17,16 @@ export default function ProtectedRoute({ allowedRoles = [] }) {
   const { data: session, isPending } = authClient.useSession();
   const [searchParams] = useSearchParams();
   const location = useLocation();
+  const navigate = useNavigate();
   const [isMaintenanceChecked, setIsMaintenanceChecked] = useState(false);
   const [sessionFailed, setSessionFailed] = useState(false);
 
-  const isAdmin = session?.user?.role && ADMIN_ROLES.includes(session.user.role);
+  const isSystemAdmin = session?.user?.role === "system_admin";
 
   useEffect(() => {
     let isMounted = true;
 
-    if (session && !isPending && !isAdmin) {
+    if (session && !isPending && !isSystemAdmin) {
       apiClient
         .get("/public/status")
         .then(() => {
@@ -33,7 +35,7 @@ export default function ProtectedRoute({ allowedRoles = [] }) {
         .catch((err) => {
           if (!isMounted) return;
           if (err.response && err.response.status === 503) {
-            // Global interceptor handles maintenance redirect
+            navigate("/maintenance", { replace: true });
             return;
           }
           // If 401, session is invalid on this port/host
@@ -54,7 +56,7 @@ export default function ProtectedRoute({ allowedRoles = [] }) {
     return () => {
       isMounted = false;
     };
-  }, [session, isPending, isAdmin]);
+  }, [session, isPending, isSystemAdmin, navigate]);
 
   if (sessionFailed) {
     return <Navigate to="/signin" replace state={{ error: "Session expired. Please sign in again." }} />;
@@ -62,7 +64,7 @@ export default function ProtectedRoute({ allowedRoles = [] }) {
 
   if (
     isPending ||
-    (session && !isAdmin && !isMaintenanceChecked)
+    (session && !isSystemAdmin && !isMaintenanceChecked)
   ) {
     return (
       <div
