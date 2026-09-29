@@ -1,3 +1,4 @@
+import { lazy, Suspense } from "react";
 import { Link } from "react-router-dom";
 import useDocumentTitle from "../../../../hooks/useDocumentTitle";
 import { HugeiconsIcon } from "@hugeicons/react";
@@ -8,8 +9,10 @@ import { useExpiringFeed } from "./hooks/useExpiringFeed";
 
 import CertAnalyticsKPIs from "./components/CertAnalyticsKPIs";
 import BarangayComplianceChart from "./components/BarangayComplianceChart";
-import ModulePopularityChart from "./components/ModulePopularityChart";
 import ExpiringCredentialsFeed from "./components/ExpiringCredentialsFeed";
+import { SkeletonChart } from "../../../../components/ui/Skeleton";
+
+const ModulePopularityChart = lazy(() => import("./components/ModulePopularityChart"));
 
 export default function MdrrmoCertifications() {
   useDocumentTitle("Municipal Certification Analytics | MDRRMO Admin");
@@ -94,10 +97,18 @@ export default function MdrrmoCertifications() {
           />
         </div>
         <div className="lg:col-span-1">
-          <ModulePopularityChart
-            modules={analyticsData?.modules || []}
-            isLoading={isAnalyticsLoading}
-          />
+          <Suspense
+            fallback={
+              <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-[0_2px_12px_-3px_rgba(0,0,0,0.06)] p-6 flex flex-col h-full min-h-[420px] items-center justify-center">
+                <SkeletonChart type="donut" height={220} />
+              </div>
+            }
+          >
+            <ModulePopularityChart
+              modules={analyticsData?.modules || []}
+              isLoading={isAnalyticsLoading}
+            />
+          </Suspense>
         </div>
       </div>
 

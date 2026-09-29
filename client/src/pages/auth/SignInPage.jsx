@@ -83,23 +83,28 @@ export default function SignInPage() {
       };
       
       const targetRoute = roleRoutes[userRole] || "/userDashboard";
-      
-      if (userRole === "resident") {
-  // Verify session validity with backend before redirecting
-  apiClient
-    .get("/user/dashboard")
-    .then(() => {
-      navigate(targetRoute, { replace: true });
-    })
-    .catch((err) => {
-      // If 401, session is dead; log out locally and stay on SignIn
-      if (err.response?.status === 401) {
-        authClient.signOut();
+
+      // Only system_admin can enter the system during maintenance mode
+      if (userRole === "system_admin") {
+        navigate(targetRoute, { replace: true });
+        return;
       }
-    });
-} else {
-  navigate(targetRoute, { replace: true });
-}
+
+      // Every other role checks if maintenance mode is active before entering
+      apiClient
+        .get("/public/status")
+        .then(() => {
+          navigate(targetRoute, { replace: true });
+        })
+        .catch((err) => {
+          if (err.response?.status === 503) {
+            navigate("/maintenance", { replace: true });
+          } else if (err.response?.status === 401) {
+            authClient.signOut();
+          } else {
+            navigate(targetRoute, { replace: true });
+          }
+        });
     }
   }, [session, isPending, navigate]);
 

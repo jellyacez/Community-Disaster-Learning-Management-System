@@ -1,0 +1,45 @@
+name: Docker — Build Validation
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "docker/**"
+      - "**/Dockerfile"
+      - "**/Dockerfile.*"
+      - "docker-compose*.yml"
+      - "server/**"
+      - "client/**"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build server image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: docker/server/Dockerfile
+          push: false
+          tags: lms-server:ci
+
+      - name: Build client image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: docker/client/Dockerfile
+          push: false
+          tags: lms-client:ci
+          build-args: |
+            VITE_API_URL=http://localhost/api
+            VITE_BASE_URL=http://localhost
+            VITE_FRONTEND_URL=http://localhost
+            VITE_DISABLE_MFA=false

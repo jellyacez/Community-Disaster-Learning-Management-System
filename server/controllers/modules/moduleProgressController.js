@@ -7,8 +7,18 @@ exports.completeModuleStep = async (req, res) => {
   const user_id = req.user?.id;
   const { answers } = req.body || {}; // Optional answers for quizzes
 
+  const parsedModId = parseInt(mod_id, 10);
+  const parsedStepId = parseInt(stepId, 10);
+
+  if (isNaN(parsedModId) || isNaN(parsedStepId)) {
+    return res.status(400).json({
+      success: false,
+      message: "Invalid module or step identifier."
+    });
+  }
+
   try {
-    const result = await ModuleProgressService.completeModuleStep(user_id, mod_id, stepId, answers);
+    const result = await ModuleProgressService.completeModuleStep(user_id, parsedModId, parsedStepId, answers);
 
     if (result && !result.passed) {
        return res.status(200).json({

@@ -1,5 +1,6 @@
-import { lazy, Suspense } from "react";
-import { Routes, Route, Navigate } from "react-router-dom";
+import { lazy, Suspense, useEffect } from "react";
+import { Routes, Route, Navigate, useNavigate, useLocation } from "react-router-dom";
+import { authClient } from "./lib/auth-client";
 import { Toaster } from "react-hot-toast";
 import ErrorBoundary from "./components/ErrorBoundary";
 import useNetworkSync from "./hooks/useNetworkSync";
@@ -138,6 +139,29 @@ const VerifyCertificate = lazy(
 export default function App() {
   useNetworkSync();
   useRealtimeEvents();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { data: session } = authClient.useSession();
+
+  useEffect(() => {
+    const handleMaintenance = () => {
+      const isSystemAdmin = session?.user?.role === "system_admin" || session?.user?.role === "super_admin";
+      const isExemptPath =
+        location.pathname === "/maintenance" ||
+        location.pathname === "/signin" ||
+        location.pathname.startsWith("/admin");
+
+      if (!isSystemAdmin && !isExemptPath) {
+        navigate("/maintenance", { replace: true });
+      }
+    };
+
+    window.addEventListener("system:maintenance", handleMaintenance);
+    return () => {
+      window.removeEventListener("system:maintenance", handleMaintenance);
+    };
+  }, [session, location.pathname, navigate]);
+
   return (
     <ErrorBoundary>
       <ScrollToTop />
@@ -280,7 +304,7 @@ export default function App() {
               </Route>              
 
               <Route
-                element={<ProtectedRoute allowedRoles={["super_admin","system_admin"]} />}
+                element={<ProtectedRoute allowedRoles={["super_admin", "system_admin"]} />}
               >
                 <Route
                   path="/admin/dashboard"
@@ -304,7 +328,7 @@ export default function App() {
               <Route
                 element={
                   <ProtectedRoute
-                    allowedRoles={["super_admin","head_mdrrmo_admin", "mdrrmo_admin"]}
+                    allowedRoles={["super_admin", "head_mdrrmo_admin", "mdrrmo_admin"]}
                   />
                 }
               >
@@ -328,7 +352,7 @@ export default function App() {
 
                   <Route
                     element={
-                      <ProtectedRoute allowedRoles={["super_admin","head_mdrrmo_admin"]} />
+                      <ProtectedRoute allowedRoles={["super_admin", "head_mdrrmo_admin"]} />
                     }
                   >
                     <Route
@@ -349,7 +373,7 @@ export default function App() {
               </Route>
 
               <Route
-                element={<ProtectedRoute allowedRoles={["super_admin","barangay_admin"]} />}
+                element={<ProtectedRoute allowedRoles={["super_admin", "barangay_admin"]} />}
               >
                 <Route
                   path="/admin/barangay"

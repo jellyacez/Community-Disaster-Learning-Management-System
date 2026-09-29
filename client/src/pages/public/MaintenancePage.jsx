@@ -1,10 +1,10 @@
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { Settings02Icon, ArrowRight01Icon } from "@hugeicons/core-free-icons";
-import { useQueryClient } from "@tanstack/react-query";
+import { Settings02Icon, ArrowRight01Icon, Logout01Icon } from "@hugeicons/core-free-icons";
 import apiClient from "../../lib/apiClient";
 import { authClient } from "../../lib/auth-client";
 import { useNavigate, Link } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import useDocumentTitle from "../../hooks/useDocumentTitle";
 import toast from "react-hot-toast";
 
@@ -12,35 +12,57 @@ export default function MaintenancePage() {
   useDocumentTitle("System Maintenance | DRRM Portal");
   const navigate = useNavigate();
   const [isChecking, setIsChecking] = useState(false);
+  const [isSigningOut, setIsSigningOut] = useState(false);
   const { data: session } = authClient.useSession();
   const queryClient = useQueryClient();
 
-  // Force logout if resident session exists
-  useEffect(() => {
-    if (session?.user && session.user.role === "resident") {
+  const handleSignOut = async () => {
+    setIsSigningOut(true);
+    try {
+      sessionStorage.setItem("isLoggingOut", "true");
       queryClient.cancelQueries();
       queryClient.clear();
-      authClient.signOut();
+      await authClient.signOut({
+        fetchOptions: {
+          onSuccess: () => {
+            navigate("/signin", { replace: true });
+          },
+        },
+      });
+      navigate("/signin", { replace: true });
+    } catch (err) {
+      console.error("Sign out error:", err);
+      navigate("/signin", { replace: true });
+    } finally {
+      setIsSigningOut(false);
     }
-  }, [session, queryClient]);
+  };
+
+  // If already authenticated as system_admin, auto-redirect directly to Admin Dashboard
+  useEffect(() => {
+    if (session?.user?.role === "system_admin") {
+      navigate("/admin/dashboard", { replace: true });
+    }
+  }, [session, navigate]);
 
   // Verify if maintenance mode is disabled
   const checkStatus = async () => {
     setIsChecking(true);
     try {
-      // Ping protected route to check system status
-      const res = await apiClient.get("/user/dashboard");
+      const res = await apiClient.get("/public/status");
       if (res.status === 200) {
         toast.success("System is back online!");
-        navigate("/");
+        if (session?.user?.role === "system_admin") {
+          navigate("/admin/dashboard");
+        } else {
+          navigate("/signin");
+        }
       }
     } catch (error) {
       if (error.response?.status === 503) {
         toast.error("System is still undergoing maintenance. Please try again later.");
       } else {
-        // If it's 401 Unauthorized, that actually means maintenance is OFF and they just aren't logged in
-        toast.success("System is back online!");
-        navigate("/");
+        toast.error("Could not reach the server. Please check your connection.");
       }
     } finally {
       setIsChecking(false);
@@ -70,7 +92,7 @@ export default function MaintenancePage() {
           <button
             onClick={checkStatus}
             disabled={isChecking}
-            className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3.5 px-6 rounded-xl transition-all shadow-sm shadow-red-200 hover:shadow-md hover:shadow-red-200 flex items-center justify-center gap-2 disabled:opacity-70"
+            className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3.5 px-6 rounded-xl transition-all shadow-sm shadow-red-200 hover:shadow-md hover:shadow-red-200 flex items-center justify-center gap-2 disabled:opacity-70 cursor-pointer"
           >
             {isChecking ? (
               <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -82,10 +104,45 @@ export default function MaintenancePage() {
             )}
           </button>
           
-          {session?.user && session.user.role !== "resident" && (
-            <p className="text-sm text-gray-500 font-medium mt-4">
-              You are signed in. <Link to="/signin" className="text-red-600 hover:underline hover:text-red-700">Return to Dashboard</Link>
-            </p>
+          {session?.user && session.user.role === "system_admin" && (
+            <div className="mt-4 space-y-1.5">
+              <p className="text-sm text-gray-600 font-medium">
+                Signed in as System Admin.{" "}
+                <Link to="/admin/dashboard" className="text-red-600 font-bold hover:underline hover:text-red-700">
+                  Go to Admin Console &rarr;
+                </Link>
+              </p>
+              <div>
+                <button
+                  type="button"
+                  onClick={handleSignOut}
+                  disabled={isSigningOut}
+                  className="text-xs text-gray-400 hover:text-red-600 font-medium underline underline-offset-2 transition-colors cursor-pointer inline-flex items-center gap-1 disabled:opacity-60"
+                >
+                  <HugeiconsIcon icon={Logout01Icon} className="w-3.5 h-3.5" />
+                  {isSigningOut ? "Signing out..." : "Sign Out"}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {session?.user && session.user.role !== "system_admin" && (
+            <div className="mt-4 space-y-2">
+              <p className="text-xs text-gray-400 font-medium leading-relaxed">
+                Signed in as {session.user.name || session.user.email} ({session.user.role}). Access will resume automatically once upgrades finish.
+              </p>
+              <div>
+                <button
+                  type="button"
+                  onClick={handleSignOut}
+                  disabled={isSigningOut}
+                  className="text-xs text-gray-500 hover:text-red-600 font-semibold underline underline-offset-2 transition-colors cursor-pointer inline-flex items-center gap-1.5 disabled:opacity-60"
+                >
+                  <HugeiconsIcon icon={Logout01Icon} className="w-3.5 h-3.5" />
+                  {isSigningOut ? "Signing out..." : "Sign Out"}
+                </button>
+              </div>
+            </div>
           )}
         </div>
       </div>

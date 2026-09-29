@@ -33,12 +33,9 @@ apiClient.interceptors.response.use(
       }
     }
 
-    // Handle 503 Maintenance Mode
+    // Handle 503 Maintenance Mode gracefully via React Router event instead of breaking React with window.location.href
     if (error.response && error.response.status === 503 && error.response.data?.error === 'MAINTENANCE_MODE') {
-      // Prevent redirect loop
-      if (window.location.pathname !== '/maintenance') {
-        window.location.href = '/maintenance';
-      }
+      window.dispatchEvent(new CustomEvent('system:maintenance'));
     }
     return Promise.reject(error);
   }

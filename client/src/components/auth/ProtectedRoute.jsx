@@ -5,6 +5,7 @@ import {
   Link,
   useSearchParams,
   useLocation,
+  useNavigate,
 } from "react-router-dom";
 import { authClient } from "../../lib/auth-client";
 import apiClient from "../../lib/apiClient";
@@ -13,14 +14,13 @@ import { Alert01Icon } from "@hugeicons/core-free-icons";
 import { ADMIN_ROLES } from "../../constants/roles";
 
 export default function ProtectedRoute({ allowedRoles = [] }) {
-  // 1. Declare all standard hooks first
   const { data: session, isPending } = authClient.useSession();
   const [searchParams] = useSearchParams();
   const location = useLocation();
+  const navigate = useNavigate();
   const [isMaintenanceChecked, setIsMaintenanceChecked] = useState(false);
   const [sessionFailed, setSessionFailed] = useState(false);
 
-  // 2. Read impersonation context from storage
   const impersonatedTargetRaw =
     sessionStorage.getItem("impersonated_target_user") ||
     localStorage.getItem("impersonated_target_user");
@@ -35,7 +35,6 @@ export default function ProtectedRoute({ allowedRoles = [] }) {
   const isSuperAdmin = session?.user?.role === "super_admin";
   const isAdmin = (session?.user?.role && ADMIN_ROLES.includes(session.user.role)) || isSuperAdmin;
 
-  // 3. Clear ghost impersonation cookies if storage was lost when navigating to user routes
   useEffect(() => {
     const hasStorage = Boolean(impersonatedUser);
 
@@ -47,7 +46,6 @@ export default function ProtectedRoute({ allowedRoles = [] }) {
     }
   }, [session, location.pathname, impersonatedUser]);
 
-  // 4. Maintenance / health check
   useEffect(() => {
     let isMounted = true;
 
@@ -60,6 +58,7 @@ export default function ProtectedRoute({ allowedRoles = [] }) {
         .catch((err) => {
           if (!isMounted) return;
           if (err.response && err.response.status === 503) {
+            navigate("/maintenance", { replace: true });
             return;
           }
           if (err.response && err.response.status === 401) {
@@ -78,7 +77,7 @@ export default function ProtectedRoute({ allowedRoles = [] }) {
     return () => {
       isMounted = false;
     };
-  }, [session, isPending, isAdmin, impersonatedUser]);
+  }, [session, isPending, isAdmin, impersonatedUser, navigate]);
 
   if (sessionFailed) {
     return (
@@ -127,7 +126,6 @@ export default function ProtectedRoute({ allowedRoles = [] }) {
     );
   }
 
-  // MFA check only for actual admin sessions when not masquerading
   const mfaBypass = import.meta.env.VITE_DISABLE_MFA === "true";
   if (
     ADMIN_ROLES.includes(session.user.role) &&
@@ -140,14 +138,11 @@ export default function ProtectedRoute({ allowedRoles = [] }) {
     }
   }
 
-  // Role verification block
   if (allowedRoles && allowedRoles.length > 0) {
-    // Unrestricted access for Super Admin
     if (isSuperAdmin) {
       return <Outlet />;
     }
 
-    // Treat 'resident' and 'user' identically
     const normalizedAllowed = allowedRoles.flatMap((r) =>
       r === "resident" ? ["resident", "user"] : [r]
     );

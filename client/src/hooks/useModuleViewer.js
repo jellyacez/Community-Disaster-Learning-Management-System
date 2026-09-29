@@ -133,7 +133,7 @@ export function useModuleViewer(moduleId) {
       if (!navigator.onLine) {
         let result;
         if (isQuiz) {
-          result = await saveOfflineResult(moduleId, userId, true, answers);
+          result = await saveOfflineResult(moduleId, userId, true, answers, stepId);
           await recalculateModuleProgress(moduleId, userId);
         } else {
           result = await saveOfflineStepProgress(moduleId, stepId, userId);
@@ -168,7 +168,7 @@ export function useModuleViewer(moduleId) {
         if (isNetworkFailure || isServiceWorkerOffline) {
           let result;
           if (isQuiz) {
-            result = await saveOfflineResult(moduleId, userId, true, answers);
+            result = await saveOfflineResult(moduleId, userId, true, answers, stepId);
             await recalculateModuleProgress(moduleId, userId);
           } else {
             result = await saveOfflineStepProgress(moduleId, stepId, userId);

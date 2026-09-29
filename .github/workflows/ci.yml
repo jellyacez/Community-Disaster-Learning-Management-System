@@ -1,0 +1,48 @@
+name: CI — Lint & Build
+
+on:
+  push:
+    branches:
+      - "**"
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  lint-and-build:
+    runs-on: ubuntu-latest
+    env:
+      PUPPETEER_SKIP_DOWNLOAD: "true"
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 25
+          cache: "npm"
+          cache-dependency-path: |
+            client/package-lock.json
+            server/package-lock.json
+
+      - name: Install client dependencies
+        working-directory: client
+        run: npm install
+
+      - name: Lint client
+        working-directory: client
+        run: npm run lint
+
+      - name: Build client
+        working-directory: client
+        run: npm run build
+
+      - name: Install server dependencies
+        working-directory: server
+        run: npm install
+
+      - name: Lint server
+        working-directory: server
+        run: npm run lint

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, lazy, Suspense } from "react";
 import { useQuery } from "@tanstack/react-query";
 import apiClient from "../../../../lib/apiClient";
 import useDocumentTitle from "../../../../hooks/useDocumentTitle";
@@ -8,11 +8,13 @@ import { Settings01Icon } from "@hugeicons/core-free-icons";
 import PlatformOverviewGrid from "./components/PlatformOverviewGrid";
 import HealthRow from "./components/HealthRow";
 import SystemAlertBanner from "./components/SystemAlertBanner";
-import SystemCharts from "./components/SystemCharts";
 import QuickActionsPanel from "./components/QuickActionsPanel";
 import RecentActivityFeed from "./components/RecentActivityFeed";
+import { SkeletonChart } from "../../../../components/ui/Skeleton";
 
 import AnnouncementModal from "../../barangay/workspace/announcementModal";
+
+const SystemCharts = lazy(() => import("./components/SystemCharts"));
 
 function formatUptime(seconds) {
   const d = Math.floor(seconds / 86400);
@@ -65,7 +67,15 @@ export default function SystemOverview() {
       <div className="grid lg:grid-cols-3 gap-6">
         {/* Left Side: Charts & Logs */}
         <div className="lg:col-span-2 flex flex-col gap-6">
-          <SystemCharts stats={s} loading={statsLoading} />
+          <Suspense
+            fallback={
+              <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-[0_2px_12px_-3px_rgba(0,0,0,0.06)] p-6 min-h-[400px] flex items-center justify-center">
+                <SkeletonChart type="area" height={240} />
+              </div>
+            }
+          >
+            <SystemCharts stats={s} loading={statsLoading} />
+          </Suspense>
           <RecentActivityFeed />
         </div>
 

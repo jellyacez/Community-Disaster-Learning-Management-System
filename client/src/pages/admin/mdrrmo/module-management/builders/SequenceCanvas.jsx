@@ -138,30 +138,7 @@ export default function SequenceCanvas({
       </div>
 
       {/* ADMIN PHOTO UPLOADER FOR ACTIVE LEVEL */}
-      <div className="rounded-2xl border border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-xs space-y-3">
-        <div className="flex items-center justify-between">
-          <div>
-            <h4 className="text-sm font-bold text-gray-900 dark:text-slate-100 flex items-center gap-2">
-              <HugeiconsIcon icon={Image01Icon} className="w-4 h-4 text-red-600" />
-              Phase {activeLevelOrder} Motivator Photo
-            </h4>
-            <p className="text-xs text-gray-500 dark:text-slate-400 mt-0.5">
-              This photo appears on the opposite side of Phase {activeLevelOrder} in the learner's Curriculum Map.
-            </p>
-          </div>
-
-          {currentCoverImage && (
-            <button
-              type="button"
-              onClick={handleRemovePhoto}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 transition cursor-pointer"
-            >
-              <HugeiconsIcon icon={Delete02Icon} className="w-4 h-4" />
-              Remove Photo
-            </button>
-          )}
-        </div>
-
+      <div className="rounded-2xl border border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-xs">
         <input
           ref={fileInputRef}
           type="file"
@@ -170,34 +147,88 @@ export default function SequenceCanvas({
           onChange={handleFileChange}
         />
 
-        {currentCoverImage ? (
-          <div className="relative w-full max-w-md h-44 rounded-xl overflow-hidden border border-gray-200 dark:border-slate-700 group">
-            <img
-              src={currentCoverImage}
-              alt={`Phase ${activeLevelOrder} Cover`}
-              className="w-full h-full object-cover"
-            />
-            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-5">
+          {/* Left Column: Info & Actions */}
+          <div className="flex-1 min-w-0 space-y-1.5">
+            <div className="flex items-center gap-2">
+              <span className="p-1.5 rounded-lg bg-red-50 dark:bg-red-950/50 text-red-600 dark:text-red-400 shrink-0">
+                <HugeiconsIcon icon={Image01Icon} className="w-4 h-4" />
+              </span>
+              <h4 className="text-sm font-bold text-gray-900 dark:text-slate-100">
+                Phase {activeLevelOrder} Motivator Photo
+              </h4>
+            </div>
+
+            <p className="text-xs text-gray-500 dark:text-slate-400 leading-relaxed pr-2">
+              This photo appears on the opposite side of Phase {activeLevelOrder} in the learner's Curriculum Map to visually orient responders.
+            </p>
+
+            <p className="text-[11px] font-medium text-gray-400 dark:text-slate-500">
+              Recommended 16:9 ratio &bull; PNG, JPG, or WEBP (Optional)
+            </p>
+
+            {currentCoverImage && (
+              <div className="pt-2 flex items-center gap-2.5">
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="px-3 py-1.5 bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-700 dark:text-slate-200 text-xs font-bold rounded-xl transition cursor-pointer"
+                >
+                  Change Photo
+                </button>
+                <button
+                  type="button"
+                  onClick={handleRemovePhoto}
+                  className="flex items-center gap-1 px-3 py-1.5 text-xs font-bold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-xl transition cursor-pointer"
+                >
+                  <HugeiconsIcon icon={Delete02Icon} className="w-3.5 h-3.5" />
+                  Remove Photo
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Right Column: Upload Box or Image Preview */}
+          <div className="w-full sm:w-60 md:w-64 shrink-0">
+            {currentCoverImage ? (
+              <div className="relative aspect-video rounded-xl overflow-hidden border border-gray-200 dark:border-slate-700 shadow-xs group">
+                <img
+                  src={currentCoverImage}
+                  alt={`Phase ${activeLevelOrder} Cover`}
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="px-3.5 py-1.5 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 rounded-xl text-xs font-bold shadow-md hover:bg-gray-100 dark:hover:bg-slate-700 transition cursor-pointer"
+                  >
+                    Change
+                  </button>
+                </div>
+              </div>
+            ) : (
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="px-4 py-2 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 rounded-xl text-xs font-bold shadow-md hover:bg-gray-100 dark:hover:bg-slate-700 transition cursor-pointer"
+                className="flex flex-col items-center justify-center w-full aspect-video border-2 border-dashed border-gray-300 dark:border-slate-700 hover:border-red-400 dark:hover:border-red-500/60 rounded-xl bg-gray-50/70 dark:bg-slate-800/40 hover:bg-red-50/20 dark:hover:bg-red-950/20 transition cursor-pointer group p-3 text-center"
               >
-                Change Photo
+                <div className="w-8 h-8 rounded-full bg-white dark:bg-slate-700 shadow-xs flex items-center justify-center mb-1.5 group-hover:scale-105 transition-transform">
+                  <HugeiconsIcon
+                    icon={Upload04Icon}
+                    className="w-4 h-4 text-gray-400 dark:text-slate-400 group-hover:text-red-600 transition-colors"
+                  />
+                </div>
+                <span className="text-xs font-bold text-gray-700 dark:text-slate-300">
+                  Upload Phase Photo
+                </span>
+                <span className="text-[10px] text-gray-400 dark:text-slate-500 mt-0.5">
+                  Click to browse
+                </span>
               </button>
-            </div>
+            )}
           </div>
-        ) : (
-          <button
-            type="button"
-            onClick={() => fileInputRef.current?.click()}
-            className="flex flex-col items-center justify-center w-full max-w-md h-32 border-2 border-dashed border-gray-300 dark:border-slate-700 hover:border-red-400 dark:hover:border-red-500/60 rounded-xl bg-gray-50/70 dark:bg-slate-800/40 hover:bg-red-50/20 dark:hover:bg-red-950/20 transition cursor-pointer"
-          >
-            <HugeiconsIcon icon={Upload04Icon} className="w-6 h-6 text-gray-400 dark:text-slate-500 mb-1" />
-            <span className="text-xs font-bold text-gray-700 dark:text-slate-300">Upload Phase Photo</span>
-            <span className="text-[10px] text-gray-400 dark:text-slate-500">PNG, JPG, or WEBP (Optional)</span>
-          </button>
-        )}
+        </div>
       </div>
 
       {/* Visual Sequence Flow */}
