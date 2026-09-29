@@ -31,7 +31,12 @@ export default function LandingPage() {
 
     if (session && !isPending) {
       const userRole = session.user?.role;
-      const isAdmin = ["system_admin","head_mdrrmo_admin" ,"mdrrmo_admin", "barangay_admin"].includes(userRole);
+      const isAdmin = [
+        "system_admin",
+        "head_mdrrmo_admin",
+        "mdrrmo_admin",
+        "barangay_admin",
+      ].includes(userRole);
       const mfaBypass = import.meta.env.VITE_DISABLE_MFA === "true";
 
       if (isAdmin && !session.user.twoFactorEnabled && !mfaBypass) {
@@ -69,61 +74,74 @@ export default function LandingPage() {
   }, [session, isPending, navigate]);
 
   return (
-    <div className="min-h-screen bg-white font-sans antialiased">
+    <div className="min-h-screen w-full max-w-full overflow-x-hidden bg-white dark:bg-slate-950 font-sans antialiased flex flex-col">
       <LandingNavbar />
       <LandingHero />
       <LandingHazards />
       <LandingFeatures />
       <LandingSteps />
 
-      <section className="py-12 bg-gray-50 border-y border-gray-100">
-        <div className="max-w-4xl mx-auto px-4 text-center">
-          <p className="text-xs text-gray-400 font-semibold uppercase tracking-widest mb-6">
+      {/* Alignment Banner */}
+      <section className="py-8 sm:py-10 bg-gray-50 dark:bg-slate-900/60 border-y border-gray-100 dark:border-slate-800">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <p className="text-[11px] sm:text-xs text-gray-400 dark:text-slate-500 font-bold uppercase tracking-widest mb-4 sm:mb-5">
             Training Content Aligned With
           </p>
-          <div className="flex flex-wrap justify-center items-center gap-10">
+          <div className="flex flex-wrap justify-center items-center gap-x-6 gap-y-3 sm:gap-x-10 sm:gap-y-4">
             {[
               "Philippine Red Cross",
               "NDRRMC",
               "Bacolor MDRRMO",
               "Republic Act 10121",
             ].map((org) => (
-              <div key={org} className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-red-500" />
-                <span className="text-sm font-bold text-gray-700">{org}</span>
+              <div key={org} className="flex items-center gap-2 shrink-0">
+                <div className="w-2 h-2 rounded-full bg-red-500 shrink-0" />
+                <span className="text-xs sm:text-sm font-bold text-gray-700 dark:text-slate-200 whitespace-nowrap">
+                  {org}
+                </span>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      <section className="py-24 bg-gradient-to-r from-red-700 via-red-600 to-rose-600">
-        <div className="max-w-4xl mx-auto px-4 text-center">
+      {/* FAQ Section */}
+      <LandingFAQ />
+
+      {/* CTA Section */}
+      <section className="py-12 sm:py-16 lg:py-20 bg-gradient-to-r from-red-700 via-red-600 to-rose-600">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
           >
-            <span className="inline-block bg-white/20 text-white/90 text-xs font-bold px-4 py-1.5 rounded-full mb-6 uppercase tracking-wide border border-white/20">
+            <span className="inline-block bg-white/20 text-white/95 text-[11px] sm:text-xs font-bold px-3.5 sm:px-4 py-1.5 rounded-full mb-4 sm:mb-5 uppercase tracking-wide border border-white/20">
               Join Your Community
             </span>
-            <h2 className="text-4xl md:text-5xl font-extrabold text-white mb-5 leading-tight">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-extrabold text-white mb-3.5 sm:mb-4 leading-tight tracking-tight">
               Ready to Start Your Preparedness Training?
             </h2>
-            <p className="text-red-100 max-w-xl mx-auto mb-10 leading-relaxed">
+            <p className="text-sm sm:text-base text-red-100 max-w-xl mx-auto mb-7 sm:mb-8 leading-relaxed font-medium">
               Disaster readiness starts with a single step.
             </p>
-            <div className="flex flex-wrap justify-center gap-4">
+            <div className="flex flex-col sm:flex-row justify-center items-center gap-3 sm:gap-4 w-full sm:w-auto">
               <button
+                type="button"
                 onClick={() => navigate("/register")}
-                className="flex items-center gap-2 px-10 py-4 bg-white text-red-700 font-extrabold rounded-xl shadow-xl hover:bg-red-50 transition-colors cursor-pointer"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 sm:px-8 py-3.5 min-h-[48px] bg-white text-red-700 text-sm sm:text-base font-extrabold rounded-xl shadow-lg hover:bg-red-50 active:scale-[0.98] transition-all cursor-pointer select-none"
               >
-                Create Free Account
-                <HugeiconsIcon aria-hidden="true" icon={ArrowRight01Icon} className="w-5 h-5" />
+                <span>Create Free Account</span>
+                <HugeiconsIcon
+                  aria-hidden="true"
+                  icon={ArrowRight01Icon}
+                  className="w-4 h-4 sm:w-5 sm:h-5 shrink-0"
+                />
               </button>
               <button
+                type="button"
                 onClick={() => navigate("/signin")}
-                className="px-10 py-4 text-white font-bold rounded-xl border-2 border-white/40 hover:bg-white/10 transition-colors cursor-pointer"
+                className="w-full sm:w-auto inline-flex items-center justify-center px-6 sm:px-8 py-3.5 min-h-[48px] text-white text-sm sm:text-base font-bold rounded-xl border-2 border-white/40 hover:bg-white/10 active:scale-[0.98] transition-all cursor-pointer select-none"
               >
                 Sign In
               </button>
@@ -131,40 +149,9 @@ export default function LandingPage() {
           </motion.div>
         </div>
       </section>
-      <LandingSteps />
-
-      <section className="py-12 bg-gray-50 border-y border-gray-100">
-        <div className="max-w-4xl mx-auto px-4 text-center">
-          <p className="text-xs text-gray-400 font-semibold uppercase tracking-widest mb-6">
-            Training Content Aligned With
-          </p>
-          <div className="flex flex-wrap justify-center items-center gap-10">
-            {[
-              "Philippine Red Cross",
-              "NDRRMC",
-              "Bacolor MDRRMO",
-              "Republic Act 10121",
-            ].map((org) => (
-              <div key={org} className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-red-500" />
-                <span className="text-sm font-bold text-gray-700">{org}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Mount FAQ Component Here */}
-      <LandingFAQ />
-
-      {/* CTA Section */}
-      <section className="py-24 bg-gradient-to-r from-red-700 via-red-600 to-rose-600">
-        {/* ... */}
-      </section>
 
       <LandingFooter />
     </div>
   );
 }
-
 // --- END: LandingPage.jsx ---
