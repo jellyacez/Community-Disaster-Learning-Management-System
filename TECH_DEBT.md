@@ -755,3 +755,22 @@ This document tracks identified technical debt, architectural decisions, missing
   - **H6:** Archived modules stay readable/writable for residents with an existing `module_activity` row; only new enrollment requires `status = 'published'`.
   - **H5:** Partly by design — offline grading needs answer keys on the client. The real protection is server-side grading (H1).
 
+---
+
+### 7. Defense Health-Check Follow-ups (2026-10-01)
+- **Source:** Frontend static checks + deployed health check of https://drrm-training.duckdns.org/ (deployed commit `ecbc29c`, later `2a18ee6`).
+- **Fixed on branch `fix/defense-demo-polish` (not merged):** `useNotificationPreferences.js` no-undef (`46cf177`), Forgot Password redirect to `${window.location.origin}/reset-password` (`ce234f5`), localhost:5000 image fallback in ModuleCard/EnrolledModuleCard/ModuleDetailsPage (`4717632`). The VerifyCertificate `Cancel01Icon` import landed on `main` in `0ca4623`.
+- **Deploy note:** The `0ca4623` deploy failed at the client build step (the committed `ForgotPasswordPage.jsx` did not parse); the follow-up `2a18ee6` deploy succeeded.
+- **Workflow:** The working directory was modified by a second tool/editor during this session (staged files, commits to `main`). Use a separate git worktree per agent and disable format-on-save.
+- **Open:**
+  - **CI lint backlog:** "CI — Lint & Build" fails on `main` (baseline 43 errors / 14 warnings in `client/`; server 0 errors / 4 warnings). Deploy does not depend on CI.
+  - **`react-pdf-vendor` preloaded on every page:** `index.html` modulepreloads the 1.46 MB `react-pdf-vendor` and 383 kB `recharts-vendor` chunks; load them only on the routes that use them.
+  - **Console stripping config:** Vite 8 uses oxc and ignores `esbuild: { drop: ['console','debugger'] }` (`vite.config.js:108-109`); production ships `console.log` / `console.debug`.
+  - **`/grid.svg` missing:** referenced by `ModuleHeaderForm.jsx:100`, not in `public/`; the deployed URL returns the HTML fallback.
+  - **Manifest content type:** nginx serves `/manifest.webmanifest` as `application/octet-stream`.
+  - **Stray backtick in API messages:** e.g. `"\`Certificate not found."` (`certificatesController.js:9`); same pattern in `ipBlocklistController.js` and `certificateManagement.js`.
+  - **UI placeholders:** `LocalizationSettings.jsx:33` "Under Development", `:59-60` "(Coming Soon)" languages.
+  - **Raw `NOT_FOUND` toast on the public verify page:** a toast showing the error code appears alongside the Not Found card (seen in the local Puppeteer test).
+  - **`/uploads` through nginx:** relative module image URLs now resolve to same-origin `/uploads/...` in production; confirm nginx on EC2 forwards `/uploads` to the API (not verified).
+  - **`localhost:*` in the production CSP meta tag:** `client/index.html:25` allows `http://localhost:*` / `ws://localhost:*` in img/connect/media/frame-src on the deployed site.
+
