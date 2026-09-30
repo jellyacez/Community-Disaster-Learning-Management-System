@@ -116,7 +116,7 @@ router.post(
 
       const targetUser = userResult.rows[0];
 
-      // Audit Log: Record impersonation initiation under Super Admin's ID
+      // Audit Log: Record impersonation initiation
       try {
         await pool.query(
           `INSERT INTO activity_log (user_id, act_log, act_date)
@@ -182,13 +182,32 @@ router.post("/super/stop-impersonating", async (req, res) => {
     res.clearCookie("impersonated_target_id", { path: "/" });
 
     if (impersonatorId) {
+      let targetDetails = "";
+
+      if (targetId) {
+        try {
+          const targetRes = await pool.query(
+            `SELECT id, name, email, role FROM public."user" WHERE id = $1`,
+            [targetId]
+          );
+          if (targetRes.rows.length > 0) {
+            const t = targetRes.rows[0];
+            targetDetails = ` for user "${t.name}" (${t.email}, Role: ${t.role}, ID: ${t.id})`;
+          } else {
+            targetDetails = ` for target user ID ${targetId}`;
+          }
+        } catch {
+          targetDetails = ` for target user ID ${targetId}`;
+        }
+      }
+
       try {
         await pool.query(
           `INSERT INTO activity_log (user_id, act_log, act_date)
            VALUES ($1, $2, NOW())`,
           [
             impersonatorId,
-            `Ended impersonation session${targetId ? ` for target user ID ${targetId}` : ""}`,
+            `Ended impersonation session${targetDetails}`,
           ]
         );
       } catch (logErr) {
