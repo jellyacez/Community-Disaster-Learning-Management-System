@@ -33,28 +33,7 @@ export default defineConfig(({ mode }) => ({
           },
           {
             src: "/maskable-icon-512x512.png",
-<<<<<<< HEAD
-            sizes: "512x512",runtimeCaching: [
-              {
-                urlPattern: /\/api\/auth\/get-session/,
-                handler: 'NetworkFirst',
-                options: {
-                  cacheName: 'auth-session-cache',
-                  networkTimeoutSeconds: 3, // Fall back to local cache if offline or slow after 3s
-                  expiration: {
-                    maxEntries: 1,
-                    maxAgeSeconds: 60 * 60 * 24 * 7, // Keep for 7 days (match your Better Auth expiry)
-                  },
-                  cacheableResponse: {
-                    statuses: [200],
-                  },
-                },
-              },
-              // ... keep your other runtimeCaching rules below
-            ],
-=======
             sizes: "512x512",
->>>>>>> 70cc79911c288552c16b12debeaa35b70f1ec685
             type: "image/png",
             purpose: "maskable",
           },
