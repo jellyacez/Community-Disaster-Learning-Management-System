@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import { authClient } from "../../lib/auth-client";
@@ -11,7 +11,6 @@ import { ROLE_BASED_LINKS } from "../../constants/adminNavLinks";
 import useDocumentTitle from "../../hooks/useDocumentTitle";
 import { useTheme } from "../../hooks/context/themeContext";
 
-// Clean label mapping for all admin roles
 const ROLE_DISPLAY_NAMES = {
   resident: "Resident",
   barangay_admin: "Barangay Admin",
@@ -29,11 +28,27 @@ export default function AdminSidebar({ sidebarOpen, setSidebarOpen }) {
 
   const [expandedMenus, setExpandedMenus] = useState({});
 
-  const userRole = session?.user?.role || "resident";
+  // Detect active impersonation target from storage
+  const impersonatedTarget = useMemo(() => {
+    try {
+      const stored =
+        sessionStorage.getItem("impersonated_target_user") ||
+        localStorage.getItem("impersonated_target_user");
+      if (!stored) return null;
+      const parsed = JSON.parse(stored);
+      return parsed.targetUser || parsed.user || parsed;
+    } catch {
+      return null;
+    }
+  }, [location.pathname]);
+
+  // When impersonating, effectiveUser and userRole switch to the target's identity
+  const effectiveUser = impersonatedTarget || session?.user;
+  const userRole = effectiveUser?.role || "resident";
   const navLinks = ROLE_BASED_LINKS[userRole] || [];
 
-  const activeLink = navLinks.flatMap(group => group.items).find(
-    link => location.pathname === link.path || location.pathname.startsWith(`${link.path}/`)
+  const activeLink = navLinks.flatMap((group) => group.items).find(
+    (link) => location.pathname === link.path || location.pathname.startsWith(`${link.path}/`)
   );
 
   useDocumentTitle(activeLink ? `${activeLink.name} | DRRM Bacolor` : "Admin Portal | DRRM Bacolor");
@@ -44,6 +59,8 @@ export default function AdminSidebar({ sidebarOpen, setSidebarOpen }) {
   const confirmLogout = async () => {
     try {
       sessionStorage.setItem("isLoggingOut", "true");
+      sessionStorage.removeItem("impersonated_target_user");
+      localStorage.removeItem("impersonated_target_user");
       queryClient.cancelQueries();
       queryClient.clear();
       resetTheme();
@@ -67,23 +84,21 @@ export default function AdminSidebar({ sidebarOpen, setSidebarOpen }) {
 
   return (
     <>
-      {/* Mobile Sidebar Overlay */}
       {sidebarOpen && (
-        <div 
+        <div
           className="fixed inset-0 bg-gray-900/50 z-40 lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
 
-      {/* Sidebar */}
-      <aside 
+      <aside
         className={`fixed inset-y-0 left-0 w-72 bg-white dark:bg-slate-900 border-r border-gray-200 dark:border-slate-800 z-50 transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:shrink-0 ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         } flex flex-col`}
       >
         <div className="h-16 flex items-center justify-between px-6 border-b border-red-800 bg-red-700">
           <span className="text-white font-bold text-xl tracking-tight">Admin Portal</span>
-          <button 
+          <button
             className="lg:hidden text-white/70 hover:text-white"
             onClick={() => setSidebarOpen(false)}
             aria-label="Close sidebar"
@@ -94,15 +109,23 @@ export default function AdminSidebar({ sidebarOpen, setSidebarOpen }) {
 
         <div className="p-4 border-b border-gray-100 dark:border-slate-800 flex flex-col items-center">
           <div className="w-16 h-16 rounded-full bg-red-100 dark:bg-red-950/70 flex items-center justify-center text-red-600 dark:text-red-400 font-bold text-xl mb-2">
-            {session?.user?.name?.charAt(0).toUpperCase() || "A"}
+            {effectiveUser?.name?.charAt(0).toUpperCase() || "A"}
           </div>
-          <p className="font-semibold text-gray-900 dark:text-white">{session?.user?.name || "Loading..."}</p>
-          <p className="text-xs text-gray-500 dark:text-slate-400 uppercase tracking-wider font-medium">
-            {formattedRole}
+          <p className="font-semibold text-gray-900 dark:text-white text-center truncate max-w-full">
+            {effectiveUser?.name || "Loading..."}
           </p>
+          <div className="flex items-center gap-1.5 mt-0.5">
+            <p className="text-xs text-gray-500 dark:text-slate-400 uppercase tracking-wider font-medium">
+              {formattedRole}
+            </p>
+            {impersonatedTarget && (
+              <span className="text-[9px] font-extrabold uppercase tracking-wider px-1.5 py-0.5 bg-amber-500/20 text-amber-600 dark:text-amber-400 rounded-md">
+                Impersonated
+              </span>
+            )}
+          </div>
         </div>
 
-        {/* Sidebar Navigation */}
         <nav className="flex-1 overflow-y-auto px-4 py-5 relative flex flex-col gap-2">
           {navLinks.map((group) => (
             <div key={group.category} className="mb-4 last:mb-0">
@@ -113,16 +136,16 @@ export default function AdminSidebar({ sidebarOpen, setSidebarOpen }) {
                 {group.items.map((link) => {
                   const hasSubItems = link.subItems && link.subItems.length > 0;
                   const isExpanded = !!expandedMenus[link.name];
-                  
+
                   const isActive = hasSubItems
-                    ? link.subItems.some(sub => location.pathname === sub.path || location.pathname.startsWith(`${sub.path}/`))
-                    : (location.pathname === link.path || (link.path && location.pathname.startsWith(`${link.path}/`)));
+                    ? link.subItems.some((sub) => location.pathname === sub.path || location.pathname.startsWith(`${sub.path}/`))
+                    : location.pathname === link.path || (link.path && location.pathname.startsWith(`${link.path}/`));
 
                   const handleItemClick = () => {
                     if (hasSubItems) {
-                      setExpandedMenus(prev => ({
+                      setExpandedMenus((prev) => ({
                         ...prev,
-                        [link.name]: !prev[link.name]
+                        [link.name]: !prev[link.name],
                       }));
                     } else {
                       navigate(link.path);
@@ -135,29 +158,39 @@ export default function AdminSidebar({ sidebarOpen, setSidebarOpen }) {
                       <button
                         onClick={handleItemClick}
                         className={`group relative flex w-full h-[44px] items-center justify-between rounded-xl px-4 text-left transition-colors duration-200 z-10 cursor-pointer ${
-                          isActive 
-                            ? "bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-300 border-l-4 border-red-600 shadow-sm" 
+                          isActive
+                            ? "bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-300 border-l-4 border-red-600 shadow-sm"
                             : "text-gray-700 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-800/70"
                         }`}
                       >
                         <span className="relative z-10 flex items-center gap-3 text-sm font-semibold whitespace-nowrap min-w-0">
-                          <HugeiconsIcon icon={link.icon} className={`w-5 h-5 shrink-0 -translate-y-px ${isActive ? "text-red-600 dark:text-red-400" : "text-gray-400 dark:text-slate-400 group-hover:text-gray-600 dark:group-hover:text-slate-200"}`} />
+                          <HugeiconsIcon
+                            icon={link.icon}
+                            className={`w-5 h-5 shrink-0 -translate-y-px ${
+                              isActive
+                                ? "text-red-600 dark:text-red-400"
+                                : "text-gray-400 dark:text-slate-400 group-hover:text-gray-600 dark:group-hover:text-slate-200"
+                            }`}
+                          />
                           <span className="truncate">{link.name}</span>
                         </span>
-                        
+
                         {hasSubItems && (
                           <HugeiconsIcon
                             icon={isExpanded ? ArrowDown01Icon : ArrowRight01Icon}
-                            className={`relative z-10 w-4 h-4 shrink-0 ${isActive ? "text-red-600 dark:text-red-400" : "text-gray-500 dark:text-slate-400"}`}
+                            className={`relative z-10 w-4 h-4 shrink-0 ${
+                              isActive ? "text-red-600 dark:text-red-400" : "text-gray-500 dark:text-slate-400"
+                            }`}
                           />
                         )}
                       </button>
 
-                      {/* SubItems rendering */}
                       {hasSubItems && isExpanded && (
                         <div className="mt-1 flex flex-col gap-1 ml-4 pl-4 border-l border-gray-200 dark:border-slate-800">
                           {link.subItems.map((subLink) => {
-                            const isSubActive = location.pathname === subLink.path || location.pathname.startsWith(`${subLink.path}/`);
+                            const isSubActive =
+                              location.pathname === subLink.path ||
+                              location.pathname.startsWith(`${subLink.path}/`);
                             return (
                               <button
                                 key={subLink.path}

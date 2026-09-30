@@ -20,7 +20,7 @@ export default function SuperMissionBanner() {
               </span>
             </div>
             <p className="text-sm text-red-100/80 mt-1 max-w-xl">
-              Bacolor DRRM municipal command telemetry, cross-barangay comparative registries, and identity delegation.
+              Bacolor DRRM command control telemetry, cross-barangay/agencies comparative registries, and identity delegation.
             </p>
           </div>
         </div>
