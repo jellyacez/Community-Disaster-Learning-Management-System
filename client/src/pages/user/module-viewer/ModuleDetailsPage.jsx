@@ -18,7 +18,7 @@ const resolveImageUrl = (url) => {
 };
 
 const fetchModuleDetails = async (moduleId) => {
-  const res = await apiClient.get(`modules/${moduleId}/details`);
+  const res = await apiClient.get(`/modules/${moduleId}/details`);
   return res.data;
 };
 
@@ -146,7 +146,7 @@ export default function ModuleDetailsPage() {
         <p className="text-sm mt-1">Please check your connection or return to the catalog.</p>
         <button 
           onClick={handleBack}
-          className="mt-4 px-4 py-2 bg-red-600 text-white text-xs font-semibold rounded-lg hover:bg-red-700 transition"
+          className="mt-4 px-4 py-2 bg-red-600 text-white text-xs font-semibold rounded-lg hover:bg-red-700 transition cursor-pointer"
         >
           Go Back
         </button>
@@ -166,7 +166,7 @@ export default function ModuleDetailsPage() {
       <div>
         <button 
           onClick={handleBack}
-          className="inline-flex items-center gap-1.5 text-xs font-medium text-gray-500 dark:text-slate-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+          className="inline-flex items-center gap-1.5 text-xs font-medium text-gray-500 dark:text-slate-400 hover:text-gray-900 dark:hover:text-white transition-colors cursor-pointer"
         >
           <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
             <path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
