@@ -20,7 +20,7 @@ import useDebounce from "../../../hooks/useDebounce";
 
 export default function UserEnrolledModules() {
   useDocumentTitle("Enrolled Modules | Bacolor LMS");
-  
+
   const [searchInput, setSearchInput] = useState("");
   const [activeTab, setActiveTab] = useState("in_progress");
   const [selectedCategory, setSelectedCategory] = useState("all");
@@ -30,20 +30,40 @@ export default function UserEnrolledModules() {
   const debouncedSearch = useDebounce(searchInput, 350);
 
   const { data: dashboardData, isLoading } = useQuery({
-    queryKey: ['userDashboard'],
-    queryFn: async () => {
-      const response = await apiClient.get('/user/dashboard');
-      return response.data;
-    },
-    refetchInterval: 60000, // Background polling every 60s
-  });
+      queryKey: ['userDashboard'],
+      networkMode: "offlineFirst", // Crucial for offline PWA viewing
+      initialData: () => {
+        try {
+          const cached = localStorage.getItem("lms_offline_dashboard");
+          return cached ? JSON.parse(cached) : undefined;
+        } catch {
+          return undefined;
+        }
+      },
+      queryFn: async () => {
+        try {
+          const response = await apiClient.get('/user/dashboard');
+          // Save the latest successful payload for offline use
+          localStorage.setItem("lms_offline_dashboard", JSON.stringify(response.data));
+          return response.data;
+        } catch (err) {
+          // Fallback to offline cache if network fails
+          if (!navigator.onLine || err.code === "ERR_NETWORK") {
+            const cached = localStorage.getItem("lms_offline_dashboard");
+            if (cached) return JSON.parse(cached);
+          }
+          throw err;
+        }
+      },
+      refetchInterval: 60000, // Background polling every 60s
+    });
 
   // Normalize dataset
   const enrolledModules = useMemo(() => {
-    const rawModules = dashboardData?.enrolledModules 
-      ? dashboardData.enrolledModules 
-      : dashboardData?.data?.enrolledModules 
-        ? dashboardData.data.enrolledModules 
+    const rawModules = dashboardData?.enrolledModules
+      ? dashboardData.enrolledModules
+      : dashboardData?.data?.enrolledModules
+        ? dashboardData.data.enrolledModules
         : [];
 
     return rawModules.map((mod) => ({
@@ -209,10 +229,10 @@ export default function UserEnrolledModules() {
         </div>
       ) : enrolledModules.length === 0 ? (
         <div className="flex flex-col items-center justify-center p-12 text-center bg-white rounded-3xl border border-gray-200 shadow-sm">
-          <img 
-            src={educationImg} 
-            alt="Education Mascot" 
-            className="w-56 h-56 mb-6 opacity-90 drop-shadow-sm transition-transform hover:-translate-y-2 duration-500 ease-out" 
+          <img
+            src={educationImg}
+            alt="Education Mascot"
+            className="w-56 h-56 mb-6 opacity-90 drop-shadow-sm transition-transform hover:-translate-y-2 duration-500 ease-out"
           />
           <h2 className="text-2xl font-extrabold text-gray-900 mb-2">
             No Enrolled Modules Yet

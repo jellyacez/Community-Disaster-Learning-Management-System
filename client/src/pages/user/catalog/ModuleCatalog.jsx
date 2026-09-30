@@ -35,13 +35,33 @@ export default function UserModuleCatalog() {
   const debouncedSearch = useDebounce(searchInput, 350);
 
   const { data: rawModules = [], isLoading } = useQuery({
-    queryKey: ["availableModules"],
-    queryFn: async () => {
-      const res = await apiClient.get("/modules/available");
-      return res.data;
-    },
-    refetchInterval: 60000,
-  });
+      queryKey: ["availableModules"],
+      networkMode: "offlineFirst", // Crucial for offline PWA viewing
+      initialData: () => {
+        try {
+          const cached = localStorage.getItem("lms_offline_catalog");
+          return cached ? JSON.parse(cached) : undefined;
+        } catch {
+          return undefined;
+        }
+      },
+      queryFn: async () => {
+        try {
+          const res = await apiClient.get("/modules/available");
+          // Save the latest successful catalog for offline use
+          localStorage.setItem("lms_offline_catalog", JSON.stringify(res.data));
+          return res.data;
+        } catch (err) {
+          // Fallback to offline cache if network fails
+          if (!navigator.onLine || err.code === "ERR_NETWORK") {
+            const cached = localStorage.getItem("lms_offline_catalog");
+            if (cached) return JSON.parse(cached);
+          }
+          throw err;
+        }
+      },
+      refetchInterval: 60000,
+    });
 
   // Normalize dataset to standardize fields across components
   const modules = useMemo(() => {
@@ -105,7 +125,15 @@ export default function UserModuleCatalog() {
     queryClient.invalidateQueries({ queryKey: ["availableModules"] });
     queryClient.invalidateQueries({ queryKey: ["userDashboard"] });
   };
-
+  try {
+        if (navigator.onLine) {
+          const dashRes = await apiClient.get("/user/dashboard");
+          localStorage.setItem("lms_offline_dashboard", JSON.stringify(dashRes.data));
+        }
+      } catch (e) {
+        console.warn("Could not background-cache dashboard for offline use.");
+      }
+    };
   // Open confirmation modal
   const handleOpenEnrollConfirm = (module) => {
     setPendingEnrollModule(module);

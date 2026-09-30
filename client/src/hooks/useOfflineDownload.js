@@ -2,17 +2,27 @@ import { useState, useEffect } from 'react';
 import apiClient from '../lib/apiClient';
 import { localDb } from '../lib/localDb';
 import toast from 'react-hot-toast';
-import { decodeHtml } from '../utils/textUtils';
 
 export function useOfflineDownload(moduleId) {
-  const [isDownloaded, setIsDownloaded] = useState(false);
+  const [isDownloaded, setIsDownloaded] = useState(() => {
+    // Check localStorage immediately on initial render (fixes cold-boot flash)
+    try {
+      return Boolean(localStorage.getItem(`lms_offline_module_${moduleId}`));
+    } catch {
+      return false;
+    }
+  });
   const [isDownloading, setIsDownloading] = useState(false);
 
-  // Check if the module is already in IndexedDB on mount
   useEffect(() => {
     const checkStatus = async () => {
       if (!moduleId) return;
       try {
+        const localCopy = localStorage.getItem(`lms_offline_module_${moduleId}`);
+        if (localCopy) {
+          setIsDownloaded(true);
+          return;
+        }
         const exists = await localDb.module_data.get(moduleId);
         setIsDownloaded(!!exists);
       } catch (err) {
@@ -28,52 +38,32 @@ export function useOfflineDownload(moduleId) {
       return;
     }
 
-    const confirmDownload = window.confirm(
-      "Download this module for offline use? This will consume some local storage on your device."
-    );
-    if (!confirmDownload) return;
-
     setIsDownloading(true);
-    const loadingToast = toast.loading("Downloading module structure...");
+    const loadingToast = toast.loading("Downloading module structure & quizzes...");
 
     try {
-      // 1. Fetch full module data from the server
-      // Inside downloadModule() in useOfflineDownload.js:
-            const response = await apiClient.get(`/modules/${moduleId}/viewer`);
-            const payload = response.data.data;
-
-            // Loop through levels and steps to fetch and cache all assessments
-            for (const level of (payload.levels || [])) {
-              for (const step of (level.steps || [])) {
-                if (["quiz", "situational", "priority_action", "hazard_identification", "action_sequence"].includes(step.type)) {
-                  try {
-                    const quizRes = await apiClient.get(`/modules/steps/${step.id}/assessment`);
-                    const rawQuestions = quizRes.data?.data || [];
-                    const questions = rawQuestions.map((q) => ({
-                      ...q,
-                      question_text: decodeHtml(q.question_text),
-                      options: (q.options || []).map((opt) => ({
-                        ...opt,
-                        text: decodeHtml(opt.text),
-                        rationale: decodeHtml(opt.rationale),
-                      })),
-                    }));
-                    localStorage.setItem(`lms_offline_assessment_${step.id}`, JSON.stringify(questions));
-                  } catch (e) {
-                    console.warn(`Could not cache assessment for step ${step.id}`, e);
-                  }
-                }
-              }
-            }
-
-            // Save the main viewer payload
-            localStorage.setItem(`lms_offline_module_${moduleId}`, JSON.stringify(payload));
+      const response = await apiClient.get(`/modules/${moduleId}/viewer`);
+      const payload = response.data.data;
 
       if (!payload?.module || !payload?.levels) {
         throw new Error("Invalid module data received.");
       }
 
-      // 2. Save everything structurally to IndexedDB (for progressService calculations)
+      // Cache all step assessments locally
+      for (const level of (payload.levels || [])) {
+        for (const step of (level.steps || [])) {
+          if (["quiz", "situational", "priority_action", "hazard_identification", "action_sequence"].includes(step.type)) {
+            try {
+              const quizRes = await apiClient.get(`/modules/steps/${step.id}/assessment`);
+              localStorage.setItem(`lms_offline_assessment_${step.id}`, JSON.stringify(quizRes.data?.data || []));
+            } catch (e) {
+              console.warn(`Could not cache assessment for step ${step.id}`);
+            }
+          }
+        }
+      }
+
+      // Save structure to Dexie
       await localDb.transaction("rw", localDb.module_data, localDb.levels, localDb.module_steps, async () => {
         await localDb.module_data.put({
           mod_id: payload.module.id,
@@ -101,7 +91,7 @@ export function useOfflineDownload(moduleId) {
         }
       });
 
-      // 3. Save a fast JSON copy to localStorage for the UI to read offline
+      // Save fast JSON payload to localStorage
       localStorage.setItem(`lms_offline_module_${moduleId}`, JSON.stringify(payload));
 
       setIsDownloaded(true);
@@ -115,9 +105,6 @@ export function useOfflineDownload(moduleId) {
   };
 
   const removeDownload = async () => {
-    const confirmRemove = window.confirm("Remove this module from offline storage to free up space?");
-    if (!confirmRemove) return;
-
     try {
       await localDb.transaction("rw", localDb.module_data, localDb.levels, localDb.module_steps, async () => {
         await localDb.module_data.delete(moduleId);
@@ -133,8 +120,8 @@ export function useOfflineDownload(moduleId) {
       localStorage.removeItem(`lms_offline_module_${moduleId}`);
       setIsDownloaded(false);
       toast.success("Offline data removed.");
-    } catch (error) {
-      toast.error("Failed to remove offline data.", error);
+    } catch {
+      toast.error("Failed to remove offline data.");
     }
   };
 
