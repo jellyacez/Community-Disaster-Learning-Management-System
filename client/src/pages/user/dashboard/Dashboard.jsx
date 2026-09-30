@@ -278,39 +278,21 @@ export default function UserDashboard() {
       sessionStorage.getItem(welcomeKey) === "true" ||
       sessionStorage.getItem("hasSeenWelcome") === "true";
 
-    const searchParams = new URLSearchParams(location.search);
-    const isFromGoogle = searchParams.get("fromGoogle") === "true";
+    const shouldShowFromRegistration =
+      sessionStorage.getItem("newlyRegistered") === "true" ||
+      location.state?.showWelcome === true;
 
-    if (sessionStorage.getItem("newlyRegistered") === "true") {
-      setTimeout(() => setShowWelcomeModal(true), 0);
+    if (shouldShowFromRegistration && !hasSeenWelcome) {
+      setShowWelcomeModal(true);
       sessionStorage.removeItem("newlyRegistered");
       sessionStorage.setItem(welcomeKey, "true");
       sessionStorage.setItem("hasSeenWelcome", "true");
-      return;
-    }
 
-    if (location.state?.showWelcome || location.state?.fromLogin || isFromGoogle) {
-      if (!hasSeenWelcome) {
-        setTimeout(() => setShowWelcomeModal(true), 0);
-        sessionStorage.setItem(welcomeKey, "true");
-        sessionStorage.setItem("hasSeenWelcome", "true");
-      }
-      navigate(location.pathname, { replace: true, state: {} });
-      return;
-    }
-
-    if (session?.user?.createdAt) {
-      const accountAgeMs =
-        Date.now() - new Date(session.user.createdAt).getTime();
-      const isNewAccount = accountAgeMs < 600000;
-
-      if (isNewAccount && !hasSeenWelcome) {
-        setTimeout(() => setShowWelcomeModal(true), 0);
-        sessionStorage.setItem(welcomeKey, "true");
-        sessionStorage.setItem("hasSeenWelcome", "true");
+      if (location.state?.showWelcome) {
+        navigate(location.pathname, { replace: true, state: {} });
       }
     }
-  }, [location, navigate, session, effectiveUser, needsOnboarding, welcomeKey]);
+  }, [effectiveUser, needsOnboarding, welcomeKey, location.state, navigate, location.pathname]);
 
   const handleResume = useCallback(
     (moduleId) => {

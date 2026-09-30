@@ -116,9 +116,18 @@ export function useRegisterForm({ turnstileToken, onResetTurnstile } = {}) {
 
       if (error) {
         console.error("Registration failed:", error);
-        setErrors({
-          form: error.message || "Registration failed. Please try again.",
-        });
+        let errorMessage = error.message || "Registration failed. Please try again.";
+
+        // Better Auth returns this code when the email is already registered and verified
+        if (
+          error.code === "USER_ALREADY_EXISTS" ||
+          errorMessage.toLowerCase().includes("already") ||
+          error.status === 422
+        ) {
+          errorMessage = "An account with this email already exists. Please sign in or check your inbox for a verification email.";
+        }
+
+        setErrors({ form: errorMessage });
         onResetTurnstile?.();
         setShowConsentModal(false);
       } else {
