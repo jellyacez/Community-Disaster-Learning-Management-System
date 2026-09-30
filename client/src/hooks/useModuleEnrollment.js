@@ -29,6 +29,13 @@ export function useModuleEnrollment({ moduleId, moduleTitle, initialEnrolled = f
         queryClient.invalidateQueries({ queryKey: ["moduleCatalog"] });
         queryClient.invalidateQueries({ queryKey: ["enrolledModules"] });
 
+        try {
+                  const dashRes = await apiClient.get("/user/dashboard");
+                  localStorage.setItem("lms_offline_dashboard", JSON.stringify(dashRes.data));
+                } catch (e) {
+                  console.warn("Could not background-cache dashboard for offline use.",e);
+                }
+
         if (onEnrollSuccess) onEnrollSuccess(moduleId);
       } else {
         // Rollback if the server indicates failure despite a 200 OK
