@@ -15,6 +15,7 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import { Search01Icon, Book02Icon } from "@hugeicons/core-free-icons";
 import { decodeHtml } from "../../../utils/textUtils";
 import { useOfflineSession } from "../../../hooks/offlineSession";
+import noInternetIMG from "../../../assets/undraw-Question.svg";
 
 export default function UserModuleCatalog() {
   useDocumentTitle("Module Catalog | Bacolor LMS");
@@ -34,7 +35,6 @@ export default function UserModuleCatalog() {
   const [isEnrolling, setIsEnrolling] = useState(false);
   const debouncedSearch = useDebounce(searchInput, 350);
 
-  // 1. Unified Offline-First Query (Matching the Dashboard Pattern)
   const { data: rawModules = [], isLoading } = useQuery({
     queryKey: ["availableModules", userId || "guest"],
     networkMode: "offlineFirst",
@@ -53,7 +53,7 @@ export default function UserModuleCatalog() {
         if (cacheKey) localStorage.setItem(cacheKey, JSON.stringify(res.data));
         return res.data;
       } catch (err) {
-        if (!err.response) { // Covers offline state and network timeouts
+        if (!err.response) {
           const cached = cacheKey ? localStorage.getItem(cacheKey) : null;
           if (cached) return JSON.parse(cached);
         }
@@ -116,8 +116,6 @@ export default function UserModuleCatalog() {
     return filteredModules.slice(start, start + itemsPerPage);
   }, [filteredModules, currentPage, itemsPerPage]);
 
-
-  // 2. Streamlined Success Handler (Removes crashing syntax errors)
   const handleEnrollSuccess = () => {
     queryClient.invalidateQueries({ queryKey: ["availableModules"] });
     queryClient.invalidateQueries({ queryKey: ["userDashboard"] });
@@ -136,9 +134,7 @@ export default function UserModuleCatalog() {
 
       if (res.data?.success || res.status === 200) {
         toast.success(`Enrollment Success! You are now enrolled in ${decodeHtml(pendingEnrollModule.title)}.`);
-
         handleEnrollSuccess();
-
         setPendingEnrollModule(null);
         navigate("/user/enrolled");
       }
@@ -213,7 +209,26 @@ export default function UserModuleCatalog() {
         </div>
       ) : (
         <div className="flex flex-col items-center justify-center py-16 text-center bg-white rounded-3xl border border-gray-200 shadow-sm">
-          {debouncedSearch || selectedCategory !== "all" ? (
+          {/* 1. OFFLINE STATE */}
+          {!navigator.onLine && rawModules.length === 0 ? (
+            <>
+              <img src={noInternetIMG} alt="No Internet Connection" className="w-48 h-48 mb-6 opacity-80" />
+              <h2 className="text-xl font-extrabold text-gray-900 mb-2">
+                You're Offline
+              </h2>
+              <p className="text-sm text-gray-500 max-w-sm mb-6">
+                Connect to the internet to browse the module catalog. Any modules you have already enrolled in and saved can be accessed in the Enrolled Modules tab.
+              </p>
+              <button
+                onClick={() => window.location.reload()}
+                className="px-6 py-2.5 bg-gray-900 hover:bg-black text-white font-bold rounded-xl text-sm transition-all shadow-sm"
+              >
+                Refresh Page
+              </button>
+            </>
+
+          /* 2. SEARCH NOT FOUND STATE */
+          ) : debouncedSearch || selectedCategory !== "all" ? (
             <>
               <HugeiconsIcon icon={Search01Icon} className="w-12 h-12 text-gray-300 mb-4" />
               <h3 className="text-xl font-bold text-gray-900 mb-2">No matching modules found</h3>
@@ -221,13 +236,24 @@ export default function UserModuleCatalog() {
                 Try adjusting your search query or category filter to discover other available training modules.
               </p>
             </>
+
+          /* 3. ALL CAUGHT UP STATE */
           ) : (
             <>
-              <img src={continuousLearningImg} alt="No modules mascot" className="w-48 h-48 mb-6 opacity-80" />
-              <h2 className="text-xl font-extrabold text-gray-900 mb-2">All Caught Up!</h2>
-              <p className="text-sm text-gray-500 max-w-xs">
-                You have explored or enrolled in all available modules. Check back later for new disaster risk reduction courses!
+              <img src={continuousLearningImg} alt="Maximum Preparedness" className="w-44 h-44 mb-5 opacity-90 drop-shadow-sm" />
+              <h2 className="text-xl font-extrabold text-gray-900 mb-2">
+                All Caught Up!
+              </h2>
+              <p className="text-sm text-gray-500 max-w-sm mb-6">
+                You have explored or enrolled in all available modules. Check back later for newdisaster risk reduction courses!
               </p>
+              <button
+                onClick={() => navigate("/user/enrolled")}
+                className="px-6 py-2.5 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl text-sm transition-all shadow-sm flex items-center justify-center gap-2 mx-auto"
+              >
+                <HugeiconsIcon icon={Book02Icon} className="w-4 h-4" />
+                <span>Go to Enrolled Modules</span>
+              </button>
             </>
           )}
         </div>
