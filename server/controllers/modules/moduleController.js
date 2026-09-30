@@ -3,6 +3,23 @@ const ModuleService = require("../../services/modules/ModuleService");
 const { ADMIN_ROLES } = require("../../config/permissions");
 const { logActivity, logError } = require("../../utils/logger");
 
+// Authoring routes (create/update) may only save a draft or submit for review.
+// Publishing goes through the approval route (PUT /:id/status, approve_modules).
+// An absent status keeps each route's existing default.
+const AUTHOR_STATUSES = ["draft", "pending_review"];
+
+function rejectDisallowedStatus(req, res) {
+  const { status } = req.body;
+  if (status === undefined || status === null || status === "" || AUTHOR_STATUSES.includes(status)) {
+    return false;
+  }
+  res.status(400).json({
+    success: false,
+    message: "Invalid status. Modules can only be saved as 'draft' or submitted as 'pending_review'.",
+  });
+  return true;
+}
+
 /**
  * Helper function to normalize level payloads so cover_image is never lost
  */
@@ -33,6 +50,7 @@ exports.createModule = async (req, res) => {
       message: validation.error,
     });
   }
+  if (rejectDisallowedStatus(req, res)) return;
 
   try {
     const payload = {
@@ -83,6 +101,7 @@ exports.updateModule = async (req, res) => {
       message: validation.error,
     });
   }
+  if (rejectDisallowedStatus(req, res)) return;
 
   try {
     const existing = await ModuleService.getModuleById(parsedModId);
