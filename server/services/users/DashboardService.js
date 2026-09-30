@@ -80,6 +80,52 @@ class DashboardService {
 
     const enrolledModulesQuery = await pool.query(
       `
+      WITH RECURSIVE 
+      module_roots AS (
+        SELECT 
+          ma.mod_id AS enrolled_mod_id,
+          md.mod_id AS current_mod_id,
+          md.parent_mod_id,
+          md.mod_id AS root_mod_id
+        FROM module_activity ma
+        JOIN module_data md ON ma.mod_id = md.mod_id
+        WHERE ma.user_id = $1
+
+        UNION ALL
+
+        SELECT 
+          mr.enrolled_mod_id,
+          p.mod_id AS current_mod_id,
+          p.parent_mod_id,
+          p.mod_id AS root_mod_id
+        FROM module_roots mr
+        JOIN module_data p ON mr.parent_mod_id = p.mod_id
+      ),
+      resolved_roots AS (
+        SELECT DISTINCT ON (enrolled_mod_id)
+          enrolled_mod_id,
+          root_mod_id
+        FROM module_roots
+        WHERE parent_mod_id IS NULL
+      ),
+      module_descendants AS (
+        SELECT 
+          ma.mod_id AS enrolled_mod_id,
+          c.mod_id AS descendant_mod_id,
+          c.status AS descendant_status
+        FROM module_activity ma
+        JOIN module_data c ON c.parent_mod_id = ma.mod_id
+        WHERE ma.user_id = $1
+
+        UNION ALL
+
+        SELECT 
+          md_sub.enrolled_mod_id,
+          c.mod_id AS descendant_mod_id,
+          c.status AS descendant_status
+        FROM module_descendants md_sub
+        JOIN module_data c ON c.parent_mod_id = md_sub.descendant_mod_id
+      )
       SELECT 
         md.mod_id as id, 
         md.modname as title, 
@@ -88,6 +134,26 @@ class DashboardService {
         md.duration, 
         md.description,
         md.image_url,
+        md.status as module_status,
+        md.parent_mod_id,
+        rr.root_mod_id,
+        (
+          SELECT d.descendant_mod_id
+          FROM module_descendants d
+          WHERE d.enrolled_mod_id = ma.mod_id
+            AND d.descendant_status = 'published'
+          ORDER BY d.descendant_mod_id DESC
+          LIMIT 1
+        ) as latest_published_id,
+        COALESCE(
+          EXISTS(
+            SELECT 1 
+            FROM module_descendants d 
+            WHERE d.enrolled_mod_id = ma.mod_id 
+              AND d.descendant_status = 'published'
+          ), 
+          false
+        ) as has_newer_version,
         ma.modstatus as enrollment_status,
         COALESCE(ma.progress, 0) as progress,
         (
@@ -106,7 +172,22 @@ class DashboardService {
         ) as "nextStepTitle"
       FROM module_activity ma
       JOIN module_data md ON ma.mod_id = md.mod_id
+      LEFT JOIN resolved_roots rr ON ma.mod_id = rr.enrolled_mod_id
       WHERE ma.user_id = $1
+        AND NOT (
+          md.status = 'archived'
+          AND COALESCE(ma.progress, 0) = 0
+          AND ma.modstatus IS DISTINCT FROM 'Completed'
+          AND COALESCE(
+            EXISTS(
+              SELECT 1 
+              FROM module_descendants d 
+              WHERE d.enrolled_mod_id = ma.mod_id 
+                AND d.descendant_status = 'published'
+            ), 
+            false
+          ) = true
+        )
       ORDER BY ma.progress DESC, ma.started_at DESC
     `,
       [userId],

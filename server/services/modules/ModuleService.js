@@ -113,7 +113,29 @@ class ModuleService {
 
   async getAvailableModules(user_id) {
     const result = await pool.query(
-     `SELECT
+     `WITH RECURSIVE ancestor_tree AS (
+        SELECT mod_id AS descendant_id, parent_mod_id AS ancestor_id
+        FROM public.module_data
+        WHERE parent_mod_id IS NOT NULL
+        UNION ALL
+        SELECT at.descendant_id, md.parent_mod_id
+        FROM ancestor_tree at
+        JOIN public.module_data md ON at.ancestor_id = md.mod_id
+        WHERE md.parent_mod_id IS NOT NULL
+      ),
+      ancestor_activity AS (
+        SELECT 
+          at.descendant_id,
+          CASE 
+            WHEN bool_or(ma.modstatus = 'Completed' OR ma.progress = 100) THEN 'Completed'
+            ELSE NULL
+          END AS previous_version_status
+        FROM ancestor_tree at
+        JOIN public.module_activity ma ON at.ancestor_id = ma.mod_id
+        WHERE ma.user_id = $1
+        GROUP BY at.descendant_id
+      )
+      SELECT
         md.mod_id AS id,
         md.modname AS title,
         md.modcat AS category,
@@ -123,7 +145,8 @@ class ModuleService {
         md.image_url,
         (um.mod_id IS NOT NULL) AS is_enrolled,
         COALESCE(um.progress, 0) AS progress,
-        um.modstatus AS enrollment_status
+        um.modstatus AS enrollment_status,
+        aa.previous_version_status
        FROM public.module_data md
        LEFT JOIN (
          SELECT DISTINCT ON (mod_id) mod_id, progress, modstatus
@@ -131,6 +154,7 @@ class ModuleService {
          WHERE user_id = $1
          ORDER BY mod_id, modact_id DESC
        ) um ON um.mod_id = md.mod_id
+       LEFT JOIN ancestor_activity aa ON aa.descendant_id = md.mod_id
        WHERE md.moddateremove IS NULL AND md.status = 'published'
        ORDER BY md.mod_id DESC`,
       [user_id]

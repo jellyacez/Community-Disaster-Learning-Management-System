@@ -76,6 +76,11 @@ export default function UserEnrolledModules() {
       image_url: mod.image_url || null,
       progress: parseInt(mod.progress || 0),
       status: mod.enrollment_status || "Not Started",
+      module_status: mod.module_status || mod.status,
+      parent_mod_id: mod.parent_mod_id || null,
+      root_mod_id: mod.root_mod_id || null,
+      has_newer_version: Boolean(mod.has_newer_version),
+      latest_published_id: mod.latest_published_id || null,
     }));
   }, [dashboardData]);
 
