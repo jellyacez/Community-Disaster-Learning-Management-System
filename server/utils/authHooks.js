@@ -162,7 +162,7 @@ const securityHooksPlugin = () => {
                   const data = await clone.json();
                   userId = data?.user?.id;
                 }
-              } catch (e) { /* non-critical */ }
+              } catch { /* non-critical */ }
             }
 
             if (!userId) {
@@ -182,7 +182,7 @@ const securityHooksPlugin = () => {
                     }
                   }
                 }
-              } catch (e) { /* non-critical */ }
+              } catch { /* non-critical */ }
             }
 
             if (!userId) return {};
@@ -226,7 +226,7 @@ const securityHooksPlugin = () => {
                     userId,
                     `Session limit enforced (${limit} for role '${role}'): ${evictCount} oldest session(s) evicted.`,
                   );
-                } catch (_) { /* non-critical */ }
+                } catch { /* non-critical */ }
               }
             } catch (err) {
               // Non-fatal — a failure here must never block a legitimate sign-in.

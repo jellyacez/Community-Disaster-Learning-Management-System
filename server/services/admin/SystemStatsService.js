@@ -116,7 +116,7 @@ class SystemStatsService {
     const usedMemBytes = totalMemBytes - freeMemBytes;
 
     const platform = os.platform();
-    let cpuLoadPercent = 0;
+    let cpuLoadPercent;
 
     if (platform === "win32") {
       cpuLoadPercent = parseFloat((12 + Math.random() * 6).toFixed(1));
@@ -139,7 +139,9 @@ class SystemStatsService {
           diskUsagePercent = Math.round(((total - free) / total) * 100);
         }
       }
-    } catch (_) {}
+    } catch {
+      // Disk stats are optional; leave usage as null
+    }
 
     return {
       db_status: "connected",

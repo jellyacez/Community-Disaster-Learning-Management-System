@@ -19,6 +19,7 @@ import { authClient } from "../../lib/auth-client";
 import toast from "react-hot-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { useTheme } from "../../hooks/context/themeContext";
+import { getUnsyncedCount, processOfflineQueue } from "../../lib/LocalSave/syncManager";
 
 const navItems = [
   {
@@ -75,14 +76,39 @@ export default function UserSidebar({
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
   const { resetTheme } = useTheme();
 
+  const [unsyncedCount, setUnsyncedCount] = useState(0);
+  const [isSyncingBeforeLogout, setIsSyncingBeforeLogout] = useState(false);
+
+  useEffect(() => {
+    if (!isLogoutModalOpen) return;
+    getUnsyncedCount().then(setUnsyncedCount).catch(() => setUnsyncedCount(0));
+  }, [isLogoutModalOpen]);
+
   const confirmLogout = async () => {
+    // Give pending offline changes a chance to sync while the session is still valid
+    if (unsyncedCount > 0 && navigator.onLine) {
+      setIsSyncingBeforeLogout(true);
+      try {
+        await processOfflineQueue();
+      } catch {
+        // Continue with logout; the user was already warned
+      } finally {
+        setIsSyncingBeforeLogout(false);
+      }
+    }
+
     try {
       localStorage.removeItem("lms_offline_session");
       sessionStorage.setItem("isLoggingOut", "true");
 
       try {
         Object.keys(localStorage).forEach((key) => {
-          if (key.startsWith("lms_offline_dashboard")) {
+          // Dashboard, cached modules and cached assessments (contain answer keys)
+          if (
+            key.startsWith("lms_offline_dashboard") ||
+            key.startsWith("lms_offline_module_") ||
+            key.startsWith("lms_offline_assessment_")
+          ) {
             localStorage.removeItem(key);
           }
         });
@@ -246,6 +272,8 @@ export default function UserSidebar({
       <LogoutModal
         isOpen={isLogoutModalOpen}
         onClose={() => setIsLogoutModalOpen(false)}
+        unsyncedCount={unsyncedCount}
+        isSyncing={isSyncingBeforeLogout}
         onConfirm={confirmLogout}
       />
     </>

@@ -27,7 +27,7 @@ exports.resetUserPassword = async (req, res) => {
     isGenerated = true;
   }
 
-  if (!/^(?=.*[A-Z])(?=.*[!@#$\%^&*_=+\-/.]).{8,}$/.test(password)) {
+  if (!/^(?=.*[A-Z])(?=.*[!@#$%^&*_=+\-/.]).{8,}$/.test(password)) {
     return res
       .status(400)
       .json({ success: false, message: "Password does not meet complexity requirements." });

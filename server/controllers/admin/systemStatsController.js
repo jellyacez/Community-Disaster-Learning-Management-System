@@ -30,7 +30,7 @@ exports.getHealthStatus = async (req, res) => {
   try {
     const data = await systemStatsService.getHealthStatus();
     res.json({ success: true, data });
-  } catch (_) {
+  } catch {
     res.status(500).json({
       success: false,
       data: { db_status: "disconnected", db_latency_ms: null },

@@ -40,8 +40,13 @@ export default function ModuleViewerContent({
 
   const isAssessment =
     assessmentData?.questions?.length > 0 ||
-    activeStep?.type === "quiz" ||
-    activeStep?.type === "situational";
+    [
+      "quiz",
+      "situational",
+      "priority_action",
+      "hazard_identification",
+      "action_sequence",
+    ].includes(activeStep?.type);
 
   /*
    * ---------------------------------------------------------
@@ -174,6 +179,15 @@ export default function ModuleViewerContent({
       ? lastLevel.steps[lastLevel.steps.length - 1]
       : null;
 
+  // step_order restarts at each level, so derive the overall position
+  const flatIndex = activeStep
+    ? levels
+        .flatMap((l) => l.steps || [])
+        .findIndex((s) => s.id === activeStep.id)
+    : -1;
+  const currentStepNumber =
+    flatIndex >= 0 ? flatIndex + 1 : activeStep?.step_order;
+
   const isLastStep = Boolean(
     activeStep?.id &&
       lastStep?.id === activeStep.id
@@ -274,7 +288,7 @@ export default function ModuleViewerContent({
         <div className="flex items-center gap-2 sm:gap-3">
           <span className="text-xs font-medium text-gray-500">
             {activeStep
-              ? `Step ${activeStep.step_order} of ${totalSteps}`
+              ? `Step ${currentStepNumber} of ${totalSteps}`
               : `${completedStepIds.length} of ${totalSteps} completed`}
           </span>
 

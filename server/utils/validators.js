@@ -53,7 +53,7 @@ exports.validateModuleCreation = (payload) => {
         }
       }
       return null;
-    } catch (e) {
+    } catch {
       return `${fieldName} format is invalid.`;
     }
   };

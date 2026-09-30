@@ -3,13 +3,13 @@ import { useQuery, useQueries, useMutation, useQueryClient } from "@tanstack/rea
 import { useNavigate } from "react-router-dom";
 import apiClient from "../lib/apiClient";
 import toast from "react-hot-toast";
-import { authClient } from "../lib/auth-client";
 import { useOfflineSession } from "./offlineSession";
 import {
   saveOfflineStepProgress,
   saveOfflineResult,
   recalculateModuleProgress,
 } from "../lib/LocalSave/progressService";
+import { gradeQuizOffline } from "../lib/LocalSave/gradeOffline";
 import { decodeHtml } from "../utils/textUtils";
 import { localDb } from "../lib/localDb";
 export function useModuleViewer(moduleId) {
@@ -89,13 +89,14 @@ export function useModuleViewer(moduleId) {
       console.warn("Failed to cache module structure to IndexedDB:", error);
     }
   };
+  const rawModule = data?.module;
   const moduleData = useMemo(() => {
-    if (!data?.module) return {};
+    if (!rawModule) return {};
     return {
-      ...data.module,
-      title: decodeHtml(data.module.title),
+      ...rawModule,
+      title: decodeHtml(rawModule.title),
     };
-  }, [data?.module]);
+  }, [rawModule]);
 
   const completedStepIds = useMemo(() => data?.completedStepIds || [], [data?.completedStepIds]);
 
@@ -217,11 +218,31 @@ export function useModuleViewer(moduleId) {
       const endpoint = `/modules/${moduleId}/steps/${stepId}/complete`;
       const isQuiz = answers && Array.isArray(answers);
 
-      // 1. OFFLINE HANDLING
-      if (!navigator.onLine) {
+      // Assessment steps need answers; queueing one without them can never sync.
+      const stepType = allSteps.find((s) => s.id === stepId)?.type;
+      if (!isQuiz && isAssessmentStepType(stepType)) {
+        throw new Error(
+          "This assessment hasn't loaded yet. Open it while online at least once, then try again."
+        );
+      }
+
+      // Saves locally; quizzes are graded from the cached assessment (provisional,
+      // the server re-grades the queued answers on sync).
+      const saveOffline = async (defaultMessage) => {
         let result;
+        let grade = null;
         if (isQuiz) {
-          result = await saveOfflineResult(moduleId, userId, true, answers, stepId);
+          const cachedRaw = localStorage.getItem(`lms_offline_assessment_${stepId}`);
+          if (cachedRaw) {
+            try {
+              const step = allSteps.find((s) => s.id === stepId);
+              const level = enhancedLevels.find((l) => l.id === step?.level_id);
+              grade = gradeQuizOffline(JSON.parse(cachedRaw), answers, level?.passing_threshold);
+            } catch (e) {
+              console.warn("Offline grading failed, treating result as provisional pass:", e);
+            }
+          }
+          result = await saveOfflineResult(moduleId, userId, grade ? grade.passed : true, answers, stepId);
           await recalculateModuleProgress(moduleId, userId);
         } else {
           result = await saveOfflineStepProgress(moduleId, stepId, userId);
@@ -231,16 +252,46 @@ export function useModuleViewer(moduleId) {
           throw new Error(result.error || "Storage failed. Progress could not be saved offline.");
         }
 
-        return {
+        const base = {
           queuedOffline: true,
           status: result?.status,
           storageType: result?.storageType,
           warning: result?.warning,
-          message:
-            result?.warning ||
-            result?.message ||
-            "You are offline. Progress saved locally and will sync when reconnected.",
+          message: result?.warning || result?.message || defaultMessage,
         };
+
+        if (grade && !grade.passed) {
+          const step = allSteps.find((s) => s.id === stepId);
+          let loopBackStepId = null;
+          if (step && !step.is_final_assessment) {
+            loopBackStepId =
+              step.loop_back_step_id ||
+              [...allSteps]
+                .filter(
+                  (s) =>
+                    s.level_id === step.level_id &&
+                    s.step_order < step.step_order &&
+                    ["text", "video"].includes(s.type)
+                )
+                .sort((a, b) => b.step_order - a.step_order)[0]?.id ||
+              null;
+          }
+          return {
+            ...base,
+            passed: false,
+            score: grade.score,
+            totalPoints: grade.totalPoints,
+            percentage: grade.percentage,
+            loop_back_step_id: loopBackStepId,
+            is_final_assessment: step?.is_final_assessment,
+          };
+        }
+        return base;
+      };
+
+      // 1. OFFLINE HANDLING
+      if (!navigator.onLine) {
+        return saveOffline("You are offline. Progress saved locally and will sync when reconnected.");
       }
 
       // 2. ONLINE HANDLING
@@ -254,34 +305,36 @@ export function useModuleViewer(moduleId) {
           error.response?.data?.error === "Network Error / Offline";
 
         if (isNetworkFailure || isServiceWorkerOffline) {
-          let result;
-          if (isQuiz) {
-            result = await saveOfflineResult(moduleId, userId, true, answers, stepId);
-            await recalculateModuleProgress(moduleId, userId);
-          } else {
-            result = await saveOfflineStepProgress(moduleId, stepId, userId);
-          }
-
-          if (result?.status === 'failed') {
-            throw new Error(result.error || "Storage failed. Progress could not be saved offline.");
-          }
-
-          return {
-            queuedOffline: true,
-            status: result?.status,
-            storageType: result?.storageType,
-            warning: result?.warning,
-            message:
-              result?.warning ||
-              result?.message ||
-              "Connection lost. Progress saved locally and will sync when reconnected.",
-          };
+          return saveOffline("Connection lost. Progress saved locally and will sync when reconnected.");
         }
         throw error;
       }
     },
-    onSuccess: (responseData) => {
+    onSuccess: (responseData, { stepId }) => {
       if (responseData.queuedOffline) {
+        if (responseData.passed === false) {
+          toast("Offline result: you did not meet the passing score. This will be confirmed when you reconnect.", {
+            icon: "📶",
+            duration: 5000,
+          });
+          setLoopBackData({
+            message: "You did not meet the passing threshold.",
+            score: responseData.score,
+            percentage: responseData.percentage,
+            loopBackStepId: responseData.loop_back_step_id,
+            isFinalAssessment: responseData.is_final_assessment,
+          });
+          return;
+        }
+
+        // Server can't be refetched offline, so mark the step done in the cache
+        // to keep the progress counter/bar and step locks in sync.
+        queryClient.setQueryData(["moduleViewer", moduleId], (old) =>
+          old && !(old.completedStepIds || []).includes(stepId)
+            ? { ...old, completedStepIds: [...(old.completedStepIds || []), stepId] }
+            : old
+        );
+
         if (responseData.status === 'queued_memory_only' || responseData.storageType === 'memory') {
           toast(
             responseData.warning ||

@@ -24,7 +24,7 @@ class UserService {
       throw new Error("ALREADY_ONBOARDED: Profile setup is a one-time action. Contact your administrator to change your barangay assignment.");
     }
 
-    let barangayId = null;
+    let barangayId;
 
     if (!isNaN(barangay) && Number.isInteger(Number(barangay))) {
       const bRes = await pool.query('SELECT id FROM barangays WHERE id = $1', [Number(barangay)]);
