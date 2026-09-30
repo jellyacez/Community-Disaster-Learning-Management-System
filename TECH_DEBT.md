@@ -738,3 +738,20 @@ This document tracks identified technical debt, architectural decisions, missing
   - Server defines unique constraints on `client_mutation_id` and executes `ON CONFLICT (client_mutation_id) DO NOTHING` on all creation endpoints that interface with the offline sync queue.
 - **Strategic Decision:** Bundle this enhancement with the Local Announcements build (Item 7) rather than fixing feedback in isolation now — no sense adding the idempotency plumbing to a feature that does not exist yet, and current feedback exposure is lower-frequency (requires the specific processed-but-response-lost race condition) than the Publish-button double-click case, which was fixed separately and immediately.
 
+---
+
+### 6. Input Validation Audit Findings (paused until after defense)
+- **Source:** Server input-validation audit (2026-10-01), findings H1–H7, M1–M15, L1–L11.
+- **Note:** Update the status lines below when each fix branch merges into `main`.
+- **Status:**
+  - **H1 — Quiz score forgery (`ModuleProgressService.completeModuleStep`): FIXED** in `6a346ef` (on `main`). Regression: `server/tests/h1-quiz-scoring.regression.cjs`.
+  - **H4 — Module status set by authors, bypassing approval (`moduleController.js`): FIXED on branch `fix/h4-module-status-allowlist`** (`69082a4`, **not merged**). Regression: `server/tests/h4-module-status.regression.cjs`.
+  - **H3 — Better Auth `update-user` accepts `twoFactorEnabled` / `barangay_id`:** field write reproduced; MFA bypass not reproducible locally (MFA disabled), needs a test with MFA enforced.
+  - **Open (reproduced locally):** H6 (new enrollment in draft/archived modules), M10 (maintenance `"false"` enables; unvalidated broadcast severity / support email).
+  - **Open (not yet reproduced):** H2, H5, H7, M11 (stop-impersonating role gate), remaining M/L items.
+  - **Also pending:** dead `POST /api/modules/:moduleId/results` route + controller and duplicate `/:id/enroll` registration (L8).
+- **Constraints for remaining fixes:**
+  - **General:** No validation change may turn an offline-queue replay into a terminal 400.
+  - **H6:** Archived modules stay readable/writable for residents with an existing `module_activity` row; only new enrollment requires `status = 'published'`.
+  - **H5:** Partly by design — offline grading needs answer keys on the client. The real protection is server-side grading (H1).
+
