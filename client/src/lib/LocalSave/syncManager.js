@@ -339,7 +339,7 @@ const dispatchTask = async (task) => {
 /**
  * Main synchronization loop to process queued offline tasks
  */
-export const processOfflineQueue = async () => {
+export const processOfflineQueue = async (currentUserId) => {
   if (!navigator.onLine) return;
 
   if (isSyncing) {
@@ -359,13 +359,15 @@ export const processOfflineQueue = async () => {
 
     // Queued actions use whoever is signed in when they sync, so hold back items
     // recorded by a different user (e.g. after a logout with unsynced progress).
-    const currentUserId = await getCurrentUserId();
+    // Callers may pass the user id; otherwise look it up from the session.
+    const userId = typeof currentUserId === 'string' ? currentUserId : await getCurrentUserId();
     const tasksToProcess = (await getAllPendingWrites()).filter((t) => {
       const owner = t.payload?.user_id;
-      if (!currentUserId || !owner || String(owner) === String(currentUserId)) return true;
+      if (!userId || !owner || String(owner) === String(userId)) return true;
       console.warn(`[SyncManager] Holding task ${t.sync_id}: belongs to a different user.`);
       return false;
     });
+
     if (tasksToProcess.length === 0) {
       scheduleNextRetryIfNeeded();
       return;
@@ -514,4 +516,3 @@ const scheduleNextRetryIfNeeded = async () => {
     }, delay);
   }
 };
-

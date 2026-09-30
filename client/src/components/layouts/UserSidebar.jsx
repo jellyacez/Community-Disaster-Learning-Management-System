@@ -97,21 +97,17 @@ export default function UserSidebar({
       }
     }
 
-    try {
-      localStorage.removeItem("lms_offline_session");
-      sessionStorage.setItem("isLoggingOut", "true");
-
       try {
-        Object.keys(localStorage).forEach((key) => {
-          // Dashboard, cached modules and cached assessments (contain answer keys)
-          if (
-            key.startsWith("lms_offline_dashboard") ||
-            key.startsWith("lms_offline_module_") ||
-            key.startsWith("lms_offline_assessment_")
-          ) {
-            localStorage.removeItem(key);
+        // Safely sweep ALL offline caches
+        const keysToRemove = [];
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          if (key && key.startsWith('lms_offline_')) {
+            keysToRemove.push(key);
           }
-        });
+        }
+        keysToRemove.forEach(k => localStorage.removeItem(k));
+
         Object.keys(sessionStorage).forEach((key) => {
           if (
             key.startsWith("hasSeenWelcome") ||
@@ -120,25 +116,23 @@ export default function UserSidebar({
             sessionStorage.removeItem(key);
           }
         });
+
+        sessionStorage.setItem("isLoggingOut", "true");
+        queryClient.cancelQueries();
+        queryClient.clear();
+        resetTheme();
+
+        if (navigator.onLine) {
+          await authClient.signOut();
+        }
+        toast.success("Successfully logged out!");
       } catch {
-        // Ignore storage errors
+        toast.success("Logged out locally.");
+      } finally {
+        setIsLogoutModalOpen(false);
+        navigate("/signin", { replace: true });
       }
-
-      queryClient.cancelQueries();
-      queryClient.clear();
-      resetTheme();
-
-      if (navigator.onLine) {
-        await authClient.signOut();
-      }
-      toast.success("Successfully logged out!");
-    } catch {
-      toast.success("Logged out locally.");
-    } finally {
-      setIsLogoutModalOpen(false);
-      navigate("/signin", { replace: true });
-    }
-      };
+    };
 
   useEffect(() => {
     const updatePillPosition = () => {
