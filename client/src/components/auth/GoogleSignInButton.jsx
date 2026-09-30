@@ -25,8 +25,8 @@ export default function GoogleSignInButton({ clearGlobalError }) {
     try {
       const { error } = await authClient.signIn.social({
         provider: "google",
-        callbackURL: `${import.meta.env.VITE_FRONTEND_URL || "http://localhost:5173"}/userDashboard`,
-        errorCallbackURL: `${import.meta.env.VITE_FRONTEND_URL || "http://localhost:5173"}/signin`,
+        callbackURL: "/userDashboard",
+        errorCallbackURL: "/signin",
       });
 
       if (error) {

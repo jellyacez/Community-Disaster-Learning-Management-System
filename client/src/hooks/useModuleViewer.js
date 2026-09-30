@@ -4,34 +4,91 @@ import { useNavigate } from "react-router-dom";
 import apiClient from "../lib/apiClient";
 import toast from "react-hot-toast";
 import { authClient } from "../lib/auth-client";
+import { useOfflineSession } from "./offlineSession";
 import {
   saveOfflineStepProgress,
   saveOfflineResult,
   recalculateModuleProgress,
 } from "../lib/LocalSave/progressService";
 import { decodeHtml } from "../utils/textUtils";
-
+import { localDb } from "../lib/localDb";
 export function useModuleViewer(moduleId) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { data: session } = authClient.useSession();
+  const { data: session } = useOfflineSession(); // Replaced authClient.useSession
   const userId = session?.user?.id;
 
   const [activeStepId, setActiveStepId] = useState(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [loopBackData, setLoopBackData] = useState(null); // { message, score, percentage, loopBackStepId }
+  const [loopBackData, setLoopBackData] = useState(null);
   const [retryCount, setRetryCount] = useState(0);
 
-  // 1. Fetch module data
+  // 1. Fetch module data (With Offline IndexedDB Fallback)
   const { data, isLoading, error } = useQuery({
     queryKey: ["moduleViewer", moduleId],
+    networkMode: "offlineFirst", // Allow running while offline
     queryFn: async () => {
-      const response = await apiClient.get(`/modules/${moduleId}/viewer`);
-      return response.data.data;
+      try {
+        const response = await apiClient.get(`/modules/${moduleId}/viewer`);
+        const payload = response.data.data;
+
+        // Cache the structure for offline use in the background
+        if (payload?.module && payload?.levels) {
+          cacheModuleStructureOffline(payload.module, payload.levels);
+
+          // Also save an offline localStorage copy for quick UI hydration
+          localStorage.setItem(`lms_offline_module_${moduleId}`, JSON.stringify(payload));
+        }
+
+        return payload;
+      } catch (err) {
+        if (!navigator.onLine || err.code === "ERR_NETWORK") {
+          const cached = localStorage.getItem(`lms_offline_module_${moduleId}`);
+          if (cached) {
+            toast("You are viewing a cached offline version of this module.", { icon: "📶", duration: 3000 });
+            return JSON.parse(cached);
+          }
+        }
+        throw err;
+      }
     },
     retry: false,
   });
 
+
+  const cacheModuleStructureOffline = async (moduleData, levels) => {
+    if (!moduleData || !moduleData.id) return;
+    try {
+      await localDb.transaction("rw", localDb.module_data, localDb.levels, localDb.module_steps, async () => {
+        await localDb.module_data.put({
+          mod_id: moduleData.id,
+          modcat: moduleData.category || "General",
+          title: moduleData.title
+        });
+
+        for (const level of levels) {
+          await localDb.levels.put({
+            level_id: level.id,
+            mod_id: moduleData.id,
+            title: level.title,
+            level_order: level.level_order
+          });
+
+          for (const step of (level.steps || [])) {
+            await localDb.module_steps.put({
+              step_id: step.id,
+              level_id: level.id,
+              title: step.title,
+              step_type: step.type,
+              step_order: step.step_order
+            });
+          }
+        }
+      });
+    } catch (error) {
+      console.warn("Failed to cache module structure to IndexedDB:", error);
+    }
+  };
   const moduleData = useMemo(() => {
     if (!data?.module) return {};
     return {

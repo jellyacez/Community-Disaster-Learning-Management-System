@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { HugeiconsIcon } from "@hugeicons/react";
-import { Activity01Icon, CheckmarkCircle02Icon, BookOpen01Icon, ArrowRight01Icon } from "@hugeicons/core-free-icons";
+import { Activity01Icon, BookOpen01Icon, ArrowRight01Icon } from "@hugeicons/core-free-icons";
 
 export default function ActivityTimeline({ enrolledModules }) {
   const activities = useMemo(() => {

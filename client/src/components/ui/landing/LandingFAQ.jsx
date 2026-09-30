@@ -6,7 +6,6 @@ import {
   ArrowDown01Icon,
   ArrowUp01Icon,
   Search01Icon,
-  HelpSquareIcon,
   ArrowRight01Icon,
 } from "@hugeicons/core-free-icons";
 import { FAQ_ITEMS } from "../../../constants/faqData";

@@ -31,23 +31,23 @@ export default function UserNavbar({
 
   return (
     <header className="sticky top-0 z-30 border-b border-gray-200 dark:border-slate-800 bg-white/90 dark:bg-slate-950/90 backdrop-blur transition-colors duration-200">
-      <div className="flex items-center justify-between px-3 sm:px-6 lg:px-8 py-3 sm:py-4 gap-2">
+      <div className="flex items-center justify-between px-3 sm:px-6 lg:px-8 py-3 sm:py-4 gap-3">
 
         {/* Left Section: Menu Toggle & Title */}
-        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+        <div className="flex flex-1 items-center gap-2 sm:gap-3 min-w-0">
           <button
             onClick={() => setSidebarOpen(true)}
             aria-label="Open sidebar menu"
-            className="shrink-0 rounded-xl border border-gray-200 dark:border-slate-800 p-2 text-gray-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-900 lg:hidden cursor-pointer transition-all active:scale-95"
+            className="shrink-0 flex-none rounded-xl border border-gray-200 dark:border-slate-800 p-2 text-gray-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-900 lg:hidden cursor-pointer transition-all active:scale-95"
           >
             <HugeiconsIcon aria-hidden="true" icon={Menu01Icon} className="w-5 h-5 shrink-0" />
           </button>
 
-          <div className="min-w-0 flex flex-col">
-            {/* Desktop: Static Branding | Mobile: Dynamic Page Title */}
+          <div className="min-w-0 flex flex-col flex-1">
             <p className="hidden sm:block text-xs font-semibold uppercase tracking-widest text-gray-500 dark:text-slate-400 truncate">
               Resident Learning Dashboard
             </p>
+            {/* The truncate class ensures the title cuts off with "..." instead of crushing the right side */}
             <p className="sm:hidden text-sm font-black text-gray-900 dark:text-slate-100 truncate">
               {currentTitle}
             </p>
@@ -55,7 +55,7 @@ export default function UserNavbar({
         </div>
 
         {/* Right Section: Action Controls */}
-        <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
+        <div className="flex items-center justify-end gap-1.5 sm:gap-3 shrink-0 flex-none">
           <UnsyncedQueueIndicator />
           <NotificationDropdown />
           <ThemeToggle />
@@ -67,16 +67,16 @@ export default function UserNavbar({
           <button
             onClick={() => navigate('/user/profile')}
             aria-label="User profile settings"
-            className="flex items-center gap-2.5 sm:gap-3 rounded-full sm:rounded-xl border border-transparent sm:border-gray-200 dark:sm:border-slate-800 bg-transparent dark:sm:bg-slate-900/60 p-0.5 sm:px-3 sm:py-2 hover:bg-gray-50 dark:hover:bg-slate-800 cursor-pointer transition-all active:scale-95 shrink-0"
+            className="flex items-center gap-2.5 sm:gap-3 rounded-full sm:rounded-xl border border-transparent sm:border-gray-200 dark:sm:border-slate-800 bg-transparent dark:sm:bg-slate-900/60 p-0 sm:px-3 sm:py-2 hover:bg-gray-50 dark:hover:bg-slate-800 cursor-pointer transition-all active:scale-95 shrink-0 flex-none"
           >
             {currentUser?.image ? (
               <img
                 src={currentUser.image}
                 alt={`${currentUser.name}'s profile`}
-                className="h-8 w-8 sm:h-9 sm:w-9 shrink-0 rounded-full object-cover border border-gray-200 dark:border-slate-700"
+                className="h-8 w-8 sm:h-9 sm:w-9 min-w-[32px] min-h-[32px] sm:min-w-[36px] sm:min-h-[36px] shrink-0 flex-none rounded-full object-cover border border-gray-200 dark:border-slate-700"
               />
             ) : (
-              <div className="flex h-8 w-8 sm:h-9 sm:w-9 shrink-0 items-center justify-center rounded-full bg-red-100 dark:bg-red-950/70 font-bold text-[11px] sm:text-xs text-red-700 dark:text-red-300 border border-red-200 dark:border-red-900/50">
+              <div className="flex h-8 w-8 sm:h-9 sm:w-9 min-w-[32px] min-h-[32px] sm:min-w-[36px] sm:min-h-[36px] shrink-0 flex-none items-center justify-center rounded-full bg-red-100 dark:bg-red-950/70 font-bold text-[11px] sm:text-xs text-red-700 dark:text-red-300 border border-red-200 dark:border-red-900/50">
                 {userInitials}
               </div>
             )}

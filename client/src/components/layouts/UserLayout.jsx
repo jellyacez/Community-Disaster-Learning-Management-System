@@ -24,16 +24,17 @@ export default function UserLayout() {
   const { data: session, isOffline } = useOfflineSession();
   const location = useLocation();
 
-  // Read impersonation profile if active
-  const impersonatedTargetRaw =
-    sessionStorage.getItem("impersonated_target_user") ||
-    localStorage.getItem("impersonated_target_user");
-  let impersonatedUser = null;
-  try {
-    impersonatedUser = impersonatedTargetRaw ? JSON.parse(impersonatedTargetRaw) : null;
-  } catch {
-    impersonatedUser = null;
-  }
+  const impersonatedUser = useMemo(() => {
+    const raw =
+      sessionStorage.getItem("impersonated_target_user") ||
+      localStorage.getItem("impersonated_target_user");
+    if (!raw) return null;
+    try {
+      return JSON.parse(raw);
+    } catch {
+      return null;
+    }
+  }, []);
 
   const activeUser = impersonatedUser || session?.user;
 
@@ -60,7 +61,6 @@ export default function UserLayout() {
   const footerMode = useMemo(() => {
     const current = (location.pathname || "").toLowerCase();
 
-    // 1. Pages where footer is permanently locked/pinned to viewport
     const pinnedKeywords = [
       "module",
       "catalog",
@@ -72,13 +72,11 @@ export default function UserLayout() {
       return "pinned";
     }
 
-    // 2. Pages where footer is non-sticky (scrolls naturally below content)
     const scrollKeywords = ["dashboard", "announcement", "settings"];
     if (scrollKeywords.some((keyword) => current.includes(keyword))) {
       return "scroll";
     }
 
-    // Fallback for any unmatched pages (default: natural scroll)
     return "scroll";
   }, [location.pathname]);
 
