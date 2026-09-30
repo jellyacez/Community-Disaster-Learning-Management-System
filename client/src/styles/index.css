@@ -14,7 +14,7 @@ html {
   scroll-behavior: smooth;
 }
 
-/* 1. Universal synchronized transition for theme toggling */
+
 html,
 body,
 *,
@@ -47,7 +47,7 @@ input, textarea, select, button {
   font-family: inherit;
 }
 
-/* Custom subtle scrollbar */
+
 *::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -76,7 +76,7 @@ html.dark *::-webkit-scrollbar-thumb:hover {
   background: #475569;
 }
 
-/* Base dark theme surface fallbacks */
+
 :where(.dark, .dark *) .bg-white:not([class*="dark:bg-"]),
 :where(.dark, .dark *) .bg-gray-50:not([class*="dark:bg-"]),
 :where(.dark, .dark *) .bg-gray-100:not([class*="dark:bg-"]),
@@ -135,7 +135,7 @@ html.dark .bg-slate-300 {
   background-color: #111c38 !important;
 }
 
-/* Hover background contrast for dark mode */
+
 :where(.dark, .dark *) .hover\:bg-gray-50\/50:hover,
 :where(.dark, .dark *) .hover\:bg-gray-50\/60:hover,
 :where(.dark, .dark *) .hover\:bg-gray-50\/70:hover,
@@ -151,7 +151,7 @@ html.dark .hover\:bg-gray-100:hover {
   background-color: #16203a !important;
 }
 
-/* Text inversion (Gray & Slate) */
+
 :where(.dark, .dark *) .text-gray-900,
 :where(.dark, .dark *) .text-slate-900,
 html.dark .text-gray-900,
@@ -191,7 +191,7 @@ html.dark .text-slate-400 {
   color: #94a3b8 !important;
 }
 
-/* Red/Maroon Text Inversion */
+
 :where(.dark, .dark *) .text-red-950:not([class*="dark:text-"]),
 :where(.dark, .dark *) .text-red-900:not([class*="dark:text-"]),
 :where(.dark, .dark *) .text-red-800:not([class*="dark:text-"]),
@@ -226,7 +226,7 @@ html.dark .text-emerald-800:not([class*="dark:text-"]) {
   color: #86efac !important;
 }
 
-/* Border inversions */
+
 :where(.dark, .dark *) .border-gray-100:not([class*="dark:border-"]),
 :where(.dark, .dark *) .border-gray-200:not([class*="dark:border-"]),
 :where(.dark, .dark *) .border-gray-300:not([class*="dark:border-"]),
@@ -259,7 +259,7 @@ html.dark .divide-gray-200:not([class*="dark:divide-"]) > :not([hidden]) ~ :not(
   border-color: #1e293b;
 }
 
-/* Input Fields */
+
 :where(.dark, .dark *) input:not([type="checkbox"]):not([type="radio"]),
 :where(.dark, .dark *) select,
 :where(.dark, .dark *) textarea,
@@ -271,7 +271,7 @@ html.dark textarea {
   border-color: #1e293b !important;
 }
 
-/* Red accents */
+
 :where(.dark, .dark *) .bg-red-50:not([class*="dark:bg-"]),
 :where(.dark, .dark *) .bg-red-50\/30:not([class*="dark:bg-"]),
 :where(.dark, .dark *) .bg-red-50\/40:not([class*="dark:bg-"]),
@@ -293,7 +293,6 @@ html.dark .bg-red-100 {
   background-color: rgba(127, 29, 29, 0.5) !important;
 }
 
-/* Auth / QR Isolation */
 .auth-isolated,
 .auth-isolated *,
 .qr-isolated,
@@ -379,7 +378,6 @@ html.dark .auth-isolated input::placeholder {
   color: #9ca3af !important;
 }
 
-/* Recharts Dark Theme Integration */
 html.dark .recharts-cartesian-grid line {
   stroke: #1e293b !important;
 }
@@ -388,7 +386,6 @@ html.dark .recharts-pie-sector {
   stroke: #0b1329 !important;
 }
 
-/* 2. Keyframes */
 @keyframes drawStroke {
   0% {
     stroke-dashoffset: 1400;
@@ -420,7 +417,6 @@ html.dark .recharts-pie-sector {
   }
 }
 
-/* 3. Top-level standalone utility classes (Tailwind v4 / Vite production-safe) */
 .chart-curve-animate {
   stroke-dasharray: 1400;
   stroke-dashoffset: 1400;
@@ -439,7 +435,7 @@ html.dark .recharts-pie-sector {
   transition: none !important;
 }
 
-/* Exempt looping UI indicators from the global 200ms transition lock */
+
 .animate-spin,
 .animate-pulse,
 .animate-ping {

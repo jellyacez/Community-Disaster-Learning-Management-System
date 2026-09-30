@@ -11,6 +11,7 @@ import {
   Message01Icon,
   Award01Icon,
   CheckmarkBadge01Icon,
+  Building03Icon,
 } from "@hugeicons/core-free-icons";
 
 export const ROLE_BASED_LINKS = {
@@ -34,13 +35,8 @@ export const ROLE_BASED_LINKS = {
                 ],
               },
               {
-                name: "User Management",
-                path: "/admin/super/users",
-                icon: UserGroupIcon,
-              },
-              {
                 name: "Barangay Operations",
-                icon: Award01Icon,
+                icon: Building03Icon,
                 subItems: [
                   {
                     name: "Barangay Dashboard",
@@ -59,6 +55,11 @@ export const ROLE_BASED_LINKS = {
                     path: "/admin/barangay/logs",
                   },
                 ],
+              },
+              {
+                name: "User Management",
+                path: "/admin/super/users",
+                icon: UserGroupIcon,
               },
             ],
           },
