@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import apiClient from '../lib/apiClient';
 import { localDb } from '../lib/localDb';
 import toast from 'react-hot-toast';
+import { decodeHtml } from '../utils/textUtils';
 
 export function useOfflineDownload(moduleId) {
   const [isDownloaded, setIsDownloaded] = useState(false);
@@ -37,8 +38,36 @@ export function useOfflineDownload(moduleId) {
 
     try {
       // 1. Fetch full module data from the server
-      const response = await apiClient.get(`/modules/${moduleId}/viewer`);
-      const payload = response.data.data;
+      // Inside downloadModule() in useOfflineDownload.js:
+            const response = await apiClient.get(`/modules/${moduleId}/viewer`);
+            const payload = response.data.data;
+
+            // Loop through levels and steps to fetch and cache all assessments
+            for (const level of (payload.levels || [])) {
+              for (const step of (level.steps || [])) {
+                if (["quiz", "situational", "priority_action", "hazard_identification", "action_sequence"].includes(step.type)) {
+                  try {
+                    const quizRes = await apiClient.get(`/modules/steps/${step.id}/assessment`);
+                    const rawQuestions = quizRes.data?.data || [];
+                    const questions = rawQuestions.map((q) => ({
+                      ...q,
+                      question_text: decodeHtml(q.question_text),
+                      options: (q.options || []).map((opt) => ({
+                        ...opt,
+                        text: decodeHtml(opt.text),
+                        rationale: decodeHtml(opt.rationale),
+                      })),
+                    }));
+                    localStorage.setItem(`lms_offline_assessment_${step.id}`, JSON.stringify(questions));
+                  } catch (e) {
+                    console.warn(`Could not cache assessment for step ${step.id}`, e);
+                  }
+                }
+              }
+            }
+
+            // Save the main viewer payload
+            localStorage.setItem(`lms_offline_module_${moduleId}`, JSON.stringify(payload));
 
       if (!payload?.module || !payload?.levels) {
         throw new Error("Invalid module data received.");
@@ -105,7 +134,7 @@ export function useOfflineDownload(moduleId) {
       setIsDownloaded(false);
       toast.success("Offline data removed.");
     } catch (error) {
-      toast.error("Failed to remove offline data.");
+      toast.error("Failed to remove offline data.", error);
     }
   };
 

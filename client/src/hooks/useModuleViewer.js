@@ -155,26 +155,43 @@ export function useModuleViewer(moduleId) {
   };
 
   const assessmentQueries = useQueries({
-    queries: allSteps.map((step) => ({
-      queryKey: ["stepAssessment", step.id],
-      queryFn: async () => {
-        const res = await apiClient.get(`/modules/steps/${step.id}/assessment`);
-        const rawQuestions = res.data?.data || [];
-        const questions = rawQuestions.map((q) => ({
-          ...q,
-          question_text: decodeHtml(q.question_text),
-          options: (q.options || []).map((opt) => ({
-            ...opt,
-            text: decodeHtml(opt.text),
-            rationale: decodeHtml(opt.rationale),
-          })),
-        }));
-        return { stepId: step.id, questions };
-      },
-      enabled: step.id === activeStepId && isAssessmentStepType(step.type),
-      staleTime: Infinity,
-    })),
-  });
+      queries: allSteps.map((step) => ({
+        queryKey: ["stepAssessment", step.id],
+        networkMode: "offlineFirst", // Allow running while offline
+        queryFn: async () => {
+          try {
+            const res = await apiClient.get(`/modules/steps/${step.id}/assessment`);
+            const rawQuestions = res.data?.data || [];
+
+            const questions = rawQuestions.map((q) => ({
+              ...q,
+              question_text: decodeHtml(q.question_text),
+              options: (q.options || []).map((opt) => ({
+                ...opt,
+                text: decodeHtml(opt.text),
+                rationale: decodeHtml(opt.rationale),
+              })),
+            }));
+
+            // Cache the assessment questions for offline use
+            localStorage.setItem(`lms_offline_assessment_${step.id}`, JSON.stringify(questions));
+
+            return { stepId: step.id, questions };
+          } catch (err) {
+            // If offline or network fails, read from localStorage cache
+            if (!navigator.onLine || err.code === "ERR_NETWORK") {
+              const cached = localStorage.getItem(`lms_offline_assessment_${step.id}`);
+              if (cached) {
+                return { stepId: step.id, questions: JSON.parse(cached) };
+              }
+            }
+            throw err;
+          }
+        },
+        enabled: step.id === activeStepId && isAssessmentStepType(step.type),
+        staleTime: Infinity,
+      })),
+    });
 
   const getAssessmentForStep = (stepId) => {
     const query = assessmentQueries.find(
