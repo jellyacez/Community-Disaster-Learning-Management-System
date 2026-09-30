@@ -4,7 +4,7 @@ import toast from "react-hot-toast";
 const generateId = () => {
   try {
     return crypto.randomUUID();
-  } catch (e) {
+  } catch {
     return Date.now().toString(36) + Math.random().toString(36).substring(2);
   }
 };
@@ -18,7 +18,7 @@ export function useStepStager(activeLevelOrder, setFormErrors) {
     textContent: "",
     videoUrl: "",
     assessmentType: "quiz",
-    plannedQuestionCount: 1,
+    plannedQuestionCount: 0,
     quizQuestions: [],
     situationalScenarios: [],
     is_final_assessment: false,
@@ -60,7 +60,7 @@ export function useStepStager(activeLevelOrder, setFormErrors) {
 
     setCurrentFlowStep({
       ...stepToEdit,
-      plannedQuestionCount: stepToEdit.plannedQuestionCount || 1,
+      plannedQuestionCount: stepToEdit.plannedQuestionCount ?? 0,
     });
 
     setEditingStepId(stepId);
@@ -84,8 +84,12 @@ export function useStepStager(activeLevelOrder, setFormErrors) {
       }
     }
 
+    const filledQuizQuestions = (currentFlowStep.quizQuestions || []).filter(
+      (q) => q.questionText && q.questionText.trim() !== ""
+    );
+
     if (currentFlowStep.builderStepType === "quiz") {
-      if (currentFlowStep.quizQuestions.length === 0) {
+      if (filledQuizQuestions.length === 0) {
         errors.stepQuiz =
           "At least one assessment question must be saved for this verification step.";
       }
@@ -109,11 +113,12 @@ export function useStepStager(activeLevelOrder, setFormErrors) {
     const stepWithMeta = {
       ...currentFlowStep,
       levelOrder: activeLevelOrder,
-      plannedQuestionCount: currentFlowStep.plannedQuestionCount || 1,
+      plannedQuestionCount: currentFlowStep.plannedQuestionCount || 0,
     };
 
     if (currentFlowStep.builderStepType === "quiz") {
       stepWithMeta.type = "quiz";
+      stepWithMeta.quizQuestions = filledQuizQuestions;
     } else if (currentFlowStep.builderStepType === "situational") {
       stepWithMeta.type = "situational";
       stepWithMeta.assessmentType = "situational";
@@ -206,7 +211,7 @@ export function useStepStager(activeLevelOrder, setFormErrors) {
       textContent: "",
       videoUrl: "",
       assessmentType: "quiz",
-      plannedQuestionCount: 1,
+      plannedQuestionCount: 0,
       quizQuestions: [],
       situationalScenarios: [],
       is_final_assessment: false,
