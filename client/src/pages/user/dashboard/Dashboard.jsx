@@ -24,7 +24,12 @@ import {
 const DASHBOARD_CACHE_KEY = "lms_offline_dashboard";
 const ANNOUNCEMENTS_CACHE_KEY = "lms_offline_announcements";
 
+function getUserDashboardCacheKey(userId) {
+  return userId ? `lms_offline_dashboard_${userId}` : DASHBOARD_CACHE_KEY;
+}
+
 function readLocalCache(key) {
+  if (!key) return undefined;
   try {
     const raw = localStorage.getItem(key);
     return raw ? JSON.parse(raw) : undefined;
@@ -34,6 +39,7 @@ function readLocalCache(key) {
 }
 
 function writeLocalCache(key, value) {
+  if (!key) return;
   try {
     if (value !== undefined && value !== null) {
       localStorage.setItem(key, JSON.stringify(value));
@@ -100,21 +106,42 @@ export default function UserDashboard() {
   const [isTransitioning, setIsTransitioning] = useState(true);
   const [isPaused, setIsPaused] = useState(false);
 
-  // 1. Fetch Main Dashboard Data (with offline localStorage fallback)
+  const currentUserId = currentUser?.id;
+  const currentUserEmail = currentUser?.email?.toLowerCase();
+  const dashboardCacheKey = useMemo(
+    () => getUserDashboardCacheKey(currentUserId),
+    [currentUserId],
+  );
+
+  // 1. Fetch Main Dashboard Data (scoped to current authenticated user)
   const {
     data: dashboardData,
     isLoading: loading,
   } = useQuery({
-    queryKey: ["userDashboard"],
+    queryKey: ["userDashboard", currentUserId || "guest"],
     networkMode: "offlineFirst",
-    initialData: () => readLocalCache(DASHBOARD_CACHE_KEY),
+    initialData: () => {
+      if (!currentUserId) return undefined;
+      const cached = readLocalCache(dashboardCacheKey);
+      if (!cached) return undefined;
+      const cachedDetails = cached.userDetails || cached.data?.userDetails;
+      if (
+        (cachedDetails?.id && String(cachedDetails.id) !== String(currentUserId)) ||
+        (cachedDetails?.email && currentUserEmail && cachedDetails.email.toLowerCase() !== currentUserEmail)
+      ) {
+        return undefined;
+      }
+      return cached;
+    },
     queryFn: async () => {
       try {
         const response = await apiClient.get("/user/dashboard");
-        writeLocalCache(DASHBOARD_CACHE_KEY, response.data);
+        if (currentUserId) {
+          writeLocalCache(dashboardCacheKey, response.data);
+        }
         return response.data;
       } catch (err) {
-        const cached = readLocalCache(DASHBOARD_CACHE_KEY);
+        const cached = readLocalCache(dashboardCacheKey);
         if (cached) return cached;
         throw err;
       }
@@ -154,13 +181,24 @@ export default function UserDashboard() {
     const dbUser =
       dashboardData?.userDetails || dashboardData?.data?.userDetails;
     if (!dbUser) return currentUser;
+
+    // Safety check: ensure dbUser belongs to the current user
+    if (
+      (dbUser.id && currentUserId && String(dbUser.id) !== String(currentUserId)) ||
+      (dbUser.email && currentUserEmail && dbUser.email.toLowerCase() !== currentUserEmail)
+    ) {
+      return currentUser;
+    }
+
     return {
       ...currentUser,
-      ...dbUser,
-      barangay_id: dbUser.barangay_id ?? currentUser?.barangay_id,
-      name: dbUser.name || currentUser?.name,
+      // currentUser is the primary source of truth for identity
+      name: currentUser?.name || dbUser.name,
+      email: currentUser?.email || dbUser.email,
+      barangay_id: currentUser?.barangay_id ?? dbUser.barangay_id,
+      barangay_name: dbUser.barangay_name || currentUser?.barangay_name,
     };
-  }, [currentUser, dashboardData]);
+  }, [currentUser, dashboardData, currentUserId, currentUserEmail]);
 
   const isAdminRole = [
     "super_admin",
@@ -257,42 +295,58 @@ export default function UserDashboard() {
     return () => clearInterval(interval);
   }, [sortedAnnouncements.length, isPaused, handleNextSlide]);
 
+  const welcomeKey = effectiveUser?.id
+    ? `hasSeenWelcome_${effectiveUser.id}`
+    : "hasSeenWelcome";
+
   const handleOnboardingSuccess = useCallback(() => {
-    const hasSeenWelcome = sessionStorage.getItem("hasSeenWelcome");
-    if (!hasSeenWelcome) {
-      setTimeout(() => setShowWelcomeModal(true), 0);
-      sessionStorage.setItem("hasSeenWelcome", "true");
+    setTimeout(() => setShowWelcomeModal(true), 0);
+    if (effectiveUser?.id) {
+      sessionStorage.setItem(`hasSeenWelcome_${effectiveUser.id}`, "true");
     }
-  }, []);
+    sessionStorage.setItem("hasSeenWelcome", "true");
+  }, [effectiveUser?.id]);
 
   useEffect(() => {
     if (!effectiveUser || needsOnboarding) return;
 
+    const hasSeenWelcome =
+      sessionStorage.getItem(welcomeKey) === "true" ||
+      sessionStorage.getItem("hasSeenWelcome") === "true";
+
+    const searchParams = new URLSearchParams(location.search);
+    const isFromGoogle = searchParams.get("fromGoogle") === "true";
+
     if (sessionStorage.getItem("newlyRegistered") === "true") {
       setTimeout(() => setShowWelcomeModal(true), 0);
       sessionStorage.removeItem("newlyRegistered");
+      sessionStorage.setItem(welcomeKey, "true");
       sessionStorage.setItem("hasSeenWelcome", "true");
       return;
     }
 
-    if (location.state?.showWelcome || location.state?.fromLogin) {
-      setTimeout(() => setShowWelcomeModal(true), 0);
-      sessionStorage.setItem("hasSeenWelcome", "true");
+    if (location.state?.showWelcome || location.state?.fromLogin || isFromGoogle) {
+      if (!hasSeenWelcome) {
+        setTimeout(() => setShowWelcomeModal(true), 0);
+        sessionStorage.setItem(welcomeKey, "true");
+        sessionStorage.setItem("hasSeenWelcome", "true");
+      }
       navigate(location.pathname, { replace: true, state: {} });
+      return;
     }
 
     if (session?.user?.createdAt) {
       const accountAgeMs =
         Date.now() - new Date(session.user.createdAt).getTime();
       const isNewAccount = accountAgeMs < 600000;
-      const hasSeenWelcome = sessionStorage.getItem("hasSeenWelcome");
 
       if (isNewAccount && !hasSeenWelcome) {
         setTimeout(() => setShowWelcomeModal(true), 0);
+        sessionStorage.setItem(welcomeKey, "true");
         sessionStorage.setItem("hasSeenWelcome", "true");
       }
     }
-  }, [location, navigate, session, effectiveUser, needsOnboarding]);
+  }, [location, navigate, session, effectiveUser, needsOnboarding, welcomeKey]);
 
   const handleResume = useCallback(
     (moduleId) => {

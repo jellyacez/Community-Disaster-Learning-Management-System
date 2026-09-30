@@ -4,7 +4,7 @@ const { UNSCOPED_ACCESS_ROLES } = require("../../config/permissions");
 class DashboardService {
   async getDashboardData(userId) {
     const userQuery = await pool.query(
-      `SELECT u.name, u.email, u.role, u.barangay_id, b.name as barangay_name 
+      `SELECT u.id, u.name, u.email, u.role, u.barangay_id, b.name as barangay_name 
        FROM "user" u 
        LEFT JOIN barangays b ON u.barangay_id = b.id 
        WHERE u.id = $1`,

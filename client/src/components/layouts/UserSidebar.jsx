@@ -77,23 +77,41 @@ export default function UserSidebar({
 
   const confirmLogout = async () => {
     try {
-          localStorage.removeItem("lms_offline_session");
-          sessionStorage.setItem("isLoggingOut", "true");
-          queryClient.cancelQueries();
-          queryClient.clear();
-          resetTheme();
+      localStorage.removeItem("lms_offline_session");
+      sessionStorage.setItem("isLoggingOut", "true");
 
-          if (navigator.onLine) {
-            await authClient.signOut();
+      try {
+        Object.keys(localStorage).forEach((key) => {
+          if (key.startsWith("lms_offline_dashboard")) {
+            localStorage.removeItem(key);
           }
-          toast.success("Successfully logged out!");
-        } catch {
+        });
+        Object.keys(sessionStorage).forEach((key) => {
+          if (
+            key.startsWith("hasSeenWelcome") ||
+            key.startsWith("newlyRegistered")
+          ) {
+            sessionStorage.removeItem(key);
+          }
+        });
+      } catch {
+        // Ignore storage errors
+      }
 
-          toast.success("Logged out locally.");
-        } finally {
-          setIsLogoutModalOpen(false);
-          navigate("/signin", { replace: true });
-        }
+      queryClient.cancelQueries();
+      queryClient.clear();
+      resetTheme();
+
+      if (navigator.onLine) {
+        await authClient.signOut();
+      }
+      toast.success("Successfully logged out!");
+    } catch {
+      toast.success("Logged out locally.");
+    } finally {
+      setIsLogoutModalOpen(false);
+      navigate("/signin", { replace: true });
+    }
       };
 
   useEffect(() => {

@@ -94,7 +94,10 @@ export default function SignInPage() {
       apiClient
         .get("/public/status")
         .then(() => {
-          navigate(targetRoute, { replace: true });
+          navigate(targetRoute, {
+            replace: true,
+            state: targetRoute === "/userDashboard" ? { fromLogin: true } : {},
+          });
         })
         .catch((err) => {
           if (err.response?.status === 503) {
@@ -102,7 +105,10 @@ export default function SignInPage() {
           } else if (err.response?.status === 401) {
             authClient.signOut();
           } else {
-            navigate(targetRoute, { replace: true });
+            navigate(targetRoute, {
+              replace: true,
+              state: targetRoute === "/userDashboard" ? { fromLogin: true } : {},
+            });
           }
         });
     }
