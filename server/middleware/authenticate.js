@@ -30,6 +30,35 @@ const authenticate = async (req, res, next) => {
       return res.status(401).json({ error: "Unauthorized. Please Log In" });
     }
 
+    // ─── CLIENT ANOMALY / SESSION HIJACK DEFENSE ──────────────────────────────
+    const incomingUserAgent = req.headers["user-agent"] || "";
+    const sessionRecord = session.session;
+
+    if (sessionRecord?.userAgent && incomingUserAgent !== sessionRecord.userAgent) {
+      logError("session_hijack_attempt_detected", {
+        userId: session.user.id,
+        expectedUserAgent: sessionRecord.userAgent,
+        receivedUserAgent: incomingUserAgent,
+        ip: req.ip,
+      });
+
+      // Invalidate the compromised session token immediately
+      try {
+        await auth.api.revokeSession({
+          body: { token: sessionRecord.token },
+          headers: req.headers,
+        });
+      } catch (revokeErr) {
+        logError("session_revocation_failed", { message: revokeErr.message });
+      }
+
+      return res.status(401).json({
+        error: "UNAUTHORIZED",
+        message: "Session terminated due to client fingerprint anomaly.",
+      });
+    }
+    // ─────────────────────────────────────────────────────────────────────────
+
     if (session.user.archived) {
       return res.status(403).json({
         error: "FORBIDDEN",
