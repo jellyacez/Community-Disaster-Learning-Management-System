@@ -5,6 +5,7 @@ import { CheckmarkBadge01Icon, ArrowDown01Icon } from "@hugeicons/core-free-icon
 import toast from "react-hot-toast";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
 import apiClient from "../../../lib/apiClient";
+import { authClient } from "../../../lib/auth-client";
 
 const DEFAULT_BACOLOR_BARANGAYS = [
   { id: 1, name: "Balas" },
@@ -30,7 +31,7 @@ const DEFAULT_BACOLOR_BARANGAYS = [
   { id: 21, name: "Tinajero" }
 ];
 
-export default function OnboardingModal({ currentUser }) {
+export default function OnboardingModal({ currentUser, onSuccess }) {
   const queryClient = useQueryClient();
   const [onboardingName, setOnboardingName] = useState(currentUser?.name || "");
   const [selectedBarangay, setSelectedBarangay] = useState(null);
@@ -107,17 +108,76 @@ export default function OnboardingModal({ currentUser }) {
         barangayId: selectedBarangay.id
       });
 
+      // Update offline session cache in localStorage if present
+      try {
+        const rawSess = localStorage.getItem("lms_offline_session");
+        if (rawSess) {
+          const parsed = JSON.parse(rawSess);
+          if (parsed?.user) {
+            parsed.user.barangay_id = selectedBarangay.id;
+            parsed.user.name = onboardingName.trim();
+            localStorage.setItem("lms_offline_session", JSON.stringify(parsed));
+            window.dispatchEvent(
+              new StorageEvent("storage", { key: "lms_offline_session" })
+            );
+          }
+        }
+      } catch {
+        // Ignore storage errors
+      }
+
+      try {
+        await authClient.getSession();
+      } catch {
+        // Ignore network errors in offline mode
+      }
+
       toast.success("Profile completed successfully!");
       setIsSuccess(true);
       queryClient.invalidateQueries({ queryKey: ["userDashboard"] });
-      queryClient.invalidateQueries({ queryKey: ["session"] });
+      onSuccess?.();
     } catch (err) {
-      toast.error(
+      const status = err.response?.status;
+      const message =
         err.response?.data?.message ||
         err.response?.data?.error ||
-        err.message ||
-        "Failed to update profile"
-      );
+        err.message;
+
+      // If profile is already onboarded in the database, resolve gracefully without trapping the user
+      if (
+        status === 409 ||
+        message?.includes("one-time action") ||
+        message?.includes("ALREADY_ONBOARDED")
+      ) {
+        try {
+          const rawSess = localStorage.getItem("lms_offline_session");
+          if (rawSess) {
+            const parsed = JSON.parse(rawSess);
+            if (parsed?.user) {
+              parsed.user.barangay_id = selectedBarangay.id;
+              localStorage.setItem("lms_offline_session", JSON.stringify(parsed));
+              window.dispatchEvent(
+                new StorageEvent("storage", { key: "lms_offline_session" })
+              );
+            }
+          }
+        } catch {
+          // Ignore storage errors
+        }
+
+        try {
+          await authClient.getSession();
+        } catch {
+          // Ignore network errors
+        }
+
+        setIsSuccess(true);
+        queryClient.invalidateQueries({ queryKey: ["userDashboard"] });
+        onSuccess?.();
+        return;
+      }
+
+      toast.error(message || "Failed to update profile");
       setIsSubmittingOnboarding(false);
     }
   };
@@ -135,7 +195,7 @@ export default function OnboardingModal({ currentUser }) {
 
         <h2 className="text-2xl font-black text-gray-900 dark:text-white mb-2">Welcome to Bacolor DRRM!</h2>
         <p className="text-gray-500 dark:text-slate-400 mb-6">
-          Since you signed in with Google, we just need one more piece of information before you can access your dashboard.
+          Please confirm your profile details and barangay assignment before accessing your dashboard.
         </p>
 
         <form onSubmit={handleOnboardingSubmit} className="space-y-4">

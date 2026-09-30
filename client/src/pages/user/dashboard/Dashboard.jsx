@@ -150,6 +150,34 @@ export default function UserDashboard() {
       ? dashboardData.data
       : {};
 
+  const effectiveUser = useMemo(() => {
+    const dbUser =
+      dashboardData?.userDetails || dashboardData?.data?.userDetails;
+    if (!dbUser) return currentUser;
+    return {
+      ...currentUser,
+      ...dbUser,
+      barangay_id: dbUser.barangay_id ?? currentUser?.barangay_id,
+      name: dbUser.name || currentUser?.name,
+    };
+  }, [currentUser, dashboardData]);
+
+  const isAdminRole = [
+    "super_admin",
+    "system_admin",
+    "mdrrmo_admin",
+    "head_mdrrmo_admin",
+    "barangay_admin",
+  ].includes(effectiveUser?.role);
+
+  const needsOnboarding = Boolean(
+    effectiveUser &&
+      !isAdminRole &&
+      !effectiveUser.barangay_id &&
+      !effectiveUser.barangayId &&
+      !effectiveUser.barangay,
+  );
+
   // Sanitize and filter out null, undefined, or empty announcements
   const resolvedAnnouncements = useMemo(() => {
     const rawList =
@@ -229,8 +257,16 @@ export default function UserDashboard() {
     return () => clearInterval(interval);
   }, [sortedAnnouncements.length, isPaused, handleNextSlide]);
 
+  const handleOnboardingSuccess = useCallback(() => {
+    const hasSeenWelcome = sessionStorage.getItem("hasSeenWelcome");
+    if (!hasSeenWelcome) {
+      setTimeout(() => setShowWelcomeModal(true), 0);
+      sessionStorage.setItem("hasSeenWelcome", "true");
+    }
+  }, []);
+
   useEffect(() => {
-    if (!currentUser || !currentUser.barangay_id) return;
+    if (!effectiveUser || needsOnboarding) return;
 
     if (sessionStorage.getItem("newlyRegistered") === "true") {
       setTimeout(() => setShowWelcomeModal(true), 0);
@@ -256,7 +292,7 @@ export default function UserDashboard() {
         sessionStorage.setItem("hasSeenWelcome", "true");
       }
     }
-  }, [location, navigate, session, currentUser]);
+  }, [location, navigate, session, effectiveUser, needsOnboarding]);
 
   const handleResume = useCallback(
     (moduleId) => {
@@ -267,12 +303,15 @@ export default function UserDashboard() {
 
   return (
     <div className="animate-in fade-in duration-300 relative w-full max-w-full">
-      <OnboardingModal currentUser={currentUser} />
+      <OnboardingModal
+        currentUser={effectiveUser}
+        onSuccess={handleOnboardingSuccess}
+      />
 
       <WelcomeModal
         isOpen={showWelcomeModal}
         onClose={() => setShowWelcomeModal(false)}
-        userName={currentUser?.name}
+        userName={effectiveUser?.name || currentUser?.name}
         onGoToCatalog={() => {
           setShowWelcomeModal(false);
           navigate("/user/modules");
@@ -442,7 +481,7 @@ export default function UserDashboard() {
                   <div className="flex items-center">
                     <span className="inline-block rounded-full bg-neutral-100 dark:bg-white/[0.06]
                       px-3 py-0.5 text-[10px] sm:text-[11px] font-bold tracking-wider uppercase text-neutral-500 dark:text-neutral-400">
-                      Welcome back, {currentUser?.name || "Resident"}
+                      Welcome back, {effectiveUser?.name || currentUser?.name || "Resident"}
                     </span>
                   </div>
                   <p className="text-xs sm:text-sm text-neutral-500 dark:text-neutral-400 max-w-2xl leading-relaxed">

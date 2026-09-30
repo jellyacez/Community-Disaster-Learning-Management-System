@@ -278,7 +278,32 @@ const securityHooksPlugin = () => {
                   [CONSENT_VERSION, userId]
                 );
 
-                
+                // Persist barangay assignment if supplied during registration
+                const rawBarangay = ctx.body?.barangay || ctx.body?.barangay_id;
+                if (rawBarangay) {
+                  let resolvedBarangayId = null;
+                  if (!isNaN(rawBarangay) && Number.isInteger(Number(rawBarangay))) {
+                    const bCheck = await pool.query(
+                      `SELECT id FROM barangays WHERE id = $1`,
+                      [Number(rawBarangay)]
+                    );
+                    if (bCheck.rows.length > 0) resolvedBarangayId = bCheck.rows[0].id;
+                  } else {
+                    const cleanName = String(rawBarangay).trim();
+                    const bCheck = await pool.query(
+                      `SELECT id FROM barangays WHERE LOWER(TRIM(name)) = LOWER($1)`,
+                      [cleanName]
+                    );
+                    if (bCheck.rows.length > 0) resolvedBarangayId = bCheck.rows[0].id;
+                  }
+                  if (resolvedBarangayId) {
+                    await pool.query(
+                      `UPDATE "user" SET barangay_id = $1 WHERE id = $2`,
+                      [resolvedBarangayId, userId]
+                    );
+                  }
+                }
+
                 logActivity(userId, `Account created with explicit data privacy consent (${CONSENT_VERSION})`);
               } catch (err) {
                 logError('consent_stamp_failure', {
