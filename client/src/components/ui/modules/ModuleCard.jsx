@@ -51,7 +51,7 @@ const ModuleCard = memo(function ModuleCard({
   const resolveImageUrl = (url) => {
     if (!url) return null;
     if (url.startsWith("http://") || url.startsWith("https://")) return url;
-    return `http://localhost:5000/${url}`;
+    return `${import.meta.env.DEV ? "http://localhost:5000" : ""}/${url.startsWith("/") ? url.slice(1) : url}`;
   };
 
   const handleLaunchViewer = (e) => {
