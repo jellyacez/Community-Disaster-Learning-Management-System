@@ -10,11 +10,6 @@ class UserService {
   async onboarding(userId, name, barangay) {
     if (!name || !barangay) throw new Error("MISSING_DATA");
 
-    // V-01 FIX: Prevent tenant-hopping via onboarding.
-    // (1) Only residents may call this endpoint — admin accounts have their
-    //     barangay_id set at provision time and must never self-reassign.
-    // (2) Once barangay_id is set, it cannot be changed through onboarding —
-    //     jurisdiction re-assignment requires an explicit admin action.
     const userRes = await pool.query('SELECT role, barangay_id FROM "user" WHERE id = $1', [userId]);
     if (userRes.rowCount === 0) throw new Error("NOT_FOUND");
 
@@ -29,7 +24,6 @@ class UserService {
       throw new Error("ALREADY_ONBOARDED: Profile setup is a one-time action. Contact your administrator to change your barangay assignment.");
     }
 
-    // Flexible lookup: accepts numeric ID, integer string, or case-insensitive/trimmed name
     let barangayId = null;
 
     if (!isNaN(barangay) && Number.isInteger(Number(barangay))) {
@@ -64,7 +58,10 @@ class UserService {
     const values = [];
     let idx = 1;
 
-    // Structural enforcement of barangay scoping and role visibility
+    const isActorSuperAdmin = adminContext.role === "super_admin";
+    const isUnscoped = isActorSuperAdmin || (Array.isArray(UNSCOPED_ACCESS_ROLES) && UNSCOPED_ACCESS_ROLES.includes(adminContext.role));
+
+    // 1. Structural visibility & tenant scoping
     if (adminContext.role === 'barangay_admin') {
       if (!adminContext.barangay_id) {
         throw new Error("SECURITY_FAULT: barangay_admin context missing barangay identifier for scoping.");
@@ -72,7 +69,7 @@ class UserService {
       conditions.push(`u.barangay_id = $${idx}`);
       values.push(adminContext.barangay_id);
       idx++;
-    } else if (UNSCOPED_ACCESS_ROLES.includes(adminContext.role)) {
+    } else if (isUnscoped) {
       // MDRRMO Admins cannot see or manage System Admin accounts
       if (['mdrrmo_admin', 'head_mdrrmo_admin'].includes(adminContext.role)) {
         conditions.push(`u.role != 'system_admin'`);
@@ -86,6 +83,12 @@ class UserService {
       throw new Error(`SECURITY_FAULT: Unauthorized role '${adminContext.role}' attempted to access user records.`);
     }
 
+    // 2. Hide Super Admin accounts from all lower tiers (system_admin, mdrrmo, barangay_admin, etc.)
+    if (!isActorSuperAdmin) {
+      conditions.push(`u.role != 'super_admin'`);
+    }
+
+    // 3. Search and filter conditions
     if (search) {
       conditions.push(`(u.name ILIKE $${idx} OR u.email ILIKE $${idx})`);
       values.push(`%${search}%`);
@@ -152,14 +155,12 @@ class UserService {
     try {
       await client.query('BEGIN');
       
-      // 1. fetch user data for anonymization
       const userRes = await client.query('SELECT u.name, u.role, b.name AS barangay FROM "user" u LEFT JOIN barangays b ON u.barangay_id = b.id WHERE u.id = $1', [userId]);
       if (userRes.rows.length === 0) {
         throw new Error("NOT_FOUND");
       }
       const { role, barangay } = userRes.rows[0];
       
-      // 2. anonymize certificates
       await client.query(`
         UPDATE certificates 
         SET user_id = NULL, 
@@ -168,7 +169,6 @@ class UserService {
         WHERE user_id = $2
       `, [barangay, userId]);
       
-      // 3. Handle activity_log retention for governance audits
       if (['barangay_admin', 'mdrrmo_admin', 'head_mdrrmo_admin', 'system_admin'].includes(role)) {
         await client.query(`
           UPDATE activity_log 
@@ -184,11 +184,9 @@ class UserService {
       await client.query('DELETE FROM user_step_progress WHERE user_id = $1', [userId]).catch(() => {});
       await client.query('DELETE FROM results WHERE user_id = $1', [userId]).catch(() => {});
       
-      // 4. Delete core Better Auth tables
       await client.query('DELETE FROM "session" WHERE "userId" = $1', [userId]);
       await client.query('DELETE FROM "account" WHERE "userId" = $1', [userId]);
       
-      // 5. Delete core user row
       await client.query('DELETE FROM "user" WHERE id = $1', [userId]);
       
       await client.query('COMMIT');
