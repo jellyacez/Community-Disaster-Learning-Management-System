@@ -33,6 +33,7 @@ export default defineConfig(({ mode }) => ({
           },
           {
             src: "/maskable-icon-512x512.png",
+<<<<<<< HEAD
             sizes: "512x512",runtimeCaching: [
               {
                 urlPattern: /\/api\/auth\/get-session/,
@@ -51,19 +52,39 @@ export default defineConfig(({ mode }) => ({
               },
               // ... keep your other runtimeCaching rules below
             ],
+=======
+            sizes: "512x512",
+>>>>>>> 70cc79911c288552c16b12debeaa35b70f1ec685
             type: "image/png",
             purpose: "maskable",
           },
         ],
       },
-        workbox: {
-          globPatterns: ["**/*.{js,css,html,ico,png,svg,webmanifest}"],
-          navigateFallback: "/index.html",
-          navigateFallbackDenylist: [/^\/api/], // CRITICAL: Excludes all API and SSE streams
-          cleanupOutdatedCaches: true,
-          clientsClaim: true,
-          skipWaiting: true,
-        },
+      workbox: {
+        globPatterns: ["**/*.{js,css,html,ico,png,svg,webmanifest}"],
+        navigateFallback: "/index.html",
+        navigateFallbackDenylist: [/^\/api/],
+        cleanupOutdatedCaches: true,
+        clientsClaim: true,
+        skipWaiting: true,
+        runtimeCaching: [
+          {
+            urlPattern: /\/api\/auth\/get-session/,
+            handler: "NetworkFirst",
+            options: {
+              cacheName: "auth-session-cache",
+              networkTimeoutSeconds: 3,
+              expiration: {
+                maxEntries: 1,
+                maxAgeSeconds: 60 * 60 * 24 * 7,
+              },
+              cacheableResponse: {
+                statuses: [200],
+              },
+            },
+          },
+        ],
+      },
       devOptions: {
         enabled: false,
       },
@@ -124,22 +145,4 @@ export default defineConfig(({ mode }) => ({
       },
     },
   },
-  runtimeCaching: [
-    {
-      urlPattern: /\/api\/auth\/get-session/,
-      handler: 'NetworkFirst',
-      options: {
-        cacheName: 'auth-session-cache',
-        networkTimeoutSeconds: 3, // Fall back to local cache if offline or slow after 3s
-        expiration: {
-          maxEntries: 1,
-          maxAgeSeconds: 60 * 60 * 24 * 7, // Keep for 7 days (match your Better Auth expiry)
-        },
-        cacheableResponse: {
-          statuses: [200],
-        },
-      },
-    },
-    // ... keep your other runtimeCaching rules below
-  ]
 }));
