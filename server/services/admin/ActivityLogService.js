@@ -4,7 +4,7 @@ const logger = require("../../utils/logger");
 class ActivityLogService {
   /**
    * System Admin Activity Logs
-   * Filters OUT super_admin logs completely so System Admin never sees Super Admin activity.
+   * Filters OUT super_admin logs completely so lower-tier admins cannot see Super Admin events.
    */
   async getActivityLog(queryParams) {
     const page = parseInt(queryParams.page, 10) || 1;
@@ -15,7 +15,6 @@ class ActivityLogService {
     const role = queryParams.role || "";
     const action = queryParams.action || "";
 
-    // System admin must not see super_admin logs
     const conditions = ["(u.role != 'super_admin' OR u.role IS NULL)"];
     const params = [];
     let paramIndex = 1;
@@ -270,8 +269,8 @@ class ActivityLogService {
   }
 
   /**
-   * Super Admin Activity Logs
-   * Displays exclusively Super Admin governance events.
+   * Super Admin Governance Logs
+   * Unrestricted platform-wide audit trail with support for searching and role filtering.
    */
   async getSuperAdminActivityLog(queryParams) {
     const page = parseInt(queryParams.page, 10) || 1;
@@ -279,25 +278,54 @@ class ActivityLogService {
     const offset = (page - 1) * limit;
 
     const search = queryParams.search || "";
+    const role = queryParams.role || "";
     const action = queryParams.action || "";
 
-    const conditions = ["u.role = 'super_admin'"];
+    const conditions = [];
     const params = [];
     let paramIndex = 1;
 
     if (search) {
-      conditions.push(`(u.name ILIKE $${paramIndex} OR al.act_log ILIKE $${paramIndex})`);
+      conditions.push(`(u.name ILIKE $${paramIndex} OR u.email ILIKE $${paramIndex} OR al.act_log ILIKE $${paramIndex})`);
       params.push(`%${search}%`);
       paramIndex++;
     }
 
-    if (action) {
-      conditions.push(`al.act_log ILIKE $${paramIndex}`);
-      params.push(`%${action}%`);
-      paramIndex++;
+    if (role) {
+      if (role === "admins") {
+        conditions.push(`u.role IN ('super_admin', 'system_admin', 'head_mdrrmo_admin', 'mdrrmo_admin', 'barangay_admin')`);
+      } else {
+        conditions.push(`u.role = $${paramIndex}`);
+        params.push(role);
+        paramIndex++;
+      }
     }
 
-    const whereClause = `WHERE ${conditions.join(" AND ")}`;
+    if (action) {
+      if (action === "impersonate") {
+        conditions.push(`al.act_log ILIKE $${paramIndex}`);
+        params.push("%impersonat%");
+        paramIndex++;
+      } else if (action === "auth") {
+        conditions.push(`(al.act_log ILIKE $${paramIndex} OR al.act_log ILIKE $${paramIndex + 1})`);
+        params.push("%log%", "%password%");
+        paramIndex += 2;
+      } else if (action === "role") {
+        conditions.push(`(al.act_log ILIKE $${paramIndex} OR al.act_log ILIKE $${paramIndex + 1})`);
+        params.push("%role%", "%update%");
+        paramIndex += 2;
+      } else if (action === "ban") {
+        conditions.push(`(al.act_log ILIKE $${paramIndex} OR al.act_log ILIKE $${paramIndex + 1} OR al.act_log ILIKE $${paramIndex + 2} OR al.act_log ILIKE $${paramIndex + 3})`);
+        params.push("%ban%", "%unban%", "%archiv%", "%restor%");
+        paramIndex += 4;
+      } else {
+        conditions.push(`al.act_log ILIKE $${paramIndex}`);
+        params.push(`%${action}%`);
+        paramIndex++;
+      }
+    }
+
+    const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
 
     const countQuery = `
       SELECT COUNT(*) FROM activity_log al
@@ -309,7 +337,7 @@ class ActivityLogService {
     const total = parseInt(countResult.rows[0].count, 10);
 
     const result = await pool.query(
-      `SELECT al.act_id, al.user_id, u.name AS user_name, u.role AS user_role,
+      `SELECT al.act_id, al.user_id, u.name AS user_name, u.email AS user_email, u.role AS user_role,
               al.act_date, al.act_log
        FROM activity_log al
        LEFT JOIN "user" u ON al.user_id = u.id
@@ -332,15 +360,14 @@ class ActivityLogService {
 
   async exportSuperAdminActivityLog(adminUserId) {
     const result = await pool.query(
-      `SELECT al.act_id, al.user_id, u.name AS user_name, u.role AS user_role,
+      `SELECT al.act_id, al.user_id, u.name AS user_name, u.email AS user_email, u.role AS user_role,
               al.act_date, al.act_log
        FROM activity_log al
        LEFT JOIN "user" u ON al.user_id = u.id
-       WHERE u.role = 'super_admin'
        ORDER BY al.act_date DESC`
     );
 
-    const headers = ["ID", "User ID", "User Name", "Role", "Date", "Action"];
+    const headers = ["ID", "User ID", "User Name", "Email", "Role", "Date", "Action"];
     const rows = result.rows.map((r) => {
       const escapeCsv = (str) => {
         if (str === null || str === undefined) return '""';
@@ -354,6 +381,7 @@ class ActivityLogService {
         r.act_id,
         r.user_id,
         escapeCsv(r.user_name),
+        escapeCsv(r.user_email),
         escapeCsv(r.user_role),
         new Date(r.act_date).toISOString(),
         escapeCsv(r.act_log),
@@ -363,7 +391,7 @@ class ActivityLogService {
     const csvContent = [headers.join(","), ...rows].join("\n");
 
     if (adminUserId) {
-      logger.logActivity(adminUserId, "Exported Super Admin governance logs");
+      logger.logActivity(adminUserId, "Exported full governance audit logs");
     }
 
     return csvContent;

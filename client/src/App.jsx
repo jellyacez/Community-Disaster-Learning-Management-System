@@ -9,6 +9,7 @@ import InstallAppPrompt from "./components/pwa/InstallAppPrompt";
 
 const SuperAdminRoot = lazy(() => import("./pages/admin/super/SuperAdminRoot"));
 const SuperOverview = lazy(() => import("./pages/admin/super/overview/SuperOverview"));
+const GovernanceLog = lazy(() => import("./pages/admin/super/logs/GovernanceLog"));
 
 const LandingPage = lazy(() => import("./pages/public/LandingPage"));
 const PrivacyPolicyPage = lazy(
@@ -296,7 +297,7 @@ export default function App() {
                   <Route index element={<Navigate to="dashboard" replace />} />
                   <Route path="dashboard" element={<SuperOverview />} />
                   <Route path="users" element={<SystemUserManagement />} />
-                  <Route path="logs" element={<SystemActivityLog />} />
+                  <Route path="logs" element={<GovernanceLog />} />
                   <Route path="settings" element={<SystemSettings />} />
                   <Route path="health" element={<SystemHealth />} />
                   <Route path="security" element={<SystemSecurity />} />

@@ -79,7 +79,12 @@ router.post(
   async (req, res) => {
     try {
       const targetUserId = req.params.userId;
-      const superAdminId = req.user?.id || req.user?.user_id;
+      const superAdminId =
+        req.user?.id ||
+        req.user?.user_id ||
+        req.user?._id ||
+        req.session?.userId ||
+        req.session?.user?.id;
 
       if (!superAdminId) {
         return res.status(401).json({
@@ -110,6 +115,20 @@ router.post(
       }
 
       const targetUser = userResult.rows[0];
+
+      // Audit Log: Record impersonation initiation under Super Admin's ID
+      try {
+        await pool.query(
+          `INSERT INTO activity_log (user_id, act_log, act_date)
+           VALUES ($1, $2, NOW())`,
+          [
+            superAdminId,
+            `Started impersonating user "${targetUser.name}" (${targetUser.email}, Role: ${targetUser.role}, ID: ${targetUser.id})`,
+          ]
+        );
+      } catch (logErr) {
+        console.error("FAILED_TO_LOG_IMPERSONATION_START:", logErr);
+      }
 
       res.cookie("impersonator_id", superAdminId, {
         httpOnly: true,
@@ -145,8 +164,37 @@ router.post(
 // 5. POST /api/admin/super/stop-impersonating
 router.post("/super/stop-impersonating", async (req, res) => {
   try {
+    const rawCookieHeader = req.headers.cookie || "";
+    const parseCookie = (name) => {
+      const match = rawCookieHeader.match(new RegExp(`(^|;\\s*)${name}=([^;]*)`));
+      return match ? decodeURIComponent(match[2]) : null;
+    };
+
+    const impersonatorId =
+      req.cookies?.impersonator_id ||
+      parseCookie("impersonator_id");
+
+    const targetId =
+      req.cookies?.impersonated_target_id ||
+      parseCookie("impersonated_target_id");
+
     res.clearCookie("impersonator_id", { path: "/" });
     res.clearCookie("impersonated_target_id", { path: "/" });
+
+    if (impersonatorId) {
+      try {
+        await pool.query(
+          `INSERT INTO activity_log (user_id, act_log, act_date)
+           VALUES ($1, $2, NOW())`,
+          [
+            impersonatorId,
+            `Ended impersonation session${targetId ? ` for target user ID ${targetId}` : ""}`,
+          ]
+        );
+      } catch (logErr) {
+        console.error("FAILED_TO_LOG_IMPERSONATION_STOP:", logErr);
+      }
+    }
 
     return res.json({
       success: true,
