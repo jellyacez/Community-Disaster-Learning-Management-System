@@ -2,17 +2,36 @@ import { localDb } from '../localDb';
 import apiClient from '../apiClient';
 import { enqueueMemoryTask } from './syncManager';
 
+const SESSION_STORAGE_KEY = 'lms_offline_session';
+
+// Helper to keep the localStorage offline session in sync when profile fields change offline
+function patchCachedOfflineUser(patch) {
+  try {
+    const raw = localStorage.getItem(SESSION_STORAGE_KEY);
+    if (!raw) return;
+    const parsed = JSON.parse(raw);
+    if (parsed?.user) {
+      parsed.user = { ...parsed.user, ...patch };
+      localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(parsed));
+      window.dispatchEvent(new StorageEvent('storage', { key: SESSION_STORAGE_KEY }));
+    }
+  } catch {
+    // Ignore storage errors
+  }
+}
+
 export const saveOfflineModuleProgress = async (userId, moduleId, newProgress) => {
   try {
+    const existing = await localDb.module_activity.get(`${userId}_${moduleId}`);
     await localDb.module_activity.put({
-      modact_id: `${userId}_${moduleId}`, // Use a composite string if missing actual ID
+      ...existing,
+      modact_id: `${userId}_${moduleId}`,
       user_id: userId,
       mod_id: moduleId,
       progress: newProgress,
       updated_at: Date.now()
     });
 
-    console.log("Progress saved locally.");
     return { status: 'queued', storageType: 'idb' };
   } catch (error) {
     console.warn("IndexedDB failed in saveOfflineModuleProgress:", error);
@@ -28,6 +47,8 @@ export const recalculateModuleProgress = async (moduleId, userId) => {
   try {
     const allLevels = await localDb.levels.where({ mod_id: moduleId }).toArray();
     const levelIds = allLevels.map(l => l.level_id);
+    if (levelIds.length === 0) return 0;
+
     const totalSteps = await localDb.module_steps.where('level_id').anyOf(levelIds).count();
 
     const completedSteps = await localDb.user_step_progress
@@ -36,7 +57,7 @@ export const recalculateModuleProgress = async (moduleId, userId) => {
 
     if (totalSteps === 0) return 0;
 
-    const percentage = Math.round((completedSteps / totalSteps) * 100);
+    const percentage = Math.min(100, Math.round((completedSteps / totalSteps) * 100));
 
     await saveOfflineModuleProgress(userId, moduleId, percentage);
 
@@ -75,7 +96,6 @@ export const saveOfflineStepProgress = async (moduleId, stepId, userId) => {
     }
 
     window.dispatchEvent(new CustomEvent('offline-sync-queue-updated'));
-    console.log("Step progress saved locally and queued for sync.");
     return {
       status: 'queued',
       storageType: 'idb',
@@ -116,7 +136,7 @@ export const saveOfflineResult = async (moduleId, userId, isPassed, newAnswersAr
         date_taken: Date.now()
       });
 
-      if (stepId) {
+      if (stepId && isPassed) {
         await localDb.user_step_progress.put({
           mod_id: moduleId,
           step_id: stepId,
@@ -138,8 +158,15 @@ export const saveOfflineResult = async (moduleId, userId, isPassed, newAnswersAr
       });
     });
 
+    if (stepId && isPassed) {
+      try {
+        await recalculateModuleProgress(moduleId, userId);
+      } catch (e) {
+        console.warn("Failed to recalculate module progress after quiz:", e);
+      }
+    }
+
     window.dispatchEvent(new CustomEvent('offline-sync-queue-updated'));
-    console.log("Quiz result saved locally and queued for sync.");
     return {
       status: 'queued',
       storageType: 'idb',
@@ -174,7 +201,12 @@ export const saveOfflineResult = async (moduleId, userId, isPassed, newAnswersAr
 export const markModuleCompletedOffline = async (userId, moduleId) => {
   try {
     await localDb.transaction('rw', localDb.module_activity, localDb.sync_queue, async () => {
-      await localDb.module_activity.update(`${userId}_${moduleId}`, {
+      const existing = await localDb.module_activity.get(`${userId}_${moduleId}`);
+      await localDb.module_activity.put({
+        ...existing,
+        modact_id: `${userId}_${moduleId}`,
+        user_id: userId,
+        mod_id: moduleId,
         modstatus: 'Completed',
         progress: 100,
         completed_at: Date.now()
@@ -191,7 +223,6 @@ export const markModuleCompletedOffline = async (userId, moduleId) => {
     });
 
     window.dispatchEvent(new CustomEvent('offline-sync-queue-updated'));
-    console.log("Module marked as completed locally.");
     return {
       status: 'queued',
       storageType: 'idb',
@@ -223,7 +254,10 @@ export const markModuleCompletedOffline = async (userId, moduleId) => {
 export const saveOfflineAvatarChange = async (userId, newImage) => {
   try {
     await localDb.transaction('rw', localDb.user, localDb.sync_queue, async () => {
-      await localDb.user.update(userId, {
+      const existing = await localDb.user.get(userId);
+      await localDb.user.put({
+        ...existing,
+        id: userId,
         image: newImage,
         updatedAt: Date.now()
       });
@@ -238,8 +272,8 @@ export const saveOfflineAvatarChange = async (userId, newImage) => {
       });
     });
 
+    patchCachedOfflineUser({ image: newImage });
     window.dispatchEvent(new CustomEvent('offline-sync-queue-updated'));
-    console.log("User Avatar Saved Locally.");
     return {
       status: 'queued',
       storageType: 'idb',
@@ -252,6 +286,7 @@ export const saveOfflineAvatarChange = async (userId, newImage) => {
         user_id: userId,
         image: newImage
       });
+      patchCachedOfflineUser({ image: newImage });
       return {
         status: 'queued_memory_only',
         storageType: 'memory',
@@ -271,7 +306,10 @@ export const saveOfflineAvatarChange = async (userId, newImage) => {
 export const saveOfflineUserName = async (userId, newUserName) => {
   try {
     await localDb.transaction('rw', localDb.user, localDb.sync_queue, async () => {
-      await localDb.user.update(userId, {
+      const existing = await localDb.user.get(userId);
+      await localDb.user.put({
+        ...existing,
+        id: userId,
         name: newUserName,
         updatedAt: Date.now()
       });
@@ -286,8 +324,8 @@ export const saveOfflineUserName = async (userId, newUserName) => {
       });
     });
 
+    patchCachedOfflineUser({ name: newUserName });
     window.dispatchEvent(new CustomEvent('offline-sync-queue-updated'));
-    console.log("Profile settings saved offline.");
     return {
       status: 'queued',
       storageType: 'idb',
@@ -300,6 +338,7 @@ export const saveOfflineUserName = async (userId, newUserName) => {
         user_id: userId,
         name: newUserName,
       });
+      patchCachedOfflineUser({ name: newUserName });
       return {
         status: 'queued_memory_only',
         storageType: 'memory',
@@ -319,7 +358,10 @@ export const saveOfflineUserName = async (userId, newUserName) => {
 export const saveOfflineNotification = async (userId, newPreference) => {
   try {
     await localDb.transaction('rw', localDb.user, localDb.sync_queue, async () => {
-      await localDb.user.update(userId, {
+      const existing = await localDb.user.get(userId);
+      await localDb.user.put({
+        ...existing,
+        id: userId,
         settings: newPreference,
         updatedAt: Date.now()
       });
@@ -335,7 +377,6 @@ export const saveOfflineNotification = async (userId, newPreference) => {
     });
 
     window.dispatchEvent(new CustomEvent('offline-sync-queue-updated'));
-    console.log("Notification settings saved offline.");
     return {
       status: 'queued',
       storageType: 'idb',
@@ -364,9 +405,7 @@ export const saveOfflineNotification = async (userId, newPreference) => {
   }
 };
 
-// Use when needed to update specific step progress
 export const saveUserProgress = async (progressData) => {
-  // 1. Check offline state immediately
   if (!navigator.onLine) {
     const res = await saveOfflineModuleProgress(
       progressData.userId,
@@ -388,12 +427,10 @@ export const saveUserProgress = async (progressData) => {
     };
   }
 
-  // 2. Attempt online sync
   try {
     const response = await apiClient.post('/modules/progress', progressData);
     return response.data;
   } catch (error) {
-    // 3. Fallback if network drops mid-request
     if (error.code === "ERR_NETWORK" || !error.response) {
       const res = await saveOfflineModuleProgress(
         progressData.userId,
@@ -408,7 +445,6 @@ export const saveUserProgress = async (progressData) => {
           message: 'Storage unavailable. Progress could not be saved offline.'
         };
       }
-      console.warn("Network dropped. Progress saved to local storage.");
       return {
         status: res?.status || 'queued',
         storageType: res?.storageType || 'idb',

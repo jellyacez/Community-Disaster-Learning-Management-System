@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { Outlet, useLocation } from "react-router-dom";
-import { authClient } from "../../lib/auth-client";
+import { useOfflineSession } from "../../hooks/offlineSession";
 import DashboardLayout from "./DashboardLayout";
 
 function formatRole(role) {
@@ -21,11 +21,13 @@ function formatRole(role) {
 
 export default function UserLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const { data: session } = authClient.useSession();
+  const { data: session, isOffline } = useOfflineSession();
   const location = useLocation();
 
   // Read impersonation profile if active
-  const impersonatedTargetRaw = sessionStorage.getItem("impersonated_target_user");
+  const impersonatedTargetRaw =
+    sessionStorage.getItem("impersonated_target_user") ||
+    localStorage.getItem("impersonated_target_user");
   let impersonatedUser = null;
   try {
     impersonatedUser = impersonatedTargetRaw ? JSON.parse(impersonatedTargetRaw) : null;
@@ -36,6 +38,7 @@ export default function UserLayout() {
   const activeUser = impersonatedUser || session?.user;
 
   const currentUser = {
+    id: activeUser?.id,
     name:
       activeUser?.name ||
       activeUser?.fullName ||
@@ -87,7 +90,7 @@ export default function UserLayout() {
       setSidebarOpen={setSidebarOpen}
       footerMode={footerMode}
     >
-      <Outlet context={{ currentUser, userInitials }} />
+      <Outlet context={{ currentUser, userInitials, isOffline }} />
     </DashboardLayout>
   );
 }
