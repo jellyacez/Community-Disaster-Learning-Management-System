@@ -1,8 +1,6 @@
 BEGIN;
 
-CREATE TABLE IF NOT EXISTS testin (
-    id SERIAL PRIMARY KEY,
-    time VARCHAR(255) NOT NULL
-);
+ALTER TABLE public.levels
+ADD COLUMN IF NOT EXISTS cover_image TEXT;
 
 COMMIT;

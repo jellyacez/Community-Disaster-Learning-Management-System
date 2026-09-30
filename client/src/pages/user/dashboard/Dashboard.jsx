@@ -406,7 +406,8 @@ export default function UserDashboard() {
               <div className="pt-[clamp(1rem,1.5vw,1.25rem)] border-t border-neutral-100 dark:border-white/[0.06] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div className="space-y-1.5 text-left">
                   <div className="flex items-center">
-                    <span className="inline-block rounded-full bg-neutral-100 dark:bg-white/[0.06] px-3 py-0.5 text-[10px] sm:text-[11px] font-bold tracking-wider uppercase text-neutral-500 dark:text-neutral-400">
+                    <span className="inline-block rounded-full bg-neutral-100 dark:bg-white/[0.06]
+                      px-3 py-0.5 text-[10px] sm:text-[11px] font-bold tracking-wider uppercase text-neutral-500 dark:text-neutral-400">
                       Welcome back, {currentUser?.name || "Resident"}
                     </span>
                   </div>
