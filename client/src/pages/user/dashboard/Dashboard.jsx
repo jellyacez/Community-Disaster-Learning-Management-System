@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import { useOutletContext, useLocation, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import apiClient from "../../../lib/apiClient";
-import { authClient } from "../../../lib/auth-client";
+import { useOfflineSession } from "../../../hooks/offlineSession";
 
 import WelcomeModal from "../../../components/ui/modals/WelcomeModal.jsx";
 import DashboardStats from "../../../components/ui/dashboard/DashboardStats.jsx";
@@ -20,6 +20,28 @@ import {
   ArrowRight01Icon,
   Megaphone01Icon,
 } from "@hugeicons/core-free-icons";
+
+const DASHBOARD_CACHE_KEY = "lms_offline_dashboard";
+const ANNOUNCEMENTS_CACHE_KEY = "lms_offline_announcements";
+
+function readLocalCache(key) {
+  try {
+    const raw = localStorage.getItem(key);
+    return raw ? JSON.parse(raw) : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+function writeLocalCache(key, value) {
+  try {
+    if (value !== undefined && value !== null) {
+      localStorage.setItem(key, JSON.stringify(value));
+    }
+  } catch {
+    // Ignore storage quota errors
+  }
+}
 
 /**
  * Helper: Separates Urgent and Standard announcements,
@@ -71,40 +93,52 @@ export default function UserDashboard() {
   const navigate = useNavigate();
 
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
-  const { data: session } = authClient.useSession();
+  const { data: session } = useOfflineSession();
 
   // Infinite Carousel State
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(true);
   const [isPaused, setIsPaused] = useState(false);
 
-  // 1. Fetch Main Dashboard Data
+  // 1. Fetch Main Dashboard Data (with offline localStorage fallback)
   const {
     data: dashboardData,
     isLoading: loading,
   } = useQuery({
     queryKey: ["userDashboard"],
+    networkMode: "offlineFirst",
+    initialData: () => readLocalCache(DASHBOARD_CACHE_KEY),
     queryFn: async () => {
-      const response = await apiClient.get("/user/dashboard");
-      return response.data;
+      try {
+        const response = await apiClient.get("/user/dashboard");
+        writeLocalCache(DASHBOARD_CACHE_KEY, response.data);
+        return response.data;
+      } catch (err) {
+        const cached = readLocalCache(DASHBOARD_CACHE_KEY);
+        if (cached) return cached;
+        throw err;
+      }
     },
   });
 
-  // 2. Dedicated Query to pull announcements (Fetch enough so standard items aren't truncated)
+  // 2. Dedicated Query to pull announcements (with offline localStorage fallback)
   const {
     data: announcementsData,
     isLoading: announcementsLoading,
   } = useQuery({
     queryKey: ["latestAnnouncements"],
+    networkMode: "offlineFirst",
+    initialData: () => readLocalCache(ANNOUNCEMENTS_CACHE_KEY),
     queryFn: async () => {
       try {
         const response = await apiClient.get("/users/announcements?limit=20");
         const list = Array.isArray(response.data)
           ? response.data
           : response.data?.announcements || response.data?.data || [];
+        writeLocalCache(ANNOUNCEMENTS_CACHE_KEY, list);
         return list;
       } catch {
-        return null;
+        return readLocalCache(ANNOUNCEMENTS_CACHE_KEY) || null;
       }
     },
     staleTime: 1000 * 60 * 2,

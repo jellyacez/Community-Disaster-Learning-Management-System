@@ -50,7 +50,7 @@ export default defineConfig(({ mode }) => ({
                 },
               },
               // ... keep your other runtimeCaching rules below
-            ]
+            ],
             type: "image/png",
             purpose: "maskable",
           },

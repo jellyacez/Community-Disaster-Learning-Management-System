@@ -1,9 +1,9 @@
 import { useEffect, useRef } from 'react';
 import { processOfflineQueue } from '../lib/LocalSave/syncManager';
-import { authClient } from '../lib/auth-client';
+import { useOfflineSession } from './offlineSession';
 
 export default function useNetworkSync() {
-  const { data: session, isPending } = authClient.useSession();
+  const { data: session, isPending } = useOfflineSession();
   const hasInitialSyncedRef = useRef(false);
 
   // Mount-time sync: Defer until authentication session is hydrated and valid
@@ -38,4 +38,3 @@ export default function useNetworkSync() {
     };
   }, []);
 }
-
