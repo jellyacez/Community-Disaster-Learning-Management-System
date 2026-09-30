@@ -30,7 +30,7 @@ export default function ForgotPasswordPage() {
 
     const { error } = await authClient.requestPasswordReset({
       email,
-      redirectTo: `${import.meta.env.VITE_FRONTEND_URL || `${window.location.origin}/reset-password`}`,
+      redirectTo: `${window.location.origin}/reset-password`,
     });
 
     if (error) {
