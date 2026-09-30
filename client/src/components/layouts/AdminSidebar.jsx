@@ -4,7 +4,8 @@ import toast from "react-hot-toast";
 import { authClient } from "../../lib/auth-client";
 import LogoutModal from "../ui/modals/LogoutModal";
 import ThemeToggle from "../ui/globalTheme";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import apiClient from "../../lib/apiClient";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Cancel01Icon, Logout01Icon, ArrowRight01Icon, ArrowDown01Icon } from "@hugeicons/core-free-icons";
 import { ROLE_BASED_LINKS } from "../../constants/adminNavLinks";
@@ -29,7 +30,28 @@ export default function AdminSidebar({ sidebarOpen, setSidebarOpen }) {
   const [expandedMenus, setExpandedMenus] = useState({});
 
   const userRole = session?.user?.role || "resident";
+  const isHeadAdmin = userRole === "head_mdrrmo_admin";
   const navLinks = ROLE_BASED_LINKS[userRole] || [];
+
+  // Poll for pending approval count exclusively for Head Admin
+  const { data: pendingCount = 0 } = useQuery({
+    queryKey: ["pendingModulesCount"],
+    queryFn: async () => {
+      try {
+        const res = await apiClient.get("/admin/mdrrmo/approvals");
+        const list = res.data?.data || res.data || [];
+        const pending = Array.isArray(list)
+          ? list.filter((m) => m.status === "pending_review")
+          : [];
+        return pending.length;
+      } catch (err) {
+        return 0;
+      }
+    },
+    enabled: Boolean(isHeadAdmin),
+    refetchInterval: 30000,
+    staleTime: 15000,
+  });
 
   const activeLink = navLinks.flatMap(group => group.items).find(
     link => location.pathname === link.path || location.pathname.startsWith(`${link.path}/`)
@@ -141,14 +163,29 @@ export default function AdminSidebar({ sidebarOpen, setSidebarOpen }) {
                         }`}
                       >
                         <span className="relative z-10 flex items-center gap-3 text-sm font-semibold whitespace-nowrap min-w-0">
-                          <HugeiconsIcon icon={link.icon} className={`w-5 h-5 shrink-0 -translate-y-px ${isActive ? "text-red-600 dark:text-red-400" : "text-gray-400 dark:text-slate-400 group-hover:text-gray-600 dark:group-hover:text-slate-200"}`} />
+                          <HugeiconsIcon
+                            icon={link.icon}
+                            className={`w-5 h-5 shrink-0 -translate-y-px ${
+                              isActive ? "text-red-600 dark:text-red-400" : "text-gray-400 dark:text-slate-400 group-hover:text-gray-600 dark:group-hover:text-slate-200"
+                            }`}
+                          />
                           <span className="truncate">{link.name}</span>
+
+                          {/* Pulsing red notification dot */}
+                          {link.path === "/admin/mdrrmo/approvals" && pendingCount > 0 && (
+                            <span className="relative flex h-2 w-2 items-center justify-center shrink-0">
+                              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75" />
+                              <span className="relative inline-flex h-2 w-2 rounded-full bg-red-600" />
+                            </span>
+                          )}
                         </span>
                         
                         {hasSubItems ? (
                           <HugeiconsIcon
                             icon={isExpanded ? ArrowDown01Icon : ArrowRight01Icon}
-                            className={`relative z-10 w-4 h-4 shrink-0 ${isActive ? "text-red-600 dark:text-red-400" : "text-gray-500 dark:text-slate-400"}`}
+                            className={`relative z-10 w-4 h-4 shrink-0 ${
+                              isActive ? "text-red-600 dark:text-red-400" : "text-gray-500 dark:text-slate-400"
+                            }`}
                           />
                         ) : (
                           <HugeiconsIcon
