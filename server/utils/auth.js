@@ -159,26 +159,16 @@ const auth = betterAuth({
     securityHooksPlugin(),
     admin({
       defaultRole: "resident",
-      adminRole: "system_admin",
+      adminRole: "super_admin",
       roles: {
-        barangay_admin: {},
+        super_admin: {},
+        system_admin: {},
+        head_mdrrmo_admin: {},
         mdrrmo_admin: {},
+        barangay_admin: {},
+        resident: {},
       },
     }),
-    /*twoFactor({
-      otpOptions: {
-        sendOTP: async ({ user, otp }) => {
-          const { orgFooterText, supportEmail } = await getOrgSettings();
-          const mailOptions = getOTPEmail(
-            user,
-            otp,
-            orgFooterText,
-            supportEmail,
-          );
-          await transporter.sendMail(mailOptions);
-        },
-      },
-    }),*/
   ],
   advanced: {
     ...(process.env.NODE_ENV === "production"

@@ -1,13 +1,65 @@
+import { authClient } from "../../../../../../lib/auth-client";
 import BarangayDropdown from "../../../../../../components/ui/inputs/BarangayDropdown";
 
 export default function AdminRoleSelection({ formData, setFormData }) {
+  const { data: session } = authClient.useSession();
+  const isSuperAdmin = session?.user?.role === "super_admin";
+
   return (
     <>
       <div>
         <label className="block text-sm font-semibold text-gray-700 dark:text-slate-300 mb-1.5">
           Admin Role
         </label>
-        <div className="grid grid-cols-2 gap-3">
+        <div className={`grid ${isSuperAdmin ? "grid-cols-2 sm:grid-cols-2" : "grid-cols-2"} gap-3`}>
+          {isSuperAdmin && (
+            <label
+              className={`relative flex items-center justify-center px-4 py-3 border rounded-xl cursor-pointer transition-all ${
+                formData.role === "system_admin"
+                  ? "border-red-500 dark:border-red-500 bg-red-50/50 dark:bg-red-950/40 text-red-700 dark:text-red-300 ring-1 ring-red-500"
+                  : "border-gray-200 dark:border-slate-700 text-gray-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-800"
+              }`}
+            >
+              <input
+                type="radio"
+                className="sr-only"
+                checked={formData.role === "system_admin"}
+                onChange={() =>
+                  setFormData({
+                    ...formData,
+                    role: "system_admin",
+                    barangay: "",
+                  })
+                }
+              />
+              <span className="text-sm font-medium">System Admin</span>
+            </label>
+          )}
+
+          {isSuperAdmin && (
+            <label
+              className={`relative flex items-center justify-center px-4 py-3 border rounded-xl cursor-pointer transition-all ${
+                formData.role === "head_mdrrmo_admin"
+                  ? "border-purple-500 dark:border-purple-500 bg-purple-50/50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 ring-1 ring-purple-500"
+                  : "border-gray-200 dark:border-slate-700 text-gray-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-800"
+              }`}
+            >
+              <input
+                type="radio"
+                className="sr-only"
+                checked={formData.role === "head_mdrrmo_admin"}
+                onChange={() =>
+                  setFormData({
+                    ...formData,
+                    role: "head_mdrrmo_admin",
+                    barangay: "",
+                  })
+                }
+              />
+              <span className="text-sm font-medium">Head MDRRMO</span>
+            </label>
+          )}
+
           <label
             className={`relative flex items-center justify-center px-4 py-3 border rounded-xl cursor-pointer transition-all ${
               formData.role === "mdrrmo_admin"

@@ -7,11 +7,15 @@ router.use(authenticate);
 
 const { isMaintenanceActive } = require("../../middleware/maintenanceMiddleware");
 
-// During maintenance mode, ONLY system_admin can access admin routes
+// During maintenance mode, system_admin and super_admin can access admin routes
 router.use(async (req, res, next) => {
   try {
     const isMaintenance = await isMaintenanceActive();
-    if (isMaintenance && req.user?.role !== "system_admin") {
+    if (
+      isMaintenance &&
+      req.user?.role !== "system_admin" &&
+      req.user?.role !== "super_admin"
+    ) {
       return res.status(503).json({
         success: false,
         error: "MAINTENANCE_MODE",

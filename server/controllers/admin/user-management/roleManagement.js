@@ -4,11 +4,18 @@ const { logActivity, logError } = require("../../../utils/logger");
 const { ROLE_RANKS } = require("../../../config/roleHierarchy");
 
 // @desc    Update a user's role
-// @access  Private (system_admin only)
+// @access  Private (system_admin and super_admin)
 exports.updateUserRole = async (req, res) => {
   const { id } = req.params;
   const { role } = req.body;
-  const validRoles = ['resident', 'barangay_admin', 'mdrrmo_admin', 'head_mdrrmo_admin', 'system_admin'];
+  const validRoles = [
+    'resident',
+    'barangay_admin',
+    'mdrrmo_admin',
+    'head_mdrrmo_admin',
+    'system_admin',
+    'super_admin',
+  ];
   if (!role || !validRoles.includes(role)) {
     return res.status(400).json({ success: false, message: 'Invalid role' });
   }
@@ -44,8 +51,9 @@ exports.updateUserRole = async (req, res) => {
     const newRoleRank = ROLE_RANKS[role] || 0;
 
     // 2. Enforce role hierarchy:
-    // Non-system_admins cannot modify users of equal or higher rank, nor can they assign roles of equal or higher rank.
-    if (adminContext.role !== 'system_admin') {
+    // super_admin bypasses restrictions; others cannot touch equal or higher rank
+    const isSuperOrSystem = adminContext.role === 'super_admin' || adminContext.role === 'system_admin';
+    if (!isSuperOrSystem) {
       if (targetCurrentRank >= adminRank) {
         throw new Error(`SECURITY_FAULT: Cannot modify role of a user with equal or higher role rank (${targetUser.role}).`);
       }
@@ -54,11 +62,18 @@ exports.updateUserRole = async (req, res) => {
       }
     }
 
-    // Failsafe: Prevent last system_admin from self-demoting
+    // Failsafe: Prevent last system_admin or super_admin from self-demoting
     if (targetUser.role === 'system_admin' && role !== 'system_admin') {
       const sysAdminCount = await pool.query('SELECT COUNT(*) FROM "user" WHERE role = \'system_admin\'');
       if (parseInt(sysAdminCount.rows[0].count, 10) <= 1) {
         return res.status(400).json({ success: false, message: 'Cannot demote the last remaining System Administrator.' });
+      }
+    }
+
+    if (targetUser.role === 'super_admin' && role !== 'super_admin') {
+      const superAdminCount = await pool.query('SELECT COUNT(*) FROM "user" WHERE role = \'super_admin\'');
+      if (parseInt(superAdminCount.rows[0].count, 10) <= 1) {
+        return res.status(400).json({ success: false, message: 'Cannot demote the last remaining Super Administrator.' });
       }
     }
 
@@ -85,4 +100,3 @@ exports.updateUserRole = async (req, res) => {
     res.status(500).json({ success: false, message: 'Failed to update role' });
   }
 };
-

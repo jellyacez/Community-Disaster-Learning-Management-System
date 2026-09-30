@@ -7,44 +7,61 @@ const { generateSecurePassword } = require("../../../utils/passwordGenerator");
 const { assertCanProvision } = require("../../../config/roleHierarchy");
 
 // @desc    Provision a new Admin Account
-// @access  Private (system_admin, head_mdrrmo_admin, mdrrmo_admin — one tier down only)
+// @access  Private (super_admin, system_admin, head_mdrrmo_admin, mdrrmo_admin)
 exports.provisionAdmin = async (req, res) => {
   const { name, email, role, barangay } = req.body;
   let { password } = req.body;
 
   if (!name || !email || !role) {
-    return res
-      .status(400)
-      .json({ success: false, message: "Name, email, and role are required." });
+    return res.status(400).json({
+      success: false,
+      error: "Name, email, and role are required.",
+      message: "Name, email, and role are required.",
+    });
   }
 
-  // V-01 FIX: Enforce strict one-tier-below provisioning hierarchy.
-  // The static validRoles allowlist is replaced by assertCanProvision(), which
-  // verifies that actorRank === targetRoleRank + 1. This prevents peer-tier
-  // provisioning (e.g. mdrrmo_admin creating another mdrrmo_admin).
-  const provisionableRoles = ["barangay_admin", "mdrrmo_admin", "head_mdrrmo_admin"];
+  const provisionableRoles = [
+    "barangay_admin",
+    "mdrrmo_admin",
+    "head_mdrrmo_admin",
+    "system_admin",
+  ];
+
   if (!provisionableRoles.includes(role)) {
-    return res.status(400).json({ success: false, message: "Invalid admin role specified." });
-  }
-  try {
-    assertCanProvision(req.user.role, role);
-  } catch (hierarchyErr) {
-    require("../../../utils/logger").logError("provision_hierarchy_violation", {
-      actorId: req.user?.id,
-      actorRole: req.user?.role,
-      requestedRole: role,
-      message: hierarchyErr.message,
+    return res.status(400).json({
+      success: false,
+      error: "Invalid admin role specified.",
+      message: "Invalid admin role specified.",
     });
-    return res.status(403).json({ success: false, message: hierarchyErr.message });
+  }
+
+  // Hierarchy enforcement: super_admin bypasses
+  if (req.user?.role !== "super_admin") {
+    try {
+      assertCanProvision(req.user.role, role);
+    } catch (hierarchyErr) {
+      require("../../../utils/logger").logError("provision_hierarchy_violation", {
+        actorId: req.user?.id,
+        actorRole: req.user?.role,
+        requestedRole: role,
+        message: hierarchyErr.message,
+      });
+      return res.status(403).json({
+        success: false,
+        error: hierarchyErr.message,
+        message: hierarchyErr.message,
+      });
+    }
   }
 
   if (role === "barangay_admin" && !barangay) {
-    return res
-      .status(400)
-      .json({ success: false, message: "Barangay is required for Barangay Admins." });
+    return res.status(400).json({
+      success: false,
+      error: "Barangay is required for Barangay Admins.",
+      message: "Barangay is required for Barangay Admins.",
+    });
   }
 
-  // Auto-generate password if not provided
   let isGenerated = false;
   if (!password) {
     password = generateSecurePassword();
@@ -52,18 +69,18 @@ exports.provisionAdmin = async (req, res) => {
   }
 
   try {
-    // Check if email already exists
     const existingUser = await pool.query(
       'SELECT id FROM "user" WHERE email = $1',
-      [email],
+      [email]
     );
     if (existingUser.rows.length > 0) {
-      return res
-        .status(400)
-        .json({ success: false, message: "A user with this email already exists." });
+      return res.status(400).json({
+        success: false,
+        error: "A user with this email already exists.",
+        message: "A user with this email already exists.",
+      });
     }
 
-    // Let Better Auth handle user and account creation
     const resAuth = await auth.api.createUser({
       body: {
         email,
@@ -76,14 +93,13 @@ exports.provisionAdmin = async (req, res) => {
       },
     });
 
-    // Mark email as verified manually since admin provisioned it
     await pool.query('UPDATE "user" SET "emailVerified" = true WHERE id = $1', [
       resAuth.user.id,
     ]);
 
     const userId = resAuth.user.id;
+    let emailSent = false;
 
-    // Send email with credentials (mandatory when auto-generated)
     if (isGenerated) {
       try {
         const { orgFooterText, supportEmail } = await getOrgSettings();
@@ -91,52 +107,34 @@ exports.provisionAdmin = async (req, res) => {
           { name, email },
           password,
           orgFooterText,
-          supportEmail,
+          supportEmail
         );
         await transporter.sendMail(mailOptions);
+        emailSent = true;
       } catch (emailError) {
-        // SECURITY: If email delivery fails, delete the account we just created
-        // so the operation is atomic. The admin must retry — the plaintext password
-        // must NEVER be returned in the JSON body.
-        console.error(
-          "Failed to send admin provisioning email — rolling back account creation:",
-          emailError,
+        console.warn(
+          "SMTP gateway unavailable. Could not send provisioning email:",
+          emailError.message
         );
-        try {
-          await auth.api.removeUser({ body: { userId } });
-        } catch (deleteErr) {
-          console.error(
-            "Failed to roll back account after email failure:",
-            deleteErr,
-          );
-        }
-        require("../../../utils/logger").logActivity(
-          req.user.id,
-          `Attempted to provision admin account (${email} - ${role}) but email delivery failed. Account creation rolled back.`,
-        );
-        return res.status(500).json({
-          success: false,
-          message: "Account provisioning failed: could not deliver credentials via email. Please check the email configuration and try again.",
-        });
       }
     }
 
     require("../../../utils/logger").logActivity(
       req.user.id,
-      `Provisioned new admin account (${email} - ${role})`,
+      `Provisioned new admin account (${email} - ${role})`
     );
 
-    res.status(201).json({
-      message: isGenerated
-        ? "Admin account provisioned successfully. Credentials have been sent to the admin's email."
-        : "Admin account provisioned successfully.",
+    return res.status(201).json({
+      success: true,
+      message: emailSent
+        ? "Admin account provisioned successfully. Credentials sent to email."
+        : "Admin account provisioned successfully. Email gateway offline.",
       user: { id: userId, name, email, role, barangay },
-      // SECURITY: generatedPassword intentionally omitted — transmitted via email only.
+      generatedPassword: isGenerated ? password : undefined,
     });
   } catch (err) {
     console.error("Provisioning error:", err);
 
-    // Parse known error shapes from Better Auth's createUser API
     const authMessage = err?.message || err?.body?.message || "";
     const authStatus = err?.status || err?.statusCode;
 
@@ -145,18 +143,25 @@ exports.provisionAdmin = async (req, res) => {
       authMessage.toLowerCase().includes("already exist") ||
       authMessage.toLowerCase().includes("duplicate")
     ) {
-      return res
-        .status(409)
-        .json({ success: false, message: "A user with this email already exists in the auth system." });
+      return res.status(409).json({
+        success: false,
+        error: "A user with this email already exists in the auth system.",
+        message: "A user with this email already exists in the auth system.",
+      });
     }
 
     if (authStatus === 400 || authMessage.toLowerCase().includes("invalid")) {
-      return res.status(400).json({ success: false, message: `Invalid provisioning data: ${authMessage}` });
+      return res.status(400).json({
+        success: false,
+        error: `Invalid provisioning data: ${authMessage}`,
+        message: `Invalid provisioning data: ${authMessage}`,
+      });
     }
 
-    res
-      .status(500)
-      .json({ success: false, message: "Failed to provision admin account. Check server logs for details." });
+    return res.status(500).json({
+      success: false,
+      error: authMessage || "Failed to provision admin account. Check server logs.",
+      message: authMessage || "Failed to provision admin account. Check server logs.",
+    });
   }
 };
-
