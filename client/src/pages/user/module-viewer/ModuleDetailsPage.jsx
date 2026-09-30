@@ -1,15 +1,23 @@
+import { useState, useMemo } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import apiClient from "../../../lib/apiClient";
-import { useState, useMemo } from "react";
 import DOMPurify from "dompurify";
-import { authClient } from "../../../lib/auth-client";
+import toast from "react-hot-toast";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  Book02Icon,
+  CloudDownloadIcon,
+  CheckmarkBadge01Icon,
+  Delete02Icon,
+} from "@hugeicons/core-free-icons";
+
+import apiClient from "../../../lib/apiClient";
+import { useOfflineSession } from "../../../hooks/offlineSession";
+import { useOfflineDownload } from "../../../hooks/useOfflineDownload";
 import { ADMIN_ROLES } from "../../../constants/roles";
+import { decodeHtml } from "../../../utils/textUtils";
 import PublishedModulePreviewModal from "../../../components/ui/modules/viewer/PublishedModulePreviewModal";
 import ConfirmationModal from "../../../components/ui/modals/ConfirmationModal";
-import { Book02Icon } from "@hugeicons/core-free-icons";
-import { decodeHtml } from "../../../utils/textUtils";
-import toast from "react-hot-toast";
 
 const resolveImageUrl = (url) => {
   if (!url) return null;
@@ -18,8 +26,21 @@ const resolveImageUrl = (url) => {
 };
 
 const fetchModuleDetails = async (moduleId) => {
-  const res = await apiClient.get(`/modules/${moduleId}/details`);
-  return res.data;
+  try {
+    const res = await apiClient.get(`/modules/${moduleId}/details`);
+    if (res.data) {
+      localStorage.setItem(`lms_offline_details_${moduleId}`, JSON.stringify(res.data));
+    }
+    return res.data;
+  } catch (err) {
+    if (!navigator.onLine || err.code === "ERR_NETWORK") {
+      const cached = localStorage.getItem(`lms_offline_details_${moduleId}`);
+      if (cached) {
+        return JSON.parse(cached);
+      }
+    }
+    throw err;
+  }
 };
 
 function getStepTypeBadge(type) {
@@ -64,12 +85,18 @@ export default function ModuleDetailsPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
+  const queryClient = useQueryClient();
+
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [showEnrollModal, setShowEnrollModal] = useState(false);
   const [isEnrolling, setIsEnrolling] = useState(false);
-  const queryClient = useQueryClient();
-  
-  const { data: session } = authClient.useSession();
+  const [showDownloadModal, setShowDownloadModal] = useState(false);
+
+  // Hook manages IndexedDB persistence and status checking
+  const { isDownloaded, isDownloading, downloadModule, removeDownload } = useOfflineDownload(id);
+
+  // Read session with offline fallback
+  const { data: session } = useOfflineSession();
 
   // Read impersonated target if active
   const impersonatedTarget = useMemo(() => {
@@ -88,7 +115,6 @@ export default function ModuleDetailsPage() {
   const effectiveUser = impersonatedTarget || session?.user;
   const userRole = effectiveUser?.role;
 
-  // Strict check: if the path is under /admin/* or role is administrative
   const isAdminRoute = location.pathname.startsWith("/admin");
   const isAdmin =
     isAdminRoute ||
@@ -101,7 +127,16 @@ export default function ModuleDetailsPage() {
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ["moduleDetails", id],
+    networkMode: "offlineFirst",
     queryFn: () => fetchModuleDetails(id),
+    initialData: () => {
+      try {
+        const cached = localStorage.getItem(`lms_offline_details_${id}`);
+        return cached ? JSON.parse(cached) : undefined;
+      } catch {
+        return undefined;
+      }
+    },
     retry: 1,
   });
 
@@ -140,7 +175,7 @@ export default function ModuleDetailsPage() {
     return moduleLevels.reduce((acc, lvl) => acc + (lvl.steps?.length || 0), 0);
   }, [moduleLevels]);
 
-  if (isLoading) {
+  if (isLoading && !data) {
     return (
       <div className="max-w-7xl mx-auto space-y-6 animate-pulse">
         <div className="h-4 w-24 bg-gray-200 dark:bg-slate-800 rounded" />
@@ -158,20 +193,16 @@ export default function ModuleDetailsPage() {
           <div className="h-4 w-full bg-gray-100 dark:bg-slate-800 rounded" />
           <div className="h-4 w-5/6 bg-gray-100 dark:bg-slate-800 rounded" />
         </div>
-        <div className="space-y-4">
-          <div className="h-5 w-40 bg-gray-200 dark:bg-slate-800 rounded" />
-          <div className="h-40 bg-white dark:bg-slate-900 rounded-2xl border border-gray-200/80 dark:border-slate-800" />
-        </div>
       </div>
     );
   }
 
-  if (isError || !data) {
+  if (isError && !data) {
     return (
       <div className="p-6 bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-300 rounded-xl border border-red-100 dark:border-red-900/50 max-w-2xl mx-auto mt-8">
         <p className="font-bold">Error loading module syllabus details.</p>
         <p className="text-sm mt-1">Please check your connection or return to the catalog.</p>
-        <button 
+        <button
           onClick={handleBack}
           className="mt-4 px-4 py-2 bg-red-600 text-white text-xs font-semibold rounded-lg hover:bg-red-700 transition cursor-pointer"
         >
@@ -182,7 +213,7 @@ export default function ModuleDetailsPage() {
   }
 
   const { module, levels = [] } = data;
-  
+
   const isEnrolled = !isAdmin && Boolean(module.is_enrolled);
   const currentProgress = parseInt(module.progress || 0, 10);
   const isCompleted = isEnrolled && (module.status === "Completed" || currentProgress === 100);
@@ -191,7 +222,7 @@ export default function ModuleDetailsPage() {
   return (
     <div className="max-w-7xl mx-auto space-y-6 animate-in fade-in duration-200">
       <div>
-        <button 
+        <button
           onClick={handleBack}
           className="inline-flex items-center gap-1.5 text-xs font-medium text-gray-500 dark:text-slate-400 hover:text-gray-900 dark:hover:text-white transition-colors cursor-pointer"
         >
@@ -205,9 +236,9 @@ export default function ModuleDetailsPage() {
       <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-200/80 dark:border-slate-800 shadow-sm overflow-hidden grid grid-cols-1 md:grid-cols-12 gap-6 p-6 md:p-8 items-center">
         <div className="md:col-span-4 h-48 sm:h-52 w-full bg-gray-50 dark:bg-slate-800/50 border border-gray-100 dark:border-slate-800 rounded-xl overflow-hidden relative flex items-center justify-center text-gray-400 dark:text-slate-500 shrink-0">
           {module.image_url ? (
-            <img 
-              src={resolveImageUrl(module.image_url)} 
-              alt={module.modname} 
+            <img
+              src={resolveImageUrl(module.image_url)}
+              alt={module.modname}
               referrerPolicy="no-referrer"
               className={`w-full h-full object-cover ${isLocked ? "grayscale opacity-75" : ""}`}
             />
@@ -258,7 +289,6 @@ export default function ModuleDetailsPage() {
           </div>
 
           <div className="space-y-3.5">
-            {/* Show Progress Bar only for learners/residents */}
             {!isAdmin && (
               <div className="w-full space-y-1.5">
                 <div className="flex justify-between items-center text-xs">
@@ -278,9 +308,9 @@ export default function ModuleDetailsPage() {
               </div>
             )}
 
-            <div className="pt-0.5">
+            <div className="pt-0.5 flex flex-wrap items-center gap-3">
               {isAdmin ? (
-                <button 
+                <button
                   onClick={() => setIsPreviewOpen(true)}
                   className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-gray-900 hover:bg-black dark:bg-slate-800 dark:hover:bg-slate-700 text-white font-medium rounded-xl text-sm transition-colors shadow-sm cursor-pointer"
                 >
@@ -302,7 +332,7 @@ export default function ModuleDetailsPage() {
                   <span className="text-xs text-amber-700 dark:text-amber-400">{module.lock_reason || "Complete foundational modules to unlock."}</span>
                 </div>
               ) : !isEnrolled ? (
-                <button 
+                <button
                   onClick={() => setShowEnrollModal(true)}
                   className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-2.5 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-xl text-sm transition-colors shadow-sm hover:shadow cursor-pointer"
                 >
@@ -312,15 +342,41 @@ export default function ModuleDetailsPage() {
                   <span>Enroll in Module</span>
                 </button>
               ) : (
-                <button 
-                  onClick={() => navigate(`/user/modules/${module.mod_id || module.id}`)}
-                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-xl text-sm transition-colors shadow-sm hover:shadow cursor-pointer"
-                >
-                  <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M8 5v14l11-7z" />
-                  </svg>
-                  <span>{isCompleted ? "Review Module Content" : "Launch Learning Viewer"}</span>
-                </button>
+                <>
+                  <button
+                    onClick={() => navigate(`/user/modules/${module.mod_id || module.id}`)}
+                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-xl text-sm transition-colors shadow-sm hover:shadow cursor-pointer"
+                  >
+                    <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M8 5v14l11-7z" />
+                    </svg>
+                    <span>{isCompleted ? "Review Module Content" : "Launch Learning Viewer"}</span>
+                  </button>
+
+                  {/* Manual Offline Download Toggle */}
+                  {!isDownloaded ? (
+                    <button
+                      type="button"
+                      onClick={() => setShowDownloadModal(true)}
+                      disabled={isDownloading}
+                      className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-700 dark:text-slate-200 text-sm font-semibold hover:bg-gray-50 dark:hover:bg-slate-750 transition-colors disabled:opacity-50 cursor-pointer"
+                    >
+                      <HugeiconsIcon icon={CloudDownloadIcon} className="w-4 h-4 text-red-600 dark:text-red-400" />
+                      <span>{isDownloading ? "Saving..." : "Save Offline"}</span>
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={removeDownload}
+                      className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 text-sm font-semibold hover:bg-red-50 dark:hover:bg-red-950/40 hover:text-red-600 dark:hover:text-red-400 hover:border-red-200 dark:hover:border-red-800 transition-colors group cursor-pointer"
+                    >
+                      <HugeiconsIcon icon={CheckmarkBadge01Icon} className="w-4 h-4 group-hover:hidden" />
+                      <HugeiconsIcon icon={Delete02Icon} className="w-4 h-4 hidden group-hover:block" />
+                      <span className="group-hover:hidden">Downloaded Offline</span>
+                      <span className="hidden group-hover:inline">Remove Download</span>
+                    </button>
+                  )}
+                </>
               )}
             </div>
           </div>
@@ -331,7 +387,7 @@ export default function ModuleDetailsPage() {
         <h2 className="text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wider">
           Course Synopsis
         </h2>
-        <div 
+        <div
           className="text-gray-600 dark:text-slate-300 text-sm leading-relaxed prose prose-sm dark:prose-invert max-w-none"
           dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(module.description || "No curriculum synopsis provided.") }}
         />
@@ -346,11 +402,11 @@ export default function ModuleDetailsPage() {
             {levels.length} {levels.length === 1 ? 'level' : 'levels'} · {totalSteps} {totalSteps === 1 ? 'step' : 'steps'}
           </span>
         </div>
-        
+
         <div className="space-y-4">
           {levels.map((lvl) => (
-            <div 
-              key={lvl.level_id} 
+            <div
+              key={lvl.level_id}
               className="bg-white dark:bg-slate-900 border border-gray-200/80 dark:border-slate-800 rounded-2xl overflow-hidden shadow-sm"
             >
               <div className="bg-gray-50/70 dark:bg-slate-800/60 px-5 py-4 border-b border-gray-100 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
@@ -364,7 +420,7 @@ export default function ModuleDetailsPage() {
                     </h3>
                   </div>
                   {lvl.level_description && (
-                    <div 
+                    <div
                       className="text-xs text-gray-500 dark:text-slate-400 font-normal pl-0.5 prose prose-xs dark:prose-invert max-w-none [&>p]:m-0"
                       dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(lvl.level_description) }}
                     />
@@ -395,20 +451,20 @@ export default function ModuleDetailsPage() {
                   lvl.steps.map((step) => {
                     const typeMeta = getStepTypeBadge(step.step_type);
                     return (
-                      <div 
-                        key={step.step_id} 
+                      <div
+                        key={step.step_id}
                         className="px-5 py-3.5 flex items-center justify-between hover:bg-gray-50/60 dark:hover:bg-slate-800/40 transition-colors gap-3"
                       >
                         <div className="flex items-center gap-3 min-w-0">
                           <span className="shrink-0 text-xs font-mono text-gray-400 dark:text-slate-400 bg-gray-100 dark:bg-slate-800 w-6 h-6 flex items-center justify-center rounded-full font-medium">
                             {step.step_order}
                           </span>
-                          
+
                           <div className="min-w-0">
                             <p className="text-sm font-medium text-gray-900 dark:text-slate-200 truncate">
                               {decodeHtml(step.step_title)}
                             </p>
-                            
+
                             {(step.is_final_assessment || step.loop_back_step_id) && (
                               <div className="flex items-center gap-1.5 mt-1">
                                 {step.is_final_assessment && (
@@ -442,12 +498,18 @@ export default function ModuleDetailsPage() {
         </div>
       </div>
 
-      <PublishedModulePreviewModal 
-        isOpen={isPreviewOpen} 
-        onClose={() => setIsPreviewOpen(false)} 
-        moduleId={module.mod_id || module.id} 
+      {/* =========================================================================
+          MODALS SECTION (Admin Preview, Enrollment, and Offline Save)
+          ========================================================================= */}
+
+      {/* 1. Admin Preview Modal */}
+      <PublishedModulePreviewModal
+        isOpen={isPreviewOpen}
+        onClose={() => setIsPreviewOpen(false)}
+        moduleId={module.mod_id || module.id}
       />
 
+      {/* 2. Enrollment Confirmation Modal */}
       <ConfirmationModal
         isOpen={showEnrollModal}
         onClose={() => !isEnrolling && setShowEnrollModal(false)}
@@ -460,6 +522,43 @@ export default function ModuleDetailsPage() {
         icon={Book02Icon}
         isLoading={isEnrolling}
       />
+
+      {/* 3. Offline Save Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={showDownloadModal}
+        onClose={() => !isDownloading && setShowDownloadModal(false)}
+        onConfirm={async () => {
+          await downloadModule();
+          setShowDownloadModal(false);
+        }}
+        title="Download for Offline Use"
+        description="Save this entire module to your device so you can study, complete lessons, and submit assessments during network outages or disasters."
+        confirmText="Save to Device"
+        cancelText="Not Now"
+        type="primary"
+        icon={CloudDownloadIcon}
+        isLoading={isDownloading}
+      >
+        <div className="rounded-xl border border-gray-200/80 dark:border-slate-800 bg-gray-50/70 dark:bg-slate-800/40 p-3.5 space-y-2.5 text-xs text-gray-600 dark:text-slate-300">
+          <div className="flex items-center justify-between pb-2 border-b border-gray-200/60 dark:border-slate-700/60">
+            <span className="font-semibold text-gray-700 dark:text-slate-200">Estimated Space:</span>
+            <span className="font-mono font-bold text-red-600 dark:text-red-400">~1.2 MB</span>
+          </div>
+
+          <div className="space-y-1">
+            <p className="font-semibold text-gray-700 dark:text-slate-200">What will be saved:</p>
+            <ul className="list-disc list-inside space-y-0.5 text-gray-500 dark:text-slate-400 pl-1">
+              <li>{levels.length} levels with all reading lessons</li>
+              <li>Interactive quizzes and assessment banks</li>
+              <li>Local progress and answer tracking</li>
+            </ul>
+          </div>
+
+          <p className="text-[11px] leading-relaxed text-gray-400 dark:text-slate-500 italic pt-1">
+            *Note: Embedded external video streams will still require an active internet connection.
+          </p>
+        </div>
+      </ConfirmationModal>
     </div>
   );
 }

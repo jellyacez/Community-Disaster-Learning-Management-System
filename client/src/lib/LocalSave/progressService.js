@@ -4,7 +4,7 @@ import { enqueueMemoryTask } from './syncManager';
 
 const SESSION_STORAGE_KEY = 'lms_offline_session';
 
-// Helper to keep the localStorage offline session in sync when profile fields change offline
+
 function patchCachedOfflineUser(patch) {
   try {
     const raw = localStorage.getItem(SESSION_STORAGE_KEY);
@@ -16,7 +16,7 @@ function patchCachedOfflineUser(patch) {
       window.dispatchEvent(new StorageEvent('storage', { key: SESSION_STORAGE_KEY }));
     }
   } catch {
-    // Ignore storage errors
+
   }
 }
 

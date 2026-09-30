@@ -291,7 +291,7 @@ export function useModuleViewer(moduleId) {
         return;
       }
 
-      // TanStack Query v5 standard object syntax
+
       queryClient.invalidateQueries({ queryKey: ["moduleViewer", moduleId] });
       queryClient.invalidateQueries({ queryKey: ["userDashboard"] });
 
