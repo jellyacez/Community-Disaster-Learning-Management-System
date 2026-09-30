@@ -63,7 +63,6 @@ export default function AdminSidebar({ sidebarOpen, setSidebarOpen }) {
     }
   };
 
-  // Format role label cleanly without underscores
   const formattedRole = ROLE_DISPLAY_NAMES[userRole] || userRole.replace(/_/g, " ");
 
   return (
@@ -146,17 +145,10 @@ export default function AdminSidebar({ sidebarOpen, setSidebarOpen }) {
                           <span className="truncate">{link.name}</span>
                         </span>
                         
-                        {hasSubItems ? (
+                        {hasSubItems && (
                           <HugeiconsIcon
                             icon={isExpanded ? ArrowDown01Icon : ArrowRight01Icon}
                             className={`relative z-10 w-4 h-4 shrink-0 ${isActive ? "text-red-600 dark:text-red-400" : "text-gray-500 dark:text-slate-400"}`}
-                          />
-                        ) : (
-                          <HugeiconsIcon
-                            icon={ArrowRight01Icon}
-                            className={`relative z-10 w-4 h-4 shrink-0 ${
-                              isActive ? "text-red-600 dark:text-red-400" : "text-gray-400 dark:text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity"
-                            }`}
                           />
                         )}
                       </button>

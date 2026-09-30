@@ -29,22 +29,53 @@ function UserTableRow({
   onImpersonate,
 }) {
   const [isOpen, setIsOpen] = useState(false);
+  const [menuCoords, setMenuCoords] = useState({ top: 0, right: 0, openUpwards: false });
   const menuRef = useRef(null);
+  const buttonRef = useRef(null);
 
-  // Close dropdown when clicking outside
+  // Close dropdown when clicking outside or scrolling
   useEffect(() => {
     function handleClickOutside(event) {
-      if (menuRef.current && !menuRef.current.contains(event.target)) {
+      if (
+        menuRef.current &&
+        !menuRef.current.contains(event.target) &&
+        buttonRef.current &&
+        !buttonRef.current.contains(event.target)
+      ) {
         setIsOpen(false);
       }
     }
+
+    function handleScrollOrResize() {
+      if (isOpen) setIsOpen(false);
+    }
+
     if (isOpen) {
       document.addEventListener("mousedown", handleClickOutside);
+      window.addEventListener("scroll", handleScrollOrResize, true);
+      window.addEventListener("resize", handleScrollOrResize);
     }
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
+      window.removeEventListener("scroll", handleScrollOrResize, true);
+      window.removeEventListener("resize", handleScrollOrResize);
     };
   }, [isOpen]);
+
+  const handleToggle = () => {
+    if (!isOpen && buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect();
+      const spaceBelow = window.innerHeight - rect.bottom;
+      const openUpwards = spaceBelow < 220;
+
+      setMenuCoords({
+        top: openUpwards ? rect.top : rect.bottom + 6,
+        right: window.innerWidth - rect.right,
+        openUpwards,
+      });
+    }
+    setIsOpen((prev) => !prev);
+  };
 
   const handleAction = (tabIndex) => {
     setIsOpen(false);
@@ -125,9 +156,10 @@ function UserTableRow({
           : "—"}
       </td>
       <td className="px-4 py-3 text-right">
-        <div className="relative inline-block text-left" ref={menuRef}>
+        <div className="inline-block text-left">
           <button
-            onClick={() => setIsOpen(!isOpen)}
+            ref={buttonRef}
+            onClick={handleToggle}
             className="w-11 h-11 min-w-[44px] min-h-[44px] inline-flex items-center justify-center text-gray-400 hover:text-gray-900 dark:hover:text-slate-100 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-xl transition-colors cursor-pointer"
             aria-label="Open action menu"
           >
@@ -135,7 +167,16 @@ function UserTableRow({
           </button>
 
           {isOpen && (
-            <div className="origin-top-right absolute right-0 mt-2 w-48 rounded-xl shadow-lg bg-white dark:bg-slate-900 ring-1 ring-black/5 dark:ring-white/10 divide-y divide-gray-50 dark:divide-slate-800 z-50">
+            <div
+              ref={menuRef}
+              style={{
+                position: "fixed",
+                top: menuCoords.openUpwards ? "auto" : `${menuCoords.top}px`,
+                bottom: menuCoords.openUpwards ? `${window.innerHeight - menuCoords.top + 6}px` : "auto",
+                right: `${menuCoords.right}px`,
+              }}
+              className="w-48 rounded-xl shadow-xl bg-white dark:bg-slate-900 ring-1 ring-black/10 dark:ring-white/10 divide-y divide-gray-50 dark:divide-slate-800 z-[9999] animate-in fade-in zoom-in-95 duration-100"
+            >
               {canImpersonate && (
                 <div className="py-1">
                   <button
@@ -154,7 +195,7 @@ function UserTableRow({
               <div className="py-1">
                 <button
                   onClick={() => handleAction(0)}
-                  className="group flex items-center w-full px-4 py-2 text-sm text-gray-700 dark:text-slate-200 hover:bg-gray-50 dark:hover:bg-slate-800 hover:text-gray-900 dark:hover:text-white"
+                  className="group flex items-center w-full px-4 py-2 text-sm text-gray-700 dark:text-slate-200 hover:bg-gray-50 dark:hover:bg-slate-800 hover:text-gray-900 dark:hover:text-white transition-colors cursor-pointer"
                 >
                   <HugeiconsIcon
                     icon={Edit02Icon}
@@ -164,7 +205,7 @@ function UserTableRow({
                 </button>
                 <button
                   onClick={() => handleAction(2)}
-                  className="group flex items-center w-full px-4 py-2 text-sm text-gray-700 dark:text-slate-200 hover:bg-gray-50 dark:hover:bg-slate-800 hover:text-gray-900 dark:hover:text-white"
+                  className="group flex items-center w-full px-4 py-2 text-sm text-gray-700 dark:text-slate-200 hover:bg-gray-50 dark:hover:bg-slate-800 hover:text-gray-900 dark:hover:text-white transition-colors cursor-pointer"
                 >
                   <HugeiconsIcon
                     icon={Key01Icon}
@@ -176,7 +217,7 @@ function UserTableRow({
               <div className="py-1">
                 <button
                   onClick={() => handleAction(3)}
-                  className="group flex items-center w-full px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30"
+                  className="group flex items-center w-full px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors cursor-pointer"
                 >
                   <HugeiconsIcon
                     icon={UserBlock01Icon}
