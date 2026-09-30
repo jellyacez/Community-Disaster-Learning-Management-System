@@ -246,7 +246,10 @@ const securityHooksPlugin = () => {
             if (ctx.context?.returned instanceof APIError) return {};
             
             // Extract user from context or response body
-            let user = ctx.context?.newSession?.user || ctx.context?.user;
+            let user =
+              ctx.context?.newSession?.user ||
+              ctx.context?.user ||
+              ctx.context?.returned?.user;
             let userId = user?.id;
 
             if (!user) {
@@ -264,6 +267,21 @@ const securityHooksPlugin = () => {
                 }
               } catch (e) {
                 console.error("Non-critical error extracting user on sign-up:", e.message);
+              }
+            }
+
+            // Guaranteed fallback: look up user by the email submitted during registration
+            if (!userId && ctx.body?.email) {
+              try {
+                const uRes = await pool.query(
+                  'SELECT id FROM "user" WHERE LOWER(email) = LOWER($1)',
+                  [ctx.body.email.trim()]
+                );
+                if (uRes.rows.length > 0) {
+                  userId = uRes.rows[0].id;
+                }
+              } catch (e) {
+                console.error("Non-critical error looking up user by email on sign-up:", e.message);
               }
             }
 
