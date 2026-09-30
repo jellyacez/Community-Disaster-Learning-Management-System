@@ -74,35 +74,48 @@ class ModuleProgressService {
             }
         });
 
-        answers.forEach(ans => {
-            const isActionSequence = sequenceMap[ans.questionId] !== undefined;
-            const isMultiSelect = correctChoicesMap[ans.questionId] && correctChoicesMap[ans.questionId].length > 1;
+        // Grade at most one entry per question of THIS step. Unknown question IDs and
+        // later duplicates are ignored, and a non-array selectedChoiceIds counts as
+        // unanswered instead of rejecting the submission, so offline-queue replays
+        // never turn into terminal 400s. First entry wins, matching the quiz UI lock.
+        const stepQuestionIds = new Set(questions.map(q => Number(q.question_id)));
+        const answersByQuestion = new Map();
+        for (const ans of answers) {
+            const qid = Number(ans?.questionId);
+            if (!stepQuestionIds.has(qid) || answersByQuestion.has(qid)) continue;
+            answersByQuestion.set(qid, Array.isArray(ans.selectedChoiceIds) ? ans.selectedChoiceIds : []);
+        }
+
+        answersByQuestion.forEach((selected, qid) => {
+            const isActionSequence = sequenceMap[qid] !== undefined;
+            const isMultiSelect = correctChoicesMap[qid] && correctChoicesMap[qid].length > 1;
 
             if (isActionSequence) {
-                const correctSequence = sequenceMap[ans.questionId]
+                const correctSequence = sequenceMap[qid]
                     .sort((a, b) => a.order - b.order)
                     .map(c => c.choice_id);
-                const submittedSequence = ans.selectedChoiceIds || [];
-                
-                if (JSON.stringify(correctSequence) === JSON.stringify(submittedSequence)) {
-                    score += pointsMap[ans.questionId] || 1;
+
+                if (JSON.stringify(correctSequence) === JSON.stringify(selected)) {
+                    score += pointsMap[qid] || 1;
                 }
             } else if (isMultiSelect) {
-                const correctArray = correctChoicesMap[ans.questionId].sort((a, b) => a - b);
-                const submittedArray = (ans.selectedChoiceIds || []).sort((a, b) => a - b);
-                
+                const correctArray = correctChoicesMap[qid].sort((a, b) => a - b);
+                const submittedArray = [...selected].sort((a, b) => a - b);
+
                 if (JSON.stringify(correctArray) === JSON.stringify(submittedArray)) {
-                    score += pointsMap[ans.questionId] || 1;
+                    score += pointsMap[qid] || 1;
                 }
             } else {
-                const correctChoiceId = correctChoicesMap[ans.questionId] ? correctChoicesMap[ans.questionId][0] : null;
-                const submittedChoiceId = ans.selectedChoiceIds && ans.selectedChoiceIds.length > 0 ? ans.selectedChoiceIds[0] : null;
-                
+                const correctChoiceId = correctChoicesMap[qid] ? correctChoicesMap[qid][0] : null;
+                const submittedChoiceId = selected.length > 0 ? selected[0] : null;
+
                 if (correctChoiceId === submittedChoiceId) {
-                    score += pointsMap[ans.questionId] || 1;
+                    score += pointsMap[qid] || 1;
                 }
             }
         });
+
+        score = Math.min(score, totalPoints);
 
         const passingThreshold = step.passing_threshold || 80;
         const percentage = totalPoints > 0 ? (score / totalPoints) * 100 : 100;
