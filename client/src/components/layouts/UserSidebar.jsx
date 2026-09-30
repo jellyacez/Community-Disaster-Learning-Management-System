@@ -77,31 +77,31 @@ export default function UserSidebar({
 
   const confirmLogout = async () => {
     try {
-      sessionStorage.setItem("isLoggingOut", "true");
-      queryClient.cancelQueries();
-      queryClient.clear();
-      resetTheme();
-      await authClient.signOut({
-        fetchOptions: {
-          onSuccess: () => {
-            navigate("/signin");
-          },
-        },
-      });
-      toast.success("Successfully logged out!");
-    } catch {
-      toast.error("Logout failed");
-    } finally {
-      setIsLogoutModalOpen(false);
-    }
-  };
+          localStorage.removeItem("lms_offline_session");
+          sessionStorage.setItem("isLoggingOut", "true");
+          queryClient.cancelQueries();
+          queryClient.clear();
+          resetTheme();
+
+          if (navigator.onLine) {
+            await authClient.signOut();
+          }
+          toast.success("Successfully logged out!");
+        } catch {
+
+          toast.success("Logged out locally.");
+        } finally {
+          setIsLogoutModalOpen(false);
+          navigate("/signin", { replace: true });
+        }
+      };
 
   useEffect(() => {
     const updatePillPosition = () => {
-      const activeIndex = navItems.findIndex(item => 
+      const activeIndex = navItems.findIndex(item =>
         location.pathname === item.path || location.pathname.startsWith(item.path + '/')
       );
-      
+
       if (activeIndex !== -1 && itemRefs.current[activeIndex]) {
         const activeEl = itemRefs.current[activeIndex];
         setPillStyle({
@@ -116,9 +116,9 @@ export default function UserSidebar({
 
     updatePillPosition();
     window.addEventListener('resize', updatePillPosition);
-    
+
     const timeoutId = setTimeout(updatePillPosition, 50);
-    
+
     return () => {
       window.removeEventListener('resize', updatePillPosition);
       clearTimeout(timeoutId);

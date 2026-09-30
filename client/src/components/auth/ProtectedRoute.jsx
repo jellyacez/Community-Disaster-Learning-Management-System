@@ -8,13 +8,19 @@ import {
   useNavigate,
 } from "react-router-dom";
 import { authClient } from "../../lib/auth-client";
+import { useOfflineSession } from "../../hooks/offlineSession";
 import apiClient from "../../lib/apiClient";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Alert01Icon } from "@hugeicons/core-free-icons";
 import { ADMIN_ROLES } from "../../constants/roles";
 
 export default function ProtectedRoute({ allowedRoles = [] }) {
-  const { data: session, isPending } = authClient.useSession();
+  const {
+    data: session,
+    isPending,
+    isOffline,
+    updateCachedSession,
+  } = useOfflineSession();
   const [searchParams] = useSearchParams();
   const location = useLocation();
   const navigate = useNavigate();
@@ -49,6 +55,14 @@ export default function ProtectedRoute({ allowedRoles = [] }) {
   useEffect(() => {
     let isMounted = true;
 
+    // Skip network status check if offline so offline navigation is instant
+    if (isOffline) {
+      setIsMaintenanceChecked(true);
+      return () => {
+        isMounted = false;
+      };
+    }
+
     if (session && !isPending && !isAdmin && !impersonatedUser) {
       apiClient
         .get("/public/status")
@@ -62,6 +76,7 @@ export default function ProtectedRoute({ allowedRoles = [] }) {
             return;
           }
           if (err.response && err.response.status === 401) {
+            updateCachedSession(null);
             authClient.signOut();
             setSessionFailed(true);
             return;
@@ -77,7 +92,7 @@ export default function ProtectedRoute({ allowedRoles = [] }) {
     return () => {
       isMounted = false;
     };
-  }, [session, isPending, isAdmin, impersonatedUser, navigate]);
+  }, [session, isPending, isAdmin, impersonatedUser, isOffline, navigate, updateCachedSession]);
 
   if (sessionFailed) {
     return (
