@@ -8,21 +8,23 @@ const { UNSCOPED_ACCESS_ROLES } = require("../../../config/permissions");
 const { logActivity, logError } = require("../../../utils/logger");
 const { assertActorOutranksTarget } = require("../../../config/roleHierarchy");
 
+function isUnscopedRole(role) {
+  return role === "super_admin" || (Array.isArray(UNSCOPED_ACCESS_ROLES) && UNSCOPED_ACCESS_ROLES.includes(role));
+}
+
 // @desc    Resets a user's password using the better-auth admin API (auto-generates if none provided)
 // @access  Private (admin only)
 exports.resetUserPassword = async (req, res) => {
   const { id } = req.params;
   let { password } = req.body;
 
-  // Auto-generate password if not provided
   let isGenerated = false;
   if (!password) {
     password = generateSecurePassword();
     isGenerated = true;
   }
 
-  // Universally validate the final password (whether manual or auto-generated) against the strict policy
-  if (!/^(?=.*[A-Z])(?=.*[!@#$%^&*_=+\-/.]).{8,}$/.test(password)) {
+  if (!/^(?=.*[A-Z])(?=.*[!@#$\%^&*_=+\-/.]).{8,}$/.test(password)) {
     return res
       .status(400)
       .json({ success: false, message: "Password does not meet complexity requirements." });
@@ -34,7 +36,6 @@ exports.resetUserPassword = async (req, res) => {
   }
 
   try {
-    // 1. Get user details to send the email with tenant scoping
     let userQuery = 'SELECT name, email, barangay_id, role FROM "user" WHERE id = $1';
     let userValues = [id];
 
@@ -44,7 +45,7 @@ exports.resetUserPassword = async (req, res) => {
       }
       userQuery += ' AND barangay_id = $2';
       userValues.push(adminContext.barangay_id);
-    } else if (!UNSCOPED_ACCESS_ROLES.includes(adminContext.role)) {
+    } else if (!isUnscopedRole(adminContext.role)) {
       throw new Error(`SECURITY_FAULT: Unauthorized role '${adminContext.role}' attempted to reset user passwords.`);
     }
 
@@ -54,12 +55,11 @@ exports.resetUserPassword = async (req, res) => {
     }
     const user = userResult.rows[0];
 
-    // V-01 FIX: Enforce rank hierarchy. The SELECT above already fetches target role.
-    // An mdrrmo_admin may not reset another mdrrmo_admin's password.
-    assertActorOutranksTarget(adminContext.role, user.role);
+    // Enforce rank hierarchy unless caller is super_admin
+    if (adminContext.role !== 'super_admin') {
+      assertActorOutranksTarget(adminContext.role, user.role);
+    }
 
-    // 2. Hash the password manually using Better Auth's crypto and update the database directly
-    // This safely bypasses the strict plugin permission checks for admin-initiated forced resets.
     const context = await auth.$context;
     const hashedPassword = await context.password.hash(password);
 
@@ -77,19 +77,23 @@ exports.resetUserPassword = async (req, res) => {
         });
     }
 
-    // Revoke existing sessions on forced password reset
     await pool.query('DELETE FROM "session" WHERE "userId" = $1', [id]);
 
-    // 3. Email the user their new password (if auto-generated)
+    let emailSent = false;
     if (isGenerated) {
-      const { orgFooterText, supportEmail } = await getOrgSettings();
-      const mailOptions = getAdminPasswordResetEmail(
-        user,
-        password,
-        orgFooterText,
-        supportEmail,
-      );
-      await transporter.sendMail(mailOptions);
+      try {
+        const { orgFooterText, supportEmail } = await getOrgSettings();
+        const mailOptions = getAdminPasswordResetEmail(
+          user,
+          password,
+          orgFooterText,
+          supportEmail,
+        );
+        await transporter.sendMail(mailOptions);
+        emailSent = true;
+      } catch (mailErr) {
+        console.warn("SMTP offline during forced reset:", mailErr.message);
+      }
     }
 
     const scopeStr = adminContext.role === 'barangay_admin' ? `Barangay ${adminContext.barangay_id}` : 'Unscoped';
@@ -99,10 +103,11 @@ exports.resetUserPassword = async (req, res) => {
     );
 
     res.json({
+      success: true,
       message: isGenerated
-        ? "Password auto-generated and emailed to the user successfully."
+        ? (emailSent ? "Password auto-generated and emailed to the user successfully." : "Password reset successfully. Email gateway offline.")
         : "Password updated successfully.",
-      // SECURITY: generatedPassword intentionally omitted — transmitted via email only.
+      temporaryPassword: !emailSent && isGenerated ? password : undefined,
     });
   } catch (err) {
     if (err.message && err.message.startsWith('SECURITY_FAULT')) {
@@ -123,4 +128,3 @@ exports.resetUserPassword = async (req, res) => {
       });
   }
 };
-

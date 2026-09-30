@@ -29,9 +29,8 @@ export const ROLE_BASED_LINKS = {
           icon: Database01Icon,
           subItems: [
             { name: "Sector Overview", path: "/admin/mdrrmo/sector-overview" },
-            { name: "System Logs", path: "/admin/super/logs" },
             { name: "Certification Analytics", path: "/admin/mdrrmo/certifications" },
-            { name: "Activity & Monitoring Logs", path: "/admin/mdrrmo/logs" },
+            { name: "Governance Logs", path: "/admin/super/logs" },
           ],
         },
         {
@@ -121,7 +120,7 @@ export const ROLE_BASED_LINKS = {
         },
         {
           name: "Activity Log",
-          path: "/admin/system/logs", // Fixed: now points to /admin/system/logs instead of /admin/super/logs
+          path: "/admin/system/logs",
           icon: Note01Icon,
         },
       ],

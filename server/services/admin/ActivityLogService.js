@@ -2,6 +2,10 @@ const pool = require("../../config/db");
 const logger = require("../../utils/logger");
 
 class ActivityLogService {
+  /**
+   * System Admin Activity Logs
+   * Filters OUT super_admin logs completely so System Admin never sees Super Admin activity.
+   */
   async getActivityLog(queryParams) {
     const page = parseInt(queryParams.page, 10) || 1;
     const limit = Math.min(parseInt(queryParams.limit, 10) || 20, 100);
@@ -11,7 +15,8 @@ class ActivityLogService {
     const role = queryParams.role || "";
     const action = queryParams.action || "";
 
-    const conditions = [];
+    // System admin must not see super_admin logs
+    const conditions = ["(u.role != 'super_admin' OR u.role IS NULL)"];
     const params = [];
     let paramIndex = 1;
 
@@ -23,8 +28,8 @@ class ActivityLogService {
 
     if (role) {
       if (role === "non_resident") {
-        conditions.push(`u.role != 'resident'`);
-      } else {
+        conditions.push(`(u.role != 'resident' AND u.role != 'super_admin')`);
+      } else if (role !== "super_admin") {
         conditions.push(`u.role = $${paramIndex}`);
         params.push(role);
         paramIndex++;
@@ -63,7 +68,7 @@ class ActivityLogService {
       }
     }
 
-    const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
+    const whereClause = `WHERE ${conditions.join(" AND ")}`;
 
     const countQuery = `
       SELECT COUNT(*) FROM activity_log al
@@ -102,6 +107,7 @@ class ActivityLogService {
               al.act_date, al.act_log
        FROM activity_log al
        LEFT JOIN "user" u ON al.user_id = u.id
+       WHERE (u.role != 'super_admin' OR u.role IS NULL)
        ORDER BY al.act_date DESC`
     );
 
@@ -134,6 +140,10 @@ class ActivityLogService {
     return csvContent;
   }
 
+  /**
+   * MDRRMO Activity Logs
+   * Filters OUT both system_admin AND super_admin
+   */
   async getMdrrmoActivityLog(queryParams) {
     const page = parseInt(queryParams.page, 10) || 1;
     const limit = Math.min(parseInt(queryParams.limit, 10) || 20, 100);
@@ -143,7 +153,7 @@ class ActivityLogService {
     const role = queryParams.role || "";
     const action = queryParams.action || "";
 
-    const conditions = ["(u.role != 'system_admin' OR u.role IS NULL)"];
+    const conditions = ["(u.role NOT IN ('system_admin', 'super_admin') OR u.role IS NULL)"];
     const params = [];
     let paramIndex = 1;
 
@@ -155,8 +165,8 @@ class ActivityLogService {
 
     if (role) {
       if (role === "non_resident") {
-        conditions.push(`u.role != 'resident'`);
-      } else {
+        conditions.push(`u.role NOT IN ('resident', 'system_admin', 'super_admin')`);
+      } else if (!["system_admin", "super_admin"].includes(role)) {
         conditions.push(`u.role = $${paramIndex}`);
         params.push(role);
         paramIndex++;
@@ -226,7 +236,7 @@ class ActivityLogService {
               al.act_date, al.act_log
        FROM activity_log al
        LEFT JOIN "user" u ON al.user_id = u.id
-       WHERE (u.role != 'system_admin' OR u.role IS NULL)
+       WHERE (u.role NOT IN ('system_admin', 'super_admin') OR u.role IS NULL)
        ORDER BY al.act_date DESC`
     );
 
@@ -254,6 +264,106 @@ class ActivityLogService {
 
     if (adminUserId) {
       logger.logActivity(adminUserId, "Exported MDRRMO audit logs");
+    }
+
+    return csvContent;
+  }
+
+  /**
+   * Super Admin Activity Logs
+   * Displays exclusively Super Admin governance events.
+   */
+  async getSuperAdminActivityLog(queryParams) {
+    const page = parseInt(queryParams.page, 10) || 1;
+    const limit = Math.min(parseInt(queryParams.limit, 10) || 20, 100);
+    const offset = (page - 1) * limit;
+
+    const search = queryParams.search || "";
+    const action = queryParams.action || "";
+
+    const conditions = ["u.role = 'super_admin'"];
+    const params = [];
+    let paramIndex = 1;
+
+    if (search) {
+      conditions.push(`(u.name ILIKE $${paramIndex} OR al.act_log ILIKE $${paramIndex})`);
+      params.push(`%${search}%`);
+      paramIndex++;
+    }
+
+    if (action) {
+      conditions.push(`al.act_log ILIKE $${paramIndex}`);
+      params.push(`%${action}%`);
+      paramIndex++;
+    }
+
+    const whereClause = `WHERE ${conditions.join(" AND ")}`;
+
+    const countQuery = `
+      SELECT COUNT(*) FROM activity_log al
+      LEFT JOIN "user" u ON al.user_id = u.id
+      ${whereClause}
+    `;
+
+    const countResult = await pool.query(countQuery, params);
+    const total = parseInt(countResult.rows[0].count, 10);
+
+    const result = await pool.query(
+      `SELECT al.act_id, al.user_id, u.name AS user_name, u.role AS user_role,
+              al.act_date, al.act_log
+       FROM activity_log al
+       LEFT JOIN "user" u ON al.user_id = u.id
+       ${whereClause}
+       ORDER BY al.act_date DESC, al.act_id DESC
+       LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`,
+      [...params, limit, offset]
+    );
+
+    return {
+      data: result.rows,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
+  }
+
+  async exportSuperAdminActivityLog(adminUserId) {
+    const result = await pool.query(
+      `SELECT al.act_id, al.user_id, u.name AS user_name, u.role AS user_role,
+              al.act_date, al.act_log
+       FROM activity_log al
+       LEFT JOIN "user" u ON al.user_id = u.id
+       WHERE u.role = 'super_admin'
+       ORDER BY al.act_date DESC`
+    );
+
+    const headers = ["ID", "User ID", "User Name", "Role", "Date", "Action"];
+    const rows = result.rows.map((r) => {
+      const escapeCsv = (str) => {
+        if (str === null || str === undefined) return '""';
+        const s = String(str);
+        if (s.includes(",") || s.includes('"') || s.includes("\n") || s.includes("\r")) {
+          return `"${s.replace(/"/g, '""')}"`;
+        }
+        return s;
+      };
+      return [
+        r.act_id,
+        r.user_id,
+        escapeCsv(r.user_name),
+        escapeCsv(r.user_role),
+        new Date(r.act_date).toISOString(),
+        escapeCsv(r.act_log),
+      ].join(",");
+    });
+
+    const csvContent = [headers.join(","), ...rows].join("\n");
+
+    if (adminUserId) {
+      logger.logActivity(adminUserId, "Exported Super Admin governance logs");
     }
 
     return csvContent;

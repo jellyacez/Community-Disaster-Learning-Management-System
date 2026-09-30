@@ -4,6 +4,7 @@ const router = express.Router();
 const requireRole = require("../../middleware/requireRole");
 const pool = require("../../config/db");
 const mdrrmoOverviewService = require("../../services/admin/MdrrmoOverviewService");
+const activityLogService = require("../../services/admin/ActivityLogService");
 
 // 1. Health check
 router.get("/super/ping", requireRole(["super_admin"]), (req, res) => {
@@ -18,7 +19,6 @@ router.get(
     try {
       const { formattedData } = await mdrrmoOverviewService.getSectorOverview();
 
-      // Exclude 'Unassigned' so the chart cleanly reflects the official 21 barangays
       const barangays = (formattedData || [])
         .filter((b) => b.id !== null && b.barangay !== "Unassigned")
         .map((b) => ({
@@ -38,7 +38,41 @@ router.get(
   }
 );
 
-// 3. POST /api/admin/super/impersonate/:userId
+// 3. Super Admin Dedicated Governance Logs
+router.get(
+  "/super/activity-log",
+  requireRole(["super_admin"]),
+  async (req, res) => {
+    try {
+      const result = await activityLogService.getSuperAdminActivityLog(req.query);
+      return res.json({ success: true, ...result });
+    } catch (error) {
+      console.error("SUPER_ADMIN_LOGS_ERROR:", error);
+      return res.status(500).json({ success: false, message: "Failed to fetch Super Admin logs." });
+    }
+  }
+);
+
+router.get(
+  "/super/activity-log/export",
+  requireRole(["super_admin"]),
+  async (req, res) => {
+    try {
+      const csvContent = await activityLogService.exportSuperAdminActivityLog(req.user?.id);
+      res.setHeader("Content-Type", "text/csv");
+      res.setHeader(
+        "Content-Disposition",
+        `attachment; filename=super_admin_governance_logs_${Date.now()}.csv`
+      );
+      return res.status(200).send(csvContent);
+    } catch (error) {
+      console.error("SUPER_ADMIN_EXPORT_LOGS_ERROR:", error);
+      return res.status(500).json({ success: false, message: "Failed to export Super Admin logs." });
+    }
+  }
+);
+
+// 4. POST /api/admin/super/impersonate/:userId
 router.post(
   "/super/impersonate/:userId",
   requireRole(["super_admin"]),
@@ -61,7 +95,6 @@ router.post(
         });
       }
 
-      // Safe query referencing barangay_id directly
       const userResult = await pool.query(
         `SELECT id, name, email, role, barangay_id, barangay_id AS "barangayId"
          FROM public."user"
@@ -78,7 +111,6 @@ router.post(
 
       const targetUser = userResult.rows[0];
 
-      // Set cookies for session impersonation context
       res.cookie("impersonator_id", superAdminId, {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
@@ -110,7 +142,7 @@ router.post(
   }
 );
 
-// 4. POST /api/admin/super/stop-impersonating
+// 5. POST /api/admin/super/stop-impersonating
 router.post("/super/stop-impersonating", async (req, res) => {
   try {
     res.clearCookie("impersonator_id", { path: "/" });
