@@ -9,7 +9,7 @@ import InstallAppPrompt from "./components/pwa/InstallAppPrompt";
 
 const SuperAdminRoot = lazy(() => import("./pages/admin/super/SuperAdminRoot"));
 const SuperOverview = lazy(() => import("./pages/admin/super/overview/SuperOverview"));
-const GovernanceLog = lazy(() => import("./pages/admin/super/logs/GovernanceLog"));
+const GovernanceLog = lazy(() => import("./pages/admin/super/superlog/GovernanceLog"));
 
 const LandingPage = lazy(() => import("./pages/public/LandingPage"));
 const PrivacyPolicyPage = lazy(
