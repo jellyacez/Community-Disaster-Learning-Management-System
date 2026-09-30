@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
+import toast from "react-hot-toast";
 import ModuleBuilderWizard from "./builders/ModuleBuilderWizard";
 import DashboardHeader from "./components/DashboardHeader";
 import ModuleGrid from "./components/ModuleGrid";
@@ -90,8 +91,8 @@ export default function ModuleManagement() {
   const handleOpenWizard = () => {
     if (!canCreateModule) {
       toast.error("Access Denied: Insufficient Authority Level");
+      return;
     }
-    return;
     resetForm();
     setIsWizardOpen(true);
   };
@@ -99,8 +100,8 @@ export default function ModuleManagement() {
   const handleEditModule = async (moduleId) => {
     if (!canCreateModule) {
       toast.error("Access Denied: Insufficient Authority Level");
+      return;
     }
-    return;
     resetForm();
     setIsWizardOpen(true);
     if (loadModuleForEdit) {
