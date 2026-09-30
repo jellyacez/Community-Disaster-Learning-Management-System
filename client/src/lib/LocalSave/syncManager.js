@@ -318,7 +318,7 @@ const dispatchTask = async (task) => {
 /**
  * Main synchronization loop to process queued offline tasks
  */
-export const processOfflineQueue = async () => {
+export const processOfflineQueue = async (currentUserId) => {
   if (!navigator.onLine) return;
 
   if (isSyncing) {
@@ -336,12 +336,17 @@ export const processOfflineQueue = async () => {
       retryTimeoutId = null;
     }
 
-    const tasksToProcess = await getAllPendingWrites();
-    if (tasksToProcess.length === 0) {
-      scheduleNextRetryIfNeeded();
-      return;
-    }
 
+    const allTasks = await getAllPendingWrites();
+
+    const tasksToProcess = allTasks.filter(t =>
+          !t.payload?.user_id || t.payload.user_id === currentUserId
+        );
+
+        if (tasksToProcess.length === 0) {
+          scheduleNextRetryIfNeeded();
+          return;
+        }
     console.log(`[SyncManager] Processing ${tasksToProcess.length} queued offline actions...`);
 
     for (const task of tasksToProcess) {
@@ -485,4 +490,3 @@ const scheduleNextRetryIfNeeded = async () => {
     }, delay);
   }
 };
-

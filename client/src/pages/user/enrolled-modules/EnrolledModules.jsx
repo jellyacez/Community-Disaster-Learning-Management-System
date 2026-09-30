@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
-import { Link } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { Link, useOutletContext } from "react-router-dom"; // Added useOutletContext
+import { useUserDashboard } from "../../../hooks/useUserDashboard"; // Imported new hook
 import apiClient from "../../../lib/apiClient";
 import educationImg from "../../../assets/education.svg";
 import ModuleCard from "../../../components/ui/modules/ModuleCard.jsx";
@@ -28,35 +28,10 @@ export default function UserEnrolledModules() {
   const itemsPerPage = 6;
 
   const debouncedSearch = useDebounce(searchInput, 350);
+  const { currentUser } = useOutletContext();
 
-  const { data: dashboardData, isLoading } = useQuery({
-      queryKey: ['userDashboard'],
-      networkMode: "offlineFirst", // Crucial for offline PWA viewing
-      initialData: () => {
-        try {
-          const cached = localStorage.getItem("lms_offline_dashboard");
-          return cached ? JSON.parse(cached) : undefined;
-        } catch {
-          return undefined;
-        }
-      },
-      queryFn: async () => {
-        try {
-          const response = await apiClient.get('/user/dashboard');
-          // Save the latest successful payload for offline use
-          localStorage.setItem("lms_offline_dashboard", JSON.stringify(response.data));
-          return response.data;
-        } catch (err) {
-          // Fallback to offline cache if network fails
-          if (!navigator.onLine || err.code === "ERR_NETWORK") {
-            const cached = localStorage.getItem("lms_offline_dashboard");
-            if (cached) return JSON.parse(cached);
-          }
-          throw err;
-        }
-      },
-      refetchInterval: 60000, // Background polling every 60s
-    });
+  // Replaced useQuery with the unified dashboard hook
+  const { data: dashboardData, isLoading } = useUserDashboard(currentUser?.id);
 
   // Normalize dataset
   const enrolledModules = useMemo(() => {
@@ -121,7 +96,6 @@ export default function UserEnrolledModules() {
     return list;
   }, [enrolledModules, activeTab, selectedCategory, debouncedSearch]);
 
-  // Reset pagination on filter changes
   useEffect(() => {
     setCurrentPage(1);
   }, [debouncedSearch, activeTab, selectedCategory]);
@@ -140,79 +114,46 @@ export default function UserEnrolledModules() {
 
   return (
     <div className="animate-in fade-in duration-300 space-y-6">
-      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-black text-gray-900 tracking-tight">
-            Enrolled Modules
-          </h1>
+          <h1 className="text-3xl font-black text-gray-900 tracking-tight">Enrolled Modules</h1>
           <p className="mt-1 text-sm font-medium text-gray-500">
             Keep track of your training progress and resume courses where you left off.
           </p>
         </div>
-        <Link
-          to="/user/modules"
-          className="inline-flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl text-sm transition-all shadow-sm self-start sm:self-auto cursor-pointer"
-        >
+        <Link to="/user/modules" className="inline-flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl text-sm transition-all shadow-sm self-start sm:self-auto cursor-pointer">
           <HugeiconsIcon icon={Book01Icon} className="w-4 h-4" />
           <span>Explore Catalog</span>
         </Link>
       </div>
 
-      {/* Unified Organized Controls Bar */}
       {enrolledModules.length > 0 && (
         <div className="bg-white p-4 rounded-2xl border border-gray-200 shadow-sm flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
-          {/* Status Tabs */}
           <div className="flex flex-wrap gap-2">
             {tabs.map((tab) => (
               <button
                 key={tab.key}
                 onClick={() => { setActiveTab(tab.key); setSearchInput(""); }}
                 className={`flex items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-bold transition-all duration-200 cursor-pointer ${
-                  activeTab === tab.key
-                    ? "bg-red-600 text-white shadow-sm"
-                    : "bg-gray-50 text-gray-600 border border-gray-200 hover:bg-gray-100"
+                  activeTab === tab.key ? "bg-red-600 text-white shadow-sm" : "bg-gray-50 text-gray-600 border border-gray-200 hover:bg-gray-100"
                 }`}
               >
                 <HugeiconsIcon icon={tab.icon} className="w-3.5 h-3.5" />
                 <span>{tab.label}</span>
-                <span
-                  className={`rounded-full px-2 py-0.5 text-[11px] font-bold ${
-                    activeTab === tab.key
-                      ? "bg-white/20 text-white"
-                      : "bg-gray-200 text-gray-700"
-                  }`}
-                >
+                <span className={`rounded-full px-2 py-0.5 text-[11px] font-bold ${activeTab === tab.key ? "bg-white/20 text-white" : "bg-gray-200 text-gray-700"}`}>
                   {tab.count}
                 </span>
               </button>
             ))}
           </div>
 
-          {/* Search + Category Filter */}
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 flex-1 md:justify-end">
-            <SearchBar
-              value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
-              onClear={() => setSearchInput("")}
-              placeholder="Search enrolled modules..."
-              ariaLabel="Search enrolled modules"
-              containerClassName="relative w-full sm:w-72"
-            />
-
+            <SearchBar value={searchInput} onChange={(e) => setSearchInput(e.target.value)} onClear={() => setSearchInput("")} placeholder="Search enrolled modules..." ariaLabel="Search enrolled modules" containerClassName="relative w-full sm:w-72" />
             {categories.length > 1 && (
               <div className="relative min-w-[150px]">
-                <select
-                  value={selectedCategory}
-                  onChange={(e) => setSelectedCategory(e.target.value)}
-                  className="w-full py-2 pl-3 pr-8 text-xs font-medium bg-white border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-colors cursor-pointer"
-                >
+                <select value={selectedCategory} onChange={(e) => setSelectedCategory(e.target.value)} className="w-full py-2 pl-3 pr-8 text-xs font-medium bg-white border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-colors cursor-pointer">
                   <option value="all">All Categories</option>
-                  {categories.map((cat) => (
-                    <option key={cat} value={cat}>
-                      {cat}
-                    </option>
-                  ))}
+                  {categories.map((cat) => (<option key={cat} value={cat}>{cat}</option>))}
                 </select>
               </div>
             )}
@@ -220,32 +161,16 @@ export default function UserEnrolledModules() {
         </div>
       )}
 
-      {/* Module Content Grid */}
       {isLoading ? (
         <div className="grid gap-5 lg:grid-cols-2">
-          {[1, 2].map((i) => (
-            <ModuleSkeleton key={i} />
-          ))}
+          {[1, 2].map((i) => <ModuleSkeleton key={i} />)}
         </div>
       ) : enrolledModules.length === 0 ? (
         <div className="flex flex-col items-center justify-center p-12 text-center bg-white rounded-3xl border border-gray-200 shadow-sm">
-          <img
-            src={educationImg}
-            alt="Education Mascot"
-            className="w-56 h-56 mb-6 opacity-90 drop-shadow-sm transition-transform hover:-translate-y-2 duration-500 ease-out"
-          />
-          <h2 className="text-2xl font-extrabold text-gray-900 mb-2">
-            No Enrolled Modules Yet
-          </h2>
-          <p className="text-gray-500 mb-6 max-w-md text-sm">
-            You have not enrolled in any training modules yet. Enroll today to start learning disaster response principles and earn recognized certifications.
-          </p>
-          <Link
-            to="/user/modules"
-            className="px-8 py-3.5 bg-red-600 hover:bg-red-700 text-white font-bold rounded-2xl shadow-sm hover:-translate-y-0.5 transition-all duration-300"
-          >
-            Browse Module Catalog
-          </Link>
+          <img src={educationImg} alt="Education Mascot" className="w-56 h-56 mb-6 opacity-90 drop-shadow-sm transition-transform hover:-translate-y-2 duration-500 ease-out" />
+          <h2 className="text-2xl font-extrabold text-gray-900 mb-2">No Enrolled Modules Yet</h2>
+          <p className="text-gray-500 mb-6 max-w-md text-sm">You have not enrolled in any training modules yet. Enroll today to start learning disaster response principles and earn recognized certifications.</p>
+          <Link to="/user/modules" className="px-8 py-3.5 bg-red-600 hover:bg-red-700 text-white font-bold rounded-2xl shadow-sm hover:-translate-y-0.5 transition-all duration-300">Browse Module Catalog</Link>
         </div>
       ) : filteredModules.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 text-center bg-white rounded-3xl border border-gray-200 shadow-sm">
@@ -266,12 +191,7 @@ export default function UserEnrolledModules() {
               <HugeiconsIcon icon={CheckmarkCircle02Icon} className="w-12 h-12 text-green-500 mb-4" />
               <h3 className="text-xl font-bold text-gray-900 mb-2">All caught up!</h3>
               <p className="text-gray-500 max-w-sm text-sm mb-4">You have completed all your enrolled modules. Browse the catalog for new training opportunities.</p>
-              <Link
-                to="/user/modules"
-                className="px-6 py-2.5 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl text-sm transition-all shadow-sm"
-              >
-                Browse Module Catalog
-              </Link>
+              <Link to="/user/modules" className="px-6 py-2.5 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl text-sm transition-all shadow-sm">Browse Module Catalog</Link>
             </>
           )}
         </div>
@@ -282,16 +202,7 @@ export default function UserEnrolledModules() {
               <ModuleCard key={module.id} module={module} enrolled={true} />
             ))}
           </div>
-
-          {/* Pagination Controls */}
-          <PaginationControls
-            currentPage={currentPage}
-            totalPages={totalPages}
-            onPageChange={setCurrentPage}
-            totalItems={filteredModules.length}
-            itemsPerPage={itemsPerPage}
-            itemName="modules"
-          />
+          <PaginationControls currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} totalItems={filteredModules.length} itemsPerPage={itemsPerPage} itemName="modules" />
         </div>
       )}
     </div>

@@ -3,7 +3,7 @@ import { useOutletContext, useLocation, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import apiClient from "../../../lib/apiClient";
 import { useOfflineSession } from "../../../hooks/offlineSession";
-
+import { useUserDashboard } from "../../../hooks/useUserDashboard";
 import WelcomeModal from "../../../components/ui/modals/WelcomeModal.jsx";
 import DashboardStats from "../../../components/ui/dashboard/DashboardStats.jsx";
 import DashboardEnrolledList from "../../../components/ui/dashboard/DashboardEnrolledList.jsx";
@@ -24,9 +24,7 @@ import {
 const DASHBOARD_CACHE_KEY = "lms_offline_dashboard";
 const ANNOUNCEMENTS_CACHE_KEY = "lms_offline_announcements";
 
-function getUserDashboardCacheKey(userId) {
-  return userId ? `lms_offline_dashboard_${userId}` : DASHBOARD_CACHE_KEY;
-}
+
 
 function readLocalCache(key) {
   if (!key) return undefined;
@@ -95,6 +93,7 @@ function organizeAnnouncements(rawList = []) {
 export default function UserDashboard() {
   useDocumentTitle("Dashboard | Bacolor LMS");
   const { currentUser } = useOutletContext();
+  const { data: dashboardData, isLoading: loading } = useUserDashboard(currentUser?.id);
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -108,47 +107,12 @@ export default function UserDashboard() {
 
   const currentUserId = currentUser?.id;
   const currentUserEmail = currentUser?.email?.toLowerCase();
-  const dashboardCacheKey = useMemo(
-    () => getUserDashboardCacheKey(currentUserId),
-    [currentUserId],
-  );
 
-  // 1. Fetch Main Dashboard Data (scoped to current authenticated user)
-  const {
-    data: dashboardData,
-    isLoading: loading,
-  } = useQuery({
-    queryKey: ["userDashboard", currentUserId || "guest"],
-    networkMode: "offlineFirst",
-    initialData: () => {
-      if (!currentUserId) return undefined;
-      const cached = readLocalCache(dashboardCacheKey);
-      if (!cached) return undefined;
-      const cachedDetails = cached.userDetails || cached.data?.userDetails;
-      if (
-        (cachedDetails?.id && String(cachedDetails.id) !== String(currentUserId)) ||
-        (cachedDetails?.email && currentUserEmail && cachedDetails.email.toLowerCase() !== currentUserEmail)
-      ) {
-        return undefined;
-      }
-      return cached;
-    },
-    queryFn: async () => {
-      try {
-        const response = await apiClient.get("/user/dashboard");
-        if (currentUserId) {
-          writeLocalCache(dashboardCacheKey, response.data);
-        }
-        return response.data;
-      } catch (err) {
-        const cached = readLocalCache(dashboardCacheKey);
-        if (cached) return cached;
-        throw err;
-      }
-    },
-  });
 
-  // 2. Dedicated Query to pull announcements (with offline localStorage fallback)
+
+
+
+
   const {
     data: announcementsData,
     isLoading: announcementsLoading,

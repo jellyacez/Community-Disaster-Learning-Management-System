@@ -76,43 +76,33 @@ export default function UserSidebar({
   const { resetTheme } = useTheme();
 
   const confirmLogout = async () => {
-    try {
-      localStorage.removeItem("lms_offline_session");
-      sessionStorage.setItem("isLoggingOut", "true");
-
       try {
-        Object.keys(localStorage).forEach((key) => {
-          if (key.startsWith("lms_offline_dashboard")) {
-            localStorage.removeItem(key);
+        // Safely sweep ALL offline caches
+        const keysToRemove = [];
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          if (key && key.startsWith('lms_offline_')) {
+            keysToRemove.push(key);
           }
-        });
-        Object.keys(sessionStorage).forEach((key) => {
-          if (
-            key.startsWith("hasSeenWelcome") ||
-            key.startsWith("newlyRegistered")
-          ) {
-            sessionStorage.removeItem(key);
-          }
-        });
+        }
+        keysToRemove.forEach(k => localStorage.removeItem(k));
+
+        sessionStorage.setItem("isLoggingOut", "true");
+        queryClient.cancelQueries();
+        queryClient.clear();
+        resetTheme();
+
+        if (navigator.onLine) {
+          await authClient.signOut();
+        }
+        toast.success("Successfully logged out!");
       } catch {
-        // Ignore storage errors
+        toast.success("Logged out locally.");
+      } finally {
+        setIsLogoutModalOpen(false);
+        navigate("/signin", { replace: true });
       }
-
-      queryClient.cancelQueries();
-      queryClient.clear();
-      resetTheme();
-
-      if (navigator.onLine) {
-        await authClient.signOut();
-      }
-      toast.success("Successfully logged out!");
-    } catch {
-      toast.success("Logged out locally.");
-    } finally {
-      setIsLogoutModalOpen(false);
-      navigate("/signin", { replace: true });
-    }
-      };
+    };
 
   useEffect(() => {
     const updatePillPosition = () => {
