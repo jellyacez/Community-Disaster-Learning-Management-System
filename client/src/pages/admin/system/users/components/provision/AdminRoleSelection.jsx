@@ -11,7 +11,31 @@ export default function AdminRoleSelection({ formData, setFormData }) {
         <label className="block text-sm font-semibold text-gray-700 dark:text-slate-300 mb-1.5">
           Admin Role
         </label>
-        <div className={`grid ${isSuperAdmin ? "grid-cols-2 sm:grid-cols-2" : "grid-cols-2"} gap-3`}>
+        <div className="grid grid-cols-2 gap-3">
+          {isSuperAdmin && (
+            <label
+              className={`relative flex items-center justify-center px-4 py-3 border rounded-xl cursor-pointer transition-all ${
+                formData.role === "super_admin"
+                  ? "border-amber-500 dark:border-amber-500 bg-amber-50/50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 ring-1 ring-amber-500"
+                  : "border-gray-200 dark:border-slate-700 text-gray-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-800"
+              }`}
+            >
+              <input
+                type="radio"
+                className="sr-only"
+                checked={formData.role === "super_admin"}
+                onChange={() =>
+                  setFormData({
+                    ...formData,
+                    role: "super_admin",
+                    barangay: "",
+                  })
+                }
+              />
+              <span className="text-sm font-medium">Super Admin</span>
+            </label>
+          )}
+
           {isSuperAdmin && (
             <label
               className={`relative flex items-center justify-center px-4 py-3 border rounded-xl cursor-pointer transition-all ${

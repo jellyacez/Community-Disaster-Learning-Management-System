@@ -55,6 +55,14 @@ exports.resetUserPassword = async (req, res) => {
     }
     const user = userResult.rows[0];
 
+    // Explicit safeguard: non-super_admin cannot touch a super_admin's password
+    if (user.role === 'super_admin' && adminContext.role !== 'super_admin') {
+      return res.status(403).json({
+        success: false,
+        message: "SECURITY_FAULT: Only a Super Administrator can reset the password of a Super Administrator account.",
+      });
+    }
+
     // Enforce rank hierarchy unless caller is super_admin
     if (adminContext.role !== 'super_admin') {
       assertActorOutranksTarget(adminContext.role, user.role);

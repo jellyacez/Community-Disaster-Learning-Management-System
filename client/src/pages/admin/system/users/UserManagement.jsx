@@ -30,7 +30,6 @@ export default function UserManagement() {
         sessionStorage.setItem("impersonated_target_user", userPayload);
         localStorage.setItem("impersonated_target_user", userPayload);
 
-        // Normalize resident vs user role redirect
         if (targetUser.role === "resident" || targetUser.role === "user") {
           window.location.href = "/userDashboard";
         } else if (targetUser.role === "barangay_admin") {
@@ -44,6 +43,35 @@ export default function UserManagement() {
     } catch (err) {
       console.error("Impersonation failed:", err);
       alert(err.response?.data?.error || "Could not switch identity to this user.");
+    }
+  };
+
+  const handleBulkArchive = () => {
+    // Exclude any super_admin accounts to comply with backend constraints
+    const selectedUsers = state.users.filter((u) => state.selectedUserIds.has(u.id));
+    const targetIds = selectedUsers
+      .filter((u) => u.role !== "super_admin")
+      .map((u) => u.id);
+
+    if (targetIds.length === 0) {
+      alert("No valid accounts selected for archiving. Super Admin accounts cannot be archived.");
+      return;
+    }
+
+    if (
+      window.confirm(
+        `Are you sure you want to archive ${targetIds.length} selected user${
+          targetIds.length !== 1 ? "s" : ""
+        }?`
+      )
+    ) {
+      actions.handleSave({
+        type: "bulk_archive",
+        data: {
+          userIds: targetIds,
+          archived: true,
+        },
+      });
     }
   };
 
@@ -81,25 +109,11 @@ export default function UserManagement() {
 
       <BulkActionBar
         selectedCount={state.selectedUserIds.size}
-        onArchive={() => {
-          const count = state.selectedUserIds.size;
-          if (window.confirm(`Are you sure you want to archive ${count} selected user${count !== 1 ? 's' : ''}?`)) {
-            actions.handleSave({
-              type: "bulk_archive",
-              data: {
-                userIds: Array.from(state.selectedUserIds),
-                archived: true,
-              },
-            });
-          }
-        }}
+        onArchive={handleBulkArchive}
         onCancel={() => actions.setSelectedUserIds(new Set())}
-        isPending={
-          state.isMutationPending && state.mutationType === "bulk_archive"
-        }
+        isPending={state.isMutationPending && state.mutationType === "bulk_archive"}
       />
 
-      {/* Table Area */}
       <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm">
         <div className="px-6 py-4 border-b border-gray-50 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
@@ -113,7 +127,7 @@ export default function UserManagement() {
 
           <button
             onClick={() => actions.setShowProvisionModal(true)}
-            className="flex items-center justify-center gap-2 px-3 py-1.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors w-full sm:w-auto"
+            className="flex items-center justify-center gap-2 px-3 py-1.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors w-full sm:w-auto cursor-pointer"
           >
             <HugeiconsIcon icon={UserAdd01Icon} size={16} />
             <span>Add Admin</span>
@@ -133,7 +147,6 @@ export default function UserManagement() {
           onImpersonate={handleImpersonate}
         />
 
-        {/* Pagination */}
         <UserTablePagination
           isLoading={state.isLoading}
           meta={state.meta}
@@ -143,7 +156,6 @@ export default function UserManagement() {
         />
       </div>
 
-      {/* Modals */}
       {state.selectedUser && (
         <UserActionModal
           user={state.selectedUser}

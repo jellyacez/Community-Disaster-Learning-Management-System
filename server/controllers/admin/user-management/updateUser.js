@@ -23,6 +23,14 @@ exports.updateUser = async (req, res) => {
     return res.status(401).json({ success: false, message: "Unauthorized." });
   }
 
+  // Anti-Lockout Safeguard: Cannot archive or ban yourself
+  if (String(adminContext.id) === String(id) && (archived === true || archived === "true")) {
+    return res.status(400).json({
+      success: false,
+      message: "Action prohibited: You cannot archive or deactivate your own administrative account.",
+    });
+  }
+
   try {
     let fetchQuery = 'SELECT id, role FROM "user" WHERE id = $1';
     let fetchValues = [id];
@@ -43,6 +51,14 @@ exports.updateUser = async (req, res) => {
     }
 
     const targetUser = fetchResult.rows[0];
+
+    // Non-super_admin cannot edit a super_admin
+    if (targetUser.role === 'super_admin' && adminContext.role !== 'super_admin') {
+      return res.status(403).json({
+        success: false,
+        message: "SECURITY_FAULT: Only a Super Admin can modify another Super Admin account.",
+      });
+    }
 
     // super_admin outranks all subordinate roles; otherwise enforce standard hierarchy
     if (adminContext.role !== 'super_admin') {

@@ -20,11 +20,14 @@ exports.provisionAdmin = async (req, res) => {
     });
   }
 
+  const isSuperAdmin = req.user?.role === "super_admin";
+
   const provisionableRoles = [
     "barangay_admin",
     "mdrrmo_admin",
     "head_mdrrmo_admin",
     "system_admin",
+    ...(isSuperAdmin ? ["super_admin"] : []),
   ];
 
   if (!provisionableRoles.includes(role)) {
@@ -36,7 +39,7 @@ exports.provisionAdmin = async (req, res) => {
   }
 
   // Hierarchy enforcement: super_admin bypasses
-  if (req.user?.role !== "super_admin") {
+  if (!isSuperAdmin) {
     try {
       assertCanProvision(req.user.role, role);
     } catch (hierarchyErr) {

@@ -25,8 +25,25 @@ exports.updateUserRole = async (req, res) => {
     return res.status(401).json({ success: false, message: 'Unauthorized' });
   }
 
+  const isSuperAdmin = adminContext.role === 'super_admin';
+
+  // Strict Safeguard: Only super_admin can grant the super_admin role
+  if (role === 'super_admin' && !isSuperAdmin) {
+    return res.status(403).json({
+      success: false,
+      message: 'SECURITY_FAULT: Only a Super Admin can promote accounts to Super Admin.',
+    });
+  }
+
+  // Self-demotion safeguard
+  if (String(adminContext.id) === String(id) && role !== adminContext.role) {
+    return res.status(400).json({
+      success: false,
+      message: 'Action forbidden: You cannot modify or demote your own administrative role.',
+    });
+  }
+
   try {
-    // 1. Enforce actor scope
     let fetchQuery = 'SELECT id, email, role, barangay_id FROM "user" WHERE id = $1';
     let fetchParams = [id];
 
@@ -46,14 +63,21 @@ exports.updateUserRole = async (req, res) => {
     }
 
     const targetUser = targetRes.rows[0];
+
+    // Non-super_admin cannot touch an existing super_admin
+    if (targetUser.role === 'super_admin' && !isSuperAdmin) {
+      return res.status(403).json({
+        success: false,
+        message: 'SECURITY_FAULT: Only a Super Admin can modify an existing Super Admin account.',
+      });
+    }
+
     const adminRank = ROLE_RANKS[adminContext.role] || 0;
     const targetCurrentRank = ROLE_RANKS[targetUser.role] || 0;
     const newRoleRank = ROLE_RANKS[role] || 0;
 
-    // 2. Enforce role hierarchy:
-    // super_admin bypasses restrictions; others cannot touch equal or higher rank
-    const isSuperOrSystem = adminContext.role === 'super_admin' || adminContext.role === 'system_admin';
-    if (!isSuperOrSystem) {
+    // Standard hierarchy for non-super_admin actors
+    if (!isSuperAdmin) {
       if (targetCurrentRank >= adminRank) {
         throw new Error(`SECURITY_FAULT: Cannot modify role of a user with equal or higher role rank (${targetUser.role}).`);
       }
@@ -62,7 +86,7 @@ exports.updateUserRole = async (req, res) => {
       }
     }
 
-    // Failsafe: Prevent last system_admin or super_admin from self-demoting
+    // Failsafe: Prevent last system_admin or super_admin from demoting out of existence
     if (targetUser.role === 'system_admin' && role !== 'system_admin') {
       const sysAdminCount = await pool.query('SELECT COUNT(*) FROM "user" WHERE role = \'system_admin\'');
       if (parseInt(sysAdminCount.rows[0].count, 10) <= 1) {

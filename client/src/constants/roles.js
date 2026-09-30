@@ -6,5 +6,6 @@ export const MODULE_VIEWER_ROLES = [
   "system_admin",
   "mdrrmo_admin",
   "head_mdrrmo_admin",
-  "system_admin"
+  "system_admin",
+  "super_admin"
 ];
