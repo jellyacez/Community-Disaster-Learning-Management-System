@@ -1,13 +1,17 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, lazy, Suspense } from "react";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { RefreshIcon, QrCodeIcon } from "@hugeicons/core-free-icons";
 import apiClient from "../../../../lib/apiClient";
-import CertificateVerificationModal from "../../../../components/ui/certificates/CertificateVerificationModal";
+import Spinner from "../../../../components/ui/Spinner";
 import useDebounce from "../../../../hooks/useDebounce";
 import CertificationsKpiRow from "./components/CertificationsKpiRow";
 import CertificationsFilterBar from "./components/CertificationsFilterBar";
 import CertificationsTable from "./components/CertificationsTable";
+
+const CertificateVerificationModal = lazy(() =>
+  import("../../../../components/ui/certificates/CertificateVerificationModal")
+);
 
 const fetchBarangayCertifications = async ({ page, limit, search, moduleId, status }) => {
   const params = new URLSearchParams();
@@ -33,6 +37,7 @@ export default function BarangayCertifications() {
 
   // Reset pagination to page 1 whenever filters or limit change
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setPage(1);
   }, [debouncedSearch, selectedModule, selectedStatus, limit]);
 
@@ -146,10 +151,25 @@ export default function BarangayCertifications() {
       />
 
       {/* In-Portal Certificate Verification Modal */}
-      <CertificateVerificationModal
-        isOpen={isVerifyModalOpen}
-        onClose={() => setIsVerifyModalOpen(false)}
-      />
+      {isVerifyModalOpen && (
+        <Suspense
+          fallback={
+            <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-in fade-in duration-200">
+              <div className="relative w-full max-w-sm rounded-2xl bg-white dark:bg-slate-900 shadow-2xl p-8 border border-gray-100 dark:border-slate-800 flex flex-col items-center justify-center gap-3">
+                <Spinner className="w-8 h-8 text-red-600 animate-spin" />
+                <p className="text-sm font-semibold text-gray-700 dark:text-slate-300">
+                  Loading scanner...
+                </p>
+              </div>
+            </div>
+          }
+        >
+          <CertificateVerificationModal
+            isOpen={isVerifyModalOpen}
+            onClose={() => setIsVerifyModalOpen(false)}
+          />
+        </Suspense>
+      )}
     </div>
   );
 }

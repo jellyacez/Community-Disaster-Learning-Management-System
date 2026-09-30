@@ -17,7 +17,7 @@ export default function CurriculumReadinessCard({
   moduleLimit,
 }) {
   return (
-    <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm lg:col-span-5 flex flex-col justify-between">
+    <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-[0_2px_12px_-3px_rgba(0,0,0,0.06)] flex flex-col justify-between h-full flex-1 w-full">
       <div className="flex items-center justify-between border-b border-gray-100 dark:border-slate-800 pb-3">
         <div>
           <h3 className="text-sm font-bold text-gray-900 dark:text-white">Curriculum Readiness</h3>
