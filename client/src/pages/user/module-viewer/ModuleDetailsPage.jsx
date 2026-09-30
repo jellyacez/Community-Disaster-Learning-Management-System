@@ -70,16 +70,43 @@ export default function ModuleDetailsPage() {
   const queryClient = useQueryClient();
   
   const { data: session } = authClient.useSession();
-  const isAdmin = session?.user?.role && ADMIN_ROLES.includes(session.user.role);
+
+  // Read impersonated target if active
+  const impersonatedTarget = useMemo(() => {
+    try {
+      const stored =
+        sessionStorage.getItem("impersonated_target_user") ||
+        localStorage.getItem("impersonated_target_user");
+      if (!stored) return null;
+      const parsed = JSON.parse(stored);
+      return parsed.targetUser || parsed.user || parsed;
+    } catch {
+      return null;
+    }
+  }, [location.pathname]);
+
+  const effectiveUser = impersonatedTarget || session?.user;
+  const userRole = effectiveUser?.role;
+
+  // Strict check: if the path is under /admin/* or role is administrative
+  const isAdminRoute = location.pathname.startsWith("/admin");
+  const isAdmin =
+    isAdminRoute ||
+    userRole === "super_admin" ||
+    userRole === "system_admin" ||
+    userRole === "mdrrmo_admin" ||
+    userRole === "head_mdrrmo_admin" ||
+    userRole === "barangay_admin" ||
+    (userRole && Array.isArray(ADMIN_ROLES) && ADMIN_ROLES.includes(userRole));
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ["moduleDetails", id],
     queryFn: () => fetchModuleDetails(id),
-    retry: 1
+    retry: 1,
   });
 
   const handleEnroll = async () => {
-    if (isEnrolling) return;
+    if (isEnrolling || isAdmin) return;
     setIsEnrolling(true);
     try {
       const res = await apiClient.post(`/modules/${id}/enroll`);
@@ -156,7 +183,7 @@ export default function ModuleDetailsPage() {
 
   const { module, levels = [] } = data;
   
-  const isEnrolled = Boolean(module.is_enrolled);
+  const isEnrolled = !isAdmin && Boolean(module.is_enrolled);
   const currentProgress = parseInt(module.progress || 0, 10);
   const isCompleted = isEnrolled && (module.status === "Completed" || currentProgress === 100);
   const isLocked = !isAdmin && !isEnrolled && Boolean(module.is_locked);
@@ -231,22 +258,25 @@ export default function ModuleDetailsPage() {
           </div>
 
           <div className="space-y-3.5">
-            <div className="w-full space-y-1.5">
-              <div className="flex justify-between items-center text-xs">
-                <span className="font-medium text-gray-500 dark:text-slate-400">Course Progress</span>
-                <span className={`font-semibold ${isCompleted ? "text-emerald-600 dark:text-emerald-400" : isEnrolled ? "text-gray-700 dark:text-slate-300" : "text-gray-400 dark:text-slate-500"}`}>
-                  {isEnrolled ? `${currentProgress}%` : isLocked ? "Locked" : "Not Enrolled"}
-                </span>
+            {/* Show Progress Bar only for learners/residents */}
+            {!isAdmin && (
+              <div className="w-full space-y-1.5">
+                <div className="flex justify-between items-center text-xs">
+                  <span className="font-medium text-gray-500 dark:text-slate-400">Course Progress</span>
+                  <span className={`font-semibold ${isCompleted ? "text-emerald-600 dark:text-emerald-400" : isEnrolled ? "text-gray-700 dark:text-slate-300" : "text-gray-400 dark:text-slate-500"}`}>
+                    {isEnrolled ? `${currentProgress}%` : isLocked ? "Locked" : "Not Enrolled"}
+                  </span>
+                </div>
+                <div className="h-2 w-full overflow-hidden rounded-full bg-gray-100 dark:bg-slate-800">
+                  <div
+                    className={`h-full rounded-full transition-all duration-500 ease-out ${
+                      isCompleted ? "bg-emerald-500" : isEnrolled ? "bg-red-600" : "bg-gray-200 dark:bg-slate-700"
+                    }`}
+                    style={{ width: `${isEnrolled ? currentProgress : 0}%` }}
+                  />
+                </div>
               </div>
-              <div className="h-2 w-full overflow-hidden rounded-full bg-gray-100 dark:bg-slate-800">
-                <div
-                  className={`h-full rounded-full transition-all duration-500 ease-out ${
-                    isCompleted ? "bg-emerald-500" : isEnrolled ? "bg-red-600" : "bg-gray-200 dark:bg-slate-700"
-                  }`}
-                  style={{ width: `${isEnrolled ? currentProgress : 0}%` }}
-                />
-              </div>
-            </div>
+            )}
 
             <div className="pt-0.5">
               {isAdmin ? (
