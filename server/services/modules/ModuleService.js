@@ -586,11 +586,17 @@ class ModuleService {
       };
     });
 
+    const completedStepSet = new Set(completedStepIds);
+    const unlockedLevelIds = levels
+      .filter(level => level.steps.length > 0 && level.steps.every(s => completedStepSet.has(s.id)))
+      .map(level => level.id);
+
     return {
       module: moduleResult.rows[0],
       levels: levels,
       completedStepIds: completedStepIds,
-      passedLevelIds: passedLevelIds
+      passedLevelIds: passedLevelIds,
+      unlockedLevelIds: unlockedLevelIds
     };
   }
 

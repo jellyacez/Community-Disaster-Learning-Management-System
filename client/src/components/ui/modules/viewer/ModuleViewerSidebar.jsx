@@ -59,15 +59,10 @@ export default function ModuleViewerSidebar({
             </div>
             
             <div className="space-y-1.5">
-              {(lvl.steps || []).map((step, idx) => {
-                const isCompleted = completedStepIds.includes(step.id);
-                // Determine if this step is the exact next step available globally
-                // But simplified for the UI: if level is unlocked and step is either completed or next in line, it's clickable.
+              {(lvl.steps || []).map((step) => {
+                const isCompleted = step.isCompleted ?? completedStepIds.includes(step.id);
                 const isActive = step.id === activeStepId;
-                
-                // For the sidebar visual, we lock steps in unlocked levels if they haven't completed the previous step
-                const previousStepInLevel = idx > 0 ? lvl.steps[idx - 1] : null;
-                const isStepLocked = isPreviewMode ? false : (!(lvl.isUnlocked || isPreviewMode) || (previousStepInLevel && !completedStepIds.includes(previousStepInLevel.id) && !isCompleted));
+                const isStepLocked = isPreviewMode ? false : Boolean(step.isLocked);
 
                 return (
                   <button

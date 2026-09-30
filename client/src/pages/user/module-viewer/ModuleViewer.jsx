@@ -24,11 +24,13 @@ export default function ModuleViewer() {
     isDataMissing,
     isCompleting,
     handleStepClick,
+    handleNextStep,
     handleCompleteAndContinue,
     handlePrevious,
     getAssessmentForStep,
     loopBackData,
-    acknowledgeLoopBack
+    acknowledgeLoopBack,
+    retryCount,
   } = useModuleViewer(moduleId);
 
   useDocumentTitle(moduleData?.title ? `${moduleData.title} | Bacolor LMS` : 'Module Viewer');
@@ -85,10 +87,12 @@ export default function ModuleViewer() {
         totalSteps={allSteps.length}
         handlePrevious={handlePrevious}
         handleCompleteAndContinue={handleCompleteAndContinue}
+        handleNextStep={handleNextStep}
         isCompleting={isCompleting}
         getAssessmentForStep={getAssessmentForStep}
         loopBackData={loopBackData}
         acknowledgeLoopBack={acknowledgeLoopBack}
+        retryCount={retryCount}
         navigate={navigate}
         setIsSidebarOpen={setIsSidebarOpen}
       />

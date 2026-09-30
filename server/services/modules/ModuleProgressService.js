@@ -126,13 +126,7 @@ class ModuleProgressService {
              if (prevStepResult.rowCount > 0) {
                  dynamicLoopBackId = prevStepResult.rows[0].step_id;
              } else {
-                 const firstStepResult = await pool.query(
-                     `SELECT step_id FROM module_steps WHERE level_id = $1 ORDER BY step_order ASC LIMIT 1`,
-                     [step.level_id]
-                 );
-                 if (firstStepResult.rowCount > 0) {
-                     dynamicLoopBackId = firstStepResult.rows[0].step_id;
-                 }
+                 dynamicLoopBackId = null;
              }
         }
 

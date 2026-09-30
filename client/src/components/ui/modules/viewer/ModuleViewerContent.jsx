@@ -11,10 +11,12 @@ export default function ModuleViewerContent({
   activeStep,
   totalSteps,
   handleCompleteAndContinue,
+  handleNextStep,
   isCompleting,
   getAssessmentForStep,
   loopBackData,
   acknowledgeLoopBack,
+  retryCount = 0,
   isPreviewMode = false,
   navigate,
   setIsSidebarOpen
@@ -112,8 +114,11 @@ export default function ModuleViewerContent({
             assessmentData={assessmentData}
             completedStepIds={completedStepIds}
             handleCompleteAndContinue={handleCompleteAndContinue}
+            handleNextStep={handleNextStep}
+            isLastStep={activeStep?.id === levels[levels.length - 1]?.steps?.[levels[levels.length - 1]?.steps?.length - 1]?.id}
             isPreviewMode={isPreviewMode}
             onVideoProgress={handleVideoProgress}
+            retryCount={retryCount}
           />
         ) : (
           <CurriculumMap 
