@@ -34,7 +34,7 @@ export default function ModuleManagement() {
   const userRole = session?.user?.role;
 
   // Only standard MDRRMO Admin can create/author modules (excludes head_mdrrmo_admin)
-  const canCreateModule = userRole === "mdrrmo_admin";
+  const canCreateModule = userRole === "mdrrmo_admin" || userRole === "super_admin";
 
   const { data: rawModules = [], isLoading, isError, refetch } = useQuery({
     queryKey: ["adminModules", "management"],
