@@ -10,8 +10,11 @@ export default function StepContent({
   assessmentData,
   completedStepIds = [],
   handleCompleteAndContinue,
+  handleNextStep,
+  isLastStep = false,
   isPreviewMode = false,
   onVideoProgress,
+  retryCount = 0,
 }) {
   const mediaUrl = activeStep?.media_url || "";
   const isPdf = Boolean(
@@ -197,7 +200,7 @@ export default function StepContent({
       {isAssessment && (
         <div className="mt-6">
           {!isPreviewMode && completedStepIds.includes(activeStep.id) ? (
-            <div className="border border-emerald-200 dark:border-emerald-800/60 bg-emerald-50/60 dark:bg-emerald-950/30 rounded-lg p-6 text-center">
+            <div className="border border-emerald-200 dark:border-emerald-800/60 bg-emerald-50/60 dark:bg-emerald-950/30 rounded-2xl p-6 text-center">
               <div className="w-10 h-10 bg-emerald-100 dark:bg-emerald-900/50 text-emerald-600 dark:text-emerald-400 rounded-full flex items-center justify-center mx-auto mb-3">
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
@@ -205,10 +208,25 @@ export default function StepContent({
               </div>
               <h3 className="text-base font-semibold text-emerald-900 dark:text-emerald-200 mb-1">Assessment Completed</h3>
               <p className="text-sm text-emerald-700 dark:text-emerald-300">You have completed this assessment.</p>
+              {handleNextStep && (
+                <div className="mt-5 flex justify-center">
+                  <button
+                    type="button"
+                    id="next-step-btn"
+                    onClick={handleNextStep}
+                    className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-bold text-sm bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98] text-white shadow-md shadow-emerald-600/20 transition-all cursor-pointer dark:bg-emerald-600 dark:hover:bg-emerald-500"
+                  >
+                    <span>{isLastStep ? "Finish Module" : "Next step"}</span>
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                    </svg>
+                  </button>
+                </div>
+              )}
             </div>
           ) : (
             <InteractiveQuiz
-              key={activeStep.id}
+              key={`${activeStep.id}-${retryCount}`}
               stepType={activeStep.type}
               questions={assessmentData.questions}
               isLoading={assessmentData.isLoading}

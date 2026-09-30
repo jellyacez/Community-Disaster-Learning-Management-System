@@ -197,7 +197,7 @@ const auth = betterAuth({
       "http://localhost:4173",
     ];
   })(),
-  autoSignIn: true,
+  autoSignIn: false, // Must be false — autoSignIn: true skips sendVerificationEmail
 });
 
 module.exports = { auth };

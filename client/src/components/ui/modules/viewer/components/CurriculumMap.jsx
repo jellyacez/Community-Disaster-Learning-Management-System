@@ -240,15 +240,9 @@ function LevelContentCard({
 
       {/* Steps List */}
       <div className="space-y-2.5">
-        {(lvl.steps || []).map((step, sIdx) => {
-          const isCompleted = completedStepIds.includes(step.id);
-          const previousStepInLevel = sIdx > 0 ? lvl.steps[sIdx - 1] : null;
-          const isStepLocked = isPreviewMode
-            ? false
-            : !isLevelUnlocked ||
-              (previousStepInLevel &&
-                !completedStepIds.includes(previousStepInLevel.id) &&
-                !isCompleted);
+        {(lvl.steps || []).map((step) => {
+          const isCompleted = step.isCompleted ?? completedStepIds.includes(step.id);
+          const isStepLocked = isPreviewMode ? false : Boolean(step.isLocked);
 
           return (
             <button

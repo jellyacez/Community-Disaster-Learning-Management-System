@@ -20,6 +20,7 @@ export function useModuleViewer(moduleId) {
   const [activeStepId, setActiveStepId] = useState(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [loopBackData, setLoopBackData] = useState(null); // { message, score, percentage, loopBackStepId }
+  const [retryCount, setRetryCount] = useState(0);
 
   // 1. Fetch module data
   const { data, isLoading, error } = useQuery({
@@ -39,29 +40,42 @@ export function useModuleViewer(moduleId) {
     };
   }, [data?.module]);
 
-  const completedStepIds = data?.completedStepIds || [];
+  const completedStepIds = useMemo(() => data?.completedStepIds || [], [data?.completedStepIds]);
 
   const enhancedLevels = useMemo(() => {
     const levels = data?.levels || [];
-    const passedLevelIds = data?.passedLevelIds || [];
+    const unlockedLevelIds = data?.unlockedLevelIds || [];
 
     return levels.map((lvl, index) => {
       const previousLvl = index > 0 ? levels[index - 1] : null;
+      const hasCompletedStep = (lvl.steps || []).some((s) => completedStepIds.includes(s.id));
       const isUnlocked =
         lvl.level_order === 1 ||
         !lvl.is_locked_by_default ||
-        (previousLvl && passedLevelIds.includes(previousLvl.id));
+        (previousLvl && unlockedLevelIds.includes(previousLvl.id)) ||
+        hasCompletedStep;
+
       return {
         ...lvl,
         title: decodeHtml(lvl.title),
-        steps: (lvl.steps || []).map((s) => ({
-          ...s,
-          title: decodeHtml(s.title),
-        })),
         isUnlocked,
+        steps: (lvl.steps || []).map((s, idx, arr) => {
+          const isCompleted = completedStepIds.includes(s.id);
+          const previousStep = idx > 0 ? arr[idx - 1] : null;
+          const isStepLocked = isCompleted
+            ? false
+            : (!isUnlocked || (previousStep && !completedStepIds.includes(previousStep.id)));
+
+          return {
+            ...s,
+            title: decodeHtml(s.title),
+            isCompleted,
+            isLocked: isStepLocked,
+          };
+        }),
       };
     });
-  }, [data?.levels, data?.passedLevelIds]);
+  }, [data?.levels, data?.unlockedLevelIds, completedStepIds]);
 
   const allSteps = useMemo(() => {
     return enhancedLevels.reduce((acc, lvl) => [...acc, ...(lvl.steps || [])], []);
@@ -267,21 +281,29 @@ export function useModuleViewer(moduleId) {
       return;
     }
 
-    const isCompleted = completedStepIds.includes(step.id);
-    const currentIndex = allSteps.findIndex((s) => s.id === step.id);
-    const previousStep = allSteps[currentIndex - 1];
-    const isNextAvailable =
-      !previousStep || completedStepIds.includes(previousStep.id);
-
     const parentLevel = enhancedLevels.find((l) => l.id === step.level_id);
+    const targetStep = parentLevel?.steps?.find((s) => s.id === step.id) || step;
 
-    if (parentLevel?.isUnlocked && (isCompleted || isNextAvailable)) {
+    if (!targetStep.isLocked) {
       setActiveStepId(step.id);
       setIsSidebarOpen(false);
     } else {
       toast.error("Please complete previous lessons or levels first.", {
         id: "lock-toast",
       });
+    }
+  };
+
+  const handleNextStep = () => {
+    if (!activeStep) return;
+    const currentIndex = allSteps.findIndex((s) => s.id === activeStep.id);
+    const nextStep = allSteps[currentIndex + 1];
+    if (nextStep) {
+      setActiveStepId(nextStep.id);
+    } else {
+      toast.success("You have reached the end of the module.");
+      queryClient.invalidateQueries({ queryKey: ["userDashboard"] });
+      navigate("/userDashboard");
     }
   };
 
@@ -302,6 +324,8 @@ export function useModuleViewer(moduleId) {
   const acknowledgeLoopBack = () => {
     if (loopBackData?.loopBackStepId) {
       setActiveStepId(loopBackData.loopBackStepId);
+    } else {
+      setRetryCount((prev) => prev + 1);
     }
     setLoopBackData(null);
   };
@@ -320,10 +344,12 @@ export function useModuleViewer(moduleId) {
     isDataMissing: !data,
     isCompleting: completeStepMutation.isPending,
     handleStepClick,
+    handleNextStep,
     handleCompleteAndContinue,
     handlePrevious,
     getAssessmentForStep,
     loopBackData,
     acknowledgeLoopBack,
+    retryCount,
   };
 }

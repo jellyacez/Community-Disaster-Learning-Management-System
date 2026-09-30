@@ -28,14 +28,16 @@ export function useRegisterForm({ turnstileToken, onResetTurnstile } = {}) {
         break;
       case "email":
         if (!value.trim()) error = "Email address is required.";
-        else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) error = "Invalid email address format.";
+        else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value))
+          error = "Invalid email address format.";
         break;
       case "barangay":
         if (!value) error = "Please select a barangay.";
         break;
       case "password":
         if (!value) error = "Password is required.";
-        else if (value.length < 8) error = "Password must be at least 8 characters.";
+        else if (value.length < 8)
+          error = "Password must be at least 8 characters.";
         break;
       case "confirmPassword":
         if (!value) error = "Please confirm your password.";
@@ -63,11 +65,14 @@ export function useRegisterForm({ turnstileToken, onResetTurnstile } = {}) {
     });
   }, []);
 
-  const handleBlur = useCallback((e) => {
-    const { name, value } = e.target;
-    const error = validateField(name, value);
-    setErrors((prev) => ({ ...prev, [name]: error }));
-  }, [formData]);
+  const handleBlur = useCallback(
+    (e) => {
+      const { name, value } = e.target;
+      const error = validateField(name, value);
+      setErrors((prev) => ({ ...prev, [name]: error }));
+    },
+    [formData],
+  );
 
   const handleSubmit = (e) => {
     if (e) e.preventDefault();
@@ -97,7 +102,7 @@ export function useRegisterForm({ turnstileToken, onResetTurnstile } = {}) {
     setIsSubmitting(true);
 
     try {
-      const { data, error } = await authClient.signUp.email({
+      const { error } = await authClient.signUp.email({
         email: formData.email,
         password: formData.password,
         name: formData.fullName,
@@ -111,17 +116,26 @@ export function useRegisterForm({ turnstileToken, onResetTurnstile } = {}) {
 
       if (error) {
         console.error("Registration failed:", error);
-        setErrors({ form: error.message || "Registration failed. Please try again." });
+        setErrors({
+          form: error.message || "Registration failed. Please try again.",
+        });
         onResetTurnstile?.();
         setShowConsentModal(false);
       } else {
-        toast.success("Account created successfully! Please verify your email.");
+        toast.success(
+          "Account created successfully! Please verify your email.",
+        );
         setShowConsentModal(false);
-        navigate("/signin", { replace: true });
+        navigate("/verify-email-prompt", {
+          state: { email: formData.email },
+          replace: true,
+        });
       }
     } catch (err) {
       console.error("Registration exception:", err);
-      setErrors({ form: "An unexpected error occurred. Please try again later." });
+      setErrors({
+        form: "An unexpected error occurred. Please try again later.",
+      });
       onResetTurnstile?.();
       setShowConsentModal(false);
     } finally {
@@ -130,7 +144,8 @@ export function useRegisterForm({ turnstileToken, onResetTurnstile } = {}) {
   };
 
   const getInputClass = (fieldName) => {
-    const baseClass = "w-full px-4 py-3 rounded-xl border outline-none transition-colors";
+    const baseClass =
+      "w-full px-4 py-3 rounded-xl border outline-none transition-colors";
     const hasError = errors[fieldName] || errors.form;
     return `${baseClass} ${
       hasError
