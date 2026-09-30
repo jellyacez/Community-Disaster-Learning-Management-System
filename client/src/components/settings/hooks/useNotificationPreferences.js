@@ -41,7 +41,7 @@ export function useNotificationPreferences() {
         if (!error.response || error.code === "ERR_NETWORK") {
           const res = await saveOfflineNotification(userId, newSettings);
           if (res?.status === 'failed') {
-            throw new Error(res.error || "Storage failed. Notification preferences could not be saved offline.");
+            throw new Error(res.error || "Storage failed. Notification preferences could not be saved offline.", { cause: err });
           }
           return { settings: newSettings, ...res };
         }
