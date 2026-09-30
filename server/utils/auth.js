@@ -100,7 +100,7 @@ const auth = betterAuth({
   emailAndPassword: {
     enabled: true,
     revokeSessionsOnPasswordReset: true,
-    requireEmailVerification: false, // Disabled for development
+    requireEmailVerification: true, // Disabled for development
     passwordResetTokenExpiresIn: 15 * 60, // 15 minutes in seconds
     sendResetPassword: async ({ user, token }) => {
       const { orgFooterText, supportEmail } = await getOrgSettings();
@@ -114,7 +114,7 @@ const auth = betterAuth({
     },
   },
   emailVerification: {
-    sendOnSignUp: false, // Disabled for development
+    sendOnSignUp: true, // Disabled for development
     autoSignInAfterVerification: true,
     sendVerificationEmail: async ({ user, token }) => {
       const { orgFooterText, supportEmail } = await getOrgSettings();
