@@ -53,6 +53,34 @@ const securityHooksPlugin = () => {
           },
         },
         {
+          // Reject sign-up for an email that already has an account with a clear 422,
+          // instead of Better Auth's anti-enumeration 200 (requireEmailVerification).
+          matcher(context) {
+            return context.path === "/sign-up/email";
+          },
+          handler: async (ctx) => {
+            const rawEmail = ctx.body?.email;
+            if (typeof rawEmail !== "string" || !rawEmail.trim()) return {};
+
+            let existing;
+            try {
+              existing = await ctx.context.internalAdapter.findUserByEmail(rawEmail.trim().toLowerCase());
+            } catch (err) {
+              // Fail open: Better Auth's own duplicate handling still prevents a second account.
+              logError("signup_duplicate_check_failure", { message: err.message });
+              return {};
+            }
+
+            if (existing?.user) {
+              throw new APIError("UNPROCESSABLE_ENTITY", {
+                code: "USER_ALREADY_EXISTS",
+                message: "An account with this email already exists. Please sign in or reset your password.",
+              });
+            }
+            return {};
+          },
+        },
+        {
           matcher(context) {
             return context.path?.includes("sign-out") || false;
           },
