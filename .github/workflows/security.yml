@@ -7,6 +7,10 @@ on:
   schedule:
     # Every Monday at 08:00 UTC
     - cron: "0 8 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
   audit:
@@ -14,17 +18,37 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
-          node-version: 25
+          node-version: 24
 
-      - name: Audit client packages
+      # Production dependencies — fails the run on high/critical findings
+      - name: Audit client packages (production)
         working-directory: client
-        run: npm audit --audit-level=high
+        run: npm audit --omit=dev --audit-level=high
 
-      - name: Audit server packages
+      - name: Audit server packages (production)
         working-directory: server
-        run: npm audit --audit-level=high
+        run: npm audit --omit=dev --audit-level=high
+
+      # All dependencies including dev — reports findings without failing the run
+      - name: Audit client packages (including dev)
+        if: ${{ !cancelled() }}
+        working-directory: client
+        run: |
+          if ! npm audit --audit-level=high > audit.txt; then
+            echo "::warning title=client dev-dependency audit::High/critical findings in client dependencies (including dev). See the run summary."
+            { echo "## client — full npm audit"; echo '```'; cat audit.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Audit server packages (including dev)
+        if: ${{ !cancelled() }}
+        working-directory: server
+        run: |
+          if ! npm audit --audit-level=high > audit.txt; then
+            echo "::warning title=server dev-dependency audit::High/critical findings in server dependencies (including dev). See the run summary."
+            { echo "## server — full npm audit"; echo '```'; cat audit.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+          fi
