@@ -20,7 +20,7 @@
     "@tiptap/react": "^3.31.3",
     "@tiptap/starter-kit": "^3.31.3",
     "axios": "^1.20.0",
-    "better-auth": "^1.6.25",
+    "better-auth": "^1.7.10",
     "buffer": "^6.0.3",
     "dexie": "^4.4.4",
     "dexie-react-hooks": "^4.4.0",
