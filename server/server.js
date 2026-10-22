@@ -154,8 +154,6 @@ const feedbackRoutes = require("./routes/users/userFeedbacksRoutes");
 
 const certificatesRoutes = require("./routes/certificatesRoutes");
 
-const levelResultRoutes = require("./routes/modules/levelResultRoutes");
-
 const mediaUploadRoutes = require("./routes/modules/mediaUploadRoutes");
 const apiSecurityMiddleware = require("./middleware/apiSecurityMiddleware");
 
@@ -172,8 +170,6 @@ app.use("/api/modules", apiSecurityMiddleware, moduleRoutes);
 app.use("/api/feedbacks", apiSecurityMiddleware, feedbackRoutes);
 // Static routes must go before dynamic param routes (/:id) to prevent shadowing
 app.use("/api/modules", apiSecurityMiddleware, mediaUploadRoutes);
-
-app.use("/api/modules", apiSecurityMiddleware, levelResultRoutes);
 app.set("etag", false);
 
 app.use("/api", (req, res, next) => {
