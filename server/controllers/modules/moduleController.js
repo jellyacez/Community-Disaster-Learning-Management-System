@@ -3,6 +3,11 @@ const ModuleService = require("../../services/modules/ModuleService");
 const { ADMIN_ROLES } = require("../../config/permissions");
 const { logActivity, logError } = require("../../utils/logger");
 
+// Learners may only reach modules that passed review and were not removed;
+// admins keep access to drafts and pending modules for authoring/review.
+const isOpenToLearners = (mod) =>
+  Boolean(mod) && mod.status === "published" && !mod.moddateremove;
+
 /**
  * Helper function to normalize level payloads so cover_image is never lost
  */
@@ -216,15 +221,15 @@ exports.enrollInModule = async (req, res) => {
         .json({ success: false, message: "Invalid module ID format." });
     }
 
+    const isAdmin = ADMIN_ROLES.includes(req.user?.role);
     const moduleCheck = await ModuleService.getModuleById(parsedModId);
-    if (!moduleCheck) {
+    if (!moduleCheck || (!isAdmin && !isOpenToLearners(moduleCheck))) {
       return res
         .status(404)
         .json({ success: false, message: "Target training module not found." });
     }
 
     // Verify Prerequisites
-    const isAdmin = ADMIN_ROLES.includes(req.user?.role);
     if (!isAdmin) {
       const allowed = await ModuleService.checkPrerequisitesMet(user_id, parsedModId);
       if (!allowed) {
@@ -288,6 +293,12 @@ exports.getModuleViewerData = async (req, res) => {
 
   try {
     const isAdmin = ADMIN_ROLES.includes(req.user?.role);
+    if (!isAdmin && !isOpenToLearners(await ModuleService.getModuleById(parsedModId))) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Module not found." });
+    }
+
     const isEnrolled = await ModuleService.checkUserEnrollment(
       user_id,
       parsedModId
@@ -376,6 +387,13 @@ exports.getModuleSyllabusDetails = async (req, res) => {
   }
 
   try {
+    const isAdmin = ADMIN_ROLES.includes(req.user?.role);
+    if (!isAdmin && !isOpenToLearners(await ModuleService.getModuleById(parsedModId))) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Module not found." });
+    }
+
     const user_id = req.user?.id || req.user?.userId;
     const details = await ModuleService.getModuleSyllabusDetails(
       parsedModId,

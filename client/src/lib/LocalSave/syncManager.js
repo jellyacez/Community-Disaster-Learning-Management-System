@@ -383,14 +383,17 @@ export const processOfflineQueue = async (currentUserId) => {
       }
 
       try {
-        await dispatchTask(task);
+        const res = await dispatchTask(task);
 
         // Successfully synced: delete from localDb
         await dequeueWrite(task.sync_id);
         console.log(`[SyncManager] Successfully synced task ${task.sync_id} (${task.action_type})`);
 
+        // Include the server reply so listeners can react to it (e.g. recertification)
         window.dispatchEvent(
-          new CustomEvent('offline-sync-item-success', { detail: { syncId: task.sync_id, task } })
+          new CustomEvent('offline-sync-item-success', {
+            detail: { syncId: task.sync_id, task, response: res?.data }
+          })
         );
         window.dispatchEvent(new CustomEvent('offline-sync-queue-updated'));
       } catch (error) {

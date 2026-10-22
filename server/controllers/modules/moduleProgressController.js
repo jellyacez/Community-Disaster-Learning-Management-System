@@ -40,7 +40,9 @@ exports.completeModuleStep = async (req, res) => {
       quizGraded: result?.quizGraded || false,
       score: result?.score || 0,
       totalPoints: result?.totalPoints || 0,
-      moduleCompleted: result?.moduleCompleted || false
+      moduleCompleted: result?.moduleCompleted || false,
+      recertificationRequired: result?.recertificationRequired || false,
+      recertificationStepIds: result?.recertificationStepIds || []
     });
   } catch (error) {
     if (error.message === "NOT_ENROLLED") {

@@ -5,6 +5,8 @@ import { useModuleViewer } from "../../../hooks/useModuleViewer";
 import ModuleViewerSidebar from "../../../components/ui/modules/viewer/ModuleViewerSidebar";
 import ModuleViewerContent from "../../../components/ui/modules/viewer/ModuleViewerContent";
 import Spinner from "../../../components/ui/Spinner";
+import ConfirmationModal from "../../../components/ui/modals/ConfirmationModal";
+import { Clock01Icon } from "@hugeicons/core-free-icons";
 
 export default function ModuleViewer() {
   const { moduleId } = useParams();
@@ -31,7 +33,14 @@ export default function ModuleViewer() {
     loopBackData,
     acknowledgeLoopBack,
     retryCount,
+    guardLeave,
+    isLeaveConfirmOpen,
+    confirmLeave,
+    cancelLeave,
   } = useModuleViewer(moduleId);
+
+  // Leaving the viewer mid-quiz goes through the same confirmation as switching steps
+  const guardedNavigate = (...args) => guardLeave(() => navigate(...args));
 
   useDocumentTitle(moduleData?.title ? `${moduleData.title} | Bacolor LMS` : 'Module Viewer');
 
@@ -76,10 +85,10 @@ export default function ModuleViewer() {
         isSidebarOpen={isSidebarOpen}
         setIsSidebarOpen={setIsSidebarOpen}
         handleStepClick={handleStepClick}
-        navigate={navigate}
+        navigate={guardedNavigate}
       />
 
-      <ModuleViewerContent 
+      <ModuleViewerContent
         levels={levels}
         completedStepIds={completedStepIds}
         handleStepClick={handleStepClick}
@@ -93,10 +102,21 @@ export default function ModuleViewer() {
         loopBackData={loopBackData}
         acknowledgeLoopBack={acknowledgeLoopBack}
         retryCount={retryCount}
-        navigate={navigate}
+        navigate={guardedNavigate}
         setIsSidebarOpen={setIsSidebarOpen}
       />
 
+      <ConfirmationModal
+        isOpen={isLeaveConfirmOpen}
+        onClose={cancelLeave}
+        onConfirm={confirmLeave}
+        type="warning"
+        icon={Clock01Icon}
+        title="Leave the assessment?"
+        description="Your answers so far are saved, but the timer keeps running. If time runs out on the current question while you're away, it will be counted as unanswered."
+        cancelText="Stay in assessment"
+        confirmText="Leave anyway"
+      />
     </div>
   );
 }

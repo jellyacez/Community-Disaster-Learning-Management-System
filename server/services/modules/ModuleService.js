@@ -515,7 +515,7 @@ class ModuleService {
 
   async getModuleById(mod_id) {
     const moduleCheck = await pool.query(
-      "SELECT mod_id, modname, modcat, level, status, author_id, rejection_reason, parent_mod_id FROM module_data WHERE mod_id = $1",
+      "SELECT mod_id, modname, modcat, level, status, author_id, rejection_reason, parent_mod_id, moddateremove FROM module_data WHERE mod_id = $1",
       [mod_id]
     );
     return moduleCheck.rowCount > 0 ? moduleCheck.rows[0] : null;

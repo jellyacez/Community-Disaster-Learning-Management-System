@@ -1,15 +1,22 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useQuery, useQueries, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import apiClient from "../lib/apiClient";
 import toast from "react-hot-toast";
 import { useOfflineSession } from "./offlineSession";
 import {
+  getPendingRetakes,
+  setPendingRetakes,
+  showRecertificationToast,
+  RECERT_RETAKES_UPDATED,
+} from "../lib/recertification";
+import {
   saveOfflineStepProgress,
   saveOfflineResult,
   recalculateModuleProgress,
 } from "../lib/LocalSave/progressService";
 import { gradeQuizOffline } from "../lib/LocalSave/gradeOffline";
+import { setQuizSessionOwner, isQuizInProgress } from "../lib/quizSessions";
 import { decodeHtml } from "../utils/textUtils";
 import { localDb } from "../lib/localDb";
 export function useModuleViewer(moduleId) {
@@ -17,11 +24,35 @@ export function useModuleViewer(moduleId) {
   const queryClient = useQueryClient();
   const { data: session } = useOfflineSession(); // Replaced authClient.useSession
   const userId = session?.user?.id;
+  // In-progress quiz attempts belong to this user; runs before any quiz reads them
+  useMemo(() => setQuizSessionOwner(userId), [userId]);
 
   const [activeStepId, setActiveStepId] = useState(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [loopBackData, setLoopBackData] = useState(null);
   const [retryCount, setRetryCount] = useState(0);
+  // Navigation held back while the learner confirms leaving a quiz in progress
+  const [pendingLeave, setPendingLeave] = useState(null);
+  // Assessment steps the learner must retake to recertify (server-flagged, persisted per
+  // module so it survives reloads, offline use, and replies that arrive during a sync)
+  const [retakeState, setRetakeState] = useState(() => ({
+    moduleId: String(moduleId),
+    ids: getPendingRetakes(moduleId),
+  }));
+  const retakeStepIds = useMemo(
+    () => (retakeState.moduleId === String(moduleId) ? retakeState.ids : getPendingRetakes(moduleId)),
+    [retakeState, moduleId]
+  );
+
+  useEffect(() => {
+    const handleRetakesUpdated = (event) => {
+      if (event.detail?.moduleId === String(moduleId)) {
+        setRetakeState({ moduleId: event.detail.moduleId, ids: event.detail.stepIds });
+      }
+    };
+    window.addEventListener(RECERT_RETAKES_UPDATED, handleRetakesUpdated);
+    return () => window.removeEventListener(RECERT_RETAKES_UPDATED, handleRetakesUpdated);
+  }, [moduleId]);
 
   // 1. Fetch module data (With Offline IndexedDB Fallback)
   const { data, isLoading, error } = useQuery({
@@ -98,7 +129,11 @@ export function useModuleViewer(moduleId) {
     };
   }, [rawModule]);
 
-  const completedStepIds = useMemo(() => data?.completedStepIds || [], [data?.completedStepIds]);
+  // Steps pending a recertification retake are treated as not completed so their quizzes reopen
+  const completedStepIds = useMemo(
+    () => (data?.completedStepIds || []).filter((id) => !retakeStepIds.includes(id)),
+    [data?.completedStepIds, retakeStepIds]
+  );
 
   const enhancedLevels = useMemo(() => {
     const levels = data?.levels || [];
@@ -327,6 +362,12 @@ export function useModuleViewer(moduleId) {
           return;
         }
 
+        // A provisional offline pass on a retake step closes that retake locally;
+        // the sync reply re-flags it if the server's grading disagrees.
+        if (retakeStepIds.includes(stepId)) {
+          setPendingRetakes(moduleId, retakeStepIds.filter((id) => id !== stepId));
+        }
+
         // Server can't be refetched offline, so mark the step done in the cache
         // to keep the progress counter/bar and step locks in sync.
         queryClient.setQueryData(["moduleViewer", moduleId], (old) =>
@@ -376,6 +417,19 @@ export function useModuleViewer(moduleId) {
         return;
       }
 
+      // Certificate is expiring/expired and was not renewed: the server lists the
+      // assessment steps that still need a fresh pass inside the renewal window.
+      if (responseData.recertificationRequired) {
+        const pendingIds = responseData.recertificationStepIds || [];
+        const retakeStep = allSteps.find((s) => pendingIds.includes(s.id));
+        showRecertificationToast();
+        setPendingRetakes(moduleId, pendingIds);
+        if (retakeStep) setActiveStepId(retakeStep.id);
+        return;
+      }
+
+      if (retakeStepIds.length) setPendingRetakes(moduleId, []);
+
       if (responseData.moduleCompleted) {
         toast.success("Congratulations! You have completed the entire module!", {
           duration: 5000,
@@ -402,9 +456,26 @@ export function useModuleViewer(moduleId) {
     },
   });
 
+  // Leaving a quiz mid-attempt asks first; the attempt is kept but its clock keeps running
+  const guardLeave = (action, targetStepId = null) => {
+    if (activeStep && targetStepId !== activeStep.id && isQuizInProgress(activeStep.id)) {
+      setPendingLeave({ action });
+      return;
+    }
+    action();
+  };
+
+  const confirmLeave = () => {
+    const action = pendingLeave?.action;
+    setPendingLeave(null);
+    action?.();
+  };
+
+  const cancelLeave = () => setPendingLeave(null);
+
   const handleStepClick = (step) => {
     if (!step) {
-      setActiveStepId(null);
+      guardLeave(() => setActiveStepId(null));
       return;
     }
 
@@ -412,8 +483,10 @@ export function useModuleViewer(moduleId) {
     const targetStep = parentLevel?.steps?.find((s) => s.id === step.id) || step;
 
     if (!targetStep.isLocked) {
-      setActiveStepId(step.id);
-      setIsSidebarOpen(false);
+      guardLeave(() => {
+        setActiveStepId(step.id);
+        setIsSidebarOpen(false);
+      }, step.id);
     } else {
       toast.error("Please complete previous lessons or levels first.", {
         id: "lock-toast",
@@ -478,5 +551,9 @@ export function useModuleViewer(moduleId) {
     loopBackData,
     acknowledgeLoopBack,
     retryCount,
+    guardLeave,
+    isLeaveConfirmOpen: Boolean(pendingLeave),
+    confirmLeave,
+    cancelLeave,
   };
 }

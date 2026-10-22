@@ -227,6 +227,7 @@ export default function StepContent({
           ) : (
             <InteractiveQuiz
               key={`${activeStep.id}-${retryCount}`}
+              stepId={activeStep.id}
               stepType={activeStep.type}
               questions={assessmentData.questions}
               isLoading={assessmentData.isLoading}

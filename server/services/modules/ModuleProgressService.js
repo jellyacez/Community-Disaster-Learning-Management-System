@@ -1,6 +1,12 @@
 const pool = require("../../config/db");
 const logger = require('../../utils/logger');
 
+// Step types that are graded against the answer key
+const GRADED_STEP_TYPES = ['quiz', 'situational', 'priority_action', 'hazard_identification', 'action_sequence'];
+
+// Days before expiry when a certificate becomes eligible for recertification
+const RENEWAL_WINDOW_DAYS = 30;
+
 class ModuleProgressService {
   async completeModuleStep(user_id, mod_id, stepId, answers) {
     // Verify user enrollment
@@ -34,7 +40,7 @@ class ModuleProgressService {
     let passed;
     let quizGraded = false;
 
-    if (step.step_type === 'quiz' || step.step_type === 'situational' || step.step_type === 'priority_action' || step.step_type === 'hazard_identification' || step.step_type === 'action_sequence') {
+    if (GRADED_STEP_TYPES.includes(step.step_type)) {
         quizGraded = true;
         if (!answers || !Array.isArray(answers)) {
             throw new Error("ANSWERS_REQUIRED");
@@ -159,7 +165,9 @@ class ModuleProgressService {
     // Update progress transaction
     const client = await pool.connect();
     let moduleCompleted;
-    
+    let recertificationRequired = false;
+    let recertificationStepIds = [];
+
     try {
       await client.query("BEGIN");
 
@@ -272,9 +280,41 @@ class ModuleProgressService {
           // Existing Certificate — Handle Renewal / Recertification
           const existingCert = certCheck.rows[0];
           const isExpired = new Date(existingCert.expires_at) < new Date();
-          const isExpiringSoon = new Date(existingCert.expires_at) <= new Date(Date.now() + 30 * 86400 * 1000);
+          const isExpiringSoon = new Date(existingCert.expires_at) <= new Date(Date.now() + RENEWAL_WINDOW_DAYS * 86400 * 1000);
 
+          // Renewal requires re-passing the module's assessment inside the renewal window.
+          // Step progress persists from the first completion, so completion alone proves nothing.
+          // Required steps: graded steps flagged final, else every graded step. Modules with
+          // no graded steps have nothing to retake and renew on completion.
+          let passedRenewalAssessment = false;
           if (isExpired || isExpiringSoon) {
+            const renewalCheck = await client.query(
+              `WITH graded AS (
+                 SELECT ms.step_id, ms.is_final_assessment
+                 FROM module_steps ms
+                 JOIN levels l ON ms.level_id = l.level_id
+                 WHERE l.mod_id = $1 AND ms.step_type = ANY($2)
+               ),
+               required AS (
+                 SELECT step_id FROM graded
+                 WHERE is_final_assessment OR NOT EXISTS (SELECT 1 FROM graded WHERE is_final_assessment)
+               )
+               SELECT required.step_id
+               FROM required
+               WHERE NOT EXISTS (
+                 SELECT 1 FROM results r
+                 WHERE r.user_id = $3 AND r.mod_id = $1 AND r.step_id = required.step_id
+                   AND r.passed AND r.date_taken >= $4::timestamptz - (INTERVAL '1 day' * $5)
+               )`,
+              [mod_id, GRADED_STEP_TYPES, user_id, existingCert.expires_at, RENEWAL_WINDOW_DAYS]
+            );
+            // No pending steps means every required step was re-passed (or none exist)
+            recertificationStepIds = renewalCheck.rows.map((r) => r.step_id);
+            passedRenewalAssessment = recertificationStepIds.length === 0;
+            recertificationRequired = !passedRenewalAssessment;
+          }
+
+          if ((isExpired || isExpiringSoon) && passedRenewalAssessment) {
             // Expired/expiring-soon certificates are eligible for renewal/recertification
             await logger.logActivity(
               user_id,
@@ -308,6 +348,8 @@ class ModuleProgressService {
         score,
         totalPoints,
         moduleCompleted,
+        recertificationRequired,
+        recertificationStepIds,
         ...(verificationToken && { verificationToken })
       };
     } catch (txError) {
