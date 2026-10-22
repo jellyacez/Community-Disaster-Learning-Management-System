@@ -120,6 +120,14 @@ app.use(globalLimiter);
 const ipBlocklistMiddleware = require("./middleware/ipBlocklistMiddleware");
 app.use(ipBlocklistMiddleware);
 
+// Public liveness probe for Docker/load balancer health checks.
+// Registered before maintenance mode so the container stays "healthy" during maintenance.
+// Intentionally reveals nothing (no versions, uptime, or DB details) — use /api/admin/health for that.
+app.get("/api/health", (req, res) => {
+  res.set("Cache-Control", "no-store");
+  res.json({ status: "ok" });
+});
+
 const maintenanceMiddleware = require("./middleware/maintenanceMiddleware");
 app.use(maintenanceMiddleware);
 
