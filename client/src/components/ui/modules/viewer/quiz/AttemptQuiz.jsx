@@ -220,7 +220,7 @@ export default function AttemptQuiz({ stepId, onSubmitAttempt, retryCount = 0 })
 
   if (!attempt) return <QuizStateMessage type="loading" />;
   if (isLocked) return <QuizStateMessage type="locked" onRestart={startAttempt} />;
-  if (attempt.total === 0) return <QuizStateMessage type="empty" onBypass={() => onSubmitAttempt(attempt.attemptId)} />;
+  if (attempt.total === 0) return <QuizStateMessage type="empty" />;
   if (!current) return null;
 
   const rationale = selected.length > 0 ? current.options.find((o) => o.id === selected[0])?.rationale : null;

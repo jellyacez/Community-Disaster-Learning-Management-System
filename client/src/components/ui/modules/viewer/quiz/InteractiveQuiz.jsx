@@ -194,7 +194,7 @@ export default function InteractiveQuiz({ stepId, stepType, questions = [], isLo
 
   if (isLoading) return <QuizStateMessage type="loading" />;
   if (isLocked) return <QuizStateMessage type="locked" onRestart={() => window.location.reload()} />;
-  if (questions.length === 0) return <QuizStateMessage type="empty" onBypass={() => finishAttempt([])} />;
+  if (questions.length === 0) return <QuizStateMessage type="empty" onBypass={isPreviewMode ? () => finishAttempt([]) : undefined} />;
   if (!currentQ) return null;
 
   const isCorrect = (() => {

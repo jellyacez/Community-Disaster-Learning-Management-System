@@ -1,4 +1,5 @@
 const Joi = require("joi");
+const { GRADED_STEP_TYPES } = require("../config/constants");
 
 /**
  * Validates the module creation payload manually.
@@ -90,7 +91,8 @@ exports.validateModuleCreation = (payload) => {
         return { isValid: false, error: `Step ${j + 1} in Level ${i + 1} is missing a step type.` };
       }
 
-      if (["quiz", "priority_action", "hazard_identification", "action_sequence"].includes(step.stepType)) {
+      // Every graded type, situational included: an update replaces all questions, so an empty step would wipe them
+      if (GRADED_STEP_TYPES.includes(step.stepType)) {
         if (!Array.isArray(step.quizQuestions) || step.quizQuestions.length === 0) {
           return { isValid: false, error: `Assessment step '${step.stepTitle}' must contain at least one question.` };
         }
