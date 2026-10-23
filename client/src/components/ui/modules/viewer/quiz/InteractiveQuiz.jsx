@@ -215,8 +215,9 @@ export default function InteractiveQuiz({ stepId, stepType, questions = [], isLo
     return selectedChoiceIds.length > 0 && currentQ.options.find(o => o.id === selectedChoiceIds[0])?.isCorrect;
   })();
     
-  // A question-level explanation (action sequences) takes precedence over the choice's rationale
-  const rationale = currentQ.rationale || (selectedChoiceIds.length > 0 ? currentQ.options.find(o => o.id === selectedChoiceIds[0])?.rationale : null);
+  // Only action sequences use a question-level explanation; everything else shows the chosen option's rationale
+  const choiceRationale = selectedChoiceIds.length > 0 ? currentQ.options.find(o => o.id === selectedChoiceIds[0])?.rationale : null;
+  const rationale = (actualStepType === 'action_sequence' && currentQ.rationale) || choiceRationale;
 
   return (
     <div 

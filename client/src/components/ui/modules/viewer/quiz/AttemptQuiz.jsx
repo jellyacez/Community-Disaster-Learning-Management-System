@@ -224,7 +224,9 @@ export default function AttemptQuiz({ stepId, onSubmitAttempt, retryCount = 0 })
   if (attempt.total === 0) return <QuizStateMessage type="empty" />;
   if (!current) return null;
 
-  const rationale = current.rationale || (selected.length > 0 ? current.options.find((o) => o.id === selected[0])?.rationale : null);
+  // Only action sequences use a question-level explanation; everything else shows the chosen option's rationale
+  const choiceRationale = selected.length > 0 ? current.options.find((o) => o.id === selected[0])?.rationale : null;
+  const rationale = (current.kind === 'sequence' && current.rationale) || choiceRationale;
   const isLast = attempt.currentIndex >= attempt.total - 1;
 
   return (
