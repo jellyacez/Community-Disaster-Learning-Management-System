@@ -68,9 +68,11 @@ async function createQuizModule() {
      VALUES ($1, 1, 'Regression Level', 80, false) RETURNING level_id`,
     [modId]
   );
+  // A practice (non-final) quiz: final assessments no longer accept client-submitted
+  // answers (see quiz-attempts.regression.cjs), but practice quizzes still grade them here.
   const step = await pool.query(
     `INSERT INTO module_steps (level_id, step_order, step_title, step_type, is_final_assessment)
-     VALUES ($1, 1, 'Regression Quiz', 'quiz', true) RETURNING step_id`,
+     VALUES ($1, 1, 'Regression Quiz', 'quiz', false) RETURNING step_id`,
     [level.rows[0].level_id]
   );
   const stepId = step.rows[0].step_id;
