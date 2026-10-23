@@ -567,7 +567,8 @@ class ModuleService {
   async enrollUserInModule(user_id, mod_id) {
     await pool.query(
       `INSERT INTO module_activity (user_id, mod_id, modstatus, progress)
-       VALUES ($1, $2, 'In Progress', 0)`,
+       VALUES ($1, $2, 'In Progress', 0)
+       ON CONFLICT (user_id, mod_id) DO NOTHING`,
       [user_id, mod_id]
     );
   }
