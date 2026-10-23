@@ -41,7 +41,7 @@ export function useFeedbackSubmit(userId, setActiveTab, onDone) {
         if (isNetworkFailure) {
           const res = await enqueueSyncTask("SUBMIT_FEEDBACK", { ...payload, user_id: userId });
           if (res?.status === 'failed') {
-            throw new Error(res.error || "Storage failed. Message could not be queued offline.");
+            throw new Error(res.error || "Storage failed. Message could not be queued offline.", { cause: err });
           }
           return { queuedOffline: true, ...res };
         }

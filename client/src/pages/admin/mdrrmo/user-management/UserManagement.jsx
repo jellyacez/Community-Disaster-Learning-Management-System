@@ -121,7 +121,7 @@ export default function UserManagement() {
                   try {
                     await actions.handleUserSubmit(e);
                     setIsAddModalOpen(false);
-                  } catch (err) {
+                  } catch {
                     // Stay open on error so user can correct
                   }
                 }}

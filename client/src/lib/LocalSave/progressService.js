@@ -16,7 +16,9 @@ function patchCachedOfflineUser(patch) {
         new StorageEvent("storage", { key: SESSION_STORAGE_KEY }),
       );
     }
-  } catch {}
+  } catch {
+    // Ignore malformed or missing cached session
+  }
 }
 
 export const saveOfflineModuleProgress = async (

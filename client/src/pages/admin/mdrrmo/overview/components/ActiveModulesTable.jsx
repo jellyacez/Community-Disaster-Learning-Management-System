@@ -7,7 +7,7 @@ import StatusBadge from "../../../../../components/ui/StatusBadge";
 import { SkeletonTableRow } from "../../../../../components/ui/Skeleton";
 import { decodeHtml } from "../../../../../utils/textUtils";
 
-export default function ActiveModulesTable({ modules = [], isLoading, selectedCategory, statusFilter, onApprove, onReject }) {
+export default function ActiveModulesTable({ modules = [], isLoading, selectedCategory, statusFilter }) {
   const { data: session } = authClient.useSession();
   const isHeadAdmin = session?.user?.role === "head_mdrrmo_admin";
 

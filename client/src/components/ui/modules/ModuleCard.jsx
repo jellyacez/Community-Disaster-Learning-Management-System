@@ -13,7 +13,6 @@ import { useModuleEnrollment } from "../../../hooks/useModuleEnrollment";
 import DOMPurify from "dompurify";
 import toast from "react-hot-toast";
 import { decodeHtml } from "../../../utils/textUtils";
-import StatusBadge from "../StatusBadge";
 
 const getCategoryIcon = (category) => {
   const cat = (category || "").toLowerCase();

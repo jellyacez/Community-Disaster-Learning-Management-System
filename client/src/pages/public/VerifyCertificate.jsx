@@ -36,12 +36,12 @@ export default function VerifyCertificate() {
         return response.data.data;
       } catch (err) {
         if (err.response && err.response.status === 404) {
-          throw new Error("NOT_FOUND");
+          throw new Error("NOT_FOUND", { cause: err });
         }
         if (err.response && err.response.status === 429) {
-          throw new Error("RATE_LIMIT");
+          throw new Error("RATE_LIMIT", { cause: err });
         }
-        throw new Error("SERVER_ERROR");
+        throw new Error("SERVER_ERROR", { cause: err });
       }
     },
     enabled: !!submittedToken,

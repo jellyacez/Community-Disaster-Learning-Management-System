@@ -2,7 +2,6 @@ import { useState, useMemo, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import apiClient from "../../../../lib/apiClient";
-import { localDb } from "../../../../lib/localDb";
 import {
   enqueueSyncTask,
   getAllSyncQueueItems,
@@ -153,7 +152,7 @@ export function useFeedbackHistory(userId, activeTab) {
         if (isNetworkFailure) {
           const res = await enqueueSyncTask("REPLY_FEEDBACK", { feedback_id: id, reply, user_id: userId });
           if (res?.status === 'failed') {
-            throw new Error(res.error || "Storage failed. Reply could not be queued offline.");
+            throw new Error(res.error || "Storage failed. Reply could not be queued offline.", { cause: err });
           }
           return { queuedOffline: true, id, ...res };
         }
@@ -239,7 +238,7 @@ export function useFeedbackHistory(userId, activeTab) {
       toast.loading("Retrying offline sync...", { id: `retry-${syncId}` });
       await retryFailedTask(syncId);
       toast.success("Sync triggered.", { id: `retry-${syncId}` });
-    } catch (e) {
+    } catch {
       toast.error("Retry failed to initiate.", { id: `retry-${syncId}` });
     }
   };
@@ -248,7 +247,7 @@ export function useFeedbackHistory(userId, activeTab) {
     try {
       await discardFailedTask(syncId);
       toast.success("Offline message discarded.");
-    } catch (e) {
+    } catch {
       toast.error("Failed to discard message.");
     }
   };

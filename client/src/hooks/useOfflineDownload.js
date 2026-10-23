@@ -56,7 +56,7 @@ export function useOfflineDownload(moduleId) {
             try {
               const quizRes = await apiClient.get(`/modules/steps/${step.id}/assessment`);
               localStorage.setItem(`lms_offline_assessment_${step.id}`, JSON.stringify(quizRes.data?.data || []));
-            } catch (e) {
+            } catch {
               console.warn(`Could not cache assessment for step ${step.id}`);
             }
           }

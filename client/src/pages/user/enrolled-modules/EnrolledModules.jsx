@@ -1,7 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { Link, useOutletContext } from "react-router-dom"; // Added useOutletContext
 import { useUserDashboard } from "../../../hooks/useUserDashboard"; // Imported new hook
-import apiClient from "../../../lib/apiClient";
 import educationImg from "../../../assets/education.svg";
 import ModuleCard from "../../../components/ui/modules/ModuleCard.jsx";
 import ModuleSkeleton from "../../../components/ui/modules/ModuleSkeleton.jsx";
