@@ -22,7 +22,8 @@ export default function DashboardEnrolledList({ displayData, loading, navigate, 
           {loading ? (
             [1, 2].map((i) => <ModuleSkeleton key={i} />)
           ) : (() => {
-            const activeModules = displayData.enrolledModules.filter(m => m.progress < 100);
+            // Archived versions can't be resumed; the Enrolled Modules page links them to the update
+            const activeModules = displayData.enrolledModules.filter(m => m.progress < 100 && m.module_status !== "archived");
             if (activeModules.length === 0) {
               return (
                 <div className="flex flex-col items-center justify-center py-12 text-center">
@@ -58,7 +59,7 @@ export default function DashboardEnrolledList({ displayData, loading, navigate, 
           })()}
         </div>
 
-        {!loading && displayData.enrolledModules.filter(m => m.progress < 100).length > 4 && (
+        {!loading && displayData.enrolledModules.filter(m => m.progress < 100 && m.module_status !== "archived").length > 4 && (
           <button
             onClick={() => navigate("/user/enrolled")}
             className="w-full mt-6 py-3 rounded-xl border border-gray-200 text-sm font-bold text-gray-700 hover:text-gray-900 hover:bg-gray-50 transition-colors"

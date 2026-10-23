@@ -47,6 +47,12 @@ const ModuleCard = memo(function ModuleCard({
     onEnrollSuccess,
   });
 
+  // An enrollment on an archived version can't be opened; send learners to the updated module
+  const isRetired = localEnrolled && !isAdminView && module.module_status === "archived";
+  const openUpdatedModule = () => {
+    if (module.latest_published_id) navigate(`/user/modules/${module.latest_published_id}/details`);
+  };
+
   const resolveImageUrl = (url) => {
     if (!url) return null;
     if (url.startsWith("http://") || url.startsWith("https://")) return url;
@@ -59,6 +65,7 @@ const ModuleCard = memo(function ModuleCard({
     if (isPreview) {
       return toast.error("Navigation is disabled in Live Preview Mode.");
     }
+    if (isRetired) return openUpdatedModule();
     navigate(`/user/modules/${module.id}`);
   };
 
@@ -77,6 +84,8 @@ const ModuleCard = memo(function ModuleCard({
       } else {
         navigate(`/admin/mdrrmo/modules/${module.id}/details`);
       }
+    } else if (isRetired) {
+      openUpdatedModule();
     } else {
       navigate(`/user/modules/${module.id}/details`);
     }
@@ -290,6 +299,15 @@ const ModuleCard = memo(function ModuleCard({
               <span>You completed an earlier version</span>
             </p>
           )}
+          {isRetired && (
+            <p className="mt-2 text-xs font-semibold text-slate-600 dark:text-slate-300">
+              {!module.latest_published_id
+                ? "This module has been retired."
+                : isCompleted
+                  ? "You completed a previous version of this module."
+                  : "This module was updated. Progress on the old version can't continue."}
+            </p>
+          )}
         </div>
 
         {localEnrolled && (
@@ -317,13 +335,20 @@ const ModuleCard = memo(function ModuleCard({
           {localEnrolled ? (
             <button
               onClick={handleLaunchViewer}
-              className={`flex-1 rounded-xl px-2 sm:px-4 py-2.5 text-xs sm:text-sm font-bold text-white transition cursor-pointer truncate ${
+              disabled={isRetired && !module.latest_published_id}
+              className={`flex-1 rounded-xl px-2 sm:px-4 py-2.5 text-xs sm:text-sm font-bold text-white transition cursor-pointer truncate disabled:cursor-not-allowed disabled:bg-gray-400 ${
                 isCompleted
                   ? "bg-green-600 hover:bg-green-700"
                   : "bg-red-600 hover:bg-red-700"
               }`}
             >
-              {isCompleted ? "Review Module" : module.progress === 0 ? "Start" : "Continue"}
+              {isRetired
+                ? !module.latest_published_id
+                  ? "No longer available"
+                  : isCompleted
+                    ? "View updated module"
+                    : "Start updated version"
+                : isCompleted ? "Review Module" : module.progress === 0 ? "Start" : "Continue"}
             </button>
           ) : isAdminView ? (
             module.status === "archived" ? (

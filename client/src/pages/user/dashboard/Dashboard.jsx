@@ -215,7 +215,8 @@ export default function UserDashboard() {
   }), [rawData, sortedAnnouncements]);
 
   const activeModules = useMemo(
-    () => displayData.enrolledModules.filter((m) => m.progress < 100),
+    // Archived versions can't be resumed; their cards point to the updated module instead
+    () => displayData.enrolledModules.filter((m) => m.progress < 100 && m.module_status !== "archived"),
     [displayData.enrolledModules],
   );
   const topActiveModule = activeModules[0];

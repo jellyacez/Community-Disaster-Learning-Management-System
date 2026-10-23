@@ -195,13 +195,20 @@ class DashboardService {
 
     const enrolledModules = enrolledModulesQuery.rows;
 
+    // An archived version the learner never finished can't be continued, so it doesn't count
+    const countedModules = enrolledModules.filter(
+      (mod) =>
+        mod.module_status !== "archived" ||
+        mod.enrollment_status === "Completed" ||
+        mod.progress === 100,
+    );
     let completionRate = 0;
-    if (enrolledModules.length > 0) {
-      const totalProgress = enrolledModules.reduce(
+    if (countedModules.length > 0) {
+      const totalProgress = countedModules.reduce(
         (sum, mod) => sum + mod.progress,
         0,
       );
-      completionRate = Math.round(totalProgress / enrolledModules.length);
+      completionRate = Math.round(totalProgress / countedModules.length);
     }
 
     const certificatesQuery = await pool.query(
