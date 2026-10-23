@@ -238,6 +238,7 @@ export function useModuleViewer(moduleId) {
           const questions = rawQuestions.map((q) => ({
             ...q,
             question_text: decodeHtml(q.question_text),
+            rationale: q.rationale ? decodeHtml(q.rationale) : null,
             options: (q.options || []).map((opt) => ({
               ...opt,
               text: decodeHtml(opt.text),

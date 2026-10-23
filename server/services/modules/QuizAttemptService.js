@@ -37,11 +37,13 @@ const deadlinePassed = (deadline) => Boolean(deadline) && Date.now() >= new Date
 const pastGrace = (deadline) =>
   !deadline || Date.now() > new Date(deadline).getTime() + QUIZ_ANSWER_GRACE_SECONDS * 1000;
 
-// Mirrors the viewer's question UI: situational questions take their shape from the key
+// Mirrors the viewer's question UI: situational questions use their stored interaction type,
+// or take their shape from the key when it isn't stored
 function questionKind(stepType, question) {
   let type = stepType;
   if (stepType === "situational") {
-    if (question.options.some((o) => o.sequenceOrder > 0)) type = "action_sequence";
+    if (question.interaction_type) type = question.interaction_type;
+    else if (question.options.some((o) => o.sequenceOrder > 0)) type = "action_sequence";
     else if (question.options.filter((o) => o.isCorrect).length > 1) type = "hazard_identification";
     else type = "priority_action";
   }
@@ -51,14 +53,14 @@ function questionKind(stepType, question) {
 }
 
 // Same rules as ModuleProgressService.completeModuleStep grading
-function isAnswerCorrect(question, selected) {
+function isAnswerCorrect(question, selected, kind) {
   const correct = question.options.filter((o) => o.isCorrect);
   const sequence = correct
     .filter((o) => o.sequenceOrder > 0)
     .sort((a, b) => a.sequenceOrder - b.sequenceOrder)
     .map((o) => o.id);
   if (sequence.length) return JSON.stringify(sequence) === JSON.stringify(selected);
-  if (correct.length > 1) {
+  if (correct.length > 1 || kind === "multi") {
     const expected = correct.map((o) => o.id).sort((a, b) => a - b);
     return JSON.stringify(expected) === JSON.stringify([...selected].sort((a, b) => a - b));
   }
@@ -119,18 +121,20 @@ async function buildState(attempt, questions, step) {
         ? { id: o.id, text: o.text, isCorrect: o.isCorrect, rationale: o.rationale, sequenceOrder: o.sequenceOrder }
         : { id: o.id, text: o.text };
     });
+    const kind = questionKind(step.step_type, q);
     return {
       question_id: q.question_id,
       question_text: q.question_text,
       points: q.points,
       image_url: q.image_url,
-      kind: questionKind(step.step_type, q),
+      kind,
       options,
+      rationale: answer ? q.rationale : null,
       answer: answer
         ? {
             selectedChoiceIds: answer.selected_choice_ids,
             timedOut: answer.timed_out,
-            correct: isAnswerCorrect(q, answer.selected_choice_ids),
+            correct: isAnswerCorrect(q, answer.selected_choice_ids, kind),
           }
         : null,
     };

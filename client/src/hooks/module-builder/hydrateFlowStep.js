@@ -9,7 +9,7 @@ const blankOptions = () => [
   { text: "", rationale: "" },
 ];
 
-// The interaction type isn't stored, so infer it the same way the player and grader do
+// Older questions have no stored interaction type; infer it the same way the player and grader do
 function inferInteractionType(options) {
   if (options.some((o) => o.sequence_order > 0)) return "action_sequence";
   if (options.filter((o) => o.isCorrect).length > 1) return "hazard_identification";
@@ -24,13 +24,14 @@ function toScenario(q, index) {
     isCorrect: opt.isCorrect || false,
     sequence_order: opt.sequence_order,
   }));
-  const interactionType = inferInteractionType(options);
+  const interactionType = q.interactionType || inferInteractionType(options);
   const correctIdx = options.findIndex((o) => o.isCorrect);
 
   return {
     id: `scenario-${q.id ?? index}`,
     scenarioDescription: decodeHtml(q.questionText) || "",
     interactionType,
+    rationale: decodeHtml(q.rationale) || "",
     options: interactionType === "priority_action"
       ? options.map(({ text, rationale, isCorrect }) => ({ text, rationale, isCorrect }))
       : blankOptions(),

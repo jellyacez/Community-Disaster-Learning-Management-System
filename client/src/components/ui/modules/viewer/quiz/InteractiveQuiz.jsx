@@ -69,6 +69,7 @@ export default function InteractiveQuiz({ stepId, stepType, questions = [], isLo
   const actualStepType = useMemo(() => {
     if (stepType !== 'situational') return stepType;
     if (!currentQ) return stepType;
+    if (currentQ.interaction_type) return currentQ.interaction_type;
     if (currentQ.options && currentQ.options.some(o => o.sequenceOrder > 0)) return 'action_sequence';
     if (currentQ.options && currentQ.options.filter(o => o.isCorrect).length > 1) return 'hazard_identification';
     return 'priority_action';
@@ -214,7 +215,8 @@ export default function InteractiveQuiz({ stepId, stepType, questions = [], isLo
     return selectedChoiceIds.length > 0 && currentQ.options.find(o => o.id === selectedChoiceIds[0])?.isCorrect;
   })();
     
-  const rationale = selectedChoiceIds.length > 0 ? currentQ.options.find(o => o.id === selectedChoiceIds[0])?.rationale : null;
+  // A question-level explanation (action sequences) takes precedence over the choice's rationale
+  const rationale = currentQ.rationale || (selectedChoiceIds.length > 0 ? currentQ.options.find(o => o.id === selectedChoiceIds[0])?.rationale : null);
 
   return (
     <div 

@@ -1,6 +1,9 @@
 const Joi = require("joi");
 const { GRADED_STEP_TYPES } = require("../config/constants");
 
+// Matches the questions_interaction_type_check constraint
+const INTERACTION_TYPES = ["priority_action", "hazard_identification", "action_sequence"];
+
 /**
  * Validates the module creation payload manually.
  * Returns an object { isValid: boolean, error: string | null }
@@ -103,6 +106,12 @@ exports.validateModuleCreation = (payload) => {
           }
           if (!Array.isArray(q.options) || q.options.length === 0) {
             return { isValid: false, error: `A question in '${step.stepTitle}' must have options.` };
+          }
+          if (q.interactionType != null && !INTERACTION_TYPES.includes(q.interactionType)) {
+            return { isValid: false, error: `A question in '${step.stepTitle}' has an invalid interaction type.` };
+          }
+          if (q.rationale != null && typeof q.rationale !== "string") {
+            return { isValid: false, error: `A question in '${step.stepTitle}' has an invalid explanation.` };
           }
         }
       }

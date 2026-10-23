@@ -308,20 +308,24 @@ class ModuleService {
             const qTexts = [];
             const qPoints = [];
             const qImages = [];
+            const qRationales = [];
+            const qInteractionTypes = [];
 
             for (const q of step.quizQuestions) {
               qTexts.push(q.questionText);
               qPoints.push(10);
               qImages.push(q.imageURL || '');
+              qRationales.push(q.rationale ? cleanRichText(q.rationale) : null);
+              qInteractionTypes.push(q.interactionType || null);
             }
 
             const qRes = await client.query(
-              `INSERT INTO public.questions (mod_id, step_id, question_text, points, image_url)
-               SELECT $1, $2, t, p, i
-               FROM unnest($3::text[], $4::int[], $5::text[]) WITH ORDINALITY AS u(t, p, i, ord)
+              `INSERT INTO public.questions (mod_id, step_id, question_text, points, image_url, rationale, interaction_type)
+               SELECT $1, $2, t, p, i, r, it
+               FROM unnest($3::text[], $4::int[], $5::text[], $6::text[], $7::text[]) WITH ORDINALITY AS u(t, p, i, r, it, ord)
                ORDER BY ord
                RETURNING question_id`,
-              [mod_id, step_id, qTexts, qPoints, qImages]
+              [mod_id, step_id, qTexts, qPoints, qImages, qRationales, qInteractionTypes]
             );
 
             const cQuestionIds = [];
@@ -457,20 +461,24 @@ class ModuleService {
             const qTexts = [];
             const qPoints = [];
             const qImages = [];
+            const qRationales = [];
+            const qInteractionTypes = [];
 
             for (const q of step.quizQuestions) {
               qTexts.push(q.questionText);
               qPoints.push(10);
               qImages.push(q.imageURL || '');
+              qRationales.push(q.rationale ? cleanRichText(q.rationale) : null);
+              qInteractionTypes.push(q.interactionType || null);
             }
 
             const qRes = await client.query(
-              `INSERT INTO public.questions (mod_id, step_id, question_text, points, image_url)
-               SELECT $1, $2, t, p, i
-               FROM unnest($3::text[], $4::int[], $5::text[]) WITH ORDINALITY AS u(t, p, i, ord)
+              `INSERT INTO public.questions (mod_id, step_id, question_text, points, image_url, rationale, interaction_type)
+               SELECT $1, $2, t, p, i, r, it
+               FROM unnest($3::text[], $4::int[], $5::text[], $6::text[], $7::text[]) WITH ORDINALITY AS u(t, p, i, r, it, ord)
                ORDER BY ord
                RETURNING question_id`,
-              [mod_id, step_id, qTexts, qPoints, qImages]
+              [mod_id, step_id, qTexts, qPoints, qImages, qRationales, qInteractionTypes]
             );
 
             const cQuestionIds = [];
@@ -641,7 +649,7 @@ class ModuleService {
     if (stepCheck.rowCount === 0) return null;
 
     const questionsResult = await pool.query(
-      "SELECT question_id, question_text, points, image_url FROM questions WHERE step_id = $1 ORDER BY question_id ASC",
+      "SELECT question_id, question_text, points, image_url, rationale, interaction_type FROM questions WHERE step_id = $1 ORDER BY question_id ASC",
       [stepId]
     );
 
@@ -707,7 +715,7 @@ class ModuleService {
 
     if (stepIds.length > 0) {
       const qRes = await pool.query(
-        `SELECT question_id, step_id, question_text, points, image_url
+        `SELECT question_id, step_id, question_text, points, image_url, rationale, interaction_type
          FROM public.questions
          WHERE step_id = ANY($1::int[])
          ORDER BY question_id ASC`,
@@ -737,6 +745,8 @@ class ModuleService {
             questionText: q.question_text,
             imageURL: q.image_url,
             points: q.points,
+            rationale: q.rationale,
+            interactionType: q.interaction_type,
             options: allChoices
               .filter(c => c.question_id === q.question_id)
               .map(c => ({

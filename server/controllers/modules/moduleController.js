@@ -383,6 +383,7 @@ exports.getStepAssessment = async (req, res) => {
     ) {
       data = data.map((q) => ({
         ...q,
+        rationale: undefined,
         options: (q.options || []).map(({ id, text }) => ({ id, text })),
       }));
     }

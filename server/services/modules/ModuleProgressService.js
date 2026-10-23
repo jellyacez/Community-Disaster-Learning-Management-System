@@ -54,7 +54,7 @@ class ModuleProgressService {
         }
         
         const questionsResult = await pool.query(
-            `SELECT question_id, points FROM public.questions WHERE step_id = $1`,
+            `SELECT question_id, points, interaction_type FROM public.questions WHERE step_id = $1`,
             [stepId]
         );
         const questions = questionsResult.rows;
@@ -69,8 +69,10 @@ class ModuleProgressService {
         );
 
         const pointsMap = {};
+        const interactionTypeMap = {};
         questions.forEach(q => {
             pointsMap[q.question_id] = q.points || 1;
+            interactionTypeMap[q.question_id] = q.interaction_type;
         });
 
         // Dynamically grade each question based on its characteristics
@@ -101,7 +103,9 @@ class ModuleProgressService {
 
         answersByQuestion.forEach((selected, qid) => {
             const isActionSequence = sequenceMap[qid] !== undefined;
-            const isMultiSelect = correctChoicesMap[qid] && correctChoicesMap[qid].length > 1;
+            // A stored hazard type stays multi-select even with a single required hazard
+            const isMultiSelect = correctChoicesMap[qid] &&
+                (correctChoicesMap[qid].length > 1 || interactionTypeMap[qid] === 'hazard_identification');
 
             if (isActionSequence) {
                 const correctSequence = sequenceMap[qid]

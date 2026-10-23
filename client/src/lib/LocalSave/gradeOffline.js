@@ -28,7 +28,7 @@ export function gradeQuizOffline(questions, answers, passingThreshold = 80) {
         .sort((a, b) => (a.sequenceOrder ?? a.sequence_order) - (b.sequenceOrder ?? b.sequence_order))
         .map((o) => o.id);
       isCorrect = JSON.stringify(expected) === JSON.stringify(submitted);
-    } else if (correct.length > 1) {
+    } else if (correct.length > 1 || q.interaction_type === "hazard_identification") {
       const expected = correct.map((o) => o.id).sort((a, b) => a - b);
       isCorrect = JSON.stringify(expected) === JSON.stringify([...submitted].sort((a, b) => a - b));
     } else {

@@ -18,6 +18,7 @@ import QuizStateMessage from './QuizStateMessage';
 const decodeQuestion = (q) => ({
   ...q,
   question_text: decodeHtml(q.question_text),
+  rationale: q.rationale ? decodeHtml(q.rationale) : null,
   options: (q.options || []).map((o) => ({
     ...o,
     text: decodeHtml(o.text),
@@ -223,7 +224,7 @@ export default function AttemptQuiz({ stepId, onSubmitAttempt, retryCount = 0 })
   if (attempt.total === 0) return <QuizStateMessage type="empty" />;
   if (!current) return null;
 
-  const rationale = selected.length > 0 ? current.options.find((o) => o.id === selected[0])?.rationale : null;
+  const rationale = current.rationale || (selected.length > 0 ? current.options.find((o) => o.id === selected[0])?.rationale : null);
   const isLast = attempt.currentIndex >= attempt.total - 1;
 
   return (
