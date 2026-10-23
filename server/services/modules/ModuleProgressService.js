@@ -1,14 +1,16 @@
 const pool = require("../../config/db");
 const logger = require('../../utils/logger');
-
-// Step types that are graded against the answer key
-const GRADED_STEP_TYPES = ['quiz', 'situational', 'priority_action', 'hazard_identification', 'action_sequence'];
+const { GRADED_STEP_TYPES } = require("../../config/constants");
 
 // Days before expiry when a certificate becomes eligible for recertification
 const RENEWAL_WINDOW_DAYS = 30;
 
+// Final assessments are graded only from answers recorded in a server-owned attempt
+const isAttemptStep = (step) => GRADED_STEP_TYPES.includes(step.step_type) && Boolean(step.is_final_assessment);
+
 class ModuleProgressService {
-  async completeModuleStep(user_id, mod_id, stepId, answers) {
+  // `options.viaAttempt` is set only by QuizAttemptService when submitting a recorded attempt
+  async completeModuleStep(user_id, mod_id, stepId, answers, options = {}) {
     // Verify user enrollment
     const enrollmentCheck = await pool.query(
       "SELECT 1 FROM module_activity WHERE user_id = $1 AND mod_id = $2 LIMIT 1",
@@ -33,6 +35,11 @@ class ModuleProgressService {
     }
     
     const step = stepResult.rows[0];
+
+    // Client-submitted answers are not accepted for final assessments
+    if (isAttemptStep(step) && !options.viaAttempt) {
+      throw new Error("ATTEMPT_REQUIRED");
+    }
 
     // If step is a quiz, grade it
     let score = 0;

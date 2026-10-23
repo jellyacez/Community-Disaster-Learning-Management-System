@@ -1,5 +1,10 @@
 import { useState, useMemo, useEffect } from "react";
-import { useQuery, useQueries, useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  useQuery,
+  useQueries,
+  useMutation,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import apiClient from "../lib/apiClient";
 import toast from "react-hot-toast";
@@ -16,42 +21,51 @@ import {
   recalculateModuleProgress,
 } from "../lib/LocalSave/progressService";
 import { gradeQuizOffline } from "../lib/LocalSave/gradeOffline";
-import { setQuizSessionOwner, isQuizInProgress } from "../lib/quizSessions";
+import {
+  setQuizSessionOwner,
+  isQuizInProgress,
+  clearQuizSession,
+} from "../lib/quizSessions";
 import { decodeHtml } from "../utils/textUtils";
 import { localDb } from "../lib/localDb";
 export function useModuleViewer(moduleId) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { data: session } = useOfflineSession(); // Replaced authClient.useSession
+  const { data: session } = useOfflineSession();
   const userId = session?.user?.id;
-  // In-progress quiz attempts belong to this user; runs before any quiz reads them
   useMemo(() => setQuizSessionOwner(userId), [userId]);
 
   const [activeStepId, setActiveStepId] = useState(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [loopBackData, setLoopBackData] = useState(null);
   const [retryCount, setRetryCount] = useState(0);
-  // Navigation held back while the learner confirms leaving a quiz in progress
   const [pendingLeave, setPendingLeave] = useState(null);
-  // Assessment steps the learner must retake to recertify (server-flagged, persisted per
-  // module so it survives reloads, offline use, and replies that arrive during a sync)
+
+  // Retake state is kept in a local state to avoid unnecessary re-renders when the moduleId changes
   const [retakeState, setRetakeState] = useState(() => ({
     moduleId: String(moduleId),
     ids: getPendingRetakes(moduleId),
   }));
   const retakeStepIds = useMemo(
-    () => (retakeState.moduleId === String(moduleId) ? retakeState.ids : getPendingRetakes(moduleId)),
-    [retakeState, moduleId]
+    () =>
+      retakeState.moduleId === String(moduleId)
+        ? retakeState.ids
+        : getPendingRetakes(moduleId),
+    [retakeState, moduleId],
   );
 
   useEffect(() => {
     const handleRetakesUpdated = (event) => {
       if (event.detail?.moduleId === String(moduleId)) {
-        setRetakeState({ moduleId: event.detail.moduleId, ids: event.detail.stepIds });
+        setRetakeState({
+          moduleId: event.detail.moduleId,
+          ids: event.detail.stepIds,
+        });
       }
     };
     window.addEventListener(RECERT_RETAKES_UPDATED, handleRetakesUpdated);
-    return () => window.removeEventListener(RECERT_RETAKES_UPDATED, handleRetakesUpdated);
+    return () =>
+      window.removeEventListener(RECERT_RETAKES_UPDATED, handleRetakesUpdated);
   }, [moduleId]);
 
   // 1. Fetch module data (With Offline IndexedDB Fallback)
@@ -68,7 +82,10 @@ export function useModuleViewer(moduleId) {
           cacheModuleStructureOffline(payload.module, payload.levels);
 
           // Also save an offline localStorage copy for quick UI hydration
-          localStorage.setItem(`lms_offline_module_${moduleId}`, JSON.stringify(payload));
+          localStorage.setItem(
+            `lms_offline_module_${moduleId}`,
+            JSON.stringify(payload),
+          );
         }
 
         return payload;
@@ -76,7 +93,10 @@ export function useModuleViewer(moduleId) {
         if (!navigator.onLine || err.code === "ERR_NETWORK") {
           const cached = localStorage.getItem(`lms_offline_module_${moduleId}`);
           if (cached) {
-            toast("You are viewing a cached offline version of this module.", { icon: "📶", duration: 3000 });
+            toast("You are viewing a cached offline version of this module.", {
+              icon: "📶",
+              duration: 3000,
+            });
             return JSON.parse(cached);
           }
         }
@@ -86,36 +106,41 @@ export function useModuleViewer(moduleId) {
     retry: false,
   });
 
-
   const cacheModuleStructureOffline = async (moduleData, levels) => {
     if (!moduleData || !moduleData.id) return;
     try {
-      await localDb.transaction("rw", localDb.module_data, localDb.levels, localDb.module_steps, async () => {
-        await localDb.module_data.put({
-          mod_id: moduleData.id,
-          modcat: moduleData.category || "General",
-          title: moduleData.title
-        });
-
-        for (const level of levels) {
-          await localDb.levels.put({
-            level_id: level.id,
+      await localDb.transaction(
+        "rw",
+        localDb.module_data,
+        localDb.levels,
+        localDb.module_steps,
+        async () => {
+          await localDb.module_data.put({
             mod_id: moduleData.id,
-            title: level.title,
-            level_order: level.level_order
+            modcat: moduleData.category || "General",
+            title: moduleData.title,
           });
 
-          for (const step of (level.steps || [])) {
-            await localDb.module_steps.put({
-              step_id: step.id,
+          for (const level of levels) {
+            await localDb.levels.put({
               level_id: level.id,
-              title: step.title,
-              step_type: step.type,
-              step_order: step.step_order
+              mod_id: moduleData.id,
+              title: level.title,
+              level_order: level.level_order,
             });
+
+            for (const step of level.steps || []) {
+              await localDb.module_steps.put({
+                step_id: step.id,
+                level_id: level.id,
+                title: step.title,
+                step_type: step.type,
+                step_order: step.step_order,
+              });
+            }
           }
-        }
-      });
+        },
+      );
     } catch (error) {
       console.warn("Failed to cache module structure to IndexedDB:", error);
     }
@@ -131,8 +156,11 @@ export function useModuleViewer(moduleId) {
 
   // Steps pending a recertification retake are treated as not completed so their quizzes reopen
   const completedStepIds = useMemo(
-    () => (data?.completedStepIds || []).filter((id) => !retakeStepIds.includes(id)),
-    [data?.completedStepIds, retakeStepIds]
+    () =>
+      (data?.completedStepIds || []).filter(
+        (id) => !retakeStepIds.includes(id),
+      ),
+    [data?.completedStepIds, retakeStepIds],
   );
 
   const enhancedLevels = useMemo(() => {
@@ -141,7 +169,9 @@ export function useModuleViewer(moduleId) {
 
     return levels.map((lvl, index) => {
       const previousLvl = index > 0 ? levels[index - 1] : null;
-      const hasCompletedStep = (lvl.steps || []).some((s) => completedStepIds.includes(s.id));
+      const hasCompletedStep = (lvl.steps || []).some((s) =>
+        completedStepIds.includes(s.id),
+      );
       const isUnlocked =
         lvl.level_order === 1 ||
         !lvl.is_locked_by_default ||
@@ -157,7 +187,8 @@ export function useModuleViewer(moduleId) {
           const previousStep = idx > 0 ? arr[idx - 1] : null;
           const isStepLocked = isCompleted
             ? false
-            : (!isUnlocked || (previousStep && !completedStepIds.includes(previousStep.id)));
+            : !isUnlocked ||
+              (previousStep && !completedStepIds.includes(previousStep.id));
 
           return {
             ...s,
@@ -171,12 +202,15 @@ export function useModuleViewer(moduleId) {
   }, [data?.levels, data?.unlockedLevelIds, completedStepIds]);
 
   const allSteps = useMemo(() => {
-    return enhancedLevels.reduce((acc, lvl) => [...acc, ...(lvl.steps || [])], []);
+    return enhancedLevels.reduce(
+      (acc, lvl) => [...acc, ...(lvl.steps || [])],
+      [],
+    );
   }, [enhancedLevels]);
 
   const activeStep = useMemo(
     () => allSteps.find((s) => s.id === activeStepId),
-    [allSteps, activeStepId]
+    [allSteps, activeStepId],
   );
 
   // Preload assessments lazily
@@ -191,47 +225,58 @@ export function useModuleViewer(moduleId) {
   };
 
   const assessmentQueries = useQueries({
-      queries: allSteps.map((step) => ({
-        queryKey: ["stepAssessment", step.id],
-        networkMode: "offlineFirst", // Allow running while offline
-        queryFn: async () => {
-          try {
-            const res = await apiClient.get(`/modules/steps/${step.id}/assessment`);
-            const rawQuestions = res.data?.data || [];
+    queries: allSteps.map((step) => ({
+      queryKey: ["stepAssessment", step.id],
+      networkMode: "offlineFirst", // Allow running while offline
+      queryFn: async () => {
+        try {
+          const res = await apiClient.get(
+            `/modules/steps/${step.id}/assessment`,
+          );
+          const rawQuestions = res.data?.data || [];
 
-            const questions = rawQuestions.map((q) => ({
-              ...q,
-              question_text: decodeHtml(q.question_text),
-              options: (q.options || []).map((opt) => ({
-                ...opt,
-                text: decodeHtml(opt.text),
-                rationale: decodeHtml(opt.rationale),
-              })),
-            }));
+          const questions = rawQuestions.map((q) => ({
+            ...q,
+            question_text: decodeHtml(q.question_text),
+            options: (q.options || []).map((opt) => ({
+              ...opt,
+              text: decodeHtml(opt.text),
+              rationale: decodeHtml(opt.rationale),
+            })),
+          }));
 
-            // Cache the assessment questions for offline use
-            localStorage.setItem(`lms_offline_assessment_${step.id}`, JSON.stringify(questions));
+          // Cache the assessment questions for offline use
+          localStorage.setItem(
+            `lms_offline_assessment_${step.id}`,
+            JSON.stringify(questions),
+          );
 
-            return { stepId: step.id, questions };
-          } catch (err) {
-            // If offline or network fails, read from localStorage cache
-            if (!navigator.onLine || err.code === "ERR_NETWORK") {
-              const cached = localStorage.getItem(`lms_offline_assessment_${step.id}`);
-              if (cached) {
-                return { stepId: step.id, questions: JSON.parse(cached) };
-              }
+          return { stepId: step.id, questions };
+        } catch (err) {
+          // If offline or network fails, read from localStorage cache
+          if (!navigator.onLine || err.code === "ERR_NETWORK") {
+            const cached = localStorage.getItem(
+              `lms_offline_assessment_${step.id}`,
+            );
+            if (cached) {
+              return { stepId: step.id, questions: JSON.parse(cached) };
             }
-            throw err;
           }
-        },
-        enabled: step.id === activeStepId && isAssessmentStepType(step.type),
-        staleTime: Infinity,
-      })),
-    });
+          throw err;
+        }
+      },
+      // Final assessments load through their server attempt (AttemptQuiz), not this query
+      enabled:
+        step.id === activeStepId &&
+        isAssessmentStepType(step.type) &&
+        !step.is_final_assessment,
+      staleTime: Infinity,
+    })),
+  });
 
   const getAssessmentForStep = (stepId) => {
     const query = assessmentQueries.find(
-      (q) => String(q.data?.stepId) === String(stepId)
+      (q) => String(q.data?.stepId) === String(stepId),
     );
     return {
       questions: query?.data?.questions || [],
@@ -243,11 +288,33 @@ export function useModuleViewer(moduleId) {
   // 2. Step completion mutation
   const completeStepMutation = useMutation({
     networkMode: "always",
-    mutationFn: async ({ stepId, answers }) => {
+    mutationFn: async ({ stepId, answers, attemptId }) => {
       if (!userId) {
         throw new Error(
-          "User session is not fully loaded. Please wait a moment and try again."
+          "User session is not fully loaded. Please wait a moment and try again.",
         );
+      }
+
+      // Final assessments: the server grades its own recorded attempt; nothing is queued offline
+      if (attemptId) {
+        try {
+          const response = await apiClient.post(
+            `/modules/attempts/${attemptId}/submit`,
+          );
+          clearQuizSession(stepId);
+          return response.data;
+        } catch (error) {
+          if (!error.response) {
+            throw new Error(
+              "Connection lost. Reconnect, then press Complete Assessment again.",
+              { cause: error },
+            );
+          }
+          throw new Error(
+            error.response.data?.message || "Could not submit the assessment.",
+            { cause: error },
+          );
+        }
       }
 
       const endpoint = `/modules/${moduleId}/steps/${stepId}/complete`;
@@ -257,7 +324,7 @@ export function useModuleViewer(moduleId) {
       const stepType = allSteps.find((s) => s.id === stepId)?.type;
       if (!isQuiz && isAssessmentStepType(stepType)) {
         throw new Error(
-          "This assessment hasn't loaded yet. Open it while online at least once, then try again."
+          "This assessment hasn't loaded yet. Open it while online at least once, then try again.",
         );
       }
 
@@ -267,24 +334,42 @@ export function useModuleViewer(moduleId) {
         let result;
         let grade = null;
         if (isQuiz) {
-          const cachedRaw = localStorage.getItem(`lms_offline_assessment_${stepId}`);
+          const cachedRaw = localStorage.getItem(
+            `lms_offline_assessment_${stepId}`,
+          );
           if (cachedRaw) {
             try {
               const step = allSteps.find((s) => s.id === stepId);
               const level = enhancedLevels.find((l) => l.id === step?.level_id);
-              grade = gradeQuizOffline(JSON.parse(cachedRaw), answers, level?.passing_threshold);
+              grade = gradeQuizOffline(
+                JSON.parse(cachedRaw),
+                answers,
+                level?.passing_threshold,
+              );
             } catch (e) {
-              console.warn("Offline grading failed, treating result as provisional pass:", e);
+              console.warn(
+                "Offline grading failed, treating result as provisional pass:",
+                e,
+              );
             }
           }
-          result = await saveOfflineResult(moduleId, userId, grade ? grade.passed : true, answers, stepId);
+          result = await saveOfflineResult(
+            moduleId,
+            userId,
+            grade ? grade.passed : true,
+            answers,
+            stepId,
+          );
           await recalculateModuleProgress(moduleId, userId);
         } else {
           result = await saveOfflineStepProgress(moduleId, stepId, userId);
         }
 
-        if (result?.status === 'failed') {
-          throw new Error(result.error || "Storage failed. Progress could not be saved offline.");
+        if (result?.status === "failed") {
+          throw new Error(
+            result.error ||
+              "Storage failed. Progress could not be saved offline.",
+          );
         }
 
         const base = {
@@ -306,7 +391,7 @@ export function useModuleViewer(moduleId) {
                   (s) =>
                     s.level_id === step.level_id &&
                     s.step_order < step.step_order &&
-                    ["text", "video"].includes(s.type)
+                    ["text", "video"].includes(s.type),
                 )
                 .sort((a, b) => b.step_order - a.step_order)[0]?.id ||
               null;
@@ -326,7 +411,9 @@ export function useModuleViewer(moduleId) {
 
       // 1. OFFLINE HANDLING
       if (!navigator.onLine) {
-        return saveOffline("You are offline. Progress saved locally and will sync when reconnected.");
+        return saveOffline(
+          "You are offline. Progress saved locally and will sync when reconnected.",
+        );
       }
 
       // 2. ONLINE HANDLING
@@ -340,7 +427,9 @@ export function useModuleViewer(moduleId) {
           error.response?.data?.error === "Network Error / Offline";
 
         if (isNetworkFailure || isServiceWorkerOffline) {
-          return saveOffline("Connection lost. Progress saved locally and will sync when reconnected.");
+          return saveOffline(
+            "Connection lost. Progress saved locally and will sync when reconnected.",
+          );
         }
         throw error;
       }
@@ -348,10 +437,13 @@ export function useModuleViewer(moduleId) {
     onSuccess: (responseData, { stepId }) => {
       if (responseData.queuedOffline) {
         if (responseData.passed === false) {
-          toast("Offline result: you did not meet the passing score. This will be confirmed when you reconnect.", {
-            icon: "📶",
-            duration: 5000,
-          });
+          toast(
+            "Offline result: you did not meet the passing score. This will be confirmed when you reconnect.",
+            {
+              icon: "📶",
+              duration: 5000,
+            },
+          );
           setLoopBackData({
             message: "You did not meet the passing threshold.",
             score: responseData.score,
@@ -362,35 +454,47 @@ export function useModuleViewer(moduleId) {
           return;
         }
 
-        // A provisional offline pass on a retake step closes that retake locally;
-        // the sync reply re-flags it if the server's grading disagrees.
+        // If the server has flagged this step as needing a recertification retake, remove it from the pending list
         if (retakeStepIds.includes(stepId)) {
-          setPendingRetakes(moduleId, retakeStepIds.filter((id) => id !== stepId));
+          setPendingRetakes(
+            moduleId,
+            retakeStepIds.filter((id) => id !== stepId),
+          );
         }
 
-        // Server can't be refetched offline, so mark the step done in the cache
-        // to keep the progress counter/bar and step locks in sync.
+        // Update the cached module viewer data to reflect the newly completed step,
+        // but only if it wasn't already marked as completed
         queryClient.setQueryData(["moduleViewer", moduleId], (old) =>
           old && !(old.completedStepIds || []).includes(stepId)
-            ? { ...old, completedStepIds: [...(old.completedStepIds || []), stepId] }
-            : old
+            ? {
+                ...old,
+                completedStepIds: [...(old.completedStepIds || []), stepId],
+              }
+            : old,
         );
 
-        if (responseData.status === 'queued_memory_only' || responseData.storageType === 'memory') {
+        if (
+          responseData.status === "queued_memory_only" ||
+          responseData.storageType === "memory"
+        ) {
           toast(
             responseData.warning ||
               "Storage restricted: Progress saved in memory for this session only. Do not close tab until reconnected.",
-            { icon: "⚠️", duration: 7000 }
+            { icon: "⚠️", duration: 7000 },
           );
         } else {
           toast.success(responseData.message, { icon: "📦", duration: 4000 });
         }
 
         queryClient.invalidateQueries({ queryKey: ["userDashboard"] });
-        queryClient.invalidateQueries({ queryKey: ["moduleDetails", moduleId] });
+        queryClient.invalidateQueries({
+          queryKey: ["moduleDetails", moduleId],
+        });
 
         if (activeStep) {
-          const currentIndex = allSteps.findIndex((s) => s.id === activeStep.id);
+          const currentIndex = allSteps.findIndex(
+            (s) => s.id === activeStep.id,
+          );
           const nextStep = allSteps[currentIndex + 1];
           if (nextStep) {
             setActiveStepId(nextStep.id);
@@ -401,7 +505,6 @@ export function useModuleViewer(moduleId) {
         }
         return;
       }
-
 
       queryClient.invalidateQueries({ queryKey: ["moduleViewer", moduleId] });
       queryClient.invalidateQueries({ queryKey: ["userDashboard"] });
@@ -431,9 +534,12 @@ export function useModuleViewer(moduleId) {
       if (retakeStepIds.length) setPendingRetakes(moduleId, []);
 
       if (responseData.moduleCompleted) {
-        toast.success("Congratulations! You have completed the entire module!", {
-          duration: 5000,
-        });
+        toast.success(
+          "Congratulations! You have completed the entire module!",
+          {
+            duration: 5000,
+          },
+        );
         navigate("/userDashboard");
         return;
       }
@@ -452,13 +558,27 @@ export function useModuleViewer(moduleId) {
       }
     },
     onError: (error) => {
-      toast.error(error.response?.data?.message || error.message || "Failed to complete step.");
+      toast.error(
+        error.response?.data?.message ||
+          error.message ||
+          "Failed to complete step.",
+      );
     },
   });
 
   // Leaving a quiz mid-attempt asks first; the attempt is kept but its clock keeps running
   const guardLeave = (action, targetStepId = null) => {
-    if (activeStep && targetStepId !== activeStep.id && isQuizInProgress(activeStep.id)) {
+    // An open, not-yet-completed final assessment always asks, so the prompt never
+    // depends only on the in-memory marker for the server-owned attempt.
+    const isOpenFinal =
+      activeStep?.is_final_assessment &&
+      isAssessmentStepType(activeStep.type) &&
+      !completedStepIds.includes(activeStep.id);
+    if (
+      activeStep &&
+      targetStepId !== activeStep.id &&
+      (isQuizInProgress(activeStep.id) || isOpenFinal)
+    ) {
       setPendingLeave({ action });
       return;
     }
@@ -480,7 +600,8 @@ export function useModuleViewer(moduleId) {
     }
 
     const parentLevel = enhancedLevels.find((l) => l.id === step.level_id);
-    const targetStep = parentLevel?.steps?.find((s) => s.id === step.id) || step;
+    const targetStep =
+      parentLevel?.steps?.find((s) => s.id === step.id) || step;
 
     if (!targetStep.isLocked) {
       guardLeave(() => {
@@ -507,9 +628,9 @@ export function useModuleViewer(moduleId) {
     }
   };
 
-  const handleCompleteAndContinue = (answers = null) => {
+  const handleCompleteAndContinue = (answers = null, { attemptId } = {}) => {
     if (!activeStep || completeStepMutation.isPending) return;
-    completeStepMutation.mutate({ stepId: activeStep.id, answers });
+    completeStepMutation.mutate({ stepId: activeStep.id, answers, attemptId });
   };
 
   const handlePrevious = () => {

@@ -3,10 +3,11 @@ import toast from "react-hot-toast";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { RefreshIcon } from "@hugeicons/core-free-icons";
 
-// Assessment steps a learner must retake to renew a module certificate, as reported by
-// the server (`recertificationStepIds`). Persisted so the viewer can reopen those quizzes
-// after a reload or while offline, and so a reply that arrives during an offline-queue
-// sync still reaches the viewer.
+// Recertification retake tracking
+// - Stores a list of stepIds that the user has pending retakes for, per module
+// - Fires a custom event when the list is updated, so other components can listen for changes
+// - Uses localStorage to persist across sessions, but will fail gracefully if storage is blocked
+// - Provides a helper to show a toast notification when recertification is required
 const storageKey = (moduleId) => `lms_recert_retake_${moduleId}`;
 
 export const RECERT_RETAKES_UPDATED = "recertification-retakes-updated";
@@ -28,15 +29,17 @@ export const setPendingRetakes = (moduleId, stepIds) => {
       localStorage.removeItem(storageKey(moduleId));
     }
   } catch {
-    // Storage blocked: the in-memory viewer state still works for this session
+    // Ignore storage errors (e.g., quota exceeded, storage disabled)
   }
   window.dispatchEvent(
-    new CustomEvent(RECERT_RETAKES_UPDATED, { detail: { moduleId: String(moduleId), stepIds: stepIds || [] } })
+    new CustomEvent(RECERT_RETAKES_UPDATED, {
+      detail: { moduleId: String(moduleId), stepIds: stepIds || [] },
+    }),
   );
 };
 
 export const showRecertificationToast = (
-  message = "Your certificate is due for renewal. Retake the final assessment to recertify."
+  message = "Your certificate is due for renewal. Retake the final assessment to recertify.",
 ) =>
   toast(message, {
     icon: createElement(HugeiconsIcon, {

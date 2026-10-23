@@ -106,6 +106,11 @@ async function setupDatabase() {
     // schemas fresh above, so running them again would cause a "already exists" error.
     schema = schema.replace(/^(CREATE|ALTER)\s+SCHEMA\b.*$/gim, "");
 
+    // Strip ownership changes. The dump assigns every object to the role that produced
+    // it (lms_admin), which usually doesn't exist on another machine; objects should
+    // simply belong to DB_USER, the role running this setup.
+    schema = schema.replace(/^ALTER\s+.+\s+OWNER\s+TO\s+\S+;\s*$/gim, "");
+
     await client.query(schema);
 
     // ── Step 4: Run numbered migration/seed files in order ────────────────────

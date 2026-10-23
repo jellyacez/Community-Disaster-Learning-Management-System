@@ -14,7 +14,7 @@ import {
   BookOpen01Icon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
-import StatCard from "../../system/overview/components/StatCard";
+import StatCard from "../../../../components/ui/StatCard";
 import ActiveModulesTable from "./components/ActiveModulesTable";
 import MdrrmoRecentActivity from "./components/MdrrmoRecentActivity";
 import MdrrmoQuickActions from "./components/MdrrmoQuickActions";

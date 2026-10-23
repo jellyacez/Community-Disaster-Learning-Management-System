@@ -3,7 +3,12 @@ import apiClient from "../lib/apiClient";
 import toast from "react-hot-toast";
 import { useQueryClient } from "@tanstack/react-query";
 
-export function useModuleEnrollment({ moduleId, moduleTitle, initialEnrolled = false, onEnrollSuccess }) {
+export function useModuleEnrollment({
+  moduleId,
+  moduleTitle,
+  initialEnrolled = false,
+  onEnrollSuccess,
+}) {
   const [localEnrolled, setLocalEnrolled] = useState(initialEnrolled);
   const [isEnrolling, setIsEnrolling] = useState(false);
   const isEnrollingRef = useRef(false);
@@ -21,20 +26,27 @@ export function useModuleEnrollment({ moduleId, moduleTitle, initialEnrolled = f
       const response = await apiClient.post(`/modules/${moduleId}/enroll`);
 
       if (response.data.success) {
-        toast.success(`Enrollment Success! You are now enrolled in ${moduleTitle}.`);
+        toast.success(
+          `Enrollment Success! You are now enrolled in ${moduleTitle}.`,
+        );
 
-        // Invalidate queries so the Dashboard and Catalog fetch the new enrollment
-        // This automatically updates DASHBOARD_CACHE_KEY in localStorage for offline use
+        // Invalidate relevant queries to refresh data
         queryClient.invalidateQueries({ queryKey: ["userDashboard"] });
         queryClient.invalidateQueries({ queryKey: ["moduleCatalog"] });
         queryClient.invalidateQueries({ queryKey: ["enrolledModules"] });
 
         try {
-                  const dashRes = await apiClient.get("/user/dashboard");
-                  localStorage.setItem("lms_offline_dashboard", JSON.stringify(dashRes.data));
-                } catch (e) {
-                  console.warn("Could not background-cache dashboard for offline use.",e);
-                }
+          const dashRes = await apiClient.get("/user/dashboard");
+          localStorage.setItem(
+            "lms_offline_dashboard",
+            JSON.stringify(dashRes.data),
+          );
+        } catch (e) {
+          console.warn(
+            "Could not background-cache dashboard for offline use.",
+            e,
+          );
+        }
 
         if (onEnrollSuccess) onEnrollSuccess(moduleId);
       } else {
@@ -46,7 +58,8 @@ export function useModuleEnrollment({ moduleId, moduleTitle, initialEnrolled = f
       setLocalEnrolled(false);
       console.error("Enrollment error:", error);
       toast.error(
-        error.response?.data?.message || "Failed to enroll in module. Please try again."
+        error.response?.data?.message ||
+          "Failed to enroll in module. Please try again.",
       );
     } finally {
       isEnrollingRef.current = false;

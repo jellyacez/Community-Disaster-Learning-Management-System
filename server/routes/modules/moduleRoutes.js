@@ -7,6 +7,7 @@ router.use(authenticate);
 // modules
 const moduleController = require("../../controllers/modules/moduleController");
 const moduleProgressController = require("../../controllers/modules/moduleProgressController");
+const quizAttemptController = require("../../controllers/modules/quizAttemptController");
 
 //middlewares
 const requireRole = require("../../middleware/requireRole");
@@ -91,5 +92,31 @@ router.post("/progress", moduleProgressController.syncModuleProgress);
 // @desc    Mark a step as complete
 // @access  Private
 router.post("/:id/steps/:stepId/complete", moduleProgressController.completeModuleStep);
+
+// Final assessments run as server-owned attempts (answer key revealed per answered question)
+// @route   POST /api/modules/:id/steps/:stepId/attempts
+// @desc    Start or resume an attempt
+// @access  Private
+router.post("/:id/steps/:stepId/attempts", quizAttemptController.startAttempt);
+
+// @route   POST /api/modules/attempts/:attemptId/answers
+// @desc    Lock in the answer to the current question
+// @access  Private
+router.post("/attempts/:attemptId/answers", quizAttemptController.answerQuestion);
+
+// @route   POST /api/modules/attempts/:attemptId/next
+// @desc    Move to the next question
+// @access  Private
+router.post("/attempts/:attemptId/next", quizAttemptController.nextQuestion);
+
+// @route   POST /api/modules/attempts/:attemptId/tab-switches
+// @desc    Record leaving the browser tab mid-attempt
+// @access  Private
+router.post("/attempts/:attemptId/tab-switches", quizAttemptController.reportTabSwitch);
+
+// @route   POST /api/modules/attempts/:attemptId/submit
+// @desc    Grade the recorded answers and complete the step
+// @access  Private
+router.post("/attempts/:attemptId/submit", quizAttemptController.submitAttempt);
 
 module.exports = router;

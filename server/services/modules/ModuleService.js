@@ -513,6 +513,14 @@ class ModuleService {
     }
   }
 
+  async getStepMeta(stepId) {
+    const { rows } = await pool.query(
+      "SELECT step_id, step_type, is_final_assessment FROM module_steps WHERE step_id = $1",
+      [stepId]
+    );
+    return rows[0] || null;
+  }
+
   async getModuleById(mod_id) {
     const moduleCheck = await pool.query(
       "SELECT mod_id, modname, modcat, level, status, author_id, rejection_reason, parent_mod_id, moddateremove FROM module_data WHERE mod_id = $1",
