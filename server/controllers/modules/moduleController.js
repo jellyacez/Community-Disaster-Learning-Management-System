@@ -514,11 +514,24 @@ exports.updateModuleStatus = async (req, res) => {
     }
     const previousStatus = current.status ?? "unknown";
 
-    await ModuleService.updateModuleStatus(
+    // Only a pending submission can be reviewed. Without this, a reviewer acting on a stale
+    // page could reject an already-published module back to draft.
+    const reviewConflict = () =>
+      res.status(409).json({
+        success: false,
+        code: "NOT_PENDING_REVIEW",
+        message: "This module is no longer pending review. Refresh the list and try again.",
+      });
+    if (current.status !== "pending_review") return reviewConflict();
+
+    // The status check repeats inside the UPDATE so two simultaneous reviews can't both apply
+    const updated = await ModuleService.updateModuleStatus(
       parsedModId,
       finalStatus,
       rejection_reason,
+      "pending_review",
     );
+    if (!updated) return reviewConflict();
 
     const pool = require("../../config/db");
 

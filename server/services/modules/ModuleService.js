@@ -855,14 +855,15 @@ class ModuleService {
     };
   }
 
-  async updateModuleStatus(mod_id, status, rejection_reason = null) {
+  // With fromStatus, only updates a module still in that status; returns undefined otherwise
+  async updateModuleStatus(mod_id, status, rejection_reason = null, fromStatus = null) {
     const query = `
       UPDATE public.module_data
       SET status = $1, rejection_reason = $2
-      WHERE mod_id = $3
+      WHERE mod_id = $3 AND ($4::text IS NULL OR status = $4)
       RETURNING *
     `;
-    const result = await pool.query(query, [status, rejection_reason, mod_id]);
+    const result = await pool.query(query, [status, rejection_reason, mod_id, fromStatus]);
     return result.rows[0];
   }
 }
