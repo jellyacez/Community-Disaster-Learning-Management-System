@@ -813,16 +813,35 @@ class ModuleService {
     };
   }
 
-  // Only updates a module still in fromStatus; returns undefined otherwise
-  async updateModuleStatus(mod_id, status, rejection_reason, fromStatus) {
-    const query = `
-      UPDATE public.module_data
-      SET status = $1, rejection_reason = $2
-      WHERE mod_id = $3 AND status = $4
-      RETURNING *
-    `;
-    const result = await pool.query(query, [status, rejection_reason, mod_id, fromStatus]);
-    return result.rows[0];
+  // Reviews a module still pending review; returns undefined if it wasn't pending.
+  // Publishing a revision archives the version it replaces in the same transaction,
+  // so a failure can't leave two published versions.
+  async reviewModule(mod_id, status, rejection_reason) {
+    const client = await pool.connect();
+    try {
+      await client.query("BEGIN");
+      const { rows } = await client.query(
+        `UPDATE public.module_data
+         SET status = $1, rejection_reason = $2
+         WHERE mod_id = $3 AND status = 'pending_review'
+         RETURNING *`,
+        [status, rejection_reason, mod_id]
+      );
+      const updated = rows[0];
+      if (updated && status === "published" && updated.parent_mod_id) {
+        await client.query(
+          "UPDATE public.module_data SET status = 'archived' WHERE mod_id = $1",
+          [updated.parent_mod_id]
+        );
+      }
+      await client.query("COMMIT");
+      return updated;
+    } catch (error) {
+      await client.query("ROLLBACK");
+      throw error;
+    } finally {
+      client.release();
+    }
   }
 }
 

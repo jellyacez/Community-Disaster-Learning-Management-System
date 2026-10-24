@@ -510,11 +510,10 @@ exports.updateModuleStatus = async (req, res) => {
 
     // Only a pending submission can be reviewed, so a stale page can't reject a published module.
     // The check lives in the UPDATE itself, so two simultaneous reviews can't both apply.
-    const updated = await ModuleService.updateModuleStatus(
+    const updated = await ModuleService.reviewModule(
       parsedModId,
       finalStatus,
       rejection_reason,
-      "pending_review",
     );
     if (!updated) {
       return res.status(409).json({
@@ -527,10 +526,6 @@ exports.updateModuleStatus = async (req, res) => {
     const pool = require("../../config/db");
 
     if (finalStatus === "published" && current.parent_mod_id) {
-      await pool.query(
-        "UPDATE module_data SET status = 'archived' WHERE mod_id = $1",
-        [current.parent_mod_id],
-      );
       await logActivity(
         req.user.id,
         `Archived original published module ID ${current.parent_mod_id} following approval of revision ID ${parsedModId}`,

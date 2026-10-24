@@ -167,6 +167,32 @@ async function main() {
     assert.equal(after.rejection_reason, "Needs sources");
   });
 
+  await check("if archiving the original fails, the revision isn't published either", async () => {
+    const original = await createModule("original for failure", "published");
+    const revision = await createModule("revision for failure", "pending_review", original);
+    // Stand-in for any error between the two writes: archiving this one original throws
+    const fn = `${RUN}_block_archive`;
+    await pool.query(
+      `CREATE FUNCTION ${fn}() RETURNS trigger LANGUAGE plpgsql AS $$
+       BEGIN
+         IF NEW.mod_id = ${original} AND NEW.status = 'archived' THEN
+           RAISE EXCEPTION 'simulated archive failure';
+         END IF;
+         RETURN NEW;
+       END $$`
+    );
+    await pool.query(`CREATE TRIGGER ${fn} BEFORE UPDATE ON module_data FOR EACH ROW EXECUTE FUNCTION ${fn}()`);
+    try {
+      const res = await review(admin, revision, "published");
+      assert.equal(res.status, 500, JSON.stringify(res.body));
+      assert.equal((await statusOf(revision)).status, "pending_review");
+      assert.equal((await statusOf(original)).status, "published");
+    } finally {
+      await pool.query(`DROP TRIGGER IF EXISTS ${fn} ON module_data`);
+      await pool.query(`DROP FUNCTION IF EXISTS ${fn}()`);
+    }
+  });
+
   console.log("All review-guard regression checks passed.");
 }
 
