@@ -85,7 +85,7 @@ export default function MaintenancePage() {
         </h1>
         
         <p className="text-base text-gray-600 mb-8 leading-relaxed">
-          The Bacolor DRRMO Learning Management System is currently undergoing scheduled maintenance to improve performance and security. We'll be back online shortly.
+          Bacolor Disaster LMS is currently undergoing scheduled maintenance to improve performance and security. We'll be back online shortly.
         </p>
 
         <div className="space-y-4">

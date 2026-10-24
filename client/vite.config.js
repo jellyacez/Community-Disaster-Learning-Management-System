@@ -11,8 +11,8 @@ export default defineConfig(({ mode }) => ({
       registerType: "autoUpdate",
       includeAssets: ["favicon.svg", "icons.svg", "apple-touch-icon-180x180.png"],
       manifest: {
-        name: "Bacolor LMS",
-        short_name: "Bacolor LMS",
+        name: "Bacolor Disaster LMS",
+        short_name: "Bacolor Disaster LMS",
         description:
           "Community Disaster Learning Management System for disaster preparedness training, announcements, and resident learning support.",
         theme_color: "#dc2626",

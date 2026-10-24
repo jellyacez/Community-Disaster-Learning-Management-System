@@ -1,15 +1,17 @@
 
 import { HugeiconsIcon } from "@hugeicons/react";
-import { Call02Icon, Copy01Icon } from "@hugeicons/core-free-icons";
+import { Call02Icon, Copy01Icon, Facebook01Icon } from "@hugeicons/core-free-icons";
 import toast from "react-hot-toast";
 
 export default function DashboardEmergencyContacts() {
   const isTouchDevice = typeof window !== "undefined" && window.matchMedia("(pointer: coarse)").matches;
 
+  // From the official MDRRMO Bacolor and BFP Bacolor Fire Station Facebook pages
   const contacts = [
-    { label: "MDRRMO Hotline", number: "(045) 123-4567", tel: "0451234567" },
-    { label: "PNP / Police", number: "117 / 911", tel: "911" },
-    { label: "BFP / Fire Dept.", number: "(045) 890-1234", tel: "0458901234" },
+    { label: "MDRRMO (Globe)", number: "0966 136 5586", tel: "09661365586" },
+    { label: "MDRRMO (Smart)", number: "0929 446 1940", tel: "09294461940" },
+    { label: "BFP Bacolor", number: "0923 103 8363", tel: "09231038363" },
+    { label: "National Emergency", number: "911", tel: "911" },
   ];
 
   const handleContactClick = (e, contact) => {
@@ -64,6 +66,16 @@ export default function DashboardEmergencyContacts() {
           </a>
         ))}
       </div>
+      <a
+        href="https://www.facebook.com/BacolorRescue.DIMANteam"
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label="Latest advisories from MDRRMO Bacolor on Facebook (opens in a new tab)"
+        className="mt-4 inline-flex min-h-11 items-center gap-1.5 text-xs sm:text-sm font-semibold text-gray-700 underline underline-offset-4 hover:text-gray-950"
+      >
+        <HugeiconsIcon icon={Facebook01Icon} className="w-4 h-4 shrink-0" aria-hidden="true" />
+        Latest advisories: MDRRMO Bacolor on Facebook
+      </a>
     </div>
   );
 }

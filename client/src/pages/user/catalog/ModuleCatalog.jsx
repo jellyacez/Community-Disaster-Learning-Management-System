@@ -17,7 +17,7 @@ import { decodeHtml } from "../../../utils/textUtils";
 import { useOfflineSession } from "../../../hooks/offlineSession";
 
 export default function UserModuleCatalog() {
-  useDocumentTitle("Module Catalog | Bacolor LMS");
+  useDocumentTitle("Module Catalog | Bacolor Disaster LMS");
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 

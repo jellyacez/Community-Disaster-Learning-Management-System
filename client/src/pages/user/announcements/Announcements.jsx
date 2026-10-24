@@ -6,7 +6,7 @@ import { usePaginatedAnnouncements } from "../hooks/usePaginatedAnnouncements";
 import PaginationControls from "../../../components/ui/PaginationControls";
 
 export default function UserAnnouncements() {
-  useDocumentTitle("Announcements | Bacolor LMS");
+  useDocumentTitle("Announcements | Bacolor Disaster LMS");
 
   const {
     announcements,

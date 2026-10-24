@@ -13,7 +13,7 @@ import {
 import Spinner from "../../components/ui/Spinner";
 
 export default function VerifyCertificate() {
-  useDocumentTitle("Verify Certificate | Bacolor LMS");
+  useDocumentTitle("Verify Certificate | Bacolor Disaster LMS");
   const [searchParams, setSearchParams] = useSearchParams();
   const [tokenInput, setTokenInput] = useState(searchParams.get("token") || "");
   const [submittedToken, setSubmittedToken] = useState(

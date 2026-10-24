@@ -1,107 +1,121 @@
-import { motion } from "framer-motion";
-import { useNavigate } from "react-router-dom";
+import { motion, useReducedMotion } from "framer-motion";
+import { Link } from "react-router-dom";
+import { QRCodeSVG } from "qrcode.react";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { Location01Icon, ArrowRight01Icon, ArrowDown01Icon } from "@hugeicons/core-free-icons";
+import { Location01Icon, ArrowRight01Icon, CheckmarkBadge01Icon } from "@hugeicons/core-free-icons";
 
-export default function LandingHero() {
-  const navigate = useNavigate();
+// Miniature of the real certificate (pages/user/certificates/certTemplate.jsx): same wording,
+// navy and gold. The QR opens the public verification page.
+function SampleCertificate() {
+  const verifyUrl = `${window.location.origin}/verify`;
 
   return (
-    <section className="relative min-h-screen flex items-center overflow-hidden pt-16">
-      <div className="absolute inset-0 bg-gradient-to-br from-gray-950 via-red-950 to-gray-900" />
-      <div className="absolute top-24 right-0 w-96 h-96 bg-red-700 opacity-10 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute bottom-10 left-10 w-72 h-72 bg-orange-600 opacity-10 rounded-full blur-3xl pointer-events-none" />
+    <div className="relative bg-[#fcfbf8] p-1.5 border-[3px] border-blue-900 shadow-[0_24px_48px_-16px_rgba(15,23,42,0.35)]">
+      <div className="relative border border-[#b89f5d] px-5 sm:px-8 pt-12 pb-6 text-center">
+        <QRCodeSVG
+          value={verifyUrl}
+          size={44}
+          level="M"
+          bgColor="#fcfbf8"
+          fgColor="#0f172a"
+          className="absolute top-3 left-3"
+          role="img"
+          aria-label="QR code linking to the certificate verification page"
+        />
+        <p className="absolute top-3 right-3 text-[10px] text-gray-500 tabular-nums">Control No. 2026-0417</p>
 
-      <div
-        className="absolute inset-0 opacity-5 pointer-events-none"
-        style={{
-          backgroundImage:
-            "linear-gradient(rgba(255,255,255,.15) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.15) 1px, transparent 1px)",
-          backgroundSize: "48px 48px",
-        }}
-      />
+        <p className="text-[10px] uppercase tracking-[0.18em] text-gray-600">Republic of the Philippines</p>
+        <p className="mt-1 text-[10px] sm:text-[11px] leading-snug text-gray-600">
+          Municipality of Bacolor, Pampanga
+          <br />
+          Municipal Disaster Risk Reduction and Management Office
+        </p>
 
-      <div className="relative max-w-6xl mx-auto px-4 py-28 w-full">
-        <div className="max-w-3xl">
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="inline-flex items-center gap-2 bg-red-600/20 border border-red-500/30 text-red-300 text-xs font-semibold px-4 py-2 rounded-full mb-6"
-          >
-            <HugeiconsIcon aria-hidden="true" icon={Location01Icon} className="w-3 h-3" />
-            Bacolor, Pampanga — Municipal DRRM Community Initiative
-          </motion.div>
+        <p className="mt-5 text-2xl sm:text-3xl font-bold tracking-[0.12em] text-blue-900">CERTIFICATE</p>
+        <p className="text-xs sm:text-sm tracking-[0.1em] text-[#6f5c2e]">OF COMPLETION</p>
 
-          <motion.h1
-            initial={{ opacity: 0, y: 28 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.1 }}
-            className="text-5xl md:text-6xl font-extrabold text-white leading-tight mb-6 tracking-tight"
-          >
-            Be Prepared.{" "}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-400 to-orange-400">
-              Stay Resilient.
-            </span>
-          </motion.h1>
+        <p className="mt-4 text-[11px] text-gray-600">This is to officially certify that</p>
+        <p className="mx-auto mt-1 max-w-[16rem] border-b border-blue-900 pb-1 text-lg sm:text-xl font-bold text-gray-900">
+          Juan dela Cruz
+        </p>
+        <p className="mt-1 text-[10px] uppercase tracking-wider text-gray-500">
+          Authorized Resident — Brgy. Cabalantian
+        </p>
+        <p className="mt-3 text-[11px] leading-relaxed text-gray-700">
+          has completed the <span className="font-bold">Flood Preparedness</span> training module.
+        </p>
 
-          <motion.p
-            initial={{ opacity: 0, y: 18 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-            className="text-lg text-gray-300 leading-relaxed mb-10 max-w-2xl"
-          >
-            A community-based disaster preparedness learning system built for
-            every Bacolor resident. Train, advance through levels, and earn
-            certifications that prove your readiness.
-          </motion.p>
-
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.3 }}
-            className="flex flex-wrap gap-4"
-          >
-            <button
-              onClick={() => navigate("/register")}
-              className="cursor-pointer flex items-center gap-2 px-8 py-4 bg-red-600 hover:bg-red-500 text-white font-bold rounded-xl shadow-lg transition-all"
-            >
-              Start Training Free
-              <HugeiconsIcon aria-hidden="true" icon={ArrowRight01Icon} className="w-5 h-5" />
-            </button>
-
-            <button
-              onClick={() => navigate("/signin")}
-              className="cursor-pointer flex items-center gap-2 px-8 py-4 text-white font-semibold rounded-xl border border-white/20 bg-white/10 hover:bg-white/20 transition-all backdrop-blur-sm"
-            >
-              Sign In to Account
-            </button>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.55, duration: 0.7 }}
-            className="mt-16 pt-8 border-t border-white/10 flex flex-wrap gap-10"
-          >
-            {[
-              { val: "3", sub: "Disaster Types Covered" },
-              { val: "Multi-Level", sub: "Progressive Modules" },
-              { val: "PWA", sub: "Works Offline" },
-              { val: "QR-Verified", sub: "Digital Certificates" },
-            ].map((s) => (
-              <div key={s.val}>
-                <p className="text-2xl font-extrabold text-white">{s.val}</p>
-                <p className="text-xs text-gray-400 mt-0.5">{s.sub}</p>
-              </div>
-            ))}
-          </motion.div>
+        <div className="mt-5 flex items-end justify-between gap-3">
+          <div className="flex-1 border-t border-gray-800 pt-1 text-[9px] text-gray-600">Barangay Captain</div>
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-dashed border-[#b89f5d] text-[7px] font-bold uppercase leading-tight text-[#6f5c2e]">
+            MDRRMO
+            <br />
+            Seal
+          </div>
+          <div className="flex-1 border-t border-gray-800 pt-1 text-[9px] text-gray-600">MDRRMO Officer</div>
         </div>
       </div>
 
-      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 text-gray-500">
-        <span className="text-xs tracking-wide">SCROLL</span>
-        <HugeiconsIcon aria-hidden="true" icon={ArrowDown01Icon} className="w-4 h-4 animate-bounce" />
+      <div className="absolute -bottom-4 -right-3 sm:-right-5 inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-white px-3 py-1.5 text-xs font-bold text-emerald-700 shadow-[0_6px_16px_-6px_rgba(15,23,42,0.3)]">
+        <HugeiconsIcon aria-hidden="true" icon={CheckmarkBadge01Icon} className="h-4 w-4" />
+        Checkable by QR code
+      </div>
+    </div>
+  );
+}
+
+export default function LandingHero() {
+  const reduceMotion = useReducedMotion();
+
+  return (
+    <section className="relative overflow-hidden bg-white pt-16">
+      <div className="relative mx-auto grid w-full max-w-6xl items-center gap-14 px-4 pt-14 pb-20 sm:pt-20 lg:grid-cols-[1.1fr_0.9fr] lg:gap-16 lg:pt-24 lg:pb-28">
+        <div>
+          <p className="mb-5 inline-flex items-center gap-1.5 text-sm font-medium text-gray-600">
+            <HugeiconsIcon aria-hidden="true" icon={Location01Icon} className="h-4 w-4 text-gray-500" />
+            Bacolor, Pampanga — Municipal DRRM Community Initiative
+          </p>
+
+          <h1 className="mb-6 text-5xl font-extrabold leading-[1.05] tracking-tight text-gray-950 text-balance md:text-6xl">
+            Be Prepared. Stay Resilient.
+          </h1>
+
+          <p className="mb-9 max-w-xl text-lg leading-relaxed text-gray-600 text-pretty">
+            A community-based disaster preparedness learning system built for
+            every Bacolor resident. Train, advance through levels, and earn
+            certifications that prove your readiness.
+          </p>
+
+          <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:gap-4">
+            <Link
+              to="/register"
+              className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl bg-red-600 px-8 py-4 font-bold text-white shadow-[0_8px_20px_-8px_rgba(220,38,38,0.6)] transition-colors hover:bg-red-700"
+            >
+              Create Free Account
+              <HugeiconsIcon aria-hidden="true" icon={ArrowRight01Icon} className="h-5 w-5" />
+            </Link>
+
+            <Link
+              to="/signin"
+              className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-gray-300 bg-white px-8 py-4 font-semibold text-gray-900 transition-colors hover:border-gray-400 hover:bg-gray-100"
+            >
+              Sign In
+            </Link>
+          </div>
+        </div>
+
+        <figure className="mx-auto w-full max-w-md lg:max-w-none">
+          <motion.div
+            initial={reduceMotion ? false : { opacity: 0, y: 32, rotate: 0 }}
+            animate={{ opacity: 1, y: 0, rotate: -2 }}
+            transition={{ duration: 0.9, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
+          >
+            <SampleCertificate />
+          </motion.div>
+          <figcaption className="mt-9 text-center text-sm text-gray-600 lg:text-left">
+            Sample certificate. Each one carries a QR code anyone can scan to check it.
+          </figcaption>
+        </figure>
       </div>
     </section>
   );

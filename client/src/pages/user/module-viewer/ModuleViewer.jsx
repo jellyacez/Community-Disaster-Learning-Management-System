@@ -42,7 +42,7 @@ export default function ModuleViewer() {
   // Leaving the viewer mid-quiz goes through the same confirmation as switching steps
   const guardedNavigate = (...args) => guardLeave(() => navigate(...args));
 
-  useDocumentTitle(moduleData?.title ? `${moduleData.title} | Bacolor LMS` : 'Module Viewer');
+  useDocumentTitle(moduleData?.title ? `${moduleData.title} | Bacolor Disaster LMS` : 'Module Viewer');
 
   if (isLoading) {
     return (

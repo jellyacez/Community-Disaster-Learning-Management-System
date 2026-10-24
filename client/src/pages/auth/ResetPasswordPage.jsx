@@ -9,7 +9,7 @@ import toast from "react-hot-toast";
 import AuthLayout from "../../components/layouts/AuthLayout";
 import PasswordInput from "../../components/ui/inputs/PasswordInput";
 export default function ResetPasswordPage() {
-  useDocumentTitle("Reset Password | Bacolor LMS");
+  useDocumentTitle("Reset Password | Bacolor Disaster LMS");
 
   const [searchParams] = useSearchParams();
   const token = searchParams.get("token");

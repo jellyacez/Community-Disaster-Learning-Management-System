@@ -12,7 +12,7 @@ import EmailSignInForm from "../../components/auth/EmailSignInForm";
 import MfaSignInForm from "../../components/auth/MfaSignInForm";
 
 export default function SignInPage() {
-  useDocumentTitle("Sign In | Bacolor LMS");
+  useDocumentTitle("Sign In | Bacolor Disaster LMS");
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -149,7 +149,7 @@ export default function SignInPage() {
   }
 
   return (
-    <AuthLayout title="Sign In" subtitle="Access your DRRM training account">
+    <AuthLayout title="Sign In" subtitle="Access your Bacolor Disaster LMS account">
       <EmailSignInForm 
         errorMessage={errorMessage}
         clearGlobalError={clearGlobalError}
