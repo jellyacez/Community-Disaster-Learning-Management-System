@@ -226,7 +226,8 @@ const ModuleCard = memo(function ModuleCard({
                 Previous version
               </span>
             )}
-            {module.has_newer_version && (
+            {/* A retired enrollment's main button already opens the newer version */}
+            {module.has_newer_version && !isRetired && (
               module.latest_published_id ? (
                 <button
                   type="button"
