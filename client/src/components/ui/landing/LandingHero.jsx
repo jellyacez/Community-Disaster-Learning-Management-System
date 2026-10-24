@@ -6,22 +6,35 @@ import { Location01Icon, ArrowRight01Icon, CheckmarkBadge01Icon } from "@hugeico
 
 // Miniature of the real certificate (pages/user/certificates/certTemplate.jsx): same wording,
 // navy and gold. The QR opens the public verification page.
-function SampleCertificate() {
+// Motion: once the card settles, a scan line passes over the QR, then the badge confirms it.
+const SCAN_DELAY = 1.1;
+
+function SampleCertificate({ reduceMotion }) {
   const verifyUrl = `${window.location.origin}/verify`;
 
   return (
     <div className="relative bg-[#fcfbf8] p-1.5 border-[3px] border-blue-900 shadow-[0_24px_48px_-16px_rgba(15,23,42,0.35)]">
       <div className="relative border border-[#b89f5d] px-5 sm:px-8 pt-12 pb-6 text-center">
-        <QRCodeSVG
-          value={verifyUrl}
-          size={44}
-          level="M"
-          bgColor="#fcfbf8"
-          fgColor="#0f172a"
-          className="absolute top-3 left-3"
-          role="img"
-          aria-label="QR code linking to the certificate verification page"
-        />
+        <div className="absolute top-3 left-3 h-11 w-11 overflow-hidden">
+          <QRCodeSVG
+            value={verifyUrl}
+            size={44}
+            level="M"
+            bgColor="#fcfbf8"
+            fgColor="#0f172a"
+            role="img"
+            aria-label="QR code linking to the certificate verification page"
+          />
+          {!reduceMotion && (
+            <motion.span
+              aria-hidden="true"
+              className="absolute inset-x-0 top-0 h-3 border-b-2 border-emerald-500 bg-emerald-400/25"
+              initial={{ y: -12, opacity: 0 }}
+              animate={{ y: [-12, 44], opacity: [0, 1, 1, 0] }}
+              transition={{ delay: SCAN_DELAY, duration: 0.8, ease: "easeInOut", times: [0, 0.15, 0.85, 1] }}
+            />
+          )}
+        </div>
         <p className="absolute top-3 right-3 text-[10px] text-gray-500 tabular-nums">Control No. 2026-0417</p>
 
         <p className="text-[10px] uppercase tracking-[0.18em] text-gray-600">Republic of the Philippines</p>
@@ -56,10 +69,15 @@ function SampleCertificate() {
         </div>
       </div>
 
-      <div className="absolute -bottom-4 -right-3 sm:-right-5 inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-white px-3 py-1.5 text-xs font-bold text-emerald-700 shadow-[0_6px_16px_-6px_rgba(15,23,42,0.3)]">
+      <motion.div
+        className="absolute -bottom-4 -right-3 sm:-right-5 inline-flex origin-bottom-right items-center gap-1.5 rounded-full border border-emerald-200 bg-white px-3 py-1.5 text-xs font-bold text-emerald-700 shadow-[0_6px_16px_-6px_rgba(15,23,42,0.3)]"
+        initial={reduceMotion ? false : { opacity: 0, scale: 0.6 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ delay: SCAN_DELAY + 0.75, type: "spring", stiffness: 420, damping: 24 }}
+      >
         <HugeiconsIcon aria-hidden="true" icon={CheckmarkBadge01Icon} className="h-4 w-4" />
         Checkable by QR code
-      </div>
+      </motion.div>
     </div>
   );
 }
@@ -110,7 +128,7 @@ export default function LandingHero() {
             animate={{ opacity: 1, y: 0, rotate: -2 }}
             transition={{ duration: 0.9, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
           >
-            <SampleCertificate />
+            <SampleCertificate reduceMotion={reduceMotion} />
           </motion.div>
           <figcaption className="mt-9 text-center text-sm text-gray-600 lg:text-left">
             Sample certificate. Each one carries a QR code anyone can scan to check it.

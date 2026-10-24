@@ -70,7 +70,7 @@ export default function LandingHazards() {
           {hazards.map((hazard) => (
             <div
               key={hazard.title}
-              className={`flex flex-col rounded-2xl overflow-hidden border ${hazard.border} bg-white shadow-sm hover:shadow-md transition-shadow`}
+              className={`flex flex-col rounded-2xl overflow-hidden border ${hazard.border} bg-white shadow-sm transition-[transform,box-shadow] duration-200 ease-out motion-safe:hover:-translate-y-1 hover:shadow-[0_18px_36px_-14px_rgba(15,23,42,0.28)] motion-safe:focus-within:-translate-y-1 focus-within:shadow-[0_18px_36px_-14px_rgba(15,23,42,0.28)] group`}
             >
               <div className={`${hazard.header} p-6 flex items-center gap-4`}>
                 <HugeiconsIcon aria-hidden="true" icon={hazard.icon} className="w-8 h-8 text-white" />
@@ -88,7 +88,7 @@ export default function LandingHazards() {
                   className={`mt-2 inline-flex min-h-11 cursor-pointer items-center gap-1 self-start text-sm font-bold ${hazard.accent} hover:underline underline-offset-4`}
                 >
                   Create an account to start{" "}
-                  <HugeiconsIcon aria-hidden="true" icon={ChevronRightIcon} className="w-3 h-3" />
+                  <HugeiconsIcon aria-hidden="true" icon={ChevronRightIcon} className="w-3 h-3 transition-transform duration-200 ease-out motion-safe:group-hover:translate-x-1 motion-safe:group-focus-within:translate-x-1" />
                 </Link>
               </div>
             </div>

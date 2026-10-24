@@ -1,4 +1,11 @@
+import { motion, useReducedMotion } from "framer-motion";
+
+// The timeline draws itself step by step when it scrolls into view; the text never moves.
+const STEP_GAP = 0.35;
+
 export default function LandingSteps() {
+  const reduceMotion = useReducedMotion();
+
   const steps = [
     {
       title: "Create Your Account",
@@ -31,16 +38,36 @@ export default function LandingSteps() {
           </p>
         </div>
 
-        <ol className="grid gap-10 sm:grid-cols-2 lg:grid-cols-4 lg:gap-8">
+        <motion.ol
+          className="grid gap-10 sm:grid-cols-2 lg:grid-cols-4 lg:gap-8"
+          initial={reduceMotion ? false : "hidden"}
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.4 }}
+        >
           {steps.map((step, index) => (
-            <li key={step.title} className="relative border-t border-white/20 pt-6">
-              <span className="absolute -top-[5px] left-0 h-2.5 w-2.5 rounded-full bg-white" aria-hidden="true" />
+            <li key={step.title} className="relative pt-6">
+              <motion.span
+                aria-hidden="true"
+                className="absolute top-0 left-0 h-px w-full origin-left bg-white/20"
+                variants={{
+                  hidden: { scaleX: 0 },
+                  visible: { scaleX: 1, transition: { delay: index * STEP_GAP + 0.1, duration: 0.45, ease: [0.16, 1, 0.3, 1] } },
+                }}
+              />
+              <motion.span
+                aria-hidden="true"
+                className="absolute -top-[5px] left-0 h-2.5 w-2.5 rounded-full bg-white"
+                variants={{
+                  hidden: { scale: 0 },
+                  visible: { scale: 1, transition: { delay: index * STEP_GAP, type: "spring", stiffness: 500, damping: 26 } },
+                }}
+              />
               <p className="text-sm font-semibold text-gray-400 tabular-nums">Step {index + 1}</p>
               <h3 className="mt-2 text-lg font-bold text-white">{step.title}</h3>
               <p className="mt-2 text-sm text-gray-300 leading-relaxed text-pretty">{step.desc}</p>
             </li>
           ))}
-        </ol>
+        </motion.ol>
       </div>
     </section>
   );
