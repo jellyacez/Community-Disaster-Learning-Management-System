@@ -254,6 +254,59 @@ class ModuleService {
     };
   }
 
+  // Inserts a step's questions and their choices in two batched statements (create and update share this)
+  async insertStepQuestions(client, mod_id, step_id, quizQuestions) {
+    const qTexts = [];
+    const qPoints = [];
+    const qImages = [];
+    const qRationales = [];
+    const qInteractionTypes = [];
+
+    for (const q of quizQuestions) {
+      qTexts.push(q.questionText);
+      qPoints.push(10);
+      qImages.push(q.imageURL || '');
+      qRationales.push(q.rationale ? cleanRichText(q.rationale) : null);
+      qInteractionTypes.push(q.interactionType || null);
+    }
+
+    const qRes = await client.query(
+      `INSERT INTO public.questions (mod_id, step_id, question_text, points, image_url, rationale, interaction_type)
+       SELECT $1, $2, t, p, i, r, it
+       FROM unnest($3::text[], $4::int[], $5::text[], $6::text[], $7::text[]) WITH ORDINALITY AS u(t, p, i, r, it, ord)
+       ORDER BY ord
+       RETURNING question_id`,
+      [mod_id, step_id, qTexts, qPoints, qImages, qRationales, qInteractionTypes]
+    );
+
+    const cQuestionIds = [];
+    const cTexts = [];
+    const cIsCorrects = [];
+    const cRationales = [];
+    const cSequenceOrders = [];
+
+    quizQuestions.forEach((q, idx) => {
+      const question_id = qRes.rows[idx].question_id;
+      for (const opt of (q.options || [])) {
+        cQuestionIds.push(question_id);
+        cTexts.push(opt.text);
+        cIsCorrects.push(opt.isCorrect);
+        cRationales.push(cleanRichText(opt.rationale || ""));
+        cSequenceOrders.push(opt.sequence_order || null);
+      }
+    });
+
+    if (cQuestionIds.length > 0) {
+      await client.query(
+        `INSERT INTO public.choices (question_id, choice_text, is_correct, rationale, sequence_order)
+         SELECT q_id, c_text, c_corr, c_rat, c_seq
+         FROM unnest($1::int[], $2::text[], $3::boolean[], $4::text[], $5::int[]) WITH ORDINALITY AS u(q_id, c_text, c_corr, c_rat, c_seq, ord)
+         ORDER BY ord`,
+        [cQuestionIds, cTexts, cIsCorrects, cRationales, cSequenceOrders]
+      );
+    }
+  }
+
   async createModuleTransaction({ moduleName, moduleCategory, description, level, duration, video_url, image_url, levels, status, author_id }) {
     const safeDescription = cleanRichText(description);
     const client = await pool.connect();
@@ -305,55 +358,7 @@ class ModuleService {
           }
 
           if (step.quizQuestions && step.quizQuestions.length > 0) {
-            const qTexts = [];
-            const qPoints = [];
-            const qImages = [];
-            const qRationales = [];
-            const qInteractionTypes = [];
-
-            for (const q of step.quizQuestions) {
-              qTexts.push(q.questionText);
-              qPoints.push(10);
-              qImages.push(q.imageURL || '');
-              qRationales.push(q.rationale ? cleanRichText(q.rationale) : null);
-              qInteractionTypes.push(q.interactionType || null);
-            }
-
-            const qRes = await client.query(
-              `INSERT INTO public.questions (mod_id, step_id, question_text, points, image_url, rationale, interaction_type)
-               SELECT $1, $2, t, p, i, r, it
-               FROM unnest($3::text[], $4::int[], $5::text[], $6::text[], $7::text[]) WITH ORDINALITY AS u(t, p, i, r, it, ord)
-               ORDER BY ord
-               RETURNING question_id`,
-              [mod_id, step_id, qTexts, qPoints, qImages, qRationales, qInteractionTypes]
-            );
-
-            const cQuestionIds = [];
-            const cTexts = [];
-            const cIsCorrects = [];
-            const cRationales = [];
-            const cSequenceOrders = [];
-
-            step.quizQuestions.forEach((q, idx) => {
-              const question_id = qRes.rows[idx].question_id;
-              for (const opt of q.options) {
-                cQuestionIds.push(question_id);
-                cTexts.push(opt.text);
-                cIsCorrects.push(opt.isCorrect);
-                cRationales.push(cleanRichText(opt.rationale || ""));
-                cSequenceOrders.push(opt.sequence_order || null);
-              }
-            });
-
-            if (cQuestionIds.length > 0) {
-              await client.query(
-                `INSERT INTO public.choices (question_id, choice_text, is_correct, rationale, sequence_order)
-                 SELECT q_id, c_text, c_corr, c_rat, c_seq
-                 FROM unnest($1::int[], $2::text[], $3::boolean[], $4::text[], $5::int[]) WITH ORDINALITY AS u(q_id, c_text, c_corr, c_rat, c_seq, ord)
-                 ORDER BY ord`,
-                [cQuestionIds, cTexts, cIsCorrects, cRationales, cSequenceOrders]
-              );
-            }
+            await this.insertStepQuestions(client, mod_id, step_id, step.quizQuestions);
           }
         }
       }
@@ -458,55 +463,7 @@ class ModuleService {
           }
 
           if (step.quizQuestions && step.quizQuestions.length > 0) {
-            const qTexts = [];
-            const qPoints = [];
-            const qImages = [];
-            const qRationales = [];
-            const qInteractionTypes = [];
-
-            for (const q of step.quizQuestions) {
-              qTexts.push(q.questionText);
-              qPoints.push(10);
-              qImages.push(q.imageURL || '');
-              qRationales.push(q.rationale ? cleanRichText(q.rationale) : null);
-              qInteractionTypes.push(q.interactionType || null);
-            }
-
-            const qRes = await client.query(
-              `INSERT INTO public.questions (mod_id, step_id, question_text, points, image_url, rationale, interaction_type)
-               SELECT $1, $2, t, p, i, r, it
-               FROM unnest($3::text[], $4::int[], $5::text[], $6::text[], $7::text[]) WITH ORDINALITY AS u(t, p, i, r, it, ord)
-               ORDER BY ord
-               RETURNING question_id`,
-              [mod_id, step_id, qTexts, qPoints, qImages, qRationales, qInteractionTypes]
-            );
-
-            const cQuestionIds = [];
-            const cTexts = [];
-            const cIsCorrects = [];
-            const cRationales = [];
-            const cSequenceOrders = [];
-
-            step.quizQuestions.forEach((q, idx) => {
-              const question_id = qRes.rows[idx].question_id;
-              for (const opt of (q.options || [])) {
-                cQuestionIds.push(question_id);
-                cTexts.push(opt.text);
-                cIsCorrects.push(opt.isCorrect);
-                cRationales.push(cleanRichText(opt.rationale || ""));
-                cSequenceOrders.push(opt.sequence_order || null);
-              }
-            });
-
-            if (cQuestionIds.length > 0) {
-              await client.query(
-                `INSERT INTO public.choices (question_id, choice_text, is_correct, rationale, sequence_order)
-                 SELECT q_id, c_text, c_corr, c_rat, c_seq
-                 FROM unnest($1::int[], $2::text[], $3::boolean[], $4::text[], $5::int[]) WITH ORDINALITY AS u(q_id, c_text, c_corr, c_rat, c_seq, ord)
-                 ORDER BY ord`,
-                [cQuestionIds, cTexts, cIsCorrects, cRationales, cSequenceOrders]
-              );
-            }
+            await this.insertStepQuestions(client, mod_id, step_id, step.quizQuestions);
           }
         }
       }
@@ -856,12 +813,12 @@ class ModuleService {
     };
   }
 
-  // With fromStatus, only updates a module still in that status; returns undefined otherwise
-  async updateModuleStatus(mod_id, status, rejection_reason = null, fromStatus = null) {
+  // Only updates a module still in fromStatus; returns undefined otherwise
+  async updateModuleStatus(mod_id, status, rejection_reason, fromStatus) {
     const query = `
       UPDATE public.module_data
       SET status = $1, rejection_reason = $2
-      WHERE mod_id = $3 AND ($4::text IS NULL OR status = $4)
+      WHERE mod_id = $3 AND status = $4
       RETURNING *
     `;
     const result = await pool.query(query, [status, rejection_reason, mod_id, fromStatus]);

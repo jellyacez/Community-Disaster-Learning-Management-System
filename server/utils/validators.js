@@ -1,8 +1,5 @@
 const Joi = require("joi");
-const { GRADED_STEP_TYPES } = require("../config/constants");
-
-// Matches the questions_interaction_type_check constraint
-const INTERACTION_TYPES = ["priority_action", "hazard_identification", "action_sequence"];
+const { GRADED_STEP_TYPES, INTERACTION_TYPES } = require("../config/constants");
 
 /**
  * Validates the module creation payload manually.

@@ -18,6 +18,9 @@ module.exports = {
     "action_sequence",
   ],
 
+  // How a situational question is answered; matches the questions_interaction_type_check constraint
+  INTERACTION_TYPES: ["priority_action", "hazard_identification", "action_sequence"],
+
   // Quiz settings
   QUIZ_QUESTION_SECONDS: 20,
   QUIZ_ANSWER_GRACE_SECONDS: 3,

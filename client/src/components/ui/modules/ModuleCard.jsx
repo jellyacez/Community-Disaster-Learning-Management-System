@@ -52,6 +52,13 @@ const ModuleCard = memo(function ModuleCard({
   const openUpdatedModule = () => {
     if (module.latest_published_id) navigate(`/user/modules/${module.latest_published_id}/details`);
   };
+  const retiredCopy = !isRetired
+    ? null
+    : !module.latest_published_id
+      ? { note: "This module has been retired.", label: "No longer available" }
+      : isCompleted
+        ? { note: "You completed a previous version of this module.", label: "View updated module" }
+        : { note: "This module was updated. Progress on the old version can't continue.", label: "Start updated version" };
 
   const resolveImageUrl = (url) => {
     if (!url) return null;
@@ -299,14 +306,8 @@ const ModuleCard = memo(function ModuleCard({
               <span>You completed an earlier version</span>
             </p>
           )}
-          {isRetired && (
-            <p className="mt-2 text-xs font-semibold text-slate-600 dark:text-slate-300">
-              {!module.latest_published_id
-                ? "This module has been retired."
-                : isCompleted
-                  ? "You completed a previous version of this module."
-                  : "This module was updated. Progress on the old version can't continue."}
-            </p>
+          {retiredCopy && (
+            <p className="mt-2 text-xs font-semibold text-slate-600 dark:text-slate-300">{retiredCopy.note}</p>
           )}
         </div>
 
@@ -342,12 +343,8 @@ const ModuleCard = memo(function ModuleCard({
                   : "bg-red-600 hover:bg-red-700"
               }`}
             >
-              {isRetired
-                ? !module.latest_published_id
-                  ? "No longer available"
-                  : isCompleted
-                    ? "View updated module"
-                    : "Start updated version"
+              {retiredCopy
+                ? retiredCopy.label
                 : isCompleted ? "Review Module" : module.progress === 0 ? "Start" : "Continue"}
             </button>
           ) : isAdminView ? (

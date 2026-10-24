@@ -16,14 +16,26 @@ function inferInteractionType(options) {
   return "priority_action";
 }
 
+const toOption = (opt) => ({
+  text: decodeHtml(opt.text) || "",
+  rationale: decodeHtml(opt.rationale) || "",
+  isCorrect: opt.isCorrect || false,
+  sequence_order: opt.sequence_order,
+});
+
+function toQuizQuestion(q) {
+  const options = (q.options || []).map(toOption);
+  const correctIdx = options.findIndex((opt) => opt.isCorrect);
+  return {
+    questionText: decodeHtml(q.questionText) || "",
+    correctAnswerIndex: correctIdx >= 0 ? correctIdx : 0,
+    options,
+  };
+}
+
 // Rebuilds a saved situational question into the builder's scenario shape, so re-saving keeps it
 function toScenario(q, index) {
-  const options = (q.options || []).map((opt) => ({
-    text: decodeHtml(opt.text) || "",
-    rationale: decodeHtml(opt.rationale) || "",
-    isCorrect: opt.isCorrect || false,
-    sequence_order: opt.sequence_order,
-  }));
+  const options = (q.options || []).map(toOption);
   const interactionType = q.interactionType || inferInteractionType(options);
   const correctIdx = options.findIndex((o) => o.isCorrect);
 
@@ -54,7 +66,7 @@ export function hydrateFlowStep(step, levelOrder) {
   const questions = step.quizQuestions || [];
   const isSituational = SITUATIONAL_TYPES.includes(type);
 
-  const flow = {
+  return {
     id: `step-${levelOrder}-${step.stepOrder || step.step_order}-${Date.now()}-${Math.random()}`,
     levelOrder,
     builderStepType: type === "quiz" ? "quiz" : isSituational ? "situational" : "learning_material",
@@ -65,27 +77,7 @@ export function hydrateFlowStep(step, levelOrder) {
     finalMediaUrl: step.mediaUrl || step.media_url || "",
     is_final_assessment: step.is_final_assessment || false,
     assessmentType: isSituational ? "situational" : "quiz",
-    quizQuestions: [],
-    situationalScenarios: [],
+    quizQuestions: isSituational ? [] : questions.map(toQuizQuestion),
+    situationalScenarios: isSituational ? questions.map(toScenario) : [],
   };
-
-  if (isSituational) {
-    flow.situationalScenarios = questions.map(toScenario);
-  } else {
-    flow.quizQuestions = questions.map((q) => {
-      const correctIdx = (q.options || []).findIndex((opt) => opt.isCorrect);
-      return {
-        questionText: decodeHtml(q.questionText) || "",
-        correctAnswerIndex: correctIdx >= 0 ? correctIdx : 0,
-        options: (q.options || []).map((opt) => ({
-          text: decodeHtml(opt.text) || "",
-          rationale: decodeHtml(opt.rationale) || "",
-          isCorrect: opt.isCorrect || false,
-          sequence_order: opt.sequence_order,
-        })),
-      };
-    });
-  }
-
-  return flow;
 }

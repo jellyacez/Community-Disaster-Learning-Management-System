@@ -246,13 +246,8 @@ exports.enrollInModule = async (req, res) => {
       }
     }
 
-    const isEnrolled = await ModuleService.checkUserEnrollment(
-      user_id,
-      parsedModId,
-    );
-    if (!isEnrolled) {
-      await ModuleService.enrollUserInModule(user_id, parsedModId);
-    }
+    // No-op when already enrolled (ON CONFLICT DO NOTHING)
+    await ModuleService.enrollUserInModule(user_id, parsedModId);
 
     const enrollmentData = await ModuleService.getEnrollmentData(
       user_id,
@@ -512,26 +507,22 @@ exports.updateModuleStatus = async (req, res) => {
         .status(404)
         .json({ success: false, message: "Module not found." });
     }
-    const previousStatus = current.status ?? "unknown";
 
-    // Only a pending submission can be reviewed. Without this, a reviewer acting on a stale
-    // page could reject an already-published module back to draft.
-    const reviewConflict = () =>
-      res.status(409).json({
-        success: false,
-        code: "NOT_PENDING_REVIEW",
-        message: "This module is no longer pending review. Refresh the list and try again.",
-      });
-    if (current.status !== "pending_review") return reviewConflict();
-
-    // The status check repeats inside the UPDATE so two simultaneous reviews can't both apply
+    // Only a pending submission can be reviewed, so a stale page can't reject a published module.
+    // The check lives in the UPDATE itself, so two simultaneous reviews can't both apply.
     const updated = await ModuleService.updateModuleStatus(
       parsedModId,
       finalStatus,
       rejection_reason,
       "pending_review",
     );
-    if (!updated) return reviewConflict();
+    if (!updated) {
+      return res.status(409).json({
+        success: false,
+        code: "NOT_PENDING_REVIEW",
+        message: "This module is no longer pending review. Refresh the list and try again.",
+      });
+    }
 
     const pool = require("../../config/db");
 
@@ -547,7 +538,7 @@ exports.updateModuleStatus = async (req, res) => {
     }
 
     if (current.author_id) {
-      if (finalStatus === "published" && previousStatus !== "published") {
+      if (finalStatus === "published") {
         await pool.query(
           `INSERT INTO public.user_notification (user_id, type, message) VALUES ($1, 'module_approved', $2)`,
           [
@@ -578,7 +569,7 @@ exports.updateModuleStatus = async (req, res) => {
       req.user.id,
       `Updated module ID ${parsedModId} ("${
         current.modname || parsedModId
-      }") status: ${previousStatus} → ${finalStatus}${
+      }") status: ${current.status} → ${finalStatus}${
         status === "rejected" && rejection_reason
           ? ` | Reason: ${rejection_reason}`
           : ""
