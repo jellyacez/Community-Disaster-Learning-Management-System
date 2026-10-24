@@ -1,10 +1,4 @@
 import { useState, useMemo } from "react";
-import { HugeiconsIcon } from "@hugeicons/react";
-import {
-  InformationCircleIcon,
-  Download01Icon,
-  FilterIcon,
-} from "@hugeicons/core-free-icons";
 
 function getSmoothCurvePath(points) {
   if (!points || points.length === 0) return "";

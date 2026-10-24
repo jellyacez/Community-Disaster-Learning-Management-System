@@ -106,7 +106,21 @@ async function setupDatabase() {
     // schemas fresh above, so running them again would cause a "already exists" error.
     schema = schema.replace(/^(CREATE|ALTER)\s+SCHEMA\b.*$/gim, "");
 
+    // Strip ownership changes. The dump assigns every object to the role that produced
+    // it (lms_admin), which usually doesn't exist on another machine; objects should
+    // simply belong to DB_USER, the role running this setup.
+    schema = schema.replace(/^ALTER\s+.+\s+OWNER\s+TO\s+\S+;\s*$/gim, "");
+
     await client.query(schema);
+
+    // The rate_limit schema belongs to @acpr/rate-limit-postgresql, which creates its
+    // tables and functions through its own migrations (tracked in its own table) on the
+    // first server start. The dump already contains those objects but not the library's
+    // migration history, so the library re-runs its 'init' migration and the server
+    // crashes ("relation unique_session_key already exists"). Leave the schema empty so
+    // the library builds it the way it expects.
+    await client.query("DROP SCHEMA IF EXISTS rate_limit CASCADE");
+    await client.query("CREATE SCHEMA rate_limit");
 
     // ── Step 4: Run numbered migration/seed files in order ────────────────────
     // Any file matching /^\d+_.*\.sql$/ in the migrations folder is run in

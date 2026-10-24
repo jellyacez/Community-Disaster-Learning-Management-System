@@ -3,7 +3,8 @@ import { BookOpen01Icon } from "@hugeicons/core-free-icons";
 import ModuleSkeleton from "../modules/ModuleSkeleton.jsx";
 import EnrolledModuleCard from "../modules/EnrolledModuleCard.jsx";
 
-export default function DashboardEnrolledList({ displayData, loading, navigate, handleResume }) {
+// activeModules: unfinished enrollments that can be resumed (archived versions excluded by Dashboard)
+export default function DashboardEnrolledList({ activeModules, loading, navigate, handleResume }) {
   return (
     <div className="lg:col-span-2">
       <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm h-full flex flex-col">
@@ -22,7 +23,6 @@ export default function DashboardEnrolledList({ displayData, loading, navigate, 
           {loading ? (
             [1, 2].map((i) => <ModuleSkeleton key={i} />)
           ) : (() => {
-            const activeModules = displayData.enrolledModules.filter(m => m.progress < 100);
             if (activeModules.length === 0) {
               return (
                 <div className="flex flex-col items-center justify-center py-12 text-center">
@@ -58,7 +58,7 @@ export default function DashboardEnrolledList({ displayData, loading, navigate, 
           })()}
         </div>
 
-        {!loading && displayData.enrolledModules.filter(m => m.progress < 100).length > 4 && (
+        {!loading && activeModules.length > 4 && (
           <button
             onClick={() => navigate("/user/enrolled")}
             className="w-full mt-6 py-3 rounded-xl border border-gray-200 text-sm font-bold text-gray-700 hover:text-gray-900 hover:bg-gray-50 transition-colors"

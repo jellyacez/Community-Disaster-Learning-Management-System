@@ -107,6 +107,20 @@ export default function ActionSequenceEditor({
         ))}
         {formErrors.situationalSequence && <p className="text-red-500 text-xs mt-1.5 font-bold">{formErrors.situationalSequence}</p>}
       </div>
+
+      <div>
+        <label htmlFor="situational-sequence-rationale" className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1.5">
+          Explanation (optional)
+        </label>
+        <textarea
+          id="situational-sequence-rationale"
+          rows={3}
+          placeholder="Why this order? Shown to learners after they answer."
+          value={currentSituationalData.rationale || ""}
+          onChange={(e) => setCurrentSituationalData({ ...currentSituationalData, rationale: e.target.value })}
+          className="w-full p-2.5 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500/20 text-sm font-medium text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 transition-colors"
+        />
+      </div>
     </div>
   );
 }

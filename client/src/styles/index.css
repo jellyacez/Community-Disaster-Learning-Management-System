@@ -441,3 +441,56 @@ html.dark .recharts-pie-sector {
 .animate-ping {
   transition-property: none !important;
 }
+
+/* Dark-mode remaps for amber / blue / green badges & callouts (light 50-900 shades
+   otherwise stay bright). Explicit dark: utilities win via the :not() guards. */
+html.dark .bg-amber-50:not([class*="dark:bg-"]):not(.auth-isolated *):not(.qr-isolated *),
+html.dark .bg-amber-100:not([class*="dark:bg-"]):not(.auth-isolated *):not(.qr-isolated *) {
+  background-color: rgba(245, 158, 11, 0.15) !important;
+}
+
+html.dark .text-amber-600:not([class*="dark:text-"]):not(.auth-isolated *):not(.qr-isolated *),
+html.dark .text-amber-700:not([class*="dark:text-"]):not(.auth-isolated *):not(.qr-isolated *),
+html.dark .text-amber-800:not([class*="dark:text-"]):not(.auth-isolated *):not(.qr-isolated *),
+html.dark .text-amber-900:not([class*="dark:text-"]):not(.auth-isolated *):not(.qr-isolated *) {
+  color: #fcd34d !important;
+}
+
+html.dark .border-amber-100:not([class*="dark:border-"]):not(.auth-isolated *):not(.qr-isolated *),
+html.dark .border-amber-200:not([class*="dark:border-"]):not(.auth-isolated *):not(.qr-isolated *) {
+  border-color: rgba(245, 158, 11, 0.3);
+}
+
+html.dark .bg-blue-50:not([class*="dark:bg-"]):not(.auth-isolated *):not(.qr-isolated *),
+html.dark .bg-blue-100:not([class*="dark:bg-"]):not(.auth-isolated *):not(.qr-isolated *) {
+  background-color: rgba(59, 130, 246, 0.15) !important;
+}
+
+html.dark .text-blue-600:not([class*="dark:text-"]):not(.auth-isolated *):not(.qr-isolated *),
+html.dark .text-blue-700:not([class*="dark:text-"]):not(.auth-isolated *):not(.qr-isolated *),
+html.dark .text-blue-800:not([class*="dark:text-"]):not(.auth-isolated *):not(.qr-isolated *),
+html.dark .text-blue-900:not([class*="dark:text-"]):not(.auth-isolated *):not(.qr-isolated *) {
+  color: #93c5fd !important;
+}
+
+html.dark .border-blue-100:not([class*="dark:border-"]):not(.auth-isolated *):not(.qr-isolated *),
+html.dark .border-blue-200:not([class*="dark:border-"]):not(.auth-isolated *):not(.qr-isolated *) {
+  border-color: rgba(59, 130, 246, 0.3);
+}
+
+html.dark .bg-green-50:not([class*="dark:bg-"]):not(.auth-isolated *):not(.qr-isolated *),
+html.dark .bg-green-100:not([class*="dark:bg-"]):not(.auth-isolated *):not(.qr-isolated *) {
+  background-color: rgba(34, 197, 94, 0.15) !important;
+}
+
+html.dark .text-green-600:not([class*="dark:text-"]):not(.auth-isolated *):not(.qr-isolated *),
+html.dark .text-green-700:not([class*="dark:text-"]):not(.auth-isolated *):not(.qr-isolated *),
+html.dark .text-green-800:not([class*="dark:text-"]):not(.auth-isolated *):not(.qr-isolated *),
+html.dark .text-green-900:not([class*="dark:text-"]):not(.auth-isolated *):not(.qr-isolated *) {
+  color: #86efac !important;
+}
+
+html.dark .border-green-100:not([class*="dark:border-"]):not(.auth-isolated *):not(.qr-isolated *),
+html.dark .border-green-200:not([class*="dark:border-"]):not(.auth-isolated *):not(.qr-isolated *) {
+  border-color: rgba(34, 197, 94, 0.3);
+}

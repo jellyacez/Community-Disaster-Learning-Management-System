@@ -120,6 +120,14 @@ app.use(globalLimiter);
 const ipBlocklistMiddleware = require("./middleware/ipBlocklistMiddleware");
 app.use(ipBlocklistMiddleware);
 
+// Public liveness probe for Docker/load balancer health checks.
+// Registered before maintenance mode so the container stays "healthy" during maintenance.
+// Intentionally reveals nothing (no versions, uptime, or DB details) — use /api/admin/health for that.
+app.get("/api/health", (req, res) => {
+  res.set("Cache-Control", "no-store");
+  res.json({ status: "ok" });
+});
+
 const maintenanceMiddleware = require("./middleware/maintenanceMiddleware");
 app.use(maintenanceMiddleware);
 
@@ -146,9 +154,6 @@ const feedbackRoutes = require("./routes/users/userFeedbacksRoutes");
 
 const certificatesRoutes = require("./routes/certificatesRoutes");
 
-const levelResultRoutes = require("./routes/modules/levelResultRoutes");
-
-const mediaUploadRoutes = require("./routes/modules/mediaUploadRoutes");
 const apiSecurityMiddleware = require("./middleware/apiSecurityMiddleware");
 
 // Notif Route
@@ -162,10 +167,6 @@ app.use("/api/users", apiSecurityMiddleware, userRoutes);
 app.use("/api/user/dashboard", apiSecurityMiddleware, userDashboardRoutes);
 app.use("/api/modules", apiSecurityMiddleware, moduleRoutes);
 app.use("/api/feedbacks", apiSecurityMiddleware, feedbackRoutes);
-// Static routes must go before dynamic param routes (/:id) to prevent shadowing
-app.use("/api/modules", apiSecurityMiddleware, mediaUploadRoutes);
-
-app.use("/api/modules", apiSecurityMiddleware, levelResultRoutes);
 app.set("etag", false);
 
 app.use("/api", (req, res, next) => {

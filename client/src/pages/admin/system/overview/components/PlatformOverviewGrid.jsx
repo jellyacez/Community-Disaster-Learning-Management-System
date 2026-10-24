@@ -1,4 +1,4 @@
-import StatCard from "./StatCard";
+import StatCard from "../../../../../components/ui/StatCard";
 import {
   UserGroupIcon,
   Database01Icon,

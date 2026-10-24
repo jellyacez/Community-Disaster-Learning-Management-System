@@ -7,6 +7,7 @@ import {
   Activity01Icon,
   Alert01Icon,
   Book01Icon,
+  CheckmarkCircle02Icon,
 } from "@hugeicons/core-free-icons";
 import { useModuleEnrollment } from "../../../hooks/useModuleEnrollment";
 import DOMPurify from "dompurify";
@@ -46,10 +47,23 @@ const ModuleCard = memo(function ModuleCard({
     onEnrollSuccess,
   });
 
+  // An enrollment on an archived version can't be opened; send learners to the updated module
+  const isRetired = localEnrolled && !isAdminView && module.module_status === "archived";
+  const openUpdatedModule = () => {
+    if (module.latest_published_id) navigate(`/user/modules/${module.latest_published_id}/details`);
+  };
+  const retiredCopy = !isRetired
+    ? null
+    : !module.latest_published_id
+      ? { note: "This module has been retired.", label: "No longer available" }
+      : isCompleted
+        ? { note: "You completed a previous version of this module.", label: "View updated module" }
+        : { note: "This module was updated. Progress on the old version can't continue.", label: "Start updated version" };
+
   const resolveImageUrl = (url) => {
     if (!url) return null;
     if (url.startsWith("http://") || url.startsWith("https://")) return url;
-    return `http://localhost:5000/${url}`;
+    return `${import.meta.env.DEV ? "http://localhost:5000" : ""}/${url.startsWith("/") ? url.slice(1) : url}`;
   };
 
   const handleLaunchViewer = (e) => {
@@ -58,6 +72,7 @@ const ModuleCard = memo(function ModuleCard({
     if (isPreview) {
       return toast.error("Navigation is disabled in Live Preview Mode.");
     }
+    if (isRetired) return openUpdatedModule();
     navigate(`/user/modules/${module.id}`);
   };
 
@@ -76,6 +91,8 @@ const ModuleCard = memo(function ModuleCard({
       } else {
         navigate(`/admin/mdrrmo/modules/${module.id}/details`);
       }
+    } else if (isRetired) {
+      openUpdatedModule();
     } else {
       navigate(`/user/modules/${module.id}/details`);
     }
@@ -185,7 +202,7 @@ const ModuleCard = memo(function ModuleCard({
               {module.level}
             </span>
             <span
-              className="rounded-full bg-amber-50 px-2.5 py-1 text-xs font-bold text-amber-700 border border-amber-100 shrink-0 cursor-help"
+              className="rounded-full bg-amber-50 px-2.5 py-1 text-xs font-bold text-amber-700 border border-amber-100 dark:bg-amber-500/15 dark:text-amber-300 dark:border-amber-400/30 shrink-0 cursor-help"
               title={
                 module.duration === "Varies"
                   ? "Duration depends on learner pacing and situational choices"
@@ -200,15 +217,41 @@ const ModuleCard = memo(function ModuleCard({
               </span>
             )}
             {isCompleted && (
-              <span className="flex items-center gap-1 rounded-full bg-green-50 px-2.5 py-1 text-xs font-bold text-green-700 border border-green-100 shrink-0">
+              <span className="flex items-center gap-1 rounded-full bg-green-50 px-2.5 py-1 text-xs font-bold text-green-700 border border-green-100 dark:bg-green-500/15 dark:text-green-300 dark:border-green-400/30 shrink-0">
                 Completed
               </span>
+            )}
+            {module.module_status === "archived" && !module.has_newer_version && (
+              <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-700 border border-slate-200 shrink-0">
+                Previous version
+              </span>
+            )}
+            {/* A retired enrollment's main button already opens the newer version */}
+            {module.has_newer_version && !isRetired && (
+              module.latest_published_id ? (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    navigate(`/user/modules/${module.latest_published_id}/details`);
+                  }}
+                  className="inline-flex items-center gap-1 rounded-full bg-blue-50 hover:bg-blue-100 dark:bg-blue-500/15 dark:hover:bg-blue-500/25 dark:text-blue-300 dark:border-blue-400/30 px-2.5 py-1 text-xs font-bold text-blue-700 border border-blue-200 transition-colors shrink-0 cursor-pointer"
+                  title="View newer version details"
+                >
+                  <span>Newer version available</span>
+                  <span aria-hidden="true">&rarr;</span>
+                </button>
+              ) : (
+                <span className="rounded-full bg-blue-50 px-2.5 py-1 text-xs font-bold text-blue-700 border border-blue-200 dark:bg-blue-500/15 dark:text-blue-300 dark:border-blue-400/30 shrink-0">
+                  Newer version available
+                </span>
+              )
             )}
             {isAdminView && (
               <>
                 {module.parent_mod_id &&
                   (module.status === "draft" || module.status === "pending_review") && (
-                    <span className="rounded-full bg-blue-50 px-2.5 py-1 text-xs font-bold text-blue-700 border border-blue-200">
+                    <span className="rounded-full bg-blue-50 px-2.5 py-1 text-xs font-bold text-blue-700 border border-blue-200 dark:bg-blue-500/15 dark:text-blue-300 dark:border-blue-400/30">
                       Draft Revision
                     </span>
                   )}
@@ -222,11 +265,11 @@ const ModuleCard = memo(function ModuleCard({
                     Draft
                   </span>
                 ) : module.status === "pending_review" ? (
-                  <span className="flex items-center gap-1 rounded-full bg-blue-50 px-2.5 py-1 text-xs font-bold text-blue-700 border border-blue-100 shrink-0">
+                  <span className="flex items-center gap-1 rounded-full bg-blue-50 px-2.5 py-1 text-xs font-bold text-blue-700 border border-blue-100 dark:bg-blue-500/15 dark:text-blue-300 dark:border-blue-400/30 shrink-0">
                     Pending Review
                   </span>
                 ) : module.status === "published" ? (
-                  <span className="flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-bold text-emerald-700 border border-emerald-100 shrink-0">
+                  <span className="flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-bold text-emerald-700 border border-emerald-100 dark:text-emerald-300 shrink-0">
                     Published
                   </span>
                 ) : module.status === "archived" ? (
@@ -258,6 +301,15 @@ const ModuleCard = memo(function ModuleCard({
               __html: DOMPurify.sanitize(module.description || ""),
             }}
           />
+          {!localEnrolled && !isAdminView && module.previous_version_status === "Completed" && (
+            <p className="mt-2 text-xs font-semibold text-emerald-700 dark:text-emerald-300 flex items-center gap-1.5">
+              <HugeiconsIcon icon={CheckmarkCircle02Icon} className="w-4 h-4 shrink-0 text-emerald-600" />
+              <span>You completed an earlier version</span>
+            </p>
+          )}
+          {retiredCopy && (
+            <p className="mt-2 text-xs font-semibold text-slate-600 dark:text-slate-300">{retiredCopy.note}</p>
+          )}
         </div>
 
         {localEnrolled && (
@@ -285,13 +337,16 @@ const ModuleCard = memo(function ModuleCard({
           {localEnrolled ? (
             <button
               onClick={handleLaunchViewer}
-              className={`flex-1 rounded-xl px-2 sm:px-4 py-2.5 text-xs sm:text-sm font-bold text-white transition cursor-pointer truncate ${
+              disabled={isRetired && !module.latest_published_id}
+              className={`flex-1 rounded-xl px-2 sm:px-4 py-2.5 text-xs sm:text-sm font-bold text-white transition cursor-pointer truncate disabled:cursor-not-allowed disabled:bg-gray-400 ${
                 isCompleted
                   ? "bg-green-600 hover:bg-green-700"
                   : "bg-red-600 hover:bg-red-700"
               }`}
             >
-              {isCompleted ? "Review Module" : "Continue"}
+              {retiredCopy
+                ? retiredCopy.label
+                : isCompleted ? "Review Module" : module.progress === 0 ? "Start" : "Continue"}
             </button>
           ) : isAdminView ? (
             module.status === "archived" ? (
@@ -318,7 +373,7 @@ const ModuleCard = memo(function ModuleCard({
                       ? "bg-gray-400 cursor-not-allowed opacity-70"
                       : isRejected
                       ? "bg-red-600 hover:bg-red-700 cursor-pointer"
-                      : "bg-gray-900 hover:bg-black cursor-pointer"
+                      : "bg-gray-900 hover:bg-black dark:bg-slate-600 dark:hover:bg-slate-500 cursor-pointer"
                   }`}
                 >
                   {module.has_active_draft ? "Revision in Progress" : isRejected ? "Revise & Edit" : "Manage"}
@@ -345,7 +400,7 @@ const ModuleCard = memo(function ModuleCard({
                 className={`flex-1 rounded-xl px-2 sm:px-4 py-2.5 text-xs sm:text-sm font-bold text-white transition flex items-center justify-center gap-1 sm:gap-2 truncate ${
                   isEnrolling
                     ? "bg-gray-400 cursor-not-allowed"
-                    : "bg-gray-900 hover:bg-black cursor-pointer"
+                    : "bg-gray-900 hover:bg-black dark:bg-slate-600 dark:hover:bg-slate-500 cursor-pointer"
                 }`}
               >
                 {isEnrolling ? "Enrolling..." : "Enroll Now"}

@@ -6,7 +6,7 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import { Settings01Icon } from "@hugeicons/core-free-icons";
 
 import PlatformOverviewGrid from "./components/PlatformOverviewGrid";
-import HealthRow from "./components/HealthRow";
+import HealthRow from "../components/HealthRow";
 import SystemAlertBanner from "./components/SystemAlertBanner";
 import QuickActionsPanel from "./components/QuickActionsPanel";
 import RecentActivityFeed from "./components/RecentActivityFeed";

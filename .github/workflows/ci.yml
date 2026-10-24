@@ -8,6 +8,13 @@ on:
     branches:
       - main
 
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   lint-and-build:
     runs-on: ubuntu-latest
@@ -16,12 +23,12 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
-          node-version: 25
+          node-version: 24
           cache: "npm"
           cache-dependency-path: |
             client/package-lock.json
@@ -29,7 +36,7 @@ jobs:
 
       - name: Install client dependencies
         working-directory: client
-        run: npm install
+        run: npm ci
 
       - name: Lint client
         working-directory: client
@@ -41,7 +48,7 @@ jobs:
 
       - name: Install server dependencies
         working-directory: server
-        run: npm install
+        run: npm ci
 
       - name: Lint server
         working-directory: server

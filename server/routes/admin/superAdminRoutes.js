@@ -164,19 +164,10 @@ router.post(
 // 5. POST /api/admin/super/stop-impersonating
 router.post("/super/stop-impersonating", async (req, res) => {
   try {
-    const rawCookieHeader = req.headers.cookie || "";
-    const parseCookie = (name) => {
-      const match = rawCookieHeader.match(new RegExp(`(^|;\\s*)${name}=([^;]*)`));
-      return match ? decodeURIComponent(match[2]) : null;
-    };
-
-    const impersonatorId =
-      req.cookies?.impersonator_id ||
-      parseCookie("impersonator_id");
-
-    const targetId =
-      req.cookies?.impersonated_target_id ||
-      parseCookie("impersonated_target_id");
+    // Only trust the impersonation pair that `authenticate` validated against the
+    // real super_admin session; the raw cookies are client-controlled.
+    const impersonatorId = req.isImpersonating ? req.impersonator?.id : null;
+    const targetId = req.isImpersonating ? req.user?.id : null;
 
     res.clearCookie("impersonator_id", { path: "/" });
     res.clearCookie("impersonated_target_id", { path: "/" });

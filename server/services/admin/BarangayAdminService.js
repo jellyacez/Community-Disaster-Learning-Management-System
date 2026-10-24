@@ -28,8 +28,8 @@ class BarangayAdminService {
       SELECT 
         md.mod_id AS module_id,
         md.modname AS module_title,
-        COUNT(CASE WHEN b_ma.modstatus = 'completed' THEN 1 END) AS completed_count,
-        COUNT(CASE WHEN b_ma.modstatus = 'in_progress' THEN 1 END) AS in_progress_count,
+        COUNT(CASE WHEN b_ma.modstatus = 'Completed' THEN 1 END) AS completed_count,
+        COUNT(CASE WHEN b_ma.modstatus = 'In Progress' THEN 1 END) AS in_progress_count,
         COUNT(b_ma.modact_id) AS total_enrolled
       FROM module_data md
       LEFT JOIN (

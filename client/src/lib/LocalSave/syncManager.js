@@ -1,6 +1,7 @@
 import { localDb } from '../localDb';
 import apiClient from '../apiClient';
 import toast from 'react-hot-toast';
+import { authClient } from '../auth-client';
 
 export const MAX_RETRY_COUNT = 5;
 export const MAX_AUTH_RETRY_COUNT = 3; // Bounded retries for transient auth (401) races
@@ -196,6 +197,26 @@ export const getAllSyncQueueItems = async () => {
   return [...dbItems, ...memorySyncQueue];
 };
 
+/**
+ * Number of queued actions that haven't reached the server (pending, retrying or failed).
+ */
+export const getUnsyncedCount = async () => {
+  const items = await getAllSyncQueueItems();
+  return items.length;
+};
+
+/**
+ * Id of the user currently signed in, or null if it can't be determined.
+ */
+const getCurrentUserId = async () => {
+  try {
+    const res = await authClient.getSession();
+    return res?.data?.user?.id ?? null;
+  } catch {
+    return null;
+  }
+};
+
 export const dequeueWrite = async (syncId) => {
   if (typeof syncId === 'string' && syncId.startsWith('mem_')) {
     memorySyncQueue = memorySyncQueue.filter((t) => t.sync_id !== syncId);
@@ -336,17 +357,22 @@ export const processOfflineQueue = async (currentUserId) => {
       retryTimeoutId = null;
     }
 
+    // Queued actions use whoever is signed in when they sync, so hold back items
+    // recorded by a different user (e.g. after a logout with unsynced progress).
+    // Callers may pass the user id; otherwise look it up from the session.
+    const userId = typeof currentUserId === 'string' ? currentUserId : await getCurrentUserId();
+    const tasksToProcess = (await getAllPendingWrites()).filter((t) => {
+      const owner = t.payload?.user_id;
+      if (!userId || !owner || String(owner) === String(userId)) return true;
+      console.warn(`[SyncManager] Holding task ${t.sync_id}: belongs to a different user.`);
+      return false;
+    });
 
-    const allTasks = await getAllPendingWrites();
+    if (tasksToProcess.length === 0) {
+      scheduleNextRetryIfNeeded();
+      return;
+    }
 
-    const tasksToProcess = allTasks.filter(t =>
-          !t.payload?.user_id || t.payload.user_id === currentUserId
-        );
-
-        if (tasksToProcess.length === 0) {
-          scheduleNextRetryIfNeeded();
-          return;
-        }
     console.log(`[SyncManager] Processing ${tasksToProcess.length} queued offline actions...`);
 
     for (const task of tasksToProcess) {
@@ -357,14 +383,17 @@ export const processOfflineQueue = async (currentUserId) => {
       }
 
       try {
-        await dispatchTask(task);
+        const res = await dispatchTask(task);
 
         // Successfully synced: delete from localDb
         await dequeueWrite(task.sync_id);
         console.log(`[SyncManager] Successfully synced task ${task.sync_id} (${task.action_type})`);
 
+        // Include the server reply so listeners can react to it (e.g. recertification)
         window.dispatchEvent(
-          new CustomEvent('offline-sync-item-success', { detail: { syncId: task.sync_id, task } })
+          new CustomEvent('offline-sync-item-success', {
+            detail: { syncId: task.sync_id, task, response: res?.data }
+          })
         );
         window.dispatchEvent(new CustomEvent('offline-sync-queue-updated'));
       } catch (error) {

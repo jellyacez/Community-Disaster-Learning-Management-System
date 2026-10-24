@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Cancel01Icon, Logout01Icon } from "@hugeicons/core-free-icons";
 
-export default function LogoutModal({ isOpen, onClose, onConfirm }) {
+export default function LogoutModal({ isOpen, onClose, onConfirm, unsyncedCount = 0, isSyncing = false }) {
   useEffect(() => {
     if (!isOpen) return;
     const handleKeyDown = (e) => {
@@ -51,6 +51,15 @@ export default function LogoutModal({ isOpen, onClose, onConfirm }) {
               Are you sure you want to log out of your account? You will need to sign in again to access the portal.
             </p>
 
+            {unsyncedCount > 0 && (
+              <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs font-medium text-amber-800 dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-300">
+                You have {unsyncedCount} unsynced {unsyncedCount === 1 ? "change" : "changes"}.{" "}
+                {typeof navigator !== "undefined" && navigator.onLine
+                  ? "We'll try to sync them before logging you out."
+                  : "You're offline, so they stay on this device and sync the next time you sign in to this account with a connection."}
+              </div>
+            )}
+
             <div className="mt-8 flex gap-3">
               <button
                 onClick={onClose}
@@ -60,9 +69,10 @@ export default function LogoutModal({ isOpen, onClose, onConfirm }) {
               </button>
               <button
                 onClick={onConfirm}
-                className="flex-1 rounded-xl bg-red-600 px-5 py-3 text-sm font-bold text-white hover:bg-red-700 transition cursor-pointer"
+                disabled={isSyncing}
+                className="flex-1 rounded-xl bg-red-600 px-5 py-3 text-sm font-bold text-white hover:bg-red-700 transition cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
               >
-                Logout
+                {isSyncing ? "Syncing..." : unsyncedCount > 0 ? "Logout anyway" : "Logout"}
               </button>
             </div>
           </motion.div>

@@ -1,5 +1,34 @@
 const ModuleProgressService = require("../../services/modules/ModuleProgressService");
 
+// Response body for a completed step, shared with final-assessment attempt submissions
+const formatCompletionResult = (result) => {
+  if (result && !result.passed) {
+    return {
+      success: true,
+      passed: false,
+      score: result.score,
+      totalPoints: result.totalPoints,
+      percentage: result.percentage,
+      loop_back_step_id: result.loop_back_step_id,
+      is_final_assessment: result.is_final_assessment,
+      message: result.message
+    };
+  }
+
+  return {
+    success: true,
+    message: "Step completed successfully.",
+    passed: true,
+    quizGraded: result?.quizGraded || false,
+    score: result?.score || 0,
+    totalPoints: result?.totalPoints || 0,
+    moduleCompleted: result?.moduleCompleted || false,
+    recertificationRequired: result?.recertificationRequired || false,
+    recertificationStepIds: result?.recertificationStepIds || []
+  };
+};
+exports.formatCompletionResult = formatCompletionResult;
+
 // @desc    Mark a step as complete (and optionally grade a quiz), update progress
 // @access  Private
 exports.completeModuleStep = async (req, res) => {
@@ -19,30 +48,16 @@ exports.completeModuleStep = async (req, res) => {
 
   try {
     const result = await ModuleProgressService.completeModuleStep(user_id, parsedModId, parsedStepId, answers);
-
-    if (result && !result.passed) {
-       return res.status(200).json({
-            success: true,
-            passed: false,
-            score: result.score,
-            totalPoints: result.totalPoints,
-            percentage: result.percentage,
-            loop_back_step_id: result.loop_back_step_id, 
-            is_final_assessment: result.is_final_assessment,
-            message: result.message
-       });
-    }
-
-    return res.status(200).json({ 
-      success: true, 
-      message: "Step completed successfully.",
-      passed: true,
-      quizGraded: result?.quizGraded || false,
-      score: result?.score || 0,
-      totalPoints: result?.totalPoints || 0,
-      moduleCompleted: result?.moduleCompleted || false
-    });
+    return res.status(200).json(formatCompletionResult(result));
   } catch (error) {
+    if (error.message === "ATTEMPT_REQUIRED") {
+      // Old cached app versions and queued offline submissions for a final assessment
+      return res.status(409).json({
+        success: false,
+        error: "ATTEMPT_REQUIRED",
+        message: "This final assessment must be taken online. Please refresh the page and start it again.",
+      });
+    }
     if (error.message === "NOT_ENROLLED") {
       return res.status(403).json({ success: false, message: "You are not enrolled in this module." });
     }

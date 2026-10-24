@@ -1,6 +1,7 @@
 import { useRef, useEffect } from "react";
 import DOMPurify from "dompurify";
 import InteractiveQuiz from "../quiz/InteractiveQuiz";
+import AttemptQuiz from "../quiz/AttemptQuiz";
 import { decodeHtml } from "../../../../../utils/textUtils";
 
 export default function StepContent({
@@ -224,9 +225,18 @@ export default function StepContent({
                 </div>
               )}
             </div>
+          ) : !isPreviewMode && activeStep.is_final_assessment ? (
+            // Final assessments run as server-owned attempts (no answer key on the client)
+            <AttemptQuiz
+              key={`${activeStep.id}-${retryCount}`}
+              stepId={activeStep.id}
+              retryCount={retryCount}
+              onSubmitAttempt={(attemptId) => handleCompleteAndContinue(null, { attemptId })}
+            />
           ) : (
             <InteractiveQuiz
               key={`${activeStep.id}-${retryCount}`}
+              stepId={activeStep.id}
               stepType={activeStep.type}
               questions={assessmentData.questions}
               isLoading={assessmentData.isLoading}

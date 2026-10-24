@@ -22,7 +22,7 @@ router.use(async (req, res, next) => {
         message: "The system is currently undergoing scheduled maintenance. Only system administrators may access the console."
       });
     }
-  } catch (err) {
+  } catch {
     // If check fails, safely proceed
   }
   next();

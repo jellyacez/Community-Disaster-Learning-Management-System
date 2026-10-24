@@ -1,8 +1,16 @@
 const pool = require("../../config/db");
 const logger = require('../../utils/logger');
+const { GRADED_STEP_TYPES } = require("../../config/constants");
+
+// Days before expiry when a certificate becomes eligible for recertification
+const RENEWAL_WINDOW_DAYS = 30;
+
+// Final assessments are graded only from answers recorded in a server-owned attempt
+const isAttemptStep = (step) => GRADED_STEP_TYPES.includes(step.step_type) && Boolean(step.is_final_assessment);
 
 class ModuleProgressService {
-  async completeModuleStep(user_id, mod_id, stepId, answers) {
+  // `options.viaAttempt` is set only by QuizAttemptService when submitting a recorded attempt
+  async completeModuleStep(user_id, mod_id, stepId, answers, options = {}) {
     // Verify user enrollment
     const enrollmentCheck = await pool.query(
       "SELECT 1 FROM module_activity WHERE user_id = $1 AND mod_id = $2 LIMIT 1",
@@ -28,20 +36,25 @@ class ModuleProgressService {
     
     const step = stepResult.rows[0];
 
+    // Client-submitted answers are not accepted for final assessments
+    if (isAttemptStep(step) && !options.viaAttempt) {
+      throw new Error("ATTEMPT_REQUIRED");
+    }
+
     // If step is a quiz, grade it
     let score = 0;
     let totalPoints = 0;
     let passed;
     let quizGraded = false;
 
-    if (step.step_type === 'quiz' || step.step_type === 'situational' || step.step_type === 'priority_action' || step.step_type === 'hazard_identification' || step.step_type === 'action_sequence') {
+    if (GRADED_STEP_TYPES.includes(step.step_type)) {
         quizGraded = true;
         if (!answers || !Array.isArray(answers)) {
             throw new Error("ANSWERS_REQUIRED");
         }
         
         const questionsResult = await pool.query(
-            `SELECT question_id, points FROM public.questions WHERE step_id = $1`,
+            `SELECT question_id, points, interaction_type FROM public.questions WHERE step_id = $1`,
             [stepId]
         );
         const questions = questionsResult.rows;
@@ -56,8 +69,10 @@ class ModuleProgressService {
         );
 
         const pointsMap = {};
+        const interactionTypeMap = {};
         questions.forEach(q => {
             pointsMap[q.question_id] = q.points || 1;
+            interactionTypeMap[q.question_id] = q.interaction_type;
         });
 
         // Dynamically grade each question based on its characteristics
@@ -74,35 +89,50 @@ class ModuleProgressService {
             }
         });
 
-        answers.forEach(ans => {
-            const isActionSequence = sequenceMap[ans.questionId] !== undefined;
-            const isMultiSelect = correctChoicesMap[ans.questionId] && correctChoicesMap[ans.questionId].length > 1;
+        // Grade at most one entry per question of THIS step. Unknown question IDs and
+        // later duplicates are ignored, and a non-array selectedChoiceIds counts as
+        // unanswered instead of rejecting the submission, so offline-queue replays
+        // never turn into terminal 400s. First entry wins, matching the quiz UI lock.
+        const stepQuestionIds = new Set(questions.map(q => Number(q.question_id)));
+        const answersByQuestion = new Map();
+        for (const ans of answers) {
+            const qid = Number(ans?.questionId);
+            if (!stepQuestionIds.has(qid) || answersByQuestion.has(qid)) continue;
+            answersByQuestion.set(qid, Array.isArray(ans.selectedChoiceIds) ? ans.selectedChoiceIds : []);
+        }
+
+        answersByQuestion.forEach((selected, qid) => {
+            const isActionSequence = sequenceMap[qid] !== undefined;
+            // A stored hazard type stays multi-select even with a single required hazard
+            const isMultiSelect = correctChoicesMap[qid] &&
+                (correctChoicesMap[qid].length > 1 || interactionTypeMap[qid] === 'hazard_identification');
 
             if (isActionSequence) {
-                const correctSequence = sequenceMap[ans.questionId]
+                const correctSequence = sequenceMap[qid]
                     .sort((a, b) => a.order - b.order)
                     .map(c => c.choice_id);
-                const submittedSequence = ans.selectedChoiceIds || [];
-                
-                if (JSON.stringify(correctSequence) === JSON.stringify(submittedSequence)) {
-                    score += pointsMap[ans.questionId] || 1;
+
+                if (JSON.stringify(correctSequence) === JSON.stringify(selected)) {
+                    score += pointsMap[qid] || 1;
                 }
             } else if (isMultiSelect) {
-                const correctArray = correctChoicesMap[ans.questionId].sort((a, b) => a - b);
-                const submittedArray = (ans.selectedChoiceIds || []).sort((a, b) => a - b);
-                
+                const correctArray = correctChoicesMap[qid].sort((a, b) => a - b);
+                const submittedArray = [...selected].sort((a, b) => a - b);
+
                 if (JSON.stringify(correctArray) === JSON.stringify(submittedArray)) {
-                    score += pointsMap[ans.questionId] || 1;
+                    score += pointsMap[qid] || 1;
                 }
             } else {
-                const correctChoiceId = correctChoicesMap[ans.questionId] ? correctChoicesMap[ans.questionId][0] : null;
-                const submittedChoiceId = ans.selectedChoiceIds && ans.selectedChoiceIds.length > 0 ? ans.selectedChoiceIds[0] : null;
-                
+                const correctChoiceId = correctChoicesMap[qid] ? correctChoicesMap[qid][0] : null;
+                const submittedChoiceId = selected.length > 0 ? selected[0] : null;
+
                 if (correctChoiceId === submittedChoiceId) {
-                    score += pointsMap[ans.questionId] || 1;
+                    score += pointsMap[qid] || 1;
                 }
             }
         });
+
+        score = Math.min(score, totalPoints);
 
         const passingThreshold = step.passing_threshold || 80;
         const percentage = totalPoints > 0 ? (score / totalPoints) * 100 : 100;
@@ -146,7 +176,9 @@ class ModuleProgressService {
     // Update progress transaction
     const client = await pool.connect();
     let moduleCompleted;
-    
+    let recertificationRequired = false;
+    let recertificationStepIds = [];
+
     try {
       await client.query("BEGIN");
 
@@ -259,9 +291,41 @@ class ModuleProgressService {
           // Existing Certificate — Handle Renewal / Recertification
           const existingCert = certCheck.rows[0];
           const isExpired = new Date(existingCert.expires_at) < new Date();
-          const isExpiringSoon = new Date(existingCert.expires_at) <= new Date(Date.now() + 30 * 86400 * 1000);
+          const isExpiringSoon = new Date(existingCert.expires_at) <= new Date(Date.now() + RENEWAL_WINDOW_DAYS * 86400 * 1000);
 
+          // Renewal requires re-passing the module's assessment inside the renewal window.
+          // Step progress persists from the first completion, so completion alone proves nothing.
+          // Required steps: graded steps flagged final, else every graded step. Modules with
+          // no graded steps have nothing to retake and renew on completion.
+          let passedRenewalAssessment = false;
           if (isExpired || isExpiringSoon) {
+            const renewalCheck = await client.query(
+              `WITH graded AS (
+                 SELECT ms.step_id, ms.is_final_assessment
+                 FROM module_steps ms
+                 JOIN levels l ON ms.level_id = l.level_id
+                 WHERE l.mod_id = $1 AND ms.step_type = ANY($2)
+               ),
+               required AS (
+                 SELECT step_id FROM graded
+                 WHERE is_final_assessment OR NOT EXISTS (SELECT 1 FROM graded WHERE is_final_assessment)
+               )
+               SELECT required.step_id
+               FROM required
+               WHERE NOT EXISTS (
+                 SELECT 1 FROM results r
+                 WHERE r.user_id = $3 AND r.mod_id = $1 AND r.step_id = required.step_id
+                   AND r.passed AND r.date_taken >= $4::timestamptz - (INTERVAL '1 day' * $5)
+               )`,
+              [mod_id, GRADED_STEP_TYPES, user_id, existingCert.expires_at, RENEWAL_WINDOW_DAYS]
+            );
+            // No pending steps means every required step was re-passed (or none exist)
+            recertificationStepIds = renewalCheck.rows.map((r) => r.step_id);
+            passedRenewalAssessment = recertificationStepIds.length === 0;
+            recertificationRequired = !passedRenewalAssessment;
+          }
+
+          if ((isExpired || isExpiringSoon) && passedRenewalAssessment) {
             // Expired/expiring-soon certificates are eligible for renewal/recertification
             await logger.logActivity(
               user_id,
@@ -295,6 +359,8 @@ class ModuleProgressService {
         score,
         totalPoints,
         moduleCompleted,
+        recertificationRequired,
+        recertificationStepIds,
         ...(verificationToken && { verificationToken })
       };
     } catch (txError) {

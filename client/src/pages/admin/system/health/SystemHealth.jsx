@@ -5,10 +5,10 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import { Settings01Icon, Time02Icon, RefreshIcon, Database01Icon, Notification01Icon, Folder01Icon, Alert01Icon, Shield01Icon } from "@hugeicons/core-free-icons";
 
 // We reuse these components from the Overview section to maintain design consistency
-import StatCard from "../overview/components/StatCard";
-import HealthRow from "../overview/components/HealthRow";
+import StatCard from "../../../../components/ui/StatCard";
+import HealthRow from "../components/HealthRow";
 
-import RuntimeInfoPanel from "../settings/components/RuntimeInfoPanel";
+import RuntimeInfoPanel from "./components/RuntimeInfoPanel";
 import InfrastructureOperationsPanel from "./components/InfrastructureOperationsPanel";
 
 

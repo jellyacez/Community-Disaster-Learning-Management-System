@@ -46,7 +46,6 @@ const ROLE_PERMISSIONS = {
   barangay_admin: [
     "ban_users",
     "archive_users",
-    "view_system_stats",
     "view_users",
   ],
 };

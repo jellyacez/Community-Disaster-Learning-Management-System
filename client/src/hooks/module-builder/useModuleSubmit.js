@@ -173,6 +173,8 @@ export function useModuleSubmit({
                 questionText: scenario.scenarioDescription,
                 imageURL: "",
                 options: options,
+                interactionType: interaction,
+                rationale: scenario.rationale?.trim() || null,
               };
             });
           }

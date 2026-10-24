@@ -23,7 +23,9 @@ const ThemeContext = createContext({
 
 const getSystemTheme = () => {
   if (typeof window !== "undefined" && window.matchMedia) {
-    return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+    return window.matchMedia("(prefers-color-scheme: dark)").matches
+      ? "dark"
+      : "light";
   }
   return "light";
 };
@@ -37,7 +39,8 @@ export function ThemeProvider({ children }) {
   // Dark mode is restricted exclusively to authenticated user/admin portals.
   // Public facing pages (e.g. landing page, sign in, register, privacy policy) must never be affected.
   const isPortalRoute =
-    location.pathname.startsWith("/user") || location.pathname.startsWith("/admin");
+    location.pathname.startsWith("/user") ||
+    location.pathname.startsWith("/admin");
   const isAuthenticatedPortal = Boolean(isPortalRoute && session);
 
   const [themeMode, setThemeMode] = useState(() => {
@@ -46,7 +49,8 @@ export function ThemeProvider({ children }) {
       const path = window.location.pathname;
       if (path.startsWith("/user") || path.startsWith("/admin")) {
         const saved = localStorage.getItem("bacolor_theme");
-        if (saved === "dark" || saved === "light" || saved === "system") return saved;
+        if (saved === "dark" || saved === "light" || saved === "system")
+          return saved;
       }
     }
     return "light";
@@ -96,7 +100,8 @@ export function ThemeProvider({ children }) {
   // Dark mode only takes effect when inside an authenticated portal route WITH an active session.
   // Public-facing routes (landing, sign-in, register, privacy policy) are strictly locked to light mode.
   const effectiveTheme =
-    isAuthenticatedPortal && (themeMode === "system" ? systemTheme : themeMode) === "dark"
+    isAuthenticatedPortal &&
+    (themeMode === "system" ? systemTheme : themeMode) === "dark"
       ? "dark"
       : "light";
 
@@ -107,7 +112,6 @@ export function ThemeProvider({ children }) {
       localStorage.setItem("bacolor_theme", themeMode);
     } else {
       root.classList.remove("dark");
-      // When a user signs out or has no active session, automatically clear stored theme
       if (!isPending && !session) {
         hydratedForUserRef.current = null;
         localStorage.removeItem("bacolor_theme");
@@ -135,10 +139,13 @@ export function ThemeProvider({ children }) {
 
         await apiClient.put("/users/me/settings", { theme: mode });
       } catch (err) {
-        console.warn("[ThemeContext] Failed to persist theme to database:", err);
+        console.warn(
+          "[ThemeContext] Failed to persist theme to database:",
+          err,
+        );
       }
     },
-    [userId, queryClient]
+    [userId, queryClient],
   );
 
   const resetTheme = useCallback(() => {
@@ -161,13 +168,15 @@ export function ThemeProvider({ children }) {
         }
       }
     },
-    [isAuthenticatedPortal, persistTheme]
+    [isAuthenticatedPortal, persistTheme],
   );
 
   const toggleTheme = useCallback(() => {
     if (!isPortalRoute) return;
     const currentResolved =
-      (themeMode === "system" ? systemTheme : themeMode) === "dark" ? "dark" : "light";
+      (themeMode === "system" ? systemTheme : themeMode) === "dark"
+        ? "dark"
+        : "light";
     const next = currentResolved === "dark" ? "light" : "dark";
     setTheme(next);
   }, [isPortalRoute, themeMode, systemTheme, setTheme]);

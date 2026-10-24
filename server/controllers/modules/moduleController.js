@@ -2,6 +2,11 @@ const { validateModuleCreation } = require("../../utils/validators");
 const ModuleService = require("../../services/modules/ModuleService");
 const { ADMIN_ROLES } = require("../../config/permissions");
 const { logActivity, logError } = require("../../utils/logger");
+const { isAttemptStep } = require("../../services/modules/QuizAttemptService");
+
+// Helper function to determine if a module is open to learners
+const isOpenToLearners = (mod) =>
+  Boolean(mod) && mod.status === "published" && !mod.moddateremove;
 
 /**
  * Helper function to normalize level payloads so cover_image is never lost
@@ -16,7 +21,6 @@ function normalizeLevels(levels = []) {
     levelDescription: lvl.levelDescription ?? lvl.level_description ?? "",
     passing_threshold: Number(lvl.passing_threshold) || 80,
     is_locked_by_default: lvl.is_locked_by_default ?? true,
-    // Explicitly guarantee cover_image is extracted from either naming convention
     cover_image: lvl.cover_image || lvl.coverImage || null,
     coverImage: lvl.cover_image || lvl.coverImage || null,
     steps: Array.isArray(lvl.steps) ? lvl.steps : [],
@@ -44,7 +48,10 @@ exports.createModule = async (req, res) => {
     const mod_id = await ModuleService.createModuleTransaction(payload);
 
     // Log module creation to activity_log
-    const safeModuleName = String(req.body.moduleName || "").replace(/[\r\n]/g, " ");
+    const safeModuleName = String(req.body.moduleName || "").replace(
+      /[\r\n]/g,
+      " ",
+    );
     await logActivity(req.user.id, `Created new module: ${safeModuleName}`);
 
     return res.status(201).json({
@@ -112,7 +119,7 @@ exports.updateModule = async (req, res) => {
 
       const draftCheck = await pool.query(
         "SELECT mod_id FROM module_data WHERE parent_mod_id = $1 AND status IN ('draft', 'pending_review') LIMIT 1",
-        [parsedModId]
+        [parsedModId],
       );
       if (draftCheck.rowCount > 0) {
         return res.status(409).json({
@@ -129,12 +136,12 @@ exports.updateModule = async (req, res) => {
 
       await pool.query(
         "UPDATE module_data SET parent_mod_id = $1 WHERE mod_id = $2",
-        [parsedModId, new_mod_id]
+        [parsedModId, new_mod_id],
       );
 
       await logActivity(
         req.user.id,
-        `Created draft revision (ID ${new_mod_id}) for published module ID ${parsedModId}`
+        `Created draft revision (ID ${new_mod_id}) for published module ID ${parsedModId}`,
       );
 
       return res.status(200).json({
@@ -147,11 +154,11 @@ exports.updateModule = async (req, res) => {
     await ModuleService.updateModuleTransaction(parsedModId, payload);
 
     const safeModuleName = String(
-      req.body.moduleName || existing.modname || parsedModId
+      req.body.moduleName || existing.modname || parsedModId,
     ).replace(/[\r\n]/g, " ");
     await logActivity(
       req.user.id,
-      `Updated module ID ${parsedModId}: "${safeModuleName}"`
+      `Updated module ID ${parsedModId}: "${safeModuleName}"`,
     );
 
     return res.status(200).json({
@@ -216,43 +223,42 @@ exports.enrollInModule = async (req, res) => {
         .json({ success: false, message: "Invalid module ID format." });
     }
 
+    const isAdmin = ADMIN_ROLES.includes(req.user?.role);
     const moduleCheck = await ModuleService.getModuleById(parsedModId);
-    if (!moduleCheck) {
+    if (!moduleCheck || (!isAdmin && !isOpenToLearners(moduleCheck))) {
       return res
         .status(404)
         .json({ success: false, message: "Target training module not found." });
     }
 
     // Verify Prerequisites
-    const isAdmin = ADMIN_ROLES.includes(req.user?.role);
     if (!isAdmin) {
-      const allowed = await ModuleService.checkPrerequisitesMet(user_id, parsedModId);
+      const allowed = await ModuleService.checkPrerequisitesMet(
+        user_id,
+        parsedModId,
+      );
       if (!allowed) {
         return res.status(403).json({
           success: false,
-          message: "Prerequisites not met. Complete foundational and lower-tier modules first.",
+          message:
+            "Prerequisites not met. Complete foundational and lower-tier modules first.",
         });
       }
     }
 
-    const isEnrolled = await ModuleService.checkUserEnrollment(
-      user_id,
-      parsedModId
-    );
-    if (!isEnrolled) {
-      await ModuleService.enrollUserInModule(user_id, parsedModId);
-    }
+    // No-op when already enrolled (ON CONFLICT DO NOTHING)
+    await ModuleService.enrollUserInModule(user_id, parsedModId);
 
     const enrollmentData = await ModuleService.getEnrollmentData(
       user_id,
-      parsedModId
+      parsedModId,
     );
 
     await logActivity(
       user_id,
       `Enrolled in module ID ${parsedModId}: "${
         moduleCheck.modname || moduleCheck.title || parsedModId
-      }"`
+      }"`,
     );
 
     return res.status(200).json({
@@ -263,7 +269,7 @@ exports.enrollInModule = async (req, res) => {
   } catch (error) {
     console.error(
       "Database error during enrollment execution pipeline:",
-      error
+      error,
     );
     return res.status(500).json({
       success: false,
@@ -288,9 +294,18 @@ exports.getModuleViewerData = async (req, res) => {
 
   try {
     const isAdmin = ADMIN_ROLES.includes(req.user?.role);
+    if (
+      !isAdmin &&
+      !isOpenToLearners(await ModuleService.getModuleById(parsedModId))
+    ) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Module not found." });
+    }
+
     const isEnrolled = await ModuleService.checkUserEnrollment(
       user_id,
-      parsedModId
+      parsedModId,
     );
 
     if (!isEnrolled && !isAdmin) {
@@ -302,11 +317,15 @@ exports.getModuleViewerData = async (req, res) => {
 
     // Prerequisite check for non-admin viewers
     if (!isAdmin) {
-      const allowed = await ModuleService.checkPrerequisitesMet(user_id, parsedModId);
+      const allowed = await ModuleService.checkPrerequisitesMet(
+        user_id,
+        parsedModId,
+      );
       if (!allowed) {
         return res.status(403).json({
           success: false,
-          message: "Prerequisites not met. Complete foundational and lower-tier modules first.",
+          message:
+            "Prerequisites not met. Complete foundational and lower-tier modules first.",
         });
       }
     }
@@ -344,11 +363,24 @@ exports.getStepAssessment = async (req, res) => {
   }
 
   try {
-    const data = await ModuleService.getStepAssessment(parsedStepId);
+    let data = await ModuleService.getStepAssessment(parsedStepId);
     if (!data) {
       return res
         .status(404)
         .json({ success: false, message: "Step not found." });
+    }
+
+    // Final assessments run as server attempts: learners never receive their answer key.
+    // Admins keep it for module previews.
+    if (
+      !ADMIN_ROLES.includes(req.user?.role) &&
+      isAttemptStep(await ModuleService.getStepMeta(parsedStepId))
+    ) {
+      data = data.map((q) => ({
+        ...q,
+        rationale: undefined,
+        options: (q.options || []).map(({ id, text }) => ({ id, text })),
+      }));
     }
 
     return res.status(200).json({
@@ -376,10 +408,20 @@ exports.getModuleSyllabusDetails = async (req, res) => {
   }
 
   try {
+    const isAdmin = ADMIN_ROLES.includes(req.user?.role);
+    if (
+      !isAdmin &&
+      !isOpenToLearners(await ModuleService.getModuleById(parsedModId))
+    ) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Module not found." });
+    }
+
     const user_id = req.user?.id || req.user?.userId;
     const details = await ModuleService.getModuleSyllabusDetails(
       parsedModId,
-      user_id
+      user_id,
     );
 
     if (!details) {
@@ -423,7 +465,7 @@ exports.getAllModules = async (req, res) => {
       search,
       category,
       level,
-      adminContext
+      adminContext,
     );
 
     res.status(200).json({
@@ -465,35 +507,39 @@ exports.updateModuleStatus = async (req, res) => {
         .status(404)
         .json({ success: false, message: "Module not found." });
     }
-    const previousStatus = current.status ?? "unknown";
 
-    await ModuleService.updateModuleStatus(
+    // Only a pending submission can be reviewed, so a stale page can't reject a published module.
+    // The check lives in the UPDATE itself, so two simultaneous reviews can't both apply.
+    const updated = await ModuleService.reviewModule(
       parsedModId,
       finalStatus,
-      rejection_reason
+      rejection_reason,
     );
+    if (!updated) {
+      return res.status(409).json({
+        success: false,
+        code: "NOT_PENDING_REVIEW",
+        message: "This module is no longer pending review. Refresh the list and try again.",
+      });
+    }
 
     const pool = require("../../config/db");
 
     if (finalStatus === "published" && current.parent_mod_id) {
-      await pool.query(
-        "UPDATE module_data SET status = 'archived' WHERE mod_id = $1",
-        [current.parent_mod_id]
-      );
       await logActivity(
         req.user.id,
-        `Archived original published module ID ${current.parent_mod_id} following approval of revision ID ${parsedModId}`
+        `Archived original published module ID ${current.parent_mod_id} following approval of revision ID ${parsedModId}`,
       );
     }
 
     if (current.author_id) {
-      if (finalStatus === "published" && previousStatus !== "published") {
+      if (finalStatus === "published") {
         await pool.query(
           `INSERT INTO public.user_notification (user_id, type, message) VALUES ($1, 'module_approved', $2)`,
           [
             current.author_id,
             `Your module "${current.modname}" has been approved and published.`,
-          ]
+          ],
         );
       } else if (status === "rejected") {
         await pool.query(
@@ -503,13 +549,13 @@ exports.updateModuleStatus = async (req, res) => {
             `Your module "${current.modname}" was returned for revision. Reason: ${
               rejection_reason || "See draft for details"
             }`,
-          ]
+          ],
         );
       }
     } else {
       if (finalStatus === "published" || status === "rejected") {
         console.warn(
-          `[Notification skipped] Module ${parsedModId} has no author_id. Could not notify creator of status change to ${status}.`
+          `[Notification skipped] Module ${parsedModId} has no author_id. Could not notify creator of status change to ${status}.`,
         );
       }
     }
@@ -518,11 +564,11 @@ exports.updateModuleStatus = async (req, res) => {
       req.user.id,
       `Updated module ID ${parsedModId} ("${
         current.modname || parsedModId
-      }") status: ${previousStatus} → ${finalStatus}${
+      }") status: ${current.status} → ${finalStatus}${
         status === "rejected" && rejection_reason
           ? ` | Reason: ${rejection_reason}`
           : ""
-      }`
+      }`,
     );
 
     res.json({ success: true, message: "Status updated successfully" });

@@ -161,7 +161,7 @@ const optionalAuthenticate = async (req, res, next) => {
     if (session && session.user && !session.user.archived) {
       req.user = session.user;
     }
-  } catch (_) {
+  } catch {
     // Graceful fallback for unauthenticated public traffic
   }
   next();

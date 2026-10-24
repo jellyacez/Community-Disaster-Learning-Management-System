@@ -113,7 +113,29 @@ class ModuleService {
 
   async getAvailableModules(user_id) {
     const result = await pool.query(
-     `SELECT
+     `WITH RECURSIVE ancestor_tree AS (
+        SELECT mod_id AS descendant_id, parent_mod_id AS ancestor_id
+        FROM public.module_data
+        WHERE parent_mod_id IS NOT NULL
+        UNION ALL
+        SELECT at.descendant_id, md.parent_mod_id
+        FROM ancestor_tree at
+        JOIN public.module_data md ON at.ancestor_id = md.mod_id
+        WHERE md.parent_mod_id IS NOT NULL
+      ),
+      ancestor_activity AS (
+        SELECT 
+          at.descendant_id,
+          CASE 
+            WHEN bool_or(ma.modstatus = 'Completed' OR ma.progress = 100) THEN 'Completed'
+            ELSE NULL
+          END AS previous_version_status
+        FROM ancestor_tree at
+        JOIN public.module_activity ma ON at.ancestor_id = ma.mod_id
+        WHERE ma.user_id = $1
+        GROUP BY at.descendant_id
+      )
+      SELECT
         md.mod_id AS id,
         md.modname AS title,
         md.modcat AS category,
@@ -123,7 +145,8 @@ class ModuleService {
         md.image_url,
         (um.mod_id IS NOT NULL) AS is_enrolled,
         COALESCE(um.progress, 0) AS progress,
-        um.modstatus AS enrollment_status
+        um.modstatus AS enrollment_status,
+        aa.previous_version_status
        FROM public.module_data md
        LEFT JOIN (
          SELECT DISTINCT ON (mod_id) mod_id, progress, modstatus
@@ -131,6 +154,7 @@ class ModuleService {
          WHERE user_id = $1
          ORDER BY mod_id, modact_id DESC
        ) um ON um.mod_id = md.mod_id
+       LEFT JOIN ancestor_activity aa ON aa.descendant_id = md.mod_id
        WHERE md.moddateremove IS NULL AND md.status = 'published'
        ORDER BY md.mod_id DESC`,
       [user_id]
@@ -230,6 +254,59 @@ class ModuleService {
     };
   }
 
+  // Inserts a step's questions and their choices in two batched statements (create and update share this)
+  async insertStepQuestions(client, mod_id, step_id, quizQuestions) {
+    const qTexts = [];
+    const qPoints = [];
+    const qImages = [];
+    const qRationales = [];
+    const qInteractionTypes = [];
+
+    for (const q of quizQuestions) {
+      qTexts.push(q.questionText);
+      qPoints.push(10);
+      qImages.push(q.imageURL || '');
+      qRationales.push(q.rationale ? cleanRichText(q.rationale) : null);
+      qInteractionTypes.push(q.interactionType || null);
+    }
+
+    const qRes = await client.query(
+      `INSERT INTO public.questions (mod_id, step_id, question_text, points, image_url, rationale, interaction_type)
+       SELECT $1, $2, t, p, i, r, it
+       FROM unnest($3::text[], $4::int[], $5::text[], $6::text[], $7::text[]) WITH ORDINALITY AS u(t, p, i, r, it, ord)
+       ORDER BY ord
+       RETURNING question_id`,
+      [mod_id, step_id, qTexts, qPoints, qImages, qRationales, qInteractionTypes]
+    );
+
+    const cQuestionIds = [];
+    const cTexts = [];
+    const cIsCorrects = [];
+    const cRationales = [];
+    const cSequenceOrders = [];
+
+    quizQuestions.forEach((q, idx) => {
+      const question_id = qRes.rows[idx].question_id;
+      for (const opt of (q.options || [])) {
+        cQuestionIds.push(question_id);
+        cTexts.push(opt.text);
+        cIsCorrects.push(opt.isCorrect);
+        cRationales.push(cleanRichText(opt.rationale || ""));
+        cSequenceOrders.push(opt.sequence_order || null);
+      }
+    });
+
+    if (cQuestionIds.length > 0) {
+      await client.query(
+        `INSERT INTO public.choices (question_id, choice_text, is_correct, rationale, sequence_order)
+         SELECT q_id, c_text, c_corr, c_rat, c_seq
+         FROM unnest($1::int[], $2::text[], $3::boolean[], $4::text[], $5::int[]) WITH ORDINALITY AS u(q_id, c_text, c_corr, c_rat, c_seq, ord)
+         ORDER BY ord`,
+        [cQuestionIds, cTexts, cIsCorrects, cRationales, cSequenceOrders]
+      );
+    }
+  }
+
   async createModuleTransaction({ moduleName, moduleCategory, description, level, duration, video_url, image_url, levels, status, author_id }) {
     const safeDescription = cleanRichText(description);
     const client = await pool.connect();
@@ -281,51 +358,7 @@ class ModuleService {
           }
 
           if (step.quizQuestions && step.quizQuestions.length > 0) {
-            const qTexts = [];
-            const qPoints = [];
-            const qImages = [];
-
-            for (const q of step.quizQuestions) {
-              qTexts.push(q.questionText);
-              qPoints.push(10);
-              qImages.push(q.imageURL || '');
-            }
-
-            const qRes = await client.query(
-              `INSERT INTO public.questions (mod_id, step_id, question_text, points, image_url)
-               SELECT $1, $2, t, p, i
-               FROM unnest($3::text[], $4::int[], $5::text[]) WITH ORDINALITY AS u(t, p, i, ord)
-               ORDER BY ord
-               RETURNING question_id`,
-              [mod_id, step_id, qTexts, qPoints, qImages]
-            );
-
-            const cQuestionIds = [];
-            const cTexts = [];
-            const cIsCorrects = [];
-            const cRationales = [];
-            const cSequenceOrders = [];
-
-            step.quizQuestions.forEach((q, idx) => {
-              const question_id = qRes.rows[idx].question_id;
-              for (const opt of q.options) {
-                cQuestionIds.push(question_id);
-                cTexts.push(opt.text);
-                cIsCorrects.push(opt.isCorrect);
-                cRationales.push(cleanRichText(opt.rationale || ""));
-                cSequenceOrders.push(opt.sequence_order || null);
-              }
-            });
-
-            if (cQuestionIds.length > 0) {
-              await client.query(
-                `INSERT INTO public.choices (question_id, choice_text, is_correct, rationale, sequence_order)
-                 SELECT q_id, c_text, c_corr, c_rat, c_seq
-                 FROM unnest($1::int[], $2::text[], $3::boolean[], $4::text[], $5::int[]) WITH ORDINALITY AS u(q_id, c_text, c_corr, c_rat, c_seq, ord)
-                 ORDER BY ord`,
-                [cQuestionIds, cTexts, cIsCorrects, cRationales, cSequenceOrders]
-              );
-            }
+            await this.insertStepQuestions(client, mod_id, step_id, step.quizQuestions);
           }
         }
       }
@@ -430,51 +463,7 @@ class ModuleService {
           }
 
           if (step.quizQuestions && step.quizQuestions.length > 0) {
-            const qTexts = [];
-            const qPoints = [];
-            const qImages = [];
-
-            for (const q of step.quizQuestions) {
-              qTexts.push(q.questionText);
-              qPoints.push(10);
-              qImages.push(q.imageURL || '');
-            }
-
-            const qRes = await client.query(
-              `INSERT INTO public.questions (mod_id, step_id, question_text, points, image_url)
-               SELECT $1, $2, t, p, i
-               FROM unnest($3::text[], $4::int[], $5::text[]) WITH ORDINALITY AS u(t, p, i, ord)
-               ORDER BY ord
-               RETURNING question_id`,
-              [mod_id, step_id, qTexts, qPoints, qImages]
-            );
-
-            const cQuestionIds = [];
-            const cTexts = [];
-            const cIsCorrects = [];
-            const cRationales = [];
-            const cSequenceOrders = [];
-
-            step.quizQuestions.forEach((q, idx) => {
-              const question_id = qRes.rows[idx].question_id;
-              for (const opt of (q.options || [])) {
-                cQuestionIds.push(question_id);
-                cTexts.push(opt.text);
-                cIsCorrects.push(opt.isCorrect);
-                cRationales.push(cleanRichText(opt.rationale || ""));
-                cSequenceOrders.push(opt.sequence_order || null);
-              }
-            });
-
-            if (cQuestionIds.length > 0) {
-              await client.query(
-                `INSERT INTO public.choices (question_id, choice_text, is_correct, rationale, sequence_order)
-                 SELECT q_id, c_text, c_corr, c_rat, c_seq
-                 FROM unnest($1::int[], $2::text[], $3::boolean[], $4::text[], $5::int[]) WITH ORDINALITY AS u(q_id, c_text, c_corr, c_rat, c_seq, ord)
-                 ORDER BY ord`,
-                [cQuestionIds, cTexts, cIsCorrects, cRationales, cSequenceOrders]
-              );
-            }
+            await this.insertStepQuestions(client, mod_id, step_id, step.quizQuestions);
           }
         }
       }
@@ -489,9 +478,17 @@ class ModuleService {
     }
   }
 
+  async getStepMeta(stepId) {
+    const { rows } = await pool.query(
+      "SELECT step_id, step_type, is_final_assessment FROM module_steps WHERE step_id = $1",
+      [stepId]
+    );
+    return rows[0] || null;
+  }
+
   async getModuleById(mod_id) {
     const moduleCheck = await pool.query(
-      "SELECT mod_id, modname, modcat, level, status, author_id, rejection_reason, parent_mod_id FROM module_data WHERE mod_id = $1",
+      "SELECT mod_id, modname, modcat, level, status, author_id, rejection_reason, parent_mod_id, moddateremove FROM module_data WHERE mod_id = $1",
       [mod_id]
     );
     return moduleCheck.rowCount > 0 ? moduleCheck.rows[0] : null;
@@ -527,7 +524,8 @@ class ModuleService {
   async enrollUserInModule(user_id, mod_id) {
     await pool.query(
       `INSERT INTO module_activity (user_id, mod_id, modstatus, progress)
-       VALUES ($1, $2, 'In Progress', 0)`,
+       VALUES ($1, $2, 'In Progress', 0)
+       ON CONFLICT (user_id, mod_id) DO NOTHING`,
       [user_id, mod_id]
     );
   }
@@ -609,7 +607,7 @@ class ModuleService {
     if (stepCheck.rowCount === 0) return null;
 
     const questionsResult = await pool.query(
-      "SELECT question_id, question_text, points, image_url FROM questions WHERE step_id = $1 ORDER BY question_id ASC",
+      "SELECT question_id, question_text, points, image_url, rationale, interaction_type FROM questions WHERE step_id = $1 ORDER BY question_id ASC",
       [stepId]
     );
 
@@ -675,7 +673,7 @@ class ModuleService {
 
     if (stepIds.length > 0) {
       const qRes = await pool.query(
-        `SELECT question_id, step_id, question_text, points, image_url
+        `SELECT question_id, step_id, question_text, points, image_url, rationale, interaction_type
          FROM public.questions
          WHERE step_id = ANY($1::int[])
          ORDER BY question_id ASC`,
@@ -705,6 +703,8 @@ class ModuleService {
             questionText: q.question_text,
             imageURL: q.image_url,
             points: q.points,
+            rationale: q.rationale,
+            interactionType: q.interaction_type,
             options: allChoices
               .filter(c => c.question_id === q.question_id)
               .map(c => ({
@@ -813,15 +813,35 @@ class ModuleService {
     };
   }
 
-  async updateModuleStatus(mod_id, status, rejection_reason = null) {
-    const query = `
-      UPDATE public.module_data
-      SET status = $1, rejection_reason = $2
-      WHERE mod_id = $3
-      RETURNING *
-    `;
-    const result = await pool.query(query, [status, rejection_reason, mod_id]);
-    return result.rows[0];
+  // Reviews a module still pending review; returns undefined if it wasn't pending.
+  // Publishing a revision archives the version it replaces in the same transaction,
+  // so a failure can't leave two published versions.
+  async reviewModule(mod_id, status, rejection_reason) {
+    const client = await pool.connect();
+    try {
+      await client.query("BEGIN");
+      const { rows } = await client.query(
+        `UPDATE public.module_data
+         SET status = $1, rejection_reason = $2
+         WHERE mod_id = $3 AND status = 'pending_review'
+         RETURNING *`,
+        [status, rejection_reason, mod_id]
+      );
+      const updated = rows[0];
+      if (updated && status === "published" && updated.parent_mod_id) {
+        await client.query(
+          "UPDATE public.module_data SET status = 'archived' WHERE mod_id = $1",
+          [updated.parent_mod_id]
+        );
+      }
+      await client.query("COMMIT");
+      return updated;
+    } catch (error) {
+      await client.query("ROLLBACK");
+      throw error;
+    } finally {
+      client.release();
+    }
   }
 }
 

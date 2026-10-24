@@ -738,3 +738,39 @@ This document tracks identified technical debt, architectural decisions, missing
   - Server defines unique constraints on `client_mutation_id` and executes `ON CONFLICT (client_mutation_id) DO NOTHING` on all creation endpoints that interface with the offline sync queue.
 - **Strategic Decision:** Bundle this enhancement with the Local Announcements build (Item 7) rather than fixing feedback in isolation now — no sense adding the idempotency plumbing to a feature that does not exist yet, and current feedback exposure is lower-frequency (requires the specific processed-but-response-lost race condition) than the Publish-button double-click case, which was fixed separately and immediately.
 
+---
+
+### 6. Input Validation Audit Findings (paused until after defense)
+- **Source:** Server input-validation audit (2026-10-01), findings H1–H7, M1–M15, L1–L11.
+- **Note:** Update the status lines below when each fix branch merges into `main`.
+- **Status:**
+  - **H1 — Quiz score forgery (`ModuleProgressService.completeModuleStep`): FIXED** in `6a346ef` (on `main`). Regression: `server/tests/h1-quiz-scoring.regression.cjs`.
+  - **H4 — Module status set by authors, bypassing approval (`moduleController.js`): FIXED on branch `fix/h4-module-status-allowlist`** (`69082a4`, **not merged**). Regression: `server/tests/h4-module-status.regression.cjs`.
+  - **H3 — Better Auth `update-user` accepts `twoFactorEnabled` / `barangay_id`:** field write reproduced; MFA bypass not reproducible locally (MFA disabled), needs a test with MFA enforced.
+  - **Open (reproduced locally):** H6 (new enrollment in draft/archived modules), M10 (maintenance `"false"` enables; unvalidated broadcast severity / support email).
+  - **Open (not yet reproduced):** H2, H5, H7, M11 (stop-impersonating role gate), remaining M/L items.
+  - **Also pending:** dead `POST /api/modules/:moduleId/results` route + controller and duplicate `/:id/enroll` registration (L8).
+- **Constraints for remaining fixes:**
+  - **General:** No validation change may turn an offline-queue replay into a terminal 400.
+  - **H6:** Archived modules stay readable/writable for residents with an existing `module_activity` row; only new enrollment requires `status = 'published'`.
+  - **H5:** Partly by design — offline grading needs answer keys on the client. The real protection is server-side grading (H1).
+
+---
+
+### 7. Defense Health-Check Follow-ups (2026-10-01)
+- **Source:** Frontend static checks + deployed health check of https://drrm-training.duckdns.org/ (deployed commit `ecbc29c`, later `2a18ee6`).
+- **Fixed on branch `fix/defense-demo-polish` (not merged):** `useNotificationPreferences.js` no-undef (`46cf177`), Forgot Password redirect to `${window.location.origin}/reset-password` (`ce234f5`), localhost:5000 image fallback in ModuleCard/EnrolledModuleCard/ModuleDetailsPage (`4717632`). The VerifyCertificate `Cancel01Icon` import landed on `main` in `0ca4623`.
+- **Deploy note:** The `0ca4623` deploy failed at the client build step (the committed `ForgotPasswordPage.jsx` did not parse); the follow-up `2a18ee6` deploy succeeded.
+- **Workflow:** The working directory was modified by a second tool/editor during this session (staged files, commits to `main`). Use a separate git worktree per agent and disable format-on-save.
+- **Open:**
+  - **CI lint backlog:** "CI — Lint & Build" fails on `main` (baseline 43 errors / 14 warnings in `client/`; server 0 errors / 4 warnings). Deploy does not depend on CI.
+  - **`react-pdf-vendor` preloaded on every page:** `index.html` modulepreloads the 1.46 MB `react-pdf-vendor` and 383 kB `recharts-vendor` chunks; load them only on the routes that use them.
+  - **Console stripping config:** Vite 8 uses oxc and ignores `esbuild: { drop: ['console','debugger'] }` (`vite.config.js:108-109`); production ships `console.log` / `console.debug`.
+  - **`/grid.svg` missing:** referenced by `ModuleHeaderForm.jsx:100`, not in `public/`; the deployed URL returns the HTML fallback.
+  - **Manifest content type:** nginx serves `/manifest.webmanifest` as `application/octet-stream`.
+  - **Stray backtick in API messages:** e.g. `"\`Certificate not found."` (`certificatesController.js:9`); same pattern in `ipBlocklistController.js` and `certificateManagement.js`.
+  - **UI placeholders:** `LocalizationSettings.jsx:33` "Under Development", `:59-60` "(Coming Soon)" languages.
+  - **Raw `NOT_FOUND` toast on the public verify page:** a toast showing the error code appears alongside the Not Found card (seen in the local Puppeteer test).
+  - **`/uploads` through nginx:** relative module image URLs now resolve to same-origin `/uploads/...` in production; confirm nginx on EC2 forwards `/uploads` to the API (not verified).
+  - **`localhost:*` in the production CSP meta tag:** `client/index.html:25` allows `http://localhost:*` / `ws://localhost:*` in img/connect/media/frame-src on the deployed site.
+

@@ -1,7 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { Link, useOutletContext } from "react-router-dom"; // Added useOutletContext
 import { useUserDashboard } from "../../../hooks/useUserDashboard"; // Imported new hook
-import apiClient from "../../../lib/apiClient";
 import educationImg from "../../../assets/education.svg";
 import ModuleCard from "../../../components/ui/modules/ModuleCard.jsx";
 import ModuleSkeleton from "../../../components/ui/modules/ModuleSkeleton.jsx";
@@ -17,6 +16,10 @@ import {
 import SearchBar from "../../../components/ui/inputs/SearchBar.jsx";
 import PaginationControls from "../../../components/ui/PaginationControls.jsx";
 import useDebounce from "../../../hooks/useDebounce";
+
+const isCompleted = (m) => m.status === "Completed" || m.progress === 100;
+// An unfinished archived version can't be continued, so it only appears under All Enrolled
+const isInProgress = (m) => !isCompleted(m) && m.module_status !== "archived";
 
 export default function UserEnrolledModules() {
   useDocumentTitle("Enrolled Modules | Bacolor LMS");
@@ -51,6 +54,11 @@ export default function UserEnrolledModules() {
       image_url: mod.image_url || null,
       progress: parseInt(mod.progress || 0),
       status: mod.enrollment_status || "Not Started",
+      module_status: mod.module_status || mod.status,
+      parent_mod_id: mod.parent_mod_id || null,
+      root_mod_id: mod.root_mod_id || null,
+      has_newer_version: Boolean(mod.has_newer_version),
+      latest_published_id: mod.latest_published_id || null,
     }));
   }, [dashboardData]);
 
@@ -64,11 +72,11 @@ export default function UserEnrolledModules() {
   }, [enrolledModules]);
 
   const inProgressCount = useMemo(() => {
-    return enrolledModules.filter((m) => m.status !== "Completed" && m.progress < 100).length;
+    return enrolledModules.filter(isInProgress).length;
   }, [enrolledModules]);
 
   const completedCount = useMemo(() => {
-    return enrolledModules.filter((m) => m.status === "Completed" || m.progress === 100).length;
+    return enrolledModules.filter(isCompleted).length;
   }, [enrolledModules]);
 
   // Filter modules
@@ -76,9 +84,9 @@ export default function UserEnrolledModules() {
     let list = enrolledModules;
 
     if (activeTab === "in_progress") {
-      list = list.filter((m) => m.status !== "Completed" && m.progress < 100);
+      list = list.filter(isInProgress);
     } else if (activeTab === "completed") {
-      list = list.filter((m) => m.status === "Completed" || m.progress === 100);
+      list = list.filter(isCompleted);
     }
 
     if (selectedCategory !== "all") {
