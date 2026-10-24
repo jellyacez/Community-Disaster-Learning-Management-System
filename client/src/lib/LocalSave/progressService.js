@@ -16,7 +16,7 @@ function patchCachedOfflineUser(patch) {
       window.dispatchEvent(new StorageEvent('storage', { key: SESSION_STORAGE_KEY }));
     }
   } catch {
-
+    console.error('Failed to patch cached offline user', );
   }
 }
 
