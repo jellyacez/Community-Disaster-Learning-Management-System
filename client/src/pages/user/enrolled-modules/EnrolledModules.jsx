@@ -17,6 +17,10 @@ import SearchBar from "../../../components/ui/inputs/SearchBar.jsx";
 import PaginationControls from "../../../components/ui/PaginationControls.jsx";
 import useDebounce from "../../../hooks/useDebounce";
 
+const isCompleted = (m) => m.status === "Completed" || m.progress === 100;
+// An unfinished archived version can't be continued, so it only appears under All Enrolled
+const isInProgress = (m) => !isCompleted(m) && m.module_status !== "archived";
+
 export default function UserEnrolledModules() {
   useDocumentTitle("Enrolled Modules | Bacolor LMS");
 
@@ -68,11 +72,11 @@ export default function UserEnrolledModules() {
   }, [enrolledModules]);
 
   const inProgressCount = useMemo(() => {
-    return enrolledModules.filter((m) => m.status !== "Completed" && m.progress < 100).length;
+    return enrolledModules.filter(isInProgress).length;
   }, [enrolledModules]);
 
   const completedCount = useMemo(() => {
-    return enrolledModules.filter((m) => m.status === "Completed" || m.progress === 100).length;
+    return enrolledModules.filter(isCompleted).length;
   }, [enrolledModules]);
 
   // Filter modules
@@ -80,9 +84,9 @@ export default function UserEnrolledModules() {
     let list = enrolledModules;
 
     if (activeTab === "in_progress") {
-      list = list.filter((m) => m.status !== "Completed" && m.progress < 100);
+      list = list.filter(isInProgress);
     } else if (activeTab === "completed") {
-      list = list.filter((m) => m.status === "Completed" || m.progress === 100);
+      list = list.filter(isCompleted);
     }
 
     if (selectedCategory !== "all") {
