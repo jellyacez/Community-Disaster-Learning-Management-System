@@ -132,7 +132,7 @@ export default function SystemHealth() {
                   progress={healthData?.cpu_load_percent || 0}
                 />
                 <HealthRow 
-                  label="Storage Space (Mocked)" 
+                  label="Storage Space" 
                   value={healthData?.disk_usage_percent != null ? `${healthData.disk_usage_percent}%` : "—"} 
                   progress={healthData?.disk_usage_percent || 0}
                 />
