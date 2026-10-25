@@ -1,3 +1,4 @@
+import { useOfflineSession } from "../offlineSession";
 import {
   createContext,
   useContext,
@@ -33,7 +34,7 @@ const getSystemTheme = () => {
 export function ThemeProvider({ children }) {
   const location = useLocation();
   const queryClient = useQueryClient();
-  const { data: session, isPending } = authClient.useSession();
+  const { data: session, isPending } = useOfflineSession();
   const userId = session?.user?.id;
 
   // Dark mode is restricted exclusively to authenticated user/admin portals.

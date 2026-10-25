@@ -27,6 +27,7 @@ export const calculateBackoff = (retryCount) => {
  * Distinguish between transient and terminal errors
  */
 export const isTransientError = (error, retryCount = 0) => {
+  if (error.message?.startsWith('Terminal:')) return false;
   // Device network error or timeout while browser reports online
   if (!error.response && navigator.onLine) return true;
   if (error.code === 'ECONNABORTED' || error.code === 'ERR_NETWORK') return true;
@@ -252,84 +253,44 @@ export const discardFailedTask = async (syncId) => {
 const dispatchTask = async (task) => {
   switch (task.action_type) {
     case 'SUBMIT_FEEDBACK':
-      return await apiClient.post('/feedbacks', task.payload);
+      return await apiClient.post('/feedbacks', task.payload, { offlineSync: true });
 
     case 'REPLY_FEEDBACK':
       return await apiClient.put(
         `/feedbacks/${task.payload.feedback_id || task.payload.id}/reply`,
-        { reply: task.payload.reply }
+        { reply: task.payload.reply }, { offlineSync: true }
       );
 
     case 'MARK_STEP_COMPLETE':
       return await apiClient.post(
         `/modules/${task.payload.mod_id}/steps/${task.payload.step_id}/complete`,
-        { answers: null }
+        { answers: null }, { offlineSync: true }
       );
 
     case 'SUBMIT_QUIZ': {
       let stepId = task.payload?.step_id;
-      // Self-heal legacy or missing step_id in queued quiz items
-      if (!stepId || stepId === 'undefined') {
-        try {
-          const modId = task.payload?.mod_id;
-          const localLevels = await localDb.levels.where({ mod_id: modId }).toArray().catch(() => []);
-          const levelIds = localLevels.map((l) => l.level_id);
-          const localSteps = levelIds.length > 0
-            ? await localDb.module_steps.where('level_id').anyOf(levelIds).toArray().catch(() => [])
-            : [];
-          const quizStep = localSteps.find((s) =>
-            ['quiz', 'situational', 'priority_action', 'hazard_identification', 'action_sequence'].includes(s.step_type)
-          );
-          if (quizStep?.step_id) {
-            stepId = quizStep.step_id;
-          } else {
-            const res = await apiClient.get(`/modules/${modId}/viewer`);
-            const levels = res.data?.data?.levels || [];
-            const foundStep = levels
-              .flatMap((lvl) => lvl.steps || [])
-              .find((s) =>
-                ['quiz', 'situational', 'priority_action', 'hazard_identification', 'action_sequence'].includes(s.type)
-              );
-            if (foundStep?.id) {
-              stepId = foundStep.id;
-            }
-          }
-
-          if (stepId) {
-            task.payload.step_id = stepId;
-            if (task.sync_id && !task.is_memory_only) {
-              await localDb.sync_queue.update(task.sync_id, {
-                'payload.step_id': stepId
-              }).catch(() => {});
-            }
-          }
-        } catch (healErr) {
-          console.warn('[SyncManager] Failed to self-heal missing step_id:', healErr);
-        }
-      }
-
       if (!stepId || stepId === 'undefined') {
         throw new Error('Terminal: Missing quiz step ID for submission.');
       }
 
       return await apiClient.post(
         `/modules/${task.payload.mod_id}/steps/${stepId}/complete`,
-        { answers: task.payload.answer ?? task.payload.answers }
+        { answers: task.payload.answer ?? task.payload.answers }, { offlineSync: true }
       );
     }
 
     case 'UPDATE_PROGRESS':
     case 'COMPLETE_MODULE':
-      return await apiClient.post('/modules/progress', task.payload);
+      return await apiClient.post('/modules/progress', task.payload, { offlineSync: true });
 
     case 'UPDATE_NAME':
-      return await apiClient.put('/auth/update-user', { name: task.payload.name });
+      return await apiClient.put('/auth/update-user', { name: task.payload.name }, { offlineSync: true });
 
     case 'UPDATE_AVATAR':
-      return await apiClient.put('/auth/update-user', { image: task.payload.image });
+      return await apiClient.put('/auth/update-user', { image: task.payload.image }, { offlineSync: true });
 
     case 'UPDATE_NOTIFICATION_SETTINGS':
-      return await apiClient.put('/users/me/settings', task.payload.settings || task.payload);
+      return await apiClient.put('/users/me/settings', task.payload.settings || task.payload, { offlineSync: true });
 
     default:
       throw new Error(`Terminal: Unsupported action_type '${task.action_type}'`);
@@ -360,10 +321,11 @@ export const processOfflineQueue = async (currentUserId) => {
     // Queued actions use whoever is signed in when they sync, so hold back items
     // recorded by a different user (e.g. after a logout with unsynced progress).
     // Callers may pass the user id; otherwise look it up from the session.
-    const userId = typeof currentUserId === 'string' ? currentUserId : await getCurrentUserId();
+    const userId = await getCurrentUserId();
+    if (!userId) return;
     const tasksToProcess = (await getAllPendingWrites()).filter((t) => {
       const owner = t.payload?.user_id;
-      if (!userId || !owner || String(owner) === String(userId)) return true;
+      if (userId && owner && String(owner) === String(userId)) return true;
       console.warn(`[SyncManager] Holding task ${t.sync_id}: belongs to a different user.`);
       return false;
     });
@@ -376,6 +338,7 @@ export const processOfflineQueue = async (currentUserId) => {
     console.log(`[SyncManager] Processing ${tasksToProcess.length} queued offline actions...`);
 
     for (const task of tasksToProcess) {
+      if (String(await getCurrentUserId()) !== String(userId)) break;
       // Abort loop immediately if device goes offline mid-batch
       if (!navigator.onLine) {
         console.warn('[SyncManager] Network disconnected mid-sync. Pausing queue.');

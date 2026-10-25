@@ -1,3 +1,4 @@
+import { useOfflineSession } from "../../hooks/offlineSession";
 // --- START: SignInPage.jsx ---
 import { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation, useSearchParams } from "react-router-dom";
@@ -18,7 +19,7 @@ export default function SignInPage() {
   const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
   const urlError = searchParams.get("error");
-  
+
   let errorMessage = location.state?.error;
   if (!errorMessage && urlError) {
     if (urlError === "access_denied") {
@@ -43,7 +44,7 @@ export default function SignInPage() {
   };
 
   const queryClient = useQueryClient();
-  const { data: session, isPending } = authClient.useSession();
+  const { data: session, isPending } = useOfflineSession();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [showTwoFactor, setShowTwoFactor] = useState(false);
   const [twoFactorMethods, setTwoFactorMethods] = useState([]);
@@ -81,7 +82,7 @@ export default function SignInPage() {
         barangay_admin: "/admin/barangay/dashboard",
         resident: "/userDashboard"
       };
-      
+
       const targetRoute = roleRoutes[userRole] || "/userDashboard";
 
       // Only system_admin can enter the system during maintenance mode
@@ -134,11 +135,11 @@ export default function SignInPage() {
 
   if (showTwoFactor) {
     return (
-      <AuthLayout 
-        title="Two-Factor Authentication" 
+      <AuthLayout
+        title="Two-Factor Authentication"
         subtitle={twoFactorCurrentMethod === "totp" ? "Enter the code from your authenticator app" : "Enter the verification code sent to your email"}
       >
-        <MfaSignInForm 
+        <MfaSignInForm
           twoFactorMethods={twoFactorMethods}
           initialMethod={twoFactorCurrentMethod}
           onCancel={() => setShowTwoFactor(false)}
@@ -150,7 +151,7 @@ export default function SignInPage() {
 
   return (
     <AuthLayout title="Sign In" subtitle="Access your DRRM training account">
-      <EmailSignInForm 
+      <EmailSignInForm
         errorMessage={errorMessage}
         clearGlobalError={clearGlobalError}
         onRequireMfa={handleRequireMfa}

@@ -27,22 +27,22 @@ export default function CurriculumMap({
   isPreviewMode = false,
 }) {
   return (
-    <div className="max-w-6xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500 pb-20 px-4">
+    <div className="w-full min-w-0 max-w-6xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500 pb-12 px-0 sm:px-2">
       {/* Header */}
-      <div className="text-center mb-14 md:mb-20">
-        <h1 className="text-4xl md:text-6xl font-black text-gray-900 dark:text-white mb-3 tracking-tighter">
+      <div className="text-center mb-8 xl:mb-14">
+        <h1 className="text-3xl sm:text-4xl xl:text-5xl font-black text-gray-900 dark:text-white mb-3 tracking-tighter">
           Curriculum Map
         </h1>
-        <p className="text-gray-500 dark:text-slate-400 text-base md:text-lg max-w-xl mx-auto font-medium">
+        <p className="text-gray-500 dark:text-slate-400 text-base xl:text-lg max-w-xl mx-auto font-medium">
           Select an unlocked level below to begin or continue your training.
         </p>
       </div>
 
       <div className="relative">
         {/* Center Connecting Line */}
-        <div className="absolute left-6 md:left-1/2 top-8 bottom-8 w-1 bg-gray-200 dark:bg-slate-700 rounded-full -ml-0.5 md:ml-0 md:-translate-x-1/2 z-0 opacity-60 dark:opacity-80" />
+        <div className="absolute left-6 xl:left-1/2 top-8 bottom-8 w-1 bg-gray-200 dark:bg-slate-700 rounded-full -ml-0.5 xl:ml-0 xl:-translate-x-1/2 z-0 opacity-60 dark:opacity-80" />
 
-        <div className="space-y-16 md:space-y-24">
+        <div className="space-y-10 xl:space-y-20">
           {levels.map((lvl, idx) => {
             // idx 0 (C1): Card Right, Image Left
             // idx 1 (C2): Card Left, Image Right
@@ -57,11 +57,11 @@ export default function CurriculumMap({
             return (
               <div
                 key={lvl.id || lvl.level_order || idx}
-                className="relative z-10 flex flex-col md:flex-row items-center gap-6 md:gap-0"
+                className="relative z-10 flex flex-col xl:flex-row items-center gap-6 xl:gap-0"
               >
                 {/* 1. Center Circle Node */}
                 <div
-                  className={`absolute left-6 md:left-1/2 -ml-6 md:ml-0 md:-translate-x-1/2 w-12 h-12 rounded-full border-[3px] flex items-center justify-center bg-white dark:bg-slate-900 shadow-md z-20 transition-all ${
+                  className={`absolute left-6 xl:left-1/2 -ml-6 xl:ml-0 xl:-translate-x-1/2 w-12 h-12 rounded-full border-[3px] flex items-center justify-center bg-white dark:bg-slate-900 shadow-md z-20 transition-all ${
                     isLevelUnlocked
                       ? "border-red-600 text-red-600 ring-4 ring-red-50 dark:ring-red-950/40"
                       : "border-gray-300 dark:border-slate-700 text-gray-400 dark:text-slate-500"
@@ -75,7 +75,7 @@ export default function CurriculumMap({
                 </div>
 
                 {/* 2. LEFT SIDE CONTAINER */}
-                <div className="w-full md:w-1/2 pl-16 md:pl-0 md:pr-14 flex justify-center md:justify-end">
+                <div className="w-full xl:w-1/2 pl-12 sm:pl-16 xl:pl-0 xl:pr-14 flex justify-center xl:justify-end">
                   {!isEven ? (
                     /* C2, C4, C6... Main Card on Left */
                     <LevelContentCard
@@ -101,7 +101,7 @@ export default function CurriculumMap({
                 </div>
 
                 {/* 3. RIGHT SIDE CONTAINER */}
-                <div className="w-full md:w-1/2 pl-16 md:pl-14 flex justify-center md:justify-start">
+                <div className="w-full xl:w-1/2 pl-12 sm:pl-16 xl:pl-14 flex justify-center xl:justify-start">
                   {isEven ? (
                     /* C1, C3, C5... Main Card on Right */
                     <LevelContentCard
@@ -183,7 +183,7 @@ function LevelOppositeImage({
               <span className="text-[11px] font-black uppercase tracking-widest text-red-600/80 dark:text-red-400">
                 Phase {lvl.level_order || idx + 1}
               </span>
-              <h4 className="text-base font-extrabold text-gray-800 dark:text-slate-100 tracking-tight mt-0.5">
+              <h4 className="break-words [overflow-wrap:anywhere] text-base font-extrabold text-gray-800 dark:text-slate-100 tracking-tight mt-0.5">
                 {decodeHtml(lvl.title)}
               </h4>
             </div>
@@ -208,19 +208,19 @@ function LevelContentCard({
 }) {
   return (
     <div
-      className={`w-full max-w-sm sm:max-w-md p-6 sm:p-7 rounded-[2rem] border transition-all duration-300 ${
+      className={`w-full min-w-0 max-w-sm sm:max-w-md p-4 sm:p-6 rounded-[2rem] border transition-all duration-300 ${
         isLevelUnlocked
           ? "bg-white dark:bg-slate-900 border-gray-200 dark:border-slate-800 hover:shadow-xl hover:border-red-200 dark:hover:border-red-800/60 shadow-sm"
           : "bg-gray-50/50 dark:bg-slate-900/40 border-gray-200 dark:border-slate-800 opacity-70"
       }`}
     >
       {/* Title & Phase Badge Header */}
-      <div className="flex items-center gap-3 mb-3">
-        <div className="px-3 py-1 rounded-xl bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-300 border border-red-100 dark:border-red-900/50 font-black text-xs uppercase tracking-wider">
+      <div className="flex min-w-0 flex-wrap items-center gap-2 mb-3">
+        <div className="shrink-0 whitespace-nowrap px-3 py-1 rounded-xl bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-300 border border-red-100 dark:border-red-900/50 font-black text-xs uppercase tracking-wider">
           Phase {lvl.level_order || idx + 1}
         </div>
         <h3
-          className={`text-xl sm:text-2xl font-black tracking-tight truncate ${
+          className={`text-xl sm:text-2xl font-black tracking-tight min-w-0 break-words ${
             isLevelUnlocked ? "text-gray-900 dark:text-white" : "text-gray-500 dark:text-slate-500"
           }`}
         >
@@ -275,12 +275,12 @@ function LevelContentCard({
                 )}
               </div>
 
-              <span className="flex-1 truncate font-semibold">
+              <span className="flex-1 min-w-0 break-words [overflow-wrap:anywhere] font-semibold">
                 {decodeHtml(step.title)}
               </span>
 
               {step.is_final_assessment && (
-                <span className="text-[9px] uppercase font-black tracking-widest px-2.5 py-0.5 rounded-full bg-red-600 text-white shadow-xs">
+                <span className="shrink-0 text-[9px] uppercase font-black tracking-widest px-2.5 py-0.5 rounded-full bg-red-600 text-white shadow-xs">
                   Final
                 </span>
               )}

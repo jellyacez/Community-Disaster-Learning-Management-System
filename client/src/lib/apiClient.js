@@ -27,7 +27,7 @@ apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
     // Handle 401 Unauthorized globally
-    if (error.response && error.response.status === 401) {
+    if (error.response && error.response.status === 401 && !error.config?.offlineSync) {
       if (window.location.pathname !== '/signin' && window.location.pathname !== '/register' && window.location.pathname !== '/') {
         window.location.href = '/signin';
       }

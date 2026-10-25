@@ -17,11 +17,7 @@ function patchCachedOfflineUser(patch) {
       );
     }
   } catch {
-<<<<<<< HEAD
-    console.error('Failed to patch cached offline user', );
-=======
-    // Ignore malformed or missing cached session
->>>>>>> e485da8c3f6fda61b8415363888091111d73ec4b
+// Ignore malformed or missing cached session
   }
 }
 
@@ -65,9 +61,10 @@ export const recalculateModuleProgress = async (moduleId, userId) => {
       .anyOf(levelIds)
       .count();
 
-    const completedSteps = await localDb.user_step_progress
+    const completedRows = await localDb.user_step_progress
       .where({ user_id: userId, mod_id: moduleId })
-      .count();
+      .toArray();
+    const completedSteps = new Set(completedRows.map(row => String(row.step_id))).size;
 
     if (totalSteps === 0) return 0;
 
@@ -93,6 +90,7 @@ export const saveOfflineStepProgress = async (moduleId, stepId, userId) => {
       localDb.sync_queue,
       async () => {
         await localDb.user_step_progress.put({
+          id: `${userId}:${stepId}`,
           mod_id: moduleId,
           step_id: stepId,
           user_id: userId,
@@ -177,6 +175,7 @@ export const saveOfflineResult = async (
 
         if (stepId && isPassed) {
           await localDb.user_step_progress.put({
+          id: `${userId}:${stepId}`,
             mod_id: moduleId,
             step_id: stepId,
             user_id: userId,

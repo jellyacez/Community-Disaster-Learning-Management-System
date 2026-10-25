@@ -70,7 +70,7 @@ export function useModuleViewer(moduleId) {
 
   // 1. Fetch module data (With Offline IndexedDB Fallback)
   const { data, isLoading, error } = useQuery({
-    queryKey: ["moduleViewer", moduleId],
+    queryKey: ["moduleViewer", moduleId, userId],
     networkMode: "offlineFirst", // Allow running while offline
     queryFn: async () => {
       try {
@@ -83,7 +83,7 @@ export function useModuleViewer(moduleId) {
 
           // Also save an offline localStorage copy for quick UI hydration
           localStorage.setItem(
-            `lms_offline_module_${moduleId}`,
+            `lms_offline_module_${userId}_${moduleId}`,
             JSON.stringify(payload),
           );
         }
@@ -91,13 +91,15 @@ export function useModuleViewer(moduleId) {
         return payload;
       } catch (err) {
         if (!navigator.onLine || err.code === "ERR_NETWORK") {
-          const cached = localStorage.getItem(`lms_offline_module_${moduleId}`);
+          const cached = localStorage.getItem(`lms_offline_module_${userId}_${moduleId}`);
           if (cached) {
             toast("You are viewing a cached offline version of this module.", {
               icon: "📶",
               duration: 3000,
             });
-            return JSON.parse(cached);
+            const payload = JSON.parse(cached);
+            const rows = await localDb.user_step_progress.filter(row => String(row.user_id) === String(userId) && String(row.mod_id) === String(moduleId)).toArray();
+            return {...payload, completedStepIds: [...new Set([...(payload.completedStepIds || []), ...rows.map(row => row.step_id)])]};
           }
         }
         throw err;
@@ -226,7 +228,7 @@ export function useModuleViewer(moduleId) {
 
   const assessmentQueries = useQueries({
     queries: allSteps.map((step) => ({
-      queryKey: ["stepAssessment", step.id],
+      queryKey: ["stepAssessment", step.id, userId],
       networkMode: "offlineFirst", // Allow running while offline
       queryFn: async () => {
         try {
@@ -248,7 +250,7 @@ export function useModuleViewer(moduleId) {
 
           // Cache the assessment questions for offline use
           localStorage.setItem(
-            `lms_offline_assessment_${step.id}`,
+            `lms_offline_assessment_${userId}_${step.id}`,
             JSON.stringify(questions),
           );
 
@@ -257,7 +259,7 @@ export function useModuleViewer(moduleId) {
           // If offline or network fails, read from localStorage cache
           if (!navigator.onLine || err.code === "ERR_NETWORK") {
             const cached = localStorage.getItem(
-              `lms_offline_assessment_${step.id}`,
+              `lms_offline_assessment_${userId}_${step.id}`,
             );
             if (cached) {
               return { stepId: step.id, questions: JSON.parse(cached) };
@@ -336,7 +338,7 @@ export function useModuleViewer(moduleId) {
         let grade = null;
         if (isQuiz) {
           const cachedRaw = localStorage.getItem(
-            `lms_offline_assessment_${stepId}`,
+            `lms_offline_assessment_${userId}_${stepId}`,
           );
           if (cachedRaw) {
             try {
@@ -354,10 +356,11 @@ export function useModuleViewer(moduleId) {
               );
             }
           }
+          if (!grade) throw new Error("This assessment cannot be graded offline. Reconnect before submitting.");
           result = await saveOfflineResult(
             moduleId,
             userId,
-            grade ? grade.passed : true,
+            grade ? grade.passed : false,
             answers,
             stepId,
           );
@@ -465,7 +468,7 @@ export function useModuleViewer(moduleId) {
 
         // Update the cached module viewer data to reflect the newly completed step,
         // but only if it wasn't already marked as completed
-        queryClient.setQueryData(["moduleViewer", moduleId], (old) =>
+        queryClient.setQueryData(["moduleViewer", moduleId, userId], (old) =>
           old && !(old.completedStepIds || []).includes(stepId)
             ? {
                 ...old,
@@ -507,7 +510,7 @@ export function useModuleViewer(moduleId) {
         return;
       }
 
-      queryClient.invalidateQueries({ queryKey: ["moduleViewer", moduleId] });
+      queryClient.invalidateQueries({ queryKey: ["moduleViewer", moduleId, userId] });
       queryClient.invalidateQueries({ queryKey: ["userDashboard"] });
 
       if (responseData.passed === false) {
