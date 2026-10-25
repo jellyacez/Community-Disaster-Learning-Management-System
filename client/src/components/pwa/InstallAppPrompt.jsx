@@ -3,7 +3,6 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import {
   Download01Icon,
   WifiOff01Icon,
-  RefreshIcon,
   Cancel01Icon,
 } from "@hugeicons/core-free-icons";
 import { useRegisterSW } from "virtual:pwa-register/react";
@@ -14,8 +13,6 @@ export default function InstallAppPrompt() {
 
   const {
     offlineReady: [offlineReady, setOfflineReady],
-    needRefresh: [needRefresh, setNeedRefresh],
-    updateServiceWorker,
   } = useRegisterSW({
     onRegisteredSW(swUrl, registration) {
       console.log("PWA service worker registered:", swUrl, registration);
@@ -53,11 +50,10 @@ export default function InstallAppPrompt() {
 
   const closePrompt = () => {
     setOfflineReady(false);
-    setNeedRefresh(false);
     setShowInstall(false);
   };
 
-  if (!offlineReady && !needRefresh && !showInstall) {
+  if (!offlineReady && !showInstall) {
     return null;
   }
 
@@ -66,11 +62,7 @@ export default function InstallAppPrompt() {
       <div className="rounded-2xl border border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xl p-4 animate-in fade-in slide-in-from-bottom-3 duration-300">
         <div className="flex items-start gap-3">
           <div className="mt-0.5">
-            {needRefresh ? (
-              <div className="p-2 rounded-xl bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300">
-                <HugeiconsIcon icon={RefreshIcon} className="w-5 h-5" />
-              </div>
-            ) : showInstall ? (
+            {showInstall ? (
               <div className="p-2 rounded-xl bg-red-100 dark:bg-red-950/60 text-red-700 dark:text-red-300">
                 <HugeiconsIcon icon={Download01Icon} className="w-5 h-5" />
               </div>
@@ -82,17 +74,7 @@ export default function InstallAppPrompt() {
           </div>
 
           <div className="flex-1">
-            {needRefresh ? (
-              <>
-                <h3 className="text-sm font-black text-gray-900 dark:text-white">
-                  Update Available
-                </h3>
-                <p className="mt-1 text-sm text-gray-600 dark:text-slate-300">
-                  A newer version of Bacolor Disaster LMS is ready. Update now to get the
-                  latest improvements.
-                </p>
-              </>
-            ) : showInstall ? (
+            {showInstall ? (
               <>
                 <h3 className="text-sm font-black text-gray-900 dark:text-white">
                   Install Bacolor Disaster LMS
@@ -115,14 +97,7 @@ export default function InstallAppPrompt() {
             )}
 
             <div className="mt-4 flex flex-wrap gap-2">
-              {needRefresh ? (
-                <button
-                  onClick={() => updateServiceWorker(true)}
-                  className="px-4 py-2 rounded-xl bg-red-600 text-white text-sm font-bold hover:bg-red-700 transition-colors cursor-pointer"
-                >
-                  Update
-                </button>
-              ) : showInstall ? (
+              {showInstall ? (
                 <button
                   onClick={handleInstall}
                   className="px-4 py-2 rounded-xl bg-red-600 text-white text-sm font-bold hover:bg-red-700 transition-colors cursor-pointer"
