@@ -48,7 +48,7 @@ export default function GoogleSignInButton({ clearGlobalError }) {
     <>
       <div className="flex items-center my-4">
         <div className="flex-1 border-t border-gray-200"></div>
-        <div className="px-3 text-sm text-gray-400 font-semibold uppercase tracking-wider">
+        <div className="px-3 text-sm text-gray-600 font-semibold uppercase tracking-wider">
           or
         </div>
         <div className="flex-1 border-t border-gray-200"></div>
@@ -58,13 +58,13 @@ export default function GoogleSignInButton({ clearGlobalError }) {
         type="button"
         onClick={handleGoogleSignIn}
         disabled={isLoading}
-        className="w-full py-3 rounded-xl bg-white border border-gray-200 text-gray-700 font-bold hover:bg-gray-50 hover:border-gray-300 transition-all flex items-center justify-center gap-3 shadow-sm disabled:opacity-70 disabled:cursor-not-allowed"
+        className="w-full min-h-12 py-3 rounded-xl bg-white border border-gray-300 text-gray-800 font-bold hover:bg-gray-50 hover:border-gray-400 transition-colors flex items-center justify-center gap-3 shadow-sm disabled:opacity-70 disabled:cursor-not-allowed outline-none focus-visible:ring-2 focus-visible:ring-gray-900 focus-visible:ring-offset-2"
       >
         {isLoading ? (
           <span className="text-gray-500">Redirecting to Google...</span>
         ) : (
           <>
-            <svg className="w-5 h-5" viewBox="0 0 24 24">
+            <svg aria-hidden="true" focusable="false" className="w-5 h-5" viewBox="0 0 24 24">
               <path
                 d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
                 fill="#4285F4"

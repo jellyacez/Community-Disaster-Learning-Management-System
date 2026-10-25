@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Alert01Icon } from "@hugeicons/core-free-icons";
@@ -9,19 +9,56 @@ import PasswordInput from "../ui/inputs/PasswordInput";
 import Spinner from "../ui/Spinner";
 import GoogleSignInButton from "./GoogleSignInButton";
 
-export default function EmailSignInForm({ errorMessage, clearGlobalError, onRequireMfa, onSuccess }) {
-  const [formData, setFormData] = useState({ email: "", password: "" });
+const SECURITY_CHECK_TIMEOUT_MS = 10000;
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+export default function EmailSignInForm({ initialEmail = "", errorMessage, clearGlobalError, onRequireMfa, onSuccess }) {
+  // Coming back from the code step keeps the email that was already typed
+  const [formData, setFormData] = useState({ email: initialEmail, password: "" });
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
   const [turnstileToken, setTurnstileToken] = useState("");
+  // Fields are only checked on blur after the first submit, so tabbing past them stays quiet
+  const [hasSubmitted, setHasSubmitted] = useState(false);
   const isSubmittingRef = useRef(false);
   const turnstileRef = useRef(null);
+  const emailRef = useRef(null);
+  // Returning from the code step: the email is already there, so start in the password field
+  useEffect(() => {
+    if (initialEmail) document.getElementById("password")?.focus();
+  }, [initialEmail]);
+
+  // "loading" | "ready" | "failed": drives the message shown in place of the security widget
+  const [securityStatus, setSecurityStatus] = useState("loading");
+  // Bumping this remounts the widget, which also reloads Cloudflare's script if it never arrived
+  const [securityAttempt, setSecurityAttempt] = useState(0);
+
+  // A security check that never finishes counts as failed, so the user gets a retry instead of a wait
+  useEffect(() => {
+    if (securityStatus !== "loading") return;
+    const timer = setTimeout(() => setSecurityStatus("failed"), SECURITY_CHECK_TIMEOUT_MS);
+    return () => clearTimeout(timer);
+  }, [securityStatus]);
+
+  const retrySecurityCheck = () => {
+    setSecurityStatus("loading");
+    setErrors((prev) => ({ ...prev, turnstile: null }));
+    setTurnstileToken("");
+    // If Cloudflare's script never loaded, drop the dead tag so the remount fetches it again
+    if (!window.turnstile) {
+      document.querySelectorAll('script[src*="challenges.cloudflare.com/turnstile"]').forEach((tag) => tag.remove());
+    }
+    setSecurityAttempt((n) => n + 1);
+    // The retry button disappears, so hand focus to Sign In rather than letting it fall to the page
+    requestAnimationFrame(() => document.querySelector('form button[type="submit"]')?.focus());
+  };
 
   const validateField = (name, value) => {
     let error = null;
     switch (name) {
       case "email":
         if (!value) error = "Email address is required.";
+        else if (!EMAIL_PATTERN.test(value.trim())) error = "Enter a valid email address, like juan@gmail.com.";
         break;
       case "password":
         if (!value) error = "Password is required.";
@@ -40,6 +77,7 @@ export default function EmailSignInForm({ errorMessage, clearGlobalError, onRequ
       setErrors((prevErrors) => {
         let updatedErrors = { ...prevErrors };
         if (prevErrors.form) updatedErrors.form = null;
+        if (prevErrors.credentials) updatedErrors.credentials = false;
         
         if (prevErrors[name]) {
           const newError = validateField(name, value);
@@ -55,10 +93,11 @@ export default function EmailSignInForm({ errorMessage, clearGlobalError, onRequ
   }, [clearGlobalError]);
 
   const handleBlur = useCallback((e) => {
+    if (!hasSubmitted) return;
     const { name, value } = e.target;
     const error = validateField(name, value);
     setErrors((prev) => ({ ...prev, [name]: error }));
-  }, []);
+  }, [hasSubmitted]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -66,6 +105,7 @@ export default function EmailSignInForm({ errorMessage, clearGlobalError, onRequ
     
     if (clearGlobalError) clearGlobalError();
     setErrors({});
+    setHasSubmitted(true);
     
     let newErrors = {};
     Object.keys(formData).forEach((key) => {
@@ -74,11 +114,14 @@ export default function EmailSignInForm({ errorMessage, clearGlobalError, onRequ
     });
 
     if (!turnstileToken) {
-      newErrors.turnstile = "Please complete the security challenge.";
+      newErrors.turnstile = "Still running the security check. Try again in a moment.";
     }
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
+      // Send focus to the first field that needs fixing
+      if (newErrors.email) emailRef.current?.focus();
+      else if (newErrors.password) document.getElementById("password")?.focus();
       return;
     }
 
@@ -96,11 +139,14 @@ export default function EmailSignInForm({ errorMessage, clearGlobalError, onRequ
     });
 
     if (error) {
-      console.error("Sign in failed:", error);
+      if (import.meta.env.DEV) console.error("Sign in failed:", error);
       let errorMsg = "Invalid email or password. Please try again.";
+      let isCredentialsError = true;
       const rawMsg = (error?.message || "").toLowerCase();
 
-      if (error.status === 429 || rawMsg.includes("too many")) {
+      if (error.code === "INVALID_EMAIL") {
+        errorMsg = "That email address doesn't look right. Check it and try again.";
+      } else if (error.status === 429 || rawMsg.includes("too many")) {
         errorMsg = "Too many login attempts. Please wait 15 minutes and try again.";
         toast.error(errorMsg);
       } else if (
@@ -112,22 +158,24 @@ export default function EmailSignInForm({ errorMessage, clearGlobalError, onRequ
         errorMsg = error.message;
       }
 
-      setErrors({ form: errorMsg });
+      if (error.code === "INVALID_EMAIL" || error.status === 429 || error.status === 403 || rawMsg.includes("verif")) {
+        isCredentialsError = false;
+      }
+      // A wrong email or password can't be told apart, so both fields are marked
+      setErrors({ form: errorMsg, credentials: isCredentialsError });
 
-      // Reset Turnstile challenge on auth failure
+      // Reset Turnstile challenge on auth failure; a fresh token is needed before the next try
       turnstileRef.current?.reset();
       setTurnstileToken("");
-
-      setTimeout(() => {
-        isSubmittingRef.current = false;
-        setIsLoading(false);
-      }, 1500);
+      setSecurityStatus("loading");
+      isSubmittingRef.current = false;
+      setIsLoading(false);
     } else {
       isSubmittingRef.current = false;
       setIsLoading(false);
       
       if (data?.twoFactorRedirect) {
-        onRequireMfa(data);
+        onRequireMfa({ ...data, email: formData.email });
         return;
       }
       onSuccess(data);
@@ -136,25 +184,29 @@ export default function EmailSignInForm({ errorMessage, clearGlobalError, onRequ
 
   const getInputClass = (fieldName) => {
     const baseClass = "w-full px-4 py-3 rounded-xl border outline-none transition-colors";
-    const hasError = errors[fieldName] || errors.form;
+    const hasError = errors[fieldName] || errors.credentials;
     return `${baseClass} ${
       hasError
-        ? "border-red-500 focus:ring-2 focus:ring-red-500 bg-red-50 text-red-900"
-        : "border-gray-200 focus:ring-2 focus:ring-red-500"
+        ? "border-red-600 focus:ring-2 focus:ring-red-600 bg-red-50 text-red-900"
+        : "border-gray-500 focus:border-gray-900 focus:ring-2 focus:ring-gray-900/50"
     }`;
   };
 
   return (
     <form onSubmit={handleSubmit} noValidate className="space-y-4">
       {errorMessage && !errors.form && (
-        <div className="flex items-center justify-center gap-2 bg-red-50 text-red-600 p-3 rounded-lg text-sm font-semibold mb-4 border border-red-100">
+        <div role="alert" className="flex items-center gap-2 bg-red-50 text-red-700 p-3 rounded-lg text-sm font-semibold mb-4 border border-red-100">
           <HugeiconsIcon aria-hidden="true" icon={Alert01Icon} className="w-5 h-5 shrink-0" />
           <span>{errorMessage}</span>
         </div>
       )}
 
       {errors.form && (
-        <div className="flex items-center justify-center gap-2 bg-red-50 text-red-600 p-3 rounded-lg text-sm font-semibold mb-4 border border-red-100">
+        <div
+          id="signin-error"
+          role="alert"
+          className="flex items-center gap-2 bg-red-50 text-red-700 p-3 rounded-lg text-sm font-semibold mb-4 border border-red-100"
+        >
           <HugeiconsIcon aria-hidden="true" icon={Alert01Icon} className="w-5 h-5 shrink-0" />
           <span>{errors.form}</span>
         </div>
@@ -165,20 +217,22 @@ export default function EmailSignInForm({ errorMessage, clearGlobalError, onRequ
           Email Address
         </label>
         <input
+          ref={emailRef}
           id="email"
           type="email"
           name="email"
           autoComplete="email"
-          aria-invalid={!!errors.email}
-          aria-describedby={errors.email ? "email-error" : undefined}
+          required
+          aria-invalid={!!errors.email || !!errors.credentials}
+          aria-describedby={errors.email ? "email-error" : errors.credentials ? "signin-error" : undefined}
           value={formData.email}
           onChange={handleChange}
           onBlur={handleBlur}
           placeholder="Enter email"
-          className={getInputClass("email")}
+          className={`${getInputClass("email")} placeholder:text-gray-500`}
         />
         {errors.email && (
-          <p id="email-error" className="text-red-500 text-xs mt-1 font-medium">{errors.email}</p>
+          <p id="email-error" className="text-red-700 text-xs mt-1 font-medium">{errors.email}</p>
         )}
       </div>
 
@@ -191,36 +245,75 @@ export default function EmailSignInForm({ errorMessage, clearGlobalError, onRequ
           onChange={handleChange}
           onBlur={handleBlur}
           error={errors.password}
+          invalid={errors.credentials}
+          describedBy={errors.credentials ? "signin-error" : undefined}
         />
-        <Link
-          to="/forgot-password"
-          className="block text-red-600 font-semibold hover:underline text-sm mt-3 cursor-pointer text-right"
-        >
-          Forgot Password?
-        </Link>
+        <div className="mt-1 text-right">
+          <Link
+            to="/forgot-password"
+            className="inline-flex min-h-11 items-center text-gray-900 font-semibold underline underline-offset-4 hover:text-gray-600 text-sm cursor-pointer rounded-md outline-none focus-visible:ring-2 focus-visible:ring-gray-900"
+          >
+            Forgot Password?
+          </Link>
+        </div>
       </div>
 
-      {/* Cloudflare Turnstile */}
-      <div className="flex flex-col items-center justify-center pt-1">
+      {/* Cloudflare Turnstile: only appears when it needs the person to interact */}
+      <div className="flex flex-col items-center justify-center">
         <Turnstile
+          key={securityAttempt}
           ref={turnstileRef}
           siteKey={import.meta.env.VITE_TURNSTILE_SITE_KEY}
+          options={{ appearance: "interaction-only" }}
           onSuccess={(token) => {
             setTurnstileToken(token);
+            setSecurityStatus("ready");
             setErrors((prev) => ({ ...prev, turnstile: null }));
           }}
-          onError={() => setTurnstileToken("")}
-          onExpire={() => setTurnstileToken("")}
+          onError={() => {
+            setTurnstileToken("");
+            setSecurityStatus("failed");
+          }}
+          onTimeout={() => {
+            setTurnstileToken("");
+            setSecurityStatus("failed");
+          }}
+          onUnsupported={() => setSecurityStatus("failed")}
+          onExpire={() => {
+            setTurnstileToken("");
+            setSecurityStatus("loading");
+          }}
         />
-        {errors.turnstile && (
-          <p className="text-red-500 text-xs mt-1 font-medium text-center">{errors.turnstile}</p>
-        )}
+        {/* Always mounted so screen readers hear the status as it changes */}
+        <div id="security-check-status" aria-live="polite" className="flex flex-col items-center text-center text-xs">
+          {securityStatus === "loading" && !errors.turnstile && (
+            <p className="text-gray-600">Running a quick security check before you can sign in…</p>
+          )}
+          {securityStatus === "failed" && (
+            <>
+              <p className="font-medium text-red-700">Security check couldn&apos;t load. Check your connection.</p>
+              <button
+                type="button"
+                onClick={retrySecurityCheck}
+                className="mt-1 inline-flex min-h-11 items-center rounded-md px-2 text-sm font-semibold text-gray-900 underline underline-offset-4 outline-none hover:text-gray-600 focus-visible:ring-2 focus-visible:ring-gray-900"
+              >
+                Try the security check again
+              </button>
+            </>
+          )}
+          {errors.turnstile && securityStatus !== "failed" && (
+            <p className="font-medium text-red-700">{errors.turnstile}</p>
+          )}
+        </div>
       </div>
 
+      {/* Stays focusable while busy so keyboard and screen-reader users keep their place */}
       <button
         type="submit"
-        disabled={isLoading || !turnstileToken}
-        className="w-full py-3 rounded-xl bg-red-600 text-white font-bold hover:bg-red-700 transition-colors disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+        aria-disabled={isLoading || !turnstileToken}
+        aria-busy={isLoading}
+        aria-describedby={!turnstileToken ? "security-check-status" : undefined}
+        className="w-full min-h-12 py-3 rounded-xl bg-red-600 text-white font-bold hover:bg-red-700 transition-colors aria-disabled:bg-gray-300 aria-disabled:text-gray-800 aria-disabled:hover:bg-gray-300 aria-disabled:cursor-not-allowed flex items-center justify-center gap-2 outline-none focus-visible:ring-2 focus-visible:ring-gray-900 focus-visible:ring-offset-2"
       >
         {isLoading ? <><Spinner /> Signing In...</> : "Sign In"}
       </button>

@@ -2,6 +2,8 @@ import { lazy, Suspense, useEffect } from "react";
 import { Routes, Route, Navigate, useNavigate, useLocation } from "react-router-dom";
 import { authClient } from "./lib/auth-client";
 import { Toaster } from "react-hot-toast";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { CheckmarkCircle02Icon, Alert02Icon } from "@hugeicons/core-free-icons";
 import ErrorBoundary from "./components/ErrorBoundary";
 import useNetworkSync from "./hooks/useNetworkSync";
 import { useRealtimeEvents } from "./hooks/useRealtimeEvents";
@@ -16,7 +18,8 @@ const PrivacyPolicyPage = lazy(
   () => import("./pages/public/PrivacyPolicyPage"),
 );
 const RegisterPage = lazy(() => import("./pages/auth/RegisterPage"));
-const SignInPage = lazy(() => import("./pages/auth/SignInPage"));
+// Loaded up front: it is the usual way in, so it should not wait on a second download
+import SignInPage from "./pages/auth/SignInPage";
 const ForgotPasswordPage = lazy(
   () => import("./pages/auth/ForgotPasswordPage"),
 );
@@ -184,25 +187,20 @@ export default function App() {
               color: "#f8fafc",
             },
           },
+          // green-700 / red-700 keep white text above 4.5:1
           success: {
             style: {
-              background: "#22c55e",
+              background: "#15803d",
               color: "#fff",
             },
-            iconTheme: {
-              primary: "#fff",
-              secondary: "#22c55e",
-            },
+            icon: <HugeiconsIcon aria-hidden="true" icon={CheckmarkCircle02Icon} className="h-5 w-5 shrink-0 text-white" />,
           },
           error: {
             style: {
-              background: "#ef4444",
+              background: "#b91c1c",
               color: "#fff",
             },
-            iconTheme: {
-              primary: "#fff",
-              secondary: "#ef4444",
-            },
+            icon: <HugeiconsIcon aria-hidden="true" icon={Alert02Icon} className="h-5 w-5 shrink-0 text-white" />,
           },
         }}
       />
@@ -214,7 +212,7 @@ export default function App() {
             className="min-h-screen flex items-center justify-center bg-white dark:bg-[#030712]"
             aria-hidden="true"
           >
-            <div className="w-10 h-10 border-4 border-red-200 dark:border-red-950 border-t-red-600 rounded-full animate-spin"></div>
+            <div className="w-10 h-10 border-4 border-red-200 dark:border-red-950 border-t-red-600 rounded-full animate-spin motion-reduce:animate-none"></div>
           </div>
         }
       >
