@@ -284,10 +284,10 @@ const dispatchTask = async (task) => {
       return await apiClient.post('/modules/progress', task.payload, { offlineSync: true });
 
     case 'UPDATE_NAME':
-      return await apiClient.put('/auth/update-user', { name: task.payload.name }, { offlineSync: true });
+      return await apiClient.post('/auth/update-user', { name: task.payload.name }, { offlineSync: true });
 
     case 'UPDATE_AVATAR':
-      return await apiClient.put('/auth/update-user', { image: task.payload.image }, { offlineSync: true });
+      return await apiClient.post('/auth/update-user', { image: task.payload.image }, { offlineSync: true });
 
     case 'UPDATE_NOTIFICATION_SETTINGS':
       return await apiClient.put('/users/me/settings', task.payload.settings || task.payload, { offlineSync: true });
