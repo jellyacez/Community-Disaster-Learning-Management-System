@@ -18,7 +18,7 @@ import { useOfflineSession } from "../../../hooks/offlineSession";
 import noInternetIMG from "../../../assets/undraw-Question.svg";
 
 export default function UserModuleCatalog() {
-  useDocumentTitle("Module Catalog | Bacolor LMS");
+  useDocumentTitle("Module Catalog | Bacolor Disaster LMS");
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 

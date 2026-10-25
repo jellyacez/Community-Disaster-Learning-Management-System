@@ -1,82 +1,73 @@
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
+
+// The timeline draws itself step by step when it scrolls into view; the text never moves.
+const STEP_GAP = 0.35;
 
 export default function LandingSteps() {
+  const reduceMotion = useReducedMotion();
+
   const steps = [
     {
-      num: "01",
       title: "Create Your Account",
-      desc: "Register as a Bacolor resident to gain access to the training platform.",
+      desc: "Create a free account as a Bacolor resident to get access to the training.",
     },
     {
-      num: "02",
       title: "Begin at Level 1",
       desc: "Start with foundational disaster awareness modules designed for your community.",
     },
     {
-      num: "03",
       title: "Pass Competency Assessments",
       desc: "Complete timed quizzes and scenario-based activities to advance to higher levels.",
     },
     {
-      num: "04",
       title: "Earn Your Certificate",
       desc: "Receive a verifiable digital certificate tied to your profile upon successful completion.",
     },
   ];
 
   return (
-    <section
-      id="how-it-works"
-      className="py-24 bg-gradient-to-br from-gray-900 to-red-950"
-    >
+    <section id="how-it-works" className="scroll-mt-20 py-24 bg-gray-950">
       <div className="max-w-6xl mx-auto px-4">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="text-center mb-14"
-        >
-          <span className="inline-block bg-red-600/20 border border-red-500/20 text-red-300 text-xs font-bold px-4 py-1.5 rounded-full mb-4 uppercase tracking-wide">
-            How It Works
-          </span>
-          <h2 className="text-4xl font-extrabold text-white mb-3">
+        <div className="mb-14 max-w-2xl">
+          <h2 className="text-4xl font-extrabold tracking-tight text-white text-balance">
             Your Path to Preparedness
           </h2>
-          <p className="text-gray-400 max-w-lg mx-auto text-sm leading-relaxed">
+          <p className="mt-4 text-gray-300 leading-relaxed">
             A structured, progressive journey from awareness to verified
             community competency.
           </p>
-        </motion.div>
-
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {steps.map((step, index) => (
-            <motion.div
-              key={step.num}
-              initial={{ opacity: 0, y: 28 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: index * 0.14 }}
-              className="relative"
-            >
-              {index < steps.length - 1 && (
-                <div className="hidden lg:block absolute top-16 left-full w-6 h-px bg-red-500/40 z-10" />
-              )}
-              <div className="bg-white/5 border border-white/10 rounded-2xl p-6 text-center h-full">
-                <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-red-600/30 to-red-800/30 border border-red-500/20 flex items-center justify-center mx-auto mb-5">
-                  <span className="text-3xl font-black text-red-400">
-                    {step.num}
-                  </span>
-                </div>
-                <h3 className="font-bold text-white text-sm mb-2">
-                  {step.title}
-                </h3>
-                <p className="text-gray-400 text-xs leading-relaxed">
-                  {step.desc}
-                </p>
-              </div>
-            </motion.div>
-          ))}
         </div>
+
+        <motion.ol
+          className="grid gap-10 sm:grid-cols-2 lg:grid-cols-4 lg:gap-8"
+          initial={reduceMotion ? false : "hidden"}
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.4 }}
+        >
+          {steps.map((step, index) => (
+            <li key={step.title} className="relative pt-6">
+              <motion.span
+                aria-hidden="true"
+                className="absolute top-0 left-0 h-px w-full origin-left bg-white/20"
+                variants={{
+                  hidden: { scaleX: 0 },
+                  visible: { scaleX: 1, transition: { delay: index * STEP_GAP + 0.1, duration: 0.45, ease: [0.16, 1, 0.3, 1] } },
+                }}
+              />
+              <motion.span
+                aria-hidden="true"
+                className="absolute -top-[5px] left-0 h-2.5 w-2.5 rounded-full bg-white"
+                variants={{
+                  hidden: { scale: 0 },
+                  visible: { scale: 1, transition: { delay: index * STEP_GAP, type: "spring", stiffness: 500, damping: 26 } },
+                }}
+              />
+              <p className="text-sm font-semibold text-gray-400 tabular-nums">Step {index + 1}</p>
+              <h3 className="mt-2 text-lg font-bold text-white">{step.title}</h3>
+              <p className="mt-2 text-sm text-gray-300 leading-relaxed text-pretty">{step.desc}</p>
+            </li>
+          ))}
+        </motion.ol>
       </div>
     </section>
   );

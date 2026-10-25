@@ -181,7 +181,7 @@ export default function UserSidebar({
             </div>
             <div>
               <p className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-slate-400">
-                Bacolor LMS
+                Bacolor Disaster LMS
               </p>
               <h2 className="text-lg font-extrabold text-gray-900 dark:text-white">
                 User Portal

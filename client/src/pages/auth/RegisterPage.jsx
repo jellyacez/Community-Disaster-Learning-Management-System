@@ -8,7 +8,7 @@ import AuthLayout from "../../components/layouts/AuthLayout";
 import RegisterForm from "../../components/auth/RegisterForm";
 
 export default function RegisterPage() {
-  useDocumentTitle("Register | Bacolor LMS");
+  useDocumentTitle("Register | Bacolor Disaster LMS");
 
   const navigate = useNavigate();
   const { data: session, isPending } = authClient.useSession();
@@ -43,7 +43,7 @@ export default function RegisterPage() {
   return (
     <AuthLayout
       title="Create Account"
-      subtitle="Register to access the DRRM portal"
+      subtitle="Register to access Bacolor Disaster LMS"
     >
       <RegisterForm />
     </AuthLayout>

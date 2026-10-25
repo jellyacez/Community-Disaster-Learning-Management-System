@@ -193,7 +193,7 @@ export default function OnboardingModal({ currentUser, onSuccess }) {
           <HugeiconsIcon aria-hidden="true" icon={CheckmarkBadge01Icon} className="w-8 h-8 text-red-600 dark:text-red-400" />
         </div>
 
-        <h2 className="text-2xl font-black text-gray-900 dark:text-white mb-2">Welcome to Bacolor DRRM!</h2>
+        <h2 className="text-2xl font-black text-gray-900 dark:text-white mb-2">Welcome to Bacolor Disaster LMS!</h2>
         <p className="text-gray-500 dark:text-slate-400 mb-6">
           Please confirm your profile details and barangay assignment before accessing your dashboard.
         </p>

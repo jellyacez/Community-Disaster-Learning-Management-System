@@ -12,7 +12,7 @@ import useDocumentTitle from "../../hooks/useDocumentTitle";
 import AuthLayout from "../../components/layouts/AuthLayout";
 
 export default function ForgotPasswordPage() {
-  useDocumentTitle("Forgot Password | Bacolor LMS");
+  useDocumentTitle("Forgot Password | Bacolor Disaster LMS");
 
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState("idle");

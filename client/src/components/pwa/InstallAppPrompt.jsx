@@ -88,14 +88,14 @@ export default function InstallAppPrompt() {
                   Update Available
                 </h3>
                 <p className="mt-1 text-sm text-gray-600 dark:text-slate-300">
-                  A newer version of Bacolor LMS is ready. Update now to get the
+                  A newer version of Bacolor Disaster LMS is ready. Update now to get the
                   latest improvements.
                 </p>
               </>
             ) : showInstall ? (
               <>
                 <h3 className="text-sm font-black text-gray-900 dark:text-white">
-                  Install Bacolor LMS
+                  Install Bacolor Disaster LMS
                 </h3>
                 <p className="mt-1 text-sm text-gray-600 dark:text-slate-300">
                   Install this app on your device for a faster, more app-like
@@ -108,7 +108,7 @@ export default function InstallAppPrompt() {
                   App Ready Offline
                 </h3>
                 <p className="mt-1 text-sm text-gray-600 dark:text-slate-300">
-                  Bacolor LMS is now cached and can work better even with limited
+                  Bacolor Disaster LMS is now cached and can work better even with limited
                   connectivity.
                 </p>
               </>

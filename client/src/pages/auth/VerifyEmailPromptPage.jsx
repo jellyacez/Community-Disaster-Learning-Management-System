@@ -5,7 +5,7 @@ import { Mail01Icon, ArrowLeft01Icon } from "@hugeicons/core-free-icons";
 import useDocumentTitle from "../../hooks/useDocumentTitle";
 
 export default function VerifyEmailPromptPage() {
-  useDocumentTitle("Check Your Email | Bacolor LMS");
+  useDocumentTitle("Check Your Email | Bacolor Disaster LMS");
 
   const location = useLocation();
   const email = location.state?.email;

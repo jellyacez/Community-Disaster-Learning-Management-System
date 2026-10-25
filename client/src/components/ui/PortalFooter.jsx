@@ -7,7 +7,7 @@ export default function PortalFooter() {
           <div className="flex items-center gap-1.5 whitespace-nowrap shrink-0">
             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
             <span className="font-bold text-gray-800 dark:text-slate-200">
-              Bacolor LMS Portal
+              Bacolor Disaster LMS
             </span>
           </div>
           <span className="hidden sm:inline text-gray-300 dark:text-slate-700 select-none">
