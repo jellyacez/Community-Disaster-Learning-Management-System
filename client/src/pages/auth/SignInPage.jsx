@@ -150,13 +150,8 @@ export default function SignInPage() {
   }
 
   return (
-<<<<<<< HEAD
-    <AuthLayout title="Sign In" subtitle="Access your DRRM training account">
-      <EmailSignInForm
-=======
     <AuthLayout title="Sign In" subtitle="Access your Bacolor Disaster LMS account">
-      <EmailSignInForm 
->>>>>>> 01c8c2903b3d26d5e9138629b270e2f635ea4dc8
+      <EmailSignInForm
         errorMessage={errorMessage}
         clearGlobalError={clearGlobalError}
         onRequireMfa={handleRequireMfa}
