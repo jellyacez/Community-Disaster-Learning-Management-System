@@ -43,7 +43,7 @@ const PasswordInput = memo(function PasswordInput({
           name={name}
           autoComplete={autoComplete}
           aria-invalid={!!error || invalid}
-          aria-describedby={error ? `${id}-error` : describedBy}
+          aria-describedby={[error && `${id}-error`, describedBy].filter(Boolean).join(" ") || undefined}
           value={value}
           onChange={onChange}
           onBlur={(e) => {

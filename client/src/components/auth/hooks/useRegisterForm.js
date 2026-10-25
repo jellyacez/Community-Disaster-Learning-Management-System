@@ -1,7 +1,40 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import { authClient } from "../../../lib/auth-client";
+import { meetsPasswordRules } from "../../../constants/passwordRules";
+
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+// Order the fields appear in, so focus goes to the first one that needs fixing
+const FIELD_ORDER = ["fullName", "email", "barangay", "password", "confirmPassword"];
+
+const validateField = (name, value, allData) => {
+  let error = null;
+  switch (name) {
+    case "fullName":
+      if (!value.trim()) error = "Enter your full name.";
+      break;
+    case "email":
+      if (!value.trim()) error = "Enter your email address.";
+      else if (!EMAIL_PATTERN.test(value.trim())) error = "Enter a valid email address, like juan@gmail.com.";
+      break;
+    case "barangay":
+      // The barangay field only hands over a name picked from the list
+      if (!value) error = "Choose your barangay from the list.";
+      break;
+    case "password":
+      if (!value) error = "Enter a password.";
+      else if (!meetsPasswordRules(value)) error = "Your password needs to meet all 3 rules below.";
+      break;
+    case "confirmPassword":
+      if (!value) error = "Re-enter your password.";
+      else if (value !== allData.password) error = "The passwords don't match.";
+      break;
+    default:
+      break;
+  }
+  return error;
+};
 
 export function useRegisterForm({ turnstileToken, onResetTurnstile } = {}) {
   const navigate = useNavigate();
@@ -15,39 +48,24 @@ export function useRegisterForm({ turnstileToken, onResetTurnstile } = {}) {
   });
 
   const [errors, setErrors] = useState({});
+  // Fields are only checked on blur after the first submit, so tabbing past them stays quiet
+  const [hasSubmitted, setHasSubmitted] = useState(false);
+  // The field to focus once the errors from a submit have rendered
+  const focusTargetRef = useRef(null);
+  const setFocusTarget = (id) => {
+    focusTargetRef.current = id;
+  };
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showTermsModal, setShowTermsModal] = useState(false);
   const [showPrivacyModal, setShowPrivacyModal] = useState(false);
   const [showConsentModal, setShowConsentModal] = useState(false);
 
-  const validateField = (name, value, allData = formData) => {
-    let error = null;
-    switch (name) {
-      case "fullName":
-        if (!value.trim()) error = "Full name is required.";
-        break;
-      case "email":
-        if (!value.trim()) error = "Email address is required.";
-        else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value))
-          error = "Invalid email address format.";
-        break;
-      case "barangay":
-        if (!value) error = "Please select a barangay.";
-        break;
-      case "password":
-        if (!value) error = "Password is required.";
-        else if (value.length < 8)
-          error = "Password must be at least 8 characters.";
-        break;
-      case "confirmPassword":
-        if (!value) error = "Please confirm your password.";
-        else if (value !== allData.password) error = "Passwords do not match.";
-        break;
-      default:
-        break;
-    }
-    return error;
-  };
+  // Runs after the consent dialog has handed focus back, so this placement wins
+  useEffect(() => {
+    if (!focusTargetRef.current) return;
+    document.getElementById(focusTargetRef.current)?.focus();
+    focusTargetRef.current = null;
+  }, [errors]);
 
   const handleChange = useCallback((e) => {
     const { name, value } = e.target;
@@ -56,8 +74,11 @@ export function useRegisterForm({ turnstileToken, onResetTurnstile } = {}) {
       setErrors((prevErrors) => {
         const nextErrors = { ...prevErrors };
         if (nextErrors.form) nextErrors.form = null;
-        if (nextErrors[name]) {
-          nextErrors[name] = validateField(name, value, next);
+        if (name === "email" && nextErrors.emailTaken) nextErrors.emailTaken = false;
+        if (nextErrors[name]) nextErrors[name] = validateField(name, value, next);
+        // Changing the password can fix or break the confirmation
+        if (name === "password" && nextErrors.confirmPassword) {
+          nextErrors.confirmPassword = validateField("confirmPassword", next.confirmPassword, next);
         }
         return nextErrors;
       });
@@ -67,34 +88,38 @@ export function useRegisterForm({ turnstileToken, onResetTurnstile } = {}) {
 
   const handleBlur = useCallback(
     (e) => {
+      if (!hasSubmitted) return;
       const { name, value } = e.target;
-      const error = validateField(name, value);
-      setErrors((prev) => ({ ...prev, [name]: error }));
+      setErrors((prev) => ({ ...prev, [name]: validateField(name, value, formData) }));
     },
-    [formData],
+    [hasSubmitted, formData],
   );
 
-  const handleSubmit = (e) => {
+  // Returns early without opening the consent step when a field needs fixing or the security check isn't done
+  const handleSubmit = (e, { securityReady = true } = {}) => {
     if (e) e.preventDefault();
-    setErrors({});
+    setHasSubmitted(true);
 
     const newErrors = {};
-    Object.keys(formData).forEach((key) => {
-      const error = validateField(key, formData[key]);
+    FIELD_ORDER.forEach((key) => {
+      const error = validateField(key, formData[key], formData);
       if (error) newErrors[key] = error;
     });
+    setErrors(newErrors);
 
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
+    const firstInvalid = FIELD_ORDER.find((key) => newErrors[key]);
+    if (firstInvalid) {
+      setFocusTarget(firstInvalid);
       return;
     }
+    if (!securityReady) return;
 
     setShowConsentModal(true);
   };
 
   const confirmRegistration = async () => {
     if (!turnstileToken) {
-      setErrors({ form: "Please complete the security challenge." });
+      setErrors({ form: "Wait for the security check to finish, then try again." });
       setShowConsentModal(false);
       return;
     }
@@ -103,9 +128,9 @@ export function useRegisterForm({ turnstileToken, onResetTurnstile } = {}) {
 
     try {
       const { error } = await authClient.signUp.email({
-        email: formData.email,
+        email: formData.email.trim(),
         password: formData.password,
-        name: formData.fullName,
+        name: formData.fullName.trim(),
         barangay: formData.barangay,
         fetchOptions: {
           headers: {
@@ -115,36 +140,39 @@ export function useRegisterForm({ turnstileToken, onResetTurnstile } = {}) {
       });
 
       if (error) {
-        console.error("Registration failed:", error);
-        let errorMessage = error.message || "Registration failed. Please try again.";
+        if (import.meta.env.DEV) console.error("Registration failed:", error);
 
-        // Better Auth returns this code when the email is already registered and verified
-        if (
-          error.code === "USER_ALREADY_EXISTS" ||
-          errorMessage.toLowerCase().includes("already") ||
-          error.status === 422
-        ) {
-          errorMessage = "An account with this email already exists. Please sign in or check your inbox for a verification email.";
+        if (error.code === "USER_ALREADY_EXISTS") {
+          // Only the email is wrong; the banner offers Sign In and Reset password
+          setErrors({ form: "An account with this email already exists.", emailTaken: true });
+          setFocusTarget("email");
+        } else if (error.code === "INVALID_BARANGAY") {
+          setErrors({ barangay: "Choose your barangay from the list." });
+          setFocusTarget("barangay");
+        } else if (error.code === "WEAK_PASSWORD") {
+          setErrors({ password: "Your password needs to meet all 3 rules below." });
+          setFocusTarget("password");
+        } else if (error.status === 429) {
+          setErrors({ form: "Too many attempts. Wait 15 minutes, then try again." });
+        } else if (error.status === 403 || error.error === "CAPTCHA_FAILED") {
+          setErrors({ form: "The security check didn't pass. Wait for it to finish again, then try." });
+        } else {
+          setErrors({ form: "We couldn't create your account. Check your connection and try again." });
         }
 
-        setErrors({ form: errorMessage });
         onResetTurnstile?.();
         setShowConsentModal(false);
       } else {
-        toast.success(
-          "Account created successfully! Please verify your email.",
-        );
+        toast.success("Account created. Check your email to verify it.");
         setShowConsentModal(false);
         navigate("/verify-email-prompt", {
-          state: { email: formData.email },
+          state: { email: formData.email.trim() },
           replace: true,
         });
       }
     } catch (err) {
-      console.error("Registration exception:", err);
-      setErrors({
-        form: "An unexpected error occurred. Please try again later.",
-      });
+      if (import.meta.env.DEV) console.error("Registration exception:", err);
+      setErrors({ form: "We couldn't create your account. Check your connection and try again." });
       onResetTurnstile?.();
       setShowConsentModal(false);
     } finally {
@@ -153,13 +181,12 @@ export function useRegisterForm({ turnstileToken, onResetTurnstile } = {}) {
   };
 
   const getInputClass = (fieldName) => {
-    const baseClass =
-      "w-full px-4 py-3 rounded-xl border outline-none transition-colors";
-    const hasError = errors[fieldName] || errors.form;
+    const baseClass = "w-full px-4 py-3 rounded-xl border outline-none transition-colors placeholder:text-gray-500";
+    const hasError = errors[fieldName] || (fieldName === "email" && errors.emailTaken);
     return `${baseClass} ${
       hasError
-        ? "border-red-500 focus:ring-2 focus:ring-red-500 bg-red-50 text-red-900"
-        : "border-gray-200 focus:ring-2 focus:ring-red-500"
+        ? "border-red-600 focus:ring-2 focus:ring-red-600 bg-red-50 text-red-900"
+        : "border-gray-500 focus:border-gray-900 focus:ring-2 focus:ring-gray-900/50"
     }`;
   };
 
