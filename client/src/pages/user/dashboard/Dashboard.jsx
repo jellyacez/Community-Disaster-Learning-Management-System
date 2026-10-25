@@ -21,7 +21,7 @@ import {
   Megaphone01Icon,
 } from "@hugeicons/core-free-icons";
 
-const DASHBOARD_CACHE_KEY = "lms_offline_dashboard";
+
 const ANNOUNCEMENTS_CACHE_KEY = "lms_offline_announcements";
 
 

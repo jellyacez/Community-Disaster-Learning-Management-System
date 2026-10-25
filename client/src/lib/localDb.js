@@ -21,3 +21,17 @@ localDb.version(1).stores({
 localDb.version(2).stores({
     sync_queue: "++sync_id, action_type, status, next_retry_at, retry_count, created_at"
 });
+
+// Preserve queued writes; collapse historical duplicate completion records.
+localDb.version(3).stores({}).upgrade(async tx => {
+  const table = tx.table('user_step_progress');
+  const rows = await table.toArray();
+  const unique = new Map();
+  for (const row of rows) {
+    const id = `${row.user_id}:${row.step_id}`;
+    const old = unique.get(id);
+    if (!old || Number(row.completed_at) >= Number(old.completed_at)) unique.set(id, {...row, id});
+  }
+  await table.clear();
+  await table.bulkPut([...unique.values()]);
+});

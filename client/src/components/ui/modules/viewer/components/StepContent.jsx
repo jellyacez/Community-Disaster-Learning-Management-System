@@ -1,4 +1,6 @@
-import { useRef, useEffect } from "react";
+import { useOfflineSession } from "../../../../../hooks/offlineSession";
+import { readMedia } from "../../../../../lib/offlineMedia";
+import { useRef, useEffect, useState } from "react";
 import DOMPurify from "dompurify";
 import InteractiveQuiz from "../quiz/InteractiveQuiz";
 import AttemptQuiz from "../quiz/AttemptQuiz";
@@ -17,7 +19,22 @@ export default function StepContent({
   onVideoProgress,
   retryCount = 0,
 }) {
-  const mediaUrl = activeStep?.media_url || "";
+  const { data: session } = useOfflineSession();
+  const userId = session?.user?.id;
+  const originalUrl = activeStep?.media_url || "";
+  const [savedMedia, setSavedMedia] = useState(null);
+  useEffect(() => {
+    let cancelled = false, objectUrl;
+    setSavedMedia(null);
+    readMedia(originalUrl, userId).then(blob => {
+      if (!blob || cancelled) return;
+      objectUrl = URL.createObjectURL(blob);
+      setSavedMedia({ originalUrl, url: objectUrl });
+    }).catch(() => {});
+    return () => { cancelled = true; if (objectUrl) URL.revokeObjectURL(objectUrl); };
+  }, [originalUrl, userId]);
+  const mediaUrl = originalUrl;
+  const playbackUrl = savedMedia?.originalUrl === originalUrl ? savedMedia.url : originalUrl;
   const isPdf = Boolean(
     mediaUrl && (mediaUrl.match(/\.pdf($|\?)/i) || activeStep?.step_type === "pdf" || activeStep?.type === "pdf")
   );
@@ -125,7 +142,7 @@ export default function StepContent({
               <div className="flex items-center justify-between mb-2">
                 <span className="text-xs font-medium text-gray-500 dark:text-slate-400">Document Guide</span>
                 <a
-                  href={mediaUrl}
+                  href={playbackUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-1 text-xs font-semibold text-gray-600 dark:text-slate-400 hover:text-red-600 dark:hover:text-red-400 transition-colors"
@@ -138,7 +155,7 @@ export default function StepContent({
               </div>
               <div className="w-full h-[620px] bg-gray-100 dark:bg-slate-900 rounded-lg overflow-hidden border border-gray-200 dark:border-slate-800">
                 <iframe
-                  src={mediaUrl}
+                  src={playbackUrl}
                   title={decodeHtml(activeStep.title) || "PDF Document"}
                   className="w-full h-full border-0"
                 />
@@ -147,25 +164,24 @@ export default function StepContent({
           ) : isVideo ? (
             <div className="w-full aspect-video rounded-lg overflow-hidden bg-black mb-8">
               <video
-                key={activeStep.id}
+                key={`${activeStep.id}:${playbackUrl}`}
                 controls
                 preload="metadata"
                 className="w-full h-full object-contain"
                 controlsList="nodownload"
-                poster="/offline-video-placeholder.svg"
                 onTimeUpdate={handleTimeUpdate}
                 onSeeking={handleSeeking}
                 onSeeked={handleSeeked}
                 onEnded={handleEnded}
               >
-                <source src={mediaUrl} />
+                <source src={playbackUrl} />
                 Your browser does not support the video tag.
               </video>
             </div>
           ) : isImage ? (
             <div className="w-full rounded-lg overflow-hidden mb-8 border border-gray-100 dark:border-slate-800">
               <img
-                src={mediaUrl}
+                src={playbackUrl}
                 alt={activeStep.title || "Step Media"}
                 className="w-full max-h-[500px] object-cover"
               />
@@ -174,7 +190,7 @@ export default function StepContent({
             <div className="w-full py-3.5 px-4 rounded-lg bg-gray-50 border border-gray-200 dark:bg-slate-900 dark:border-slate-800 flex items-center justify-between mb-8">
               <span className="text-sm font-medium text-gray-700 dark:text-slate-300">Reference Material Attachment</span>
               <a
-                href={mediaUrl}
+                href={playbackUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-1 text-xs font-semibold text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 transition-colors"

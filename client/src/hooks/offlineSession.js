@@ -32,14 +32,17 @@ export function useOfflineSession() {
     try {
       if (newSession?.user) {
         const serialized = JSON.stringify(newSession);
+        if (localStorage.getItem(SESSION_STORAGE_KEY) === serialized) return;
         localStorage.setItem(SESSION_STORAGE_KEY, serialized);
         setCachedSession((prev) =>
           JSON.stringify(prev) === serialized ? prev : newSession
         );
       } else {
+        if (!localStorage.getItem(SESSION_STORAGE_KEY)) return;
         localStorage.removeItem(SESSION_STORAGE_KEY);
-        setCachedSession((prev) => (prev === null ? null : null));
+        setCachedSession(null);
       }
+      window.dispatchEvent(new StorageEvent("storage", { key: SESSION_STORAGE_KEY }));
     } catch {
       // Ignore storage quota or private browsing errors
     }
@@ -78,7 +81,7 @@ export function useOfflineSession() {
 
   // Fall back to cachedSession while loading, when offline, or on network error
   const effectiveSession =
-    liveSession ?? (isPending || isOffline || error ? cachedSession : null);
+    liveSession ?? (isPending || isOffline || (error && !error.status) ? cachedSession : null);
 
   return {
     data: effectiveSession,

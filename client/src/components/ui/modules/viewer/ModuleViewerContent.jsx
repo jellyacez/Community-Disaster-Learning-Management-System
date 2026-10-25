@@ -218,7 +218,7 @@ export default function ModuleViewerContent({
    * ---------------------------------------------------------
    */
   return (
-    <main className="flex-1 flex flex-col min-h-0 bg-white relative">
+    <main className="flex-1 flex flex-col min-h-0 min-w-0 bg-white relative">
       {/* -----------------------------------------------------
           LOOP BACK MODAL
           ----------------------------------------------------- */}
@@ -256,7 +256,7 @@ export default function ModuleViewerContent({
       {/* -----------------------------------------------------
           TOP BAR
           ----------------------------------------------------- */}
-      <header className="border-b border-gray-200 bg-white px-4 py-3 md:px-12 flex items-center justify-between z-10 shrink-0">
+      <header className="border-b border-gray-200 bg-white px-4 py-3 xl:px-12 flex items-center justify-between z-10 shrink-0">
         {/* Exit button */}
         <button
           type="button"
@@ -292,7 +292,7 @@ export default function ModuleViewerContent({
               : `${completedStepIds.length} of ${totalSteps} completed`}
           </span>
 
-          <div className="w-16 sm:w-24 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+          <div className="hidden sm:block w-16 sm:w-24 h-1.5 bg-gray-100 rounded-full overflow-hidden">
             <div
               className="h-full bg-red-600 transition-all duration-300"
               style={{
@@ -316,7 +316,7 @@ export default function ModuleViewerContent({
             <button
               type="button"
               onClick={() => setIsSidebarOpen(true)}
-              className="md:hidden p-1.5 bg-gray-100 rounded-lg text-gray-700 hover:bg-gray-200 transition shrink-0 ml-1"
+              className="lg:hidden p-1.5 bg-gray-100 rounded-lg text-gray-700 hover:bg-gray-200 transition shrink-0 ml-1"
               aria-label="Open course navigation"
             >
               <MenuIcon />
@@ -328,7 +328,7 @@ export default function ModuleViewerContent({
       {/* -----------------------------------------------------
           MAIN CONTENT
           ----------------------------------------------------- */}
-      <div className="flex-1 overflow-y-auto px-6 py-8 md:px-12 md:py-10">
+      <div className="flex-1 min-w-0 overflow-y-auto px-4 py-6 xl:px-12 xl:py-10">
         {activeStep ? (
           <div className="space-y-4">
             {/* Offline video warning */}
@@ -388,13 +388,13 @@ export default function ModuleViewerContent({
           BOTTOM ACTION BAR
           ----------------------------------------------------- */}
       {activeStep && (
-        <div className="border-t border-gray-200 bg-white px-6 py-4 md:px-12 z-10 sticky bottom-0">
-          <div className="max-w-3xl mx-auto flex items-center justify-between gap-4">
+        <div className="border-t border-gray-200 bg-white px-3 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:px-6 xl:px-12 z-10 shrink-0">
+          <div className="max-w-3xl mx-auto grid grid-cols-2 items-center gap-2 xl:flex xl:justify-between xl:gap-4">
             {/* View map */}
             <button
               type="button"
               onClick={() => handleStepClick(null)}
-              className="px-4 py-2.5 rounded-lg font-semibold text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors flex items-center gap-2 shrink-0"
+              className="min-w-0 min-h-11 px-2 sm:px-4 py-2.5 rounded-lg font-semibold text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors flex items-center gap-2 shrink-0"
             >
               <svg
                 className="w-4 h-4"
@@ -415,12 +415,12 @@ export default function ModuleViewerContent({
 
             {/* Normal content completion */}
             {!isAssessment && (
-              <div className="flex items-center gap-3">
+              <div className="contents xl:flex xl:min-w-0 xl:items-center xl:gap-3">
                 {/* Video not watched enough */}
                 {isVideoGated && !isOffline && (
                   <div
                     id="video-watch-hint"
-                    className="flex items-center gap-1.5 text-xs font-medium text-amber-800 bg-amber-50 border border-amber-200/80 px-3 py-2 rounded-lg transition-all"
+                    className="order-first col-span-2 min-w-0 flex items-center justify-center gap-1.5 text-xs font-medium text-amber-800 bg-amber-50 border border-amber-200/80 px-3 py-2 rounded-lg transition-all"
                   >
                     <svg
                       className="w-4 h-4 text-amber-600 shrink-0"
@@ -453,7 +453,7 @@ export default function ModuleViewerContent({
                   (currentVideoProgress?.canContinue || isOffline) && (
                     <div
                       id="video-watch-hint"
-                      className="flex items-center gap-1.5 text-xs font-medium text-emerald-800 bg-emerald-50 border border-emerald-200/80 px-3 py-2 rounded-lg transition-all"
+                      className="order-first col-span-2 min-w-0 flex items-center justify-center gap-1.5 text-xs font-medium text-emerald-800 bg-emerald-50 border border-emerald-200/80 px-3 py-2 rounded-lg transition-all"
                     >
                       <svg
                         className="w-4 h-4 text-emerald-600 shrink-0"
@@ -494,7 +494,7 @@ export default function ModuleViewerContent({
                       ? "Watch at least 90% of the video to continue"
                       : undefined
                   }
-                  className={`px-6 py-2.5 rounded-lg font-semibold text-sm text-white transition-all flex items-center gap-2 shrink-0 ${
+                  className={`min-w-0 min-h-11 px-3 sm:px-6 py-2.5 rounded-lg font-semibold text-sm text-white transition-all flex items-center justify-center gap-2 whitespace-normal break-words xl:shrink-0 ${
                     isCompleting ||
                     (isVideoGated && !isOffline)
                       ? "bg-gray-300 text-gray-500 cursor-not-allowed border border-gray-300 shadow-none opacity-80"

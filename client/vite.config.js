@@ -46,23 +46,7 @@ export default defineConfig(({ mode }) => ({
         cleanupOutdatedCaches: true,
         clientsClaim: true,
         skipWaiting: true,
-        runtimeCaching: [
-          {
-            urlPattern: /\/api\/auth\/get-session/,
-            handler: "NetworkFirst",
-            options: {
-              cacheName: "auth-session-cache",
-              networkTimeoutSeconds: 3,
-              expiration: {
-                maxEntries: 1,
-                maxAgeSeconds: 60 * 60 * 24 * 7,
-              },
-              cacheableResponse: {
-                statuses: [200],
-              },
-            },
-          },
-        ],
+        runtimeCaching: [],
       },
       devOptions: {
         enabled: false,

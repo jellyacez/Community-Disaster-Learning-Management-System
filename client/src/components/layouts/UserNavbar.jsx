@@ -31,7 +31,7 @@ export default function UserNavbar({
 
   return (
     <header className="sticky top-0 z-30 border-b border-gray-200 dark:border-slate-800 bg-white/90 dark:bg-slate-950/90 backdrop-blur transition-colors duration-200">
-      <div className="flex items-center justify-between px-3 sm:px-6 lg:px-8 py-3 sm:py-4 gap-3">
+      <div className="flex items-center justify-between px-3 sm:px-6 lg:px-8 py-3 sm:py-4 gap-1.5 sm:gap-3">
 
         {/* Left Section: Menu Toggle & Title */}
         <div className="flex flex-1 items-center gap-2 sm:gap-3 min-w-0">
@@ -55,7 +55,7 @@ export default function UserNavbar({
         </div>
 
         {/* Right Section: Action Controls */}
-        <div className="flex items-center justify-end gap-1.5 sm:gap-3 shrink-0 flex-none">
+        <div className="flex min-w-0 items-center justify-end gap-1.5 sm:gap-3 shrink-0 flex-none">
           <UnsyncedQueueIndicator />
           <NotificationDropdown />
           <ThemeToggle />

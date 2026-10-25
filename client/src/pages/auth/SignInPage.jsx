@@ -1,3 +1,4 @@
+import { useOfflineSession } from "../../hooks/offlineSession";
 // --- START: SignInPage.jsx ---
 import { useState, useEffect } from "react";
 import {
@@ -56,7 +57,7 @@ export default function SignInPage() {
   };
 
   const queryClient = useQueryClient();
-  const { data: session, isPending } = authClient.useSession();
+  const { data: session, isPending } = useOfflineSession();
   const [signedOutAll, setSignedOutAll] = useState(false);
   const [showTwoFactor, setShowTwoFactor] = useState(false);
   const [twoFactorMethods, setTwoFactorMethods] = useState([]);

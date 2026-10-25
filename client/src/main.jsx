@@ -21,9 +21,12 @@ import * as progressService from "./lib/LocalSave/progressService";
 import { localDb } from "./lib/localDb";
 import apiClient from "./lib/apiClient";
 
+if ("caches" in window) caches.delete("auth-session-cache").catch(() => {});
+
 const queryClient = new QueryClient({
   queryCache: new QueryCache({
     onError: (error) => {
+      if (!error?.response && (!navigator.onLine || error?.code === "ERR_NETWORK")) return;
       if (error?.response?.status !== 401 && error?.response?.status !== 503) {
         const message =
           error?.response?.data?.message ||

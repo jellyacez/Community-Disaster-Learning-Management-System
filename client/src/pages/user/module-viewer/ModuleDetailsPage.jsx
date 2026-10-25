@@ -25,16 +25,16 @@ const resolveImageUrl = (url) => {
   return `${import.meta.env.DEV ? "http://localhost:5000" : ""}/${url.startsWith("/") ? url.slice(1) : url}`;
 };
 
-const fetchModuleDetails = async (moduleId) => {
+const fetchModuleDetails = async (moduleId, userId) => {
   try {
     const res = await apiClient.get(`/modules/${moduleId}/details`);
     if (res.data) {
-      localStorage.setItem(`lms_offline_details_${moduleId}`, JSON.stringify(res.data));
+      localStorage.setItem(`lms_offline_details_${userId}_${moduleId}`, JSON.stringify(res.data));
     }
     return res.data;
   } catch (err) {
     if (!navigator.onLine || err.code === "ERR_NETWORK") {
-      const cached = localStorage.getItem(`lms_offline_details_${moduleId}`);
+      const cached = localStorage.getItem(`lms_offline_details_${userId}_${moduleId}`);
       if (cached) {
         return JSON.parse(cached);
       }
@@ -126,9 +126,9 @@ export default function ModuleDetailsPage() {
     (userRole && Array.isArray(ADMIN_ROLES) && ADMIN_ROLES.includes(userRole));
 
   const { data, isLoading, isError } = useQuery({
-    queryKey: ["moduleDetails", id],
+    queryKey: ["moduleDetails", id, session?.user?.id],
     networkMode: "offlineFirst",
-    queryFn: () => fetchModuleDetails(id),
+    queryFn: () => fetchModuleDetails(id, session?.user?.id),
     initialData: () => {
       try {
         const cached = localStorage.getItem(`lms_offline_details_${id}`);
@@ -147,7 +147,7 @@ export default function ModuleDetailsPage() {
       const res = await apiClient.post(`/modules/${id}/enroll`);
       if (res.data?.success || res.status === 200) {
         toast.success(`Enrollment Success! You are now enrolled in ${decodeHtml(data?.module?.modname) || "this module"}.`);
-        queryClient.invalidateQueries({ queryKey: ["moduleDetails", id] });
+        queryClient.invalidateQueries({ queryKey: ["moduleDetails", id, session?.user?.id] });
         queryClient.invalidateQueries({ queryKey: ["availableModules"] });
         queryClient.invalidateQueries({ queryKey: ["userDashboard"] });
         setShowEnrollModal(false);
@@ -532,7 +532,7 @@ export default function ModuleDetailsPage() {
           setShowDownloadModal(false);
         }}
         title="Download for Offline Use"
-        description="Save this entire module to your device so you can study, complete lessons, and submit assessments during network outages or disasters."
+        description="Save this entire module to your device so you can study, complete lessons, and complete downloaded practice lessons during network outages. Final assessments require internet."
         confirmText="Save to Device"
         cancelText="Not Now"
         type="primary"
@@ -542,7 +542,7 @@ export default function ModuleDetailsPage() {
         <div className="rounded-xl border border-gray-200/80 dark:border-slate-800 bg-gray-50/70 dark:bg-slate-800/40 p-3.5 space-y-2.5 text-xs text-gray-600 dark:text-slate-300">
           <div className="flex items-center justify-between pb-2 border-b border-gray-200/60 dark:border-slate-700/60">
             <span className="font-semibold text-gray-700 dark:text-slate-200">Estimated Space:</span>
-            <span className="font-mono font-bold text-red-600 dark:text-red-400">~1.2 MB</span>
+            <span className="font-mono font-bold text-red-600 dark:text-red-400">Depends on media size</span>
           </div>
 
           <div className="space-y-1">

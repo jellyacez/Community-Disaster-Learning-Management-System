@@ -126,19 +126,20 @@ const ConfirmationModal = memo(function ConfirmationModal({
   const colors = getColors();
 
   const modalContent = (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm transition-opacity">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 overflow-y-auto overscroll-contain p-3 sm:p-4 backdrop-blur-sm transition-opacity">
       <div
         ref={dialogRef}
         role="alertdialog"
         aria-modal="true"
         aria-labelledby="confirmation-modal-title"
-        aria-describedby="confirmation-modal-desc"
-        className="relative w-full max-w-sm rounded-2xl bg-white dark:bg-slate-900 border border-transparent dark:border-slate-800 p-6 shadow-2xl animate-in zoom-in-95 duration-200 motion-reduce:animate-none"
+        aria-describedby={modalDescription ? "confirmation-modal-desc" : undefined}
+        className="relative w-full min-w-0 max-w-sm max-h-[calc(100dvh-1.5rem)] overflow-y-auto overscroll-contain rounded-2xl bg-white dark:bg-slate-900 border border-transparent dark:border-slate-800 p-4 sm:p-6 shadow-2xl animate-in zoom-in-95 duration-200 motion-reduce:animate-none"
       >
         <button
+          type="button"
+          aria-label="Close"
           onClick={handleClose}
           disabled={isLoading}
-          aria-label="Close"
           className="absolute right-2 top-2 inline-flex h-11 w-11 items-center justify-center rounded-lg text-gray-500 hover:text-gray-700 dark:text-slate-400 dark:hover:text-slate-200 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-900"
         >
           <HugeiconsIcon
@@ -161,37 +162,39 @@ const ConfirmationModal = memo(function ConfirmationModal({
 
           <h2
             id="confirmation-modal-title"
-            className="mb-2 text-xl font-bold text-gray-900 dark:text-white"
+            className="mb-2 max-w-full px-6 break-words text-lg sm:text-xl font-bold text-gray-900 dark:text-white"
           >
             {title}
           </h2>
           {modalDescription && (
             <p
               id="confirmation-modal-desc"
-              className="mb-6 text-sm leading-relaxed text-gray-500 dark:text-slate-400"
+              className="mb-6 max-w-full break-words text-sm leading-relaxed text-gray-500 dark:text-slate-400"
             >
               {modalDescription}
             </p>
           )}
-          {children && <div className="w-full mb-6 text-left">{children}</div>}
+          {children && <div className="w-full min-w-0 mb-6 break-words text-left">{children}</div>}
 
-          <div className="flex w-full gap-3">
+          <div className="flex w-full flex-col-reverse sm:flex-row gap-2 sm:gap-3">
             {/* Pass cancelText={null} for a notice that only needs acknowledging */}
             {cancelText && (
               <button
+                type="button"
                 data-initial-focus
                 onClick={handleClose}
                 disabled={isLoading}
-                className="w-full min-h-11 rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-slate-200 hover:bg-gray-50 dark:hover:bg-slate-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-900 dark:focus-visible:ring-slate-300 disabled:opacity-50 transition-colors cursor-pointer disabled:cursor-not-allowed"
+                className="w-full min-w-0 min-h-11 break-words whitespace-normal rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-slate-200 hover:bg-gray-50 dark:hover:bg-slate-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-900 dark:focus-visible:ring-slate-300 disabled:opacity-50 transition-colors cursor-pointer disabled:cursor-not-allowed"
               >
                 {cancelText}
               </button>
             )}
             <button
+              type="button"
               data-initial-focus={cancelText ? undefined : true}
               onClick={onConfirm}
               disabled={isLoading}
-              className={`w-full min-h-11 rounded-xl px-4 py-2.5 text-sm font-bold text-white focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 transition-colors cursor-pointer disabled:cursor-not-allowed ${colors.button}`}
+              className={`w-full min-w-0 min-h-11 break-words whitespace-normal rounded-xl px-4 py-2.5 text-sm font-bold text-white focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 transition-colors cursor-pointer disabled:cursor-not-allowed ${colors.button}`}
             >
               {isLoading ? "Processing..." : modalConfirmText}
             </button>
@@ -199,9 +202,10 @@ const ConfirmationModal = memo(function ConfirmationModal({
           {alternateText && onAlternateAction && (
             <div className="w-full mt-3">
               <button
+                type="button"
                 onClick={onAlternateAction}
                 disabled={isLoading}
-                className="w-full rounded-xl border-2 border-emerald-500 bg-white dark:bg-slate-800 px-4 py-2.5 text-sm font-bold text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 focus:outline-none focus:ring-2 focus:ring-emerald-200 disabled:opacity-50 transition-colors"
+                className="w-full min-w-0 min-h-11 break-words whitespace-normal rounded-xl border-2 border-emerald-500 bg-white dark:bg-slate-800 px-4 py-2.5 text-sm font-bold text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 focus:outline-none focus:ring-2 focus:ring-emerald-200 disabled:opacity-50 transition-colors"
               >
                 {alternateText}
               </button>
