@@ -1,9 +1,10 @@
 import { HugeiconsIcon } from '@hugeicons/react';
-import { Menu01Icon } from '@hugeicons/core-free-icons';
+import { Menu01Icon, WifiOff01Icon } from '@hugeicons/core-free-icons';
 import { useLocation, useNavigate } from 'react-router-dom';
 import NotificationDropdown from './NotificationDropdown';
 import UnsyncedQueueIndicator from '../ui/UnsyncedQueueIndicator';
 import ThemeToggle from '../ui/globalTheme';
+import { useOfflineSession } from '../../hooks/offlineSession';
 
 export default function UserNavbar({
   currentUser,
@@ -12,6 +13,7 @@ export default function UserNavbar({
 }) {
   const location = useLocation();
   const navigate = useNavigate();
+  const { isOffline } = useOfflineSession();
 
   const getPageTitle = (pathname) => {
     if (pathname === '/userDashboard') return 'Dashboard';
@@ -56,6 +58,16 @@ export default function UserNavbar({
 
         {/* Right Section: Action Controls */}
         <div className="flex min-w-0 items-center justify-end gap-1.5 sm:gap-3 shrink-0 flex-none">
+          {isOffline && (
+            <span
+              role="status"
+              title="You're offline. Changes are saved on this device and sync when you reconnect."
+              className="flex items-center gap-1.5 rounded-full border border-amber-200 dark:border-amber-900/60 bg-amber-50 dark:bg-amber-950/40 px-2 sm:px-3 py-1 text-xs font-bold text-amber-700 dark:text-amber-300 shrink-0"
+            >
+              <HugeiconsIcon aria-hidden="true" icon={WifiOff01Icon} className="w-4 h-4" />
+              <span className="sr-only sm:not-sr-only">Offline</span>
+            </span>
+          )}
           <UnsyncedQueueIndicator />
           <NotificationDropdown />
           <ThemeToggle />
