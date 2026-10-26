@@ -1,7 +1,7 @@
 import RichTextEditor from "../../../../../../components/ui/RichTextEditor";
 import { flushSync } from "react-dom";
 import toast from "react-hot-toast";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 import { scrollToFirstError } from "../../../../../../utils/scrollUtils";
 
@@ -10,10 +10,17 @@ export default function LearningContentEditor({
   handleFieldChange,
   formErrors,
   writtenMaterialFile,
-  setWrittenMaterialFile
+  setWrittenMaterialFile,
 }) {
+  const fileInputRef = useRef(null);
   const [isInstructionsOpen, setIsInstructionsOpen] = useState(true);
   const [isMediaOpen, setIsMediaOpen] = useState(true);
+
+  useEffect(() => {
+    if (!writtenMaterialFile && fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  }, [writtenMaterialFile]);
 
   useEffect(() => {
     if (formErrors.stepContent) {
@@ -22,7 +29,9 @@ export default function LearningContentEditor({
           setIsInstructionsOpen(true);
         });
         setTimeout(() => {
-          scrollToFirstError("step-builder-scroll-container", ["learning-content-anchor"]);
+          scrollToFirstError("step-builder-scroll-container", [
+            "learning-content-anchor",
+          ]);
         }, 50);
       }, 10);
       return () => clearTimeout(timer);
@@ -32,41 +41,57 @@ export default function LearningContentEditor({
 
   return (
     <div className="space-y-4 pt-2">
-      
       {/* 1. Learning Content Instructions Accordion */}
       <div className="border border-slate-200 dark:border-slate-800 rounded-xl bg-white dark:bg-slate-900 overflow-hidden shadow-sm animate-in fade-in slide-in-from-bottom-2 duration-300">
-        <button 
-          type="button" 
+        <button
+          type="button"
           onClick={() => setIsInstructionsOpen(!isInstructionsOpen)}
           className="w-full flex items-center justify-between p-4 bg-slate-50 hover:bg-slate-100 dark:bg-slate-800/60 dark:hover:bg-slate-800 transition-colors text-left"
         >
-          <span className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wide">1. Learning Content Instructions</span>
-          <span className="text-slate-400 dark:text-slate-500 font-bold">{isInstructionsOpen ? '−' : '+'}</span>
+          <span className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wide">
+            1. Learning Content Instructions
+          </span>
+          <span className="text-slate-400 dark:text-slate-500 font-bold">
+            {isInstructionsOpen ? "−" : "+"}
+          </span>
         </button>
         {isInstructionsOpen && (
           <div className="p-4 border-t border-slate-200 dark:border-slate-800 space-y-2 bg-slate-50 dark:bg-slate-900/40">
-            <div id="learning-content-anchor" className="text-sm bg-white dark:bg-slate-900 rounded-xl shadow-sm">
-              <RichTextEditor 
-                placeholder="Type detailed learning steps or instructional summary text..." 
-                value={currentFlowStep.textContent} 
-                onChange={(content) => handleFieldChange('textContent', content)} 
-                className={`min-h-[140px] text-sm border ${formErrors.stepContent ? 'border-red-500 ring-2 ring-red-500/10' : 'border-slate-300 dark:border-slate-700'}`}
+            <div
+              id="learning-content-anchor"
+              className="text-sm bg-white dark:bg-slate-900 rounded-xl shadow-sm"
+            >
+              <RichTextEditor
+                placeholder="Type detailed learning steps or instructional summary text..."
+                value={currentFlowStep.textContent}
+                onChange={(content) =>
+                  handleFieldChange("textContent", content)
+                }
+                className={`min-h-[140px] text-sm border ${formErrors.stepContent ? "border-red-500 ring-2 ring-red-500/10" : "border-slate-300 dark:border-slate-700"}`}
               />
             </div>
-            {formErrors.stepContent && <p className="text-red-500 text-xs mt-1.5 font-bold">{formErrors.stepContent}</p>}
+            {formErrors.stepContent && (
+              <p className="text-red-500 text-xs mt-1.5 font-bold">
+                {formErrors.stepContent}
+              </p>
+            )}
           </div>
         )}
       </div>
 
       {/* 2. Media & Document Upload Accordion */}
       <div className="border border-slate-200 dark:border-slate-800 rounded-xl bg-white dark:bg-slate-900 overflow-hidden shadow-sm animate-in fade-in slide-in-from-bottom-2 duration-300">
-        <button 
-          type="button" 
+        <button
+          type="button"
           onClick={() => setIsMediaOpen(!isMediaOpen)}
           className="w-full flex items-center justify-between p-4 bg-slate-50 hover:bg-slate-100 dark:bg-slate-800/60 dark:hover:bg-slate-800 transition-colors text-left"
         >
-          <span className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wide">2. Media & Document Upload</span>
-          <span className="text-slate-400 dark:text-slate-500 font-bold">{isMediaOpen ? '−' : '+'}</span>
+          <span className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wide">
+            2. Media & Document Upload
+          </span>
+          <span className="text-slate-400 dark:text-slate-500 font-bold">
+            {isMediaOpen ? "−" : "+"}
+          </span>
         </button>
         {isMediaOpen && (
           <div className="p-4 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/40">
@@ -74,34 +99,54 @@ export default function LearningContentEditor({
               <span className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wide">
                 Select Reference File (Video, PDF, DOCX)
               </span>
-              <input 
-                type="file" 
-                accept=".pdf, .docx, video/mp4, video/webm, video/ogg" 
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".pdf, .docx, video/mp4, video/webm, video/ogg"
                 onChange={(e) => {
                   const targetFile = e.target.files[0];
                   if (targetFile) {
-                    const validTypes = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'video/mp4', 'video/webm', 'video/ogg'];
-                    const fileExt = targetFile.name.split('.').pop().toLowerCase();
-                    const isValidExt = ['pdf', 'docx', 'mp4', 'webm', 'ogg'].includes(fileExt);
-                    
+                    const validTypes = [
+                      "application/pdf",
+                      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                      "video/mp4",
+                      "video/webm",
+                      "video/ogg",
+                    ];
+                    const fileExt = targetFile.name
+                      .split(".")
+                      .pop()
+                      .toLowerCase();
+                    const isValidExt = [
+                      "pdf",
+                      "docx",
+                      "mp4",
+                      "webm",
+                      "ogg",
+                    ].includes(fileExt);
+
                     if (validTypes.includes(targetFile.type) || isValidExt) {
                       setWrittenMaterialFile(targetFile);
                       toast.success(`Media staged: ${targetFile.name}`);
                     } else {
-                      toast.error("Invalid file type. Only PDF, DOCX, and Video files are allowed.");
+                      toast.error(
+                        "Invalid file type. Only PDF, DOCX, and Video files are allowed.",
+                      );
                       e.target.value = null;
                     }
                   }
                 }}
-                className="text-xs text-slate-600 dark:text-slate-400 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border file:border-slate-300 dark:file:border-slate-700 file:text-xs file:font-bold file:bg-slate-50 dark:file:bg-slate-800 file:text-slate-700 dark:file:text-slate-300 hover:file:bg-slate-100 dark:hover:file:bg-slate-700 cursor-pointer transition-colors" 
+                className="text-xs text-slate-600 dark:text-slate-400 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border file:border-slate-300 dark:file:border-slate-700 file:text-xs file:font-bold file:bg-slate-50 dark:file:bg-slate-800 file:text-slate-700 dark:file:text-slate-300 hover:file:bg-slate-100 dark:hover:file:bg-slate-700 cursor-pointer transition-colors"
               />
               {writtenMaterialFile && (
                 <div className="mt-3 p-3 bg-emerald-50 dark:bg-emerald-950/40 rounded-xl border border-emerald-100 dark:border-emerald-900/50">
-                  <p className="text-xs text-emerald-800 dark:text-emerald-300 font-bold">Staged File: {writtenMaterialFile.name}</p>
+                  <p className="text-xs text-emerald-800 dark:text-emerald-300 font-bold">
+                    Staged File: {writtenMaterialFile.name}
+                  </p>
                   {writtenMaterialFile.type.startsWith("video/") && (
-                    <video 
-                      controls 
-                      preload="metadata" 
+                    <video
+                      controls
+                      preload="metadata"
                       className="w-full max-h-64 object-cover rounded-xl border border-slate-200 dark:border-slate-700 mt-2 shadow-sm"
                       src={URL.createObjectURL(writtenMaterialFile)}
                     />
@@ -112,7 +157,6 @@ export default function LearningContentEditor({
           </div>
         )}
       </div>
-      
     </div>
   );
 }

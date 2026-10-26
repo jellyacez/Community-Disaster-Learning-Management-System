@@ -31,7 +31,7 @@ export default function LoopBackModal({ loopBackData, acknowledgeLoopBack }) {
               Return to Review Material
             </>
           ) : (
-            "Continue"
+            "Try Again"
           )}
         </button>
       </div>

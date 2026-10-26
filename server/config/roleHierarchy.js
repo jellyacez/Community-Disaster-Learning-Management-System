@@ -8,6 +8,7 @@
  */
 
 const ROLE_RANKS = {
+  super_admin: 6,
   system_admin: 5,
   head_mdrrmo_admin: 4,
   mdrrmo_admin: 3,

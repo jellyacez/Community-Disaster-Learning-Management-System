@@ -14,7 +14,8 @@ import { PDFViewer, PDFDownloadLink, Document, Page, Text, View, StyleSheet, Ima
 const styles = StyleSheet.create({
   page: { flexDirection: "column", backgroundColor: "#fcfbf8", padding: 30 },
   outerBorder: { border: "4pt solid #1e3a8a", padding: 6, flexGrow: 1 },
-  innerBorder: { border: "2pt solid #b89f5d", flexGrow: 1, padding: 40, alignItems: "center", position: "relative" },
+  innerBorder: { border: "2pt solid #b89f5d", flexGrow: 1, paddingTop: 30, paddingBottom: 25, paddingHorizontal: 40, alignItems: "center", position: "relative" },
+  content: { width: "100%", alignItems: "center" },
   
   // Top corner elements
   qrCode: { position: "absolute", top: 20, left: 30, width: 55, height: 55 },
@@ -30,7 +31,8 @@ const styles = StyleSheet.create({
   nameSubLine: { fontSize: 8, color: "#777", marginBottom: 20, textTransform: "uppercase", letterSpacing: 1 },
   description: { fontSize: 11, lineHeight: 1.5, marginHorizontal: 60, marginBottom: 15, textAlign: "center", color: "#333" },
   dateText: { fontSize: 11, marginTop: 10, color: "#555", fontStyle: "italic" },
-  bottomRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-end", width: "100%", position: "absolute", bottom: 30, paddingHorizontal: 30 },
+  // In normal flow (pushed to the bottom) so long descriptions can't overlap it
+  bottomRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-end", width: "100%", marginTop: "auto", paddingTop: 12 },
   sigBlock: { alignItems: "center", width: 180 },
   sigName: { fontSize: 12, fontWeight: "bold", color: "#1e3a8a", textTransform: "uppercase", marginBottom: 4 },
   sigLine: { borderTop: "1pt solid #000", width: "100%", paddingTop: 4, alignItems: "center" },
@@ -133,9 +135,23 @@ export default function CertificateTemplate() {
   const mdrrmoOfficerName = certData.mdrrmo_officer_name || "Municipal DRRM Officer";
   const mdrrmoOfficerTitle = "Municipal DRRMO Head";
 
+  const MAX_DESCRIPTION_CHARS = 260;
+  const cleanDescription =
+    certData.module_description
+      ?.replace(/<br\s*\/?>/gi, " ")
+      .replace(/<\/(p|div)>/gi, " ")
+      .replace(/<[^>]*>?/gm, "")
+      .replace(/\s+/g, " ")
+      .trim() ||
+    "The aforementioned resident has demonstrated comprehensive knowledge and tactical readiness in Disaster Risk Reduction and Management (DRRM) protocols.";
+  const descriptionText =
+    cleanDescription.length > MAX_DESCRIPTION_CHARS
+      ? `${cleanDescription.slice(0, MAX_DESCRIPTION_CHARS).replace(/\s+\S*$/, "")}…`
+      : cleanDescription;
+
   const MyDocument = (
     <Document>
-       <Page size="A4" orientation="landscape" style={styles.page}>
+       <Page size="A4" orientation="landscape" style={styles.page} wrap={false}>
         <View style={styles.outerBorder}>
           <View style={styles.innerBorder}>
             
@@ -143,7 +159,9 @@ export default function CertificateTemplate() {
             {qrDataUrl && <Image style={styles.qrCode} src={qrDataUrl} />}
 
             <Text style={styles.certNumber}>Control No. {certId}</Text>
-            
+
+            <View style={styles.content}>
+
             <Text style={styles.headerText}>Republic of the Philippines</Text>
             <Text style={styles.headerSub}>
               Municipality of Bacolor, Pampanga{"\n"}
@@ -161,9 +179,10 @@ export default function CertificateTemplate() {
               has successfully satisfied all academic and practical requirements of the Community Disaster 
               Learning Management System by completing the <Text style={{ fontWeight: "bold" }}>{certData.module_title}</Text> training module.
               {"\n\n"}
-              {(certData.module_description?.replace(/<br\s*\/?>/gi, '\n').replace(/<\/(p|div)>/gi, '\n\n').replace(/<[^>]*>?/gm, '').replace(/\n\s*\n\s*\n/g, '\n\n').trim() || "The aforementioned resident has demonstrated comprehensive knowledge and tactical readiness in Disaster Risk Reduction and Management (DRRM) protocols.")}
+              {descriptionText}
             </Text>
             <Text style={styles.dateText}>Conferred this {dateIssued}.</Text>
+            </View>
 
             <View style={styles.bottomRow}>
               <View style={styles.sigBlock}>

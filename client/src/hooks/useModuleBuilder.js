@@ -6,6 +6,7 @@ import { useLevelManager } from "./module-builder/useLevelManager";
 import { useStepStager } from "./module-builder/useStepStager";
 import { useModuleSubmit } from "./module-builder/useModuleSubmit";
 import { decodeHtml } from "../utils/textUtils";
+import { hydrateFlowStep } from "./module-builder/hydrateFlowStep";
 
 export function useModuleBuilder() {
   const [formErrors, setFormErrors] = useState({});
@@ -89,29 +90,7 @@ export function useModuleBuilder() {
       (data.levels || []).forEach((lvl) => {
         const currentOrder = lvl.levelOrder ?? lvl.level_order;
         (lvl.steps || []).forEach((step) => {
-          flows.push({
-            id: `step-${currentOrder}-${step.stepOrder || step.step_order}-${Date.now()}-${Math.random()}`,
-            levelOrder: currentOrder,
-            title: decodeHtml(step.stepTitle || step.step_title) || "",
-            type: step.stepType || step.step_type || "text",
-            textContent: (step.stepType || step.step_type) === "text" ? (step.stepContent || step.step_content || "") : "",
-            mediaUrl: step.mediaUrl || step.media_url || "",
-            finalMediaUrl: step.mediaUrl || step.media_url || "",
-            is_final_assessment: step.is_final_assessment || false,
-            quizQuestions: (step.quizQuestions || []).map((q) => {
-              const correctIdx = (q.options || []).findIndex((opt) => opt.isCorrect);
-              return {
-                questionText: decodeHtml(q.questionText) || "",
-                correctAnswerIndex: correctIdx >= 0 ? correctIdx : 0,
-                options: (q.options || []).map((opt) => ({
-                  text: decodeHtml(opt.text) || "",
-                  rationale: decodeHtml(opt.rationale) || "",
-                  isCorrect: opt.isCorrect || false,
-                  sequence_order: opt.sequence_order
-                }))
-              };
-            })
-          });
+          flows.push(hydrateFlowStep(step, currentOrder));
         });
       });
 

@@ -19,6 +19,7 @@ import { authClient } from "../../lib/auth-client";
 import toast from "react-hot-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { useTheme } from "../../hooks/context/themeContext";
+import { getUnsyncedCount, processOfflineQueue } from "../../lib/LocalSave/syncManager";
 
 const navItems = [
   {
@@ -75,33 +76,70 @@ export default function UserSidebar({
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
   const { resetTheme } = useTheme();
 
+  const [unsyncedCount, setUnsyncedCount] = useState(0);
+  const [isSyncingBeforeLogout, setIsSyncingBeforeLogout] = useState(false);
+
+  useEffect(() => {
+    if (!isLogoutModalOpen) return;
+    getUnsyncedCount().then(setUnsyncedCount).catch(() => setUnsyncedCount(0));
+  }, [isLogoutModalOpen]);
+
   const confirmLogout = async () => {
-    try {
-      sessionStorage.setItem("isLoggingOut", "true");
-      queryClient.cancelQueries();
-      queryClient.clear();
-      resetTheme();
-      await authClient.signOut({
-        fetchOptions: {
-          onSuccess: () => {
-            navigate("/signin");
-          },
-        },
-      });
-      toast.success("Successfully logged out!");
-    } catch {
-      toast.error("Logout failed");
-    } finally {
-      setIsLogoutModalOpen(false);
+    // Give pending offline changes a chance to sync while the session is still valid
+    if (unsyncedCount > 0 && navigator.onLine) {
+      setIsSyncingBeforeLogout(true);
+      try {
+        await processOfflineQueue();
+      } catch {
+        // Continue with logout; the user was already warned
+      } finally {
+        setIsSyncingBeforeLogout(false);
+      }
     }
-  };
+
+      try {
+        // Safely sweep ALL offline caches
+        const keysToRemove = [];
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          if (key && key.startsWith('lms_offline_')) {
+            keysToRemove.push(key);
+          }
+        }
+        keysToRemove.forEach(k => localStorage.removeItem(k));
+
+        Object.keys(sessionStorage).forEach((key) => {
+          if (
+            key.startsWith("hasSeenWelcome") ||
+            key.startsWith("newlyRegistered")
+          ) {
+            sessionStorage.removeItem(key);
+          }
+        });
+
+        sessionStorage.setItem("isLoggingOut", "true");
+        queryClient.cancelQueries();
+        queryClient.clear();
+        resetTheme();
+
+        if (navigator.onLine) {
+          await authClient.signOut();
+        }
+        toast.success("Successfully logged out!");
+      } catch {
+        toast.success("Logged out locally.");
+      } finally {
+        setIsLogoutModalOpen(false);
+        navigate("/signin", { replace: true });
+      }
+    };
 
   useEffect(() => {
     const updatePillPosition = () => {
-      const activeIndex = navItems.findIndex(item => 
+      const activeIndex = navItems.findIndex(item =>
         location.pathname === item.path || location.pathname.startsWith(item.path + '/')
       );
-      
+
       if (activeIndex !== -1 && itemRefs.current[activeIndex]) {
         const activeEl = itemRefs.current[activeIndex];
         setPillStyle({
@@ -116,9 +154,9 @@ export default function UserSidebar({
 
     updatePillPosition();
     window.addEventListener('resize', updatePillPosition);
-    
+
     const timeoutId = setTimeout(updatePillPosition, 50);
-    
+
     return () => {
       window.removeEventListener('resize', updatePillPosition);
       clearTimeout(timeoutId);
@@ -128,7 +166,7 @@ export default function UserSidebar({
   return (
     <>
       <aside
-        className={`fixed left-0 top-0 z-50 flex h-screen w-72 flex-col border-r border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-950 transition-colors duration-200 transition-transform duration-300 lg:translate-x-0 ${
+        className={`fixed left-0 top-0 z-50 flex h-screen w-72 flex-col overflow-x-hidden border-r border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-950 transition-colors duration-200 transition-transform duration-300 lg:translate-x-0 ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
@@ -143,7 +181,7 @@ export default function UserSidebar({
             </div>
             <div>
               <p className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-slate-400">
-                Bacolor LMS
+                Bacolor Disaster LMS
               </p>
               <h2 className="text-lg font-extrabold text-gray-900 dark:text-white">
                 User Portal
@@ -164,9 +202,9 @@ export default function UserSidebar({
           </button>
         </div>
 
-        <div className="border-b border-gray-200 dark:border-slate-800 px-6 py-5">
-          <p className="text-sm font-bold text-gray-900 dark:text-white">{currentUser.name}</p>
-          <p className="text-sm text-gray-500 dark:text-slate-400">{currentUser.email}</p>
+        <div className="border-b border-gray-200 dark:border-slate-800 px-6 py-5 min-w-0">
+          <p className="text-sm font-bold text-gray-900 dark:text-white truncate">{currentUser.name}</p>
+          <p className="text-sm text-gray-500 dark:text-slate-400 truncate">{currentUser.email}</p>
           <p className="mt-2 inline-block rounded-full bg-red-50 dark:bg-red-950/60 border border-red-100 dark:border-red-900/40 px-3 py-1 text-xs font-bold text-red-700 dark:text-red-400">
             {currentUser.role}
           </p>
@@ -228,6 +266,8 @@ export default function UserSidebar({
       <LogoutModal
         isOpen={isLogoutModalOpen}
         onClose={() => setIsLogoutModalOpen(false)}
+        unsyncedCount={unsyncedCount}
+        isSyncing={isSyncingBeforeLogout}
         onConfirm={confirmLogout}
       />
     </>

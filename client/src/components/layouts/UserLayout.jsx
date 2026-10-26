@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { Outlet, useLocation } from "react-router-dom";
-import { authClient } from "../../lib/auth-client";
+import { useOfflineSession } from "../../hooks/offlineSession";
 import DashboardLayout from "./DashboardLayout";
 
 function formatRole(role) {
@@ -12,6 +12,7 @@ function formatRole(role) {
     case "barangay_admin":
       return "Barangay Administrator";
     case "user":
+    case "resident":
       return "Resident / Learner";
     default:
       return role || "Resident / Learner";
@@ -20,22 +21,37 @@ function formatRole(role) {
 
 export default function UserLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const { data: session } = authClient.useSession();
+  const { data: session, isOffline } = useOfflineSession();
   const location = useLocation();
 
+  const impersonatedUser = useMemo(() => {
+    const raw =
+      sessionStorage.getItem("impersonated_target_user") ||
+      localStorage.getItem("impersonated_target_user");
+    if (!raw) return null;
+    try {
+      return JSON.parse(raw);
+    } catch {
+      return null;
+    }
+  }, []);
+
+  const activeUser = impersonatedUser || session?.user;
+
   const currentUser = {
+    id: activeUser?.id,
     name:
-      session?.user?.name ||
-      session?.user?.fullName ||
-      session?.user?.username ||
+      activeUser?.name ||
+      activeUser?.fullName ||
+      activeUser?.username ||
       "User",
-    email: session?.user?.email || "No email available",
-    barangay_id: session?.user?.barangay_id,
-    role: formatRole(session?.user?.role),
-    image: session?.user?.image,
+    email: activeUser?.email || "No email available",
+    barangay_id: activeUser?.barangay_id || activeUser?.barangayId,
+    role: formatRole(activeUser?.role),
+    image: activeUser?.image,
   };
 
-  const userInitials = currentUser.name
+  const userInitials = (currentUser.name || "U")
     .split(" ")
     .map((part) => part[0])
     .join("")
@@ -45,7 +61,6 @@ export default function UserLayout() {
   const footerMode = useMemo(() => {
     const current = (location.pathname || "").toLowerCase();
 
-    // 1. Pages where footer is permanently locked/pinned to viewport
     const pinnedKeywords = [
       "module",
       "catalog",
@@ -57,13 +72,11 @@ export default function UserLayout() {
       return "pinned";
     }
 
-    // 2. Pages where footer is non-sticky (scrolls naturally below content)
     const scrollKeywords = ["dashboard", "announcement", "settings"];
     if (scrollKeywords.some((keyword) => current.includes(keyword))) {
       return "scroll";
     }
 
-    // Fallback for any unmatched pages (default: natural scroll)
     return "scroll";
   }, [location.pathname]);
 
@@ -75,7 +88,7 @@ export default function UserLayout() {
       setSidebarOpen={setSidebarOpen}
       footerMode={footerMode}
     >
-      <Outlet context={{ currentUser, userInitials }} />
+      <Outlet context={{ currentUser, userInitials, isOffline }} />
     </DashboardLayout>
   );
 }

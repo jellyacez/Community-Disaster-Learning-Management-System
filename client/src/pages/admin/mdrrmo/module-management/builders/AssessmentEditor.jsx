@@ -2,6 +2,7 @@ import QuizEditor from "./steps/QuizEditor";
 import SituationalEditor from "./steps/SituationalEditor";
 
 export default function AssessmentEditor({
+  editingStepId,
   currentFlowStep,
   setCurrentFlowStep,
   currentQuizQuestion,
@@ -47,6 +48,8 @@ export default function AssessmentEditor({
 
       {currentFlowStep.builderStepType === "quiz" && (
         <QuizEditor
+          key={editingStepId || currentFlowStep?.id || "new-quiz-step"}
+          editingStepId={editingStepId}
           currentFlowStep={currentFlowStep}
           setCurrentFlowStep={setCurrentFlowStep}
           currentQuizQuestion={currentQuizQuestion}

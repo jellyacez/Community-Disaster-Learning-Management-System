@@ -1,5 +1,5 @@
 import { StarAward01Icon, Alert01Icon, UserGroupIcon, Home01Icon } from "@hugeicons/core-free-icons";
-import StatCard from "../../../system/overview/components/StatCard";
+import StatCard from "../../../../../components/ui/StatCard";
 
 export default function SectorKPIs({ kpiData = {}, trends, isLoading }) {
   const k = kpiData || {};

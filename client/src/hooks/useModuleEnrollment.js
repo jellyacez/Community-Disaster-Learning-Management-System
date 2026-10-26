@@ -1,11 +1,18 @@
 import { useState, useCallback, useRef } from "react";
 import apiClient from "../lib/apiClient";
 import toast from "react-hot-toast";
+import { useQueryClient } from "@tanstack/react-query";
 
-export function useModuleEnrollment({ moduleId, moduleTitle, initialEnrolled = false, onEnrollSuccess }) {
+export function useModuleEnrollment({
+  moduleId,
+  moduleTitle,
+  initialEnrolled = false,
+  onEnrollSuccess,
+}) {
   const [localEnrolled, setLocalEnrolled] = useState(initialEnrolled);
   const [isEnrolling, setIsEnrolling] = useState(false);
   const isEnrollingRef = useRef(false);
+  const queryClient = useQueryClient();
 
   const handleEnroll = useCallback(async () => {
     if (isEnrollingRef.current) return;
@@ -19,7 +26,28 @@ export function useModuleEnrollment({ moduleId, moduleTitle, initialEnrolled = f
       const response = await apiClient.post(`/modules/${moduleId}/enroll`);
 
       if (response.data.success) {
-        toast.success(`Enrollment Success! You are now enrolled in ${moduleTitle}.`);
+        toast.success(
+          `Enrollment Success! You are now enrolled in ${moduleTitle}.`,
+        );
+
+        // Invalidate relevant queries to refresh data
+        queryClient.invalidateQueries({ queryKey: ["userDashboard"] });
+        queryClient.invalidateQueries({ queryKey: ["moduleCatalog"] });
+        queryClient.invalidateQueries({ queryKey: ["enrolledModules"] });
+
+        try {
+          const dashRes = await apiClient.get("/user/dashboard");
+          localStorage.setItem(
+            "lms_offline_dashboard",
+            JSON.stringify(dashRes.data),
+          );
+        } catch (e) {
+          console.warn(
+            "Could not background-cache dashboard for offline use.",
+            e,
+          );
+        }
+
         if (onEnrollSuccess) onEnrollSuccess(moduleId);
       } else {
         // Rollback if the server indicates failure despite a 200 OK
@@ -30,13 +58,14 @@ export function useModuleEnrollment({ moduleId, moduleTitle, initialEnrolled = f
       setLocalEnrolled(false);
       console.error("Enrollment error:", error);
       toast.error(
-        error.response?.data?.message || "Failed to enroll in module. Please try again."
+        error.response?.data?.message ||
+          "Failed to enroll in module. Please try again.",
       );
     } finally {
       isEnrollingRef.current = false;
       setIsEnrolling(false);
     }
-  }, [moduleId, moduleTitle, onEnrollSuccess]);
+  }, [moduleId, moduleTitle, onEnrollSuccess, queryClient]);
 
   return { localEnrolled, isEnrolling, handleEnroll };
 }

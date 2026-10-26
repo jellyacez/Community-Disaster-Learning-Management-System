@@ -11,7 +11,7 @@ exports.getFeedbacks = async (req, res) => {
 
     const rows = await feedbackService.getUserFeedbacks(userId);
     res.json({ success: true, data: rows });
-  } catch (_) {
+  } catch {
     res.status(500).json({ success: false, error: "Failed to fetch feedback history." });
   }
 };
@@ -27,7 +27,7 @@ exports.submitFeedback = async (req, res) => {
 
     const row = await feedbackService.submitFeedback(userId, req.body);
     res.status(201).json({ success: true, data: row });
-  } catch (_) {
+  } catch {
     res.status(500).json({ success: false, error: "Failed to submit feedback." });
   }
 };

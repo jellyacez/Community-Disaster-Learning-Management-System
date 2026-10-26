@@ -1,0 +1,75 @@
+name: Deploy to AWS EC2
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: SSH into EC2 and Deploy
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2HOST }}
+          username: ${{ secrets.EC2USER }}
+          key: ${{ secrets.EC2SSHKEY }}
+          script: |
+            # Stop immediately if any command fails
+            set -e
+
+            echo "1. Navigating to project directory and pulling latest code..."
+            cd /var/www/lms/Community-Disaster-Learning-Management-System
+            git fetch origin main
+            git reset --hard origin/main
+            git pull origin main
+
+            echo "2. Updating and building Frontend (React Vite)..."
+            cd /var/www/lms/Community-Disaster-Learning-Management-System/client
+            PUPPETEER_SKIP_DOWNLOAD=true npm install
+            npm run build
+
+            echo "3. Updating Backend dependencies..."
+            cd /var/www/lms/Community-Disaster-Learning-Management-System/server
+            PUPPETEER_SKIP_DOWNLOAD=true npm install
+
+            export $(grep -v '^#' .env | xargs)
+
+            echo "3a. Backing up the database before migrating..."
+            # pg_dump refuses to dump a server newer than itself, so pick one whose major
+            # version is at least the server's: PG_DUMP_PATH, then PATH, then the
+            # versioned client paths used by Ubuntu/Debian and Amazon Linux/RHEL.
+            SERVER_MAJOR=$(psql "$DATABASE_URL" -tAc "SHOW server_version_num" | cut -c1-2)
+            if [ -z "$SERVER_MAJOR" ]; then
+              echo "ERROR: could not read the PostgreSQL server version with psql. Check DATABASE_URL in server/.env." >&2
+              exit 1
+            fi
+            PG_DUMP=""
+            for candidate in "${PG_DUMP_PATH:-}" pg_dump "/usr/lib/postgresql/$SERVER_MAJOR/bin/pg_dump" "/usr/pgsql-$SERVER_MAJOR/bin/pg_dump"; do
+              [ -n "$candidate" ] && command -v "$candidate" >/dev/null 2>&1 || continue
+              DUMP_MAJOR=$("$candidate" --version | grep -oE '[0-9]+' | head -1)
+              if [ "$DUMP_MAJOR" -ge "$SERVER_MAJOR" ]; then PG_DUMP="$candidate"; break; fi
+            done
+            if [ -z "$PG_DUMP" ]; then
+              echo "ERROR: no pg_dump for PostgreSQL $SERVER_MAJOR found. Install postgresql-client-$SERVER_MAJOR (Ubuntu) or postgresql$SERVER_MAJOR (Amazon Linux), or set PG_DUMP_PATH in server/.env." >&2
+              exit 1
+            fi
+            echo "   using $PG_DUMP ($("$PG_DUMP" --version)) for server version $SERVER_MAJOR"
+            mkdir -p "$HOME/db-backups"
+            BACKUP="$HOME/db-backups/pre-deploy-$(date +%Y%m%d-%H%M%S).dump"
+            # Write to a temp name first so a failed dump never counts as a backup
+            "$PG_DUMP" "$DATABASE_URL" -Fc -f "$BACKUP.partial"
+            mv "$BACKUP.partial" "$BACKUP"
+            echo "   backup saved: $BACKUP ($(du -h "$BACKUP" | cut -f1))"
+            # Keep the 10 most recent backups
+            ls -1t "$HOME"/db-backups/pre-deploy-*.dump | tail -n +11 | xargs -r rm --
+
+            echo "3b. Applying migrations (stops the deploy on any SQL error)..."
+            psql -v ON_ERROR_STOP=1 "$DATABASE_URL" -f migrations/migration.sql
+
+            echo "4. Restarting PM2..."
+            pm2 restart all --update-env
+
+            echo "Deployment completed successfully!"

@@ -11,8 +11,8 @@ export default defineConfig(({ mode }) => ({
       registerType: "autoUpdate",
       includeAssets: ["favicon.svg", "icons.svg", "apple-touch-icon-180x180.png"],
       manifest: {
-        name: "Bacolor LMS",
-        short_name: "Bacolor LMS",
+        name: "Bacolor Disaster LMS",
+        short_name: "Bacolor Disaster LMS",
         description:
           "Community Disaster Learning Management System for disaster preparedness training, announcements, and resident learning support.",
         theme_color: "#dc2626",
@@ -39,14 +39,15 @@ export default defineConfig(({ mode }) => ({
           },
         ],
       },
-        workbox: {
-          globPatterns: ["**/*.{js,css,html,ico,png,svg,webmanifest}"],
-          navigateFallback: "/index.html",
-          navigateFallbackDenylist: [/^\/api/], // CRITICAL: Excludes all API and SSE streams
-          cleanupOutdatedCaches: true,
-          clientsClaim: true,
-          skipWaiting: true,
-        },
+      workbox: {
+        globPatterns: ["**/*.{js,css,html,ico,png,svg,webmanifest}"],
+        navigateFallback: "/index.html",
+        navigateFallbackDenylist: [/^\/api/],
+        cleanupOutdatedCaches: true,
+        clientsClaim: true,
+        skipWaiting: true,
+        runtimeCaching: [],
+      },
       devOptions: {
         enabled: false,
       },
@@ -62,6 +63,31 @@ export default defineConfig(({ mode }) => ({
   },
   build: {
     sourcemap: false,
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (
+            id.includes("@react-pdf") ||
+            id.includes("pdfkit") ||
+            id.includes("fontkit") ||
+            id.includes("png-js") ||
+            id.includes("restructure")
+          ) {
+            return "react-pdf-vendor";
+          }
+          if (id.includes("html5-qrcode")) {
+            return "html5-qrcode-vendor";
+          }
+          if (
+            id.includes("recharts") ||
+            id.includes("victory-vendor") ||
+            id.includes("d3-")
+          ) {
+            return "recharts-vendor";
+          }
+        },
+      },
+    },
   },
   esbuild: {
     drop: mode === "production" ? ["console", "debugger"] : [],

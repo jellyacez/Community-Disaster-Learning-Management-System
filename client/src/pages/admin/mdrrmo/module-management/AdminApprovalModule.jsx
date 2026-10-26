@@ -19,7 +19,7 @@ import ConfirmationModal from "../../../../components/ui/modals/ConfirmationModa
 import { SkeletonModuleCard } from "../../../../components/ui/Skeleton";
 
 export default function AdminModuleApprovals() {
-  useDocumentTitle("Module Approvals | Bacolor LMS Admin");
+  useDocumentTitle("Module Approvals | Bacolor Disaster LMS Admin");
   const queryClient = useQueryClient();
   const navigate = useNavigate();
 
@@ -68,6 +68,14 @@ export default function AdminModuleApprovals() {
     },
     onError: (err) => {
       toast.error(err.response?.data?.message || "Failed to process the review.");
+      // Someone else already reviewed it: drop the stale row and close the dialog
+      if (err.response?.status === 409) {
+        queryClient.invalidateQueries({ queryKey: ["moduleApprovals"] });
+        queryClient.invalidateQueries({ queryKey: ["adminModules"] });
+        setSelectedModule(null);
+        setRejectReason("");
+        setRejectError("");
+      }
     },
   });
 

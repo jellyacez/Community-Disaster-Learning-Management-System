@@ -27,22 +27,27 @@ apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
     // Handle 401 Unauthorized globally
-    if (error.response && error.response.status === 401) {
+    if (error.response && error.response.status === 401 && !error.config?.offlineSync) {
       if (window.location.pathname !== '/signin' && window.location.pathname !== '/register' && window.location.pathname !== '/') {
         window.location.href = '/signin';
       }
     }
 
-    // Handle 503 Maintenance Mode
+    // Handle 503 Maintenance Mode gracefully via React Router event instead of breaking React with window.location.href
     if (error.response && error.response.status === 503 && error.response.data?.error === 'MAINTENANCE_MODE') {
-      // Prevent redirect loop
-      if (window.location.pathname !== '/maintenance') {
-        window.location.href = '/maintenance';
-      }
+      window.dispatchEvent(new CustomEvent('system:maintenance'));
     }
     return Promise.reject(error);
   }
 );
+
+apiClient.interceptors.request.use((config) => {
+  const superBarangayScope = localStorage.getItem("super_admin_barangay_scope");
+  if (superBarangayScope) {
+    config.headers["x-barangay-scope"] = superBarangayScope;
+  }
+  return config;
+});
 
 
 apiClient.interceptors.request.use((config) => {

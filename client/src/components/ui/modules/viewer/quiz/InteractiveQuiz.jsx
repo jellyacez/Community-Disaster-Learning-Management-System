@@ -5,6 +5,24 @@ import QuizChoice from './QuizChoice';
 import QuizFeedback from './QuizFeedback';
 import QuizStateMessage from './QuizStateMessage';
 import { decodeHtml } from '../../../../../utils/textUtils';
+import { getQuizSession, saveQuizSession, clearQuizSession } from '../../../../../lib/quizSessions';
+import { HugeiconsIcon } from '@hugeicons/react';
+import { Clock01Icon } from '@hugeicons/core-free-icons';
+
+const QUESTION_SECONDS = 20;
+
+// Rebuild the saved question/option order; null if the questions no longer match
+function restoreOrder(questions, order) {
+  const byId = new Map(questions.map((q) => [q.question_id || q.id, q]));
+  const restored = order.map(({ id, optionIds }) => {
+    const q = byId.get(id);
+    if (!q) return null;
+    const optsById = new Map((q.options || []).map((o) => [o.id, o]));
+    const options = optionIds.map((oid) => optsById.get(oid));
+    return options.every(Boolean) && options.length === (q.options || []).length ? { ...q, options } : null;
+  });
+  return restored.length === questions.length && restored.every(Boolean) ? restored : null;
+}
 
 // Fisher-Yates shuffle
 function shuffle(array) {
@@ -16,28 +34,42 @@ function shuffle(array) {
   return newArray;
 }
 
-export default function InteractiveQuiz({ stepType, questions = [], isLoading = false, onCompleteStep, isPreviewMode = false }) {
-  const [currentQIndex, setCurrentQIndex] = useState(0);
-  const [selectedChoiceIds, setSelectedChoiceIds] = useState([]);
-  const [hasSubmitted, setHasSubmitted] = useState(false);
-  const [timeLeft, setTimeLeft] = useState(20);
-  const [tabSwitchWarnings, setTabSwitchWarnings] = useState(0);
-  const [answers, setAnswers] = useState([]);
-  
-  // 1. DYNAMIC RANDOMIZATION
+export default function InteractiveQuiz({ stepId, stepType, questions = [], isLoading = false, onCompleteStep, isPreviewMode = false }) {
+  // Resume an attempt the learner left mid-way (another step, the map, the dashboard).
+  // Previews never persist.
+  const [savedSession] = useState(() => (isPreviewMode || stepId == null ? null : getQuizSession(stepId)));
+  const [currentQIndex, setCurrentQIndex] = useState(savedSession?.currentQIndex ?? 0);
+  const [selectedChoiceIds, setSelectedChoiceIds] = useState(savedSession?.selectedChoiceIds ?? []);
+  const [hasSubmitted, setHasSubmitted] = useState(savedSession?.hasSubmitted ?? false);
+  // Absolute deadline for the current question: the clock keeps running while away
+  const [deadline, setDeadline] = useState(savedSession?.deadline ?? null);
+  const [timeLeft, setTimeLeft] = useState(() =>
+    savedSession?.deadline ? Math.max(0, Math.ceil((savedSession.deadline - Date.now()) / 1000)) : QUESTION_SECONDS
+  );
+  const [tabSwitchWarnings, setTabSwitchWarnings] = useState(savedSession?.tabSwitchWarnings ?? 0);
+  const [answers, setAnswers] = useState(savedSession?.answers ?? []);
+  const [timedOutWhileAway] = useState(
+    () => Boolean(savedSession && !savedSession.hasSubmitted && savedSession.deadline && savedSession.deadline <= Date.now())
+  );
+  const submittedRef = useRef(false);
+
+  // 1. DYNAMIC RANDOMIZATION (kept stable when resuming)
   const shuffledQuestions = useMemo(() => {
     if (!questions || questions.length === 0) return [];
+    const restored = savedSession?.order ? restoreOrder(questions, savedSession.order) : null;
+    if (restored) return restored;
     return shuffle(questions).map(q => ({
       ...q,
       options: shuffle(q.options || [])
     }));
-  }, [questions]);
+  }, [questions, savedSession]);
 
   const currentQ = shuffledQuestions[currentQIndex];
 
   const actualStepType = useMemo(() => {
     if (stepType !== 'situational') return stepType;
     if (!currentQ) return stepType;
+    if (currentQ.interaction_type) return currentQ.interaction_type;
     if (currentQ.options && currentQ.options.some(o => o.sequenceOrder > 0)) return 'action_sequence';
     if (currentQ.options && currentQ.options.filter(o => o.isCorrect).length > 1) return 'hazard_identification';
     return 'priority_action';
@@ -71,24 +103,62 @@ export default function InteractiveQuiz({ stepType, questions = [], isLoading = 
     selectedChoiceIdsRef.current = selectedChoiceIds;
   }, [selectedChoiceIds]);
 
-  // 3. STRICT COMPONENT-LEVEL TIMERS
+  // 3. STRICT DEADLINE-BASED TIMER
+  // Measured against an absolute deadline, so time spent away from the quiz still counts.
   useEffect(() => {
     if (!currentQ || hasSubmitted || isLocked || isPreviewMode) return;
-    
-    const timer = setInterval(() => {
-      setTimeLeft(prev => {
-        if (prev <= 1) {
-          clearInterval(timer);
-          setHasSubmitted(true);
-          setAnswers(prevAns => [...prevAns, { questionId: currentQ.question_id || currentQ.id, selectedChoiceIds: selectedChoiceIdsRef.current }]);
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-    
-    return () => clearInterval(timer);
-  }, [currentQ, hasSubmitted, isLocked, currentQIndex]);
+
+    const activeDeadline = deadline ?? Date.now() + QUESTION_SECONDS * 1000;
+    let expired = false;
+    const tick = () => {
+      if (expired) return;
+      if (deadline == null) setDeadline(activeDeadline);
+      const remaining = Math.max(0, Math.ceil((activeDeadline - Date.now()) / 1000));
+      setTimeLeft(remaining);
+      if (remaining <= 0) {
+        expired = true;
+        setHasSubmitted(true);
+        setAnswers(prevAns => [...prevAns, { questionId: currentQ.question_id || currentQ.id, selectedChoiceIds: selectedChoiceIdsRef.current }]);
+      }
+    };
+
+    const first = setTimeout(tick, 0);
+    const timer = setInterval(tick, 1000);
+    return () => {
+      clearTimeout(first);
+      clearInterval(timer);
+    };
+  }, [currentQ, hasSubmitted, isLocked, deadline, isPreviewMode]);
+
+  // Tell a returning learner the clock kept running and the question timed out
+  useEffect(() => {
+    if (!timedOutWhileAway) return;
+    toast("Time ran out on this question while you were away. It was counted as unanswered.", {
+      icon: <HugeiconsIcon icon={Clock01Icon} className="w-5 h-5 shrink-0 text-amber-600" aria-hidden="true" />,
+      duration: 6000,
+      id: "quiz-timed-out-away",
+    });
+  }, [timedOutWhileAway]);
+
+  // Keep the attempt so leaving and returning resumes it
+  useEffect(() => {
+    if (isPreviewMode || stepId == null || shuffledQuestions.length === 0 || submittedRef.current) return;
+    saveQuizSession(stepId, {
+      order: shuffledQuestions.map(q => ({ id: q.question_id || q.id, optionIds: (q.options || []).map(o => o.id) })),
+      currentQIndex,
+      answers,
+      selectedChoiceIds,
+      hasSubmitted,
+      deadline,
+      tabSwitchWarnings,
+    });
+  }, [isPreviewMode, stepId, shuffledQuestions, currentQIndex, answers, selectedChoiceIds, hasSubmitted, deadline, tabSwitchWarnings]);
+
+  const finishAttempt = (finalAnswers) => {
+    submittedRef.current = true;
+    if (stepId != null) clearQuizSession(stepId);
+    onCompleteStep(finalAnswers);
+  };
 
   // Reset state for next question
   const handleNextQuestion = () => {
@@ -96,9 +166,10 @@ export default function InteractiveQuiz({ stepType, questions = [], isLoading = 
       setCurrentQIndex(prev => prev + 1);
       setSelectedChoiceIds([]);
       setHasSubmitted(false);
-      setTimeLeft(20);
+      setTimeLeft(QUESTION_SECONDS);
+      setDeadline(Date.now() + QUESTION_SECONDS * 1000);
     } else {
-      onCompleteStep(answers);
+      finishAttempt(answers);
     }
   };
 
@@ -124,7 +195,7 @@ export default function InteractiveQuiz({ stepType, questions = [], isLoading = 
 
   if (isLoading) return <QuizStateMessage type="loading" />;
   if (isLocked) return <QuizStateMessage type="locked" onRestart={() => window.location.reload()} />;
-  if (questions.length === 0) return <QuizStateMessage type="empty" onBypass={() => onCompleteStep([])} />;
+  if (questions.length === 0) return <QuizStateMessage type="empty" onBypass={isPreviewMode ? () => finishAttempt([]) : undefined} />;
   if (!currentQ) return null;
 
   const isCorrect = (() => {
@@ -144,7 +215,9 @@ export default function InteractiveQuiz({ stepType, questions = [], isLoading = 
     return selectedChoiceIds.length > 0 && currentQ.options.find(o => o.id === selectedChoiceIds[0])?.isCorrect;
   })();
     
-  const rationale = selectedChoiceIds.length > 0 ? currentQ.options.find(o => o.id === selectedChoiceIds[0])?.rationale : null;
+  // Only action sequences use a question-level explanation; everything else shows the chosen option's rationale
+  const choiceRationale = selectedChoiceIds.length > 0 ? currentQ.options.find(o => o.id === selectedChoiceIds[0])?.rationale : null;
+  const rationale = (actualStepType === 'action_sequence' && currentQ.rationale) || choiceRationale;
 
   return (
     <div 

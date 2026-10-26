@@ -1,17 +1,23 @@
 import { useState } from "react";
 import ConfirmationModal from "../../../../../../components/ui/modals/ConfirmationModal";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { Alert02Icon } from "@hugeicons/core-free-icons";
 
 export default function DeactivateArchiveTab({ user, onSave }) {
   const [banReason, setBanReason] = useState("");
   const [modalConfig, setModalConfig] = useState({ isOpen: false, action: null });
 
+  const isSuperAdminAccount = user?.role === "super_admin";
+
   const handleBanSubmit = (e) => {
     e.preventDefault();
+    if (isSuperAdminAccount) return;
     const actionName = user.banned ? "reactivate" : "deactivate";
     setModalConfig({ isOpen: true, action: actionName });
   };
 
   const handleArchive = () => {
+    if (isSuperAdminAccount) return;
     const actionName = user.archived ? "restore" : "archive";
     setModalConfig({ isOpen: true, action: actionName });
   };
@@ -34,6 +40,20 @@ export default function DeactivateArchiveTab({ user, onSave }) {
   return (
     <>
       <div className="space-y-4 pb-2">
+        {isSuperAdminAccount && (
+          <div className="p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/60 flex items-start gap-3">
+            <HugeiconsIcon icon={Alert02Icon} className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+            <div>
+              <p className="text-sm font-bold text-amber-900 dark:text-amber-200">
+                Super Admin Protection
+              </p>
+              <p className="text-xs text-amber-700 dark:text-amber-400 mt-0.5 leading-relaxed">
+                Super Administrator accounts cannot be deactivated, archived, or deleted via this console to preserve root system access.
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Ban / Unban */}
         <form onSubmit={handleBanSubmit} className="p-5 rounded-2xl border border-red-100 dark:border-red-900/40 bg-red-50 dark:bg-red-950/30 space-y-3">
           <div className="flex items-center justify-between">
@@ -46,7 +66,7 @@ export default function DeactivateArchiveTab({ user, onSave }) {
               )}
             </div>
           </div>
-          {!user.banned && (
+          {!user.banned && !isSuperAdminAccount && (
             <div>
               <label className="block text-xs font-semibold text-red-800 dark:text-red-300 mb-1">Deactivation Reason</label>
               <input
@@ -60,10 +80,13 @@ export default function DeactivateArchiveTab({ user, onSave }) {
           )}
           <button
             type="submit"
-            className={`w-full rounded-xl py-2.5 text-sm font-bold transition-colors cursor-pointer ${
-              user.banned
-                ? "bg-emerald-600 text-white hover:bg-emerald-700"
-                : "bg-red-600 text-white hover:bg-red-700"
+            disabled={isSuperAdminAccount}
+            className={`w-full rounded-xl py-2.5 text-sm font-bold transition-colors ${
+              isSuperAdminAccount
+                ? "bg-gray-300 dark:bg-slate-800 text-gray-500 cursor-not-allowed opacity-60"
+                : user.banned
+                ? "bg-emerald-600 text-white hover:bg-emerald-700 cursor-pointer"
+                : "bg-red-600 text-white hover:bg-red-700 cursor-pointer"
             }`}
           >
             {user.banned ? "Reactivate Account" : "Deactivate Account"}
@@ -85,10 +108,13 @@ export default function DeactivateArchiveTab({ user, onSave }) {
           <button
             type="button"
             onClick={handleArchive}
-            className={`w-full rounded-xl py-2.5 text-sm font-bold transition-colors cursor-pointer ${
-              user.archived
-                ? "bg-emerald-600 text-white hover:bg-emerald-700"
-                : "bg-gray-200 dark:bg-slate-700 text-gray-700 dark:text-slate-200 hover:bg-gray-300 dark:hover:bg-slate-600"
+            disabled={isSuperAdminAccount}
+            className={`w-full rounded-xl py-2.5 text-sm font-bold transition-colors ${
+              isSuperAdminAccount
+                ? "bg-gray-300 dark:bg-slate-800 text-gray-500 cursor-not-allowed opacity-60"
+                : user.archived
+                ? "bg-emerald-600 text-white hover:bg-emerald-700 cursor-pointer"
+                : "bg-gray-200 dark:bg-slate-700 text-gray-700 dark:text-slate-200 hover:bg-gray-300 dark:hover:bg-slate-600 cursor-pointer"
             }`}
           >
             {user.archived ? "Restore Account" : "Archive Account"}
@@ -109,8 +135,13 @@ export default function DeactivateArchiveTab({ user, onSave }) {
           </div>
           <button
             type="button"
+            disabled={isSuperAdminAccount}
             onClick={() => setModalConfig({ isOpen: true, action: "hard_delete" })}
-            className="w-full rounded-xl py-2.5 text-sm font-bold transition-colors bg-red-600 text-white hover:bg-red-700 cursor-pointer"
+            className={`w-full rounded-xl py-2.5 text-sm font-bold transition-colors ${
+              isSuperAdminAccount
+                ? "bg-gray-300 dark:bg-slate-800 text-gray-500 cursor-not-allowed opacity-60"
+                : "bg-red-600 text-white hover:bg-red-700 cursor-pointer"
+            }`}
           >
             Permanently Delete
           </button>

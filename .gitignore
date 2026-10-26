@@ -50,6 +50,8 @@ coverage/
 .nyc_output/
 test-results/
 playwright-report/
+.playwright-cli/
+graphify-out/
 
 # ── Docker ────────────────────────────────────────────────────────────────────
 docker-compose.override.yml
@@ -111,3 +113,4 @@ scratch/
 *.scratch.js
 *.scratch.mjs
 *.scratch.ts
+.impeccable/

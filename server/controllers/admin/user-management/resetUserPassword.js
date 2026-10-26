@@ -8,20 +8,25 @@ const { UNSCOPED_ACCESS_ROLES } = require("../../../config/permissions");
 const { logActivity, logError } = require("../../../utils/logger");
 const { assertActorOutranksTarget } = require("../../../config/roleHierarchy");
 
-// @desc    Resets a user's password using the better-auth admin API (auto-generates if none provided)
+function isUnscopedRole(role) {
+  return (
+    role === "super_admin" ||
+    (Array.isArray(UNSCOPED_ACCESS_ROLES) && UNSCOPED_ACCESS_ROLES.includes(role))
+  );
+}
+
+// @desc    Resets a user's password using better-auth admin API (auto-generates if none provided)
 // @access  Private (admin only)
 exports.resetUserPassword = async (req, res) => {
   const { id } = req.params;
   let { password } = req.body;
 
-  // Auto-generate password if not provided
   let isGenerated = false;
   if (!password) {
     password = generateSecurePassword();
     isGenerated = true;
   }
 
-  // Universally validate the final password (whether manual or auto-generated) against the strict policy
   if (!/^(?=.*[A-Z])(?=.*[!@#$%^&*_=+\-/.]).{8,}$/.test(password)) {
     return res
       .status(400)
@@ -34,17 +39,16 @@ exports.resetUserPassword = async (req, res) => {
   }
 
   try {
-    // 1. Get user details to send the email with tenant scoping
     let userQuery = 'SELECT name, email, barangay_id, role FROM "user" WHERE id = $1';
     let userValues = [id];
 
-    if (adminContext.role === 'barangay_admin') {
+    if (adminContext.role === "barangay_admin") {
       if (!adminContext.barangay_id) {
         throw new Error("SECURITY_FAULT: barangay_admin context missing barangay identifier for scoping.");
       }
-      userQuery += ' AND barangay_id = $2';
+      userQuery += " AND barangay_id = $2";
       userValues.push(adminContext.barangay_id);
-    } else if (!UNSCOPED_ACCESS_ROLES.includes(adminContext.role)) {
+    } else if (!isUnscopedRole(adminContext.role)) {
       throw new Error(`SECURITY_FAULT: Unauthorized role '${adminContext.role}' attempted to reset user passwords.`);
     }
 
@@ -54,73 +58,96 @@ exports.resetUserPassword = async (req, res) => {
     }
     const user = userResult.rows[0];
 
-    // V-01 FIX: Enforce rank hierarchy. The SELECT above already fetches target role.
-    // An mdrrmo_admin may not reset another mdrrmo_admin's password.
-    assertActorOutranksTarget(adminContext.role, user.role);
-
-    // 2. Hash the password manually using Better Auth's crypto and update the database directly
-    // This safely bypasses the strict plugin permission checks for admin-initiated forced resets.
-    const context = await auth.$context;
-    const hashedPassword = await context.password.hash(password);
-
-    const accountResult = await pool.query(
-      'UPDATE "account" SET password = $1 WHERE "userId" = $2 AND "providerId" = $3',
-      [hashedPassword, id, "credential"],
-    );
-
-    if (accountResult.rowCount === 0) {
-      return res
-        .status(400)
-        .json({
-          success: false,
-          message: "Cannot reset password. User signed up via a social provider (e.g., Google) and has no password credential.",
-        });
+    // Explicit safeguard: non-super_admin cannot touch a super_admin's password
+    if (user.role === "super_admin" && adminContext.role !== "super_admin") {
+      return res.status(403).json({
+        success: false,
+        message: "SECURITY_FAULT: Only a Super Administrator can reset the password of a Super Administrator account.",
+      });
     }
 
-    // Revoke existing sessions on forced password reset
+    // Enforce rank hierarchy unless caller is super_admin
+    if (adminContext.role !== "super_admin") {
+      assertActorOutranksTarget(adminContext.role, user.role);
+    }
+
+    // Set the new password via Better Auth Admin API
+    try {
+      await auth.api.setUserPassword({
+        body: {
+          userId: id,
+          newPassword: password,
+        },
+        headers: req.headers,
+      });
+    } catch (authApiErr) {
+      // Fallback: If Better Auth admin plugin method is not enabled, update DB directly using scrypt
+      const context = await auth.$context;
+      const hasher = context?.password?.hash || context?.auth?.options?.password?.hash;
+      
+      if (typeof hasher === "function") {
+        const hashedPassword = await hasher(password);
+        const accountResult = await pool.query(
+          'UPDATE "account" SET password = $1 WHERE "userId" = $2 AND "providerId" = $3',
+          [hashedPassword, id, "credential"]
+        );
+        if (accountResult.rowCount === 0) {
+          return res.status(400).json({
+            success: false,
+            message: "Cannot reset password. User signed up via a social provider and has no password credential.",
+          });
+        }
+      } else {
+        throw authApiErr;
+      }
+    }
+
+    // Invalidate user sessions so they must log in with the new password
     await pool.query('DELETE FROM "session" WHERE "userId" = $1', [id]);
 
-    // 3. Email the user their new password (if auto-generated)
+    let emailSent = false;
     if (isGenerated) {
-      const { orgFooterText, supportEmail } = await getOrgSettings();
-      const mailOptions = getAdminPasswordResetEmail(
-        user,
-        password,
-        orgFooterText,
-        supportEmail,
-      );
-      await transporter.sendMail(mailOptions);
+      try {
+        const { orgFooterText, supportEmail } = await getOrgSettings();
+        const mailOptions = getAdminPasswordResetEmail(
+          user,
+          password,
+          orgFooterText,
+          supportEmail
+        );
+        await transporter.sendMail(mailOptions);
+        emailSent = true;
+      } catch (mailErr) {
+        console.warn("SMTP offline during forced reset:", mailErr.message);
+      }
     }
 
-    const scopeStr = adminContext.role === 'barangay_admin' ? `Barangay ${adminContext.barangay_id}` : 'Unscoped';
+    const scopeStr = adminContext.role === "barangay_admin" ? `Barangay ${adminContext.barangay_id}` : "Unscoped";
     logActivity(
       adminContext.id,
-      `Reset password for user ${user.email} (Admin Initiated) [Scope: ${scopeStr}]`,
+      `Reset password for user ${user.email} (Admin Initiated) [Scope: ${scopeStr}]`
     );
 
-    res.json({
+    return res.json({
+      success: true,
       message: isGenerated
-        ? "Password auto-generated and emailed to the user successfully."
+        ? (emailSent ? "Password auto-generated and emailed to the user successfully." : "Password reset successfully. Email gateway offline.")
         : "Password updated successfully.",
-      // SECURITY: generatedPassword intentionally omitted — transmitted via email only.
+      temporaryPassword: !emailSent && isGenerated ? password : undefined,
     });
   } catch (err) {
-    if (err.message && err.message.startsWith('SECURITY_FAULT')) {
+    if (err.message && err.message.startsWith("SECURITY_FAULT")) {
       return res.status(403).json({ success: false, message: err.message });
     }
-    logError('reset_password_failure', {
+    logError("reset_password_failure", {
       adminId: adminContext?.id,
       targetId: id,
       message: err.message,
       stack: err.stack,
     });
-    res
-      .status(500)
-      .json({
-        success: false,
-        message:
-          "An internal server error occurred while resetting the password.",
-      });
+    return res.status(500).json({
+      success: false,
+      message: "An internal server error occurred while resetting the password.",
+    });
   }
 };
-

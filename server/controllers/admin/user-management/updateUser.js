@@ -3,14 +3,16 @@ const { UNSCOPED_ACCESS_ROLES } = require("../../../config/permissions");
 const { logActivity, logError } = require("../../../utils/logger");
 const { assertActorOutranksTarget } = require("../../../config/roleHierarchy");
 
+function isUnscopedRole(role) {
+  return role === "super_admin" || (Array.isArray(UNSCOPED_ACCESS_ROLES) && UNSCOPED_ACCESS_ROLES.includes(role));
+}
+
 // @desc    Updates user demographic details and archived status
 // @access  Private (admin only — actor must strictly outrank target)
 exports.updateUser = async (req, res) => {
   const { id } = req.params;
   const { name, email, archived } = req.body;
 
-  // M-4 FIX: Use a proper RFC-5322 compatible regex instead of the weak includes("@") check.
-  // The old check accepted malformed emails like "a@", "@b", and "@@".
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!name || !email || !emailRegex.test(email)) {
     return res.status(400).json({ success: false, message: "Valid name and email are required." });
@@ -21,9 +23,15 @@ exports.updateUser = async (req, res) => {
     return res.status(401).json({ success: false, message: "Unauthorized." });
   }
 
+  // Anti-Lockout Safeguard: Cannot archive or ban yourself
+  if (String(adminContext.id) === String(id) && (archived === true || archived === "true")) {
+    return res.status(400).json({
+      success: false,
+      message: "Action prohibited: You cannot archive or deactivate your own administrative account.",
+    });
+  }
+
   try {
-    // V-01 FIX: Fetch the target user's current role BEFORE running the UPDATE,
-    // so we can enforce the hierarchy check. The query is already scoped by barangay.
     let fetchQuery = 'SELECT id, role FROM "user" WHERE id = $1';
     let fetchValues = [id];
 
@@ -33,7 +41,7 @@ exports.updateUser = async (req, res) => {
       }
       fetchQuery += ' AND barangay_id = $2';
       fetchValues.push(adminContext.barangay_id);
-    } else if (!UNSCOPED_ACCESS_ROLES.includes(adminContext.role)) {
+    } else if (!isUnscopedRole(adminContext.role)) {
       throw new Error(`SECURITY_FAULT: Unauthorized role '${adminContext.role}' attempted to update user details.`);
     }
 
@@ -42,7 +50,20 @@ exports.updateUser = async (req, res) => {
       return res.status(404).json({ success: false, message: "User not found or out of scope." });
     }
 
-    assertActorOutranksTarget(adminContext.role, fetchResult.rows[0].role);
+    const targetUser = fetchResult.rows[0];
+
+    // Non-super_admin cannot edit a super_admin
+    if (targetUser.role === 'super_admin' && adminContext.role !== 'super_admin') {
+      return res.status(403).json({
+        success: false,
+        message: "SECURITY_FAULT: Only a Super Admin can modify another Super Admin account.",
+      });
+    }
+
+    // super_admin outranks all subordinate roles; otherwise enforce standard hierarchy
+    if (adminContext.role !== 'super_admin') {
+      assertActorOutranksTarget(adminContext.role, targetUser.role);
+    }
 
     let updateQuery = 'UPDATE "user" SET name = $1, email = $2, archived = $3 WHERE id = $4';
     let updateValues = [name, email, archived, id];
@@ -59,7 +80,6 @@ exports.updateUser = async (req, res) => {
       return res.status(404).json({ success: false, message: "User not found or out of scope." });
     }
 
-    // Revoke sessions if user was archived
     if (archived === true || archived === "true") {
       await pool.query('DELETE FROM "session" WHERE "userId" = $1', [id]);
     }
@@ -81,5 +101,3 @@ exports.updateUser = async (req, res) => {
     res.status(500).json({ success: false, message: "Failed to update user details." });
   }
 };
-
-

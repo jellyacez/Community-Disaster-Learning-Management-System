@@ -4,19 +4,34 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import { Menu01Icon, Sun01Icon, Moon02Icon } from "@hugeicons/core-free-icons";
 import AdminSidebar from "./AdminSidebar";
 import CriticalAlertBanner from "./CriticalAlertBanner";
-import PortalFooter from "../ui/PortalFooter";
+
 import { authClient } from "../../lib/auth-client";
 import { useTheme } from "../../hooks/context/themeContext";
+import SuperBarangayScopeModal from "../admin/SuperBarangayScopeModal";
 
 export default function AdminLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { data: session } = authClient.useSession();
-  const userRole = session?.user?.role;
-  const isSystemAdmin = userRole === "system_admin";
-  const isMdrrmoAdmin = userRole === "mdrrmo_admin" || userRole === "head_mdrrmo_admin";
+  const { pathname } = useLocation();
+
+  // Read impersonated role if active
+  const impersonatedTarget = useMemo(() => {
+    try {
+      const stored =
+        sessionStorage.getItem("impersonated_target_user") ||
+        localStorage.getItem("impersonated_target_user");
+      if (!stored) return null;
+      const parsed = JSON.parse(stored);
+      return parsed.targetUser || parsed.user || parsed;
+    } catch {
+      return null;
+    }
+  }, [pathname]);
+
+  const effectiveRole = impersonatedTarget?.role || session?.user?.role;
+  const isSystemAdmin = effectiveRole === "system_admin" || effectiveRole === "super_admin";
   const { theme, toggleTheme } = useTheme();
 
-  const { pathname } = useLocation();
   const mainContentRef = useRef(null);
 
   useEffect(() => {
@@ -24,25 +39,6 @@ export default function AdminLayout() {
       mainContentRef.current.scrollTo(0, 0);
     }
   }, [pathname]);
-
-  // Determine if the footer should flow naturally with content (non-sticky)
-  const isScrollableFooter = useMemo(() => {
-    if (!isMdrrmoAdmin) return false;
-
-    const currentPath = (pathname || "").toLowerCase();
-    const scrollKeywords = [
-      "dashboard",
-      "sector-overview",
-      "certifications",
-      "logs",
-      "feedback",
-    ];
-
-    return (
-      currentPath.includes("/admin/mdrrmo") &&
-      scrollKeywords.some((keyword) => currentPath.includes(keyword))
-    );
-  }, [isMdrrmoAdmin, pathname]);
 
   return (
     <div className="flex flex-col h-screen bg-gray-50 dark:bg-slate-950 overflow-hidden transition-colors duration-200">
@@ -81,15 +77,10 @@ export default function AdminLayout() {
             className="flex-1 overflow-y-auto bg-gray-50 dark:bg-slate-950 flex flex-col transition-colors"
           >
             <div className="flex-1 p-4 lg:p-8">
+              <SuperBarangayScopeModal />
               <Outlet />
             </div>
-
-            {/* Non-sticky footer flows naturally at the end of the scrollable content */}
-            {isScrollableFooter && <PortalFooter />}
           </div>
-
-          {/* Pinned/Sticky footer for other pages */}
-          {!isScrollableFooter && <PortalFooter />}
         </main>
       </div>
     </div>

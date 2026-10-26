@@ -1,6 +1,7 @@
 import { localDb } from '../localDb';
 import apiClient from '../apiClient';
 import toast from 'react-hot-toast';
+import { authClient } from '../auth-client';
 
 export const MAX_RETRY_COUNT = 5;
 export const MAX_AUTH_RETRY_COUNT = 3; // Bounded retries for transient auth (401) races
@@ -26,6 +27,7 @@ export const calculateBackoff = (retryCount) => {
  * Distinguish between transient and terminal errors
  */
 export const isTransientError = (error, retryCount = 0) => {
+  if (error.message?.startsWith('Terminal:')) return false;
   // Device network error or timeout while browser reports online
   if (!error.response && navigator.onLine) return true;
   if (error.code === 'ECONNABORTED' || error.code === 'ERR_NETWORK') return true;
@@ -53,7 +55,7 @@ export const extractErrorMessage = (error) => {
   if (error.response?.status === 401) return 'Session expired. Please log in again.';
   if (error.response?.status === 403) return 'Permission denied for this action.';
   if (error.response?.status === 404) return 'The requested resource no longer exists.';
-  if (error.response?.status === 409) return error.response?.data?.message || error.response?.data?.error || 'State conflict: resource was modified while offline.';
+  if (error.response?.status === 409) return error.response?.data?.message || error.response?.data?.error || "This action conflicts with the current server state and can't be applied.";
   if (error.response?.status === 422) return 'Validation error: data was rejected by the server.';
   if (error.response?.status >= 500) return 'Server error. The service is temporarily unavailable.';
   if (error.message) return error.message;
@@ -196,6 +198,26 @@ export const getAllSyncQueueItems = async () => {
   return [...dbItems, ...memorySyncQueue];
 };
 
+/**
+ * Number of queued actions that haven't reached the server (pending, retrying or failed).
+ */
+export const getUnsyncedCount = async () => {
+  const items = await getAllSyncQueueItems();
+  return items.length;
+};
+
+/**
+ * Id of the user currently signed in, or null if it can't be determined.
+ */
+const getCurrentUserId = async () => {
+  try {
+    const res = await authClient.getSession();
+    return res?.data?.user?.id ?? null;
+  } catch {
+    return null;
+  }
+};
+
 export const dequeueWrite = async (syncId) => {
   if (typeof syncId === 'string' && syncId.startsWith('mem_')) {
     memorySyncQueue = memorySyncQueue.filter((t) => t.sync_id !== syncId);
@@ -231,38 +253,44 @@ export const discardFailedTask = async (syncId) => {
 const dispatchTask = async (task) => {
   switch (task.action_type) {
     case 'SUBMIT_FEEDBACK':
-      return await apiClient.post('/feedbacks', task.payload);
+      return await apiClient.post('/feedbacks', task.payload, { offlineSync: true });
 
     case 'REPLY_FEEDBACK':
       return await apiClient.put(
         `/feedbacks/${task.payload.feedback_id || task.payload.id}/reply`,
-        { reply: task.payload.reply }
+        { reply: task.payload.reply }, { offlineSync: true }
       );
 
     case 'MARK_STEP_COMPLETE':
       return await apiClient.post(
         `/modules/${task.payload.mod_id}/steps/${task.payload.step_id}/complete`,
-        { answers: null }
+        { answers: null }, { offlineSync: true }
       );
 
-    case 'SUBMIT_QUIZ':
+    case 'SUBMIT_QUIZ': {
+      let stepId = task.payload?.step_id;
+      if (!stepId || stepId === 'undefined') {
+        throw new Error('Terminal: Missing quiz step ID for submission.');
+      }
+
       return await apiClient.post(
-        `/modules/${task.payload.mod_id}/steps/${task.payload.step_id}/complete`,
-        { answers: task.payload.answer }
+        `/modules/${task.payload.mod_id}/steps/${stepId}/complete`,
+        { answers: task.payload.answer ?? task.payload.answers }, { offlineSync: true }
       );
+    }
 
     case 'UPDATE_PROGRESS':
     case 'COMPLETE_MODULE':
-      return await apiClient.post('/modules/progress', task.payload);
+      return await apiClient.post('/modules/progress', task.payload, { offlineSync: true });
 
     case 'UPDATE_NAME':
-      return await apiClient.put('/auth/update-user', { name: task.payload.name });
+      return await apiClient.post('/auth/update-user', { name: task.payload.name }, { offlineSync: true });
 
     case 'UPDATE_AVATAR':
-      return await apiClient.put('/auth/update-user', { image: task.payload.image });
+      return await apiClient.post('/auth/update-user', { image: task.payload.image }, { offlineSync: true });
 
     case 'UPDATE_NOTIFICATION_SETTINGS':
-      return await apiClient.put('/users/me/settings', task.payload.settings || task.payload);
+      return await apiClient.put('/users/me/settings', task.payload.settings || task.payload, { offlineSync: true });
 
     default:
       throw new Error(`Terminal: Unsupported action_type '${task.action_type}'`);
@@ -272,7 +300,7 @@ const dispatchTask = async (task) => {
 /**
  * Main synchronization loop to process queued offline tasks
  */
-export const processOfflineQueue = async () => {
+export const processOfflineQueue = async (currentUserId) => {
   if (!navigator.onLine) return;
 
   if (isSyncing) {
@@ -290,7 +318,18 @@ export const processOfflineQueue = async () => {
       retryTimeoutId = null;
     }
 
-    const tasksToProcess = await getAllPendingWrites();
+    // Queued actions use whoever is signed in when they sync, so hold back items
+    // recorded by a different user (e.g. after a logout with unsynced progress).
+    // Callers may pass the user id; otherwise look it up from the session.
+    const userId = await getCurrentUserId();
+    if (!userId) return;
+    const tasksToProcess = (await getAllPendingWrites()).filter((t) => {
+      const owner = t.payload?.user_id;
+      if (userId && owner && String(owner) === String(userId)) return true;
+      console.warn(`[SyncManager] Holding task ${t.sync_id}: belongs to a different user.`);
+      return false;
+    });
+
     if (tasksToProcess.length === 0) {
       scheduleNextRetryIfNeeded();
       return;
@@ -299,6 +338,7 @@ export const processOfflineQueue = async () => {
     console.log(`[SyncManager] Processing ${tasksToProcess.length} queued offline actions...`);
 
     for (const task of tasksToProcess) {
+      if (String(await getCurrentUserId()) !== String(userId)) break;
       // Abort loop immediately if device goes offline mid-batch
       if (!navigator.onLine) {
         console.warn('[SyncManager] Network disconnected mid-sync. Pausing queue.');
@@ -306,14 +346,17 @@ export const processOfflineQueue = async () => {
       }
 
       try {
-        await dispatchTask(task);
+        const res = await dispatchTask(task);
 
         // Successfully synced: delete from localDb
         await dequeueWrite(task.sync_id);
         console.log(`[SyncManager] Successfully synced task ${task.sync_id} (${task.action_type})`);
 
+        // Include the server reply so listeners can react to it (e.g. recertification)
         window.dispatchEvent(
-          new CustomEvent('offline-sync-item-success', { detail: { syncId: task.sync_id, task } })
+          new CustomEvent('offline-sync-item-success', {
+            detail: { syncId: task.sync_id, task, response: res?.data }
+          })
         );
         window.dispatchEvent(new CustomEvent('offline-sync-queue-updated'));
       } catch (error) {
@@ -370,7 +413,7 @@ export const processOfflineQueue = async () => {
             retry_count: currentRetries,
             last_error: errorMessage,
             error_type: errorType,
-            conflict_type: error.response?.data?.conflict_type || (isConflict ? 'TICKET_CLOSED' : null),
+            conflict_type: error.response?.data?.conflict_type || (isConflict ? 'STALE_DATA' : null),
             failed_at: Date.now(),
             next_retry_at: null
           });
@@ -439,4 +482,3 @@ const scheduleNextRetryIfNeeded = async () => {
     }, delay);
   }
 };
-

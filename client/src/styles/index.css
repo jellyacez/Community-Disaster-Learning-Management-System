@@ -10,26 +10,46 @@
   margin-bottom: 0;
 }
 
-html {
-  scroll-behavior: smooth;
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+/* In the base layer so Tailwind transition utilities can override it; skipped for reduced motion */
+@layer base {
+  html,
+  body,
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    html,
+    body,
+    *,
+    *::before,
+    *::after {
+      transition-property: background-color, border-color, color, fill, stroke;
+      transition-duration: 200ms;
+      transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    }
+  }
 }
 
 body {
   margin: 0;
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans);
   background-color: #ffffff;
   color: #111827;
-  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 :where(.dark, .dark *) body,
 html.dark body {
   background-color: #030712;
   color: #f8fafc;
-}
-
-* {
-  box-sizing: border-box;
 }
 
 input, textarea, select, button {
@@ -40,7 +60,7 @@ input, textarea, select, button {
   font-family: inherit;
 }
 
-/* Custom subtle scrollbar */
+
 *::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -118,9 +138,8 @@ html.dark .bg-gray-100\/80:not([class*="dark:bg-"]),
 html.dark .bg-gray-200\/70:not([class*="dark:bg-"]),
 html.dark .bg-slate-50\/50:not([class*="dark:bg-"]),
 html.dark .bg-slate-50\/70:not([class*="dark:bg-"]) {
-  background-color: #0b1329 !important; /* deep card navy matching charts */
+  background-color: #0b1329 !important;
 }
-
 
 :where(.dark, .dark *) .bg-gray-300,
 :where(.dark, .dark *) .bg-slate-300,
@@ -129,7 +148,7 @@ html.dark .bg-slate-300 {
   background-color: #111c38 !important;
 }
 
-/* Hover background contrast for dark mode */
+
 :where(.dark, .dark *) .hover\:bg-gray-50\/50:hover,
 :where(.dark, .dark *) .hover\:bg-gray-50\/60:hover,
 :where(.dark, .dark *) .hover\:bg-gray-50\/70:hover,
@@ -145,7 +164,7 @@ html.dark .hover\:bg-gray-100:hover {
   background-color: #16203a !important;
 }
 
-/* Text inversion (Gray & Slate) */
+
 :where(.dark, .dark *) .text-gray-900,
 :where(.dark, .dark *) .text-slate-900,
 html.dark .text-gray-900,
@@ -186,14 +205,13 @@ html.dark .text-slate-400 {
 }
 
 
-/* Red/Maroon Text Inversion */
 :where(.dark, .dark *) .text-red-950:not([class*="dark:text-"]),
 :where(.dark, .dark *) .text-red-900:not([class*="dark:text-"]),
 :where(.dark, .dark *) .text-red-800:not([class*="dark:text-"]),
 html.dark .text-red-950:not([class*="dark:text-"]),
 html.dark .text-red-900:not([class*="dark:text-"]),
 html.dark .text-red-800:not([class*="dark:text-"]) {
-  color: #fca5a5 !important; /* Accessible high-contrast coral on dark red/navy */
+  color: #fca5a5 !important;
 }
 
 :where(.dark, .dark *) .text-red-700:not([class*="dark:text-"]),
@@ -203,7 +221,7 @@ html.dark .text-red-600:not([class*="dark:text-"]) {
   color: #f87171 !important;
 }
 
-/* Emerald Text & Background Inversion for Success/Quiz States */
+/* Emerald Text & Background Inversion */
 :where(.dark, .dark *) .bg-emerald-50:not([class*="dark:bg-"]),
 :where(.dark, .dark *) .bg-emerald-50\/70:not([class*="dark:bg-"]),
 html.dark .bg-emerald-50:not([class*="dark:bg-"]),
@@ -373,11 +391,119 @@ html.dark .auth-isolated input::placeholder {
   color: #9ca3af !important;
 }
 
-/* Recharts Dark Theme Integration */
 html.dark .recharts-cartesian-grid line {
   stroke: #1e293b !important;
 }
 
 html.dark .recharts-pie-sector {
   stroke: #0b1329 !important;
-}
+}
+
+@keyframes drawStroke {
+  0% {
+    stroke-dashoffset: 1400;
+  }
+  100% {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes riseArea {
+  0% {
+    opacity: 0;
+    transform: translateY(12px) scaleY(0.9);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scaleY(1);
+  }
+}
+
+@keyframes countEntrance {
+  0% {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.chart-curve-animate {
+  stroke-dasharray: 1400;
+  stroke-dashoffset: 1400;
+  animation: drawStroke 2.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  transition: none !important;
+}
+
+.chart-area-animate {
+  transform-origin: bottom;
+  animation: riseArea 2.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  transition: none !important;
+}
+
+.stat-number-animate {
+  animation: countEntrance 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  transition: none !important;
+}
+
+
+.animate-spin,
+.animate-pulse,
+.animate-ping {
+  transition-property: none !important;
+}
+
+/* Dark-mode remaps for amber / blue / green badges & callouts (light 50-900 shades
+   otherwise stay bright). Explicit dark: utilities win via the :not() guards. */
+html.dark .bg-amber-50:not([class*="dark:bg-"]):not(.auth-isolated *):not(.qr-isolated *),
+html.dark .bg-amber-100:not([class*="dark:bg-"]):not(.auth-isolated *):not(.qr-isolated *) {
+  background-color: rgba(245, 158, 11, 0.15) !important;
+}
+
+html.dark .text-amber-600:not([class*="dark:text-"]):not(.auth-isolated *):not(.qr-isolated *),
+html.dark .text-amber-700:not([class*="dark:text-"]):not(.auth-isolated *):not(.qr-isolated *),
+html.dark .text-amber-800:not([class*="dark:text-"]):not(.auth-isolated *):not(.qr-isolated *),
+html.dark .text-amber-900:not([class*="dark:text-"]):not(.auth-isolated *):not(.qr-isolated *) {
+  color: #fcd34d !important;
+}
+
+html.dark .border-amber-100:not([class*="dark:border-"]):not(.auth-isolated *):not(.qr-isolated *),
+html.dark .border-amber-200:not([class*="dark:border-"]):not(.auth-isolated *):not(.qr-isolated *) {
+  border-color: rgba(245, 158, 11, 0.3);
+}
+
+html.dark .bg-blue-50:not([class*="dark:bg-"]):not(.auth-isolated *):not(.qr-isolated *),
+html.dark .bg-blue-100:not([class*="dark:bg-"]):not(.auth-isolated *):not(.qr-isolated *) {
+  background-color: rgba(59, 130, 246, 0.15) !important;
+}
+
+html.dark .text-blue-600:not([class*="dark:text-"]):not(.auth-isolated *):not(.qr-isolated *),
+html.dark .text-blue-700:not([class*="dark:text-"]):not(.auth-isolated *):not(.qr-isolated *),
+html.dark .text-blue-800:not([class*="dark:text-"]):not(.auth-isolated *):not(.qr-isolated *),
+html.dark .text-blue-900:not([class*="dark:text-"]):not(.auth-isolated *):not(.qr-isolated *) {
+  color: #93c5fd !important;
+}
+
+html.dark .border-blue-100:not([class*="dark:border-"]):not(.auth-isolated *):not(.qr-isolated *),
+html.dark .border-blue-200:not([class*="dark:border-"]):not(.auth-isolated *):not(.qr-isolated *) {
+  border-color: rgba(59, 130, 246, 0.3);
+}
+
+html.dark .bg-green-50:not([class*="dark:bg-"]):not(.auth-isolated *):not(.qr-isolated *),
+html.dark .bg-green-100:not([class*="dark:bg-"]):not(.auth-isolated *):not(.qr-isolated *) {
+  background-color: rgba(34, 197, 94, 0.15) !important;
+}
+
+html.dark .text-green-600:not([class*="dark:text-"]):not(.auth-isolated *):not(.qr-isolated *),
+html.dark .text-green-700:not([class*="dark:text-"]):not(.auth-isolated *):not(.qr-isolated *),
+html.dark .text-green-800:not([class*="dark:text-"]):not(.auth-isolated *):not(.qr-isolated *),
+html.dark .text-green-900:not([class*="dark:text-"]):not(.auth-isolated *):not(.qr-isolated *) {
+  color: #86efac !important;
+}
+
+html.dark .border-green-100:not([class*="dark:border-"]):not(.auth-isolated *):not(.qr-isolated *),
+html.dark .border-green-200:not([class*="dark:border-"]):not(.auth-isolated *):not(.qr-isolated *) {
+  border-color: rgba(34, 197, 94, 0.3);
+}

@@ -60,6 +60,8 @@ exports.setMaintenanceMode = async (req, res) => {
   const { enabled } = req.body;
   try {
     await SystemSettingsService.setMaintenanceMode(enabled);
+    const { clearMaintenanceCache } = require("../../middleware/maintenanceMiddleware");
+    clearMaintenanceCache();
     
     require('../../utils/logger').logActivity(req.user.id, enabled ? 'Enabled maintenance mode' : 'Disabled maintenance mode');
     

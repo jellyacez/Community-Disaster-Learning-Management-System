@@ -2,8 +2,8 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import { useOutletContext, useLocation, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import apiClient from "../../../lib/apiClient";
-import { authClient } from "../../../lib/auth-client";
-
+import { useOfflineSession } from "../../../hooks/offlineSession";
+import { useUserDashboard } from "../../../hooks/useUserDashboard";
 import WelcomeModal from "../../../components/ui/modals/WelcomeModal.jsx";
 import DashboardStats from "../../../components/ui/dashboard/DashboardStats.jsx";
 import DashboardEnrolledList from "../../../components/ui/dashboard/DashboardEnrolledList.jsx";
@@ -20,6 +20,32 @@ import {
   ArrowRight01Icon,
   Megaphone01Icon,
 } from "@hugeicons/core-free-icons";
+
+
+const ANNOUNCEMENTS_CACHE_KEY = "lms_offline_announcements";
+
+
+
+function readLocalCache(key) {
+  if (!key) return undefined;
+  try {
+    const raw = localStorage.getItem(key);
+    return raw ? JSON.parse(raw) : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+function writeLocalCache(key, value) {
+  if (!key) return;
+  try {
+    if (value !== undefined && value !== null) {
+      localStorage.setItem(key, JSON.stringify(value));
+    }
+  } catch {
+    // Ignore storage quota errors
+  }
+}
 
 /**
  * Helper: Separates Urgent and Standard announcements,
@@ -65,46 +91,45 @@ function organizeAnnouncements(rawList = []) {
 }
 
 export default function UserDashboard() {
-  useDocumentTitle("Dashboard | Bacolor LMS");
+  useDocumentTitle("Dashboard | Bacolor Disaster LMS");
   const { currentUser } = useOutletContext();
+  const { data: dashboardData, isLoading: loading } = useUserDashboard(currentUser?.id);
   const location = useLocation();
   const navigate = useNavigate();
 
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
-  const { data: session } = authClient.useSession();
+  const { data: session } = useOfflineSession();
 
   // Infinite Carousel State
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(true);
   const [isPaused, setIsPaused] = useState(false);
 
-  // 1. Fetch Main Dashboard Data
-  const {
-    data: dashboardData,
-    isLoading: loading,
-  } = useQuery({
-    queryKey: ["userDashboard"],
-    queryFn: async () => {
-      const response = await apiClient.get("/user/dashboard");
-      return response.data;
-    },
-  });
+  const currentUserId = currentUser?.id;
+  const currentUserEmail = currentUser?.email?.toLowerCase();
 
-  // 2. Dedicated Query to pull announcements (Fetch enough so standard items aren't truncated)
+
+
+
+
+
   const {
     data: announcementsData,
     isLoading: announcementsLoading,
   } = useQuery({
     queryKey: ["latestAnnouncements"],
+    networkMode: "offlineFirst",
+    initialData: () => readLocalCache(ANNOUNCEMENTS_CACHE_KEY),
     queryFn: async () => {
       try {
         const response = await apiClient.get("/users/announcements?limit=20");
         const list = Array.isArray(response.data)
           ? response.data
           : response.data?.announcements || response.data?.data || [];
+        writeLocalCache(ANNOUNCEMENTS_CACHE_KEY, list);
         return list;
       } catch {
-        return null;
+        return readLocalCache(ANNOUNCEMENTS_CACHE_KEY) || null;
       }
     },
     staleTime: 1000 * 60 * 2,
@@ -115,6 +140,45 @@ export default function UserDashboard() {
     : dashboardData?.data?.enrolledModules
       ? dashboardData.data
       : {};
+
+  const effectiveUser = useMemo(() => {
+    const dbUser =
+      dashboardData?.userDetails || dashboardData?.data?.userDetails;
+    if (!dbUser) return currentUser;
+
+    // Safety check: ensure dbUser belongs to the current user
+    if (
+      (dbUser.id && currentUserId && String(dbUser.id) !== String(currentUserId)) ||
+      (dbUser.email && currentUserEmail && dbUser.email.toLowerCase() !== currentUserEmail)
+    ) {
+      return currentUser;
+    }
+
+    return {
+      ...currentUser,
+      // currentUser is the primary source of truth for identity
+      name: currentUser?.name || dbUser.name,
+      email: currentUser?.email || dbUser.email,
+      barangay_id: currentUser?.barangay_id ?? dbUser.barangay_id,
+      barangay_name: dbUser.barangay_name || currentUser?.barangay_name,
+    };
+  }, [currentUser, dashboardData, currentUserId, currentUserEmail]);
+
+  const isAdminRole = [
+    "super_admin",
+    "system_admin",
+    "mdrrmo_admin",
+    "head_mdrrmo_admin",
+    "barangay_admin",
+  ].includes(effectiveUser?.role);
+
+  const needsOnboarding = Boolean(
+    effectiveUser &&
+      !isAdminRole &&
+      !effectiveUser.barangay_id &&
+      !effectiveUser.barangayId &&
+      !effectiveUser.barangay,
+  );
 
   // Sanitize and filter out null, undefined, or empty announcements
   const resolvedAnnouncements = useMemo(() => {
@@ -151,7 +215,8 @@ export default function UserDashboard() {
   }), [rawData, sortedAnnouncements]);
 
   const activeModules = useMemo(
-    () => displayData.enrolledModules.filter((m) => m.progress < 100),
+    // Archived versions can't be resumed; their cards point to the updated module instead
+    () => displayData.enrolledModules.filter((m) => m.progress < 100 && m.module_status !== "archived"),
     [displayData.enrolledModules],
   );
   const topActiveModule = activeModules[0];
@@ -195,34 +260,40 @@ export default function UserDashboard() {
     return () => clearInterval(interval);
   }, [sortedAnnouncements.length, isPaused, handleNextSlide]);
 
+  const welcomeKey = effectiveUser?.id
+    ? `hasSeenWelcome_${effectiveUser.id}`
+    : "hasSeenWelcome";
+
+  const handleOnboardingSuccess = useCallback(() => {
+    setTimeout(() => setShowWelcomeModal(true), 0);
+    if (effectiveUser?.id) {
+      sessionStorage.setItem(`hasSeenWelcome_${effectiveUser.id}`, "true");
+    }
+    sessionStorage.setItem("hasSeenWelcome", "true");
+  }, [effectiveUser?.id]);
+
   useEffect(() => {
-    if (!currentUser || !currentUser.barangay_id) return;
+    if (!effectiveUser || needsOnboarding) return;
 
-    if (sessionStorage.getItem("newlyRegistered") === "true") {
-      setTimeout(() => setShowWelcomeModal(true), 0);
+    const hasSeenWelcome =
+      sessionStorage.getItem(welcomeKey) === "true" ||
+      sessionStorage.getItem("hasSeenWelcome") === "true";
+
+    const shouldShowFromRegistration =
+      sessionStorage.getItem("newlyRegistered") === "true" ||
+      location.state?.showWelcome === true;
+
+    if (shouldShowFromRegistration && !hasSeenWelcome) {
+      setShowWelcomeModal(true);
       sessionStorage.removeItem("newlyRegistered");
+      sessionStorage.setItem(welcomeKey, "true");
       sessionStorage.setItem("hasSeenWelcome", "true");
-      return;
-    }
 
-    if (location.state?.showWelcome || location.state?.fromLogin) {
-      setTimeout(() => setShowWelcomeModal(true), 0);
-      sessionStorage.setItem("hasSeenWelcome", "true");
-      navigate(location.pathname, { replace: true, state: {} });
-    }
-
-    if (session?.user?.createdAt) {
-      const accountAgeMs =
-        Date.now() - new Date(session.user.createdAt).getTime();
-      const isNewAccount = accountAgeMs < 600000;
-      const hasSeenWelcome = sessionStorage.getItem("hasSeenWelcome");
-
-      if (isNewAccount && !hasSeenWelcome) {
-        setTimeout(() => setShowWelcomeModal(true), 0);
-        sessionStorage.setItem("hasSeenWelcome", "true");
+      if (location.state?.showWelcome) {
+        navigate(location.pathname, { replace: true, state: {} });
       }
     }
-  }, [location, navigate, session, currentUser]);
+  }, [effectiveUser, needsOnboarding, welcomeKey, location.state, navigate, location.pathname]);
 
   const handleResume = useCallback(
     (moduleId) => {
@@ -233,12 +304,15 @@ export default function UserDashboard() {
 
   return (
     <div className="animate-in fade-in duration-300 relative w-full max-w-full">
-      <OnboardingModal currentUser={currentUser} />
+      <OnboardingModal
+        currentUser={effectiveUser}
+        onSuccess={handleOnboardingSuccess}
+      />
 
       <WelcomeModal
         isOpen={showWelcomeModal}
         onClose={() => setShowWelcomeModal(false)}
-        userName={currentUser?.name}
+        userName={effectiveUser?.name || currentUser?.name}
         onGoToCatalog={() => {
           setShowWelcomeModal(false);
           navigate("/user/modules");
@@ -406,8 +480,9 @@ export default function UserDashboard() {
               <div className="pt-[clamp(1rem,1.5vw,1.25rem)] border-t border-neutral-100 dark:border-white/[0.06] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div className="space-y-1.5 text-left">
                   <div className="flex items-center">
-                    <span className="inline-block rounded-full bg-neutral-100 dark:bg-white/[0.06] px-3 py-0.5 text-[10px] sm:text-[11px] font-bold tracking-wider uppercase text-neutral-500 dark:text-neutral-400">
-                      Welcome back, {currentUser?.name || "Resident"}
+                    <span className="inline-block rounded-full bg-neutral-100 dark:bg-white/[0.06]
+                      px-3 py-0.5 text-[10px] sm:text-[11px] font-bold tracking-wider uppercase text-neutral-500 dark:text-neutral-400">
+                      Welcome back, {effectiveUser?.name || currentUser?.name || "Resident"}
                     </span>
                   </div>
                   <p className="text-xs sm:text-sm text-neutral-500 dark:text-neutral-400 max-w-2xl leading-relaxed">
@@ -432,7 +507,7 @@ export default function UserDashboard() {
         <section className="grid gap-6 lg:grid-cols-3 items-start">
           <div className="lg:col-span-2 min-w-0">
             <DashboardEnrolledList
-              displayData={displayData}
+              activeModules={activeModules}
               loading={loading}
               navigate={navigate}
               handleResume={handleResume}

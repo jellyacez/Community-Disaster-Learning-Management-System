@@ -6,6 +6,9 @@ const { ADMIN_ROLES } = require("../../config/permissions");
 const requirePermission = require("../../middleware/requirePermission");
 const { adminDataLimiter, adminWriteLimiter } = require("../../middleware/rateLimiters");
 
+// MDRRMO dashboards expose municipality-wide data; barangay_admin is excluded
+const MDRRMO_DASHBOARD_ROLES = ["super_admin", "system_admin", "mdrrmo_admin", "head_mdrrmo_admin"];
+
 const moduleController = require("../../controllers/modules/moduleController");
 const mdrrmoOverviewController = require("../../controllers/admin/mdrrmoOverviewController");
 const certificateManagementController = require("../../controllers/admin/certificateManagement");
@@ -18,7 +21,7 @@ const barangayController = require("../../controllers/admin/barangayController")
 // @access  Private (admin/system_admin only)
 router.get(
   "/modules",
-  requireRole(["system_admin", "mdrrmo_admin", "head_mdrrmo_admin"]),
+  requireRole(["super_admin","system_admin", "mdrrmo_admin", "head_mdrrmo_admin"]),
   adminDataLimiter,
   requirePermission("manage_modules"),
   moduleController.getAllModules
@@ -72,7 +75,7 @@ router.patch(
 // @access  Private (mdrrmo_admin, system_admin)
 router.get(
   "/mdrrmo/metrics",
-  requireRole(ADMIN_ROLES),
+  requireRole(MDRRMO_DASHBOARD_ROLES),
   adminDataLimiter,
   mdrrmoOverviewController.getMetrics
 );
@@ -82,7 +85,7 @@ router.get(
 // @access  Private (mdrrmo_admin, system_admin)
 router.get(
   "/mdrrmo/module-distribution",
-  requireRole(ADMIN_ROLES),
+  requireRole(MDRRMO_DASHBOARD_ROLES),
   adminDataLimiter,
   mdrrmoOverviewController.getModuleDistribution
 );
@@ -92,7 +95,7 @@ router.get(
 // @access  Private (mdrrmo_admin, system_admin)
 router.get(
   "/mdrrmo/enrollment-trend",
-  requireRole(ADMIN_ROLES),
+  requireRole(MDRRMO_DASHBOARD_ROLES),
   adminDataLimiter,
   mdrrmoOverviewController.getEnrollmentTrend
 );
@@ -102,7 +105,7 @@ router.get(
 // @access  Private (mdrrmo_admin, system_admin)
 router.get(
   "/mdrrmo/recent-activity",
-  requireRole(ADMIN_ROLES),
+  requireRole(MDRRMO_DASHBOARD_ROLES),
   adminDataLimiter,
   mdrrmoOverviewController.getRecentActivity
 );
@@ -112,7 +115,7 @@ router.get(
 // @access  Private (mdrrmo_admin, system_admin)
 router.get(
   "/mdrrmo/activity-log",
-  requireRole(ADMIN_ROLES),
+  requireRole(MDRRMO_DASHBOARD_ROLES),
   adminDataLimiter,
   activityLogController.getMdrrmoActivityLog
 );
@@ -122,7 +125,7 @@ router.get(
 // @access  Private (mdrrmo_admin, system_admin)
 router.get(
   "/mdrrmo/activity-log/export",
-  requireRole(ADMIN_ROLES),
+  requireRole(MDRRMO_DASHBOARD_ROLES),
   adminDataLimiter,
   activityLogController.exportMdrrmoActivityLog
 );
@@ -131,7 +134,7 @@ router.get(
 // @desc    Get aggregate data per barangay for Sector Overview
 router.get(
   "/mdrrmo/sector-overview",
-  requireRole(ADMIN_ROLES),
+  requireRole(MDRRMO_DASHBOARD_ROLES),
   adminDataLimiter,
   mdrrmoOverviewController.getSectorOverview
 );
@@ -140,7 +143,7 @@ router.get(
 // @desc    Get category breakdown for certificates per barangay
 router.get(
   "/mdrrmo/sector-overview/category-breakdown",
-  requireRole(ADMIN_ROLES),
+  requireRole(MDRRMO_DASHBOARD_ROLES),
   adminDataLimiter,
   mdrrmoOverviewController.getSectorOverviewCategoryBreakdown
 );
@@ -181,7 +184,7 @@ router.put(
 
 router.get(
   "/mdrrmo/approvals",
-  requireRole(["head_mdrrmo_admin"]),
+  requireRole(["super_admin","head_mdrrmo_admin"]),
   adminWriteLimiter,
   requirePermission("approve_modules"),
   moduleController.getPendingModulesReview
@@ -189,7 +192,7 @@ router.get(
 
 router.put(
   "/mdrrmo/module/:id/review",
-  requireRole(["head_mdrrmo_admin"]),
+  requireRole(["super_admin","head_mdrrmo_admin"]),
   adminWriteLimiter,
   requirePermission("approve_modules"),
   moduleController.updateModuleStatus
@@ -200,7 +203,7 @@ router.put(
 // @access  Private (mdrrmo_admin, system_admin)
 router.get(
   "/mdrrmo/certifications/analytics",
-  requireRole(["system_admin", "mdrrmo_admin", "head_mdrrmo_admin"]),
+  requireRole(["super_admin","system_admin", "mdrrmo_admin", "head_mdrrmo_admin"]),
   adminDataLimiter,
   mdrrmoOverviewController.getMunicipalCertAnalytics
 );
@@ -210,7 +213,7 @@ router.get(
 // @access  Private (mdrrmo_admin, system_admin)
 router.get(
   "/mdrrmo/certifications/feed",
-  requireRole(["system_admin", "mdrrmo_admin", "head_mdrrmo_admin"]),
+  requireRole(["super_admin","system_admin", "mdrrmo_admin", "head_mdrrmo_admin"]),
   adminDataLimiter,
   mdrrmoOverviewController.getMunicipalCertFeed
 );
@@ -220,7 +223,7 @@ router.get(
 // @access  Private (mdrrmo_admin, head_mdrrmo_admin, system_admin)
 router.post(
   "/mdrrmo/announcements",
-  requireRole(["system_admin", "mdrrmo_admin", "head_mdrrmo_admin"]),
+  requireRole(["super_admin","system_admin", "mdrrmo_admin", "head_mdrrmo_admin"]),
   adminWriteLimiter,
   barangayController.createBarangayAnnouncement
 );

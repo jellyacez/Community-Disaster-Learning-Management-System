@@ -3,7 +3,7 @@ import useDocumentTitle from "../../hooks/useDocumentTitle";
 import { Link } from "react-router-dom";
 
 export default function PrivacyPolicyPage() {
-  useDocumentTitle("Privacy Policy | Bacolor LMS");
+  useDocumentTitle("Privacy Policy | Bacolor Disaster LMS");
   const [showScrollTop, setShowScrollTop] = useState(false);
 
   useEffect(() => {

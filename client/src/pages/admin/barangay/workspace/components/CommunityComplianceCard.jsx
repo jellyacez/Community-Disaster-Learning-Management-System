@@ -6,7 +6,7 @@ export default function CommunityComplianceCard({
   pendingCount,
 }) {
   return (
-    <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm lg:col-span-4 flex flex-col justify-between">
+    <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-[0_2px_12px_-3px_rgba(0,0,0,0.06)] flex flex-col justify-between h-full flex-1 w-full">
       <div className="border-b border-gray-100 dark:border-slate-800 pb-3">
         <h3 className="text-sm font-bold text-gray-900 dark:text-white">Community Safety Compliance</h3>
         <p className="text-xs text-gray-400 dark:text-slate-400 mt-0.5">Ratio of certified vs uncertified citizens</p>

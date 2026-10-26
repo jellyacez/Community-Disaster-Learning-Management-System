@@ -8,7 +8,7 @@ import AuthLayout from "../../components/layouts/AuthLayout";
 import RegisterForm from "../../components/auth/RegisterForm";
 
 export default function RegisterPage() {
-  useDocumentTitle("Register | Bacolor LMS");
+  useDocumentTitle("Register | Bacolor Disaster LMS");
 
   const navigate = useNavigate();
   const { data: session, isPending } = authClient.useSession();
@@ -25,7 +25,7 @@ export default function RegisterPage() {
       const navState = { replace: true };
 
       if (userRole === "system_admin") navigate("/admin/dashboard", navState);
-      else if (userRole === "mdrrmo_admin")
+      else if (userRole === "mdrrmo_admin" || userRole === "head_mdrrmo_admin")
         navigate("/admin/mdrrmo/dashboard", navState);
       else if (userRole === "barangay_admin")
         navigate("/admin/barangay/dashboard", navState);
@@ -43,7 +43,7 @@ export default function RegisterPage() {
   return (
     <AuthLayout
       title="Create Account"
-      subtitle="Register to access the DRRM portal"
+      subtitle="Register to access Bacolor Disaster LMS"
     >
       <RegisterForm />
     </AuthLayout>

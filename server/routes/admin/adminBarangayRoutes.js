@@ -28,7 +28,7 @@ router.get(
 // @access  Private (barangay_admin only)
 router.get(
   "/barangay/certifications",
-  requireRole(["barangay_admin"]),
+  requireRole(["super_admin","barangay_admin"]),
   adminDataLimiter,
   barangayController.getBarangayCertifications
 );
@@ -59,7 +59,7 @@ router.post(
 // @access  Private (barangay_admin only)
 router.get(
   "/barangay/activity-log",
-  requireRole(["barangay_admin"]),
+  requireRole(["super_admin","barangay_admin"]),
   adminDataLimiter,
   barangayController.getBarangayActivityLog
 );

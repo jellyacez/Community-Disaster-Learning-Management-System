@@ -53,6 +53,75 @@ const securityHooksPlugin = () => {
           },
         },
         {
+          // Reject sign-up for an email that already has an account with a clear 422,
+          // instead of Better Auth's anti-enumeration 200 (requireEmailVerification).
+          matcher(context) {
+            return context.path === "/sign-up/email";
+          },
+          handler: async (ctx) => {
+            // Same rules the register form shows: 8+ characters, one uppercase letter, one symbol
+            const password = ctx.body?.password;
+            if (typeof password !== "string" || !/^(?=.*[A-Z])(?=.*[!@#$%^&*_=+\-/.]).{8,}$/.test(password)) {
+              throw new APIError("UNPROCESSABLE_ENTITY", {
+                code: "WEAK_PASSWORD",
+                message: "Use at least 8 characters, with 1 uppercase letter and 1 symbol.",
+              });
+            }
+
+            // The barangay must be one of ours, otherwise the after hook would silently skip it
+            const rawBarangay = ctx.body?.barangay || ctx.body?.barangay_id;
+            let barangayFound = false;
+            if (rawBarangay) {
+              try {
+                if (!isNaN(rawBarangay) && Number.isInteger(Number(rawBarangay))) {
+                  const bCheck = await pool.query(
+                    `SELECT 1 FROM barangays WHERE id = $1`,
+                    [Number(rawBarangay)]
+                  );
+                  barangayFound = bCheck.rows.length > 0;
+                } else if (typeof rawBarangay === "string" && rawBarangay.trim()) {
+                  const bCheck = await pool.query(
+                    `SELECT 1 FROM barangays WHERE LOWER(TRIM(name)) = LOWER($1)`,
+                    [rawBarangay.trim()]
+                  );
+                  barangayFound = bCheck.rows.length > 0;
+                }
+              } catch (err) {
+                logError("signup_barangay_check_failure", { message: err.message });
+                throw new APIError("INTERNAL_SERVER_ERROR", {
+                  message: "We couldn't check your barangay. Please try again.",
+                });
+              }
+            }
+            if (!barangayFound) {
+              throw new APIError("UNPROCESSABLE_ENTITY", {
+                code: "INVALID_BARANGAY",
+                message: "Choose your barangay from the list.",
+              });
+            }
+
+            const rawEmail = ctx.body?.email;
+            if (typeof rawEmail !== "string" || !rawEmail.trim()) return {};
+
+            let existing;
+            try {
+              existing = await ctx.context.internalAdapter.findUserByEmail(rawEmail.trim().toLowerCase());
+            } catch (err) {
+              // Fail open: Better Auth's own duplicate handling still prevents a second account.
+              logError("signup_duplicate_check_failure", { message: err.message });
+              return {};
+            }
+
+            if (existing?.user) {
+              throw new APIError("UNPROCESSABLE_ENTITY", {
+                code: "USER_ALREADY_EXISTS",
+                message: "An account with this email already exists. Please sign in or reset your password.",
+              });
+            }
+            return {};
+          },
+        },
+        {
           matcher(context) {
             return context.path?.includes("sign-out") || false;
           },
@@ -162,7 +231,7 @@ const securityHooksPlugin = () => {
                   const data = await clone.json();
                   userId = data?.user?.id;
                 }
-              } catch (e) { /* non-critical */ }
+              } catch { /* non-critical */ }
             }
 
             if (!userId) {
@@ -182,7 +251,7 @@ const securityHooksPlugin = () => {
                     }
                   }
                 }
-              } catch (e) { /* non-critical */ }
+              } catch { /* non-critical */ }
             }
 
             if (!userId) return {};
@@ -226,7 +295,7 @@ const securityHooksPlugin = () => {
                     userId,
                     `Session limit enforced (${limit} for role '${role}'): ${evictCount} oldest session(s) evicted.`,
                   );
-                } catch (_) { /* non-critical */ }
+                } catch { /* non-critical */ }
               }
             } catch (err) {
               // Non-fatal — a failure here must never block a legitimate sign-in.
@@ -246,7 +315,10 @@ const securityHooksPlugin = () => {
             if (ctx.context?.returned instanceof APIError) return {};
             
             // Extract user from context or response body
-            let user = ctx.context?.newSession?.user || ctx.context?.user;
+            let user =
+              ctx.context?.newSession?.user ||
+              ctx.context?.user ||
+              ctx.context?.returned?.user;
             let userId = user?.id;
 
             if (!user) {
@@ -267,6 +339,21 @@ const securityHooksPlugin = () => {
               }
             }
 
+            // Guaranteed fallback: look up user by the email submitted during registration
+            if (!userId && ctx.body?.email) {
+              try {
+                const uRes = await pool.query(
+                  'SELECT id FROM "user" WHERE LOWER(email) = LOWER($1)',
+                  [ctx.body.email.trim()]
+                );
+                if (uRes.rows.length > 0) {
+                  userId = uRes.rows[0].id;
+                }
+              } catch (e) {
+                console.error("Non-critical error looking up user by email on sign-up:", e.message);
+              }
+            }
+
             if (userId) {
               try {
                 // Track consent in the database
@@ -278,7 +365,32 @@ const securityHooksPlugin = () => {
                   [CONSENT_VERSION, userId]
                 );
 
-                
+                // Persist barangay assignment if supplied during registration
+                const rawBarangay = ctx.body?.barangay || ctx.body?.barangay_id;
+                if (rawBarangay) {
+                  let resolvedBarangayId = null;
+                  if (!isNaN(rawBarangay) && Number.isInteger(Number(rawBarangay))) {
+                    const bCheck = await pool.query(
+                      `SELECT id FROM barangays WHERE id = $1`,
+                      [Number(rawBarangay)]
+                    );
+                    if (bCheck.rows.length > 0) resolvedBarangayId = bCheck.rows[0].id;
+                  } else {
+                    const cleanName = String(rawBarangay).trim();
+                    const bCheck = await pool.query(
+                      `SELECT id FROM barangays WHERE LOWER(TRIM(name)) = LOWER($1)`,
+                      [cleanName]
+                    );
+                    if (bCheck.rows.length > 0) resolvedBarangayId = bCheck.rows[0].id;
+                  }
+                  if (resolvedBarangayId) {
+                    await pool.query(
+                      `UPDATE "user" SET barangay_id = $1 WHERE id = $2`,
+                      [resolvedBarangayId, userId]
+                    );
+                  }
+                }
+
                 logActivity(userId, `Account created with explicit data privacy consent (${CONSENT_VERSION})`);
               } catch (err) {
                 logError('consent_stamp_failure', {

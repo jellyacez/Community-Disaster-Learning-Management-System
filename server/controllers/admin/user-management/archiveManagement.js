@@ -3,6 +3,10 @@ const { logActivity, logError } = require('../../../utils/logger');
 const { UNSCOPED_ACCESS_ROLES } = require("../../../config/permissions");
 const { assertActorOutranksTarget } = require("../../../config/roleHierarchy");
 
+function isUnscopedRole(role) {
+  return role === "super_admin" || (Array.isArray(UNSCOPED_ACCESS_ROLES) && UNSCOPED_ACCESS_ROLES.includes(role));
+}
+
 // @desc    Archive or unarchive a user
 // @access  Private (admin only — actor must strictly outrank target)
 exports.archiveUser = async (req, res) => {
@@ -11,7 +15,6 @@ exports.archiveUser = async (req, res) => {
   try {
     const adminContext = req.user;
 
-    // V-01 FIX: Fetch target user's role before mutation.
     let targetQuery = 'SELECT id, role, email FROM "user" WHERE id = $1';
     let targetValues = [id];
 
@@ -21,7 +24,7 @@ exports.archiveUser = async (req, res) => {
       }
       targetQuery += ' AND barangay_id = $2';
       targetValues.push(adminContext.barangay_id);
-    } else if (!UNSCOPED_ACCESS_ROLES.includes(adminContext.role)) {
+    } else if (!isUnscopedRole(adminContext.role)) {
       throw new Error(`SECURITY_FAULT: Unauthorized role '${adminContext.role}' attempted to archive users.`);
     }
 
@@ -31,11 +34,18 @@ exports.archiveUser = async (req, res) => {
     }
 
     const targetUser = targetResult.rows[0];
-    assertActorOutranksTarget(adminContext.role, targetUser.role);
+
+    // Protect super_admin from being archived
+    if (targetUser.role === 'super_admin') {
+      return res.status(403).json({ success: false, message: 'Super Administrator accounts cannot be archived.' });
+    }
+
+    if (adminContext.role !== 'super_admin') {
+      assertActorOutranksTarget(adminContext.role, targetUser.role);
+    }
 
     await pool.query(`UPDATE "user" SET archived = $1 WHERE id = $2`, [archived, id]);
 
-    // Immediately revoke sessions if archived
     if (archived) {
       await pool.query(`DELETE FROM "session" WHERE "userId" = $1`, [id]);
     }
@@ -73,9 +83,6 @@ exports.bulkArchiveUsers = async (req, res) => {
   try {
     const adminContext = req.user;
 
-    // V-01 FIX: Fetch ALL target users' roles before any mutation.
-    // If any target has equal or higher rank than the actor, the entire
-    // bulk operation is rejected — no partial execution.
     let targetQuery = 'SELECT id, role, email FROM "user" WHERE id = ANY($1)';
     let targetValues = [userIds];
 
@@ -85,7 +92,7 @@ exports.bulkArchiveUsers = async (req, res) => {
       }
       targetQuery += ' AND barangay_id = $2';
       targetValues.push(adminContext.barangay_id);
-    } else if (!UNSCOPED_ACCESS_ROLES.includes(adminContext.role)) {
+    } else if (!isUnscopedRole(adminContext.role)) {
       throw new Error(`SECURITY_FAULT: Unauthorized role '${adminContext.role}' attempted to bulk archive users.`);
     }
 
@@ -94,16 +101,18 @@ exports.bulkArchiveUsers = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Users not found or out of scope' });
     }
 
-    // Validate rank against every matched user — fail-fast on first violation
     for (const targetUser of targetResult.rows) {
-      assertActorOutranksTarget(adminContext.role, targetUser.role);
+      if (targetUser.role === 'super_admin') {
+        return res.status(403).json({ success: false, message: 'Bulk actions cannot target Super Administrator accounts.' });
+      }
+      if (adminContext.role !== 'super_admin') {
+        assertActorOutranksTarget(adminContext.role, targetUser.role);
+      }
     }
 
-    // Only the users that passed scope + rank checks get updated
     const validatedIds = targetResult.rows.map(u => u.id);
     await pool.query(`UPDATE "user" SET archived = $1 WHERE id = ANY($2)`, [isArchived, validatedIds]);
 
-    // Immediately revoke sessions for all archived users
     if (isArchived) {
       await pool.query(`DELETE FROM "session" WHERE "userId" = ANY($1)`, [validatedIds]);
     }
@@ -126,4 +135,3 @@ exports.bulkArchiveUsers = async (req, res) => {
     res.status(500).json({ success: false, message: 'Failed to bulk update users' });
   }
 };
-

@@ -2,7 +2,7 @@
 export default function Spinner({ className = "w-4 h-4 text-white" }) {
   return (
     <svg
-      className={`animate-spin ${className}`}
+      className={`animate-spin motion-reduce:animate-none ${className}`}
       xmlns="http://www.w3.org/2000/svg"
       fill="none"
       viewBox="0 0 24 24"

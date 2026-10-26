@@ -7,7 +7,7 @@ import { authClient } from "../../lib/auth-client";
 import { useQueryClient } from "@tanstack/react-query";
 
 export default function AdminMfaSetupPage() {
-  useDocumentTitle("Admin MFA Setup | Bacolor LMS");
+  useDocumentTitle("Admin MFA Setup | Bacolor Disaster LMS");
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { data: session } = authClient.useSession();

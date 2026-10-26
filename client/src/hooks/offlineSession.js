@@ -1,0 +1,96 @@
+import { useCallback, useEffect, useState } from 'react';
+import { authClient } from '../lib/auth-client';
+
+const SESSION_STORAGE_KEY = 'lms_offline_session';
+
+// The offline fallback only reads user and session.expiresAt; never persist the session token
+const toCachedSession = (s) => ({ user: s.user, session: { expiresAt: s.session?.expiresAt } });
+
+function readCachedSession() {
+  try {
+    const saved = localStorage.getItem(SESSION_STORAGE_KEY);
+    if (!saved) return null;
+    const parsed = JSON.parse(saved);
+
+    // Remove if expired
+    if (parsed?.session?.expiresAt && new Date(parsed.session.expiresAt) < new Date()) {
+      localStorage.removeItem(SESSION_STORAGE_KEY);
+      return null;
+    }
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+export function useOfflineSession() {
+  const { data: liveSession, isPending, error } = authClient.useSession();
+  const [cachedSession, setCachedSession] = useState(readCachedSession);
+  const [isOffline, setIsOffline] = useState(
+    typeof navigator !== 'undefined' ? !navigator.onLine : false
+  );
+
+  // Helper to manually update or clear both localStorage and React state
+  const updateCachedSession = useCallback((newSession) => {
+    try {
+      if (newSession?.user) {
+        const cached = toCachedSession(newSession);
+        const serialized = JSON.stringify(cached);
+        if (localStorage.getItem(SESSION_STORAGE_KEY) === serialized) return;
+        localStorage.setItem(SESSION_STORAGE_KEY, serialized);
+        setCachedSession((prev) =>
+          JSON.stringify(prev) === serialized ? prev : cached
+        );
+      } else {
+        if (!localStorage.getItem(SESSION_STORAGE_KEY)) return;
+        localStorage.removeItem(SESSION_STORAGE_KEY);
+        setCachedSession(null);
+      }
+      window.dispatchEvent(new StorageEvent("storage", { key: SESSION_STORAGE_KEY }));
+    } catch {
+      // Ignore storage quota or private browsing errors
+    }
+  }, []);
+
+  // Track browser online/offline status and cross-tab storage changes
+  useEffect(() => {
+    const handleOnline = () => setIsOffline(false);
+    const handleOffline = () => setIsOffline(true);
+    const handleStorage = (e) => {
+      if (e.key === SESSION_STORAGE_KEY) {
+        setCachedSession(readCachedSession());
+      }
+    };
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    window.addEventListener('storage', handleStorage);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+      window.removeEventListener('storage', handleStorage);
+    };
+  }, []);
+
+  // Sync live session from Better Auth into local storage
+  useEffect(() => {
+    if (liveSession?.user) {
+      updateCachedSession(liveSession);
+    } else if (!isPending && !liveSession && !isOffline && !error) {
+      // Server confirmed the user is logged out while online
+      updateCachedSession(null);
+    }
+  }, [liveSession, isPending, isOffline, error, updateCachedSession]);
+
+  // Fall back to cachedSession while loading, when offline, or on network error
+  const effectiveSession =
+    liveSession ?? (isPending || isOffline || (error && !error.status) ? cachedSession : null);
+
+  return {
+    data: effectiveSession,
+    isPending: isPending && !cachedSession,
+    isOffline,
+    updateCachedSession,
+  };
+}

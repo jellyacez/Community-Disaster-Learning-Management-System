@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
+import toast from "react-hot-toast";
 import ModuleBuilderWizard from "./builders/ModuleBuilderWizard";
 import DashboardHeader from "./components/DashboardHeader";
 import ModuleGrid from "./components/ModuleGrid";
@@ -33,8 +34,7 @@ export default function ModuleManagement() {
   const { data: session } = authClient.useSession();
   const userRole = session?.user?.role;
 
-  // Only standard MDRRMO Admin can create/author modules (excludes head_mdrrmo_admin)
-  const canCreateModule = userRole === "mdrrmo_admin";
+  const canCreateModule = userRole === "mdrrmo_admin" || userRole === "super_admin";
 
   const { data: rawModules = [], isLoading, isError, refetch } = useQuery({
     queryKey: ["adminModules", "management"],
@@ -89,13 +89,19 @@ export default function ModuleManagement() {
   const paginatedModules = filteredModules.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   const handleOpenWizard = () => {
-    if (!canCreateModule) return;
+    if (!canCreateModule) {
+      toast.error("Access Denied: Insufficient Authority Level");
+      return;
+    }
     resetForm();
     setIsWizardOpen(true);
   };
 
   const handleEditModule = async (moduleId) => {
-    if (!canCreateModule) return;
+    if (!canCreateModule) {
+      toast.error("Access Denied: Insufficient Authority Level");
+      return;
+    }
     resetForm();
     setIsWizardOpen(true);
     if (loadModuleForEdit) {
@@ -118,7 +124,7 @@ export default function ModuleManagement() {
           setFilterStatus={setFilterStatus}
           sortOption={sortOption}
           setSortOption={setSortOption}
-          handleOpenWizard={canCreateModule ? handleOpenWizard : null}
+          handleOpenWizard={handleOpenWizard}
         />
 
         <ModuleGrid
@@ -129,8 +135,8 @@ export default function ModuleManagement() {
           totalPages={totalPages}
           currentPage={currentPage}
           setCurrentPage={setCurrentPage}
-          handleOpenWizard={canCreateModule ? handleOpenWizard : null}
-          handleEditModule={canCreateModule ? handleEditModule : null}
+          handleOpenWizard={handleOpenWizard}
+          handleEditModule={handleEditModule}
           setSearchQuery={setSearchQuery}
           setFilterCategory={setFilterCategory}
           setFilterLevel={setFilterLevel}

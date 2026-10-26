@@ -32,6 +32,8 @@ const { startLogRetentionCron } = require("./utils/logRetention");
 const { startCertificateExpiryCron } = require("./utils/certificateExpiryCron");
 const { startAlertMonitor } = require("./services/alertMonitorService");
 
+const verifyTurnstile = require("./middleware/verifyTurnstile");
+
 const app = express();
 
 // Start background cron jobs
@@ -68,13 +70,24 @@ app.use(
     contentSecurityPolicy: {
       directives: {
         defaultSrc: ["'self'"],
-        scriptSrc: ["'self'", "'wasm-unsafe-eval'", "blob:"],
+        scriptSrc: [
+          "'self'",
+          "'wasm-unsafe-eval'",
+          "blob:",
+          "https://challenges.cloudflare.com",
+        ],
         workerSrc: ["'self'", "blob:"],
-        connectSrc: ["'self'"],
+        connectSrc: [
+          "'self'",
+          "https://challenges.cloudflare.com",
+        ],
         styleSrc: ["'self'", "'unsafe-inline'"],
         imgSrc: ["'self'", "data:", "https:", "blob:"],
         mediaSrc: ["'self'", "https:", "blob:"], // Allow HTML5 <video> from AWS S3 and blob: previews
-        frameSrc: ["'self'"], // Removed youtube and vimeo
+        frameSrc: [
+          "'self'",
+          "https://challenges.cloudflare.com",
+        ], // Removed youtube and vimeo
         frameAncestors: ["'none'"],
         objectSrc: ["'none'"],
         upgradeInsecureRequests: [],
@@ -107,6 +120,14 @@ app.use(globalLimiter);
 const ipBlocklistMiddleware = require("./middleware/ipBlocklistMiddleware");
 app.use(ipBlocklistMiddleware);
 
+// Public liveness probe for Docker/load balancer health checks.
+// Registered before maintenance mode so the container stays "healthy" during maintenance.
+// Intentionally reveals nothing (no versions, uptime, or DB details) — use /api/admin/health for that.
+app.get("/api/health", (req, res) => {
+  res.set("Cache-Control", "no-store");
+  res.json({ status: "ok" });
+});
+
 const maintenanceMiddleware = require("./middleware/maintenanceMiddleware");
 app.use(maintenanceMiddleware);
 
@@ -115,6 +136,9 @@ const apiCacheMiddleware = require("./middleware/apiCacheMiddleware");
 
 // Apply no-store caching globally to all API routes to prevent 304 ghost caching
 app.use("/api", apiCacheMiddleware);
+
+app.post("/api/auth/sign-in/email", verifyTurnstile);
+app.post("/api/auth/sign-up/email", verifyTurnstile);
 
 app.use("/api/auth", authRateLimiter);
 app.use("/api/auth", customAuthRoutes);
@@ -130,13 +154,10 @@ const feedbackRoutes = require("./routes/users/userFeedbacksRoutes");
 
 const certificatesRoutes = require("./routes/certificatesRoutes");
 
-const levelResultRoutes = require("./routes/modules/levelResultRoutes");
-
-const mediaUploadRoutes = require("./routes/modules/mediaUploadRoutes");
 const apiSecurityMiddleware = require("./middleware/apiSecurityMiddleware");
 
 // Notif Route
-app.use("/api/notif", require("./routes/notif/sseRoutes"))
+app.use("/api/notif", require("./routes/notif/sseRoutes"));
 
 // API Routes (Business logic protected by security middleware)
 app.use("/api/public", publicRoutes);
@@ -146,10 +167,6 @@ app.use("/api/users", apiSecurityMiddleware, userRoutes);
 app.use("/api/user/dashboard", apiSecurityMiddleware, userDashboardRoutes);
 app.use("/api/modules", apiSecurityMiddleware, moduleRoutes);
 app.use("/api/feedbacks", apiSecurityMiddleware, feedbackRoutes);
-// Static routes must go before dynamic param routes (/:id) to prevent shadowing
-app.use("/api/modules", apiSecurityMiddleware, mediaUploadRoutes);
-
-app.use("/api/modules", apiSecurityMiddleware, levelResultRoutes);
 app.set("etag", false);
 
 app.use("/api", (req, res, next) => {

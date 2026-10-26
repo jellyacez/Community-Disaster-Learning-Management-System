@@ -7,7 +7,10 @@ export default function UserTable({
   selectedUserIds,
   setSelectedUserIds,
   handleManageClick,
-  handleToggleSelect
+  handleToggleSelect,
+  isSuperAdmin,
+  currentUserId,
+  onImpersonate
 }) {
   return (
     <div className="overflow-x-auto min-h-[280px]">
@@ -54,6 +57,9 @@ export default function UserTable({
                 onManageClick={handleManageClick}
                 isSelected={selectedUserIds.has(user.id)}
                 onToggleSelect={handleToggleSelect}
+                isSuperAdmin={isSuperAdmin}
+                currentUserId={currentUserId}
+                onImpersonate={onImpersonate}
               />
             ))}
         </tbody>

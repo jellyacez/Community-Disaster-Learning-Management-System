@@ -1,4 +1,4 @@
-import React from "react";
+
 import PropTypes from "prop-types";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Search01Icon } from "@hugeicons/core-free-icons";

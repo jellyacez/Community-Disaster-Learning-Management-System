@@ -1,6 +1,9 @@
-import { useRef, useEffect } from "react";
+import { useOfflineSession } from "../../../../../hooks/offlineSession";
+import { readMedia } from "../../../../../lib/offlineMedia";
+import { useRef, useEffect, useState } from "react";
 import DOMPurify from "dompurify";
 import InteractiveQuiz from "../quiz/InteractiveQuiz";
+import AttemptQuiz from "../quiz/AttemptQuiz";
 import { decodeHtml } from "../../../../../utils/textUtils";
 
 export default function StepContent({
@@ -10,10 +13,28 @@ export default function StepContent({
   assessmentData,
   completedStepIds = [],
   handleCompleteAndContinue,
+  handleNextStep,
+  isLastStep = false,
   isPreviewMode = false,
   onVideoProgress,
+  retryCount = 0,
 }) {
-  const mediaUrl = activeStep?.media_url || "";
+  const { data: session } = useOfflineSession();
+  const userId = session?.user?.id;
+  const originalUrl = activeStep?.media_url || "";
+  const [savedMedia, setSavedMedia] = useState(null);
+  useEffect(() => {
+    let cancelled = false, objectUrl;
+    setSavedMedia(null);
+    readMedia(originalUrl, userId).then(blob => {
+      if (!blob || cancelled) return;
+      objectUrl = URL.createObjectURL(blob);
+      setSavedMedia({ originalUrl, url: objectUrl });
+    }).catch(() => {});
+    return () => { cancelled = true; if (objectUrl) URL.revokeObjectURL(objectUrl); };
+  }, [originalUrl, userId]);
+  const mediaUrl = originalUrl;
+  const playbackUrl = savedMedia?.originalUrl === originalUrl ? savedMedia.url : originalUrl;
   const isPdf = Boolean(
     mediaUrl && (mediaUrl.match(/\.pdf($|\?)/i) || activeStep?.step_type === "pdf" || activeStep?.type === "pdf")
   );
@@ -121,7 +142,7 @@ export default function StepContent({
               <div className="flex items-center justify-between mb-2">
                 <span className="text-xs font-medium text-gray-500 dark:text-slate-400">Document Guide</span>
                 <a
-                  href={mediaUrl}
+                  href={playbackUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-1 text-xs font-semibold text-gray-600 dark:text-slate-400 hover:text-red-600 dark:hover:text-red-400 transition-colors"
@@ -134,7 +155,7 @@ export default function StepContent({
               </div>
               <div className="w-full h-[620px] bg-gray-100 dark:bg-slate-900 rounded-lg overflow-hidden border border-gray-200 dark:border-slate-800">
                 <iframe
-                  src={mediaUrl}
+                  src={playbackUrl}
                   title={decodeHtml(activeStep.title) || "PDF Document"}
                   className="w-full h-full border-0"
                 />
@@ -143,25 +164,24 @@ export default function StepContent({
           ) : isVideo ? (
             <div className="w-full aspect-video rounded-lg overflow-hidden bg-black mb-8">
               <video
-                key={activeStep.id}
+                key={`${activeStep.id}:${playbackUrl}`}
                 controls
                 preload="metadata"
                 className="w-full h-full object-contain"
                 controlsList="nodownload"
-                poster="/offline-video-placeholder.svg"
                 onTimeUpdate={handleTimeUpdate}
                 onSeeking={handleSeeking}
                 onSeeked={handleSeeked}
                 onEnded={handleEnded}
               >
-                <source src={mediaUrl} />
+                <source src={playbackUrl} />
                 Your browser does not support the video tag.
               </video>
             </div>
           ) : isImage ? (
             <div className="w-full rounded-lg overflow-hidden mb-8 border border-gray-100 dark:border-slate-800">
               <img
-                src={mediaUrl}
+                src={playbackUrl}
                 alt={activeStep.title || "Step Media"}
                 className="w-full max-h-[500px] object-cover"
               />
@@ -170,7 +190,7 @@ export default function StepContent({
             <div className="w-full py-3.5 px-4 rounded-lg bg-gray-50 border border-gray-200 dark:bg-slate-900 dark:border-slate-800 flex items-center justify-between mb-8">
               <span className="text-sm font-medium text-gray-700 dark:text-slate-300">Reference Material Attachment</span>
               <a
-                href={mediaUrl}
+                href={playbackUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-1 text-xs font-semibold text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 transition-colors"
@@ -197,7 +217,7 @@ export default function StepContent({
       {isAssessment && (
         <div className="mt-6">
           {!isPreviewMode && completedStepIds.includes(activeStep.id) ? (
-            <div className="border border-emerald-200 dark:border-emerald-800/60 bg-emerald-50/60 dark:bg-emerald-950/30 rounded-lg p-6 text-center">
+            <div className="border border-emerald-200 dark:border-emerald-800/60 bg-emerald-50/60 dark:bg-emerald-950/30 rounded-2xl p-6 text-center">
               <div className="w-10 h-10 bg-emerald-100 dark:bg-emerald-900/50 text-emerald-600 dark:text-emerald-400 rounded-full flex items-center justify-center mx-auto mb-3">
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
@@ -205,10 +225,34 @@ export default function StepContent({
               </div>
               <h3 className="text-base font-semibold text-emerald-900 dark:text-emerald-200 mb-1">Assessment Completed</h3>
               <p className="text-sm text-emerald-700 dark:text-emerald-300">You have completed this assessment.</p>
+              {handleNextStep && (
+                <div className="mt-5 flex justify-center">
+                  <button
+                    type="button"
+                    id="next-step-btn"
+                    onClick={handleNextStep}
+                    className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-bold text-sm bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98] text-white shadow-md shadow-emerald-600/20 transition-all cursor-pointer dark:bg-emerald-600 dark:hover:bg-emerald-500"
+                  >
+                    <span>{isLastStep ? "Finish Module" : "Next step"}</span>
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                    </svg>
+                  </button>
+                </div>
+              )}
             </div>
+          ) : !isPreviewMode && activeStep.is_final_assessment ? (
+            // Final assessments run as server-owned attempts (no answer key on the client)
+            <AttemptQuiz
+              key={`${activeStep.id}-${retryCount}`}
+              stepId={activeStep.id}
+              retryCount={retryCount}
+              onSubmitAttempt={(attemptId) => handleCompleteAndContinue(null, { attemptId })}
+            />
           ) : (
             <InteractiveQuiz
-              key={activeStep.id}
+              key={`${activeStep.id}-${retryCount}`}
+              stepId={activeStep.id}
               stepType={activeStep.type}
               questions={assessmentData.questions}
               isLoading={assessmentData.isLoading}

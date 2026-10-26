@@ -621,6 +621,59 @@ This document tracks identified technical debt, architectural decisions, missing
 
 ---
 
+### Resolved: Phantom UPDATE_PROGRESS and COMPLETE_MODULE Offline Sync Dispatch Gap (`syncManager.js`, `progressService.js`, `moduleRoutes.js`)
+- **Location:** `server/routes/modules/moduleRoutes.js`, `server/controllers/modules/moduleProgressController.js`, `client/src/lib/LocalSave/syncManager.js`, `client/src/lib/LocalSave/progressService.js`
+- **Issue:** 
+  1. `syncManager.js` previously dispatched `UPDATE_PROGRESS` and `COMPLETE_MODULE` to unmounted path patterns (`/api/modules/:id/progress` and `/api/modules/:id/complete`), producing HTTP 404 errors during background replay.
+  2. Investigation confirmed that the primary source of truth for learner progression is step completion (`POST /api/modules/:id/steps/:stepId/complete`), which atomically updates step status, recalculates overall module percentage, and issues certificates upon completion. However, client-side progress updates and completions still required a legitimate, mounted sync route.
+- **Resolution:**
+  - **Mounted Dedicated Sync Route:** Implemented and mounted `POST /api/modules/progress` (`router.post("/progress", moduleProgressController.syncModuleProgress)` in `moduleRoutes.js`). The controller recalculates completion percentage from step completions and updates `module_activity` (`modstatus`, `progress`, `completed_at`).
+  - **Re-routed Sync Manager Dispatches:** In `syncManager.js`, routed both `UPDATE_PROGRESS` and `COMPLETE_MODULE` to `POST /api/modules/progress` with `task.payload` (`{ mod_id, user_id, ... }`).
+  - **Cache vs. Sync Segregation in Progress Service:** Updated `saveOfflineModuleProgress` in `progressService.js` to update the local Dexie `module_activity` store directly without enqueueing orphaned tasks to the sync queue (acting as an immediate local progress-bar cache).
+  - **Maintained Backward Compatibility:** `markModuleCompletedOffline` still enqueues `COMPLETE_MODULE`, but it now replays safely against the mounted `POST /api/modules/progress` route instead of failing with 404.
+- **Verification:** Verified that step completions and offline sync replays cleanly succeed against `POST /api/modules/progress` without 404 errors or orphaned tasks.
+
+---
+
+### Resolved: Offline Queue Safari / iOS Storage Fallback & Honest Failure Propagation (D6 Part 1)
+- **Location:** `client/src/lib/LocalSave/syncManager.js`, `client/src/lib/LocalSave/progressService.js`, calling UI hooks and components (`useModuleViewer.js`, `ProfilePreferences.jsx`, `ProfileAvatar.jsx`, `useNotificationPreferences.js`, `useFeedbackSubmit.js`, `useFeedbackHistory.js`)
+- **Issue:**
+  1. In restricted environments (Safari Private Browsing which blocks IndexedDB access, or quota exhaustion), Dexie calls threw `SecurityError` or `QuotaExceededError`.
+  2. Sibling storage functions in `progressService.js` (`saveOfflineStepProgress`, `saveOfflineResult`, `saveOfflineAvatarChange`, `saveOfflineUserName`, `saveOfflineNotification`, `markModuleCompletedOffline`, `saveOfflineModuleProgress`) swallowed errors in silent try/catch blocks and dishonestly reported `{ status: 'queued' }` back to the UI, leading the resident to believe their actions were safely persisted when they were lost.
+- **Resolution:**
+  - **In-Memory Queue Fallback (`memorySyncQueue`):** Introduced `enqueueMemoryTask` and unified `enqueueSyncTask` in `syncManager.js`. When IndexedDB writes fail with `SecurityError` or `QuotaExceededError`, tasks are safely buffered in an in-memory queue (`memorySyncQueue`) for the current tab session, annotated with `is_memory_only: true`.
+  - **Honest Status Propagation:** Refactored all 7 storage-layer methods in `progressService.js` to return honest status contracts: `{ status: 'queued', storageType: 'idb' }`, `{ status: 'queued_memory_only', storageType: 'memory', warning: ... }`, or `{ status: 'failed', error: ... }`.
+  - **UI Branching & Warning Banners:** Updated all calling UI components and hooks to branch on the returned status, displaying amber warning toasts informing the resident that data is held in memory for the active session only and advising them not to close or refresh the tab until reconnected.
+- **Verification:** Automated verification script (`scratch/verify_safari_fallback.js`) simulated Safari Private Browsing by monkey-patching IndexedDB methods with `DOMException('The operation is insecure.', 'SecurityError')`:
+  1. Confirmed all 7 functions fall back cleanly to `memorySyncQueue` with status `'queued_memory_only'` or report honest failure.
+  2. Captured live UI screenshot (`safari_private_mode_warning_toast.png`) confirming the warning toast is rendered.
+  3. Reconnected and verified background sync drains the memory queue cleanly.
+
+---
+
+### Resolved: Offline State Conflict Lifecycle & Resolution Surface (D6 Part 2)
+- **Location:** `server/services/feedback/FeedbackService.js`, `server/controllers/users/feedbackController.js`, `server/controllers/admin/adminFeedbacks.js`, `client/src/lib/LocalSave/syncManager.js`, `client/src/components/ui/UnsyncedQueueIndicator.jsx`, `client/src/pages/user/feedback/components/FeedbackHistoryCard.jsx`
+- **Issue:**
+  1. Replying to a feedback ticket that was closed on the server while the resident was offline returned a generic `400 Bad Request`.
+  2. The offline sync manager treated 400 as an unspecified terminal failure, missing structured conflict semantics and lacking an interactive resolution surface for state divergence.
+  3. **Architectural Scope Analysis:** An audit evaluated whether module completion required a 409 conflict guard if a module was archived while offline. This was deliberately rejected and excluded because adding an archived-module 409 guard would directly regress the verified draft/versioning model (`TECH_DEBT.md:511-531`), which guarantees completion integrity for enrollees on parent versions. Step progress is naturally idempotent (`ON CONFLICT DO NOTHING`). Hence, Part 2 was cleanly scoped to the genuine state-conflict scenario: `REPLY_FEEDBACK` on closed tickets.
+- **Resolution:**
+  - **Backend 409 Semantics:** Updated `FeedbackService.js` and controllers (`feedbackController.js`, `adminFeedbacks.js`) to reject replies to closed tickets with `HTTP 409 Conflict` and structured metadata: `{ success: false, error: "Cannot reply to a closed ticket.", message: "Cannot reply to a closed ticket.", conflict_type: "TICKET_CLOSED" }`.
+  - **Client Conflict Trap & Retry Suppression:** Updated `syncManager.js` to trap 409 status codes, mark tasks as `status: 'conflict'`, `error_type: 'conflict'`, and preserve `conflict_type` (defaulting to generic `'STALE_DATA'` if unspecified). Suppressed pointless retries and backoff schedules for conflicts.
+  - **Resolution Surface (`UnsyncedQueueIndicator.jsx` & `FeedbackHistoryCard.jsx`):**
+    - Rendered distinct amber conflict badges and cards with `State Conflict` headers, `conflict_type` tags (`TICKET_CLOSED`, `STALE_DATA`), and explanatory messages.
+    - Suppressed the "Retry Now" button for conflict items and provided a dedicated "Dismiss Conflict" action with confirmation modal.
+    - Updated feedback thread cards to style conflicting offline replies with amber conflict notices and suppress in-thread retry.
+- **Verification:** Verified via automated Puppeteer test (`scratch/verify_conflict_handling.cjs`):
+  1. Direct API call to closed ticket returned `HTTP 409 { conflict_type: "TICKET_CLOSED" }`.
+  2. Queued offline task transitioned to `status: 'conflict'`.
+  3. Drawer rendered amber Conflict card with `TICKET_CLOSED` badge, suppressed "Retry Now", and rendered "Dismiss Conflict".
+  4. Dismissal confirmed and verified task purged from queue.
+  5. Verified generic 409 fallback (`STALE_DATA`) renders neutral conflict explanation.
+  6. Visual artifacts captured: `conflict_drawer_open.png` and `conflict_dismiss_modal.png`.
+
+---
+
 ## 🟡 Open / Active Technical Debt & Optimization Items
 
 ### 1. Server-Side Pagination & Cursor Querying for High-Scale Endpoints
@@ -672,6 +725,7 @@ This document tracks identified technical debt, architectural decisions, missing
 - **Location:** `client/src/lib/LocalSave/syncManager.js`, `server/controllers/feedback/feedbackController.js`, `server/controllers/admin/barangayController.js`
 - **Description:**
   - **Context:** The application is an offline-first PWA with a background sync queue (`syncManager.js` replaying queued writes via Dexie on reconnect). Any `POST` endpoint without a unique constraint is vulnerable to duplicate creation if the server processes a request successfully but the HTTP 200 OK never reaches the client before the connection drops — the client re-queues and replays the same write on the next reconnect.
+  - **Client Mutex Nuance:** An in-memory `isSyncing` guard was added in `syncManager.js` to prevent concurrent execution among overlapping wakeup events (`online`, `visibilitychange`, `trigger-offline-sync`) within a single page instance. However, this mutex is strictly in-memory per-tab. It prevents intra-tab duplication races, but cannot prevent duplicates if a resident has the application active in multiple tabs or across multiple devices syncing concurrently. Full defense-in-depth requires server-side idempotency keys.
   - **Confirmed Vulnerable (verified against real code):**
     - `POST /api/feedbacks` (`feedbackController.js`) — raw `INSERT INTO feedbacks`, no deduplication key or unique constraint.
     - Future: `POST /api/announcements` — same pattern, and this endpoint does not exist as a real feature yet (Item 7, deferred).
@@ -683,4 +737,40 @@ This document tracks identified technical debt, architectural decisions, missing
   - Client generates a UUID (`client_mutation_id`) when queuing a write in Dexie `sync_queue`, passed either via an `Idempotency-Key` request header or as a body/column value.
   - Server defines unique constraints on `client_mutation_id` and executes `ON CONFLICT (client_mutation_id) DO NOTHING` on all creation endpoints that interface with the offline sync queue.
 - **Strategic Decision:** Bundle this enhancement with the Local Announcements build (Item 7) rather than fixing feedback in isolation now — no sense adding the idempotency plumbing to a feature that does not exist yet, and current feedback exposure is lower-frequency (requires the specific processed-but-response-lost race condition) than the Publish-button double-click case, which was fixed separately and immediately.
+
+---
+
+### 6. Input Validation Audit Findings (paused until after defense)
+- **Source:** Server input-validation audit (2026-10-01), findings H1–H7, M1–M15, L1–L11.
+- **Note:** Update the status lines below when each fix branch merges into `main`.
+- **Status:**
+  - **H1 — Quiz score forgery (`ModuleProgressService.completeModuleStep`): FIXED** in `6a346ef` (on `main`). Regression: `server/tests/h1-quiz-scoring.regression.cjs`.
+  - **H4 — Module status set by authors, bypassing approval (`moduleController.js`): FIXED on branch `fix/h4-module-status-allowlist`** (`69082a4`, **not merged**). Regression: `server/tests/h4-module-status.regression.cjs`.
+  - **H3 — Better Auth `update-user` accepts `twoFactorEnabled` / `barangay_id`:** field write reproduced; MFA bypass not reproducible locally (MFA disabled), needs a test with MFA enforced.
+  - **Open (reproduced locally):** H6 (new enrollment in draft/archived modules), M10 (maintenance `"false"` enables; unvalidated broadcast severity / support email).
+  - **Open (not yet reproduced):** H2, H5, H7, M11 (stop-impersonating role gate), remaining M/L items.
+  - **Also pending:** dead `POST /api/modules/:moduleId/results` route + controller and duplicate `/:id/enroll` registration (L8).
+- **Constraints for remaining fixes:**
+  - **General:** No validation change may turn an offline-queue replay into a terminal 400.
+  - **H6:** Archived modules stay readable/writable for residents with an existing `module_activity` row; only new enrollment requires `status = 'published'`.
+  - **H5:** Partly by design — offline grading needs answer keys on the client. The real protection is server-side grading (H1).
+
+---
+
+### 7. Defense Health-Check Follow-ups (2026-10-01)
+- **Source:** Frontend static checks + deployed health check of https://drrm-training.duckdns.org/ (deployed commit `ecbc29c`, later `2a18ee6`).
+- **Fixed on branch `fix/defense-demo-polish` (not merged):** `useNotificationPreferences.js` no-undef (`46cf177`), Forgot Password redirect to `${window.location.origin}/reset-password` (`ce234f5`), localhost:5000 image fallback in ModuleCard/EnrolledModuleCard/ModuleDetailsPage (`4717632`). The VerifyCertificate `Cancel01Icon` import landed on `main` in `0ca4623`.
+- **Deploy note:** The `0ca4623` deploy failed at the client build step (the committed `ForgotPasswordPage.jsx` did not parse); the follow-up `2a18ee6` deploy succeeded.
+- **Workflow:** The working directory was modified by a second tool/editor during this session (staged files, commits to `main`). Use a separate git worktree per agent and disable format-on-save.
+- **Open:**
+  - **CI lint backlog:** "CI — Lint & Build" fails on `main` (baseline 43 errors / 14 warnings in `client/`; server 0 errors / 4 warnings). Deploy does not depend on CI.
+  - **`react-pdf-vendor` preloaded on every page:** `index.html` modulepreloads the 1.46 MB `react-pdf-vendor` and 383 kB `recharts-vendor` chunks; load them only on the routes that use them.
+  - **Console stripping config:** Vite 8 uses oxc and ignores `esbuild: { drop: ['console','debugger'] }` (`vite.config.js:108-109`); production ships `console.log` / `console.debug`.
+  - **`/grid.svg` missing:** referenced by `ModuleHeaderForm.jsx:100`, not in `public/`; the deployed URL returns the HTML fallback.
+  - **Manifest content type:** nginx serves `/manifest.webmanifest` as `application/octet-stream`.
+  - **Stray backtick in API messages:** e.g. `"\`Certificate not found."` (`certificatesController.js:9`); same pattern in `ipBlocklistController.js` and `certificateManagement.js`.
+  - **UI placeholders:** `LocalizationSettings.jsx:33` "Under Development", `:59-60` "(Coming Soon)" languages.
+  - **Raw `NOT_FOUND` toast on the public verify page:** a toast showing the error code appears alongside the Not Found card (seen in the local Puppeteer test).
+  - **`/uploads` through nginx:** relative module image URLs now resolve to same-origin `/uploads/...` in production; confirm nginx on EC2 forwards `/uploads` to the API (not verified).
+  - **`localhost:*` in the production CSP meta tag:** `client/index.html:25` allows `http://localhost:*` / `ws://localhost:*` in img/connect/media/frame-src on the deployed site.
 

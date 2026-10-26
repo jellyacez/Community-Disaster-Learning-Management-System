@@ -2,6 +2,8 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import { UserAdd01Icon } from "@hugeicons/core-free-icons";
 
 import useDocumentTitle from "../../../../hooks/useDocumentTitle";
+import { authClient } from "../../../../lib/auth-client";
+import apiClient from "../../../../lib/apiClient";
 
 import UserActionModal from "./components/UserActionModal/UserActionModal";
 import AdminProvisionModal from "./components/AdminProvisionModal";
@@ -16,6 +18,62 @@ import { useUserManagement } from "./hooks/useUserManagement";
 export default function UserManagement() {
   useDocumentTitle("User Management | Admin Console");
   const { state, actions } = useUserManagement();
+  const { data: session } = authClient.useSession();
+
+  const isSuperAdmin = session?.user?.role === "super_admin";
+
+  const handleImpersonate = async (targetUser) => {
+    try {
+      const res = await apiClient.post(`/admin/super/impersonate/${targetUser.id}`);
+      if (res.data?.success) {
+        const userPayload = JSON.stringify(targetUser);
+        sessionStorage.setItem("impersonated_target_user", userPayload);
+        localStorage.setItem("impersonated_target_user", userPayload);
+
+        if (targetUser.role === "resident" || targetUser.role === "user") {
+          window.location.href = "/userDashboard";
+        } else if (targetUser.role === "barangay_admin") {
+          window.location.href = "/admin/barangay/dashboard";
+        } else if (targetUser.role && targetUser.role.includes("mdrrmo")) {
+          window.location.href = "/admin/mdrrmo/dashboard";
+        } else {
+          window.location.href = "/admin/system/dashboard";
+        }
+      }
+    } catch (err) {
+      console.error("Impersonation failed:", err);
+      alert(err.response?.data?.error || "Could not switch identity to this user.");
+    }
+  };
+
+  const handleBulkArchive = () => {
+    // Exclude any super_admin accounts to comply with backend constraints
+    const selectedUsers = state.users.filter((u) => state.selectedUserIds.has(u.id));
+    const targetIds = selectedUsers
+      .filter((u) => u.role !== "super_admin")
+      .map((u) => u.id);
+
+    if (targetIds.length === 0) {
+      alert("No valid accounts selected for archiving. Super Admin accounts cannot be archived.");
+      return;
+    }
+
+    if (
+      window.confirm(
+        `Are you sure you want to archive ${targetIds.length} selected user${
+          targetIds.length !== 1 ? "s" : ""
+        }?`
+      )
+    ) {
+      actions.handleSave({
+        type: "bulk_archive",
+        data: {
+          userIds: targetIds,
+          archived: true,
+        },
+      });
+    }
+  };
 
   return (
     <div className="max-w-7xl mx-auto animate-in fade-in duration-150 px-6 md:px-12 pt-2 md:pt-2 pb-12 space-y-4">
@@ -36,6 +94,7 @@ export default function UserManagement() {
           Platform-wide control, access provisioning, and user administration
         </p>
       </div>
+
       <UserFilters
         search={state.search}
         setSearch={actions.setSearch}
@@ -50,25 +109,11 @@ export default function UserManagement() {
 
       <BulkActionBar
         selectedCount={state.selectedUserIds.size}
-        onArchive={() => {
-          const count = state.selectedUserIds.size;
-          if (window.confirm(`Are you sure you want to archive ${count} selected user${count !== 1 ? 's' : ''}?`)) {
-            actions.handleSave({
-              type: "bulk_archive",
-              data: {
-                userIds: Array.from(state.selectedUserIds),
-                archived: true,
-              },
-            });
-          }
-        }}
+        onArchive={handleBulkArchive}
         onCancel={() => actions.setSelectedUserIds(new Set())}
-        isPending={
-          state.isMutationPending && state.mutationType === "bulk_archive"
-        }
+        isPending={state.isMutationPending && state.mutationType === "bulk_archive"}
       />
 
-      {/* Table Area */}
       <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm">
         <div className="px-6 py-4 border-b border-gray-50 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
@@ -82,7 +127,7 @@ export default function UserManagement() {
 
           <button
             onClick={() => actions.setShowProvisionModal(true)}
-            className="flex items-center justify-center gap-2 px-3 py-1.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors w-full sm:w-auto"
+            className="flex items-center justify-center gap-2 px-3 py-1.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors w-full sm:w-auto cursor-pointer"
           >
             <HugeiconsIcon icon={UserAdd01Icon} size={16} />
             <span>Add Admin</span>
@@ -97,9 +142,11 @@ export default function UserManagement() {
           setSelectedUserIds={actions.setSelectedUserIds}
           handleManageClick={actions.handleManageClick}
           handleToggleSelect={actions.handleToggleSelect}
+          isSuperAdmin={isSuperAdmin}
+          currentUserId={session?.user?.id}
+          onImpersonate={handleImpersonate}
         />
 
-        {/* Pagination */}
         <UserTablePagination
           isLoading={state.isLoading}
           meta={state.meta}
@@ -109,7 +156,6 @@ export default function UserManagement() {
         />
       </div>
 
-      {/* Modals */}
       {state.selectedUser && (
         <UserActionModal
           user={state.selectedUser}

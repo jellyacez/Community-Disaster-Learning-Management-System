@@ -14,7 +14,7 @@ import CertificateCard from "../../../components/ui/certificates/CertificateCard
 import { SkeletonBlock } from "../../../components/ui/Skeleton";
 
 export default function UserCertificates() {
-  useDocumentTitle("My Certificates | Bacolor LMS");
+  useDocumentTitle("My Certificates | Bacolor Disaster LMS");
   const [infoDismissed, setInfoDismissed] = useState(false);
 
   const { data: rawData, isLoading, isError } = useQuery({

@@ -123,7 +123,8 @@ export default function StepBuilder({
         {(currentFlowStep.builderStepType === "quiz" || currentFlowStep.builderStepType === "situational") && (
           <div className="pt-2 border-t border-gray-100 dark:border-slate-800">
              <AssessmentEditor 
-               currentFlowStep={currentFlowStep}
+                editingStepId={editingStepId}
+                currentFlowStep={currentFlowStep}
                setCurrentFlowStep={setCurrentFlowStep}
                currentQuizQuestion={currentQuizQuestion}
                setCurrentQuizQuestion={setCurrentQuizQuestion}

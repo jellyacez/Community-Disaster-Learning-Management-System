@@ -160,6 +160,7 @@ export default function ModulePlayerPreviewModal({
             handleCompleteAndContinue={handleNextStep}
             isCompleting={false}
             getAssessmentForStep={() => ({ questions: [], isLoading: false })}
+            isPreviewMode
           />
         </div>
       </div>

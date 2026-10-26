@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, lazy, Suspense } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Alert01Icon, Download02Icon } from "@hugeicons/core-free-icons";
@@ -7,9 +7,13 @@ import toast from "react-hot-toast";
 import WorkspaceOverviewSkeleton from "./WorkspaceOverviewSkeleton";
 import ResidentInspectorPanel from "../../shared/ResidentInspectorPanel";
 import AnnouncementModal from "./announcementModal";
-import CertificateVerificationModal from "../../../../components/ui/certificates/CertificateVerificationModal";
+import Spinner from "../../../../components/ui/Spinner";
 import apiClient from "../../../../lib/apiClient";
 import useDebounce from "../../../../hooks/useDebounce";
+
+const CertificateVerificationModal = lazy(() =>
+  import("../../../../components/ui/certificates/CertificateVerificationModal")
+);
 
 // Modular sub-components
 import WorkspaceKpiGrid from "./components/WorkspaceKpiGrid";
@@ -194,7 +198,7 @@ export default function WorkspaceOverview() {
 
       {/* Row 2: Analytics Visualizers */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-4 sm:gap-6 items-stretch w-full min-w-0">
-        <div className="lg:col-span-4 min-w-0">
+        <div className="lg:col-span-4 min-w-0 flex flex-col">
           <CommunityComplianceCard
             preparednessRate={preparednessRate}
             certifiedCount={certifiedCount}
@@ -202,7 +206,7 @@ export default function WorkspaceOverview() {
           />
         </div>
 
-        <div className="lg:col-span-5 min-w-0">
+        <div className="lg:col-span-5 min-w-0 flex flex-col">
           <CurriculumReadinessCard
             modulePerformance={modulePerformance}
             paginatedModules={paginatedModules}
@@ -214,7 +218,7 @@ export default function WorkspaceOverview() {
           />
         </div>
 
-        <div className="md:col-span-2 lg:col-span-3 min-w-0">
+        <div className="md:col-span-2 lg:col-span-3 min-w-0 flex flex-col">
           <WorkspaceQuickActions
             onOpenVerifyModal={handleVerifyCertificate}
             onOpenAnnouncementModal={() => setIsAnnouncementModalOpen(true)}
@@ -256,10 +260,25 @@ export default function WorkspaceOverview() {
         barangayName={barangay.name}
       />
 
-      <CertificateVerificationModal
-        isOpen={isVerifyModalOpen}
-        onClose={() => setIsVerifyModalOpen(false)}
-      />
+      {isVerifyModalOpen && (
+        <Suspense
+          fallback={
+            <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-in fade-in duration-200">
+              <div className="relative w-full max-w-sm rounded-2xl bg-white dark:bg-slate-900 shadow-2xl p-8 border border-gray-100 dark:border-slate-800 flex flex-col items-center justify-center gap-3">
+                <Spinner className="w-8 h-8 text-red-600 animate-spin" />
+                <p className="text-sm font-semibold text-gray-700 dark:text-slate-300">
+                  Loading scanner...
+                </p>
+              </div>
+            </div>
+          }
+        >
+          <CertificateVerificationModal
+            isOpen={isVerifyModalOpen}
+            onClose={() => setIsVerifyModalOpen(false)}
+          />
+        </Suspense>
+      )}
     </div>
   );
 }

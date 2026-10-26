@@ -1,9 +1,10 @@
 import { HugeiconsIcon } from '@hugeicons/react';
-import { Menu01Icon } from '@hugeicons/core-free-icons';
+import { Menu01Icon, WifiOff01Icon } from '@hugeicons/core-free-icons';
 import { useLocation, useNavigate } from 'react-router-dom';
 import NotificationDropdown from './NotificationDropdown';
 import UnsyncedQueueIndicator from '../ui/UnsyncedQueueIndicator';
 import ThemeToggle from '../ui/globalTheme';
+import { useOfflineSession } from '../../hooks/offlineSession';
 
 export default function UserNavbar({
   currentUser,
@@ -12,6 +13,7 @@ export default function UserNavbar({
 }) {
   const location = useLocation();
   const navigate = useNavigate();
+  const { isOffline } = useOfflineSession();
 
   const getPageTitle = (pathname) => {
     if (pathname === '/userDashboard') return 'Dashboard';
@@ -27,53 +29,77 @@ export default function UserNavbar({
     return 'Resident Portal';
   };
 
-  // eslint-disable-next-line no-unused-vars
   const currentTitle = getPageTitle(location.pathname);
 
   return (
     <header className="sticky top-0 z-30 border-b border-gray-200 dark:border-slate-800 bg-white/90 dark:bg-slate-950/90 backdrop-blur transition-colors duration-200">
-      <div className="flex items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
-        <div className="flex items-center gap-3">
+      <div className="flex items-center justify-between px-3 sm:px-6 lg:px-8 py-3 sm:py-4 gap-1.5 sm:gap-3">
+
+        {/* Left Section: Menu Toggle & Title */}
+        <div className="flex flex-1 items-center gap-2 sm:gap-3 min-w-0">
           <button
             onClick={() => setSidebarOpen(true)}
             aria-label="Open sidebar menu"
-            className="rounded-xl border border-gray-200 dark:border-slate-800 p-2 text-gray-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-900 lg:hidden cursor-pointer transition-colors"
+            className="shrink-0 flex-none rounded-xl border border-gray-200 dark:border-slate-800 p-2 text-gray-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-900 lg:hidden cursor-pointer transition-all active:scale-95"
           >
-            <HugeiconsIcon aria-hidden="true" icon={Menu01Icon} className="w-5 h-5" />
+            <HugeiconsIcon aria-hidden="true" icon={Menu01Icon} className="w-5 h-5 shrink-0" />
           </button>
 
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-widest text-gray-500 dark:text-slate-400">
+          <div className="min-w-0 flex flex-col flex-1">
+            <p className="hidden sm:block text-xs font-semibold uppercase tracking-widest text-gray-500 dark:text-slate-400 truncate">
               Resident Learning Dashboard
+            </p>
+            {/* The truncate class ensures the title cuts off with "..." instead of crushing the right side */}
+            <p className="sm:hidden text-sm font-black text-gray-900 dark:text-slate-100 truncate">
+              {currentTitle}
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
+        {/* Right Section: Action Controls */}
+        <div className="flex min-w-0 items-center justify-end gap-1.5 sm:gap-3 shrink-0 flex-none">
+          {isOffline && (
+            <span
+              role="status"
+              title="You're offline. Changes are saved on this device and sync when you reconnect."
+              className="flex items-center gap-1.5 rounded-full border border-amber-200 dark:border-amber-900/60 bg-amber-50 dark:bg-amber-950/40 px-2 sm:px-3 py-1 text-xs font-bold text-amber-700 dark:text-amber-300 shrink-0"
+            >
+              <HugeiconsIcon aria-hidden="true" icon={WifiOff01Icon} className="w-4 h-4" />
+              <span className="sr-only sm:not-sr-only">Offline</span>
+            </span>
+          )}
           <UnsyncedQueueIndicator />
           <NotificationDropdown />
           <ThemeToggle />
 
+          {/* Divider visible only on larger screens */}
+          <div className="hidden sm:block w-px h-6 bg-gray-200 dark:bg-slate-800 mx-1" />
+
+          {/* User Profile Button */}
           <button
             onClick={() => navigate('/user/profile')}
             aria-label="User profile settings"
-            className="flex items-center gap-3 rounded-xl border border-gray-200 dark:border-slate-800 bg-transparent dark:bg-slate-900/60 px-3 py-2 hover:bg-gray-50 dark:hover:bg-slate-800 cursor-pointer transition-colors"
+            className="flex items-center gap-2.5 sm:gap-3 rounded-full sm:rounded-xl border border-transparent sm:border-gray-200 dark:sm:border-slate-800 bg-transparent dark:sm:bg-slate-900/60 p-0 sm:px-3 sm:py-2 hover:bg-gray-50 dark:hover:bg-slate-800 cursor-pointer transition-all active:scale-95 shrink-0 flex-none"
           >
             {currentUser?.image ? (
-              <img 
-                src={currentUser.image} 
-                alt={`${currentUser.name}'s profile`} 
-                className="h-9 w-9 rounded-full object-cover border border-gray-200 dark:border-slate-700"
+              <img
+                src={currentUser.image}
+                alt={`${currentUser.name}'s profile`}
+                className="h-8 w-8 sm:h-9 sm:w-9 min-w-[32px] min-h-[32px] sm:min-w-[36px] sm:min-h-[36px] shrink-0 flex-none rounded-full object-cover border border-gray-200 dark:border-slate-700"
               />
             ) : (
-              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-red-100 dark:bg-red-950/70 font-bold text-red-700 dark:text-red-300">
+              <div className="flex h-8 w-8 sm:h-9 sm:w-9 min-w-[32px] min-h-[32px] sm:min-w-[36px] sm:min-h-[36px] shrink-0 flex-none items-center justify-center rounded-full bg-red-100 dark:bg-red-950/70 font-bold text-[11px] sm:text-xs text-red-700 dark:text-red-300 border border-red-200 dark:border-red-900/50">
                 {userInitials}
               </div>
             )}
-            
-            <div className="hidden text-left sm:block">
-              <p className="text-sm font-bold text-gray-900 dark:text-white">{currentUser.name}</p>
-              <p className="text-xs text-gray-500 dark:text-slate-400 capitalize">{currentUser.role}</p>
+
+            <div className="hidden text-left md:block min-w-0 max-w-[130px]">
+              <p className="text-sm font-bold text-gray-900 dark:text-white truncate">
+                {currentUser?.name || "Resident"}
+              </p>
+              <p className="text-[11px] text-gray-500 dark:text-slate-400 capitalize truncate leading-tight">
+                {currentUser?.role?.replace(/_/g, " ") || "User"}
+              </p>
             </div>
           </button>
         </div>

@@ -3,10 +3,10 @@ const { logActivity, logError } = require("../../../utils/logger");
 const UserService = require("../../../services/users/UserService");
 
 // @desc    Admin hard delete a user's account and anonymize certificates
-// @access  Private (system_admin only)
+// @access  Private (system_admin and super_admin only)
 exports.deleteAccount = async (req, res) => {
-  // Explicit double-gate: Only system_admin can do this
-  if (req.user.role !== 'system_admin') {
+  // Allow both super_admin and system_admin
+  if (req.user.role !== 'system_admin' && req.user.role !== 'super_admin') {
     return res.status(403).json({ success: false, message: 'Unauthorized to permanently delete users.' });
   }
 
@@ -29,10 +29,13 @@ exports.deleteAccount = async (req, res) => {
     }
     const { email, role: targetRole, barangay_name } = userRes.rows[0];
 
-    // V-01 FIX: system_admin may not delete other system_admin accounts.
-    // This prevents both lateral attacks and last-sysadmin destruction.
-    if (targetRole === 'system_admin') {
-      return res.status(403).json({ success: false, message: 'System administrator accounts cannot be permanently deleted through this endpoint.' });
+    // Protect super_admin accounts and protect system_admins from non-super admins
+    if (targetRole === 'super_admin') {
+      return res.status(403).json({ success: false, message: 'Super administrator accounts cannot be deleted through this endpoint.' });
+    }
+
+    if (targetRole === 'system_admin' && req.user.role !== 'super_admin') {
+      return res.status(403).json({ success: false, message: 'System administrator accounts can only be deleted by a Super Administrator.' });
     }
 
     // Call the existing pipeline
@@ -54,4 +57,3 @@ exports.deleteAccount = async (req, res) => {
     res.status(500).json({ success: false, message: 'An internal server error occurred while deleting the user.' });
   }
 };
-

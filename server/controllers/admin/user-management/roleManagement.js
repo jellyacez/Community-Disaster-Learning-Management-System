@@ -4,11 +4,18 @@ const { logActivity, logError } = require("../../../utils/logger");
 const { ROLE_RANKS } = require("../../../config/roleHierarchy");
 
 // @desc    Update a user's role
-// @access  Private (system_admin only)
+// @access  Private (system_admin and super_admin)
 exports.updateUserRole = async (req, res) => {
   const { id } = req.params;
   const { role } = req.body;
-  const validRoles = ['resident', 'barangay_admin', 'mdrrmo_admin', 'head_mdrrmo_admin', 'system_admin'];
+  const validRoles = [
+    'resident',
+    'barangay_admin',
+    'mdrrmo_admin',
+    'head_mdrrmo_admin',
+    'system_admin',
+    'super_admin',
+  ];
   if (!role || !validRoles.includes(role)) {
     return res.status(400).json({ success: false, message: 'Invalid role' });
   }
@@ -18,8 +25,25 @@ exports.updateUserRole = async (req, res) => {
     return res.status(401).json({ success: false, message: 'Unauthorized' });
   }
 
+  const isSuperAdmin = adminContext.role === 'super_admin';
+
+  // Strict Safeguard: Only super_admin can grant the super_admin role
+  if (role === 'super_admin' && !isSuperAdmin) {
+    return res.status(403).json({
+      success: false,
+      message: 'SECURITY_FAULT: Only a Super Admin can promote accounts to Super Admin.',
+    });
+  }
+
+  // Self-demotion safeguard
+  if (String(adminContext.id) === String(id) && role !== adminContext.role) {
+    return res.status(400).json({
+      success: false,
+      message: 'Action forbidden: You cannot modify or demote your own administrative role.',
+    });
+  }
+
   try {
-    // 1. Enforce actor scope
     let fetchQuery = 'SELECT id, email, role, barangay_id FROM "user" WHERE id = $1';
     let fetchParams = [id];
 
@@ -39,13 +63,21 @@ exports.updateUserRole = async (req, res) => {
     }
 
     const targetUser = targetRes.rows[0];
+
+    // Non-super_admin cannot touch an existing super_admin
+    if (targetUser.role === 'super_admin' && !isSuperAdmin) {
+      return res.status(403).json({
+        success: false,
+        message: 'SECURITY_FAULT: Only a Super Admin can modify an existing Super Admin account.',
+      });
+    }
+
     const adminRank = ROLE_RANKS[adminContext.role] || 0;
     const targetCurrentRank = ROLE_RANKS[targetUser.role] || 0;
     const newRoleRank = ROLE_RANKS[role] || 0;
 
-    // 2. Enforce role hierarchy:
-    // Non-system_admins cannot modify users of equal or higher rank, nor can they assign roles of equal or higher rank.
-    if (adminContext.role !== 'system_admin') {
+    // Standard hierarchy for non-super_admin actors
+    if (!isSuperAdmin) {
       if (targetCurrentRank >= adminRank) {
         throw new Error(`SECURITY_FAULT: Cannot modify role of a user with equal or higher role rank (${targetUser.role}).`);
       }
@@ -54,11 +86,18 @@ exports.updateUserRole = async (req, res) => {
       }
     }
 
-    // Failsafe: Prevent last system_admin from self-demoting
+    // Failsafe: Prevent last system_admin or super_admin from demoting out of existence
     if (targetUser.role === 'system_admin' && role !== 'system_admin') {
       const sysAdminCount = await pool.query('SELECT COUNT(*) FROM "user" WHERE role = \'system_admin\'');
       if (parseInt(sysAdminCount.rows[0].count, 10) <= 1) {
         return res.status(400).json({ success: false, message: 'Cannot demote the last remaining System Administrator.' });
+      }
+    }
+
+    if (targetUser.role === 'super_admin' && role !== 'super_admin') {
+      const superAdminCount = await pool.query('SELECT COUNT(*) FROM "user" WHERE role = \'super_admin\'');
+      if (parseInt(superAdminCount.rows[0].count, 10) <= 1) {
+        return res.status(400).json({ success: false, message: 'Cannot demote the last remaining Super Administrator.' });
       }
     }
 
@@ -85,4 +124,3 @@ exports.updateUserRole = async (req, res) => {
     res.status(500).json({ success: false, message: 'Failed to update role' });
   }
 };
-

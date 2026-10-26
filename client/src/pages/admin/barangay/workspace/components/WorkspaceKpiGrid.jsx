@@ -1,4 +1,4 @@
-import React from "react";
+
 import PropTypes from "prop-types";
 import { 
   UserGroupIcon, 
@@ -7,7 +7,7 @@ import {
   Notification01Icon, 
   UserAdd01Icon 
 } from "@hugeicons/core-free-icons";
-import StatCard from "../../../system/overview/components/StatCard";
+import StatCard from "../../../../../components/ui/StatCard";
 
 export default function WorkspaceKpiGrid({
   totalResidents,
