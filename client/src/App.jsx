@@ -40,7 +40,7 @@ const SystemUserManagement = lazy(
   () => import("./pages/admin/system/users/UserManagement"),
 );
 const SystemActivityLog = lazy(
-  () => import("./pages/admin/system/logs/ActivityLog"),
+  () => import("./pages/admin/system/logs/ActivityLog.jsx"),
 );
 const SystemSettings = lazy(
   () => import("./pages/admin/system/settings/SystemSettings"),
@@ -98,7 +98,7 @@ const MdrrmoSectorOverview = lazy(
   () => import("./pages/admin/mdrrmo/sector-overview/SectorOverview"),
 );
 const MdrrmoActivityLog = lazy(
-  () => import("./pages/admin/mdrrmo/logs/ActivityLog"),
+  () => import("./pages/admin/mdrrmo/logs/ActivityLog.jsx"),
 );
 const MdrrmoCertifications = lazy(
   () => import("./pages/admin/mdrrmo/certifications/MdrrmoCertifications"),
@@ -119,7 +119,7 @@ const BarangayResidentRegistry = lazy(
 );
 
 const BarangaySystemLogs = lazy(
-  () => import("./pages/admin/barangay/logs/SystemLogs"),
+  () => import("./pages/admin/barangay/logs/SystemLogs.jsx"),
 );
 const BarangayCertifications = lazy(
   () => import("./pages/admin/barangay/certifications/BarangayCertifications"),

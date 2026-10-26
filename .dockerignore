@@ -17,13 +17,19 @@
 # Build outputs (client build happens inside Docker)
 **/dist
 
-# Runtime-generated directories
-**/logs
+# Runtime-generated directories (scoped so frontend source pages aren't wiped)
+/server/logs
+/logs
 **/tmp
 **/uploads
 
+# Explicitly ensure client source log pages are never excluded
+!client/src/**/logs/
+
 # Log files
-**/*.log
+*.log
+npm-debug.log*
+yarn-debug.log*
 
 # Version control & editor config
 .git
