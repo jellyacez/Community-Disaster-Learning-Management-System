@@ -120,7 +120,7 @@ class FeedbackService {
     let query = `
       SELECT
         f.*,
-        u.name AS resident_name,
+        'Anonymous Resident' AS resident_name,
         u.barangay_id,
         b.name AS barangay_name,
         COALESCE(
@@ -129,7 +129,7 @@ class FeedbackService {
               json_build_object(
                 'id', fm.id,
                 'sender_type', fm.sender_type,
-                'sender_id', fm.sender_id,
+                'sender_id', CASE WHEN fm.sender_type = 'resident' THEN NULL ELSE fm.sender_id END,
                 'message', fm.message,
                 'created_at', fm.created_at
               ) ORDER BY fm.created_at ASC
@@ -258,7 +258,7 @@ class FeedbackService {
       const fetchCompleteQuery = `
         SELECT
           f.*,
-          u.name AS resident_name,
+          'Anonymous Resident' AS resident_name,
           u.barangay_id,
           b.name AS barangay_name,
           COALESCE(
@@ -267,7 +267,7 @@ class FeedbackService {
                 json_build_object(
                   'id', fm.id,
                   'sender_type', fm.sender_type,
-                  'sender_id', fm.sender_id,
+                  'sender_id', CASE WHEN fm.sender_type = 'resident' THEN NULL ELSE fm.sender_id END,
                   'message', fm.message,
                   'created_at', fm.created_at
                 ) ORDER BY fm.created_at ASC
