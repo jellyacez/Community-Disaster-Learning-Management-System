@@ -47,3 +47,7 @@ BEGIN
 END $$;
 
 COMMIT;
+
+ALTER TABLE public.module_activity
+ADD CONSTRAINT module_activity_user_module_unique
+UNIQUE (user_id, mod_id);
