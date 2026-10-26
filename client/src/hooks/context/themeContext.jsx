@@ -9,7 +9,6 @@ import {
 } from "react";
 import { useLocation } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { authClient } from "../../lib/auth-client";
 import apiClient from "../../lib/apiClient";
 import { saveOfflineNotification } from "../../lib/LocalSave/progressService";
 
@@ -34,7 +33,7 @@ const getSystemTheme = () => {
 export function ThemeProvider({ children }) {
   const location = useLocation();
   const queryClient = useQueryClient();
-  const { data: session, isPending } = useOfflineSession();
+  const { data: session, isPending, isOffline } = useOfflineSession();
   const userId = session?.user?.id;
 
   // Dark mode is restricted exclusively to authenticated user/admin portals.
@@ -44,17 +43,15 @@ export function ThemeProvider({ children }) {
     location.pathname.startsWith("/admin");
   const isAuthenticatedPortal = Boolean(isPortalRoute && session);
 
+  // Restore preference on every entry route, including / before AppEntry redirects.
+  // Public pages remain light through effectiveTheme below.
   const [themeMode, setThemeMode] = useState(() => {
-    // Only load saved theme if initially on a portal route
-    if (typeof window !== "undefined") {
-      const path = window.location.pathname;
-      if (path.startsWith("/user") || path.startsWith("/admin")) {
-        const saved = localStorage.getItem("bacolor_theme");
-        if (saved === "dark" || saved === "light" || saved === "system")
-          return saved;
-      }
+    try {
+      const saved = localStorage.getItem("bacolor_theme");
+      return ["dark", "light", "system"].includes(saved) ? saved : "light";
+    } catch {
+      return "light";
     }
-    return "light";
   });
 
   const [systemTheme, setSystemTheme] = useState(getSystemTheme);
@@ -67,13 +64,13 @@ export function ThemeProvider({ children }) {
       const response = await apiClient.get("/users/me/settings");
       return response.data;
     },
-    enabled: Boolean(isAuthenticatedPortal && userId),
+    enabled: Boolean(isAuthenticatedPortal && userId && !isOffline),
     staleTime: 1000 * 60 * 5,
   });
 
   // Hydrate theme preference from DB whenever user logs in or portal mounts
   useEffect(() => {
-    if (isAuthenticatedPortal && userId && userSettings?.theme) {
+    if (!isOffline && isAuthenticatedPortal && userId && userSettings?.theme) {
       const dbTheme = userSettings.theme;
       if (dbTheme === "dark" || dbTheme === "light" || dbTheme === "system") {
         if (hydratedForUserRef.current !== userId) {
@@ -83,7 +80,7 @@ export function ThemeProvider({ children }) {
         }
       }
     }
-  }, [isAuthenticatedPortal, userId, userSettings?.theme]);
+  }, [isOffline, isAuthenticatedPortal, userId, userSettings?.theme]);
 
   // Listen to OS theme changes
   useEffect(() => {
@@ -110,12 +107,11 @@ export function ThemeProvider({ children }) {
     const root = document.documentElement;
     if (isAuthenticatedPortal && effectiveTheme === "dark") {
       root.classList.add("dark");
-      localStorage.setItem("bacolor_theme", themeMode);
     } else {
       root.classList.remove("dark");
       if (!isPending && !session) {
         hydratedForUserRef.current = null;
-        localStorage.removeItem("bacolor_theme");
+        // Keep the local preference through offline/session hydration failures.
       }
     }
   }, [isAuthenticatedPortal, effectiveTheme, themeMode, session, isPending]);
