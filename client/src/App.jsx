@@ -140,6 +140,21 @@ const VerifyCertificate = lazy(
   () => import("./pages/public/VerifyCertificate"),
 );
 
+import { useOfflineSession } from "./hooks/offlineSession";
+function AppEntry() {
+  const { data: session, isOffline } = useOfflineSession();
+
+  const isLearner = ["resident", "user"].includes(
+    session?.user?.role
+  );
+
+  if (isOffline && isLearner) {
+    return <Navigate to="/userDashboard" replace />;
+  }
+
+  return <LandingPage />;
+}
+
 export default function App() {
   useNetworkSync();
   useRealtimeEvents();
@@ -218,7 +233,7 @@ export default function App() {
       >
         <Routes>
           {/* PUBLIC ROUTES */}
-          <Route path="/" element={<LandingPage />} />
+          <Route path="/" element={<AppEntry />} />
           <Route path="/verify" element={<VerifyCertificate />} />
           <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
           <Route path="/register" element={<RegisterPage />} />
@@ -300,7 +315,7 @@ export default function App() {
                   <Route path="health" element={<SystemHealth />} />
                   <Route path="security" element={<SystemSecurity />} />
                 </Route>
-              </Route>              
+              </Route>
 
               <Route
                 element={<ProtectedRoute allowedRoles={["super_admin", "system_admin"]} />}
