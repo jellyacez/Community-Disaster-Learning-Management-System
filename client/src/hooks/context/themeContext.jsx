@@ -3,6 +3,7 @@ import {
   createContext,
   useContext,
   useEffect,
+  useLayoutEffect,
   useState,
   useCallback,
   useRef,
@@ -33,7 +34,7 @@ const getSystemTheme = () => {
 export function ThemeProvider({ children }) {
   const location = useLocation();
   const queryClient = useQueryClient();
-  const { data: session, isPending, isOffline } = useOfflineSession();
+  const { data: session, isOffline } = useOfflineSession();
   const userId = session?.user?.id;
 
   // Dark mode is restricted exclusively to authenticated user/admin portals.
@@ -48,7 +49,9 @@ export function ThemeProvider({ children }) {
   const [themeMode, setThemeMode] = useState(() => {
     try {
       const saved = localStorage.getItem("bacolor_theme");
-      return ["dark", "light", "system"].includes(saved) ? saved : "light";
+      return ["dark", "light", "system"].includes(saved)
+        ? saved
+        : "light";
     } catch {
       return "light";
     }
@@ -103,18 +106,12 @@ export function ThemeProvider({ children }) {
       ? "dark"
       : "light";
 
-  useEffect(() => {
-    const root = document.documentElement;
-    if (isAuthenticatedPortal && effectiveTheme === "dark") {
-      root.classList.add("dark");
-    } else {
-      root.classList.remove("dark");
-      if (!isPending && !session) {
-        hydratedForUserRef.current = null;
-        // Keep the local preference through offline/session hydration failures.
-      }
-    }
-  }, [isAuthenticatedPortal, effectiveTheme, themeMode, session, isPending]);
+  useLayoutEffect(() => {
+    document.documentElement.classList.toggle(
+      "dark",
+      effectiveTheme === "dark"
+    );
+  }, [effectiveTheme]);
 
   const persistTheme = useCallback(
     async (mode) => {
@@ -158,14 +155,16 @@ export function ThemeProvider({ children }) {
   const setTheme = useCallback(
     (mode) => {
       if (mode === "dark" || mode === "light" || mode === "system") {
+        hydratedForUserRef.current = userId;
         setThemeMode(mode);
+
         if (isAuthenticatedPortal) {
           localStorage.setItem("bacolor_theme", mode);
           persistTheme(mode);
         }
       }
     },
-    [isAuthenticatedPortal, persistTheme],
+    [isAuthenticatedPortal, persistTheme, userId],
   );
 
   const toggleTheme = useCallback(() => {
