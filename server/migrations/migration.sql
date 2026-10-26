@@ -51,3 +51,5 @@ COMMIT;
 ALTER TABLE public.module_activity
 ADD CONSTRAINT module_activity_user_module_unique
 UNIQUE (user_id, mod_id);
+
+ALTER TABLE activity_log ADD COLUMN ip_address VARCHAR(45);
