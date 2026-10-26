@@ -10,21 +10,23 @@
 # Secrets — never bake into an image
 **/.env
 **/.env.*
-# ...but example templates are fine to include
 !**/.env.example
 !docker/env/
 
 # Build outputs (client build happens inside Docker)
 **/dist
 
-# Runtime-generated directories (scoped so frontend source pages aren't wiped)
-/server/logs
-/logs
+# Runtime-generated directories
+server/logs
+server/logs/**
+logs
+logs/**
 **/tmp
 **/uploads
 
-# Explicitly ensure client source log pages are never excluded
-!client/src/**/logs/
+# Ensure all client source log folders AND files inside them are included
+!client/src/**/logs
+!client/src/**/logs/**
 
 # Log files
 *.log

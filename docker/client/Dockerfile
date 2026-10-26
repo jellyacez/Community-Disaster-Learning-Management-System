@@ -11,6 +11,9 @@ COPY client/package.json client/package-lock.json ./
 
 RUN npm ci
 
+# Force a fresh file copy (busts GitHub Actions layer cache)
+ARG CACHEBUST=2
+
 # Copy the rest of the client source
 COPY client/ .
 
