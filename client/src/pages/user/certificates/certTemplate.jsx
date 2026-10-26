@@ -1,3 +1,5 @@
+import { useOfflineSession } from "../../../hooks/offlineSession";
+import { loadContent } from "../../../lib/offlineContent";
 import { Buffer } from "buffer/";
 if (typeof window !== "undefined") {
   window.Buffer = window.Buffer || Buffer;
@@ -5,7 +7,7 @@ if (typeof window !== "undefined") {
 }
 
 import { useState, useEffect } from "react";
-import { useOutletContext, useSearchParams, Link } from "react-router-dom"; 
+import { useOutletContext, useSearchParams, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import QRCode from "qrcode";
 import apiClient from "../../../lib/apiClient";
@@ -16,7 +18,7 @@ const styles = StyleSheet.create({
   outerBorder: { border: "4pt solid #1e3a8a", padding: 6, flexGrow: 1 },
   innerBorder: { border: "2pt solid #b89f5d", flexGrow: 1, paddingTop: 30, paddingBottom: 25, paddingHorizontal: 40, alignItems: "center", position: "relative" },
   content: { width: "100%", alignItems: "center" },
-  
+
   // Top corner elements
   qrCode: { position: "absolute", top: 20, left: 30, width: 55, height: 55 },
   certNumber: { position: "absolute", top: 20, right: 30, fontSize: 8, color: "#888" },
@@ -45,7 +47,9 @@ export default function CertificateTemplate() {
   const { currentUser } = useOutletContext();
   const [searchParams] = useSearchParams();
   const token = searchParams.get("token");
-  const residentName = currentUser?.name || "Resident"; 
+  const { data: session } = useOfflineSession();
+  const userId = session?.user?.id;
+  const residentName = currentUser?.name || "Resident";
   const [qrDataUrl, setQrDataUrl] = useState("");
 
   useEffect(() => {
@@ -75,15 +79,17 @@ export default function CertificateTemplate() {
     };
   }, [token]);
 
-  const { data: certData, isLoading, isError } = useQuery({
-    queryKey: ["certificateData", token],
-    queryFn: async () => {
-      if (!token) return null;
-      const response = await apiClient.get(`/users/certificates/${token}`);
+  const { data: snapshot, isLoading, isError, error } = useQuery({
+    queryKey: ["certificateData", userId, token],
+    networkMode: "offlineFirst", retry:false,
+    queryFn: () => loadContent(userId, `certificate:${token}`, async () => {
+      const response = await apiClient.get(`/users/certificates/${encodeURIComponent(token)}`, {timeout:8000});
+      if (!response.data?.data) throw new Error("Certificate details unavailable.");
       return response.data.data;
-    },
-    enabled: !!token
+    }),
+    enabled: Boolean(token && userId),
   });
+  const certData = snapshot?.value;
 
   if (!token) {
     return <div className="p-8 text-center text-red-500 font-bold">Error: No certificate token provided.</div>;
@@ -94,7 +100,7 @@ export default function CertificateTemplate() {
   }
 
   if (isError || !certData) {
-    return <div className="p-8 text-center text-red-500 font-bold">Error: Could not load certificate. It may be revoked or invalid.</div>;
+    return <div className="p-8 text-center text-red-500 font-bold">{error?.message || "Could not load this certificate. Open it online first to save a copy."}</div>;
   }
 
   const certId = certData.cert_rec;
@@ -154,7 +160,7 @@ export default function CertificateTemplate() {
        <Page size="A4" orientation="landscape" style={styles.page} wrap={false}>
         <View style={styles.outerBorder}>
           <View style={styles.innerBorder}>
-            
+
             {/* Zero-network local QR code generator (PNG base64 Data URI) */}
             {qrDataUrl && <Image style={styles.qrCode} src={qrDataUrl} />}
 
@@ -176,7 +182,7 @@ export default function CertificateTemplate() {
             <Text style={styles.nameSubLine}>Authorized Resident — Brgy. {residentBarangay}</Text>
             <Text style={styles.hoursText}>Total Training Credited: {formattedHours}</Text>
             <Text style={styles.description}>
-              has successfully satisfied all academic and practical requirements of the Community Disaster 
+              has successfully satisfied all academic and practical requirements of the Community Disaster
               Learning Management System by completing the <Text style={{ fontWeight: "bold" }}>{certData.module_title}</Text> training module.
               {"\n\n"}
               {descriptionText}
@@ -210,6 +216,7 @@ export default function CertificateTemplate() {
 
   return (
     <div className="flex flex-col h-auto w-full bg-white p-6 rounded-lg shadow-sm">
+      {snapshot?.fromCache && <p role="status" className="mb-4 rounded-xl bg-amber-50 text-amber-900 p-3 text-sm">Saved copy from {new Date(snapshot.savedAt).toLocaleString()}. Current revocation status cannot be checked offline.</p>}
       <div className="mb-4">
         <Link to="/user/certificates" className="inline-flex items-center text-sm font-bold text-gray-500 hover:text-red-600 transition-colors mb-2">
           ← Back to Certificates
@@ -220,15 +227,15 @@ export default function CertificateTemplate() {
           <h1 className="text-2xl font-bold text-gray-800 mb-1">{certData.module_title} Certification</h1>
           <p className="text-gray-500 text-sm">View and download your official completion certificate below.</p>
         </div>
-        <PDFDownloadLink 
-          document={MyDocument} 
+        <PDFDownloadLink
+          document={MyDocument}
           fileName={`Certificate-${residentName.replace(/\s+/g, '')}-${certData.module_title.replace(/\s+/g, '')}.pdf`}
           className="px-6 py-2 bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg transition-colors shadow-sm text-sm whitespace-nowrap"
         >
           {({ loading, error }) => (error ? 'Error — try again' : loading ? 'Preparing Document...' : 'Download PDF')}
         </PDFDownloadLink>
       </div>
-      
+
       <div className="w-full mt-4 border border-gray-200 rounded-xl overflow-hidden bg-white aspect-[11/8.5]">
         <PDFViewer style={{ width: "100%", height: "100%", border: "none", background: "transparent" }} showToolbar={false}>
           {MyDocument}

@@ -1,3 +1,5 @@
+import { useOfflineSession } from "../../../hooks/offlineSession";
+import { loadContent, readContent, writeContent } from "../../../lib/offlineContent";
 import { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -17,14 +19,38 @@ export default function UserCertificates() {
   useDocumentTitle("My Certificates | Bacolor Disaster LMS");
   const [infoDismissed, setInfoDismissed] = useState(false);
 
-  const { data: rawData, isLoading, isError } = useQuery({
-    queryKey: ["userDashboard"],
-    queryFn: async () => {
-      const response = await apiClient.get("/user/dashboard");
-      return response.data;
-    },
-    refetchInterval: 60000,
+  const {data: session} = useOfflineSession();
+  const userId = session?.user?.id;
+  const { data: snapshot, isLoading, isError, error } = useQuery({
+    queryKey: ["offlineCertificates", userId],
+    enabled: Boolean(userId), networkMode: "offlineFirst", retry: false,
+    queryFn: () => loadContent(userId, "certificates", async () => {
+      const response = await apiClient.get("/user/dashboard", {timeout:8000});
+      const payload = response.data;
+      const list = payload?.certificates || payload?.data?.certificates;
+      if (!Array.isArray(list)) throw new Error("Unexpected certificate response.");
+      const readiness = await Promise.allSettled(list.map(async cert => {
+        if (!cert.verification_token) return false;
+        const token = cert.verification_token;
+        const kind = `certificate:${token}`;
+        try {
+          const res = await apiClient.get(`/users/certificates/${encodeURIComponent(token)}`, {timeout:8000});
+          if (!res.data?.data) throw new Error("Missing certificate details.");
+          return writeContent(userId, kind, res.data.data).persisted;
+        } catch(error) {
+          if (error.response?.status === 401 || error.response?.status === 403 || error.response?.status === 404) {
+            const {contentKey} = await import("../../../lib/offlineContent");
+            try {localStorage.removeItem(contentKey(userId, kind));} catch { /* storage unavailable */ }
+            return false;
+          }
+          return Boolean(readContent(userId, kind));
+        }
+      }));
+      return {certificates:list, readyTokens:list.filter((_, i)=>readiness[i].status === "fulfilled" && readiness[i].value).map(c=>c.verification_token)};
+    }),
+    refetchInterval: () => navigator.onLine ? 60000 : false,
   });
+  const rawData = snapshot?.value;
 
   const certificates = useMemo(() => {
     return rawData?.certificates || rawData?.data?.certificates || [];
@@ -57,6 +83,11 @@ export default function UserCertificates() {
         </div>
       </div>
 
+      {snapshot && <p role="status" className="rounded-xl bg-amber-50 text-amber-900 p-3 text-sm">
+        {snapshot.fromCache ? "Saved certificate records" : "Certificate records updated"} — {new Date(snapshot.savedAt).toLocaleString()}.
+        {" "}Current validity and revocation require online verification.
+        {snapshot.persisted === false && " Device storage unavailable: this list was not saved."}
+      </p>}
       {/* Dismissible Notice (Edge-to-edge with matching radius) */}
       {!infoDismissed && (
         <div className="flex items-center gap-3 bg-blue-50/80 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900/40 rounded-2xl px-5 py-3.5 shadow-2xs">
@@ -125,6 +156,7 @@ export default function UserCertificates() {
             <CertificateCard
               key={cert.verification_token || cert.cert_rec}
               cert={cert}
+              offlineReady={Boolean(snapshot?.persisted && rawData?.readyTokens?.includes(cert.verification_token))}
             />
           ))}
         </div>

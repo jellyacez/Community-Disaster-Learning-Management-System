@@ -16,6 +16,7 @@ export default function UserAnnouncements() {
     setCurrentPage,
     totalPages,
     totalAnnouncements,
+    isCached, savedAt, storageWarning, error,
   } = usePaginatedAnnouncements(5);
 
   return (
@@ -31,6 +32,9 @@ export default function UserAnnouncements() {
           </p>
         </div>
 
+        {(isCached || storageWarning) && <p role="status" className="rounded-xl bg-amber-50 text-amber-900 p-3 text-sm">
+          {storageWarning ? "Device storage is unavailable: this content was not saved for reopening." : `Saved announcements — last updated ${new Date(savedAt).toLocaleString()}. Only announcements previously fetched on this device are available; newer changes and removals may not be reflected.`}
+        </p>}
         {isLoading && currentPage === 1 ? (
           <div className="space-y-4">
             {[1, 2, 3].map((i) => (
@@ -48,7 +52,7 @@ export default function UserAnnouncements() {
             ))}
           </div>
         ) : isError ? (
-          <div className="text-center py-10 text-red-500 font-medium">Failed to load announcements.</div>
+          <div className="text-center py-10 text-red-500 font-medium">{error?.message || "Failed to load announcements."}</div>
         ) : announcements.length === 0 ? (
           <div className="text-center py-10 text-gray-500 font-medium">No announcements available.</div>
         ) : (

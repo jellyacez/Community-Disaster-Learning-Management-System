@@ -11,6 +11,8 @@ import {
 
 /** Derive a display-level status that includes "expiring_soon" */
 function resolveStatus(cert) {
+  if (cert.status === "revoked") return "revoked";
+  if (cert.expires_at && new Date(cert.expires_at).getTime() <= Date.now()) return "expired";
   if (cert.status === "expired") return "expired";
   if (cert.expires_at) {
     const msLeft = new Date(cert.expires_at) - Date.now();
@@ -21,6 +23,7 @@ function resolveStatus(cert) {
 }
 
 const STATUS_CONFIG = {
+  revoked: {label:"Revoked",badge:"bg-red-50 text-red-700 border-red-200",border:"border-red-200"},
   active: {
     label: "Active Credential",
     badge: "bg-emerald-50 text-emerald-700 border-emerald-200",
@@ -47,7 +50,7 @@ const fmt = (dateStr) =>
       })
     : "—";
 
-const CertificateCard = memo(function CertificateCard({ cert }) {
+const CertificateCard = memo(function CertificateCard({ cert, offlineReady = false }) {
   const displayStatus = resolveStatus(cert);
   const cfg = STATUS_CONFIG[displayStatus] ?? STATUS_CONFIG.active;
   const isExpired = displayStatus === "expired";
@@ -118,6 +121,7 @@ const CertificateCard = memo(function CertificateCard({ cert }) {
         </div>
       </div>
 
+      <p className="text-xs text-gray-500">{offlineReady ? "Saved details available for offline PDF viewing" : "Offline PDF not saved yet — open online to prepare"}</p>
       {/* Action Buttons */}
       <div className="flex items-center gap-3 pt-2">
         {isExpired ? (
