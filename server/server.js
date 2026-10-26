@@ -141,7 +141,23 @@ app.post("/api/auth/sign-in/email", verifyTurnstile);
 app.post("/api/auth/sign-up/email", verifyTurnstile);
 
 app.use("/api/auth", authRateLimiter);
+
+app.use("/api/auth", (req, res, next) => {
+  const clientIp = req.ip || req.socket?.remoteAddress;
+
+  if (clientIp) {
+    // Overwrite the header instead of trusting a client-supplied value.
+    req.headers["x-forwarded-for"] = clientIp;
+  }
+
+  next();
+});
+
 app.use("/api/auth", customAuthRoutes);
+app.use("/api/auth", (req, res, next) => {
+  req.auditClientIp = req.ip || req.socket?.remoteAddress || null;
+  next();
+});
 app.use("/api/auth", toNodeHandler(auth));
 
 // Import routes

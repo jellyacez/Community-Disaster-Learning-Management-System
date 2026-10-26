@@ -5,9 +5,6 @@ const { CONSENT_VERSION } = require("../config/constants");
 const { logActivity, logError } = require("./logger");
 const alertMonitorService = require("../services/alertMonitorService");
 
-// Maximum concurrent active sessions per role.
-// When a new sign-in would exceed the limit, the oldest session(s) are
-// evicted automatically so the user is never blocked.
 const SESSION_LIMITS = {
   resident: 5,
   barangay_admin: 3,
@@ -37,8 +34,7 @@ const securityHooksPlugin = () => {
                 );
                 if (res.rows.length > 0 && res.rows[0].archived) {
                   throw new APIError("FORBIDDEN", {
-                    message:
-                      "This account has been archived. Please contact an administrator.",
+                    message: "This account has been archived. Please contact an administrator.",
                   });
                 }
               } catch (err) {
@@ -53,13 +49,10 @@ const securityHooksPlugin = () => {
           },
         },
         {
-          // Reject sign-up for an email that already has an account with a clear 422,
-          // instead of Better Auth's anti-enumeration 200 (requireEmailVerification).
           matcher(context) {
             return context.path === "/sign-up/email";
           },
           handler: async (ctx) => {
-            // Same rules the register form shows: 8+ characters, one uppercase letter, one symbol
             const password = ctx.body?.password;
             if (typeof password !== "string" || !/^(?=.*[A-Z])(?=.*[!@#$%^&*_=+\-/.]).{8,}$/.test(password)) {
               throw new APIError("UNPROCESSABLE_ENTITY", {
@@ -68,7 +61,6 @@ const securityHooksPlugin = () => {
               });
             }
 
-            // The barangay must be one of ours, otherwise the after hook would silently skip it
             const rawBarangay = ctx.body?.barangay || ctx.body?.barangay_id;
             let barangayFound = false;
             if (rawBarangay) {
@@ -107,7 +99,6 @@ const securityHooksPlugin = () => {
             try {
               existing = await ctx.context.internalAdapter.findUserByEmail(rawEmail.trim().toLowerCase());
             } catch (err) {
-              // Fail open: Better Auth's own duplicate handling still prevents a second account.
               logError("signup_duplicate_check_failure", { message: err.message });
               return {};
             }
@@ -135,10 +126,7 @@ const securityHooksPlugin = () => {
               userId = sessionContext?.user?.id;
             }
             if (userId) {
-              require("./logger").logActivity(
-                userId,
-                "Logged out successfully",
-              );
+              logActivity(userId, "Logged out successfully", ctx);
             }
             return {};
           },
@@ -198,10 +186,6 @@ const securityHooksPlugin = () => {
       ],
       after: [
         {
-          // Enforce concurrent session cap for ALL sign-in methods (email + OAuth).
-          // Runs after the new session is already created, so the new session is
-          // always the most recent by createdAt. Evicting by ASC order therefore
-          // always removes old sessions, never the one just issued.
           matcher(context) {
             return (
               context.path?.includes("sign-in") ||
@@ -212,9 +196,6 @@ const securityHooksPlugin = () => {
           handler: async (ctx) => {
             if (ctx.context?.returned instanceof APIError) return {};
 
-            // Extract userId — try context first, then response body, then
-            // the Set-Cookie session token as a last resort (needed for OAuth
-            // redirects where the response body may be empty).
             let userId =
               ctx.context?.session?.user?.id ||
               ctx.context?.user?.id ||
@@ -266,7 +247,6 @@ const securityHooksPlugin = () => {
               const { role } = userRes.rows[0];
               const limit = SESSION_LIMITS[role] ?? DEFAULT_SESSION_LIMIT;
 
-              // Count ALL active sessions including the one just created.
               const countRes = await pool.query(
                 `SELECT COUNT(*) FROM session
                  WHERE "userId" = $1 AND "expiresAt" > NOW()`,
@@ -276,8 +256,6 @@ const securityHooksPlugin = () => {
 
               if (totalActive > limit) {
                 const evictCount = totalActive - limit;
-                // The new session has the highest createdAt, so ORDER BY ASC
-                // naturally protects it and removes the truly stale ones.
                 await pool.query(
                   `DELETE FROM session
                    WHERE id IN (
@@ -288,17 +266,15 @@ const securityHooksPlugin = () => {
                    )`,
                   [userId, evictCount],
                 );
-                // Log separately so a logging failure doesn't obscure a
-                // successful eviction in the error trail.
                 try {
                   logActivity(
                     userId,
                     `Session limit enforced (${limit} for role '${role}'): ${evictCount} oldest session(s) evicted.`,
+                    ctx,
                   );
                 } catch { /* non-critical */ }
               }
             } catch (err) {
-              // Non-fatal — a failure here must never block a legitimate sign-in.
               logError("session_limit_enforcement_error", {
                 message: err.message,
                 stack: err.stack,
@@ -314,7 +290,6 @@ const securityHooksPlugin = () => {
           handler: async (ctx) => {
             if (ctx.context?.returned instanceof APIError) return {};
             
-            // Extract user from context or response body
             let user =
               ctx.context?.newSession?.user ||
               ctx.context?.user ||
@@ -339,7 +314,6 @@ const securityHooksPlugin = () => {
               }
             }
 
-            // Guaranteed fallback: look up user by the email submitted during registration
             if (!userId && ctx.body?.email) {
               try {
                 const uRes = await pool.query(
@@ -356,7 +330,6 @@ const securityHooksPlugin = () => {
 
             if (userId) {
               try {
-                // Track consent in the database
                 await pool.query(
                   `UPDATE "user" 
                    SET consent_given_at = CURRENT_TIMESTAMP, 
@@ -365,7 +338,6 @@ const securityHooksPlugin = () => {
                   [CONSENT_VERSION, userId]
                 );
 
-                // Persist barangay assignment if supplied during registration
                 const rawBarangay = ctx.body?.barangay || ctx.body?.barangay_id;
                 if (rawBarangay) {
                   let resolvedBarangayId = null;
@@ -391,7 +363,7 @@ const securityHooksPlugin = () => {
                   }
                 }
 
-                logActivity(userId, `Account created with explicit data privacy consent (${CONSENT_VERSION})`);
+                logActivity(userId, `Account created with explicit data privacy consent (${CONSENT_VERSION})`, ctx);
               } catch (err) {
                 logError('consent_stamp_failure', {
                   userId: userId,
@@ -458,10 +430,10 @@ const securityHooksPlugin = () => {
             if (userId && user.email) {
               if (ctx.path?.includes("reset-password")) {
                 securityService.handlePasswordResetRecovery(user.email);
-                require("./logger").logActivity(userId, "Reset password");
+                logActivity(userId, "Reset password", ctx);
               } else {
                 securityService.handlePasswordChangeAlert(user);
-                require("./logger").logActivity(userId, "Changed password");
+                logActivity(userId, "Changed password", ctx);
               }
             }
             return {};
@@ -478,7 +450,6 @@ const securityHooksPlugin = () => {
           handler: async (ctx) => {
             let email = ctx.body?.email;
 
-            // Check for failed login attempt
             if (ctx.context?.returned instanceof APIError) {
               if (email) {
                 try {
@@ -487,9 +458,10 @@ const securityHooksPlugin = () => {
                     [email.toLowerCase()],
                   );
                   if (res.rows.length > 0) {
-                    require("./logger").logActivity(
+                    logActivity(
                       res.rows[0].id,
                       "Failed login attempt",
+                      ctx,
                     );
                   }
                 } catch (e) {
@@ -499,7 +471,6 @@ const securityHooksPlugin = () => {
               return {};
             }
 
-            // Successful login
             let user =
               ctx.context?.session?.user ||
               ctx.context?.user ||
@@ -510,7 +481,6 @@ const securityHooksPlugin = () => {
               try {
                 let responseData = null;
                 if (ctx.response && typeof ctx.response.clone === "function") {
-                  // Only try to parse json if it's not a redirect
                   if (ctx.response.status < 300) {
                     const clone = ctx.response.clone();
                     responseData = await clone.json();
@@ -533,10 +503,6 @@ const securityHooksPlugin = () => {
               }
             }
 
-            // Fallback for OAuth redirects: extract session token from Set-Cookie header.
-            // The regex intentionally handles __Secure- and __Host- cookie prefixes that
-            // browsers enforce on HTTPS (e.g. __Secure-better-auth.session_token), so this
-            // doesn't silently break when deployed behind a TLS terminator or in production.
             if (!userId && ctx.response?.headers) {
               try {
                 const setCookie = ctx.response.headers.get("set-cookie");
@@ -575,7 +541,6 @@ const securityHooksPlugin = () => {
               }
             }
 
-            // Re-fetch email if we have a userId but no email (e.g. from cookie)
             if (userId && !email) {
               try {
                 const res = await pool.query(
@@ -593,7 +558,16 @@ const securityHooksPlugin = () => {
             email = email || user?.email;
 
             if (userId) {
-              require("./logger").logActivity(userId, "Logged in successfully");
+              console.log("[IP DEBUG]", {
+  requestIp: ctx.request?.ip,
+  socketAddress: ctx.request?.socket?.remoteAddress,
+  headersType: ctx.request?.headers?.constructor?.name,
+  forwardedFor: ctx.request?.headers?.get?.("x-forwarded-for"),
+  realIp: ctx.request?.headers?.get?.("x-real-ip"),
+  cfConnectingIp: ctx.request?.headers?.get?.("cf-connecting-ip"),
+});
+
+              logActivity(userId, "Logged in successfully", ctx);
               if (email) {
                 securityService.handleNewDeviceLoginCheck(email);
               }

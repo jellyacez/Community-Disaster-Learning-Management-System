@@ -170,20 +170,24 @@ const auth = betterAuth({
       },
     }),
   ],
-  advanced: {
-    ...(process.env.NODE_ENV === "production"
-      ? {
-          useSecureCookies: false,
-          cookiePrefix: "__Host-better-auth",
-          defaultCookieAttributes: {
-            secure: true,
-            path: "/",
-            sameSite: "lax",
-            httpOnly: true,
-          },
-        }
-      : {}),
+advanced: {
+  ...(process.env.NODE_ENV === "production"
+    ? {
+        useSecureCookies: false,
+        cookiePrefix: "__Host-better-auth",
+        defaultCookieAttributes: {
+          secure: true,
+          path: "/",
+          sameSite: "lax",
+          httpOnly: true,
+        },
+      }
+    : {}),
+
+  ipAddress: {
+    ipAddressHeaders: ["x-forwarded-for"],
   },
+},
   trustedOrigins: (() => {
     if (process.env.NODE_ENV === "production") {
       if (!process.env.FRONTEND_URL) {
@@ -199,5 +203,6 @@ const auth = betterAuth({
   })(),
   autoSignIn: true,
 });
+
 
 module.exports = { auth };  
