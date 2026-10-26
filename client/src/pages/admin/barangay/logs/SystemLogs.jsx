@@ -20,7 +20,7 @@ export default function SystemLogs() {
 
   // Reset page on filter changes
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
+     
     setPage(1);
   }, [actionFilter, limit, debouncedSearch]);
 

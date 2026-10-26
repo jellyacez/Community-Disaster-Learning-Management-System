@@ -23,7 +23,7 @@ export default function SectorDataTable({
   const ITEMS_PER_PAGE = 8;
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
+     
     setCurrentPage(1);
   }, [searchQuery, filters, sortConfig]);
 

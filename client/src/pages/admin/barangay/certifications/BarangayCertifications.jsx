@@ -37,7 +37,7 @@ export default function BarangayCertifications() {
 
   // Reset pagination to page 1 whenever filters or limit change
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
+     
     setPage(1);
   }, [debouncedSearch, selectedModule, selectedStatus, limit]);
 

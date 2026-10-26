@@ -41,6 +41,7 @@ export default function AdminSidebar({ sidebarOpen, setSidebarOpen }) {
     } catch {
       return null;
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.pathname]);
 
   // When impersonating, effectiveUser and userRole switch to the target's identity
@@ -60,7 +61,7 @@ export default function AdminSidebar({ sidebarOpen, setSidebarOpen }) {
           ? list.filter((m) => m.status === "pending_review")
           : [];
         return pending.length;
-      } catch (err) {
+        } catch {
         return 0;
       }
     },

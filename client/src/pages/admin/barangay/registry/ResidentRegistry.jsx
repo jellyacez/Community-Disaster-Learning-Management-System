@@ -33,7 +33,7 @@ export default function ResidentRegistry() {
 
   // Reset pagination to page 1 on filter or limit changes
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
+     
     setPage(1);
   }, [debouncedSearch, selectedStatus, limit]);
 
