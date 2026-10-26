@@ -169,6 +169,20 @@ const auth = betterAuth({
         resident: {},
       },
     }),
+    twoFactor({
+      otpOptions: {
+        sendOTP: async ({ user, otp }) => {
+          const { orgFooterText, supportEmail } = await getOrgSettings();
+          const mailOptions = getOTPEmail(
+            user,
+            otp,
+            orgFooterText,
+            supportEmail,
+          );
+          await transporter.sendMail(mailOptions);
+        },
+      },
+    }),
   ],
   advanced: {
     ...(process.env.NODE_ENV === "production"

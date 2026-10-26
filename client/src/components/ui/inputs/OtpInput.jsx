@@ -1,8 +1,13 @@
 import { useRef, useState, useEffect, memo, Fragment } from "react";
 
-const OtpInput = memo(function OtpInput({ value, onChange, length = 6 }) {
+// labelledBy names the group for screen readers; autoFocus puts the cursor in the first box
+const OtpInput = memo(function OtpInput({ value, onChange, length = 6, labelledBy, describedBy, invalid = false, autoFocus = false, align = "center" }) {
   const [otp, setOtp] = useState(new Array(length).fill(""));
   const inputRefs = useRef([]);
+
+  useEffect(() => {
+    if (autoFocus) inputRefs.current[0]?.focus();
+  }, [autoFocus]);
 
   useEffect(() => {
     const valArr = value.split("");
@@ -14,8 +19,16 @@ const OtpInput = memo(function OtpInput({ value, onChange, length = 6 }) {
   }, [value, length]);
 
   const handleChange = (e, index) => {
-    const val = e.target.value;
-    if (isNaN(val)) return;
+    const val = e.target.value.replace(/[^0-9]/g, "");
+    // Phone autofill drops the whole code into one box: spread it across the boxes
+    if (val.length >= length) {
+      const newOtp = val.slice(0, length).split("");
+      setOtp(newOtp);
+      onChange(newOtp.join(""));
+      inputRefs.current[length - 1]?.focus();
+      return;
+    }
+    if (e.target.value && !val) return;
 
     const newOtp = [...otp];
     newOtp[index] = val.substring(val.length - 1);
@@ -64,7 +77,7 @@ const OtpInput = memo(function OtpInput({ value, onChange, length = 6 }) {
   };
 
   return (
-    <div className="flex items-center justify-center gap-1.5 md:gap-2">
+    <div role="group" aria-labelledby={labelledBy} aria-describedby={describedBy} className={`flex items-center gap-1.5 md:gap-2 ${align === "start" ? "justify-start" : "justify-center"}`}>
       {otp.map((digit, index) => (
         <Fragment key={`otp-digit-${index}`}>
           <input
@@ -72,14 +85,20 @@ const OtpInput = memo(function OtpInput({ value, onChange, length = 6 }) {
             id={`otp-input-${index}`}
             name={`otp-input-${index}`}
             aria-label={`Digit ${index + 1} of ${length}`}
+            aria-invalid={invalid || undefined}
             type="text"
             inputMode="numeric"
+            autoComplete={index === 0 ? "one-time-code" : "off"}
             value={digit}
             onChange={(e) => handleChange(e, index)}
             onKeyDown={(e) => handleKeyDown(e, index)}
             onPaste={handlePaste}
-            className="w-10 h-12 md:w-12 md:h-14 text-center text-xl font-bold border border-gray-200 rounded-xl focus:border-red-500 focus:ring-2 focus:ring-red-200 outline-none transition-all bg-white shadow-sm"
-            maxLength={1}
+            className={`w-11 h-12 md:w-12 md:h-14 text-center text-xl font-bold border rounded-xl outline-none transition-all shadow-sm ${
+              invalid
+                ? "border-red-600 bg-red-50 text-red-900 focus:ring-2 focus:ring-red-600"
+                : "border-gray-500 bg-white focus:border-gray-900 focus:ring-2 focus:ring-gray-900/50"
+            }`}
+            maxLength={index === 0 ? length : 1}
           />
           {index === 2 && (
             <div className="w-3 h-[2px] bg-gray-300 rounded-full shrink-0 mx-0.5" />

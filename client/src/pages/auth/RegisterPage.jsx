@@ -25,7 +25,7 @@ export default function RegisterPage() {
       const navState = { replace: true };
 
       if (userRole === "system_admin") navigate("/admin/dashboard", navState);
-      else if (userRole === "mdrrmo_admin")
+      else if (userRole === "mdrrmo_admin" || userRole === "head_mdrrmo_admin")
         navigate("/admin/mdrrmo/dashboard", navState);
       else if (userRole === "barangay_admin")
         navigate("/admin/barangay/dashboard", navState);

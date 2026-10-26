@@ -10,17 +10,23 @@ const PasswordInput = memo(function PasswordInput({
   onChange,
   onBlur,
   error,
+  // Marks the field as wrong without its own message (e.g. a rejected email/password pair)
+  invalid = false,
+  // Points at a message shown elsewhere (e.g. a form-level error banner)
+  describedBy,
   placeholder = "Enter password",
   required = true,
   autoComplete = "current-password"
 }) {
   const [showPassword, setShowPassword] = useState(false);
+  const [capsLockOn, setCapsLockOn] = useState(false);
+  const checkCapsLock = (e) => setCapsLockOn(e.getModifierState?.("CapsLock") ?? false);
 
   const baseClass = "w-full px-4 py-3 rounded-xl border outline-none transition-colors";
   const inputClass = `${baseClass} ${
-    error
-      ? "border-red-500 focus:ring-2 focus:ring-red-500 bg-red-50 text-red-900"
-      : "border-gray-200 focus:ring-2 focus:ring-red-500"
+    error || invalid
+      ? "border-red-600 focus:ring-2 focus:ring-red-600 bg-red-50 text-red-900"
+      : "border-gray-500 focus:border-gray-900 focus:ring-2 focus:ring-gray-900/50"
   }`;
 
   return (
@@ -36,20 +42,25 @@ const PasswordInput = memo(function PasswordInput({
           type={showPassword ? "text" : "password"}
           name={name}
           autoComplete={autoComplete}
-          aria-invalid={!!error}
-          aria-describedby={error ? `${id}-error` : undefined}
+          aria-invalid={!!error || invalid}
+          aria-describedby={[error && `${id}-error`, describedBy].filter(Boolean).join(" ") || undefined}
           value={value}
           onChange={onChange}
-          onBlur={onBlur}
+          onBlur={(e) => {
+            setCapsLockOn(false);
+            onBlur?.(e);
+          }}
+          onKeyDown={checkCapsLock}
+          onKeyUp={checkCapsLock}
           placeholder={placeholder}
-          className={`${inputClass} pr-12`}
+          className={`${inputClass} pr-14 placeholder:text-gray-500`}
           required={required}
         />
         <button
           type="button"
           aria-label={showPassword ? "Hide password" : "Show password"}
           onClick={() => setShowPassword(!showPassword)}
-          className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-gray-500 hover:text-gray-700 focus:outline-none"
+          className="absolute right-1 top-1/2 -translate-y-1/2 inline-flex h-11 w-11 items-center justify-center rounded-lg text-gray-600 hover:text-gray-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-900"
         >
           {showPassword ? (
             <HugeiconsIcon aria-hidden="true" icon={EyeOffIcon} className="w-5 h-5" />
@@ -58,8 +69,12 @@ const PasswordInput = memo(function PasswordInput({
           )}
         </button>
       </div>
+      {/* Always mounted so the hint is announced when it appears */}
+      <p aria-live="polite" className={`text-xs font-medium text-gray-700 ${capsLockOn ? "mt-1" : ""}`}>
+        {capsLockOn ? "Caps Lock is on." : ""}
+      </p>
       {error && (
-        <p id={`${id}-error`} className="text-red-500 text-xs mt-1 font-medium">{error}</p>
+        <p id={`${id}-error`} className="text-red-700 text-xs mt-1 font-medium">{error}</p>
       )}
     </div>
   );

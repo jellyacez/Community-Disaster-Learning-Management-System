@@ -54,7 +54,7 @@ async function userCount(email) {
 async function signUp(email) {
   try {
     const res = await auth.api.signUpEmail({
-      body: { email, password: PASSWORD, name: "ZZ Test Register" },
+      body: { email, password: PASSWORD, name: "ZZ Test Register", barangay: "Balas" },
       headers: new Headers({ "user-agent": UA }),
     });
     return { ok: true, res };

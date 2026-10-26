@@ -3,6 +3,9 @@ import { authClient } from '../lib/auth-client';
 
 const SESSION_STORAGE_KEY = 'lms_offline_session';
 
+// The offline fallback only reads user and session.expiresAt; never persist the session token
+const toCachedSession = (s) => ({ user: s.user, session: { expiresAt: s.session?.expiresAt } });
+
 function readCachedSession() {
   try {
     const saved = localStorage.getItem(SESSION_STORAGE_KEY);
@@ -31,11 +34,12 @@ export function useOfflineSession() {
   const updateCachedSession = useCallback((newSession) => {
     try {
       if (newSession?.user) {
-        const serialized = JSON.stringify(newSession);
+        const cached = toCachedSession(newSession);
+        const serialized = JSON.stringify(cached);
         if (localStorage.getItem(SESSION_STORAGE_KEY) === serialized) return;
         localStorage.setItem(SESSION_STORAGE_KEY, serialized);
         setCachedSession((prev) =>
-          JSON.stringify(prev) === serialized ? prev : newSession
+          JSON.stringify(prev) === serialized ? prev : cached
         );
       } else {
         if (!localStorage.getItem(SESSION_STORAGE_KEY)) return;

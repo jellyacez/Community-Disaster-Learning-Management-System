@@ -59,6 +59,47 @@ const securityHooksPlugin = () => {
             return context.path === "/sign-up/email";
           },
           handler: async (ctx) => {
+            // Same rules the register form shows: 8+ characters, one uppercase letter, one symbol
+            const password = ctx.body?.password;
+            if (typeof password !== "string" || !/^(?=.*[A-Z])(?=.*[!@#$%^&*_=+\-/.]).{8,}$/.test(password)) {
+              throw new APIError("UNPROCESSABLE_ENTITY", {
+                code: "WEAK_PASSWORD",
+                message: "Use at least 8 characters, with 1 uppercase letter and 1 symbol.",
+              });
+            }
+
+            // The barangay must be one of ours, otherwise the after hook would silently skip it
+            const rawBarangay = ctx.body?.barangay || ctx.body?.barangay_id;
+            let barangayFound = false;
+            if (rawBarangay) {
+              try {
+                if (!isNaN(rawBarangay) && Number.isInteger(Number(rawBarangay))) {
+                  const bCheck = await pool.query(
+                    `SELECT 1 FROM barangays WHERE id = $1`,
+                    [Number(rawBarangay)]
+                  );
+                  barangayFound = bCheck.rows.length > 0;
+                } else if (typeof rawBarangay === "string" && rawBarangay.trim()) {
+                  const bCheck = await pool.query(
+                    `SELECT 1 FROM barangays WHERE LOWER(TRIM(name)) = LOWER($1)`,
+                    [rawBarangay.trim()]
+                  );
+                  barangayFound = bCheck.rows.length > 0;
+                }
+              } catch (err) {
+                logError("signup_barangay_check_failure", { message: err.message });
+                throw new APIError("INTERNAL_SERVER_ERROR", {
+                  message: "We couldn't check your barangay. Please try again.",
+                });
+              }
+            }
+            if (!barangayFound) {
+              throw new APIError("UNPROCESSABLE_ENTITY", {
+                code: "INVALID_BARANGAY",
+                message: "Choose your barangay from the list.",
+              });
+            }
+
             const rawEmail = ctx.body?.email;
             if (typeof rawEmail !== "string" || !rawEmail.trim()) return {};
 

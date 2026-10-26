@@ -19,25 +19,46 @@ function getRoleDashboard(role, pathname = "") {
   return "/";
 }
 
+// A lazy route chunk failed to load: usually a new deploy replaced it, or the device is offline.
+// Chrome, Firefox and Safari word it differently.
+const CHUNK_ERROR = /Failed to fetch dynamically imported module|error loading dynamically imported module|Importing a module script failed/i;
+const CHUNK_RELOAD_KEY = "chunk_reload_at";
+
 class ErrorBoundary extends React.Component {
   constructor(props) {
     super(props);
     this.state = { hasError: false };
   }
 
-  static getDerivedStateFromError() {
+  static getDerivedStateFromError(error) {
     // Update state so the next render will show the fallback UI.
-    return { hasError: true };
+    return { hasError: true, isChunkError: CHUNK_ERROR.test(error?.message || "") };
   }
 
   componentDidCatch(error, errorInfo) {
     // You can also log the error to an error reporting service
     console.error("ErrorBoundary caught an error:", error, errorInfo);
     this.setState({ error, errorInfo });
+
+    // Online: reload once to fetch the current chunks. At most once per 30s, so a chunk
+    // that is still missing after the reload shows the error screen instead of looping.
+    if (CHUNK_ERROR.test(error?.message || "") && navigator.onLine) {
+      try {
+        if (Date.now() - Number(sessionStorage.getItem(CHUNK_RELOAD_KEY) || 0) > 30000) {
+          sessionStorage.setItem(CHUNK_RELOAD_KEY, String(Date.now()));
+          this.setState({ reloading: true });
+          window.location.reload();
+        }
+      } catch {
+        // sessionStorage unavailable: fall through to the error screen
+      }
+    }
   }
 
   render() {
     if (this.state.hasError) {
+      if (this.state.reloading) return null;
+      const offline = this.state.isChunkError && !navigator.onLine;
       // You can render any custom fallback UI
       return (
         <div className="min-h-screen bg-gray-50 dark:bg-slate-950 flex items-center justify-center p-6 transition-colors">
@@ -50,12 +71,13 @@ class ErrorBoundary extends React.Component {
             </div>
 
             <h1 className="text-2xl font-black text-gray-900 dark:text-white mb-2">
-              Something went wrong.
+              {offline ? "You're offline" : "Something went wrong."}
             </h1>
 
             <p className="text-sm text-gray-500 dark:text-slate-400 mb-8 max-w-sm mx-auto">
-              We encountered an unexpected issue while loading this section.
-              Please refresh the page to try again, or return to the dashboard.
+              {offline
+                ? "This page isn't available offline yet. Reconnect and reload, or return to the dashboard."
+                : "We encountered an unexpected issue while loading this section. Please refresh the page to try again, or return to the dashboard."}
             </p>
 
             <div className="flex flex-col gap-3">

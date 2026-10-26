@@ -1,4 +1,4 @@
-import { memo, useEffect } from "react";
+import { memo, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
@@ -29,6 +29,37 @@ const ConfirmationModal = memo(function ConfirmationModal({
   const handleClose = onClose || onCancel || (() => {});
   const modalDescription = description || message;
   const modalConfirmText = confirmText || confirmLabel || "Confirm";
+
+  const dialogRef = useRef(null);
+
+  // Move focus into the dialog, keep Tab inside it, and give focus back when it closes
+  useEffect(() => {
+    if (!isOpen) return;
+    const previouslyFocused = document.activeElement;
+    const getFocusable = () =>
+      [...(dialogRef.current?.querySelectorAll("button:not([disabled]), a[href], input, select, textarea") || [])];
+    // Start on the least drastic action: Cancel when there is one, otherwise the acknowledge button
+    (dialogRef.current?.querySelector("[data-initial-focus]") || getFocusable()[1])?.focus();
+    const trapTab = (e) => {
+      if (e.key !== "Tab") return;
+      const focusable = getFocusable();
+      if (focusable.length === 0) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    };
+    document.addEventListener("keydown", trapTab);
+    return () => {
+      document.removeEventListener("keydown", trapTab);
+      previouslyFocused?.focus?.();
+    };
+  }, [isOpen]);
 
   // Keyboard shortcut: Escape to cancel
   useEffect(() => {
@@ -87,7 +118,7 @@ const ConfirmationModal = memo(function ConfirmationModal({
           bg: "bg-yellow-100 dark:bg-amber-950/60",
           text: "text-yellow-600 dark:text-amber-400",
           button:
-            "bg-yellow-600 hover:bg-yellow-700 dark:bg-amber-600 dark:hover:bg-amber-700 focus:ring-yellow-500",
+            "bg-amber-700 hover:bg-amber-800 dark:bg-amber-600 dark:hover:bg-amber-700 focus:ring-amber-600",
         };
     }
   };
@@ -97,18 +128,19 @@ const ConfirmationModal = memo(function ConfirmationModal({
   const modalContent = (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 overflow-y-auto overscroll-contain p-3 sm:p-4 backdrop-blur-sm transition-opacity">
       <div
+        ref={dialogRef}
         role="alertdialog"
         aria-modal="true"
         aria-labelledby="confirmation-modal-title"
         aria-describedby={modalDescription ? "confirmation-modal-desc" : undefined}
-        className="relative w-full min-w-0 max-w-sm max-h-[calc(100dvh-1.5rem)] overflow-y-auto overscroll-contain rounded-2xl bg-white dark:bg-slate-900 border border-transparent dark:border-slate-800 p-4 sm:p-6 shadow-2xl animate-in zoom-in-95 duration-200"
+        className="relative w-full min-w-0 max-w-sm max-h-[calc(100dvh-1.5rem)] overflow-y-auto overscroll-contain rounded-2xl bg-white dark:bg-slate-900 border border-transparent dark:border-slate-800 p-4 sm:p-6 shadow-2xl animate-in zoom-in-95 duration-200 motion-reduce:animate-none"
       >
         <button
           type="button"
-          aria-label="Close confirmation"
+          aria-label="Close"
           onClick={handleClose}
           disabled={isLoading}
-          className="absolute right-2 top-2 min-h-11 min-w-11 inline-flex items-center justify-center text-gray-400 hover:text-gray-600 dark:text-slate-400 dark:hover:text-slate-200 transition-colors focus:outline-none"
+          className="absolute right-2 top-2 inline-flex h-11 w-11 items-center justify-center rounded-lg text-gray-500 hover:text-gray-700 dark:text-slate-400 dark:hover:text-slate-200 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-900"
         >
           <HugeiconsIcon
             aria-hidden="true"
@@ -128,12 +160,12 @@ const ConfirmationModal = memo(function ConfirmationModal({
             />
           </div>
 
-          <h3
+          <h2
             id="confirmation-modal-title"
             className="mb-2 max-w-full px-6 break-words text-lg sm:text-xl font-bold text-gray-900 dark:text-white"
           >
             {title}
-          </h3>
+          </h2>
           {modalDescription && (
             <p
               id="confirmation-modal-desc"
@@ -145,15 +177,21 @@ const ConfirmationModal = memo(function ConfirmationModal({
           {children && <div className="w-full min-w-0 mb-6 break-words text-left">{children}</div>}
 
           <div className="flex w-full flex-col-reverse sm:flex-row gap-2 sm:gap-3">
-            <button
-              onClick={handleClose}
-              disabled={isLoading}
-              className="w-full min-w-0 min-h-11 break-words whitespace-normal rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-slate-200 hover:bg-gray-50 dark:hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-gray-200 dark:focus:ring-slate-600 disabled:opacity-50 transition-colors cursor-pointer disabled:cursor-not-allowed"
-            >
-              {cancelText}
-            </button>
+            {/* Pass cancelText={null} for a notice that only needs acknowledging */}
+            {cancelText && (
+              <button
+                type="button"
+                data-initial-focus
+                onClick={handleClose}
+                disabled={isLoading}
+                className="w-full min-w-0 min-h-11 break-words whitespace-normal rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-slate-200 hover:bg-gray-50 dark:hover:bg-slate-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-900 dark:focus-visible:ring-slate-300 disabled:opacity-50 transition-colors cursor-pointer disabled:cursor-not-allowed"
+              >
+                {cancelText}
+              </button>
+            )}
             <button
               type="button"
+              data-initial-focus={cancelText ? undefined : true}
               onClick={onConfirm}
               disabled={isLoading}
               className={`w-full min-w-0 min-h-11 break-words whitespace-normal rounded-xl px-4 py-2.5 text-sm font-bold text-white focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 transition-colors cursor-pointer disabled:cursor-not-allowed ${colors.button}`}
