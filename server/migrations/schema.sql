@@ -2025,7 +2025,7 @@ CHECK (modcat IN ('Fundamentals', 'Flood', 'Earthquake', 'Fire', 'General'));
 
 ALTER TYPE public.user_role ADD VALUE 'super_admin';
 
-ALTER TABLE activity_log ADD COLUMN ip_address VARCHAR(45);
+
 
 -- Completed on 2026-08-21 15:49:58
 
