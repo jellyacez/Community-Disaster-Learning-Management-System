@@ -27,7 +27,7 @@ export default function AdminSidebar({ sidebarOpen, setSidebarOpen }) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
-const [expandedMenus, setExpandedMenus] = useState({});
+  const [expandedMenus, setExpandedMenus] = useState({});
 
   // Detect active impersonation target from storage
   const impersonatedTarget = useMemo(() => {
@@ -198,7 +198,7 @@ const [expandedMenus, setExpandedMenus] = useState({});
                           )}
                         </span>
 
-                        {hasSubItems && (
+                      {hasSubItems ? (
                           <HugeiconsIcon
                             icon={isExpanded ? ArrowDown01Icon : ArrowRight01Icon}
                             className={`relative z-10 w-4 h-4 shrink-0 ${isActive ? "text-red-600 dark:text-red-400" : "text-gray-500 dark:text-slate-400"}`}
