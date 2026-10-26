@@ -7,7 +7,7 @@ import AdminTablePagination from "../pagination/AdminTablePagination";
 function SkeletonRow() {
   return (
     <tr className="border-b border-gray-50 dark:border-slate-800/60">
-      {[1, 2, 3, 4].map((i) => (
+      {[1, 2, 3, 4, 5].map((i) => (
         <td key={i} className="px-4 py-3">
           <div className="h-4 bg-gray-100 dark:bg-slate-800 rounded animate-pulse" />
         </td>
@@ -26,6 +26,7 @@ export default function ActivityLogTable({ logs, isLoading, meta, setPage, limit
               <th className="px-6 py-4 font-semibold w-48 text-sm">Timestamp</th>
               <th className="px-6 py-4 font-semibold w-64 text-sm">User</th>
               {!hideRoleColumn && <th className="px-6 py-4 font-semibold w-40 text-sm">Role</th>}
+              <th className="px-6 py-4 font-semibold w-36 text-sm">IP Address</th>
               <th className="px-6 py-4 font-semibold text-sm">Action</th>
             </tr>
           </thead>
@@ -34,7 +35,7 @@ export default function ActivityLogTable({ logs, isLoading, meta, setPage, limit
               [1, 2, 3, 4, 5, 6, 7, 8].map((i) => <SkeletonRow key={i} />)
             ) : logs.length === 0 ? (
               <tr>
-                <td colSpan={hideRoleColumn ? 3 : 4} className="py-24 text-center">
+                <td colSpan={hideRoleColumn ? 4 : 5} className="py-24 text-center">
                   <div className="flex flex-col items-center justify-center space-y-3">
                     <div className="w-16 h-16 bg-gray-50 dark:bg-slate-800 rounded-full flex items-center justify-center mb-2">
                       <HugeiconsIcon icon={Folder01Icon} className="w-8 h-8 text-gray-300 dark:text-slate-600" />
@@ -74,6 +75,9 @@ export default function ActivityLogTable({ logs, isLoading, meta, setPage, limit
                       <RoleBadge role={log.user_role} />
                     </td>
                   )}
+                  <td className="px-6 py-4 text-xs font-mono text-gray-600 dark:text-slate-400 whitespace-nowrap">
+                    {log.ipaddress || "—"}
+                  </td>
                   <td className={`px-6 py-4 text-sm font-medium leading-snug ${getActionColor(log.act_log)}`}>
                     {log.act_log}
                   </td>

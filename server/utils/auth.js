@@ -100,7 +100,7 @@ const auth = betterAuth({
   emailAndPassword: {
     enabled: true,
     revokeSessionsOnPasswordReset: true,
-    requireEmailVerification: true, // Disabled for development
+    requireEmailVerification: false, // Disabled for development
     passwordResetTokenExpiresIn: 15 * 60, // 15 minutes in seconds
     sendResetPassword: async ({ user, token }) => {
       const { orgFooterText, supportEmail } = await getOrgSettings();
@@ -113,8 +113,8 @@ const auth = betterAuth({
       await transporter.sendMail(mailOptions);
     },
   },
-  emailVerification: {
-    sendOnSignUp: true, // Disabled for development
+  /*emailVerification: {
+    sendOnSignUp: false, // Disabled for development
     autoSignInAfterVerification: true,
     sendVerificationEmail: async ({ user, token }) => {
       const { orgFooterText, supportEmail } = await getOrgSettings();
@@ -126,7 +126,7 @@ const auth = betterAuth({
       );
       await transporter.sendMail(mailOptions);
     },
-  },
+  },*/
   user: {
     additionalFields: {
       barangay_id: {
@@ -169,20 +169,6 @@ const auth = betterAuth({
         resident: {},
       },
     }),
-    twoFactor({
-      otpOptions: {
-        sendOTP: async ({ user, otp }) => {
-          const { orgFooterText, supportEmail } = await getOrgSettings();
-          const mailOptions = getOTPEmail(
-            user,
-            otp,
-            orgFooterText,
-            supportEmail,
-          );
-          await transporter.sendMail(mailOptions);
-        },
-      },
-    }),
   ],
   advanced: {
     ...(process.env.NODE_ENV === "production"
@@ -211,7 +197,7 @@ const auth = betterAuth({
       "http://localhost:4173",
     ];
   })(),
-  autoSignIn: false, // Must be false — autoSignIn: true skips sendVerificationEmail
+  autoSignIn: true,
 });
 
-module.exports = { auth };
+module.exports = { auth };  

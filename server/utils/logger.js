@@ -44,18 +44,21 @@ const writeToDisk = (prefix, line) => {
  * @param {string|number} userId - The ID of the user performing the action.
  * @param {string} action - A brief description of the action (e.g., 'Logged in successfully').
  */
-exports.logActivity = async (userId, action) => {
+exports.logActivity = async (userId, action, req = null) => {
   if (!userId || !action) return;
   
+  let normalizedIp = null;
+  if (req) {
+    const clientIp = req.ip || req.socket.remoteAddress;
+    normalizedIp = clientIp === '::1' ? '127.0.0.1' : clientIp?.split(',')[0].trim();
+  }
+
   try {
-    // Fire-and-forget: we await it here so we can catch any DB errors,
-    // but the caller does not need to await logActivity().
     await pool.query(
-      `INSERT INTO activity_log (user_id, act_date, act_log) VALUES ($1, NOW(), $2)`,
-      [userId, action]
+      `INSERT INTO activity_log (user_id, act_date, act_log, ip_address) VALUES ($1, NOW(), $2, $3)`,
+      [userId, action, normalizedIp]
     );
   } catch (err) {
-    // Swallowing the error to prevent application crashes
     const safeUserId = String(userId).replace(/[\r\n]/g, " ");
     console.error("[ActivityLogger Error] Failed to record activity log for user %s: %s", safeUserId, err.message);
   }

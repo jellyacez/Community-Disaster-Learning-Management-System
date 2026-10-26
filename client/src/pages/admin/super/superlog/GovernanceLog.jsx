@@ -177,19 +177,20 @@ export default function GovernanceLog() {
                 <th className="px-5 py-3.5">Timestamp</th>
                 <th className="px-5 py-3.5">User</th>
                 <th className="px-5 py-3.5">Role</th>
+                <th className="px-5 py-3.5">IP Address</th>
                 <th className="px-5 py-3.5">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 dark:divide-slate-800/70 text-sm">
               {isLoading ? (
                 <tr>
-                  <td colSpan={4} className="py-16 text-center text-gray-400 dark:text-slate-500">
+                  <td colSpan={5} className="py-16 text-center text-gray-400 dark:text-slate-500">
                     Loading audit trail...
                   </td>
                 </tr>
               ) : logs.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="py-16 text-center text-gray-400 dark:text-slate-500">
+                  <td colSpan={5} className="py-16 text-center text-gray-400 dark:text-slate-500">
                     No activity found matching your criteria.
                   </td>
                 </tr>
@@ -236,6 +237,9 @@ export default function GovernanceLog() {
                         <span className={`inline-block whitespace-nowrap px-3 py-1 rounded-full text-xs font-medium ${roleStyle.bg} ${roleStyle.text}`}>
                           {roleStyle.label}
                         </span>
+                      </td>
+                      <td className="px-5 py-3.5 text-xs font-mono text-gray-600 dark:text-slate-400 whitespace-nowrap">
+                        {log.ipaddress || "—"}
                       </td>
                       <td className="px-5 py-3.5">
                         <span

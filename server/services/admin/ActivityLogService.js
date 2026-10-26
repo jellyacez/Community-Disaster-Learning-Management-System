@@ -80,7 +80,7 @@ class ActivityLogService {
 
     const result = await pool.query(
       `SELECT al.act_id, al.user_id, u.name AS user_name, u.role AS user_role,
-              al.act_date, al.act_log
+              al.ip_address, al.act_date, al.act_log
        FROM activity_log al
        LEFT JOIN "user" u ON al.user_id = u.id
        ${whereClause}
@@ -103,14 +103,14 @@ class ActivityLogService {
   async exportActivityLog(adminUserId) {
     const result = await pool.query(
       `SELECT al.act_id, al.user_id, u.name AS user_name, u.role AS user_role,
-              al.act_date, al.act_log
+              al.ip_address, al.act_date, al.act_log
        FROM activity_log al
        LEFT JOIN "user" u ON al.user_id = u.id
        WHERE (u.role != 'super_admin' OR u.role IS NULL)
        ORDER BY al.act_date DESC`
     );
 
-    const headers = ["ID", "User ID", "User Name", "Role", "Date", "Action"];
+    const headers = ["ID", "User ID", "User Name", "Role", "IP Address", "Date", "Action"];
     const rows = result.rows.map((r) => {
       const escapeCsv = (str) => {
         if (str === null || str === undefined) return '""';
@@ -125,6 +125,7 @@ class ActivityLogService {
         r.user_id,
         escapeCsv(r.user_name),
         escapeCsv(r.user_role),
+        escapeCsv(r.ip_address),
         new Date(r.act_date).toISOString(),
         escapeCsv(r.act_log),
       ].join(",");
@@ -209,7 +210,7 @@ class ActivityLogService {
 
     const result = await pool.query(
       `SELECT al.act_id, al.user_id, u.name AS user_name, u.role AS user_role,
-              al.act_date, al.act_log
+              al.ip_address, al.act_date, al.act_log
        FROM activity_log al
        LEFT JOIN "user" u ON al.user_id = u.id
        ${whereClause}
@@ -232,14 +233,14 @@ class ActivityLogService {
   async exportMdrrmoActivityLog(adminUserId) {
     const result = await pool.query(
       `SELECT al.act_id, al.user_id, u.name AS user_name, u.role AS user_role,
-              al.act_date, al.act_log
+              al.ip_address, al.act_date, al.act_log
        FROM activity_log al
        LEFT JOIN "user" u ON al.user_id = u.id
        WHERE (u.role NOT IN ('system_admin', 'super_admin') OR u.role IS NULL)
        ORDER BY al.act_date DESC`
     );
 
-    const headers = ["ID", "User ID", "User Name", "Role", "Date", "Action"];
+    const headers = ["ID", "User ID", "User Name", "Role", "IP Address", "Date", "Action"];
     const rows = result.rows.map((r) => {
       const escapeCsv = (str) => {
         if (str === null || str === undefined) return '""';
@@ -254,6 +255,7 @@ class ActivityLogService {
         r.user_id,
         escapeCsv(r.user_name),
         escapeCsv(r.user_role),
+        escapeCsv(r.ip_address),
         new Date(r.act_date).toISOString(),
         escapeCsv(r.act_log),
       ].join(",");
@@ -338,7 +340,7 @@ class ActivityLogService {
 
     const result = await pool.query(
       `SELECT al.act_id, al.user_id, u.name AS user_name, u.email AS user_email, u.role AS user_role,
-              al.act_date, al.act_log
+              al.ip_address, al.act_date, al.act_log
        FROM activity_log al
        LEFT JOIN "user" u ON al.user_id = u.id
        ${whereClause}
@@ -361,13 +363,13 @@ class ActivityLogService {
   async exportSuperAdminActivityLog(adminUserId) {
     const result = await pool.query(
       `SELECT al.act_id, al.user_id, u.name AS user_name, u.email AS user_email, u.role AS user_role,
-              al.act_date, al.act_log
+              al.ip_address, al.act_date, al.act_log
        FROM activity_log al
        LEFT JOIN "user" u ON al.user_id = u.id
        ORDER BY al.act_date DESC`
     );
 
-    const headers = ["ID", "User ID", "User Name", "Email", "Role", "Date", "Action"];
+    const headers = ["ID", "User ID", "User Name", "Email", "Role", "IP Address", "Date", "Action"];
     const rows = result.rows.map((r) => {
       const escapeCsv = (str) => {
         if (str === null || str === undefined) return '""';
@@ -383,6 +385,7 @@ class ActivityLogService {
         escapeCsv(r.user_name),
         escapeCsv(r.user_email),
         escapeCsv(r.user_role),
+        escapeCsv(r.ip_address),
         new Date(r.act_date).toISOString(),
         escapeCsv(r.act_log),
       ].join(",");
