@@ -48,4 +48,7 @@ END $$;
 
 COMMIT;
 
+-- Duplicate of uq_module_activity_user_mod (same UNIQUE (user_id, mod_id))
+ALTER TABLE public.module_activity DROP CONSTRAINT IF EXISTS module_activity_user_module_unique;
+
 ALTER TABLE public.activity_log ADD COLUMN IF NOT EXISTS ip_address VARCHAR(45);
