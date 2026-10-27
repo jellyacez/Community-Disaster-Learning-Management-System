@@ -48,8 +48,4 @@ END $$;
 
 COMMIT;
 
-ALTER TABLE public.module_activity
-ADD CONSTRAINT module_activity_user_module_unique
-UNIQUE (user_id, mod_id);
-
-ALTER TABLE activity_log ADD COLUMN ip_address VARCHAR(45);
+ALTER TABLE public.activity_log ADD COLUMN IF NOT EXISTS ip_address VARCHAR(45);
