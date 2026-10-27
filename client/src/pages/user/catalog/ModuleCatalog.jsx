@@ -47,6 +47,8 @@ export default function UserModuleCatalog() {
         return undefined;
       }
     },
+    // The offline copy may predate an enrollment made elsewhere, so show it but refetch on mount
+    initialDataUpdatedAt: 0,
     queryFn: async () => {
       try {
         const res = await apiClient.get("/modules/available", { timeout: 8000 });
