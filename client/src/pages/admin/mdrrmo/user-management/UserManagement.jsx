@@ -108,22 +108,21 @@ export default function UserManagement() {
           setPage={actions.setPage}
           limit={state.limit}
           setLimit={actions.setLimit}
+          onAccountAction={actions.handleAccountAction}
+          isActionPending={state.isMutationPending}
         />
         
         {isAddModalOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/50 backdrop-blur-sm animate-in fade-in duration-200">
-            <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200">
+            {/* overflow-visible so the barangay dropdown's list can extend past the card */}
+            <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-visible animate-in zoom-in-95 duration-200">
               <RegisterPersonnelForm 
                 userForm={state.userForm}
                 setUserForm={actions.setUserForm}
                 isSubmitting={state.isMutationPending}
                 handleUserSubmit={async (e) => {
-                  try {
-                    await actions.handleUserSubmit(e);
-                    setIsAddModalOpen(false);
-                  } catch {
-                    // Stay open on error so user can correct
-                  }
+                  // Stay open on a validation or server error so the user can correct it
+                  if (await actions.handleUserSubmit(e)) setIsAddModalOpen(false);
                 }}
                 onClose={() => setIsAddModalOpen(false)}
               />

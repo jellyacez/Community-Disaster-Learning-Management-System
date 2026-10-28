@@ -1,7 +1,13 @@
 
 import Spinner from "../../../../../components/ui/Spinner";
+import BarangayDropdown from "../../../../../components/ui/inputs/BarangayDropdown";
+import { authClient } from "../../../../../lib/auth-client";
 
 export default function RegisterPersonnelForm({ userForm, setUserForm, handleUserSubmit, onClose, isSubmitting = false }) {
+  const { data: session } = authClient.useSession();
+  // Server rule (assertCanProvision): only roles below your own; the head outranks MDRRMO admins
+  const canCreateMdrrmoAdmin = session?.user?.role === "head_mdrrmo_admin";
+
   return (
     <div className="p-6 w-full space-y-5">
       <div className="flex items-center justify-between border-b border-gray-100 pb-4">
@@ -43,12 +49,22 @@ export default function RegisterPersonnelForm({ userForm, setUserForm, handleUse
           <select 
             value={userForm.role} 
             disabled={isSubmitting}
-            onChange={(e) => setUserForm({ ...userForm, role: e.target.value })} 
+            onChange={(e) => setUserForm({ ...userForm, role: e.target.value, barangay: "" })}
             className="w-full p-2.5 bg-gray-50 border border-gray-200 text-gray-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all disabled:opacity-60"
           >
             <option value="barangay_admin">Barangay Admin</option>
+            {canCreateMdrrmoAdmin && <option value="mdrrmo_admin">MDRRMO Admin</option>}
           </select>
         </div>
+        {userForm.role === "barangay_admin" && (
+          <div>
+            {/* BarangayDropdown renders its own "Barangay" label and required check */}
+            <BarangayDropdown
+              value={userForm.barangay}
+              onChange={(e) => setUserForm({ ...userForm, barangay: e.target.value })}
+            />
+          </div>
+        )}
         <button 
           type="submit" 
           disabled={isSubmitting}

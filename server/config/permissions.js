@@ -28,8 +28,12 @@ const ROLE_PERMISSIONS = {
     "manage_modules",
     "view_users",
   ],
+  // ban/archive are limited by rank in the controllers (assertActorOutranksTarget):
+  // MDRRMO admins reach barangay admins and residents; the head also reaches MDRRMO admins
   mdrrmo_admin: [
     "provision_admins",
+    "ban_users",
+    "archive_users",
     "view_system_stats",
     "view_activity_logs",
     "manage_modules",
@@ -38,6 +42,8 @@ const ROLE_PERMISSIONS = {
   head_mdrrmo_admin: [
     "approve_modules",
     "provision_admins",
+    "ban_users",
+    "archive_users",
     "view_system_stats",
     "view_activity_logs",
     "manage_modules",

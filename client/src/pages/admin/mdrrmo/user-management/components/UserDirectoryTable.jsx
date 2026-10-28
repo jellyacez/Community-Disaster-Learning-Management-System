@@ -3,8 +3,25 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import { MoreHorizontalIcon, Archive02Icon, UserBlock01Icon } from "@hugeicons/core-free-icons";
 import { useState, useRef, useEffect } from "react";
 import AdminTablePagination from "../../../../../components/ui/pagination/AdminTablePagination";
+import { authClient } from "../../../../../lib/auth-client";
 
-export default function UserDirectoryTable({ users, isLoading, meta, setPage, limit = 10, setLimit }) {
+// Mirrors server/config/roleHierarchy.js: an admin may only act on lower-ranked accounts.
+// The server enforces this; here it only decides which menu items are enabled.
+const ROLE_RANKS = {
+  super_admin: 6,
+  system_admin: 5,
+  head_mdrrmo_admin: 4,
+  mdrrmo_admin: 3,
+  barangay_admin: 2,
+  resident: 1,
+};
+
+const menuItemClass =
+  "w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 cursor-pointer disabled:text-gray-400 disabled:hover:bg-transparent disabled:cursor-not-allowed";
+
+export default function UserDirectoryTable({ users, isLoading, meta, setPage, limit = 10, setLimit, onAccountAction, isActionPending = false }) {
+  const { data: session } = authClient.useSession();
+  const actorRank = ROLE_RANKS[session?.user?.role] ?? 0;
   const [openDropdownId, setOpenDropdownId] = useState(null);
   const dropdownRef = useRef(null);
 
@@ -57,6 +74,12 @@ export default function UserDirectoryTable({ users, isLoading, meta, setPage, li
                     <span className="bg-gray-100 text-gray-600 px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider">
                       {u.role}
                     </span>
+                    {u.banned ? (
+                      <span className="ml-1.5 bg-red-100 text-red-700 px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider">Banned</span>
+                    ) : null}
+                    {u.archived ? (
+                      <span className="ml-1.5 bg-slate-100 text-slate-700 px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider">Archived</span>
+                    ) : null}
                   </td>
                   <td className="py-3 px-6 text-right relative">
                     <button 
@@ -78,22 +101,41 @@ export default function UserDirectoryTable({ users, isLoading, meta, setPage, li
                         <div className="px-3 py-1.5 border-b border-gray-50 mb-1">
                           <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Manage Personnel</p>
                         </div>
-                        <button 
-                          disabled
-                          title="MDRRMO Admins do not have archive permissions."
-                          className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-400 cursor-not-allowed"
-                        >
-                          <HugeiconsIcon icon={Archive02Icon} size={16} />
-                          <span>Archive Account</span>
-                        </button>
-                        <button 
-                          disabled
-                          title="MDRRMO Admins do not have ban permissions."
-                          className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-400 cursor-not-allowed"
-                        >
-                          <HugeiconsIcon icon={UserBlock01Icon} size={16} />
-                          <span>Ban Personnel</span>
-                        </button>
+                        {(() => {
+                          const canManage = actorRank > (ROLE_RANKS[u.role] ?? 0);
+                          const blockedReason = canManage ? undefined : "You can only manage accounts below your own role.";
+                          const run = (action) => {
+                            setOpenDropdownId(null);
+                            onAccountAction?.(u, action);
+                          };
+                          return (
+                            <>
+                              <button
+                                type="button"
+                                disabled={!canManage || isActionPending}
+                                title={blockedReason}
+                                onClick={() => run(u.archived ? "restore" : "archive")}
+                                className={menuItemClass}
+                              >
+                                <HugeiconsIcon icon={Archive02Icon} size={16} />
+                                <span>{u.archived ? "Restore Account" : "Archive Account"}</span>
+                              </button>
+                              <button
+                                type="button"
+                                disabled={!canManage || isActionPending}
+                                title={blockedReason}
+                                onClick={() => run(u.banned ? "unban" : "ban")}
+                                className={`${menuItemClass} ${!u.banned && canManage ? "text-red-600" : ""}`}
+                              >
+                                <HugeiconsIcon icon={UserBlock01Icon} size={16} />
+                                <span>{u.banned ? "Lift Ban" : "Ban Personnel"}</span>
+                              </button>
+                              {!canManage && (
+                                <p className="px-3 pt-1 pb-0.5 text-[11px] text-gray-400">Above or equal to your role</p>
+                              )}
+                            </>
+                          );
+                        })()}
                       </div>
                     )}
                   </td>

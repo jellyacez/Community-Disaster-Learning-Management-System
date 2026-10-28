@@ -4,9 +4,19 @@ import apiClient from "../../../../../lib/apiClient";
 import toast from "react-hot-toast";
 import useDebounce from "../../../../../hooks/useDebounce";
 
+const EMPTY_FORM = { name: "", email: "", role: "barangay_admin", barangay: "" };
+
+// Row actions: endpoint, request body, and the toast shown on success
+const ACCOUNT_ACTIONS = {
+  archive: { path: "archive", body: { archived: true }, done: "archived" },
+  restore: { path: "archive", body: { archived: false }, done: "restored" },
+  ban: { path: "ban", body: {}, done: "banned" },
+  unban: { path: "unban", body: {}, done: "unbanned" },
+};
+
 export const useUserManagement = () => {
   const queryClient = useQueryClient();
-  const [userForm, setUserForm] = useState({ name: "", email: "", role: "barangay_admin" });
+  const [userForm, setUserForm] = useState(EMPTY_FORM);
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
   const [search, setSearch] = useState("");
@@ -31,54 +41,64 @@ export const useUserManagement = () => {
 
   const mutation = useMutation({
     mutationFn: async ({ type, payload }) => {
-      switch (type) {
-        case "provision":
-          return apiClient.post(`/admin/users/provision`, payload);
-        case "archived system account record":
-          return apiClient.patch(`/admin/users/${payload.userId}/archive`);
-        case "banned and terminated authorization credentials":
-          return apiClient.patch(`/admin/users/${payload.userId}/ban`);
-        default:
-          throw new Error("Unknown action type");
-      }
+      if (type === "provision") return apiClient.post(`/admin/users/provision`, payload);
+      const action = ACCOUNT_ACTIONS[type];
+      if (!action) throw new Error("Unknown action type");
+      return apiClient.patch(`/admin/users/${payload.userId}/${action.path}`, action.body);
     },
-    onSuccess: (_, variables) => {
-      toast.success(
-        variables.type === "provision" 
-          ? "New account parameters registered successfully." 
-          : `Account ID reference node ${variables.payload.userId} successfully updated: ${variables.type.toUpperCase()}`
-      );
+    onSuccess: (res, variables) => {
       if (variables.type === "provision") {
-        setUserForm({ name: "", email: "", role: "barangay_admin" });
+        // The server says whether the credentials email actually went out
+        toast.success(res?.data?.message || `Account created for ${variables.payload.email}.`, { duration: 6000 });
+        setUserForm(EMPTY_FORM);
+      } else {
+        toast.success(`${variables.payload.name} was ${ACCOUNT_ACTIONS[variables.type].done}.`);
       }
       queryClient.invalidateQueries({ queryKey: ["adminUsers"] });
     },
     onError: (err) => {
-      toast.error(err?.response?.data?.error || "Action failed.");
+      const data = err?.response?.data;
+      toast.error(data?.message || data?.error || "Action failed.");
     }
   });
 
+  // Resolves true only when the account was created, so the caller knows whether to close the form
   const handleUserSubmit = async (e) => {
     e.preventDefault();
-    if (!userForm.name || !userForm.email) return toast.error("Please fill out all fields.");
-    
-    await mutation.mutateAsync({ 
-      type: "provision", 
+    if (!userForm.name || !userForm.email) {
+      toast.error("Please fill out all fields.");
+      return false;
+    }
+    if (userForm.role === "barangay_admin" && !userForm.barangay) {
+      toast.error("Choose the barangay this admin will manage.");
+      return false;
+    }
+
+    return mutation.mutateAsync({
+      type: "provision",
       payload: {
         name: userForm.name,
         email: userForm.email,
-        role: userForm.role 
-      }
-    });
+        role: userForm.role,
+        ...(userForm.role === "barangay_admin" ? { barangay: userForm.barangay } : {}),
+      },
+    })
+      .then(() => true)
+      .catch(() => false); // onError already shows the toast
   };
 
-  const handleAccountAction = async (userId, action) => {
-    if (window.confirm(`Are you sure you want to perform this action? This cannot be easily undone.`)) {
-      await mutation.mutateAsync({
-        type: action,
-        payload: { userId }
-      });
-    }
+  // action: "archive" | "restore" | "ban" | "unban"
+  const handleAccountAction = async (user, action) => {
+    const prompts = {
+      archive: `Archive ${user.name}? They will no longer be able to sign in until restored.`,
+      restore: `Restore ${user.name}'s account?`,
+      ban: `Ban ${user.name}? They will be signed out and blocked from signing in.`,
+      unban: `Lift the ban on ${user.name}?`,
+    };
+    if (!window.confirm(prompts[action])) return;
+    await mutation
+      .mutateAsync({ type: action, payload: { userId: user.id || user._id, name: user.name } })
+      .catch(() => {}); // onError already shows the toast
   };
 
   return {

@@ -4,6 +4,8 @@ import BarangayDropdown from "../../../../../../components/ui/inputs/BarangayDro
 export default function AdminRoleSelection({ formData, setFormData }) {
   const { data: session } = authClient.useSession();
   const isSuperAdmin = session?.user?.role === "super_admin";
+  // System admins may create any role below their own (server: assertCanProvision)
+  const canProvisionHeadMdrrmo = isSuperAdmin || session?.user?.role === "system_admin";
 
   return (
     <>
@@ -60,7 +62,7 @@ export default function AdminRoleSelection({ formData, setFormData }) {
             </label>
           )}
 
-          {isSuperAdmin && (
+          {canProvisionHeadMdrrmo && (
             <label
               className={`relative flex items-center justify-center px-4 py-3 border rounded-xl cursor-pointer transition-all ${
                 formData.role === "head_mdrrmo_admin"
