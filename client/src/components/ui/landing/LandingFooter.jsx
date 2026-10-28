@@ -6,14 +6,14 @@ const CONTACTS = [
   {
     name: "MDRRMO Bacolor",
     phones: [
-      { label: "Globe 0966 136 5586", tel: "09661365586" },
-      { label: "Smart 0929 446 1940", tel: "09294461940" },
+      { label: "Globe 0987 654 3210", tel: "09876543210" },
+      { label: "Smart 0987 654 3210", tel: "09876543210" },
     ],
     facebook: "https://www.facebook.com/BacolorRescue.DIMANteam",
   },
   {
     name: "BFP Bacolor Fire Station",
-    phones: [{ label: "0923 103 8363", tel: "09231038363" }],
+    phones: [{ label: "0987 654 3210", tel: "09876543210" }],
     facebook: "https://www.facebook.com/profile.php?id=61569884632047",
   },
 ];
@@ -25,7 +25,11 @@ export default function LandingFooter() {
         <div className="flex flex-col md:flex-row justify-between gap-8 mb-8">
           <div className="flex items-start gap-3">
             <div className="w-10 h-10 rounded-xl bg-red-600 flex items-center justify-center shrink-0">
-              <HugeiconsIcon aria-hidden="true" icon={Shield01Icon} className="w-5 h-5 text-white" />
+              <HugeiconsIcon
+                aria-hidden="true"
+                icon={Shield01Icon}
+                className="w-5 h-5 text-white"
+              />
             </div>
             <div>
               <p className="text-white font-bold text-sm">
@@ -101,7 +105,10 @@ export default function LandingFooter() {
                   <ul>
                     {office.phones.map((p) => (
                       <li key={p.tel}>
-                        <a href={`tel:${p.tel}`} className="inline-flex min-h-11 items-center hover:text-white transition-colors">
+                        <a
+                          href={`tel:${p.tel}`}
+                          className="inline-flex min-h-11 items-center hover:text-white transition-colors"
+                        >
                           {p.label}
                         </a>
                       </li>
@@ -114,7 +121,11 @@ export default function LandingFooter() {
                         aria-label={`${office.name} on Facebook (opens in a new tab)`}
                         className="inline-flex min-h-11 items-center gap-1.5 hover:text-white transition-colors"
                       >
-                        <HugeiconsIcon aria-hidden="true" icon={Facebook01Icon} className="h-4 w-4" />
+                        <HugeiconsIcon
+                          aria-hidden="true"
+                          icon={Facebook01Icon}
+                          className="h-4 w-4"
+                        />
                         Facebook page
                       </a>
                     </li>
