@@ -1,16 +1,21 @@
-
 import { HugeiconsIcon } from "@hugeicons/react";
-import { Call02Icon, Copy01Icon, Facebook01Icon } from "@hugeicons/core-free-icons";
+import {
+  Call02Icon,
+  Copy01Icon,
+  Facebook01Icon,
+} from "@hugeicons/core-free-icons";
 import toast from "react-hot-toast";
 
 export default function DashboardEmergencyContacts() {
-  const isTouchDevice = typeof window !== "undefined" && window.matchMedia("(pointer: coarse)").matches;
+  const isTouchDevice =
+    typeof window !== "undefined" &&
+    window.matchMedia("(pointer: coarse)").matches;
 
   // From the official MDRRMO Bacolor and BFP Bacolor Fire Station Facebook pages
   const contacts = [
-    { label: "MDRRMO (Globe)", number: "0966 136 5586", tel: "09661365586" },
-    { label: "MDRRMO (Smart)", number: "0929 446 1940", tel: "09294461940" },
-    { label: "BFP Bacolor", number: "0923 103 8363", tel: "09231038363" },
+    { label: "MDRRMO (Globe)", number: "0987 654 3210", tel: "09876543210" },
+    { label: "MDRRMO (Smart)", number: "0987 654 3210", tel: "09876543210" },
+    { label: "BFP Bacolor", number: "0987 654 3210", tel: "09876543210" },
     { label: "National Emergency", number: "911", tel: "911" },
   ];
 
@@ -35,7 +40,9 @@ export default function DashboardEmergencyContacts() {
             Emergency Contacts
           </h2>
           <p className="text-xs text-gray-500">
-            {isTouchDevice ? "Tap to call local hotlines" : "Click to copy hotline number"}
+            {isTouchDevice
+              ? "Tap to call local hotlines"
+              : "Click to copy hotline number"}
           </p>
         </div>
       </div>
@@ -45,12 +52,19 @@ export default function DashboardEmergencyContacts() {
             key={c.label}
             href={`tel:${c.tel}`}
             onClick={(e) => handleContactClick(e, c)}
-            title={isTouchDevice ? `Call ${c.label} at ${c.number}` : `Click to copy ${c.label}: ${c.number}`}
+            title={
+              isTouchDevice
+                ? `Call ${c.label} at ${c.number}`
+                : `Click to copy ${c.label}: ${c.number}`
+            }
             aria-label={`${c.label} at ${c.number}. ${isTouchDevice ? "Tap to call" : "Click to copy"}`}
             className="flex justify-between items-center p-3 bg-gray-50 rounded-xl hover:bg-red-50 hover:border-red-200 border border-transparent transition-all cursor-pointer group shadow-2xs focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 outline-hidden"
           >
             <div className="flex items-center gap-2">
-              <HugeiconsIcon icon={Call02Icon} className="w-4 h-4 text-gray-400 group-hover:text-red-600 transition-colors" />
+              <HugeiconsIcon
+                icon={Call02Icon}
+                className="w-4 h-4 text-gray-400 group-hover:text-red-600 transition-colors"
+              />
               <span className="font-semibold text-xs sm:text-sm text-gray-700 group-hover:text-red-700">
                 {c.label}
               </span>
@@ -60,7 +74,10 @@ export default function DashboardEmergencyContacts() {
                 {c.number}
               </span>
               {!isTouchDevice && (
-                <HugeiconsIcon icon={Copy01Icon} className="w-3.5 h-3.5 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                <HugeiconsIcon
+                  icon={Copy01Icon}
+                  className="w-3.5 h-3.5 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity"
+                />
               )}
             </div>
           </a>
@@ -73,7 +90,11 @@ export default function DashboardEmergencyContacts() {
         aria-label="Latest advisories from MDRRMO Bacolor on Facebook (opens in a new tab)"
         className="mt-4 inline-flex min-h-11 items-center gap-1.5 text-xs sm:text-sm font-semibold text-gray-700 underline underline-offset-4 hover:text-gray-950"
       >
-        <HugeiconsIcon icon={Facebook01Icon} className="w-4 h-4 shrink-0" aria-hidden="true" />
+        <HugeiconsIcon
+          icon={Facebook01Icon}
+          className="w-4 h-4 shrink-0"
+          aria-hidden="true"
+        />
         Latest advisories: MDRRMO Bacolor on Facebook
       </a>
     </div>

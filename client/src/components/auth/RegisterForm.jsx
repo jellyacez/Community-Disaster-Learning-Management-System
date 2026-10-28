@@ -31,7 +31,10 @@ export default function RegisterForm() {
   // A security check that never finishes counts as failed, so the user gets a retry instead of a wait
   useEffect(() => {
     if (securityStatus !== "loading") return;
-    const timer = setTimeout(() => setSecurityStatus("failed"), SECURITY_CHECK_TIMEOUT_MS);
+    const timer = setTimeout(
+      () => setSecurityStatus("failed"),
+      SECURITY_CHECK_TIMEOUT_MS,
+    );
     return () => clearTimeout(timer);
   }, [securityStatus]);
 
@@ -47,11 +50,15 @@ export default function RegisterForm() {
     setTurnstileToken("");
     // If Cloudflare's script never loaded, drop the dead tag so the remount fetches it again
     if (!window.turnstile) {
-      document.querySelectorAll('script[src*="challenges.cloudflare.com/turnstile"]').forEach((tag) => tag.remove());
+      document
+        .querySelectorAll('script[src*="challenges.cloudflare.com/turnstile"]')
+        .forEach((tag) => tag.remove());
     }
     setSecurityAttempt((n) => n + 1);
     // The retry button disappears, so hand focus to Create Account rather than letting it fall to the page
-    requestAnimationFrame(() => document.getElementById("register-submit")?.focus());
+    requestAnimationFrame(() =>
+      document.getElementById("register-submit")?.focus(),
+    );
   };
 
   const { state, actions } = useRegisterForm({
@@ -59,12 +66,23 @@ export default function RegisterForm() {
     onResetTurnstile: resetTurnstile,
   });
 
-  const { formData, errors, isSubmitting, showTermsModal, showPrivacyModal, showConsentModal } = state;
+  const {
+    formData,
+    errors,
+    isSubmitting,
+    showTermsModal,
+    showPrivacyModal,
+    showConsentModal,
+  } = state;
 
   const handleFormSubmit = (e) => {
     e.preventDefault();
     if (isSubmitting) return;
-    setTurnstileError(turnstileToken ? "" : "Still running the security check. Try again in a moment.");
+    setTurnstileError(
+      turnstileToken
+        ? ""
+        : "Still running the security check. Try again in a moment.",
+    );
     actions.handleSubmit(e, { securityReady: !!turnstileToken });
   };
 
@@ -77,14 +95,23 @@ export default function RegisterForm() {
             role="alert"
             className="flex items-start gap-2 bg-red-50 text-red-700 p-3 rounded-lg text-sm font-semibold mb-4 border border-red-100"
           >
-            <HugeiconsIcon aria-hidden="true" icon={Alert01Icon} className="w-5 h-5 shrink-0" />
+            <HugeiconsIcon
+              aria-hidden="true"
+              icon={Alert01Icon}
+              className="w-5 h-5 shrink-0"
+            />
             <div>
               <p>{errors.form}</p>
               {errors.emailTaken && (
                 <p className="mt-1 font-medium text-gray-900">
-                  <Link to="/signin" className={INLINE_LINK_CLASS}>Sign in</Link>
+                  <Link to="/signin" className={INLINE_LINK_CLASS}>
+                    Sign in
+                  </Link>
                   {" or "}
-                  <Link to="/forgot-password" className={INLINE_LINK_CLASS}>reset your password</Link>.
+                  <Link to="/forgot-password" className={INLINE_LINK_CLASS}>
+                    reset your password
+                  </Link>
+                  .
                 </p>
               )}
             </div>
@@ -92,7 +119,10 @@ export default function RegisterForm() {
         )}
 
         <div>
-          <label htmlFor="fullName" className="block text-sm font-semibold text-gray-700 mb-1">
+          <label
+            htmlFor="fullName"
+            className="block text-sm font-semibold text-gray-700 mb-1"
+          >
             Full Name
           </label>
           <input
@@ -109,11 +139,21 @@ export default function RegisterForm() {
             className={actions.getInputClass("fullName")}
             required
           />
-          {errors.fullName && <p id="fullName-error" className="text-red-700 text-xs mt-1 font-medium">{errors.fullName}</p>}
+          {errors.fullName && (
+            <p
+              id="fullName-error"
+              className="text-red-700 text-xs mt-1 font-medium"
+            >
+              {errors.fullName}
+            </p>
+          )}
         </div>
 
         <div>
-          <label htmlFor="email" className="block text-sm font-semibold text-gray-700 mb-1">
+          <label
+            htmlFor="email"
+            className="block text-sm font-semibold text-gray-700 mb-1"
+          >
             Email Address
           </label>
           <input
@@ -122,7 +162,13 @@ export default function RegisterForm() {
             name="email"
             autoComplete="email"
             aria-invalid={!!errors.email || !!errors.emailTaken}
-            aria-describedby={errors.email ? "email-error" : errors.emailTaken ? "register-error" : undefined}
+            aria-describedby={
+              errors.email
+                ? "email-error"
+                : errors.emailTaken
+                  ? "register-error"
+                  : undefined
+            }
             value={formData.email}
             onChange={actions.handleChange}
             onBlur={actions.handleBlur}
@@ -130,7 +176,14 @@ export default function RegisterForm() {
             className={actions.getInputClass("email")}
             required
           />
-          {errors.email && <p id="email-error" className="text-red-700 text-xs mt-1 font-medium">{errors.email}</p>}
+          {errors.email && (
+            <p
+              id="email-error"
+              className="text-red-700 text-xs mt-1 font-medium"
+            >
+              {errors.email}
+            </p>
+          )}
         </div>
 
         <BarangayDropdown
@@ -153,7 +206,10 @@ export default function RegisterForm() {
             placeholder="Create a password"
             autoComplete="new-password"
           />
-          <PasswordRequirements id="password-rules" password={formData.password} />
+          <PasswordRequirements
+            id="password-rules"
+            password={formData.password}
+          />
         </div>
 
         <PasswordInput
@@ -195,13 +251,21 @@ export default function RegisterForm() {
             }}
           />
           {/* Always mounted so screen readers hear the status as it changes */}
-          <div id="security-check-status" aria-live="polite" className="flex flex-col items-center text-center text-xs">
+          <div
+            id="security-check-status"
+            aria-live="polite"
+            className="flex flex-col items-center text-center text-xs"
+          >
             {securityStatus === "loading" && !turnstileError && (
-              <p className="text-gray-600">Running a quick security check before you can register…</p>
+              <p className="text-gray-600">
+                Running a quick security check before you can register…
+              </p>
             )}
             {securityStatus === "failed" && (
               <>
-                <p className="font-medium text-red-700">Security check couldn&apos;t load. Check your connection.</p>
+                <p className="font-medium text-red-700">
+                  Security check couldn&apos;t load. Check your connection.
+                </p>
                 <button
                   type="button"
                   onClick={retrySecurityCheck}
@@ -219,11 +283,19 @@ export default function RegisterForm() {
 
         <p className="text-sm text-gray-600 text-center leading-relaxed">
           Next, we&apos;ll ask for your consent under our{" "}
-          <button type="button" onClick={() => actions.setShowPrivacyModal(true)} className={INLINE_LINK_CLASS}>
+          <button
+            type="button"
+            onClick={() => actions.setShowPrivacyModal(true)}
+            className={INLINE_LINK_CLASS}
+          >
             Privacy Policy
           </button>
           . Creating an account also means you accept our{" "}
-          <button type="button" onClick={() => actions.setShowTermsModal(true)} className={INLINE_LINK_CLASS}>
+          <button
+            type="button"
+            onClick={() => actions.setShowTermsModal(true)}
+            className={INLINE_LINK_CLASS}
+          >
             Terms &amp; Conditions
           </button>
           .
@@ -235,10 +307,18 @@ export default function RegisterForm() {
           type="submit"
           aria-disabled={isSubmitting || !turnstileToken}
           aria-busy={isSubmitting}
-          aria-describedby={!turnstileToken ? "security-check-status" : undefined}
+          aria-describedby={
+            !turnstileToken ? "security-check-status" : undefined
+          }
           className="w-full min-h-12 py-3 rounded-xl bg-red-600 text-white font-bold hover:bg-red-700 transition-colors aria-disabled:bg-gray-300 aria-disabled:text-gray-800 aria-disabled:hover:bg-gray-300 aria-disabled:cursor-not-allowed flex items-center justify-center gap-2 outline-none focus-visible:ring-2 focus-visible:ring-gray-900 focus-visible:ring-offset-2"
         >
-          {isSubmitting ? <><Spinner /> Creating account…</> : "Create Account"}
+          {isSubmitting ? (
+            <>
+              <Spinner /> Creating account…
+            </>
+          ) : (
+            "Create Account"
+          )}
         </button>
       </form>
 
@@ -251,13 +331,22 @@ export default function RegisterForm() {
 
       <p className="text-sm text-gray-600 text-center">
         Need help registering? Contact the MDRRMO at{" "}
-        <a href="mailto:mdrrmcbacolor@gmail.com" className={`${LINK_CLASS} whitespace-nowrap`}>
-          mdrrmcbacolor@gmail.com
+        <a
+          href="mailto:supportbacolor@gmail.com"
+          className={`${LINK_CLASS} whitespace-nowrap`}
+        >
+          supportbacolor@gmail.com
         </a>
       </p>
 
-      <TermsModal isOpen={showTermsModal} onClose={() => actions.setShowTermsModal(false)} />
-      <PrivacyModal isOpen={showPrivacyModal} onClose={() => actions.setShowPrivacyModal(false)} />
+      <TermsModal
+        isOpen={showTermsModal}
+        onClose={() => actions.setShowTermsModal(false)}
+      />
+      <PrivacyModal
+        isOpen={showPrivacyModal}
+        onClose={() => actions.setShowPrivacyModal(false)}
+      />
 
       <ExplicitConsentModal
         isOpen={showConsentModal}

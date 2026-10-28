@@ -196,8 +196,15 @@ export default function SignInPage() {
       subtitle="Access your Bacolor Disaster LMS account. Barangay and MDRRMO staff will also enter a verification code."
     >
       {signedOutAll && (
-        <div role="status" className="mb-5 flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 p-3 text-sm font-semibold text-green-800">
-          <HugeiconsIcon aria-hidden="true" icon={CheckmarkCircle02Icon} className="h-5 w-5 shrink-0" />
+        <div
+          role="status"
+          className="mb-5 flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 p-3 text-sm font-semibold text-green-800"
+        >
+          <HugeiconsIcon
+            aria-hidden="true"
+            icon={CheckmarkCircle02Icon}
+            className="h-5 w-5 shrink-0"
+          />
           <span>You signed out of all devices. Sign in again to continue.</span>
         </div>
       )}
@@ -223,13 +230,12 @@ export default function SignInPage() {
       <p className="text-sm text-gray-600 text-center">
         Need help signing in? Contact the MDRRMO at{" "}
         <a
-          href="mailto:mdrrmcbacolor@gmail.com"
+          href="mailto:supportbacolor@gmail.com"
           className="inline-flex min-h-11 items-center whitespace-nowrap font-semibold text-gray-900 underline underline-offset-4 rounded-md outline-none focus-visible:ring-2 focus-visible:ring-gray-900"
         >
-          mdrrmcbacolor@gmail.com
+          supportbacolor@gmail.com
         </a>
       </p>
-
     </AuthLayout>
   );
 }
