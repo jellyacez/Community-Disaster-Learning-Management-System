@@ -60,6 +60,8 @@ export default function AdminModuleApprovals() {
       );
       queryClient.invalidateQueries({ queryKey: ["moduleApprovals"] });
       queryClient.invalidateQueries({ queryKey: ["adminModules"] });
+      queryClient.invalidateQueries({ queryKey: ["pendingModulesCount"] });
+      
       setSelectedModule(null);
       setRejectReason("");
       setRejectError("");

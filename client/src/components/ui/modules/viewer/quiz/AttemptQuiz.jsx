@@ -92,7 +92,7 @@ export default function AttemptQuiz({ stepId, onSubmitAttempt, retryCount = 0 })
 
   // Start or resume when the step opens (and for a fresh attempt after "Try Again")
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- loading external state on mount
+     
     startAttempt();
   }, [startAttempt, retryCount]);
 

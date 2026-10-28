@@ -10,7 +10,6 @@
 # Secrets — never bake into an image
 **/.env
 **/.env.*
-# ...but example templates are fine to include
 !**/.env.example
 !docker/env/
 
@@ -18,12 +17,21 @@
 **/dist
 
 # Runtime-generated directories
-**/logs
+server/logs
+server/logs/**
+logs
+logs/**
 **/tmp
 **/uploads
 
+# Ensure all client source log folders AND files inside them are included
+!client/src/**/logs
+!client/src/**/logs/**
+
 # Log files
-**/*.log
+*.log
+npm-debug.log*
+yarn-debug.log*
 
 # Version control & editor config
 .git
