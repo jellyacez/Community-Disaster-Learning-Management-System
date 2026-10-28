@@ -56,5 +56,10 @@
   "allowScripts": {
     "esbuild@0.28.1": true,
     "puppeteer@25.3.0": true
+  },
+  "overrides": {
+    "@tailwindcss/typography": {
+      "postcss-selector-parser": "^6.1.5"
+    }
   }
 }
