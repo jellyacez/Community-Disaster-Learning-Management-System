@@ -8,7 +8,8 @@ export default function RecentActivityFeed() {
   const { data, isLoading, isFetching, refetch } = useQuery({
     queryKey: ["recentLogs"],
     queryFn: async () => {
-      const res = await apiClient.get("/admin/activity-log?limit=5&page=1");
+      // The feed never shows a total, so skip the server's full-log count
+      const res = await apiClient.get("/admin/activity-log?limit=5&page=1&includeTotal=false");
       return res.data.data;
     },
     refetchInterval: 60000,

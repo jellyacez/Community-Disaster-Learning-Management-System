@@ -69,14 +69,20 @@ class ActivityLogService {
 
     const whereClause = `WHERE ${conditions.join(" AND ")}`;
 
-    const countQuery = `
-      SELECT COUNT(*) FROM activity_log al
-      LEFT JOIN "user" u ON al.user_id = u.id
-      ${whereClause}
-    `;
+    // The count scans the whole log (the page itself uses the act_date index), so callers
+    // that never show a total, like the dashboard's recent-activity feed, can skip it
+    const includeTotal = queryParams.includeTotal !== "false";
 
-    const countResult = await pool.query(countQuery, params);
-    const total = parseInt(countResult.rows[0].count, 10);
+    let total = null;
+    if (includeTotal) {
+      const countQuery = `
+        SELECT COUNT(*) FROM activity_log al
+        LEFT JOIN "user" u ON al.user_id = u.id
+        ${whereClause}
+      `;
+      const countResult = await pool.query(countQuery, params);
+      total = parseInt(countResult.rows[0].count, 10);
+    }
 
     const result = await pool.query(
       `SELECT al.act_id, al.user_id, u.name AS user_name, u.role AS user_role,
@@ -95,7 +101,7 @@ class ActivityLogService {
         total,
         page,
         limit,
-        totalPages: Math.ceil(total / limit),
+        totalPages: total === null ? null : Math.ceil(total / limit),
       },
     };
   }
