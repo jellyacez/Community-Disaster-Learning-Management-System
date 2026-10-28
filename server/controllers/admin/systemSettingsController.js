@@ -12,6 +12,18 @@ exports.getSystemSettings = async (req, res) => {
   }
 };
 
+// @desc    Get the system logo (kept out of getSystemSettings to keep polling light)
+// @access  Private (system_admin only)
+exports.getSystemLogo = async (req, res) => {
+  try {
+    const system_logo = await SystemSettingsService.getSystemLogo();
+    res.status(200).json({ success: true, data: { system_logo } });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, message: "Failed to retrieve system logo." });
+  }
+};
+
 // @desc    Update system branding (Name and Base64 Logo)
 // @access  Private (system_admin only)
 exports.updateSystemBranding = async (req, res) => {
@@ -30,11 +42,12 @@ exports.updateSystemBranding = async (req, res) => {
           return res.status(400).json({ success: false, message: 'Invalid logo format. Must be a valid HTTPS URL or a Base64 image (PNG, JPG, WEBP, SVG).' });
         }
         
-        // Size Validation: Calculate byte size (max 2MB)
+        // Size Validation: max 500 KB. Base64 adds ~33%, so this keeps the request
+        // under the 800kb express.json limit in server.js.
         const base64Data = base64Match[2];
         const sizeInBytes = (base64Data.length * 3) / 4 - (base64Data.endsWith("==") ? 2 : (base64Data.endsWith("=") ? 1 : 0));
-        if (sizeInBytes > 2 * 1024 * 1024) {
-          return res.status(400).json({ success: false, message: 'Logo image is too large. Maximum size is 2MB.' });
+        if (sizeInBytes > 500 * 1024) {
+          return res.status(400).json({ success: false, message: 'Logo image is too large. Maximum size is 500 KB.' });
         }
         isValidLogo = true;
       }

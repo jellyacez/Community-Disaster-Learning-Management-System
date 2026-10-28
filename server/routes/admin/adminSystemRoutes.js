@@ -71,6 +71,16 @@ router.get(
   systemSettingsController.getSystemSettings
 );
 
+// @route   GET /api/admin/settings/logo
+// @desc    Get the system logo (separate from /settings, which is polled)
+// @access  Private (system_admin only)
+router.get(
+  "/settings/logo",
+  requireRole(ADMIN_ROLES),
+  requirePermission("manage_system_settings"),
+  systemSettingsController.getSystemLogo
+);
+
 // @route   PATCH /api/admin/settings/branding
 // @desc    Update system branding (name and logo)
 // @access  Private (system_admin only)

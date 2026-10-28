@@ -1,5 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
+import { useQuery, keepPreviousData } from "@tanstack/react-query";
+import apiClient from "../../../../../lib/apiClient";
 import { authClient } from "../../../../../lib/auth-client";
 import { ArrowLeft01Icon, ArrowRight01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
@@ -7,28 +9,51 @@ import StatusBadge from "../../../../../components/ui/StatusBadge";
 import { SkeletonTableRow } from "../../../../../components/ui/Skeleton";
 import { decodeHtml } from "../../../../../utils/textUtils";
 
-export default function ActiveModulesTable({ modules = [], isLoading, selectedCategory, statusFilter }) {
+const itemsPerPage = 5;
+
+export default function ActiveModulesTable({ selectedCategory, statusFilter }) {
   const { data: session } = authClient.useSession();
   const isHeadAdmin = session?.user?.role === "head_mdrrmo_admin";
 
+  // Page resets to 1 when filters change because Overview keys this component by them
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 5;
 
-  let filtered = modules;
-  if (selectedCategory) {
-    filtered = filtered.filter(m => m.category === selectedCategory);
+  // Filter and page on the server so the table stays correct past the API's 100-row limit
+  const { data, isLoading, isPlaceholderData } = useQuery({
+    queryKey: ["adminModules", "overview", { page: currentPage, category: selectedCategory, status: statusFilter }],
+    queryFn: async () => {
+      const res = await apiClient.get("/admin/modules", {
+        params: {
+          page: currentPage,
+          limit: itemsPerPage,
+          category: selectedCategory || undefined,
+          status: statusFilter || undefined,
+        },
+      });
+      return {
+        rows: (res.data.data || []).map((mod) => ({
+          id: mod.mod_id,
+          title: mod.modname,
+          category: mod.modcat,
+          status: mod.status,
+          step_count: parseInt(mod.step_count, 10) || 0,
+        })),
+        total: res.data.meta?.total ?? 0,
+      };
+    },
+    // Keep the current rows on screen while the next page loads
+    placeholderData: keepPreviousData,
+    retry: 1,
+  });
+
+  const paginatedModules = data?.rows ?? [];
+  const total = data?.total ?? 0;
+  const totalPages = Math.ceil(total / itemsPerPage);
+
+  // If the last page empties (e.g. its module was archived), step back to the new last page
+  if (data && !isPlaceholderData && currentPage > totalPages && totalPages > 0) {
+    setCurrentPage(totalPages);
   }
-  if (statusFilter) {
-    filtered = filtered.filter(m => m.status === statusFilter);
-  }
-
-  // Reset to page 1 when filters change
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [selectedCategory, statusFilter]);
-
-  const totalPages = Math.ceil(filtered.length / itemsPerPage);
-  const paginatedModules = filtered.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   const getStatusBadge = (status) => {
     switch(status) {
@@ -58,7 +83,7 @@ export default function ActiveModulesTable({ modules = [], isLoading, selectedCa
       </div>
 
       <div className="flex-1 flex flex-col justify-between overflow-x-auto min-h-0">
-        {!isLoading && filtered.length === 0 ? (
+        {!isLoading && total === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-gray-400 text-sm py-12">
             <p>No modules found matching the criteria.</p>
           </div>
@@ -74,7 +99,10 @@ export default function ActiveModulesTable({ modules = [], isLoading, selectedCa
                     <th className="py-2.5 px-4 sm:px-5 text-right">Action</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-100 text-xs">
+                <tbody
+                  aria-busy={isPlaceholderData || undefined}
+                  className={`divide-y divide-gray-100 text-xs transition-opacity duration-150 motion-reduce:transition-none ${isPlaceholderData ? "opacity-60" : ""}`}
+                >
                   {isLoading
                     ? [1, 2, 3, 4, 5].map((i) => (
                         <SkeletonTableRow key={i} columns={4} padding="py-3 px-4 sm:px-5" />
@@ -124,8 +152,8 @@ export default function ActiveModulesTable({ modules = [], isLoading, selectedCa
               <div className="flex items-center justify-between px-4 sm:px-5 py-3 border-t border-gray-100 shrink-0 bg-white">
                 <span className="text-[11px] font-medium text-gray-500">
                   Showing <span className="font-semibold text-gray-800">{(currentPage - 1) * itemsPerPage + 1}</span> to{" "}
-                  <span className="font-semibold text-gray-800">{Math.min(currentPage * itemsPerPage, filtered.length)}</span> of{" "}
-                  <span className="font-semibold text-gray-800">{filtered.length}</span> entries
+                  <span className="font-semibold text-gray-800">{Math.min(currentPage * itemsPerPage, total)}</span> of{" "}
+                  <span className="font-semibold text-gray-800">{total}</span> entries
                 </span>
                 
                 <div className="flex items-center gap-1.5">

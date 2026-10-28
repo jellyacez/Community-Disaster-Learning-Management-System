@@ -20,6 +20,7 @@ import MdrrmoRecentActivity from "./components/MdrrmoRecentActivity";
 import MdrrmoQuickActions from "./components/MdrrmoQuickActions";
 import AnnouncementModal from "../../barangay/workspace/announcementModal";
 import { SkeletonChart } from "../../../../components/ui/Skeleton";
+import ExportReportModal from "./components/ExportReportModal";
 
 const MdrrmoModuleDistributionChart = lazy(() =>
   import("./components/MdrrmoCharts").then((module) => ({
@@ -37,6 +38,8 @@ export default function Overview() {
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [statusFilter, setStatusFilter] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isExportOpen, setIsExportOpen] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
 
   const { data: session } = authClient.useSession();
   const userRole = session?.user?.role;
@@ -57,26 +60,6 @@ export default function Overview() {
     retry: 1,
   });
 
-  const { data: modules = [], isLoading: isLoadingModules } = useQuery({
-    queryKey: ["adminModules", "overview"],
-    queryFn: async () => {
-      const res = await apiClient.get("admin/modules?limit=1000");
-      const data = res.data.data || [];
-      return data.map((mod) => ({
-        id: mod.mod_id,
-        title: mod.modname,
-        category: mod.modcat,
-        status: mod.status,
-        step_count: parseInt(mod.step_count, 10) || 0,
-        description: mod.description || "",
-        level: mod.level || "Level 1",
-        duration: mod.duration || "Varies",
-        image_url: mod.image_url || null,
-      }));
-    },
-    refetchInterval: 60000,
-    retry: 1,
-  });
 
   if (metricsError) {
     return (
@@ -96,79 +79,35 @@ export default function Overview() {
 
   const m = metricsData || {};
 
-  const handleExportReport = () => {
-    if (metricsLoading || isLoadingModules) {
-      toast.error("Please wait while report data finishes loading.");
-      return;
+  const handleExportReport = async ({ from, to, sheets }) => {
+    setIsExporting(true);
+    try {
+      const res = await apiClient.get("/admin/mdrrmo/report/export", {
+        params: { from, to, sheets: sheets.join(",") },
+        responseType: "blob",
+      });
+      const downloadUrl = window.URL.createObjectURL(res.data);
+      const link = document.createElement("a");
+      link.href = downloadUrl;
+      link.download = `MDRRMO_Accomplishment_Report_${from}_to_${to}.xlsx`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(downloadUrl);
+      setIsExportOpen(false);
+      toast.success("Accomplishment report exported.");
+    } catch (err) {
+      // Error bodies arrive as a Blob because of responseType: "blob"
+      let message = "Failed to export the report.";
+      try {
+        message = JSON.parse(await err.response.data.text()).message || message;
+      } catch {
+        // Keep the generic message
+      }
+      toast.error(message);
+    } finally {
+      setIsExporting(false);
     }
-
-    const reportDate = new Date().toISOString().split("T")[0];
-    const generatedTimestamp = new Date().toLocaleString();
-
-    // Section 1: Executive KPI Summary
-    const kpiHeaders = ["KPI Metric", "Value", "Description"];
-    const kpiRows = [
-      ["Registered Responders", m.registered_responders ?? 0, "Total resident learner accounts registered in the system"],
-      ["Active Modules", m.active_modules ?? 0, "Currently published and accessible training curriculum"],
-      ["Total Enrollments", m.total_enrollments ?? 0, "Total module participation and attempts recorded"],
-      ["Certificates Issued", m.certificates_issued ?? 0, "Active certificates of competency earned by residents"],
-      ["Pending Approvals", m.pending_reviews ?? 0, "Curriculum modules awaiting administrative review"],
-    ];
-
-    // Section 2: Curriculum & Training Modules Inventory
-    const moduleHeaders = [
-      "Module ID",
-      "Module Title",
-      "Category",
-      "Status",
-      "Steps Inside",
-      "Difficulty Level",
-      "Duration",
-    ];
-    const moduleRows = (modules || []).map((mod) => [
-      mod.id || "",
-      `"${(mod.title || "").replace(/"/g, '""')}"`,
-      `"${(mod.category || "Uncategorized").replace(/"/g, '""')}"`,
-      `"${(mod.status || "draft").replace(/"/g, '""')}"`,
-      mod.step_count ?? 0,
-      `"${(mod.level || "Level 1").replace(/"/g, '""')}"`,
-      `"${(mod.duration || "Varies").replace(/"/g, '""')}"`,
-    ]);
-
-    const csvLines = [
-      `"MUNICIPAL DISASTER RISK REDUCTION AND MANAGEMENT OFFICE (MDRRMO)"`,
-      `"EXECUTIVE TRAINING & DISASTER PREPAREDNESS SUMMARY REPORT"`,
-      `"Generated At:","${generatedTimestamp}"`,
-      "",
-      `"--- SECTION 1: KEY PERFORMANCE INDICATORS ---"`,
-      kpiHeaders.join(","),
-      ...kpiRows.map((r) =>
-        r
-          .map((c) =>
-            typeof c === "string" && !c.startsWith('"')
-              ? `"${c.replace(/"/g, '""')}"`
-              : c,
-          )
-          .join(","),
-      ),
-      "",
-      `"--- SECTION 2: CURRICULUM & TRAINING MODULES INVENTORY ---"`,
-      moduleHeaders.join(","),
-      ...moduleRows.map((r) => r.join(",")),
-    ];
-
-    const csvContent = csvLines.join("\r\n");
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-    const downloadUrl = window.URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = downloadUrl;
-    link.download = `MDRRMO_Training_Summary_Report_${reportDate}.csv`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    window.URL.revokeObjectURL(downloadUrl);
-
-    toast.success("MDRRMO Training Summary Report exported successfully!");
   };
 
   return (
@@ -187,8 +126,7 @@ export default function Overview() {
         <div className="flex flex-wrap sm:flex-nowrap items-center gap-2.5 sm:gap-3 shrink-0 w-full sm:w-auto">
           <button
             type="button"
-            onClick={handleExportReport}
-            disabled={metricsLoading || isLoadingModules}
+            onClick={() => setIsExportOpen(true)}
             className="flex-1 sm:flex-initial h-10 px-3.5 sm:px-4 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-gray-700 dark:text-slate-200 text-xs font-bold tracking-wide uppercase rounded-xl flex items-center justify-center gap-2 hover:bg-gray-50 dark:hover:bg-slate-700 active:scale-[0.98] transition-all whitespace-nowrap shadow-sm cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <HugeiconsIcon
@@ -324,8 +262,8 @@ export default function Overview() {
         </div>
         <div className="w-full min-w-0 overflow-hidden">
           <ActiveModulesTable
-            modules={modules}
-            isLoading={isLoadingModules}
+            // Remount on filter change so pagination restarts at page 1 without an extra render
+            key={`${selectedCategory ?? ""}|${statusFilter ?? ""}`}
             selectedCategory={selectedCategory}
             statusFilter={statusFilter}
           />
@@ -337,6 +275,13 @@ export default function Overview() {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         currentUserRole="mdrrmo_admin"
+      />
+
+      <ExportReportModal
+        isOpen={isExportOpen}
+        onClose={() => setIsExportOpen(false)}
+        onExport={handleExportReport}
+        isExporting={isExporting}
       />
     </div>
   );

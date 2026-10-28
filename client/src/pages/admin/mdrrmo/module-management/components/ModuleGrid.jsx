@@ -6,7 +6,8 @@ import { SkeletonModuleCard } from "../../../../../components/ui/Skeleton";
 export default function ModuleGrid({
   isLoading,
   isError,
-  rawModules,
+  isLibraryEmpty,
+  isRefreshing,
   paginatedModules,
   totalPages,
   currentPage,
@@ -15,7 +16,8 @@ export default function ModuleGrid({
   handleEditModule,
   setSearchQuery,
   setFilterCategory,
-  setFilterLevel
+  setFilterLevel,
+  setFilterStatus
 }) {
   if (isLoading) {
     return (
@@ -36,7 +38,7 @@ export default function ModuleGrid({
     );
   }
 
-  if (rawModules.length === 0) {
+  if (isLibraryEmpty) {
     return (
       <div className="w-full text-center px-4 sm:px-6 py-10 sm:py-14 bg-white dark:bg-slate-900 rounded-2xl sm:rounded-3xl border border-dashed border-gray-200 dark:border-slate-800 shadow-2xs">
         <div className="w-12 h-12 sm:w-14 sm:h-14 bg-gray-100 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-3.5">
@@ -70,7 +72,7 @@ export default function ModuleGrid({
       <div className="text-center py-16">
         <p className="text-gray-500 dark:text-slate-400 font-medium">No learning paths match your filters.</p>
         <button
-          onClick={() => { setSearchQuery(""); setFilterCategory("All"); setFilterLevel("All"); }}
+          onClick={() => { setSearchQuery(""); setFilterCategory("All"); setFilterLevel("All"); setFilterStatus("All"); setCurrentPage(1); }}
           className="mt-4 text-red-600 dark:text-red-400 font-bold hover:underline cursor-pointer"
         >
           Clear Filters
@@ -81,7 +83,11 @@ export default function ModuleGrid({
 
   return (
     <div className="space-y-8">
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      {/* Previous page stays visible while the next one loads; dim it so the change registers */}
+      <div
+        aria-busy={isRefreshing || undefined}
+        className={`grid grid-cols-1 lg:grid-cols-2 gap-8 transition-opacity duration-150 motion-reduce:transition-none ${isRefreshing ? "opacity-60" : ""}`}
+      >
         {paginatedModules.map((mod) => (
           <ModuleCard
             key={mod.id}

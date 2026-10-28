@@ -2,6 +2,16 @@ const pool = require("../../config/db");
 const { cleanRichText } = require("../../utils/sanitizeHtml");
 const { UNSCOPED_ACCESS_ROLES } = require("../../config/permissions");
 
+const MODULE_STATUSES = new Set(["draft", "pending_review", "published", "rejected", "archived"]);
+
+// ORDER BY clauses for getAllModules; only these fixed strings ever reach the SQL
+const MODULE_SORTS = {
+  default: "moddateadd DESC",
+  newest: "mod_id DESC",
+  // Drafts sent back by a reviewer first, then newest
+  needs_revision: "(status = 'draft' AND rejection_reason IS NOT NULL) DESC, mod_id DESC",
+};
+
 class ModuleService {
   /**
    * Evaluates progression locking logic for a set of modules against a user's completion records.
@@ -748,12 +758,13 @@ class ModuleService {
     };
   }
 
-  async getAllModules(page = 1, limit = 10, search = "", category = "", level = "", adminContext = null) {
+  async getAllModules(page = 1, limit = 10, search = "", category = "", level = "", adminContext = null, status = "", sort = "") {
     if (!adminContext || !adminContext.role) {
       throw new Error("SECURITY_FAULT: Missing or invalid adminContext. Cannot safely return modules.");
     }
 
     limit = Math.min(Math.max(parseInt(limit) || 10, 1), 100);
+    page = Math.max(parseInt(page) || 1, 1);
     const offset = (page - 1) * limit;
     const conditions = [];
     const values = [];
@@ -771,8 +782,9 @@ class ModuleService {
     }
 
     if (search) {
+      // Escape LIKE wildcards so a typed % or _ is matched literally
       conditions.push(`modname ILIKE $${idx}`);
-      values.push(`%${search}%`);
+      values.push(`%${String(search).replace(/[\\%_]/g, "\\$&")}%`);
       idx++;
     }
 
@@ -788,6 +800,15 @@ class ModuleService {
       idx++;
     }
 
+    // Unknown statuses are ignored rather than matching nothing
+    if (MODULE_STATUSES.has(status)) {
+      conditions.push(`status = $${idx}`);
+      values.push(status);
+      idx++;
+    } else if (status === "not_archived") {
+      conditions.push(`status <> 'archived'`);
+    }
+
     const where = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
 
     const countResult = await pool.query(`SELECT COUNT(*) FROM public.module_data ${where}`, values);
@@ -798,7 +819,7 @@ class ModuleService {
        (SELECT COUNT(*) FROM public.module_steps ms JOIN public.levels l ON ms.level_id = l.level_id WHERE l.mod_id = public.module_data.mod_id) AS step_count,
        (SELECT COUNT(*) FROM public.module_data d2 WHERE d2.parent_mod_id = public.module_data.mod_id AND d2.status IN ('draft', 'pending_review')) > 0 AS has_active_draft
        FROM public.module_data ${where}
-       ORDER BY moddateadd DESC LIMIT $${idx} OFFSET $${idx + 1}`,
+       ORDER BY ${Object.hasOwn(MODULE_SORTS, sort) ? MODULE_SORTS[sort] : MODULE_SORTS.default} LIMIT $${idx} OFFSET $${idx + 1}`,
       [...values, limit, offset]
     );
 

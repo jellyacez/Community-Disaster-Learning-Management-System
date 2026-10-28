@@ -1,5 +1,5 @@
-import { useState, useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
+import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import ModuleBuilderWizard from "./builders/ModuleBuilderWizard";
 import DashboardHeader from "./components/DashboardHeader";
@@ -10,10 +10,35 @@ import { useModuleBuilder } from "../../../../hooks/useModuleBuilder";
 import useDebounce from "../../../../hooks/useDebounce";
 import { decodeHtml } from "../../../../utils/textUtils";
 
-const fetchModules = async () => {
-  const res = await apiClient.get("/admin/modules?limit=1000");
+const ITEMS_PER_PAGE = 6;
+
+// Dropdown values -> API filters (filtering and sorting happen on the server)
+const STATUS_PARAM = {
+  All: "not_archived",
+  Published: "published",
+  Drafts: "draft",
+  "Pending Review": "pending_review",
+  Archived: "archived",
+};
+const SORT_PARAM = {
+  "Needs revision first": "needs_revision",
+  "Recently edited": "newest",
+};
+
+const fetchModules = async ({ page, search, category, level, status, sort }) => {
+  const res = await apiClient.get("/admin/modules", {
+    params: {
+      page,
+      limit: ITEMS_PER_PAGE,
+      search: search || undefined,
+      category: category === "All" ? undefined : category,
+      level: level === "All" ? undefined : level,
+      status: STATUS_PARAM[status],
+      sort: SORT_PARAM[sort],
+    },
+  });
   const data = res.data.data || [];
-  return data.map((mod) => ({
+  const rows = data.map((mod) => ({
     id: mod.mod_id,
     title: decodeHtml(mod.modname),
     category: mod.modcat,
@@ -28,6 +53,7 @@ const fetchModules = async () => {
     parent_mod_id: mod.parent_mod_id || null,
     has_active_draft: mod.has_active_draft || false,
   }));
+  return { rows, total: res.data.meta?.total ?? 0 };
 };
 
 export default function ModuleManagement() {
@@ -35,12 +61,6 @@ export default function ModuleManagement() {
   const userRole = session?.user?.role;
 
   const canCreateModule = userRole === "mdrrmo_admin" || userRole === "super_admin";
-
-  const { data: rawModules = [], isLoading, isError, refetch } = useQuery({
-    queryKey: ["adminModules", "management"],
-    queryFn: fetchModules,
-    retry: 1
-  });
 
   const { state, setters, actions } = useModuleBuilder();
   const { triggerFlowSequencePreview, loadModuleForEdit, resetForm } = actions;
@@ -56,37 +76,35 @@ export default function ModuleManagement() {
   const [filterStatus, setFilterStatus] = useState("All");
   const [sortOption, setSortOption] = useState("Needs revision first");
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 6;
 
-  const filteredModules = useMemo(() => {
-    return rawModules.filter(mod => {
-      const matchesSearch = mod.title.toLowerCase().includes(debouncedSearchQuery.toLowerCase());
-      const matchesCat = filterCategory === "All" || mod.category === filterCategory;
-      const matchesLevel = filterLevel === "All" || mod.level === filterLevel;
+  const filters = {
+    page: currentPage,
+    search: debouncedSearchQuery.trim(),
+    category: filterCategory,
+    level: filterLevel,
+    status: filterStatus,
+    sort: sortOption,
+  };
+  const { data, isLoading, isError, refetch, isPlaceholderData } = useQuery({
+    queryKey: ["adminModules", "management", filters],
+    queryFn: () => fetchModules(filters),
+    // Keep the current cards on screen while the next page or filter loads
+    placeholderData: keepPreviousData,
+    retry: 1,
+  });
 
-      let matchesStatus = true;
-      if (filterStatus === "All") matchesStatus = mod.status !== "archived";
-      if (filterStatus === "Published") matchesStatus = mod.status === "published";
-      if (filterStatus === "Drafts") matchesStatus = mod.status === "draft";
-      if (filterStatus === "Pending Review") matchesStatus = mod.status === "pending_review";
-      if (filterStatus === "Archived") matchesStatus = mod.status === "archived";
+  const paginatedModules = data?.rows ?? [];
+  const totalPages = Math.ceil((data?.total ?? 0) / ITEMS_PER_PAGE);
 
-      return matchesSearch && matchesCat && matchesLevel && matchesStatus;
-    }).sort((a, b) => {
-      const aIsRejected = a.status === 'draft' && !!a.rejection_reason;
-      const bIsRejected = b.status === 'draft' && !!b.rejection_reason;
-
-      if (sortOption === "Needs revision first") {
-        if (aIsRejected && !bIsRejected) return -1;
-        if (!aIsRejected && bIsRejected) return 1;
-      }
-
-      return (b.id || 0) - (a.id || 0);
-    });
-  }, [rawModules, debouncedSearchQuery, filterCategory, filterLevel, filterStatus, sortOption]);
-
-  const totalPages = Math.ceil(filteredModules.length / itemsPerPage);
-  const paginatedModules = filteredModules.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+  // Archiving or deleting the last module on the last page leaves that page empty;
+  // step back to the new last page instead of showing "no matches" (adjusted during render, not in an effect)
+  if (data && !isPlaceholderData && data.rows.length === 0 && currentPage > totalPages && totalPages > 0) {
+    setCurrentPage(totalPages);
+  }
+  // "No learning paths yet" only when the unfiltered library is empty, not when filters hide everything
+  const hasActiveFilters =
+    filters.search !== "" || filterCategory !== "All" || filterLevel !== "All" || filterStatus !== "All";
+  const isLibraryEmpty = !hasActiveFilters && (data?.total ?? 0) === 0;
 
   const handleOpenWizard = () => {
     if (!canCreateModule) {
@@ -130,7 +148,8 @@ export default function ModuleManagement() {
         <ModuleGrid
           isLoading={isLoading}
           isError={isError}
-          rawModules={rawModules}
+          isLibraryEmpty={isLibraryEmpty}
+          isRefreshing={isPlaceholderData}
           paginatedModules={paginatedModules}
           totalPages={totalPages}
           currentPage={currentPage}
@@ -140,6 +159,7 @@ export default function ModuleManagement() {
           setSearchQuery={setSearchQuery}
           setFilterCategory={setFilterCategory}
           setFilterLevel={setFilterLevel}
+          setFilterStatus={setFilterStatus}
         />
       </div>
 

@@ -1,10 +1,11 @@
 const pool = require("../../config/db");
 
 // Allowlist of safe keys that are permitted to be returned to the frontend.
+// system_logo is left out on purpose: admin pages poll these settings every minute,
+// so the logo (a base64 image) is served separately by getSystemLogo().
 const SAFE_SETTINGS_KEYS = new Set([
   'maintenance_mode',
   'system_name',
-  'system_logo',
   'broadcast_active',
   'broadcast_message',
   'broadcast_severity',
@@ -22,6 +23,13 @@ class SystemSettingsService {
       }
     });
     return settings;
+  }
+
+  async getSystemLogo() {
+    const result = await pool.query(
+      `SELECT value FROM public.system_settings WHERE key = 'system_logo'`
+    );
+    return result.rows[0]?.value || null;
   }
 
   async updateSystemBranding(system_name, system_logo) {

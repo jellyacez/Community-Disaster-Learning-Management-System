@@ -455,6 +455,8 @@ exports.getAllModules = async (req, res) => {
       search = "",
       category = "",
       level = "",
+      status = "",
+      sort = "",
     } = req.query;
 
     const adminContext = req.user;
@@ -466,6 +468,8 @@ exports.getAllModules = async (req, res) => {
       category,
       level,
       adminContext,
+      status,
+      sort,
     );
 
     res.status(200).json({

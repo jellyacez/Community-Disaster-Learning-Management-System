@@ -98,3 +98,63 @@ exports.getMunicipalCertFeed = async (req, res) => {
     return res.status(500).json({ success: false, message: "Server Error" });
   }
 };
+
+const Joi = require("joi");
+const mdrrmoReportService = require("../../services/admin/MdrrmoReportService");
+const { buildMdrrmoReportWorkbook } = require("../../utils/mdrrmoReportWorkbook");
+
+const MAX_REPORT_DAYS = 366 * 3;
+// Rejects impossible dates like 2026-02-30 instead of rolling them over
+const calendarDate = Joi.string()
+  .pattern(/^\d{4}-\d{2}-\d{2}$/)
+  .custom((v, helpers) => {
+    const d = new Date(`${v}T00:00:00Z`);
+    return !Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === v ? v : helpers.error("any.invalid");
+  });
+const OPTIONAL_SHEETS = ["monthly", "barangays", "modules"];
+const reportRangeSchema = Joi.object({
+  from: calendarDate.required(),
+  to: calendarDate.required(),
+  // Comma-separated; omitted means every sheet, empty means Summary only
+  sheets: Joi.string()
+    .allow("")
+    .pattern(new RegExp(`^(${OPTIONAL_SHEETS.join("|")})(,(${OPTIONAL_SHEETS.join("|")}))*$`)),
+});
+
+// @desc    Export the training accomplishment report for a date range as .xlsx
+// @route   GET /api/admin/mdrrmo/report/export?from=YYYY-MM-DD&to=YYYY-MM-DD
+// @access  Private (system_admin, mdrrmo_admin, head_mdrrmo_admin)
+exports.exportAccomplishmentReport = async (req, res) => {
+  const { error, value } = reportRangeSchema.validate(req.query, { stripUnknown: true });
+  if (error) {
+    return res.status(400).json({ success: false, message: "Provide valid from and to dates (YYYY-MM-DD) and sheet names." });
+  }
+  const { from, to } = value;
+  const sheets = new Set(value.sheets === undefined ? OPTIONAL_SHEETS : value.sheets.split(",").filter(Boolean));
+  const days = (Date.parse(to) - Date.parse(from)) / 86400000;
+  if (days < 0) {
+    return res.status(400).json({ success: false, message: "The start date must be on or before the end date." });
+  }
+  if (days > MAX_REPORT_DAYS) {
+    return res.status(400).json({ success: false, message: "The reporting period can be at most 3 years." });
+  }
+
+  try {
+    const data = await mdrrmoReportService.getAccomplishmentReport(from, to);
+    const buffer = await buildMdrrmoReportWorkbook(data, {
+      from,
+      to,
+      sheets,
+      preparedBy: { name: req.user.name || req.user.email, role: req.user.role },
+    });
+    res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename="MDRRMO_Accomplishment_Report_${from}_to_${to}.xlsx"`
+    );
+    return res.send(Buffer.from(buffer));
+  } catch (err) {
+    console.error("MDRRMO Accomplishment Report Error:", err);
+    return res.status(500).json({ success: false, message: "Server Error" });
+  }
+};

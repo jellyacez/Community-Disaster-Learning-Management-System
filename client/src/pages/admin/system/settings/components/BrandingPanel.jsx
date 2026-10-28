@@ -1,13 +1,27 @@
 import { useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import apiClient from "../../../../../lib/apiClient";
 import toast from "react-hot-toast";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Settings01Icon, Image01Icon } from "@hugeicons/core-free-icons";
 
+// Must match the server check in systemSettingsController.updateSystemBranding
+const MAX_LOGO_BYTES = 500 * 1024;
+
 export default function BrandingPanel({ settingsData }) {
   const queryClient = useQueryClient();
   const [isSaving, setIsSaving] = useState(false);
+
+  // Fetched on its own so the polled settings query stays small
+  const { data: systemLogo } = useQuery({
+    queryKey: ["systemLogo"],
+    queryFn: async () => {
+      const res = await apiClient.get("/admin/settings/logo");
+      return res.data.data.system_logo;
+    },
+    // The logo only changes on save, which invalidates this query; don't re-download it per visit
+    staleTime: Infinity,
+  });
 
   return (
     <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm p-6">
@@ -26,6 +40,11 @@ export default function BrandingPanel({ settingsData }) {
           
           let system_logo = undefined;
           
+          if (file && file.size > MAX_LOGO_BYTES) {
+            toast.error("Logo image is too large. Maximum size is 500 KB.", { id: "branding" });
+            return;
+          }
+
           if (file && file.size > 0) {
             // Convert to Base64 using FileReader
             system_logo = await new Promise((resolve, reject) => {
@@ -42,8 +61,9 @@ export default function BrandingPanel({ settingsData }) {
             await apiClient.patch("/admin/settings/branding", { system_name, system_logo });
             toast.success("Branding updated successfully", { id: "branding" });
             queryClient.invalidateQueries({ queryKey: ["systemSettings"] });
-          } catch {
-            toast.error("Failed to update branding", { id: "branding" });
+            queryClient.invalidateQueries({ queryKey: ["systemLogo"] });
+          } catch (err) {
+            toast.error(err.response?.data?.message || "Failed to update branding", { id: "branding" });
           } finally {
             setIsSaving(false);
           }
@@ -55,6 +75,8 @@ export default function BrandingPanel({ settingsData }) {
             <label htmlFor="system_name" className="block text-xs font-semibold text-gray-700 dark:text-slate-300 mb-1">System Name</label>
             <input 
               id="system_name"
+              // Remount once settings load; defaultValue is only read on first render
+              key={settingsData?.system_name ?? "loading"}
               type="text" 
               name="system_name" 
               defaultValue={settingsData?.system_name || "Community Disaster Learning Management System"} 
@@ -71,6 +93,7 @@ export default function BrandingPanel({ settingsData }) {
                 <HugeiconsIcon icon={Image01Icon} className="w-4 h-4 text-gray-400 dark:text-slate-400" />
                 <p className="text-xs text-gray-500 dark:text-slate-400"><span className="font-semibold text-gray-700 dark:text-slate-200">Click to upload</span> or drag</p>
               </div>
+              <span className="sr-only">PNG, JPG, WEBP or SVG, up to 500 KB</span>
               <input 
                 id="system_logo"
                 type="file" 
@@ -79,12 +102,13 @@ export default function BrandingPanel({ settingsData }) {
                 className="hidden"
               />
             </label>
+            <p className="mt-1 text-[11px] text-gray-500 dark:text-slate-400" aria-hidden="true">PNG, JPG, WEBP or SVG, up to 500 KB</p>
           </div>
         </div>
-        {settingsData?.system_logo && (
+        {systemLogo && (
            <div className="mt-2">
               <p className="text-xs text-gray-500 dark:text-slate-400 mb-2">Current Logo:</p>
-              <img src={settingsData.system_logo} alt="System Logo" className="h-12 object-contain rounded border border-gray-100 dark:border-slate-800 p-1 bg-gray-50 dark:bg-slate-800" />
+              <img src={systemLogo} alt="System Logo" className="h-12 object-contain rounded border border-gray-100 dark:border-slate-800 p-1 bg-gray-50 dark:bg-slate-800" />
            </div>
         )}
         <div className="pt-2 border-t border-gray-100/50 dark:border-slate-800 mt-2">

@@ -80,6 +80,16 @@ router.get(
   mdrrmoOverviewController.getMetrics
 );
 
+// @route   GET /api/admin/mdrrmo/report/export
+// @desc    Export the training accomplishment report (.xlsx) for a date range
+// @access  Private (mdrrmo_admin, head_mdrrmo_admin, system_admin)
+router.get(
+  "/mdrrmo/report/export",
+  requireRole(MDRRMO_DASHBOARD_ROLES),
+  adminDataLimiter,
+  mdrrmoOverviewController.exportAccomplishmentReport
+);
+
 // @route   GET /api/admin/mdrrmo/module-distribution
 // @desc    Get module distribution by category
 // @access  Private (mdrrmo_admin, system_admin)
