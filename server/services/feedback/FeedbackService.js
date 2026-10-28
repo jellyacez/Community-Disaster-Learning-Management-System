@@ -168,14 +168,71 @@ class FeedbackService {
       throw error;
     }
 
-    if (conditions.length > 0) {
-      query += ` WHERE ` + conditions.join(" AND ");
+    // Tab counts cover the admin's whole scope (not the search), matching the inbox tabs
+    const scopeWhere = conditions.length > 0 ? ` WHERE ${conditions.join(" AND ")}` : "";
+    const countsResult = await pool.query(
+      `SELECT
+         COUNT(*) AS all,
+         COUNT(*) FILTER (WHERE f.status = 'Pending') AS pending,
+         COUNT(*) FILTER (WHERE f.status = 'Replied') AS replied,
+         COUNT(*) FILTER (WHERE f.status = 'Closed') AS closed
+       FROM public.feedbacks f
+       INNER JOIN public."user" u ON f.user_id = u.id${scopeWhere}`,
+      sqlParams
+    );
+    const c = countsResult.rows[0];
+    const counts = {
+      all: parseInt(c.all, 10),
+      pending: parseInt(c.pending, 10),
+      replied: parseInt(c.replied, 10),
+      closed: parseInt(c.closed, 10),
+    };
+
+    // Paging, tab, search and sort run here so only one page of tickets (and their
+    // threads) is sent, instead of every ticket ever filed
+    const listParams = [...sqlParams];
+    const listConditions = [...conditions];
+    const STATUS_BY_TAB = { pending: "Pending", replied: "Replied", closed: "Closed" };
+    const tabStatus = STATUS_BY_TAB[String(queryParams.status || "").toLowerCase()];
+    if (tabStatus) {
+      listParams.push(tabStatus);
+      listConditions.push(`f.status = $${listParams.length}`);
     }
+    const search = String(queryParams.search || "").trim();
+    if (search) {
+      // Escape LIKE wildcards; residents are shown as 'Anonymous Resident', so that is the name searched
+      listParams.push(`%${search.replace(/[\\%_]/g, "\\$&")}%`);
+      const p = `$${listParams.length}`;
+      listConditions.push(`(f.subject ILIKE ${p} OR f.type ILIKE ${p} OR 'Anonymous Resident' ILIKE ${p})`);
+    }
+    const listWhere = listConditions.length > 0 ? ` WHERE ${listConditions.join(" AND ")}` : "";
 
-    query += ` ORDER BY f.created_at DESC;`;
+    const ORDER_BY = {
+      newest: "f.created_at DESC, f.id DESC",
+      oldest: "f.created_at ASC, f.id ASC",
+      status: "CASE f.status WHEN 'Pending' THEN 0 WHEN 'Replied' THEN 1 WHEN 'Closed' THEN 2 ELSE 3 END, f.created_at DESC, f.id DESC",
+    };
+    const orderBy = Object.hasOwn(ORDER_BY, queryParams.sort) ? ORDER_BY[queryParams.sort] : ORDER_BY.newest;
 
-    const { rows } = await pool.query(query, sqlParams);
-    return rows;
+    const limit = Math.min(Math.max(parseInt(queryParams.limit, 10) || 10, 1), 50);
+    const page = Math.max(parseInt(queryParams.page, 10) || 1, 1);
+
+    const totalResult = await pool.query(
+      `SELECT COUNT(*) FROM public.feedbacks f INNER JOIN public."user" u ON f.user_id = u.id${listWhere}`,
+      listParams
+    );
+    const total = parseInt(totalResult.rows[0].count, 10);
+
+    const { rows } = await pool.query(
+      `${query}${listWhere} ORDER BY ${orderBy} LIMIT $${listParams.length + 1} OFFSET $${listParams.length + 2}`,
+      [...listParams, limit, (page - 1) * limit]
+    );
+
+    return {
+      data: rows,
+      meta: { total, page, limit, totalPages: Math.max(1, Math.ceil(total / limit)) },
+      counts,
+    };
   }
 
   async replyToFeedback(adminContext, feedbackId, replyData) {

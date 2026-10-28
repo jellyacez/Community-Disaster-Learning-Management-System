@@ -4,10 +4,12 @@ import FeedbackTicketCard from "./FeedbackTicketCard";
 import { FeedbackTicketSkeleton } from "../../../../components/ui/Skeleton";
 import AdminTablePagination from "../../../../components/ui/pagination/AdminTablePagination";
 
+// submissions is the current page from the server; total counts every matching ticket
 export default function FeedbackList({
   isLoading,
-  filteredSubmissions,
-  paginatedSubmissions,
+  isRefreshing = false,
+  submissions,
+  total,
   activeTab,
   currentPage,
   pageSize = 10,
@@ -28,7 +30,7 @@ export default function FeedbackList({
             <FeedbackTicketSkeleton key={i} />
           ))}
         </div>
-      ) : filteredSubmissions.length === 0 ? (
+      ) : total === 0 ? (
         <div className="rounded-3xl border border-dashed border-gray-200 dark:border-slate-800 bg-gray-50 dark:bg-slate-800/40 p-10 text-center">
           <HugeiconsIcon
             icon={Message01Icon}
@@ -42,8 +44,12 @@ export default function FeedbackList({
           </p>
         </div>
       ) : (
-        <div className="space-y-3">
-          {paginatedSubmissions.map((item) => (
+        // Previous page stays visible while the next one loads; dim it so the change registers
+        <div
+          aria-busy={isRefreshing || undefined}
+          className={`space-y-3 transition-opacity duration-150 motion-reduce:transition-none ${isRefreshing ? "opacity-60" : ""}`}
+        >
+          {submissions.map((item) => (
             <FeedbackTicketCard
               key={item.feedback_id || item.id}
               item={item}
@@ -61,7 +67,7 @@ export default function FeedbackList({
         <AdminTablePagination
           page={currentPage}
           totalPages={totalPages}
-          total={filteredSubmissions.length}
+          total={total}
           limit={pageSize || PAGE_SIZE || 10}
           onPageChange={setCurrentPage}
           onLimitChange={setPageSize}

@@ -16,8 +16,9 @@ exports.getAdminFeedbacks = async (req, res) => {
       barangay_id: adminBarangayId,
     };
 
-    const rows = await feedbackService.getAdminFeedbacks(adminContext, req.query);
-    res.json({ success: true, data: rows });
+    // { data: one page, meta: paging, counts: per-tab totals }
+    const result = await feedbackService.getAdminFeedbacks(adminContext, req.query);
+    res.json({ success: true, ...result });
   } catch (err) {
     if (err.statusCode) {
       return res.status(err.statusCode).json({ success: false, error: err.message });

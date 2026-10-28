@@ -4,7 +4,7 @@ import { authClient } from "../../../lib/auth-client";
 
 // Hooks
 import { useAdminFeedbacks } from "./hooks/useAdminFeedbacks";
-import { useFeedbackFilters } from "./hooks/useFeedbackFilters";
+import { useFeedbackFilters, buildFeedbackTabs } from "./hooks/useFeedbackFilters";
 
 // Components
 import FeedbackHeader from "./components/FeedbackHeader";
@@ -37,28 +37,49 @@ export default function AdminFeedbackManager() {
   const [selectedBarangayFilter, setSelectedBarangayFilter] = useState("all");
 
   const {
-    submissions,
-    isLoading,
-    replyMutation,
-    closeMutation,
-  } = useAdminFeedbacks(adminId, adminRole, selectedBarangayFilter, isMdrrmoOrSystem);
-
-  const {
     activeTab,
     searchQuery,
+    debouncedSearch,
     sortOrder,
     currentPage,
     setCurrentPage,
     pageSize,
     setPageSize,
-    filteredSubmissions,
-    totalPages,
-    paginatedSubmissions,
-    tabs,
     handleTabChange,
     handleSearchChange,
     handleSortChange,
-  } = useFeedbackFilters(submissions);
+  } = useFeedbackFilters();
+
+  const {
+    submissions,
+    total,
+    totalPages,
+    counts,
+    isLoading,
+    isPlaceholderData,
+    replyMutation,
+    closeMutation,
+  } = useAdminFeedbacks(adminId, adminRole, selectedBarangayFilter, isMdrrmoOrSystem, {
+    page: currentPage,
+    limit: pageSize,
+    status: activeTab,
+    search: debouncedSearch,
+    sort: sortOrder,
+  });
+
+  const tabs = buildFeedbackTabs(counts);
+
+  // If the current page empties (e.g. its last ticket was closed under a status tab),
+  // step back to the new last page; adjusted during render, not in an effect
+  if (!isLoading && !isPlaceholderData && submissions.length === 0 && currentPage > totalPages) {
+    setCurrentPage(totalPages);
+  }
+
+  // A different barangay is a different result set, so start from page 1
+  const handleBarangayFilterChange = (value) => {
+    setSelectedBarangayFilter(value);
+    setCurrentPage(1);
+  };
 
   return (
     <div className="animate-in fade-in duration-300 space-y-6">
@@ -66,7 +87,7 @@ export default function AdminFeedbackManager() {
       <FeedbackHeader
         isMdrrmoOrSystem={isMdrrmoOrSystem}
         selectedBarangayFilter={selectedBarangayFilter}
-        setSelectedBarangayFilter={setSelectedBarangayFilter}
+        setSelectedBarangayFilter={handleBarangayFilterChange}
       />
 
       {/* Main Inbox */}
@@ -83,8 +104,9 @@ export default function AdminFeedbackManager() {
 
         <FeedbackList
           isLoading={isLoading}
-          filteredSubmissions={filteredSubmissions}
-          paginatedSubmissions={paginatedSubmissions}
+          isRefreshing={isPlaceholderData}
+          submissions={submissions}
+          total={total}
           activeTab={activeTab}
           currentPage={currentPage}
           pageSize={pageSize}

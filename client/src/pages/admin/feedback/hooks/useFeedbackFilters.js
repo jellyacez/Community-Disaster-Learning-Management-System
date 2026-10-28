@@ -1,77 +1,15 @@
-import { useState, useMemo } from "react";
+import { useState } from "react";
+import useDebounce from "../../../../hooks/useDebounce";
 
-export function useFeedbackFilters(submissions) {
+// Filter, sort and paging state for the feedback inbox. The server applies all of it
+// (see useAdminFeedbacks), so only one page of tickets is ever downloaded.
+export function useFeedbackFilters() {
   const [activeTab, setActiveTab] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [sortOrder, setSortOrder] = useState("newest"); // "newest" | "oldest" | "status"
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
-
-  const filteredSubmissions = useMemo(() => {
-    let result = submissions;
-
-    // 1. Tab filter
-    if (activeTab !== "all") {
-      result = result.filter(
-        (item) => item.status.toLowerCase() === activeTab.toLowerCase()
-      );
-    }
-
-    // 2. Search filter (subject, resident name, type)
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
-      result = result.filter(
-        (item) =>
-          item.subject?.toLowerCase().includes(q) ||
-          item.resident_name?.toLowerCase().includes(q) ||
-          item.type?.toLowerCase().includes(q)
-      );
-    }
-
-    // 3. Sort
-    result = [...result].sort((a, b) => {
-      if (sortOrder === "oldest") {
-        return new Date(a.created_at || a.createdAt) - new Date(b.created_at || b.createdAt);
-      }
-      if (sortOrder === "status") {
-        const order = { Pending: 0, Replied: 1, Closed: 2 };
-        return (order[a.status] ?? 3) - (order[b.status] ?? 3);
-      }
-      // "newest" default
-      return new Date(b.created_at || b.createdAt) - new Date(a.created_at || a.createdAt);
-    });
-
-    return result;
-  }, [activeTab, submissions, searchQuery, sortOrder]);
-
-  const totalPages = Math.max(1, Math.ceil(filteredSubmissions.length / pageSize));
-
-  const paginatedSubmissions = useMemo(() => {
-    const start = (currentPage - 1) * pageSize;
-    return filteredSubmissions.slice(start, start + pageSize);
-  }, [filteredSubmissions, currentPage, pageSize]);
-
-  const tabs = useMemo(
-    () => [
-      { key: "all", label: "All Tickets", count: submissions.length },
-      {
-        key: "pending",
-        label: "Needs Response",
-        count: submissions.filter((item) => item.status === "Pending").length,
-      },
-      {
-        key: "replied",
-        label: "Replied",
-        count: submissions.filter((item) => item.status === "Replied").length,
-      },
-      {
-        key: "closed",
-        label: "Closed / Resolved",
-        count: submissions.filter((item) => item.status === "Closed").length,
-      },
-    ],
-    [submissions]
-  );
+  const debouncedSearch = useDebounce(searchQuery, 300);
 
   // Reset to page 1 whenever filters change
   const handleTabChange = (key) => { setActiveTab(key); setCurrentPage(1); };
@@ -86,18 +24,24 @@ export function useFeedbackFilters(submissions) {
   return {
     activeTab,
     searchQuery,
+    debouncedSearch,
     sortOrder,
     currentPage,
     setCurrentPage,
     pageSize,
-    PAGE_SIZE: pageSize,
     setPageSize: handlePageSizeChange,
-    filteredSubmissions,
-    totalPages,
-    paginatedSubmissions,
-    tabs,
     handleTabChange,
     handleSearchChange,
-    handleSortChange
+    handleSortChange,
   };
+}
+
+// Tab labels with the per-status totals the server returns alongside each page
+export function buildFeedbackTabs(counts) {
+  return [
+    { key: "all", label: "All Tickets", count: counts?.all ?? 0 },
+    { key: "pending", label: "Needs Response", count: counts?.pending ?? 0 },
+    { key: "replied", label: "Replied", count: counts?.replied ?? 0 },
+    { key: "closed", label: "Closed / Resolved", count: counts?.closed ?? 0 },
+  ];
 }
