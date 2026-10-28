@@ -65,27 +65,41 @@ export default defineConfig(({ mode }) => ({
     sourcemap: false,
     rollupOptions: {
       output: {
-        manualChunks(id) {
-          if (
-            id.includes("@react-pdf") ||
-            id.includes("pdfkit") ||
-            id.includes("fontkit") ||
-            id.includes("png-js") ||
-            id.includes("restructure")
-          ) {
-            return "react-pdf-vendor";
-          }
-          if (id.includes("html5-qrcode")) {
-            return "html5-qrcode-vendor";
-          }
-          if (
-            id.includes("recharts") ||
-            id.includes("victory-vendor") ||
-            id.includes("d3-")
-          ) {
-            return "recharts-vendor";
-          }
+        // Chunk groups pull in their modules' dependencies by default, so the old
+        // manualChunks rules dragged React, buffer, tslib, clsx, etc. into react-pdf-vendor
+        // and recharts-vendor, and every page (even the landing page) downloaded the whole
+        // PDF engine (~530 KB gz). React now gets its own chunk first, and the heavy
+        // libraries capture only their own modules; shared code stays in shared chunks.
+        codeSplitting: {
+          groups: [
+            {
+              name: "react-vendor",
+              test: /[\\/]node_modules[\\/](react|react-dom|scheduler)[\\/]/,
+              priority: 30,
+            },
+            {
+              name: "react-pdf-vendor",
+              test: /@react-pdf|pdfkit|fontkit|png-js|restructure/,
+              priority: 20,
+              includeDependenciesRecursively: false,
+            },
+            {
+              name: "html5-qrcode-vendor",
+              test: /html5-qrcode/,
+              priority: 20,
+              includeDependenciesRecursively: false,
+            },
+            {
+              name: "recharts-vendor",
+              test: /recharts|victory-vendor|[\\/]d3-/,
+              priority: 20,
+              includeDependenciesRecursively: false,
+            },
+          ],
         },
+        // Recommended by Rolldown when groups skip their dependencies, so modules split
+        // across chunks still run in import order
+        strictExecutionOrder: true,
       },
     },
   },
