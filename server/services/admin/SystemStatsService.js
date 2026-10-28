@@ -83,6 +83,10 @@ class SystemStatsService {
       FROM hours h
       LEFT JOIN public.activity_log al
         ON date_trunc('hour', al.act_date AT TIME ZONE 'Asia/Manila') = h.hour
+        -- Plain range on act_date so the act_date index is used. Rows before the first
+        -- bucket can't match any hour, so the result is unchanged; without it the
+        -- function call above forces a scan of the entire log.
+        AND al.act_date >= (date_trunc('hour', (NOW() AT TIME ZONE 'Asia/Manila') - INTERVAL '23 hours') AT TIME ZONE 'Asia/Manila')
       GROUP BY h.hour
       ORDER BY h.hour ASC;
     `;
