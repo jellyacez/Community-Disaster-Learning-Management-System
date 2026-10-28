@@ -45,14 +45,6 @@ const PERIODS = [
   },
 ];
 
-// Summary is always part of the report; the rest can be left out
-const REPORT_SHEETS = [
-  { id: "summary", label: "Summary", detail: "Period totals, certification status, signature block", locked: true },
-  { id: "monthly", label: "Monthly breakdown", detail: "Activity per month in the period" },
-  { id: "barangays", label: "Barangay coverage", detail: "Residents, completions, pass rate per barangay" },
-  { id: "modules", label: "Module performance", detail: "Enrollments, completions, scores per module" },
-];
-
 const parseInput = (value) => {
   const [y, m, d] = value.split("-").map(Number);
   return new Date(y, m - 1, d);
@@ -69,12 +61,14 @@ function formatRange(from, to) {
   return `${left} – ${right}`;
 }
 
-// Mounting the dialog only while open gives every opening fresh state and dates
+// Mounting the dialog only while open gives every opening fresh state and dates.
+// sheetOptions: [{ id, label, detail, locked? }]; locked sheets are always included and
+// never sent, the rest are sent to onExport as `sheets` when checked.
 export default function ExportReportModal({ isOpen, ...props }) {
   return isOpen ? <ExportReportDialog {...props} /> : null;
 }
 
-function ExportReportDialog({ onClose, onExport, isExporting }) {
+function ExportReportDialog({ sheetOptions, onClose, onExport, isExporting }) {
   const dialogRef = useRef(null);
   // Resolve every preset once per opening so labels and the export agree
   const [presets] = useState(() => {
@@ -88,7 +82,7 @@ function ExportReportDialog({ onClose, onExport, isExporting }) {
   });
   const [periodId, setPeriodId] = useState("this_month");
   const [custom, setCustom] = useState(() => ({ from: presets[0].from, to: presets[0].to }));
-  const [sheets, setSheets] = useState(() => new Set(REPORT_SHEETS.map((s) => s.id)));
+  const [sheets, setSheets] = useState(() => new Set(sheetOptions.map((s) => s.id)));
 
   const range = periodId === "custom" ? custom : presets.find((p) => p.id === periodId);
   const rangeError =
@@ -152,7 +146,7 @@ function ExportReportDialog({ onClose, onExport, isExporting }) {
     onExport({
       from: range.from,
       to: range.to,
-      sheets: REPORT_SHEETS.filter((s) => !s.locked && sheets.has(s.id)).map((s) => s.id),
+      sheets: sheetOptions.filter((s) => !s.locked && sheets.has(s.id)).map((s) => s.id),
     });
   };
 
@@ -263,7 +257,7 @@ function ExportReportDialog({ onClose, onExport, isExporting }) {
           <fieldset>
             <legend className={sectionLabel}>Sheets to include</legend>
             <div className="rounded-xl border border-gray-200 dark:border-slate-700 divide-y divide-gray-100 dark:divide-slate-800 overflow-hidden">
-              {REPORT_SHEETS.map((s) => {
+              {sheetOptions.map((s) => {
                 const checked = s.locked || sheets.has(s.id);
                 return (
                   <label
@@ -316,7 +310,7 @@ function ExportReportDialog({ onClose, onExport, isExporting }) {
               <>
                 <span className="tabular-nums">{formatRange(range.from, range.to)}</span>
                 {" · "}
-                {1 + REPORT_SHEETS.filter((s) => !s.locked && sheets.has(s.id)).length} of {REPORT_SHEETS.length} sheets
+                {sheetOptions.filter((s) => s.locked || sheets.has(s.id)).length} of {sheetOptions.length} sheets
               </>
             )}
           </p>

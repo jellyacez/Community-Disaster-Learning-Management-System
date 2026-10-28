@@ -129,11 +129,23 @@ class UserService {
          u."twoFactorEnabled", 
          b.name AS barangay, 
          u.archived,
-         (SELECT COUNT(*)::int 
-          FROM certificates c 
-          WHERE c.user_id = u.id 
-         ) AS "modulesCompleted"
-       FROM "user" u 
+         (SELECT COUNT(*)::int
+          FROM certificates c
+          WHERE c.user_id = u.id
+         ) AS "modulesCompleted",
+         -- Current standing from certificate status, same rules as the accomplishment report roster:
+         -- any active cert -> certified (expiring if one lapses within 30 days); else expired; else none
+         (SELECT CASE
+             WHEN COUNT(*) FILTER (WHERE c.status = 'active') > 0 THEN
+               CASE WHEN MIN(c.expires_at) FILTER (WHERE c.status = 'active') <= NOW() + INTERVAL '30 days'
+                    THEN 'expiring' ELSE 'certified' END
+             WHEN COUNT(*) FILTER (WHERE c.status = 'expired') > 0 THEN 'expired'
+             ELSE 'none'
+           END
+          FROM certificates c
+          WHERE c.user_id = u.id
+         ) AS "certStatus"
+       FROM "user" u
        LEFT JOIN barangays b ON u.barangay_id = b.id ${where}
        ORDER BY u."createdAt" DESC LIMIT $${idx} OFFSET $${idx + 1}`,
       [...values, limit, offset]

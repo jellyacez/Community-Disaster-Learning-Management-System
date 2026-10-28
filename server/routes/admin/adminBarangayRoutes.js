@@ -64,4 +64,14 @@ router.get(
   barangayController.getBarangayActivityLog
 );
 
+// @route   GET /api/admin/barangay/report/export
+// @desc    Export the barangay training accomplishment report (.xlsx) for a date range
+// @access  Private (barangay_admin for their own barangay; super_admin with a barangay scope)
+router.get(
+  "/barangay/report/export",
+  requireRole(["super_admin","barangay_admin"]),
+  adminDataLimiter,
+  barangayController.exportBarangayReport
+);
+
 module.exports = router;

@@ -7,18 +7,31 @@ const inPeriod = (col) => `${col} >= $1::date AND ${col} < $2::date + 1`;
 const toInt = (v) => parseInt(v, 10) || 0;
 const toRate = (v) => (v === null || v === undefined ? null : Number(v));
 
-class MdrrmoReportService {
-  async getAccomplishmentReport(from, to) {
-    const params = [from, to];
+const RECERT_WINDOW_DAYS = 30;
 
-    const [summary, certStatus, monthly, barangays, modules] = await Promise.all([
+class MdrrmoReportService {
+  // Pass { barangayId } for a barangay report: every count is then limited to that
+  // barangay's residents ($3), the per-barangay sheet is skipped and a resident roster is added.
+  async getAccomplishmentReport(from, to, { barangayId = null } = {}) {
+    const scoped = barangayId !== null;
+    const params = scoped ? [from, to, barangayId] : [from, to];
+    // Resident filter for a "user" row, optionally with a table alias prefix like "u."
+    const isResident = (a = "") => `${a}role = 'resident'${scoped ? ` AND ${a}barangay_id = $3` : ""}`;
+
+    // The barangay name runs alongside the report queries rather than before them
+    const [barangayRow, summary, certStatus, monthly, barangays, modules, roster] = await Promise.all([
+      scoped ? pool.query(`SELECT name FROM barangays WHERE id = $1`, [barangayId]) : { rows: [] },
+
       pool.query(
-        `WITH res AS (SELECT id FROM "user" WHERE role = 'resident')
+        `WITH res AS (SELECT id FROM "user" WHERE ${isResident()})
         SELECT
           (SELECT COUNT(*) FROM "user"
-             WHERE role = 'resident' AND archived = false AND (banned IS NULL OR banned = false)
+             WHERE ${isResident()} AND archived = false AND (banned IS NULL OR banned = false)
                AND "createdAt" < $2::date + 1) AS registered_residents,
-          (SELECT COUNT(*) FROM "user" WHERE role = 'resident' AND ${inPeriod('"createdAt"')}) AS new_residents,
+          (SELECT COUNT(DISTINCT c.user_id) FROM certificates c JOIN "user" u ON u.id = c.user_id
+             WHERE ${isResident("u.")} AND u.archived = false AND (u.banned IS NULL OR u.banned = false)
+               AND c.status = 'active') AS certified_residents,
+          (SELECT COUNT(*) FROM "user" WHERE ${isResident()} AND ${inPeriod('"createdAt"')}) AS new_residents,
           (SELECT COUNT(*) FROM module_activity ma JOIN res ON res.id = ma.user_id
              WHERE ${inPeriod("ma.started_at")}) AS enrollments,
           (SELECT COUNT(*) FROM module_activity ma JOIN res ON res.id = ma.user_id
@@ -37,18 +50,20 @@ class MdrrmoReportService {
         params
       ),
 
-      // Snapshot at generation time, not limited to the period
-      pool.query(`
-        SELECT
-          COUNT(*) FILTER (WHERE status = 'active') AS active,
-          COUNT(*) FILTER (WHERE status = 'active' AND expires_at <= NOW() + INTERVAL '30 days') AS expiring_30_days,
-          COUNT(*) FILTER (WHERE status = 'expired') AS expired,
-          COUNT(*) FILTER (WHERE status = 'revoked') AS revoked
-        FROM certificates
-      `),
+      // Snapshot at generation time, not limited to the period; residents' certificates only
+      pool.query(
+        `SELECT
+          COUNT(*) FILTER (WHERE c.status = 'active') AS active,
+          COUNT(*) FILTER (WHERE c.status = 'active' AND c.expires_at <= NOW() + INTERVAL '${RECERT_WINDOW_DAYS} days') AS expiring_30_days,
+          COUNT(*) FILTER (WHERE c.status = 'expired') AS expired,
+          COUNT(*) FILTER (WHERE c.status = 'revoked') AS revoked
+        FROM certificates c JOIN "user" u ON u.id = c.user_id
+        WHERE u.role = 'resident'${scoped ? " AND u.barangay_id = $1" : ""}`,
+        scoped ? [barangayId] : []
+      ),
 
       pool.query(
-        `WITH res AS (SELECT id FROM "user" WHERE role = 'resident'),
+        `WITH res AS (SELECT id FROM "user" WHERE ${isResident()}),
         months AS (
           SELECT m,
                  GREATEST(m, $1::date::timestamp) AS lo,
@@ -62,7 +77,7 @@ class MdrrmoReportService {
         SELECT
           to_char(m, 'Mon YYYY') AS month,
           (SELECT COUNT(*) FROM "user" u
-             WHERE u.role = 'resident' AND u."createdAt" >= lo AND u."createdAt" < hi) AS new_residents,
+             WHERE ${isResident("u.")} AND u."createdAt" >= lo AND u."createdAt" < hi) AS new_residents,
           (SELECT COUNT(*) FROM module_activity ma JOIN res ON res.id = ma.user_id
              WHERE ma.started_at >= lo AND ma.started_at < hi) AS enrollments,
           (SELECT COUNT(*) FROM module_activity ma JOIN res ON res.id = ma.user_id
@@ -78,7 +93,8 @@ class MdrrmoReportService {
         params
       ),
 
-      pool.query(
+      // Per-barangay breakdown only makes sense municipality-wide
+      scoped ? { rows: [] } : pool.query(
         `WITH res AS (
           SELECT id, barangay_id, "createdAt", archived, banned FROM "user" WHERE role = 'resident'
         ),
@@ -103,7 +119,8 @@ class MdrrmoReportService {
           (SELECT COUNT(*) FROM certificates c JOIN res ON res.id = c.user_id
              WHERE res.barangay_id IS NOT DISTINCT FROM b.id AND ${inPeriod("c.completion_date")}) AS certificates_issued,
           (SELECT COUNT(DISTINCT c.user_id) FROM certificates c JOIN res ON res.id = c.user_id
-             WHERE res.barangay_id IS NOT DISTINCT FROM b.id AND c.status = 'active') AS certified_responders,
+             WHERE res.barangay_id IS NOT DISTINCT FROM b.id AND c.status = 'active'
+               AND res.archived = false AND (res.banned IS NULL OR res.banned = false)) AS certified_responders,
           (SELECT COUNT(*) FROM results r JOIN res ON res.id = r.user_id
              WHERE res.barangay_id IS NOT DISTINCT FROM b.id AND ${inPeriod("r.date_taken")}) AS assessment_attempts,
           (SELECT AVG(r.passed::int) FROM results r JOIN res ON res.id = r.user_id
@@ -117,7 +134,7 @@ class MdrrmoReportService {
 
       // Published modules, plus any other module residents were active in during the period
       pool.query(
-        `WITH res AS (SELECT id FROM "user" WHERE role = 'resident'),
+        `WITH res AS (SELECT id FROM "user" WHERE ${isResident()}),
         stats AS (
           SELECT
             md.mod_id, md.modname, md.modcat, md.status, md.level,
@@ -141,14 +158,36 @@ class MdrrmoReportService {
         ORDER BY enrollments DESC, modname`,
         params
       ),
+
+      // Barangay only: each active resident's training and certification standing
+      !scoped ? { rows: [] } : pool.query(
+        `SELECT
+          u.name, u.email, u."createdAt" AS registered_at,
+          (SELECT COUNT(*) FROM module_activity ma
+             WHERE ma.user_id = u.id AND ma.modstatus ILIKE 'completed') AS completed_total,
+          (SELECT COUNT(*) FROM module_activity ma
+             WHERE ma.user_id = u.id AND ma.modstatus ILIKE 'completed' AND ${inPeriod("ma.completed_at")}) AS completed_in_period,
+          (SELECT COUNT(*) FROM certificates c WHERE c.user_id = u.id AND c.status = 'active') AS active_certificates,
+          (SELECT MIN(c.expires_at) FROM certificates c WHERE c.user_id = u.id AND c.status = 'active') AS next_expiry,
+          EXISTS (SELECT 1 FROM certificates c WHERE c.user_id = u.id AND c.status = 'expired') AS has_expired
+        FROM "user" u
+        WHERE ${isResident("u.")} AND u.archived = false AND (u.banned IS NULL OR u.banned = false)
+          AND u."createdAt" < $2::date + 1
+        ORDER BY u.name`,
+        params
+      ),
     ]);
+
+    if (scoped && !barangayRow.rows.length) return null; // unknown barangay
 
     const s = summary.rows[0];
     const c = certStatus.rows[0];
 
     return {
+      barangayName: scoped ? barangayRow.rows[0].name : null,
       summary: {
         registered_residents: toInt(s.registered_residents),
+        certified_residents: toInt(s.certified_residents),
         new_residents: toInt(s.new_residents),
         enrollments: toInt(s.enrollments),
         completions: toInt(s.completions),
@@ -202,6 +241,23 @@ class MdrrmoReportService {
         pass_rate: toRate(r.pass_rate),
         avg_score: toRate(r.avg_score),
       })),
+      residents: roster.rows.map((r) => {
+        const activeCerts = toInt(r.active_certificates);
+        const expiringSoon =
+          r.next_expiry && new Date(r.next_expiry) <= new Date(Date.now() + RECERT_WINDOW_DAYS * 86400000);
+        return {
+          name: r.name,
+          email: r.email,
+          registered_at: r.registered_at,
+          completed_total: toInt(r.completed_total),
+          completed_in_period: toInt(r.completed_in_period),
+          active_certificates: activeCerts,
+          next_expiry: r.next_expiry,
+          status: activeCerts > 0
+            ? (expiringSoon ? "Expiring soon" : "Certified")
+            : (r.has_expired ? "Expired" : "Not certified"),
+        };
+      }),
     };
   }
 }

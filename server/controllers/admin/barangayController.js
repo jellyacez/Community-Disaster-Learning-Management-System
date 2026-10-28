@@ -163,3 +163,49 @@ exports.getBarangayCertifications = async (req, res) => {
     });
   }
 };
+// 6. GET /api/admin/barangay/report/export?from=YYYY-MM-DD&to=YYYY-MM-DD&sheets=...
+// Same accomplishment report as the MDRRMO one, limited to this barangay's residents
+const mdrrmoReportService = require("../../services/admin/MdrrmoReportService");
+const { buildMdrrmoReportWorkbook } = require("../../utils/mdrrmoReportWorkbook");
+const { parseReportQuery, XLSX_TYPE } = require("../../utils/reportQuery");
+
+exports.exportBarangayReport = async (req, res) => {
+  // Barangay admins always get their own barangay; only unscoped roles may choose one
+  const barangayId = resolveBarangayId(req);
+  if (!barangayId) {
+    return res.status(400).json({
+      success: false,
+      error: "NO_BARANGAY_SELECTED",
+      message: "A target barangay must be selected to export a report.",
+    });
+  }
+
+  const { error, from, to, sheets } = parseReportQuery(req.query, ["monthly", "residents", "modules"]);
+  if (error) {
+    return res.status(400).json({ success: false, message: error });
+  }
+
+  try {
+    const data = await mdrrmoReportService.getAccomplishmentReport(from, to, { barangayId });
+    if (!data) {
+      return res.status(404).json({ success: false, message: "Barangay not found." });
+    }
+    const buffer = await buildMdrrmoReportWorkbook(data, {
+      from,
+      to,
+      sheets,
+      barangayName: data.barangayName,
+      preparedBy: { name: req.user.name || req.user.email, role: req.user.role },
+    });
+    const safeName = data.barangayName.replace(/[^A-Za-z0-9]+/g, "_");
+    res.setHeader("Content-Type", XLSX_TYPE);
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename="Barangay_${safeName}_Accomplishment_Report_${from}_to_${to}.xlsx"`
+    );
+    return res.send(Buffer.from(buffer));
+  } catch (err) {
+    console.error("Barangay Accomplishment Report Error:", err);
+    return res.status(500).json({ success: false, message: "Server Error" });
+  }
+};

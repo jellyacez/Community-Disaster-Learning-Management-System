@@ -1,5 +1,6 @@
 
 import StatusBadge from "../../../components/ui/StatusBadge";
+import CertStatusBadge from "./CertStatusBadge";
 
 export default function ResidentInspectorPanel({ selectedResident, onVerifyCertificate }) {
   if (!selectedResident) {
@@ -16,7 +17,9 @@ export default function ResidentInspectorPanel({ selectedResident, onVerifyCerti
   }
 
   const modulesCompleted = selectedResident.modulesCompleted ?? 0;
-  const isCertified = modulesCompleted > 0;
+  // modulesCompleted counts every certificate ever issued, so this means "has a certificate
+  // record to inspect" (even an expired one); current standing comes from certStatus
+  const hasCertificateRecord = modulesCompleted > 0;
 
   return (
     <div className="space-y-5 flex-1 flex flex-col justify-between animate-in fade-in duration-200 min-h-[250px]">
@@ -54,16 +57,12 @@ export default function ResidentInspectorPanel({ selectedResident, onVerifyCerti
         <div className="flex justify-between items-center">
           <span className="text-gray-500 font-semibold">Compliance Status:</span>
           <span>
-            {isCertified ? (
-              <StatusBadge color="emerald">Certified</StatusBadge>
-            ) : (
-              <StatusBadge color="amber">Pending</StatusBadge>
-            )}
+            <CertStatusBadge status={selectedResident.certStatus} />
           </span>
         </div>
       </div>
 
-      {isCertified && onVerifyCertificate && (
+      {hasCertificateRecord && onVerifyCertificate && (
         <button 
           type="button" 
           onClick={() => onVerifyCertificate(selectedResident.name)} 

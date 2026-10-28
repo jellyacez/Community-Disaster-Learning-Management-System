@@ -20,7 +20,15 @@ import MdrrmoRecentActivity from "./components/MdrrmoRecentActivity";
 import MdrrmoQuickActions from "./components/MdrrmoQuickActions";
 import AnnouncementModal from "../../barangay/workspace/announcementModal";
 import { SkeletonChart } from "../../../../components/ui/Skeleton";
-import ExportReportModal from "./components/ExportReportModal";
+import ExportReportModal from "../../../../components/ui/modals/ExportReportModal";
+
+// Summary is always part of the report; the rest can be left out
+const REPORT_SHEETS = [
+  { id: "summary", label: "Summary", detail: "Period totals, certification status, signature block", locked: true },
+  { id: "monthly", label: "Monthly breakdown", detail: "Activity per month in the period" },
+  { id: "barangays", label: "Barangay coverage", detail: "Residents, completions, pass rate per barangay" },
+  { id: "modules", label: "Module performance", detail: "Enrollments, completions, scores per module" },
+];
 
 const MdrrmoModuleDistributionChart = lazy(() =>
   import("./components/MdrrmoCharts").then((module) => ({
@@ -278,6 +286,7 @@ export default function Overview() {
       />
 
       <ExportReportModal
+        sheetOptions={REPORT_SHEETS}
         isOpen={isExportOpen}
         onClose={() => setIsExportOpen(false)}
         onExport={handleExportReport}

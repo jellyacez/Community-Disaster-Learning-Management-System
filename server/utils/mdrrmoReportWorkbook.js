@@ -16,6 +16,7 @@ const ROLE_LABELS = {
   system_admin: "System Administrator",
   head_mdrrmo_admin: "Head, MDRRMO",
   mdrrmo_admin: "MDRRMO Administrator",
+  barangay_admin: "Barangay Administrator",
 };
 
 const formatDate = (isoDate) =>
@@ -31,10 +32,14 @@ const formatDateTime = (date) =>
 // Rates are fractions (0-1); null means there was nothing to measure in the period
 const rate = (v) => (v === null || v === undefined ? "—" : v);
 
-function addTitleBlock(ws, lastCol, { title, period, generated }) {
+// Excel stores dates without a timezone; keep the Manila calendar day
+const toExcelDate = (d) =>
+  d ? new Date(`${new Date(d).toLocaleDateString("en-CA", { timeZone: TZ })}T00:00:00Z`) : "—";
+
+function addTitleBlock(ws, lastCol, { office, title, period, generated }) {
   const lines = [
     ["MUNICIPALITY OF BACOLOR", { bold: true, size: 14 }],
-    ["Municipal Disaster Risk Reduction and Management Office", { bold: true, size: 12 }],
+    [office, { bold: true, size: 12 }],
     [title, { bold: true, size: 12, color: { argb: "FFB91C1C" } }],
     [`Reporting period: ${period}`, { size: 10 }],
     [`Generated: ${generated}`, { size: 10, italic: true, color: { argb: "FF6B7280" } }],
@@ -108,6 +113,7 @@ function addTable(ws, startRow, columns, rows, { totals, headerHeight = 30 } = {
       cell.value = col.percent ? rate(value) : value;
       cell.border = BORDER;
       if (col.percent) cell.numFmt = "0.0%";
+      if (col.date && value instanceof Date) cell.numFmt = "mmm d, yyyy";
       cell.alignment = {
         vertical: "top",
         horizontal: col.align || (typeof value === "string" && !col.percent ? "left" : "right"),
@@ -146,13 +152,21 @@ function addDataSheet(wb, name, meta, columns, rows, totals) {
 
 const sum = (rows, key) => rows.reduce((acc, r) => acc + (r[key] || 0), 0);
 
-async function buildMdrrmoReportWorkbook(data, { from, to, preparedBy, sheets = new Set(["monthly", "barangays", "modules"]) }) {
+// barangayName switches the report to a single barangay: its letterhead, the resident
+// roster sheet, and the Punong Barangay as the noting official
+async function buildMdrrmoReportWorkbook(
+  data,
+  { from, to, preparedBy, barangayName = null, sheets = new Set(["monthly", "barangays", "modules"]) },
+) {
   const wb = new ExcelJS.Workbook();
   wb.creator = "Bacolor Disaster LMS Portal";
   wb.created = new Date();
 
+  const barangayLabel =
+    barangayName && (/^barangay\b/i.test(barangayName) ? barangayName : `Barangay ${barangayName}`);
   const meta = {
-    title: "Training Accomplishment Report",
+    office: barangayLabel || "Municipal Disaster Risk Reduction and Management Office",
+    title: barangayLabel ? "Barangay Training Accomplishment Report" : "Training Accomplishment Report",
     period: `${formatDate(from)} – ${formatDate(to)}`,
     generated: `${formatDateTime(new Date())} by ${preparedBy.name}`,
   };
@@ -196,18 +210,39 @@ async function buildMdrrmoReportWorkbook(data, { from, to, preparedBy, sheets = 
   row = addSectionHeading(ws, row, 3, "B. Program status (as of generation)");
   const statusRows = [
     { label: "Active registered residents", value: s.registered_residents, note: "Resident accounts registered by the end of the period that are not archived or banned." },
+    ...(barangayLabel
+      ? [
+          { label: "Certified residents", value: s.certified_residents, note: "Active residents holding at least one valid certificate." },
+          {
+            label: "Preparedness rate",
+            value: rate(s.registered_residents ? s.certified_residents / s.registered_residents : null),
+            note: "Certified residents ÷ active registered residents.",
+            isRate: true,
+          },
+        ]
+      : []),
     { label: "Published training modules", value: s.published_modules, note: "Modules currently available to residents." },
     { label: "Active certificates", value: c.active, note: "Valid certificates of competency held by residents." },
     { label: "Certificates expiring within 30 days", value: c.expiring_30_days, note: "Active certificates due for recertification soon." },
     { label: "Expired certificates", value: c.expired, note: "Certificates past their validity that were not renewed." },
     { label: "Revoked certificates", value: c.revoked, note: "Certificates withdrawn by an administrator." },
   ];
+  const firstStatusRow = row + 1;
   row = addTable(ws, row, summaryCols, statusRows) + 1;
+  statusRows.forEach((r, i) => {
+    if (r.isRate) {
+      const cell = ws.getCell(firstStatusRow + i, 2);
+      cell.numFmt = "0.0%";
+      cell.alignment = { ...cell.alignment, horizontal: "right" };
+    }
+  });
 
   row = addSectionHeading(ws, row, 3, "C. Notes");
   [
-    "Figures count resident accounts only; administrator activity is excluded.",
-    ...(sheets.size ? ["Breakdowns by month, barangay or module are on the other sheets of this workbook."] : []),
+    barangayLabel
+      ? `Figures count residents of ${barangayLabel} only; administrator activity is excluded.`
+      : "Figures count resident accounts only; administrator activity is excluded.",
+    ...(sheets.size ? ["Further breakdowns are on the other sheets of this workbook."] : []),
   ].forEach((text) => {
     ws.mergeCells(row, 1, row, 3);
     ws.getCell(row, 1).value = `• ${text}`;
@@ -228,7 +263,7 @@ async function buildMdrrmoReportWorkbook(data, { from, to, preparedBy, sheets = 
   ws.getCell(row, 1).alignment = { horizontal: "center" };
   row += 1;
   ws.getCell(row, 1).value = ROLE_LABELS[preparedBy.role] || "Administrator";
-  ws.getCell(row, 3).value = "MDRRMO Head";
+  ws.getCell(row, 3).value = barangayLabel ? "Punong Barangay" : "MDRRMO Head";
   ws.getCell(row, 1).alignment = { horizontal: "center" };
   ws.getCell(row, 3).alignment = { horizontal: "center" };
   row += 1;
@@ -270,7 +305,7 @@ async function buildMdrrmoReportWorkbook(data, { from, to, preparedBy, sheets = 
     { header: "Pass Rate", key: "pass_rate", width: 11, percent: true },
     { header: "Average Score", key: "avg_score", width: 11, percent: true },
   ];
-  if (sheets.has("barangays")) addDataSheet(wb, "Barangay Coverage", meta, barangayCols, data.barangays, {
+  if (!barangayLabel && sheets.has("barangays")) addDataSheet(wb, "Barangay Coverage", meta, barangayCols, data.barangays, {
     barangay: "TOTAL",
     registered_residents: sum(data.barangays, "registered_residents"),
     new_residents: sum(data.barangays, "new_residents"),
@@ -282,6 +317,36 @@ async function buildMdrrmoReportWorkbook(data, { from, to, preparedBy, sheets = 
     pass_rate: s.pass_rate,
     avg_score: s.avg_score,
   });
+
+  // --- Resident roster (barangay report only) ---
+  const residentCols = [
+    { header: "Resident", key: "name", width: 26, align: "left" },
+    { header: "Email", key: "email", width: 30, align: "left" },
+    { header: "Registered", key: "registered_at", width: 14, date: true },
+    { header: "Modules Completed (All Time)", key: "completed_total", width: 14 },
+    { header: "Completed in Period", key: "completed_in_period", width: 12 },
+    { header: "Active Certificates", key: "active_certificates", width: 12 },
+    { header: "Next Certificate Expiry", key: "next_expiry", width: 15, date: true },
+    { header: "Status", key: "status", width: 15, align: "left" },
+  ];
+  if (barangayLabel && sheets.has("residents")) {
+    const residents = data.residents.map((r) => ({
+      ...r,
+      registered_at: toExcelDate(r.registered_at),
+      next_expiry: toExcelDate(r.next_expiry),
+    }));
+    const certified = data.residents.filter((r) => r.active_certificates > 0).length;
+    addDataSheet(wb, "Resident Roster", meta, residentCols, residents, {
+      name: `TOTAL: ${residents.length} residents`,
+      email: "",
+      registered_at: "",
+      completed_total: sum(residents, "completed_total"),
+      completed_in_period: sum(residents, "completed_in_period"),
+      active_certificates: sum(residents, "active_certificates"),
+      next_expiry: "",
+      status: `${certified} certified`,
+    });
+  }
 
   // --- Module sheet ---
   const moduleCols = [

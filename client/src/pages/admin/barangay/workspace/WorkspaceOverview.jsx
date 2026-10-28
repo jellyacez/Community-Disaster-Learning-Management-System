@@ -1,5 +1,5 @@
 import { useState, lazy, Suspense } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Alert01Icon, Download02Icon } from "@hugeicons/core-free-icons";
 import toast from "react-hot-toast";
@@ -10,6 +10,15 @@ import AnnouncementModal from "./announcementModal";
 import Spinner from "../../../../components/ui/Spinner";
 import apiClient from "../../../../lib/apiClient";
 import useDebounce from "../../../../hooks/useDebounce";
+import ExportReportModal from "../../../../components/ui/modals/ExportReportModal";
+
+// Summary is always part of the report; the rest can be left out
+const REPORT_SHEETS = [
+  { id: "summary", label: "Summary", detail: "Period totals, preparedness rate, signature block", locked: true },
+  { id: "monthly", label: "Monthly breakdown", detail: "Activity per month in the period" },
+  { id: "residents", label: "Resident roster", detail: "Each resident's completions and certificate status" },
+  { id: "modules", label: "Module performance", detail: "Enrollments, completions, scores per module" },
+];
 
 const CertificateVerificationModal = lazy(() =>
   import("../../../../components/ui/certificates/CertificateVerificationModal")
@@ -22,22 +31,28 @@ import CurriculumReadinessCard from "./components/CurriculumReadinessCard";
 import WorkspaceQuickActions from "./components/WorkspaceQuickActions";
 import MonitoredCitizenTable from "./components/MonitoredCitizenTable";
 
-const fetchOverviewData = async () => {
-  const [residentsRes, analyticsRes] = await Promise.all([
-    apiClient.get("/admin/residents"),
-    apiClient.get("/admin/barangay/analytics"),
-  ]);
+const CITIZEN_TABLE_ROWS = 7;
 
-  return {
-    residents: residentsRes.data?.data || residentsRes.data || [],
-    analytics: analyticsRes.data?.data || {},
-  };
+const fetchOverviewData = async () => {
+  const analyticsRes = await apiClient.get("/admin/barangay/analytics");
+  return { analytics: analyticsRes.data?.data || {} };
+};
+
+// Search runs on the server across the whole barangay; the API scopes a barangay
+// admin to their own residents. Only the rows the table shows are fetched.
+const fetchCitizenRows = async (search) => {
+  const res = await apiClient.get("/admin/residents", {
+    params: { role: "resident", limit: CITIZEN_TABLE_ROWS, search: search || undefined },
+  });
+  return res.data?.data || [];
 };
 
 export default function WorkspaceOverview() {
   const [selectedResident, setSelectedResident] = useState(null);
   const [searchFilter, setSearchFilter] = useState("");
   const [isAnnouncementModalOpen, setIsAnnouncementModalOpen] = useState(false);
+  const [isExportOpen, setIsExportOpen] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
   const [isVerifyModalOpen, setIsVerifyModalOpen] = useState(false);
   const [modulePage, setModulePage] = useState(1);
   const moduleLimit = 5;
@@ -47,6 +62,16 @@ export default function WorkspaceOverview() {
   const { data, isLoading, isError, isFetching } = useQuery({
     queryKey: ["barangayWorkspaceOverview"],
     queryFn: fetchOverviewData,
+    retry: 1,
+  });
+
+  const citizenSearch = debouncedSearch.trim();
+  // Keyed under the overview so its existing invalidations refresh the table too
+  const { data: citizenRows, isPlaceholderData: isSearchingCitizens } = useQuery({
+    queryKey: ["barangayWorkspaceOverview", "citizens", citizenSearch],
+    queryFn: () => fetchCitizenRows(citizenSearch),
+    // Keep the current rows on screen while a new search loads
+    placeholderData: keepPreviousData,
     retry: 1,
   });
 
@@ -70,7 +95,6 @@ export default function WorkspaceOverview() {
     );
   }
 
-  const residents = Array.isArray(data?.residents) ? data.residents : [];
   const kpis = data?.analytics?.kpis || {};
   const modulePerformance = data?.analytics?.modulePerformance || [];
   const totalModules = modulePerformance.length;
@@ -90,7 +114,7 @@ export default function WorkspaceOverview() {
     ? barangay.name
     : `Barangay ${barangay.name || "Local"}`;
 
-  const totalResidents = parseInt(kpis.total_residents, 10) || residents.length;
+  const totalResidents = parseInt(kpis.total_residents, 10) || 0;
   const certifiedCount = parseInt(kpis.certified_residents, 10) || 0;
   const activeLearners = parseInt(kpis.active_learners, 10) || 0;
   const localAlertsCount = parseInt(kpis.local_alerts, 10) || 0;
@@ -101,51 +125,42 @@ export default function WorkspaceOverview() {
       : 0;
   const pendingCount = Math.max(0, totalResidents - certifiedCount);
 
-  const filteredResidents = residents.filter(
-    (r) =>
-      r.name?.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
-      r.email?.toLowerCase().includes(debouncedSearch.toLowerCase()),
-  );
+  const filteredResidents = citizenRows ?? [];
 
   const handleVerifyCertificate = () => {
     setIsVerifyModalOpen(true);
   };
 
-  const handleExportReport = () => {
-    if (!residents.length) {
-      toast.error("No resident records available to export.");
-      return;
+  // Built on the server, which scopes it to this admin's own barangay
+  const handleExportReport = async ({ from, to, sheets }) => {
+    setIsExporting(true);
+    try {
+      const res = await apiClient.get("/admin/barangay/report/export", {
+        params: { from, to, sheets: sheets.join(",") },
+        responseType: "blob",
+      });
+      const downloadUrl = window.URL.createObjectURL(res.data);
+      const link = document.createElement("a");
+      link.href = downloadUrl;
+      link.download = `${formattedBarangayName.replace(/[^A-Za-z0-9]+/g, "_")}_Accomplishment_Report_${from}_to_${to}.xlsx`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(downloadUrl);
+      setIsExportOpen(false);
+      toast.success(`Exported report for ${formattedBarangayName}.`);
+    } catch (err) {
+      // Error bodies arrive as a Blob because of responseType: "blob"
+      let message = "Failed to export the report.";
+      try {
+        message = JSON.parse(await err.response.data.text()).message || message;
+      } catch {
+        // Keep the generic message
+      }
+      toast.error(message);
+    } finally {
+      setIsExporting(false);
     }
-    const headers = [
-      "ID",
-      "Name",
-      "Email",
-      "Jurisdiction",
-      "Modules Completed",
-      "Compliance Status",
-    ];
-    const rows = residents.map((r) => [
-      r.id || "",
-      `"${(r.name || "").replace(/"/g, '""')}"`,
-      `"${(r.email || "").replace(/"/g, '""')}"`,
-      `"${formattedBarangayName}"`,
-      r.modulesCompleted ?? 0,
-      `"${(r.modulesCompleted || 0) > 0 ? "Certified" : "Pending"}"`,
-    ]);
-    const csvContent =
-      "data:text/csv;charset=utf-8," +
-      [headers.join(","), ...rows.map((e) => e.join(","))].join("\n");
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute(
-      "download",
-      `${formattedBarangayName.replace(/\s+/g, "_")}_DRRM_Report_${new Date().toISOString().split("T")[0]}.csv`,
-    );
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    toast.success(`Exported report for ${formattedBarangayName}!`);
   };
 
   return (
@@ -164,7 +179,7 @@ export default function WorkspaceOverview() {
         <div className="flex flex-wrap sm:flex-nowrap items-center gap-2.5 sm:gap-3 shrink-0 w-full lg:w-auto">
           <button
             type="button"
-            onClick={handleExportReport}
+            onClick={() => setIsExportOpen(true)}
             className="flex-1 sm:flex-initial h-10 px-3.5 sm:px-4 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-gray-700 dark:text-slate-200 text-xs font-bold tracking-wide uppercase rounded-xl inline-flex items-center justify-center gap-2 hover:bg-gray-50 dark:hover:bg-slate-750 active:scale-[0.98] transition-all whitespace-nowrap shadow-xs cursor-pointer"
           >
             <HugeiconsIcon
@@ -231,6 +246,7 @@ export default function WorkspaceOverview() {
         <div className="lg:col-span-8 min-w-0 overflow-x-auto">
           <MonitoredCitizenTable
             filteredResidents={filteredResidents}
+            isSearching={isSearchingCitizens}
             selectedResident={selectedResident}
             setSelectedResident={setSelectedResident}
             searchFilter={searchFilter}
@@ -258,6 +274,14 @@ export default function WorkspaceOverview() {
         isOpen={isAnnouncementModalOpen}
         onClose={() => setIsAnnouncementModalOpen(false)}
         barangayName={barangay.name}
+      />
+
+      <ExportReportModal
+        isOpen={isExportOpen}
+        sheetOptions={REPORT_SHEETS}
+        onClose={() => setIsExportOpen(false)}
+        onExport={handleExportReport}
+        isExporting={isExporting}
       />
 
       {isVerifyModalOpen && (

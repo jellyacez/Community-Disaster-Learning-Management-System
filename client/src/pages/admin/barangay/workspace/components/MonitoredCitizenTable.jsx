@@ -3,9 +3,11 @@ import PropTypes from "prop-types";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Search01Icon } from "@hugeicons/core-free-icons";
 import StatusBadge from "../../../../../components/ui/StatusBadge";
+import CertStatusBadge from "../../../shared/CertStatusBadge";
 
 export default function MonitoredCitizenTable({
   filteredResidents,
+  isSearching = false,
   selectedResident,
   setSelectedResident,
   searchFilter,
@@ -40,7 +42,11 @@ export default function MonitoredCitizenTable({
               <th className="py-2.5 px-3 font-semibold uppercase tracking-wider text-right">Action</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-50 text-gray-700">
+          {/* Previous results stay visible while a new search loads; dim them meanwhile */}
+          <tbody
+            aria-busy={isSearching || undefined}
+            className={`divide-y divide-gray-50 text-gray-700 transition-opacity duration-150 motion-reduce:transition-none ${isSearching ? "opacity-60" : ""}`}
+          >
             {filteredResidents.length === 0 ? (
               <tr>
                 <td colSpan="4" className="py-8 text-center text-gray-400 italic">
@@ -50,7 +56,6 @@ export default function MonitoredCitizenTable({
             ) : (
               filteredResidents.slice(0, 7).map((r) => {
                 const modulesCompleted = r.modulesCompleted ?? 0;
-                const isCertified = modulesCompleted > 0;
                 return (
                   <tr
                     key={r.id || r._id}
@@ -71,10 +76,8 @@ export default function MonitoredCitizenTable({
                         <StatusBadge color="red">Banned</StatusBadge>
                       ) : r.archived ? (
                         <StatusBadge color="slate">Archived</StatusBadge>
-                      ) : isCertified ? (
-                        <StatusBadge color="emerald">Certified</StatusBadge>
                       ) : (
-                        <StatusBadge color="amber">Pending</StatusBadge>
+                        <CertStatusBadge status={r.certStatus} />
                       )}
                     </td>
                     <td className="py-3 px-3 text-right">
@@ -102,6 +105,7 @@ export default function MonitoredCitizenTable({
 
 MonitoredCitizenTable.propTypes = {
   filteredResidents: PropTypes.array.isRequired,
+  isSearching: PropTypes.bool,
   selectedResident: PropTypes.object,
   setSelectedResident: PropTypes.func.isRequired,
   searchFilter: PropTypes.string.isRequired,
