@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import { authClient } from "../../lib/auth-client";
 import LogoutModal from "../ui/modals/LogoutModal";
+import AdminNotificationBell from "./AdminNotificationBell";
 import ThemeToggle from "../ui/globalTheme";
 import { useQueryClient } from "@tanstack/react-query";
 import { HugeiconsIcon } from "@hugeicons/react";
@@ -98,6 +99,9 @@ export default function AdminSidebar({ sidebarOpen, setSidebarOpen }) {
       >
         <div className="h-16 flex items-center justify-between px-6 border-b border-red-800 bg-red-700">
           <span className="text-white font-bold text-xl tracking-tight">Admin Portal</span>
+          <div className="hidden lg:block">
+            <AdminNotificationBell buttonClassName="text-white/80 hover:text-white hover:bg-red-800" />
+          </div>
           <button
             className="lg:hidden text-white/70 hover:text-white"
             onClick={() => setSidebarOpen(false)}

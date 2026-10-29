@@ -55,6 +55,16 @@ router.get("/me/settings", authenticate, userController.getUserSettings);
 // @access  Private
 router.put("/me/settings", authenticate, userController.updateUserSettings);
 
+// @route   GET /api/users/me/notifications
+// @desc    Get the current user's latest in-app notifications
+// @access  Private
+router.get("/me/notifications", authenticate, userController.getNotifications);
+
+// @route   PATCH /api/users/me/notifications/read
+// @desc    Mark all of the current user's notifications as read
+// @access  Private
+router.patch("/me/notifications/read", authenticate, userController.markNotificationsRead);
+
 // @route   GET /api/users/me/sessions
 // @desc    Get active login sessions / telemetry for current user
 // @access  Private

@@ -103,17 +103,22 @@ function startAlertMonitor() {
       const settingsRes = await pool.query(`
         SELECT key, value 
         FROM public.system_settings 
-        WHERE key IN ('maintenance_mode', 'emergency_broadcast')
+        WHERE key IN ('maintenance_mode', 'broadcast_active', 'broadcast_severity')
       `);
       let isMaintenance = false;
-      let isEmergency = false;
+      let isBroadcastActive = false;
+      let isCritical = false;
 
       settingsRes.rows.forEach((row) => {
         if (row.key === "maintenance_mode" && row.value === "true")
           isMaintenance = true;
-        if (row.key === "emergency_broadcast" && row.value === "true")
-          isEmergency = true;
+        if (row.key === "broadcast_active" && row.value === "true")
+          isBroadcastActive = true;
+        if (row.key === "broadcast_severity" && row.value === "critical")
+          isCritical = true;
       });
+      // Only a critical-severity broadcast counts as an emergency override
+      const isEmergency = isBroadcastActive && isCritical;
 
       if (isMaintenance) {
         setAlert("MAINTENANCE_MODE", {

@@ -290,6 +290,29 @@ class UserService {
     await pool.query('UPDATE "user" SET settings = $1 WHERE id = $2', [safeSettings, userId]);
     return safeSettings;
   }
+
+  async getNotifications(userId) {
+    const { rows } = await pool.query(
+      `SELECT notification_id AS id, type, message, is_read, created_at,
+              COUNT(*) FILTER (WHERE NOT is_read) OVER () AS unread_count
+       FROM public.user_notification
+       WHERE user_id = $1
+       ORDER BY created_at DESC
+       LIMIT 20`,
+      [userId]
+    );
+    return {
+      notifications: rows.map(({ id, type, message, is_read, created_at }) => ({ id, type, message, is_read, created_at })),
+      unreadCount: rows.length > 0 ? parseInt(rows[0].unread_count, 10) : 0,
+    };
+  }
+
+  async markNotificationsRead(userId) {
+    await pool.query(
+      'UPDATE public.user_notification SET is_read = true WHERE user_id = $1 AND NOT is_read',
+      [userId]
+    );
+  }
 }
 
 module.exports = new UserService();

@@ -93,8 +93,12 @@ exports.setMaintenanceMode = async (req, res) => {
 exports.updateBroadcast = async (req, res) => {
   const { broadcast_message, broadcast_active, broadcast_severity } = req.body;
   try {
-    await SystemSettingsService.updateBroadcast(broadcast_message, broadcast_active, broadcast_severity);
-    
+    const state = await SystemSettingsService.updateBroadcast(broadcast_message, broadcast_active, broadcast_severity);
+
+    // Drop the public endpoint's 30s cache so page loads agree with the live push
+    require('../../routes/publicRoutes').clearBroadcastCache();
+    require('../../services/notif/sseService').broadcast('SYSTEM_BROADCAST_UPDATE', { success: true, ...state });
+
     require('../../utils/logger').logActivity(req.user.id, 'Updated global broadcast settings');
     res.status(200).json({ success: true, data: { message: 'Broadcast settings updated successfully' } });
   } catch (err) {

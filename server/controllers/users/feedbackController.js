@@ -1,4 +1,5 @@
 const feedbackService = require("../../services/feedback/FeedbackService");
+const sseService = require("../../services/notif/sseService");
 
 // @desc    Get logged-in resident's feedback history
 // @route   GET /api/feedbacks/my-submissions
@@ -26,6 +27,18 @@ exports.submitFeedback = async (req, res) => {
     }
 
     const row = await feedbackService.submitFeedback(userId, req.body);
+
+    // Refresh the inbox of the admins who can see this ticket (same scope as getAdminFeedbacks)
+    const residentBarangayId = req.user?.barangay_id;
+    sseService.broadcastWhere(
+      (client) =>
+        row.recipient === "mdrrmo"
+          ? client.role?.includes("mdrrmo") || client.role === "system_admin"
+          : client.role === "barangay_admin" && Number(client.barangayId) === Number(residentBarangayId),
+      "NEW_FEEDBACK_TICKET",
+      { id: row.id },
+    );
+
     res.status(201).json({ success: true, data: row });
   } catch {
     res.status(500).json({ success: false, error: "Failed to submit feedback." });

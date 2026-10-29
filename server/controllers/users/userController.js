@@ -158,3 +158,27 @@ exports.updateUserSettings = async (req, res) => {
 };
 // --- End of updateUserSettings ---
 
+// @desc    Get the current user's latest in-app notifications
+// @access  Private
+exports.getNotifications = async (req, res) => {
+  try {
+    const data = await UserService.getNotifications(req.user.id);
+    res.json({ success: true, data });
+  } catch (err) {
+    console.error("Error fetching notifications:", err.message);
+    res.status(500).json({ success: false, message: "Failed to retrieve notifications." });
+  }
+};
+
+// @desc    Mark all of the current user's notifications as read
+// @access  Private
+exports.markNotificationsRead = async (req, res) => {
+  try {
+    await UserService.markNotificationsRead(req.user.id);
+    res.json({ success: true });
+  } catch (err) {
+    console.error("Error marking notifications read:", err.message);
+    res.status(500).json({ success: false, message: "Failed to update notifications." });
+  }
+};
+

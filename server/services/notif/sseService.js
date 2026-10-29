@@ -44,6 +44,16 @@ class SSEService {
       }
     }
   }
+
+  // Broadcast only to clients matching a predicate on { userId, role, barangayId }
+  broadcastWhere(filter, event, data) {
+    const payload = `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
+    for (const [, client] of this.clients) {
+      if (filter(client)) {
+        client.res.write(payload);
+      }
+    }
+  }
 }
 
 module.exports = new SSEService();

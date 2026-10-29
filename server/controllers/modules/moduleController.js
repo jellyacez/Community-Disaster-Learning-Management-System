@@ -3,6 +3,7 @@ const ModuleService = require("../../services/modules/ModuleService");
 const { ADMIN_ROLES } = require("../../config/permissions");
 const { logActivity, logError } = require("../../utils/logger");
 const { isAttemptStep } = require("../../services/modules/QuizAttemptService");
+const sseService = require("../../services/notif/sseService");
 
 // Helper function to determine if a module is open to learners
 const isOpenToLearners = (mod) =>
@@ -554,6 +555,13 @@ exports.updateModuleStatus = async (req, res) => {
               rejection_reason || "See draft for details"
             }`,
           ],
+        );
+      }
+      if (finalStatus === "published" || status === "rejected") {
+        sseService.broadcastWhere(
+          (client) => client.userId === current.author_id,
+          "USER_NOTIFICATION",
+          {},
         );
       }
     } else {
