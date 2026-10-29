@@ -222,6 +222,8 @@ class ModuleProgressService {
 
       // Handle Completion logic & Certificates
       let verificationToken = null;
+      // Sent after COMMIT so a rolled-back completion never notifies
+      let certNotice = null;
       if (moduleCompleted) {
         const modResult = await client.query(`SELECT modname FROM module_data WHERE mod_id = $1`, [mod_id]);
         const modTitle = modResult.rows.length > 0 ? modResult.rows[0].modname : 'Unknown Module';
@@ -278,6 +280,7 @@ class ModuleProgressService {
             const certId = certInsert.rows[0].cert_id;
             verificationToken = certInsert.rows[0].verification_token;
             logger.logActivity(user_id, `Earned certificate: ${modTitle} (ID: CERT-${certId})`);
+            certNotice = ["certificate_earned", `You earned a certificate for "${modTitle}".`];
           } else {
              // Lost the race, fetch the token that the other request just inserted
              const raceCheck = await client.query(
@@ -345,6 +348,10 @@ class ModuleProgressService {
             );
 
             verificationToken = renewResult.rows[0]?.verification_token || existingCert.verification_token;
+            certNotice = [
+              "certificate_renewed",
+              `Your certificate for "${modTitle}" was renewed for ${RECERTIFICATION_INTERVAL_YEARS} year${RECERTIFICATION_INTERVAL_YEARS === 1 ? "" : "s"}.`,
+            ];
           } else {
             // Still active with > 30 days remaining, return existing verification token
             verificationToken = existingCert.verification_token;
@@ -353,6 +360,10 @@ class ModuleProgressService {
       }
 
       await client.query("COMMIT");
+
+      if (certNotice) {
+        require("../notif/userNotificationService").notifyUser(user_id, ...certNotice);
+      }
 
       return {
         passed: true,

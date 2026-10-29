@@ -3,6 +3,7 @@ const pool = require("../config/db");
 const logger = require("./logger");
 const { transporter } = require("./mailer");
 const { getRecertificationReminderEmail } = require("./emailTemplates");
+const { notifyUser } = require("../services/notif/userNotificationService");
 
 /**
  * runCertificateMaintenanceJob
@@ -77,6 +78,14 @@ async function runCertificateMaintenanceJob() {
         await pool.query(
           `UPDATE certificates SET recert_notified_at = NOW() WHERE cert_id = $1`,
           [row.cert_id]
+        );
+
+        // After the stamp, so a failed email retried tomorrow doesn't duplicate this
+        const days = Math.max(1, row.days_remaining);
+        await notifyUser(
+          row.user_id,
+          "recert_reminder",
+          `Your certificate for "${row.module_title}" expires in ${days} day${days === 1 ? "" : "s"}. Retake the final assessment to renew it.`
         );
 
         notifiedCount++;
