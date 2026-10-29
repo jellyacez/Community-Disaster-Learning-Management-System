@@ -2,6 +2,7 @@ const barangayAdminService = require("../../services/admin/BarangayAdminService"
 const { cleanRichText } = require("../../utils/sanitizeHtml");
 const { UNSCOPED_ACCESS_ROLES } = require("../../config/permissions");
 const sseService = require("../../services/notif/sseService");
+const { logActivity } = require("../../utils/logger");
 
 function resolveBarangayId(req) {
   const userRole = req.user?.role;
@@ -101,6 +102,12 @@ exports.createBarangayAnnouncement = async (req, res) => {
       targetBarangay
     );
 
+    logActivity(
+      authorId,
+      `Posted announcement "${title}" to ${targetBarangay ? `Barangay ${targetBarangay}` : "all barangays"}`,
+      req,
+    );
+
     if (targetBarangay) {
       sseService.broadcastToBarangay(targetBarangay, "ANNOUNCEMENT_CREATED", data);
     } else {
@@ -197,6 +204,7 @@ exports.exportBarangayReport = async (req, res) => {
       barangayName: data.barangayName,
       preparedBy: { name: req.user.name || req.user.email, role: req.user.role },
     });
+    logActivity(req.user.id, `Exported accomplishment report for Barangay ${data.barangayName} (${from} to ${to})`, req);
     const safeName = data.barangayName.replace(/[^A-Za-z0-9]+/g, "_");
     res.setHeader("Content-Type", XLSX_TYPE);
     res.setHeader(

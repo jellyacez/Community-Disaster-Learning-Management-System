@@ -1,4 +1,5 @@
 const mdrrmoOverviewService = require("../../services/admin/MdrrmoOverviewService");
+const { logActivity } = require("../../utils/logger");
 
 // @desc    Get MDRRMO dashboard metrics
 // @access  Private (mdrrmo_admin, system_admin)
@@ -121,6 +122,7 @@ exports.exportAccomplishmentReport = async (req, res) => {
       preparedBy: { name: req.user.name || req.user.email, role: req.user.role },
     });
     res.setHeader("Content-Type", XLSX_TYPE);
+    logActivity(req.user.id, `Exported MDRRMO accomplishment report (${from} to ${to})`, req);
     res.setHeader(
       "Content-Disposition",
       `attachment; filename="MDRRMO_Accomplishment_Report_${from}_to_${to}.xlsx"`

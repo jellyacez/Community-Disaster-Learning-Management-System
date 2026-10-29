@@ -2,6 +2,7 @@ const crypto = require("crypto");
 const pool = require("../../config/db");
 const ModuleService = require("./ModuleService");
 const ModuleProgressService = require("./ModuleProgressService");
+const { logActivity } = require("../../utils/logger");
 const {
   GRADED_STEP_TYPES,
   QUIZ_QUESTION_SECONDS,
@@ -338,6 +339,12 @@ class QuizAttemptService {
       attempt.tab_switch_count = count;
       if (locked) attempt.status = "locked";
     });
+    if (attempt.status === "locked") {
+      logActivity(
+        userId,
+        `Final assessment attempt #${attempt.attempt_id} (module ID ${attempt.mod_id}) voided after ${attempt.tab_switch_count} tab switches`,
+      );
+    }
     return buildState(attempt, questions, step);
   }
 
@@ -364,14 +371,22 @@ class QuizAttemptService {
       return {
         modId: attempt.mod_id,
         stepId: attempt.step_id,
+        tabSwitchCount: attempt.tab_switch_count,
         answers: rows.map((r) => ({ questionId: r.question_id, selectedChoiceIds: r.selected_choice_ids })),
       };
     });
 
     try {
-      return await ModuleProgressService.completeModuleStep(userId, claim.modId, claim.stepId, claim.answers, {
+      const result = await ModuleProgressService.completeModuleStep(userId, claim.modId, claim.stepId, claim.answers, {
         viaAttempt: true,
       });
+      logActivity(
+        userId,
+        `Submitted final assessment attempt #${attemptId} (module ID ${claim.modId}): ` +
+          `${result?.score ?? 0}/${result?.totalPoints ?? 0}, ${result?.passed ? "passed" : "failed"}, ` +
+          `${claim.tabSwitchCount} tab switch(es)`,
+      );
+      return result;
     } catch (error) {
       // Grading failed: reopen so the learner can submit again
       await pool

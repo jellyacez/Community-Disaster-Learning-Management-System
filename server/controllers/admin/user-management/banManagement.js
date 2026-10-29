@@ -2,6 +2,7 @@ const pool = require("../../../config/db");
 const { logActivity, logError } = require("../../../utils/logger");
 const { UNSCOPED_ACCESS_ROLES } = require("../../../config/permissions");
 const { assertActorOutranksTarget } = require("../../../config/roleHierarchy");
+const { sendAccountNotice } = require("../../../services/accountNoticeService");
 
 function isUnscopedRole(role) {
   return role === "super_admin" || (Array.isArray(UNSCOPED_ACCESS_ROLES) && UNSCOPED_ACCESS_ROLES.includes(role));
@@ -55,6 +56,7 @@ exports.banUser = async (req, res) => {
 
     const scopeStr = adminContext.role === "barangay_admin" ? `Barangay ${adminContext.barangay_id}` : "Unscoped";
     logActivity(req.user.id, `Banned user ${targetUser.email} (ID: ${id}) for: ${banReason} [Scope: ${scopeStr}]`);
+    sendAccountNotice(id, "banned", { reason: banReason, expiresAt: banExpires });
     res.json({ success: true, message: "User banned" });
   } catch (err) {
     if (err.message && err.message.startsWith("SECURITY_FAULT")) {
@@ -108,6 +110,7 @@ exports.unbanUser = async (req, res) => {
 
     const scopeStr = adminContext.role === "barangay_admin" ? `Barangay ${adminContext.barangay_id}` : "Unscoped";
     logActivity(req.user.id, `Unbanned user ${targetUser.email} (ID: ${id}) [Scope: ${scopeStr}]`);
+    sendAccountNotice(id, "unbanned");
     res.json({ success: true, message: "User unbanned" });
   } catch (err) {
     if (err.message && err.message.startsWith("SECURITY_FAULT")) {

@@ -5,6 +5,7 @@ const requireRole = require("../../middleware/requireRole");
 const pool = require("../../config/db");
 const mdrrmoOverviewService = require("../../services/admin/MdrrmoOverviewService");
 const activityLogService = require("../../services/admin/ActivityLogService");
+const { logActivity } = require("../../utils/logger");
 
 // 1. Health check
 router.get("/super/ping", requireRole(["super_admin"]), (req, res) => {
@@ -117,18 +118,11 @@ router.post(
       const targetUser = userResult.rows[0];
 
       // Audit Log: Record impersonation initiation
-      try {
-        await pool.query(
-          `INSERT INTO activity_log (user_id, act_log, act_date)
-           VALUES ($1, $2, NOW())`,
-          [
-            superAdminId,
-            `Started impersonating user "${targetUser.name}" (${targetUser.email}, Role: ${targetUser.role}, ID: ${targetUser.id})`,
-          ]
-        );
-      } catch (logErr) {
-        console.error("FAILED_TO_LOG_IMPERSONATION_START:", logErr);
-      }
+      await logActivity(
+        superAdminId,
+        `Started impersonating user "${targetUser.name}" (${targetUser.email}, Role: ${targetUser.role}, ID: ${targetUser.id})`,
+        req
+      );
 
       res.cookie("impersonator_id", superAdminId, {
         httpOnly: true,
@@ -192,18 +186,7 @@ router.post("/super/stop-impersonating", async (req, res) => {
         }
       }
 
-      try {
-        await pool.query(
-          `INSERT INTO activity_log (user_id, act_log, act_date)
-           VALUES ($1, $2, NOW())`,
-          [
-            impersonatorId,
-            `Ended impersonation session${targetDetails}`,
-          ]
-        );
-      } catch (logErr) {
-        console.error("FAILED_TO_LOG_IMPERSONATION_STOP:", logErr);
-      }
+      await logActivity(impersonatorId, `Ended impersonation session${targetDetails}`, req);
     }
 
     return res.json({

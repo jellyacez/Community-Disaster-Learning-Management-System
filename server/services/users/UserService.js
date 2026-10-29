@@ -167,7 +167,7 @@ class UserService {
     try {
       await client.query('BEGIN');
       
-      const userRes = await client.query('SELECT u.name, u.role, b.name AS barangay FROM "user" u LEFT JOIN barangays b ON u.barangay_id = b.id WHERE u.id = $1', [userId]);
+      const userRes = await client.query('SELECT u.name, u.email, u.role, b.name AS barangay FROM "user" u LEFT JOIN barangays b ON u.barangay_id = b.id WHERE u.id = $1', [userId]);
       if (userRes.rows.length === 0) {
         throw new Error("NOT_FOUND");
       }
@@ -200,8 +200,11 @@ class UserService {
       await client.query('DELETE FROM "account" WHERE "userId" = $1', [userId]);
       
       await client.query('DELETE FROM "user" WHERE id = $1', [userId]);
-      
+
       await client.query('COMMIT');
+
+      // The row is gone, so callers get the details they need to notify and log
+      return userRes.rows[0];
     } catch (err) {
       await client.query('ROLLBACK');
       throw err;

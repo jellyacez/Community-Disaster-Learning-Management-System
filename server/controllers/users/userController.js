@@ -1,4 +1,7 @@
+const pool = require("../../config/db");
 const UserService = require("../../services/users/UserService");
+const { logActivity } = require("../../utils/logger");
+const { sendAccountNotice } = require("../../services/accountNoticeService");
 
 // @desc    Retrieves a list of authentication providers linked to the current user
 // @access  Private
@@ -20,6 +23,7 @@ exports.onboarding = async (req, res) => {
 
   try {
     await UserService.onboarding(req.user.id, name, barangay);
+    logActivity(req.user.id, "Completed profile onboarding", req);
     res.json({ success: true, message: "Profile updated successfully!" });
   } catch (err) {
     if (err.message === "MISSING_DATA") {
@@ -72,7 +76,17 @@ exports.getAllUsers = async (req, res) => {
 // @access  Private
 exports.deleteAccount = async (req, res) => {
   try {
-    await UserService.deleteAccount(req.user.id);
+    const deletedUser = await UserService.deleteAccount(req.user.id);
+
+    // deleteAccount wipes this user's own log rows, so record the event without a user id
+    pool
+      .query(
+        `INSERT INTO activity_log (user_id, act_date, act_log, ip_address) VALUES (NULL, NOW(), $1, $2)`,
+        [`Self-deleted account (Role: ${deletedUser.role}, Barangay: ${deletedUser.barangay || "None"})`, req.ip || null],
+      )
+      .catch((err) => console.error("[ActivityLogger Error] Failed to record self-deletion:", err.message));
+    sendAccountNotice(deletedUser, "deleted", { byAdmin: false });
+
     res.json({
       success: true,
       message: "Account and associated data permanently deleted.",
@@ -111,6 +125,7 @@ exports.getCertificateData = async (req, res) => {
 exports.exportUserData = async (req, res) => {
   try {
     const exportData = await UserService.exportUserData(req.user.id);
+    logActivity(req.user.id, "Exported personal data (data privacy request)", req);
     const date = new Date().toISOString().split("T")[0];
     res.setHeader(
       "Content-Disposition",

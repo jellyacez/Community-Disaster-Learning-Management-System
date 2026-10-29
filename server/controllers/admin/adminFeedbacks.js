@@ -1,4 +1,5 @@
 const feedbackService = require("../../services/feedback/FeedbackService");
+const { logActivity } = require("../../utils/logger");
 
 // @desc    Get scoped feedback submissions for admins
 // @route   GET /api/admin/mdrrmo/feedback
@@ -52,6 +53,7 @@ exports.replyToFeedback = async (req, res) => {
     };
 
     const updatedTicket = await feedbackService.replyToFeedback(adminContext, id, { reply, status });
+    logActivity(adminId, `Replied to feedback ticket #${id} (status: ${status})`, req);
     res.json({ success: true, data: updatedTicket });
   } catch (err) {
     console.error("Reply error:", err);
@@ -85,6 +87,7 @@ exports.closeFeedbackThread = async (req, res) => {
     };
 
     const updatedTicket = await feedbackService.closeFeedbackThread(adminContext, id);
+    logActivity(req.user?.id || req.session?.user?.id, `Closed feedback ticket #${id}`, req);
     res.json({ success: true, data: updatedTicket });
   } catch (err) {
     if (err.statusCode) {
