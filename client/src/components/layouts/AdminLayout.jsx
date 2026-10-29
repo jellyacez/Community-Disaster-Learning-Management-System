@@ -4,6 +4,7 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import { Menu01Icon, Sun01Icon, Moon02Icon } from "@hugeicons/core-free-icons";
 import AdminSidebar from "./AdminSidebar";
 import CriticalAlertBanner from "./CriticalAlertBanner";
+import AdminNotificationBell from "./AdminNotificationBell";
 
 import { authClient } from "../../lib/auth-client";
 import { useTheme } from "../../hooks/context/themeContext";
@@ -59,6 +60,8 @@ export default function AdminLayout() {
               <HugeiconsIcon icon={Menu01Icon} className="w-6 h-6" />
             </button>
             <span className="font-bold text-gray-900 dark:text-white">Admin Portal</span>
+            <div className="flex items-center gap-1">
+            <AdminNotificationBell buttonClassName="text-gray-500 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-800 focus:ring-red-500" />
             <button
               onClick={toggleTheme}
               aria-label="Toggle Theme"
@@ -69,6 +72,7 @@ export default function AdminLayout() {
                 className={`w-5 h-5 ${theme === "dark" ? "text-amber-400" : "text-gray-600"}`}
               />
             </button>
+            </div>
           </header>
 
           {/* Scrollable Page Body */}

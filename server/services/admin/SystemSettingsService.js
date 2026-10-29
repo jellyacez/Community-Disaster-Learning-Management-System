@@ -87,8 +87,20 @@ class SystemSettingsService {
           [broadcast_severity]
         );
       }
-      
+
+      const { rows } = await client.query(
+        `SELECT key, value FROM public.system_settings WHERE key IN ('broadcast_active', 'broadcast_message', 'broadcast_severity')`
+      );
+
       await client.query('COMMIT');
+
+      const state = { active: false, message: '', severity: 'warning' };
+      rows.forEach(row => {
+        if (row.key === 'broadcast_active') state.active = row.value === 'true';
+        if (row.key === 'broadcast_message') state.message = row.value;
+        if (row.key === 'broadcast_severity') state.severity = row.value || 'warning';
+      });
+      return state;
     } catch (err) {
       await client.query('ROLLBACK');
       throw err;

@@ -26,11 +26,15 @@ export function useRealtimeEvents() {
 
     eventSource.addEventListener("SYSTEM_BROADCAST_UPDATE", (e) => {
       const data = JSON.parse(e.data);
-      queryClient.setQueryData(["systemBroadcast"], data);
+      queryClient.setQueryData(["globalBroadcast"], data);
     });
 
     eventSource.addEventListener("NEW_FEEDBACK_TICKET", () => {
       queryClient.invalidateQueries({ queryKey: ["adminFeedbacks"] });
+    });
+
+    eventSource.addEventListener("USER_NOTIFICATION", () => {
+      queryClient.invalidateQueries({ queryKey: ["userNotifications"] });
     });
 
     eventSource.onerror = (err) => {
