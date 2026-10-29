@@ -1,12 +1,15 @@
 import { createPortal } from "react-dom";
 import { useState, useRef, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Notification03Icon } from "@hugeicons/core-free-icons";
 import { motion, AnimatePresence } from "framer-motion";
 import apiClient from "../../lib/apiClient";
 import { useNotificationPreferences } from "../settings/hooks/useNotificationPreferences";
+
+// Personal notification types shown with an amber (needs attention) dot instead of green
+const WARNING_TYPES = new Set(["module_rejected", "certificate_revoked", "recert_reminder"]);
 
 export default function NotificationDropdown() {
   const [isOpen, setIsOpen] = useState(false);
@@ -63,10 +66,37 @@ export default function NotificationDropdown() {
       : [];
   const recentAnnouncements = announcements.slice(0, 3);
 
+  // Personal notifications (feedback replies, certificates, reminders) from user_notification
+  const queryClient = useQueryClient();
+  const { data: personalData } = useQuery({
+    queryKey: ["userNotifications"],
+    queryFn: async () => {
+      const response = await apiClient.get("/users/me/notifications");
+      return response.data.data;
+    },
+    refetchInterval: 60000,
+  });
+  // Capped so emergency announcements below stay in view
+  const personal = (personalData?.notifications || []).slice(0, 3);
+  const personalUnread = personalData?.unreadCount || 0;
+
   // A notification is "new" if the newest announcement ID doesn't match what is stored in DB settings
-  const hasUnread =
+  const hasUnreadAnnouncement =
     recentAnnouncements.length > 0 &&
     String(recentAnnouncements[0].id) !== String(lastSeenId);
+  const hasUnread = hasUnreadAnnouncement || personalUnread > 0;
+
+  // Opening marks personal notifications read; refetch on close so the unread highlight stays while open
+  const markedRead = useRef(false);
+  useEffect(() => {
+    if (isOpen && personalUnread > 0 && !markedRead.current) {
+      markedRead.current = true;
+      apiClient.patch("/users/me/notifications/read").catch(() => {});
+    } else if (!isOpen && markedRead.current) {
+      markedRead.current = false;
+      queryClient.invalidateQueries({ queryKey: ["userNotifications"] });
+    }
+  }, [isOpen, personalUnread, queryClient]);
 
   // When dropdown opens, mark the newest announcement as seen in the DB
   useEffect(() => {
@@ -85,7 +115,7 @@ export default function NotificationDropdown() {
         onClick={() => setIsOpen(!isOpen)}
         ref={triggerRef}
         aria-expanded={isOpen}
-        aria-label="View announcements"
+        aria-label={hasUnread ? "Notifications, new items" : "Notifications"}
         className="relative inline-flex items-center justify-center rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-2 sm:p-2.5 text-gray-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-800 active:scale-95 transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 dark:focus:ring-offset-slate-950"
       >
         <HugeiconsIcon
@@ -122,7 +152,38 @@ export default function NotificationDropdown() {
             </div>
 
             {/* Notification List */}
-            <div className="min-h-0 flex-1 max-h-[55vh] sm:max-h-[320px] overflow-y-auto overscroll-contain p-1.5 sm:p-2">
+            <div className="min-h-0 flex-1 max-h-[55vh] sm:max-h-[420px] overflow-y-auto overscroll-contain p-1.5 sm:p-2">
+              {personal.length > 0 && (
+                <div className="flex flex-col gap-1 pb-2 mb-1.5 border-b border-gray-100 dark:border-slate-800">
+                  <p className="px-2.5 pt-1 text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-slate-400">
+                    For you
+                  </p>
+                  {personal.map((item) => (
+                    <div
+                      key={item.id}
+                      className={`p-2.5 sm:p-3 rounded-xl flex gap-2.5 min-w-0 ${item.is_read ? "" : "bg-red-50/60 dark:bg-red-950/30"}`}
+                    >
+                      <span
+                        aria-hidden="true"
+                        className={`mt-1.5 h-2 w-2 rounded-full shrink-0 ${WARNING_TYPES.has(item.type) ? "bg-amber-500" : "bg-emerald-500"}`}
+                      />
+                      <div className="flex flex-col gap-1 min-w-0">
+                        <p className="text-xs sm:text-sm text-gray-800 dark:text-slate-200 break-words [overflow-wrap:anywhere] leading-relaxed">
+                          {item.message}
+                        </p>
+                        <span className="text-[11px] text-gray-500 dark:text-slate-400 tabular-nums">
+                          {new Date(item.created_at).toLocaleString()}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {personal.length > 0 && (
+                <p className="px-2.5 pt-1 pb-1 text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-slate-400">
+                  Announcements
+                </p>
+              )}
               {isLoadingAnnouncements ? (
                 <div className="p-4 text-center text-xs sm:text-sm text-gray-500 dark:text-slate-400">
                   Loading...

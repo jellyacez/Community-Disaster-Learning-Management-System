@@ -1,4 +1,5 @@
 const pool = require("../../config/db");
+const { notifyUser } = require("../notif/userNotificationService");
 
 class FeedbackService {
   async getUserFeedbacks(userId) {
@@ -342,7 +343,14 @@ class FeedbackService {
       const finalRes = await client.query(fetchCompleteQuery, [feedbackId]);
 
       await client.query("COMMIT");
-      return finalRes.rows[0];
+
+      const updated = finalRes.rows[0];
+      notifyUser(
+        updated.user_id,
+        "feedback_reply",
+        `An administrator replied to your feedback "${updated.subject}". Status: ${status}.`
+      );
+      return updated;
     } catch (err) {
       await client.query("ROLLBACK");
       throw err;

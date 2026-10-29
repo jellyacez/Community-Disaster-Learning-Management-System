@@ -112,7 +112,7 @@ export default function AdminNotificationBell({ buttonClassName = "" }) {
                     >
                       <span
                         aria-hidden="true"
-                        className={`mt-1.5 h-2 w-2 rounded-full shrink-0 ${item.type === "module_rejected" ? "bg-amber-500" : "bg-emerald-500"}`}
+                        className={`mt-1.5 h-2 w-2 rounded-full shrink-0 ${["module_rejected", "certificate_revoked", "recert_reminder"].includes(item.type) ? "bg-amber-500" : "bg-emerald-500"}`}
                       />
                       <div className="flex flex-col gap-1 min-w-0">
                         <p className="text-xs sm:text-sm text-gray-800 dark:text-slate-200 break-words [overflow-wrap:anywhere] leading-relaxed">
