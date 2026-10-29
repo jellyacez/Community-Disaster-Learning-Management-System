@@ -5,11 +5,13 @@ import { API_BASE_URL } from "../lib/apiClient";
 
 export function useRealtimeEvents() {
   const queryClient = useQueryClient();
-  const { data: session } = authClient.useSession(); 
+  const { data: session } = authClient.useSession();
+  // Reconnect only when the signed-in user changes, not when other session fields refresh
+  const userId = session?.user?.id;
 
   useEffect(() => {
-  
-    if (!session?.user) {
+
+    if (!userId) {
       return;
     }
 
@@ -44,5 +46,5 @@ export function useRealtimeEvents() {
     return () => {
       eventSource.close();
     };
-  }, [queryClient, session?.user]); 
+  }, [queryClient, userId]);
 }

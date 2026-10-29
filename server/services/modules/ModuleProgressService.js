@@ -580,7 +580,12 @@ class ModuleProgressService {
       certRec: cert.cert_rec,
       reason,
     });
-    
+    require("../notif/userNotificationService").notifyUser(
+      cert.learner_id,
+      "certificate_revoked",
+      `Your certificate for "${cert.modname || "a training module"}" was revoked. Reason: ${reason}`
+    );
+
     return true;
   }
 

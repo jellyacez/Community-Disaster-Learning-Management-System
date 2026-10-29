@@ -1,7 +1,5 @@
-const pool = require("../../config/db");
 const ModuleProgressService = require("../../services/modules/ModuleProgressService");
 const logger = require("../../utils/logger");
-const { notifyUser } = require("../../services/notif/userNotificationService");
 
 const getAllCertificates = async (req, res) => {
   try {
@@ -54,18 +52,6 @@ const revokeCertificate = async (req, res) => {
     const adminUserId = req.user.id;
 
     await ModuleProgressService.revokeCertificate(certId, reason, adminContext, adminUserId);
-
-    const { rows } = await pool.query(
-      `SELECT c.user_id, m.modname FROM certificates c LEFT JOIN module_data m ON c.module_id = m.mod_id WHERE c.cert_id = $1`,
-      [certId]
-    );
-    if (rows[0]) {
-      notifyUser(
-        rows[0].user_id,
-        "certificate_revoked",
-        `Your certificate for "${rows[0].modname || "a training module"}" was revoked. Reason: ${reason}`
-      );
-    }
 
     return res.json({ success: true, message: "Certificate revoked successfully." });
   } catch (err) {
