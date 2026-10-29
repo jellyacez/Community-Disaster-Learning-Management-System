@@ -216,7 +216,7 @@ export default function CertificateTemplate() {
 
   return (
     <div className="flex flex-col h-auto w-full bg-white p-6 rounded-lg shadow-sm">
-      {snapshot?.fromCache && <p role="status" className="mb-4 rounded-xl bg-amber-50 text-amber-900 p-3 text-sm">Saved copy from {new Date(snapshot.savedAt).toLocaleString()}. Current revocation status cannot be checked offline.</p>}
+      {snapshot?.fromCache && <p role="status" className="mb-4 rounded-xl bg-amber-50 text-amber-900 p-3 text-sm">Saved copy from {new Date(snapshot.savedAt).toLocaleString()}. Current validity cannot be checked offline.</p>}
       <div className="mb-4">
         <Link to="/user/certificates" className="inline-flex items-center text-sm font-bold text-gray-500 hover:text-red-600 transition-colors mb-2">
           ← Back to Certificates

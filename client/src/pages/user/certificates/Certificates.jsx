@@ -85,7 +85,7 @@ export default function UserCertificates() {
 
       {snapshot && <p role="status" className="rounded-xl bg-amber-50 text-amber-900 p-3 text-sm">
         {snapshot.fromCache ? "Saved certificate records" : "Certificate records updated"} — {new Date(snapshot.savedAt).toLocaleString()}.
-        {" "}Current validity and revocation require online verification.
+        {" "}Current validity requires online verification.
         {snapshot.persisted === false && " Device storage unavailable: this list was not saved."}
       </p>}
       {/* Dismissible Notice (Edge-to-edge with matching radius) */}
