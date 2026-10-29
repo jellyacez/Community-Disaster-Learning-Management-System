@@ -2,6 +2,7 @@ const pool = require("../../../config/db");
 const { logActivity, logError } = require('../../../utils/logger');
 const { UNSCOPED_ACCESS_ROLES } = require("../../../config/permissions");
 const { assertActorOutranksTarget } = require("../../../config/roleHierarchy");
+const { sendAccountNotice } = require("../../../services/accountNoticeService");
 
 function isUnscopedRole(role) {
   return role === "super_admin" || (Array.isArray(UNSCOPED_ACCESS_ROLES) && UNSCOPED_ACCESS_ROLES.includes(role));
@@ -52,6 +53,7 @@ exports.archiveUser = async (req, res) => {
 
     const scopeStr = adminContext.role === 'barangay_admin' ? `Barangay ${adminContext.barangay_id}` : 'Unscoped';
     logActivity(req.user.id, `${archived ? 'Archived' : 'Restored'} user ${targetUser.email} (ID: ${id}) [Scope: ${scopeStr}]`);
+    sendAccountNotice(id, archived ? 'archived' : 'restored');
 
     res.json({ success: true, message: archived ? 'User archived' : 'User restored' });
   } catch (err) {
@@ -120,6 +122,13 @@ exports.bulkArchiveUsers = async (req, res) => {
     const scopeStr = adminContext.role === 'barangay_admin' ? `Barangay ${adminContext.barangay_id}` : 'Unscoped';
     const idsStr = validatedIds.length > 10 ? `${validatedIds.slice(0, 10).join(', ')}... (+${validatedIds.length - 10} more)` : validatedIds.join(', ');
     logActivity(req.user.id, `Bulk ${isArchived ? 'archived' : 'restored'} ${validatedIds.length} users (IDs: ${idsStr}) [Scope: ${scopeStr}]`);
+
+    // One at a time in the background, so up to 50 notices don't burst the SMTP gateway
+    (async () => {
+      for (const userId of validatedIds) {
+        await sendAccountNotice(userId, isArchived ? 'archived' : 'restored');
+      }
+    })();
 
     res.json({ success: true, message: `${validatedIds.length} users ${isArchived ? 'archived' : 'restored'}` });
   } catch (err) {

@@ -1,5 +1,6 @@
 const pool = require("../../config/db");
 const logger = require('../../utils/logger');
+const { sendAccountNotice } = require("../accountNoticeService");
 const { GRADED_STEP_TYPES } = require("../../config/constants");
 
 // Days before expiry when a certificate becomes eligible for recertification
@@ -527,9 +528,10 @@ class ModuleProgressService {
     
     // First fetch the cert to check scope
       const certQuery = await pool.query(
-      `SELECT c.cert_id, c.cert_rec, u.barangay_id as learner_barangay_id, u.id as learner_id
+      `SELECT c.cert_id, c.cert_rec, u.barangay_id as learner_barangay_id, u.id as learner_id, m.modname
        FROM certificates c
        JOIN "user" u ON c.user_id = u.id
+       LEFT JOIN module_data m ON c.module_id = m.mod_id
        WHERE c.cert_id = $1 AND c.status = 'active'`,
       [certId]
     );
@@ -562,6 +564,11 @@ class ModuleProgressService {
 
     // Log the deliberate action using logActivity per instructions
     logger.logActivity(adminUserId, `Revoked certificate ${cert.cert_rec} for user ${cert.learner_id}. Reason: ${reason}`);
+    sendAccountNotice(cert.learner_id, "certificateRevoked", {
+      moduleName: cert.modname || "Training module",
+      certRec: cert.cert_rec,
+      reason,
+    });
     
     return true;
   }

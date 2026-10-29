@@ -1,6 +1,7 @@
 const pool = require("../../../config/db");
 const { logActivity, logError } = require("../../../utils/logger");
 const UserService = require("../../../services/users/UserService");
+const { sendAccountNotice } = require("../../../services/accountNoticeService");
 
 // @desc    Admin hard delete a user's account and anonymize certificates
 // @access  Private (system_admin and super_admin only)
@@ -39,9 +40,10 @@ exports.deleteAccount = async (req, res) => {
     }
 
     // Call the existing pipeline
-    await UserService.deleteAccount(id);
+    const deletedUser = await UserService.deleteAccount(id);
 
     logActivity(req.user.id, `Permanently deleted user ${email} from ${barangay_name || 'No Barangay'}`);
+    sendAccountNotice(deletedUser, 'deleted', { byAdmin: true });
 
     res.json({ success: true, message: 'User permanently deleted.' });
   } catch (err) {

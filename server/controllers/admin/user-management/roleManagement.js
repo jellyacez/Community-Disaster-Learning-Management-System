@@ -2,6 +2,7 @@ const pool = require("../../../config/db");
 const { UNSCOPED_ACCESS_ROLES } = require("../../../config/permissions");
 const { logActivity, logError } = require("../../../utils/logger");
 const { ROLE_RANKS } = require("../../../config/roleHierarchy");
+const { sendAccountNotice } = require("../../../services/accountNoticeService");
 
 // @desc    Update a user's role
 // @access  Private (system_admin and super_admin)
@@ -108,6 +109,9 @@ exports.updateUserRole = async (req, res) => {
 
     const scopeStr = adminContext.role === 'barangay_admin' ? `Barangay ${adminContext.barangay_id}` : 'Unscoped';
     logActivity(adminContext.id, `Updated role for ${result.rows[0].email} from ${targetUser.role} to ${role} [Scope: ${scopeStr}]`);
+    if (targetUser.role !== role) {
+      sendAccountNotice(id, 'roleChanged', { fromRole: targetUser.role, toRole: role });
+    }
 
     res.json({ success: true, message: 'Role updated successfully' });
   } catch (err) {

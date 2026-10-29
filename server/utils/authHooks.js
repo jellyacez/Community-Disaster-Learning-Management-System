@@ -4,6 +4,7 @@ const securityService = require("../services/securityService");
 const { CONSENT_VERSION } = require("../config/constants");
 const { logActivity, logError } = require("./logger");
 const alertMonitorService = require("../services/alertMonitorService");
+const { sendAccountNotice } = require("../services/accountNoticeService");
 
 const SESSION_LIMITS = {
   resident: 5,
@@ -589,12 +590,21 @@ const securityHooksPlugin = () => {
               ctx.context?.session?.user?.id ||
               ctx.context?.user?.id ||
               ctx.context?.newSession?.user?.id;
+            // Signed-in callers are enabling 2FA; the sign-in challenge has no session yet.
+            // The session snapshot predates better-auth's own twoFactorEnabled update.
+            const isEnabling =
+              Boolean(ctx.context?.session?.session) &&
+              ctx.context.session.user?.twoFactorEnabled !== true;
             if (userId) {
               try {
                 await pool.query(
                   `UPDATE "user" SET "twoFactorEnabled" = true WHERE id = $1`,
                   [userId],
                 );
+                if (isEnabling) {
+                  logActivity(userId, "Enabled two-factor authentication", ctx);
+                  sendAccountNotice(userId, "twoFactorEnabled");
+                }
               } catch (e) {
                 console.error("Error setting twoFactorEnabled to true:", e);
                 alertMonitorService.setAlert("2FA_STATE_DESYNC", {
@@ -623,6 +633,8 @@ const securityHooksPlugin = () => {
                   `UPDATE "user" SET "twoFactorEnabled" = false WHERE id = $1`,
                   [userId],
                 );
+                logActivity(userId, "Disabled two-factor authentication", ctx);
+                sendAccountNotice(userId, "twoFactorDisabled");
               } catch (e) {
                 console.error("Error setting twoFactorEnabled to false:", e);
                 alertMonitorService.setAlert("2FA_STATE_DESYNC", {
