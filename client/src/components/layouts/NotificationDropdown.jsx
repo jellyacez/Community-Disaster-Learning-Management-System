@@ -1,53 +1,23 @@
 import { createPortal } from "react-dom";
-import { useState, useRef, useEffect } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Notification03Icon } from "@hugeicons/core-free-icons";
 import { motion, AnimatePresence } from "framer-motion";
 import apiClient from "../../lib/apiClient";
 import { useNotificationPreferences } from "../settings/hooks/useNotificationPreferences";
-
-// Personal notification types shown with an amber (needs attention) dot instead of green
-const WARNING_TYPES = new Set(["module_rejected", "certificate_revoked", "recert_reminder"]);
+import { useAnchoredPopover } from "../../hooks/useAnchoredPopover";
+import { useNotificationFeed, WARNING_NOTIFICATION_TYPES } from "../../hooks/useNotificationFeed";
 
 export default function NotificationDropdown() {
   const [isOpen, setIsOpen] = useState(false);
-  const dropdownRef = useRef(null);
-  const panelRef = useRef(null);
-  const triggerRef = useRef(null);
-  const [position, setPosition] = useState({ top: 72, left: 12, width: 320 });
-  useEffect(() => {
-    if (!isOpen) return;
-    const update = () => {
-      const rect = triggerRef.current?.getBoundingClientRect();
-      if (!rect) return;
-      const width = Math.min(window.innerWidth - 24, window.innerWidth >= 768 ? 384 : 320);
-      setPosition({top: Math.max(12, Math.min(rect.bottom + 10, window.innerHeight - 120)), left: Math.max(12, Math.min(rect.right - width, window.innerWidth - width - 12)), width});
-    };
-    const escape = event => { if (event.key === "Escape") { setIsOpen(false); triggerRef.current?.focus(); } };
-    update();
-    window.addEventListener("resize", update);
-    window.addEventListener("scroll", update, true);
-    document.addEventListener("keydown", escape);
-    return () => { window.removeEventListener("resize", update); window.removeEventListener("scroll", update, true); document.removeEventListener("keydown", escape); };
-  }, [isOpen]);
+  const { wrapperRef: dropdownRef, panelRef, triggerRef, position } = useAnchoredPopover(isOpen, setIsOpen, "right");
   const navigate = useNavigate();
 
   // Pull settings from DB via our custom hook
   const { settings, updatePreference } = useNotificationPreferences();
   const lastSeenId = settings?.lastSeenAnnouncementId || null;
-
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    function handleClickOutside(event) {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target) && !panelRef.current?.contains(event.target)) {
-        setIsOpen(false);
-      }
-    }
-    document.addEventListener("pointerdown", handleClickOutside);
-    return () => document.removeEventListener("pointerdown", handleClickOutside);
-  }, []);
 
   const { data: dashboardData, isLoading: isLoadingAnnouncements } = useQuery({
     queryKey: ["userDashboard"],
@@ -66,37 +36,16 @@ export default function NotificationDropdown() {
       : [];
   const recentAnnouncements = announcements.slice(0, 3);
 
-  // Personal notifications (feedback replies, certificates, reminders) from user_notification
-  const queryClient = useQueryClient();
-  const { data: personalData } = useQuery({
-    queryKey: ["userNotifications"],
-    queryFn: async () => {
-      const response = await apiClient.get("/users/me/notifications");
-      return response.data.data;
-    },
-    refetchInterval: 60000,
-  });
+  // Personal notifications (feedback replies, certificates, reminders); opening marks them read
+  const { notifications, unreadCount: personalUnread } = useNotificationFeed(isOpen);
   // Capped so emergency announcements below stay in view
-  const personal = (personalData?.notifications || []).slice(0, 3);
-  const personalUnread = personalData?.unreadCount || 0;
+  const personal = notifications.slice(0, 3);
 
   // A notification is "new" if the newest announcement ID doesn't match what is stored in DB settings
   const hasUnreadAnnouncement =
     recentAnnouncements.length > 0 &&
     String(recentAnnouncements[0].id) !== String(lastSeenId);
   const hasUnread = hasUnreadAnnouncement || personalUnread > 0;
-
-  // Opening marks personal notifications read; refetch on close so the unread highlight stays while open
-  const markedRead = useRef(false);
-  useEffect(() => {
-    if (isOpen && personalUnread > 0 && !markedRead.current) {
-      markedRead.current = true;
-      apiClient.patch("/users/me/notifications/read").catch(() => {});
-    } else if (!isOpen && markedRead.current) {
-      markedRead.current = false;
-      queryClient.invalidateQueries({ queryKey: ["userNotifications"] });
-    }
-  }, [isOpen, personalUnread, queryClient]);
 
   // When dropdown opens, mark the newest announcement as seen in the DB
   useEffect(() => {
@@ -165,7 +114,7 @@ export default function NotificationDropdown() {
                     >
                       <span
                         aria-hidden="true"
-                        className={`mt-1.5 h-2 w-2 rounded-full shrink-0 ${WARNING_TYPES.has(item.type) ? "bg-amber-500" : "bg-emerald-500"}`}
+                        className={`mt-1.5 h-2 w-2 rounded-full shrink-0 ${WARNING_NOTIFICATION_TYPES.has(item.type) ? "bg-amber-500" : "bg-emerald-500"}`}
                       />
                       <div className="flex flex-col gap-1 min-w-0">
                         <p className="text-xs sm:text-sm text-gray-800 dark:text-slate-200 break-words [overflow-wrap:anywhere] leading-relaxed">
