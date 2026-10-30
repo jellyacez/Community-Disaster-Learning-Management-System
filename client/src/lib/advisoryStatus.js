@@ -1,12 +1,20 @@
 // Urgent advisories are "in effect" until they expire or an admin lifts them.
-// The API sends `in_effect`; it is derived here only for older cached items that lack it.
-export function getAdvisoryStatus(item) {
+// The API's `in_effect` can be stale on a copy saved for offline use, so an expiry that has
+// since passed wins over it. (A lift made after the copy was saved can't be known offline.)
+export function getAdvisoryStatus(item, now = new Date()) {
   if (item?.priority !== "urgent") return null;
   if (item.lifted_at) return { state: "lifted", at: new Date(item.lifted_at) };
   const expiresAt = item.expires_at ? new Date(item.expires_at) : null;
-  const inEffect = typeof item.in_effect === "boolean" ? item.in_effect : !expiresAt || expiresAt > new Date();
+  const notExpired = !expiresAt || expiresAt > now;
+  const inEffect = item.in_effect !== false && notExpired;
   if (inEffect) return { state: "in_effect", until: expiresAt };
   return { state: "ended", at: expiresAt };
+}
+
+// "Oct 30, 3:12 PM": advisories need the time of issue, not just the day
+export function formatIssuedAt(value) {
+  if (!value) return "";
+  return new Date(value).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
 }
 
 export function formatAdvisoryTime(date) {

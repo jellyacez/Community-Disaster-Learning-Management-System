@@ -2,7 +2,8 @@ const pool = require("../../config/db");
 const { UNSCOPED_ACCESS_ROLES } = require("../../config/permissions");
 
 // An urgent advisory stays pinned only while it is in effect (not expired, not lifted)
-const IN_EFFECT_SQL = `(a.priority = 'urgent' AND a.lifted_at IS NULL AND (a.expires_at IS NULL OR a.expires_at > NOW()))`;
+const inEffectSql = (t) =>
+  `(${t}.priority = 'urgent' AND ${t}.lifted_at IS NULL AND (${t}.expires_at IS NULL OR ${t}.expires_at > NOW()))`;
 
 // @desc    Get paginated announcements: in-effect urgent advisories first, then newest first
 // @access  Private
@@ -17,16 +18,21 @@ exports.getPaginatedAnnouncements = async (req, res) => {
     const barangayId = req.user?.barangay_id || null;
 
     // Residents see their barangay's posts plus municipality-wide ones
-    let scopeSql = "";
+    const conditions = [];
     const scopeParams = [];
     if (!isUnscoped) {
       if (barangayId) {
         scopeParams.push(barangayId);
-        scopeSql = "WHERE n.barangay_id = $1 OR n.barangay_id IS NULL";
+        conditions.push("(n.barangay_id = $1 OR n.barangay_id IS NULL)");
       } else {
-        scopeSql = "WHERE n.barangay_id IS NULL";
+        conditions.push("n.barangay_id IS NULL");
       }
     }
+    // status=active: only urgent advisories in effect (the page's top section);
+    // status=history: everything else (the paginated list below it)
+    if (req.query.status === "active") conditions.push(inEffectSql("n"));
+    if (req.query.status === "history") conditions.push(`NOT ${inEffectSql("n")}`);
+    const scopeSql = conditions.length ? `WHERE ${conditions.join(" AND ")}` : "";
 
     const countQuery = await pool.query(
       `SELECT COUNT(*) FROM announcements n ${scopeSql}`,
@@ -47,13 +53,22 @@ exports.getPaginatedAnnouncements = async (req, res) => {
           a.barangay_id,
           a.expires_at,
           a.lifted_at,
-          ${IN_EFFECT_SQL} AS in_effect,
+          ${inEffectSql("a")} AS in_effect,
           EXTRACT(YEAR FROM a.date)::int AS advisory_year,
           ROW_NUMBER() OVER (
             PARTITION BY EXTRACT(YEAR FROM a.date)
             ORDER BY a.date ASC, a.id ASC
-          ) AS advisory_number
+          ) AS advisory_number,
+          -- Who issued it, so residents can judge the source; MDRRMO can also target one barangay
+          CASE
+            WHEN u.role IS NULL THEN NULL
+            WHEN u.role = 'barangay_admin' AND b.name IS NOT NULL THEN
+              CASE WHEN b.name ILIKE 'barangay%' THEN b.name ELSE 'Barangay ' || b.name END
+            ELSE 'MDRRMO Bacolor'
+          END AS issuer
         FROM announcements a
+        LEFT JOIN "user" u ON a.author_id = u.id
+        LEFT JOIN barangays b ON a.barangay_id = b.id
       )
       SELECT *
       FROM numbered n
@@ -78,6 +93,7 @@ exports.getPaginatedAnnouncements = async (req, res) => {
         priority: a.priority || "standard",
         barangay_id: a.barangay_id,
         in_effect: a.in_effect,
+        issuer: a.issuer,
         expires_at: a.expires_at,
         lifted_at: a.lifted_at,
         created_at: a.date, // Preserves raw timestamp for 48h recency calculations

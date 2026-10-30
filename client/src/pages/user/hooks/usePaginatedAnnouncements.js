@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import apiClient from '../../../lib/apiClient';
 import { useOfflineSession } from '../../../hooks/offlineSession';
 import { readContent, writeContent, mergeAnnouncements } from '../../../lib/offlineContent';
+import { getAdvisoryStatus } from '../../../lib/advisoryStatus';
 
 export function usePaginatedAnnouncements(initialLimit = 5) {
   const [currentPage, setCurrentPage] = useState(1);
@@ -18,14 +19,15 @@ export function usePaginatedAnnouncements(initialLimit = 5) {
           const error = new Error('No announcements saved yet. Open this page online first.');
           error.code = 'ERR_NETWORK'; throw error;
         }
-        const items = cached.value;
+        // In-effect advisories are shown above the list (useActiveAdvisories), not in it
+        const items = cached.value.filter((item) => getAdvisoryStatus(item)?.state !== 'in_effect');
         const totalPages = Math.max(1, Math.ceil(items.length / initialLimit));
         const page = Math.min(currentPage, totalPages);
         return {announcements: items.slice((page-1)*initialLimit, page*initialLimit), pagination:{totalPages,total:items.length}, page, fromCache:true, savedAt:cached.savedAt, persisted:true};
       };
       if (!navigator.onLine) return offlinePage();
       try {
-        const response = await apiClient.get(`/users/announcements?page=${currentPage}&limit=${initialLimit}`, {timeout:8000});
+        const response = await apiClient.get(`/users/announcements?status=history&page=${currentPage}&limit=${initialLimit}`, {timeout:8000});
         const payload = response.data;
         if (!Array.isArray(payload?.announcements)) throw new Error('Unexpected announcement response.');
         const stored = writeContent(userId, 'announcements', mergeAnnouncements(cached?.value, payload.announcements));
