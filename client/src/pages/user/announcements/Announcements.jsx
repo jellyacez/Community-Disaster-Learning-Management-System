@@ -4,6 +4,8 @@ import AnnouncementCard from "../../../components/ui/announcements/AnnouncementC
 import useDocumentTitle from "../../../hooks/useDocumentTitle";
 import { usePaginatedAnnouncements } from "../hooks/usePaginatedAnnouncements";
 import PaginationControls from "../../../components/ui/PaginationControls";
+import { useActiveAdvisories } from "../hooks/useActiveAdvisories";
+import InEffectNow from "./InEffectNow";
 
 export default function UserAnnouncements() {
   useDocumentTitle("Announcements | Bacolor Disaster LMS");
@@ -18,6 +20,7 @@ export default function UserAnnouncements() {
     totalAnnouncements,
     isCached, savedAt, storageWarning, error,
   } = usePaginatedAnnouncements(5);
+  const activeAdvisories = useActiveAdvisories();
 
   return (
     <div className="animate-in fade-in duration-300">
@@ -35,6 +38,12 @@ export default function UserAnnouncements() {
         {(isCached || storageWarning) && <p role="status" className="rounded-xl bg-amber-50 text-amber-900 p-3 text-sm">
           {storageWarning ? "Device storage is unavailable: this content was not saved for reopening." : `Saved announcements — last updated ${new Date(savedAt).toLocaleString()}. Only announcements previously fetched on this device are available; newer changes and removals may not be reflected.`}
         </p>}
+
+        <InEffectNow advisories={activeAdvisories} />
+        {activeAdvisories.length > 0 && (
+          <h2 className="text-lg font-bold text-gray-900 dark:text-white">Other announcements</h2>
+        )}
+
         {isLoading && currentPage === 1 ? (
           <div className="space-y-4">
             {[1, 2, 3].map((i) => (

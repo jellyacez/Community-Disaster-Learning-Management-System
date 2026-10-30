@@ -5,6 +5,8 @@ const requireRole = require("../../middleware/requireRole");
 const { ADMIN_ROLES } = require("../../config/permissions");
 const requirePermission = require("../../middleware/requirePermission");
 const { adminDataLimiter, adminWriteLimiter } = require("../../middleware/rateLimiters");
+const validate = require("../../middleware/validate");
+const { announcementSchema } = require("../../utils/validators");
 
 // MDRRMO dashboards expose municipality-wide data; barangay_admin is excluded
 const MDRRMO_DASHBOARD_ROLES = ["super_admin", "system_admin", "mdrrmo_admin", "head_mdrrmo_admin"];
@@ -235,6 +237,7 @@ router.post(
   "/mdrrmo/announcements",
   requireRole(["super_admin","system_admin", "mdrrmo_admin", "head_mdrrmo_admin"]),
   adminWriteLimiter,
+  validate(announcementSchema),
   barangayController.createBarangayAnnouncement
 );
 

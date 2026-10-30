@@ -137,6 +137,9 @@ const announcementSchema = Joi.object({
   }),
   priority: Joi.string().valid("standard", "urgent").default("standard"),
   duration_hours: Joi.number().valid(...URGENT_DURATION_HOURS).allow(null),
+  // MDRRMO/system admins may target one barangay; listed so validate()'s stripUnknown keeps it.
+  // The controller ignores it for barangay admins, who always post to their own barangay.
+  target_barangay_id: Joi.number().integer().positive().allow(null, ""),
 });
 
 // Certificate generation & training hours snapshot
