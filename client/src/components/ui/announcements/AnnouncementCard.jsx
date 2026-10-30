@@ -4,13 +4,14 @@ import {
   Calendar01Icon,
   Alert01Icon,
 } from "@hugeicons/core-free-icons";
+import { getAdvisoryStatus, formatAdvisoryLabel, formatAdvisoryTime } from "../../../lib/advisoryStatus";
 
 const AnnouncementCard = memo(function AnnouncementCard({ item }) {
-  const isUrgent = item?.priority === "urgent";
+  // Urgent styling only while the advisory is in effect; ended or lifted ones read as history
+  const status = getAdvisoryStatus(item);
+  const isUrgent = status?.state === "in_effect";
 
-  // Use the yearly sequence from DB or fall back to item.id
-  const seqNum = item?.advisory_number || item?.id || 1;
-  const advisoryLabel = `Advisory #${seqNum}`;
+  const advisoryLabel = formatAdvisoryLabel(item);
 
   // Check if announcement was posted within the last 48 hours
   const isNew = useMemo(() => {
@@ -63,6 +64,11 @@ const AnnouncementCard = memo(function AnnouncementCard({ item }) {
               Urgent
             </span>
           )}
+          {status && !isUrgent && (
+            <span className="inline-flex items-center rounded-full bg-gray-100 dark:bg-slate-800 px-2.5 py-0.5 text-[11px] font-semibold text-gray-700 dark:text-slate-300">
+              {status.state === "lifted" ? "Lifted" : "Ended"}
+            </span>
+          )}
         </div>
 
         {/* Date */}
@@ -73,6 +79,12 @@ const AnnouncementCard = memo(function AnnouncementCard({ item }) {
           </div>
         )}
       </div>
+
+      {isUrgent && (
+        <p className="mb-3 text-sm font-semibold text-red-700 dark:text-red-300">
+          {status.until ? `In effect until ${formatAdvisoryTime(status.until)}` : "In effect until further notice"}
+        </p>
+      )}
 
       {/* Title & Body (Author/Issuer footer intentionally removed) */}
       <div className="space-y-1.5">
