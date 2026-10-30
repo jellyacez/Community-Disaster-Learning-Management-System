@@ -80,8 +80,11 @@ class BarangayAdminService {
         a.priority,
         a.barangay_id,
         b.name AS barangay_name,
-        a.date AS created_at, 
-        u.name AS author_name 
+        a.date AS created_at,
+        a.expires_at,
+        a.lifted_at,
+        (a.priority = 'urgent' AND a.lifted_at IS NULL AND (a.expires_at IS NULL OR a.expires_at > NOW())) AS in_effect,
+        u.name AS author_name
        FROM announcements a
        LEFT JOIN "user" u ON a.author_id = u.id
        LEFT JOIN barangays b ON a.barangay_id = b.id
@@ -94,16 +97,17 @@ class BarangayAdminService {
     }
 
     query += `
-       ORDER BY 
-         CASE WHEN a.priority = 'urgent' THEN 0 ELSE 1 END,
-         a.date DESC
+       ORDER BY
+         in_effect DESC,
+         a.date DESC,
+         a.id DESC
     `;
 
     const result = await pool.query(query, params);
     return result.rows;
   }
 
-  async createBarangayAnnouncement(title, content, priority, authorId, barangayId = null) {
+  async createBarangayAnnouncement(title, content, priority, authorId, barangayId = null, durationHours = null) {
     const sanitizedContent = cleanRichText(content);
 
     const normalizedPriority =
@@ -114,14 +118,44 @@ class BarangayAdminService {
         ? parseInt(barangayId, 10)
         : null;
 
+    // Only urgent advisories end; standard posts have no expiry
+    const expiryHours = normalizedPriority === "urgent" ? durationHours : null;
+
     const result = await pool.query(
-      `INSERT INTO announcements (title, content, priority, author_id, barangay_id, date)
-      VALUES ($1, $2, $3, $4, $5, NOW())
-      RETURNING id, title, content, priority, barangay_id, date AS created_at`,
-      [title, sanitizedContent, normalizedPriority, authorId, resolvedBarangayId]
+      `INSERT INTO announcements (title, content, priority, author_id, barangay_id, date, expires_at)
+      VALUES ($1, $2, $3, $4, $5, NOW(), CASE WHEN $6::int IS NULL THEN NULL ELSE NOW() + INTERVAL '1 hour' * $6::int END)
+      RETURNING id, title, content, priority, barangay_id, date AS created_at, expires_at`,
+      [title, sanitizedContent, normalizedPriority, authorId, resolvedBarangayId, expiryHours]
   );
 
     return result.rows[0];
+  }
+
+  /**
+   * Ends an urgent advisory early. `barangayId` limits a barangay admin to their own posts;
+   * pass null for unscoped admins. Returns { row } on success or { error: "NOT_FOUND" | "NOT_IN_EFFECT" }.
+   */
+  async liftAnnouncement(announcementId, liftedBy, barangayId = null) {
+    const lookup = await pool.query(
+      `SELECT id, title, barangay_id,
+              (priority = 'urgent' AND lifted_at IS NULL AND (expires_at IS NULL OR expires_at > NOW())) AS in_effect
+       FROM announcements
+       WHERE id = $1 ${barangayId ? "AND barangay_id = $2" : ""}`,
+      barangayId ? [announcementId, barangayId] : [announcementId]
+    );
+    if (lookup.rowCount === 0) return { error: "NOT_FOUND" };
+    if (!lookup.rows[0].in_effect) return { error: "NOT_IN_EFFECT" };
+
+    // The in-effect condition is repeated so two admins lifting at once can't both succeed
+    const result = await pool.query(
+      `UPDATE announcements
+       SET lifted_at = NOW(), lifted_by = $2
+       WHERE id = $1 AND priority = 'urgent' AND lifted_at IS NULL AND (expires_at IS NULL OR expires_at > NOW())
+       RETURNING id, title, barangay_id, lifted_at`,
+      [announcementId, liftedBy]
+    );
+    if (result.rowCount === 0) return { error: "NOT_IN_EFFECT" };
+    return { row: result.rows[0] };
   }
 
   async getBarangayActivityLog(barangayId, queryParams) {

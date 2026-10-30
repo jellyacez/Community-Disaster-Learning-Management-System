@@ -52,3 +52,33 @@ COMMIT;
 ALTER TABLE public.module_activity DROP CONSTRAINT IF EXISTS module_activity_user_module_unique;
 
 ALTER TABLE public.activity_log ADD COLUMN IF NOT EXISTS ip_address VARCHAR(45);
+
+-- 14: Urgent advisories end (also in migrations/14_announcement_expiry.sql).
+-- An urgent announcement is in effect until expires_at passes or an admin lifts it
+-- (lifted_at, lifted_by); after that it is no longer pinned above the feed.
+-- Urgent rows posted before this had no end and stayed pinned forever, so they get the
+-- default 24-hour window counted from when they were posted.
+-- Additive and safe to re-run (deploy.yml applies migration.sql on every deploy).
+
+BEGIN;
+
+SET LOCAL lock_timeout = '5s';
+
+ALTER TABLE public.announcements ADD COLUMN IF NOT EXISTS expires_at timestamp with time zone;
+ALTER TABLE public.announcements ADD COLUMN IF NOT EXISTS lifted_at timestamp with time zone;
+ALTER TABLE public.announcements ADD COLUMN IF NOT EXISTS lifted_by text;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'fk_announcements_lifted_by') THEN
+    ALTER TABLE public.announcements
+      ADD CONSTRAINT fk_announcements_lifted_by
+      FOREIGN KEY (lifted_by) REFERENCES public."user"(id) ON DELETE SET NULL;
+  END IF;
+END $$;
+
+UPDATE public.announcements
+SET expires_at = date + INTERVAL '24 hours'
+WHERE priority = 'urgent' AND expires_at IS NULL;
+
+COMMIT;

@@ -11,9 +11,12 @@ import {
 } from "@hugeicons/core-free-icons";
 import apiClient from "../../../lib/apiClient";
 import AnnouncementModal from "../barangay/workspace/announcementModal";
+import { getAdvisoryStatus, formatAdvisoryTime } from "../../../lib/advisoryStatus";
+import { useLiftAnnouncement } from "../../../hooks/useLiftAnnouncement";
 
 export default function LiveAlerts() {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const { lift, liftingId } = useLiftAnnouncement();
   const [page, setPage] = useState(1);
   const limit = 6;
 
@@ -100,11 +103,14 @@ const { data, isLoading, isError } = useQuery({
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {announcements.map((item) => (
+          {announcements.map((item) => {
+            const status = getAdvisoryStatus(item);
+            const inEffect = status?.state === "in_effect";
+            return (
             <div
               key={item.id}
               className={`bg-white rounded-2xl p-5 border transition-all shadow-sm flex flex-col justify-between ${
-                item.priority === "urgent"
+                inEffect
                   ? "border-red-300 ring-1 ring-red-200"
                   : "border-gray-100 hover:border-gray-200"
               }`}
@@ -114,12 +120,12 @@ const { data, isLoading, isError } = useQuery({
                 <div className="flex items-center justify-between gap-2">
                   <span
                     className={`text-[10px] font-mono font-bold uppercase px-2 py-0.5 rounded ${
-                      item.priority === "urgent"
+                      inEffect
                         ? "bg-red-600 text-white"
                         : "bg-gray-100 text-gray-700"
                     }`}
                   >
-                    {item.priority === "urgent" ? "Urgent Advisory" : "Standard"}
+                    {!status ? "Standard" : inEffect ? "Urgent · In effect" : status.state === "lifted" ? "Urgent · Lifted" : "Urgent · Ended"}
                   </span>
 
                   <span className="text-[10px] font-medium text-gray-500 flex items-center gap-1 bg-gray-50 px-2 py-0.5 rounded">
@@ -137,6 +143,22 @@ const { data, isLoading, isError } = useQuery({
                     {item.content}
                   </p>
                 </div>
+
+                {inEffect && (
+                  <div className="flex items-center justify-between gap-3 rounded-xl bg-red-50 px-3 py-2">
+                    <p className="text-xs text-red-800">
+                      {status.until ? `Pinned until ${formatAdvisoryTime(status.until)}` : "Pinned until lifted"}
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => lift(item)}
+                      disabled={liftingId === item.id}
+                      className="h-9 px-3 shrink-0 rounded-lg border border-red-300 bg-white text-red-700 text-[11px] font-bold uppercase tracking-wide hover:bg-red-100 disabled:opacity-50 transition cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
+                    >
+                      {liftingId === item.id ? "Lifting..." : "Lift"}
+                    </button>
+                  </div>
+                )}
               </div>
 
               {/* Card Footer */}
@@ -151,7 +173,8 @@ const { data, isLoading, isError } = useQuery({
                 </span>
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
       )}
 

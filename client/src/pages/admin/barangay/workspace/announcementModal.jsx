@@ -8,6 +8,11 @@ import {
 } from "@hugeicons/core-free-icons";
 import toast from "react-hot-toast";
 import apiClient from "../../../../lib/apiClient";
+import { invalidateAnnouncementQueries } from "../../../../hooks/useLiftAnnouncement";
+
+// Must match URGENT_DURATION_HOURS on the server (utils/validators.js)
+const URGENT_DURATIONS = [6, 12, 24, 48, 72];
+const DEFAULT_URGENT_HOURS = 24;
 
 export default function AnnouncementModal({
   isOpen,
@@ -19,6 +24,7 @@ export default function AnnouncementModal({
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [priority, setPriority] = useState("standard");
+  const [durationHours, setDurationHours] = useState(DEFAULT_URGENT_HOURS);
   const [targetBarangayId, setTargetBarangayId] = useState("");
 
   const isHighTierAdmin = [
@@ -41,6 +47,7 @@ export default function AnnouncementModal({
     setTitle("");
     setContent("");
     setPriority("standard");
+    setDurationHours(DEFAULT_URGENT_HOURS);
     setTargetBarangayId("");
   };
 
@@ -77,9 +84,7 @@ export default function AnnouncementModal({
     },
     onSuccess: () => {
       toast.success("Announcement broadcasted successfully!");
-      queryClient.invalidateQueries({ queryKey: ["barangayWorkspaceOverview"] });
-      queryClient.invalidateQueries({ queryKey: ["barangayAnnouncements"] });
-      queryClient.invalidateQueries({ queryKey: ["userAnnouncements"] });
+      invalidateAnnouncementQueries(queryClient);
       resetForm();
       onClose();
     },
@@ -101,6 +106,7 @@ export default function AnnouncementModal({
       title,
       content,
       priority,
+      duration_hours: priority === "urgent" ? durationHours : null,
       target_barangay_id: isHighTierAdmin && targetBarangayId ? targetBarangayId : null,
     });
   };
@@ -226,6 +232,37 @@ export default function AnnouncementModal({
               </button>
             </div>
           </div>
+
+          {priority === "urgent" && (
+            <fieldset>
+              <legend className="block text-xs font-bold uppercase tracking-wider text-gray-600 dark:text-slate-300 mb-2 font-mono">
+                In effect for
+              </legend>
+              <div className="grid grid-cols-5 gap-2" role="radiogroup">
+                {URGENT_DURATIONS.map((hours) => (
+                  <button
+                    key={hours}
+                    type="button"
+                    role="radio"
+                    aria-checked={durationHours === hours}
+                    onClick={() => setDurationHours(hours)}
+                    className={`h-11 rounded-xl border text-sm font-bold tabular-nums transition cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 ${
+                      durationHours === hours
+                        ? "border-red-600 dark:border-red-500 bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-300"
+                        : "border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800/40 text-gray-700 dark:text-slate-300 hover:border-gray-300 dark:hover:border-slate-600"
+                    }`}
+                  >
+                    {hours}h
+                  </button>
+                ))}
+              </div>
+              <p className="text-xs text-gray-500 dark:text-slate-400 mt-2">
+                Pinned at the top for residents for{" "}
+                <span className="font-semibold text-gray-700 dark:text-slate-200">{durationHours} hours</span>{" "}
+                after posting. You can lift it sooner.
+              </p>
+            </fieldset>
+          )}
 
           <div className="bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/60 text-amber-800 dark:text-amber-300 p-3 rounded-xl flex items-start gap-2.5 text-xs">
             <HugeiconsIcon

@@ -54,6 +54,16 @@ router.post(
   barangayController.createBarangayAnnouncement
 );
 
+// @route   PATCH /api/admin/barangay/announcements/:id/lift
+// @desc    End an urgent advisory early (barangay admins: own barangay only)
+// @access  Private (admins)
+router.patch(
+  "/barangay/announcements/:id/lift",
+  requireRole(ADMIN_ROLES),
+  adminWriteLimiter,
+  barangayController.liftAnnouncement
+);
+
 // @route   GET /api/admin/barangay/activity-log
 // @desc    Get activity logs for residents in the assigned barangay
 // @access  Private (barangay_admin only)

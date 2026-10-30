@@ -3,6 +3,7 @@ const { cleanRichText } = require("../../utils/sanitizeHtml");
 const { UNSCOPED_ACCESS_ROLES } = require("../../config/permissions");
 const sseService = require("../../services/notif/sseService");
 const { logActivity } = require("../../utils/logger");
+const { URGENT_DURATION_HOURS, DEFAULT_URGENT_HOURS } = require("../../utils/validators");
 
 function resolveBarangayId(req) {
   const userRole = req.user?.role;
@@ -62,7 +63,7 @@ exports.getBarangayAnnouncements = async (req, res) => {
 // 3. POST /api/admin/barangay/announcements
 exports.createBarangayAnnouncement = async (req, res) => {
   try {
-    const { title, content, priority, target_barangay_id } = req.body;
+    const { title, content, priority, target_barangay_id, duration_hours } = req.body;
     const authorId = req.user?.user_id || req.user?.id;
     const userRole = req.user?.role;
 
@@ -70,6 +71,18 @@ exports.createBarangayAnnouncement = async (req, res) => {
       return res.status(400).json({
         error: "Title and content are required.",
       });
+    }
+
+    // Checked here too because the MDRRMO route posts here without the Joi schema
+    const isUrgent = String(priority).toLowerCase() === "urgent";
+    let durationHours = null;
+    if (isUrgent) {
+      durationHours = duration_hours === undefined || duration_hours === null ? DEFAULT_URGENT_HOURS : Number(duration_hours);
+      if (!URGENT_DURATION_HOURS.includes(durationHours)) {
+        return res.status(400).json({
+          error: `Choose how long the urgent advisory stays in effect: ${URGENT_DURATION_HOURS.join(", ")} hours.`,
+        });
+      }
     }
 
     if (!authorId) {
@@ -99,7 +112,8 @@ exports.createBarangayAnnouncement = async (req, res) => {
       cleanRichText(content),
       priority,
       authorId,
-      targetBarangay
+      targetBarangay,
+      durationHours
     );
 
     logActivity(
@@ -118,6 +132,44 @@ exports.createBarangayAnnouncement = async (req, res) => {
   } catch (error) {
     console.error("Error posting announcement:", error);
     res.status(500).json({ error: "Failed to create announcement." });
+  }
+};
+
+// PATCH /api/admin/barangay/announcements/:id/lift
+exports.liftAnnouncement = async (req, res) => {
+  try {
+    const announcementId = parseInt(req.params.id, 10);
+    if (!Number.isInteger(announcementId) || announcementId <= 0) {
+      return res.status(400).json({ error: "Invalid announcement ID." });
+    }
+
+    // Barangay admins can only lift their own barangay's advisories; unscoped admins can lift any
+    const isUnscoped = UNSCOPED_ACCESS_ROLES.includes(req.user?.role);
+    const scopeBarangayId = isUnscoped ? null : req.user?.barangay_id;
+    if (!isUnscoped && !scopeBarangayId) {
+      return res.status(400).json({ error: "No barangay assigned to this administrator account." });
+    }
+
+    const { row, error } = await barangayAdminService.liftAnnouncement(announcementId, req.user.id, scopeBarangayId);
+    if (error === "NOT_FOUND") {
+      return res.status(404).json({ error: "Announcement not found." });
+    }
+    if (error === "NOT_IN_EFFECT") {
+      return res.status(409).json({ error: "This advisory has already ended." });
+    }
+
+    logActivity(req.user.id, `Lifted urgent advisory "${row.title}" (ID: ${row.id})`, req);
+
+    if (row.barangay_id) {
+      sseService.broadcastToBarangay(row.barangay_id, "ANNOUNCEMENT_UPDATED", row);
+    } else {
+      sseService.broadcast("ANNOUNCEMENT_UPDATED", row);
+    }
+
+    res.json({ success: true, data: row });
+  } catch (error) {
+    console.error("Error lifting announcement:", error);
+    res.status(500).json({ error: "Failed to lift announcement." });
   }
 };
 

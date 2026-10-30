@@ -123,6 +123,10 @@ exports.validateModuleCreation = (payload) => {
 // ---------------------------------------------------------------------
 
 // Announcement schema
+// How long an urgent advisory stays in effect (pinned) unless an admin lifts it sooner
+const URGENT_DURATION_HOURS = [6, 12, 24, 48, 72];
+const DEFAULT_URGENT_HOURS = 24;
+
 const announcementSchema = Joi.object({
   title: Joi.string().trim().min(1).max(255).required().messages({
     "string.empty": "Title cannot be empty.",
@@ -132,6 +136,7 @@ const announcementSchema = Joi.object({
     "string.empty": "Content cannot be empty.",
   }),
   priority: Joi.string().valid("standard", "urgent").default("standard"),
+  duration_hours: Joi.number().valid(...URGENT_DURATION_HOURS).allow(null),
 });
 
 // Certificate generation & training hours snapshot
@@ -161,6 +166,8 @@ const paginationQuerySchema = Joi.object({
 });
 
 exports.announcementSchema = announcementSchema;
+exports.URGENT_DURATION_HOURS = URGENT_DURATION_HOURS;
+exports.DEFAULT_URGENT_HOURS = DEFAULT_URGENT_HOURS;
 exports.issueCertificateSchema = issueCertificateSchema;
 exports.idParamSchema = idParamSchema;
 exports.paginationQuerySchema = paginationQuerySchema;

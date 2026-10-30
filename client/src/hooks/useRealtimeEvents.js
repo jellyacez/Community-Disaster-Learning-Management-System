@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { authClient } from "../lib/auth-client"; 
 import { API_BASE_URL } from "../lib/apiClient";
+import { invalidateAnnouncementQueries } from "./useLiftAnnouncement";
 
 export function useRealtimeEvents() {
   const queryClient = useQueryClient();
@@ -21,10 +22,9 @@ export function useRealtimeEvents() {
       withCredentials: true,
     });
 
-    eventSource.addEventListener("ANNOUNCEMENT_CREATED", () => {
-      queryClient.invalidateQueries({ queryKey: ["barangayAnnouncements"] });
-      queryClient.invalidateQueries({ queryKey: ["barangayWorkspaceOverview"] });
-    });
+    // A new post or a lifted advisory changes the order of every announcement list
+    eventSource.addEventListener("ANNOUNCEMENT_CREATED", () => invalidateAnnouncementQueries(queryClient));
+    eventSource.addEventListener("ANNOUNCEMENT_UPDATED", () => invalidateAnnouncementQueries(queryClient));
 
     eventSource.addEventListener("SYSTEM_BROADCAST_UPDATE", (e) => {
       const data = JSON.parse(e.data);

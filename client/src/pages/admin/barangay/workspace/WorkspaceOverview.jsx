@@ -30,6 +30,7 @@ import CommunityComplianceCard from "./components/CommunityComplianceCard";
 import CurriculumReadinessCard from "./components/CurriculumReadinessCard";
 import WorkspaceQuickActions from "./components/WorkspaceQuickActions";
 import MonitoredCitizenTable from "./components/MonitoredCitizenTable";
+import ActiveAdvisoriesPanel from "./components/ActiveAdvisoriesPanel";
 
 const CITIZEN_TABLE_ROWS = 7;
 
@@ -198,6 +199,8 @@ export default function WorkspaceOverview() {
           </button>
         </div>
       </div>
+
+      <ActiveAdvisoriesPanel />
 
       {/* Row 1: KPI Metrics Grid */}
       <div className="w-full min-w-0">
