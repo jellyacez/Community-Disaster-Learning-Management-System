@@ -14,6 +14,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { authClient } from "../../lib/auth-client";
 import apiClient from "../../lib/apiClient";
 import useDocumentTitle from "../../hooks/useDocumentTitle";
+import { useMfaEnabled } from "../../hooks/useMfaEnabled";
 import AuthLayout from "../../components/layouts/AuthLayout";
 import EmailSignInForm from "../../components/auth/EmailSignInForm";
 import MfaSignInForm from "../../components/auth/MfaSignInForm";
@@ -58,6 +59,7 @@ export default function SignInPage() {
 
   const queryClient = useQueryClient();
   const { data: session, isPending } = useOfflineSession();
+  const mfaEnabled = useMfaEnabled();
   const [signedOutAll, setSignedOutAll] = useState(false);
   const [showTwoFactor, setShowTwoFactor] = useState(false);
   const [twoFactorMethods, setTwoFactorMethods] = useState([]);
@@ -89,9 +91,7 @@ export default function SignInPage() {
         "mdrrmo_admin",
         "barangay_admin",
       ].includes(userRole);
-      const mfaBypass = import.meta.env.VITE_DISABLE_MFA === "true";
-
-      if (isAdmin && !session.user.twoFactorEnabled && !mfaBypass) {
+      if (mfaEnabled === true && isAdmin && !session.user.twoFactorEnabled) {
         navigate("/admin/mfa-setup", { replace: true });
         return;
       }
@@ -135,7 +135,7 @@ export default function SignInPage() {
           }
         });
     }
-  }, [session, isPending, navigate]);
+  }, [session, isPending, navigate, mfaEnabled]);
 
   const handleRequireMfa = async (data) => {
     const methods = data.twoFactorMethods || [];

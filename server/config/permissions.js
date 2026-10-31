@@ -63,6 +63,8 @@ const MFA_REQUIRED_ROLES = [
   "barangay_admin",
   "head_mdrrmo_admin",
 ];
+// 2FA stays off until MFA_ENABLED=true (the better-auth twoFactor plugin must be registered first)
+const isMfaEnforced = () => process.env.MFA_ENABLED === "true";
 const UNSCOPED_ACCESS_ROLES = ["system_admin", "mdrrmo_admin", "head_mdrrmo_admin", "super_admin"];
 
 // Keep in sync with client/src/constants/roles.js ADMIN_ROLES
@@ -85,6 +87,7 @@ const MODULE_VIEWER_ROLES = [
 module.exports = {
   ROLE_PERMISSIONS,
   MFA_REQUIRED_ROLES,
+  isMfaEnforced,
   UNSCOPED_ACCESS_ROLES,
   ADMIN_ROLES,
   MODULE_VIEWER_ROLES,

@@ -13,6 +13,7 @@ import apiClient from "../../lib/apiClient";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Alert01Icon } from "@hugeicons/core-free-icons";
 import { ADMIN_ROLES } from "../../constants/roles";
+import { useMfaEnabled } from "../../hooks/useMfaEnabled";
 
 export default function ProtectedRoute({ allowedRoles = [] }) {
   const {
@@ -26,6 +27,7 @@ export default function ProtectedRoute({ allowedRoles = [] }) {
   const navigate = useNavigate();
   const [isMaintenanceChecked, setIsMaintenanceChecked] = useState(false);
   const [sessionFailed, setSessionFailed] = useState(false);
+  const mfaEnabled = useMfaEnabled();
 
   const impersonatedTargetRaw =
     sessionStorage.getItem("impersonated_target_user") ||
@@ -141,11 +143,10 @@ export default function ProtectedRoute({ allowedRoles = [] }) {
     );
   }
 
-  const mfaBypass = import.meta.env.VITE_DISABLE_MFA === "true";
   if (
+    mfaEnabled === true &&
     ADMIN_ROLES.includes(session.user.role) &&
     !session.user.twoFactorEnabled &&
-    !mfaBypass &&
     !impersonatedUser
   ) {
     if (location.pathname !== "/admin/mfa-setup") {

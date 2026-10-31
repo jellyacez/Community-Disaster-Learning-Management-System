@@ -100,7 +100,6 @@ services:
         VITE_API_URL: http://localhost/api
         VITE_BASE_URL: http://localhost
         VITE_FRONTEND_URL: http://localhost
-        VITE_DISABLE_MFA: "false"
     container_name: lms_client
     restart: unless-stopped
     depends_on:
