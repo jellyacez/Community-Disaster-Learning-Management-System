@@ -10,6 +10,7 @@ const {
 } = require("./emailTemplates");
 const { securityHooksPlugin } = require("./authHooks");
 const { getOrgSettings } = require("./settings");
+const { isMfaEnforced } = require("../config/permissions");
 
 const parseSecrets = () => {
   if (process.env.BETTER_AUTH_SECRETS) {
@@ -169,6 +170,25 @@ const auth = betterAuth({
         resident: {},
       },
     }),
+    // Registered only with MFA_ENABLED=true, so the 2FA endpoints and sign-in challenge follow the same flag
+    ...(isMfaEnforced()
+      ? [
+          twoFactor({
+            otpOptions: {
+              sendOTP: async ({ user, otp }) => {
+                const { orgFooterText, supportEmail } = await getOrgSettings();
+                const mailOptions = getOTPEmail(
+                  user,
+                  otp,
+                  orgFooterText,
+                  supportEmail,
+                );
+                await transporter.sendMail(mailOptions);
+              },
+            },
+          }),
+        ]
+      : []),
   ],
 advanced: {
   ...(process.env.NODE_ENV === "production"

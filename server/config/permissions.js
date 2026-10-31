@@ -63,7 +63,7 @@ const MFA_REQUIRED_ROLES = [
   "barangay_admin",
   "head_mdrrmo_admin",
 ];
-// 2FA stays off until MFA_ENABLED=true (the better-auth twoFactor plugin must be registered first)
+// 2FA (the better-auth twoFactor plugin and admin enforcement) is off unless MFA_ENABLED=true
 const isMfaEnforced = () => process.env.MFA_ENABLED === "true";
 const UNSCOPED_ACCESS_ROLES = ["system_admin", "mdrrmo_admin", "head_mdrrmo_admin", "super_admin"];
 
