@@ -12,13 +12,48 @@ function isUnscopedRole(role) {
 // @access  Private (admin only — actor must strictly outrank target)
 exports.banUser = async (req, res) => {
   const { id } = req.params;
-  const { reason, expiresAt } = req.body;
-  try {
-    const banReason = reason || "Banned by System Administrator";
-    const banExpires = expiresAt ? new Date(expiresAt) : null;
 
+  try {
     const adminContext = req.user;
 
+        if (String(adminContext.id) === String(id)) {
+          return res.status(403).json({
+            success: false,
+            message: "You cannot ban your own account.",
+          });
+        }
+
+        if (
+          !req.body ||
+          typeof req.body !== "object" ||
+          Array.isArray(req.body)
+        ) {
+          return res.status(400).json({
+            success: false,
+            message: "Send a JSON body containing the ban details.",
+          });
+        }
+
+        const { reason, expiresAt } = req.body;
+
+        if (reason !== undefined && typeof reason !== "string") {
+          return res.status(400).json({
+            success: false,
+            message: "The ban reason must be text.",
+          });
+        }
+
+        const banReason =
+          reason?.trim() || "Banned by System Administrator";
+
+        const banExpires = expiresAt ? new Date(expiresAt) : null;
+
+        if (banExpires && Number.isNaN(banExpires.getTime())) {
+          return res.status(400).json({
+            success: false,
+            message: "The ban expiration date is invalid.",
+          });
+        }
     let targetQuery = 'SELECT id, role, email FROM "user" WHERE id = $1';
     let targetValues = [id];
 
@@ -78,6 +113,13 @@ exports.unbanUser = async (req, res) => {
   const { id } = req.params;
   try {
     const adminContext = req.user;
+
+        if (String(adminContext.id) === String(id)) {
+          return res.status(403).json({
+            success: false,
+            message: "You cannot unban your own account.",
+          });
+        }
 
     let targetQuery = 'SELECT id, role, email FROM "user" WHERE id = $1';
     let targetValues = [id];

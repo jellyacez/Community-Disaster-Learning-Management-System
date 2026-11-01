@@ -22,6 +22,7 @@ export default function QuickActionsPanel({
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [showExportModal, setShowExportModal] = useState(false);
   const [showBackupModal, setShowBackupModal] = useState(false);
+  const [accountPassword, setAccountPassword] = useState("");
   const [showLogsModal, setShowLogsModal] = useState(false);
 
   const {
@@ -144,6 +145,8 @@ export default function QuickActionsPanel({
 
         {/* Download DB Backup */}
         <button
+          type="button"
+          disabled={isDownloadingBackup}
           onClick={() => setShowBackupModal(true)}
           className="w-full flex items-center justify-between p-3 rounded-xl border border-gray-200 bg-gray-50 text-gray-800 hover:bg-gray-100 transition-colors cursor-pointer"
         >
@@ -152,7 +155,7 @@ export default function QuickActionsPanel({
             <div className="text-left">
               <div className="text-sm font-semibold">Download DB Backup</div>
               <div className="text-xs text-gray-500 font-medium hidden sm:block">
-                Export PostgreSQL data (.sql)
+                Download encrypted database backup (.zip)
               </div>
             </div>
           </div>
@@ -211,14 +214,41 @@ export default function QuickActionsPanel({
 
       <ConfirmationModal
         isOpen={showBackupModal}
-        onClose={() => setShowBackupModal(false)}
-        onConfirm={() => downloadBackup(() => setShowBackupModal(false))}
+        onClose={() => {
+          if (isDownloadingBackup) return;
+          setShowBackupModal(false);
+          setAccountPassword("");
+        }}
+        onConfirm={() => {
+          if (!accountPassword) {
+            toast.error("Enter your account password.");
+            return;
+          }
+
+          // The updated hook expects the account password before the callback.
+          downloadBackup(accountPassword, () => {
+            setShowBackupModal(false);
+            setAccountPassword("");
+          });
+        }}
         isLoading={isDownloadingBackup}
         title="Download Database Backup?"
-        description="This will generate and download a complete SQL dump of the PostgreSQL database, including all schemas and records."
-        confirmText="Download SQL"
+        description="Enter your own account password to authorize this download. The ZIP uses the designated recovery password configured on the server."
+        confirmText="Download ZIP"
         type="warning"
-      />
+      >
+        <label className="block text-sm text-gray-700 dark:text-slate-200">
+          Your account password
+          <input
+            type="password"
+            autoComplete="current-password"
+            disabled={isDownloadingBackup}
+            value={accountPassword}
+            onChange={(event) => setAccountPassword(event.target.value)}
+            className="mt-2 w-full rounded-lg border border-gray-300 bg-white p-2 text-gray-900 dark:border-slate-600 dark:bg-slate-800 dark:text-white"
+          />
+        </label>
+      </ConfirmationModal>
 
       <ConfirmationModal
         isOpen={showLogsModal}

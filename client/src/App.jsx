@@ -188,6 +188,7 @@ export default function App() {
       <GlobalBroadcastBanner />
       <Toaster
         position="top-center"
+        containerStyle={{ zIndex: 10000 }}
         toastOptions={{
           duration: 3000,
           className: "dark:!bg-slate-800 dark:!text-slate-100 dark:!border dark:!border-slate-700 shadow-xl",

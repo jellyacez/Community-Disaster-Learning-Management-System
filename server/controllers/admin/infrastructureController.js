@@ -1,139 +1,202 @@
-const { execFile } = require("child_process");
-const fs = require("fs");
-const path = require("path");
+const { execFile } = require("node:child_process");
+const { promisify } = require("node:util");
+const fs = require("node:fs");
+const fsp = fs.promises;
+const path = require("node:path");
+const os = require("node:os");
+const secureBackup = require("../../services/secureBackup");
 
-// @desc    Download full database backup (.sql)
-// @access  Private (system_admin only)
-exports.downloadDatabaseBackup = async (req, res) => {
+const runPostgresCommand = promisify(execFile);
+// This lock covers one Node process. Restore requires a single app instance.
+let databaseOperationRunning = false;
+
+function getDatabaseArguments() {
+  return [
+    "-U",
+    process.env.DB_USER || "postgres",
+    "-h",
+    process.env.DB_HOST || "localhost",
+    "-p",
+    String(process.env.DB_PORT || 5432),
+    "-d",
+    process.env.DB_DATABASE || "LMS_db",
+  ];
+}
+
+function getCommandOptions() {
+  return {
+    env: { ...process.env, PGPASSWORD: process.env.DB_PASSWORD || "" },
+    timeout: 300000,
+    maxBuffer: 1024 * 1024,
+  };
+}
+
+async function logDatabaseActivity(req, message) {
   try {
-    const dbUser = process.env.DB_USER || "postgres";
-    const dbHost = process.env.DB_HOST || "localhost";
-    const dbPort = process.env.DB_PORT || "5432";
-    const dbName = process.env.DB_DATABASE || "LMS_db";
-    const dbPassword = process.env.DB_PASSWORD || "";
+    await require("../../utils/logger").logActivity(req.user.id, message);
+  } catch {
+    // Logging must not change the result of a completed database operation.
+    console.warn("Database activity could not be recorded.");
+  }
+}
 
-    // Generate a timestamped filename
-    const dateStr = new Date().toISOString().replace(/[:.]/g, "-");
-    const filename = `backup_cdlms_${dateStr}.sql`;
+async function removeTemporaryDirectory(directory) {
+  if (!directory) return;
+  try {
+    await fsp.rm(directory, { recursive: true, force: true });
+  } catch {
+    console.warn("A database operation temporary directory needs cleanup.");
+  }
+}
 
-    // Create a temporary file path
-    const backupPath = path.join(__dirname, "..", "..", "tmp", filename);
+// Account-password verification is performed by the route middleware first.
+exports.downloadDatabaseBackup = async (req, res) => {
+  res.set("Cache-Control", "no-store");
+  if (databaseOperationRunning) {
+    return res
+      .status(409)
+      .json({ error: "Another database operation is running." });
+  }
 
-    // Ensure tmp directory exists
-    const tmpDir = path.dirname(backupPath);
-    if (!fs.existsSync(tmpDir)) {
-      fs.mkdirSync(tmpDir, { recursive: true });
+  // The ZIP password is independent from the administrator's account password.
+  const zipPassword = process.env.BACKUP_ZIP_PASSWORD;
+  try {
+    secureBackup.passwordCheck(zipPassword);
+  } catch {
+    return res
+      .status(503)
+      .json({
+        error: "The server backup password is not configured correctly.",
+      });
+  }
+
+  databaseOperationRunning = true;
+  let temporaryDirectory;
+  try {
+    temporaryDirectory = await fsp.mkdtemp(
+      path.join(os.tmpdir(), "lms-backup-"),
+    );
+    const dumpPath = path.join(temporaryDirectory, "database.dump");
+    await runPostgresCommand(
+      process.env.PG_DUMP_PATH || "pg_dump",
+      [...getDatabaseArguments(), "--no-password", "-F", "c", "-f", dumpPath],
+      getCommandOptions(),
+    );
+
+    const dumpStats = await fsp.stat(dumpPath);
+    if (dumpStats.size > secureBackup.MAX) {
+      throw new Error("Backup exceeds the 64 MiB limit.");
+    }
+    const zip = await secureBackup.pack(
+      await fsp.readFile(dumpPath),
+      zipPassword,
+    );
+    res.attachment(`backup_cdlms_${Date.now()}.zip`);
+    res.type("application/zip");
+    res.send(zip);
+    await logDatabaseActivity(req, "Generated encrypted database backup");
+  } catch (error) {
+    console.error("Database backup failed:", {
+      code: error.code,
+      message: error.message?.split("\n")[0],
+      stderr: error.stderr,
+    });
+
+    if (!res.headersSent) {
+      res.status(500).json({
+        error:
+          "Backup failed. Check server configuration and PostgreSQL tools; no backup was generated.",
+      });
+    }
+  } finally {
+    await removeTemporaryDirectory(temporaryDirectory);
+    databaseOperationRunning = false;
+  }
+};
+
+exports.restoreDatabaseBackup = async (req, res) => {
+  res.set("Cache-Control", "no-store");
+  if (process.env.ENABLE_DATABASE_RESTORE !== "true") {
+    return res
+      .status(503)
+      .json({
+        error:
+          "Database restore is disabled. Enable it only during a maintenance window.",
+      });
+  }
+  if (databaseOperationRunning) {
+    return res
+      .status(409)
+      .json({ error: "Another database operation is running." });
+  }
+  if (req.body?.confirmation !== "RESTORE DATABASE") {
+    return res.status(400).json({ error: "Type RESTORE DATABASE to confirm." });
+  }
+  if (!req.file?.buffer) {
+    return res.status(400).json({ error: "Select an encrypted backup ZIP." });
+  }
+
+  databaseOperationRunning = true;
+  let temporaryDirectory;
+  try {
+    let dump;
+    try {
+      // Restore uses the ZIP password supplied by the recovery operator.
+      // This also supports older archives with their original ZIP password.
+      dump = await secureBackup.unpack(req.file.buffer, req.body.password);
+    } catch {
+      return res
+        .status(400)
+        .json({
+          error:
+            "Wrong password, wrong server key, modified archive, or unsupported backup.",
+        });
     }
 
-    // SECURITY: Use execFile instead of exec to pass arguments as an array,
-    // which bypasses shell interpretation entirely and eliminates any command
-    // injection risk from environment variable values containing metacharacters.
-    const pgDumpArgs = [
-      "-U", dbUser,
-      "-h", dbHost,
-      "-p", String(dbPort),
-      "-d", dbName,
-      "-F", "c",
-      "-f", backupPath,
-    ];
-
-    const execOptions = {
-      env: {
-        ...process.env,
-        PGPASSWORD: dbPassword,
-      },
-    };
-
-    // Allow overriding the pg_dump binary path via env var.
-    // This avoids relying on system PATH, which may not be updated without a reboot on Windows.
-    const pgDumpBin = process.env.PG_DUMP_PATH || "pg_dump";
-
-    execFile(pgDumpBin, pgDumpArgs, execOptions, (error) => {
-      if (error) {
-        console.error("pg_dump error:", error);
-
-        // Check if pg_dump is not recognized (common on local Windows setups during Capstone defenses)
-        if (
-          error.code === "ENOENT" ||
-          error.code === 127 ||
-          (error.message &&
-            (error.message.includes("is not recognized") ||
-              error.message.includes("not found")))
-        ) {
-          console.log(
-            "pg_dump not found. Generating a mock SQL backup for defense demonstration purposes.",
-          );
-
-          const mockSqlContent = `-- Community Disaster LMS Mock Database Backup
--- Generated for Capstone Defense Demonstration
--- Timestamp: ${new Date().toISOString()}
-
-CREATE TABLE "user" (
-    id SERIAL PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,
-    email VARCHAR(255) NOT NULL UNIQUE,
-    role VARCHAR(50) DEFAULT 'resident'
-);
-
--- Note: This is a placeholder file because pg_dump is not installed on this local machine.
--- In a production Linux environment, this file will contain the full binary schema and data dump.
-`;
-          fs.writeFileSync(backupPath, mockSqlContent);
-
-          return res.download(backupPath, filename, (err) => {
-            fs.unlink(backupPath, (unlinkErr) => {
-              if (unlinkErr)
-                console.error("Error cleaning up mock backup file:", unlinkErr);
-            });
-            if (err) {
-              console.error("Error sending mock backup file:", err);
-              return;
-            }
-            // Only log after the download actually succeeded
-            require("../../utils/logger").logActivity(
-              req.user.id,
-              "Triggered full database backup download (Mock)",
-            );
-          });
-        }
-
-        return res
-          .status(500)
-          .json({
-            success: false,
-            error: "Failed to generate database backup",
-          });
-      }
-
-      // If successful, download the file to the client
-      res.download(backupPath, filename, (err) => {
-        // Clean up: delete the temporary backup file after download attempt
-        fs.unlink(backupPath, (unlinkErr) => {
-          if (unlinkErr)
-            console.error("Error cleaning up backup file:", unlinkErr);
-        });
-
-        if (err) {
-          console.error("Error sending backup file:", err);
-          if (!res.headersSent) {
-            res.status(500).json({
-              success: false,
-              error: "Failed to download backup file",
-            });
-          }
-          return;
-        }
-
-        // Only log after the download actually succeeded
-        require("../../utils/logger").logActivity(
-          req.user.id,
-          "Triggered full database backup download",
-        );
-      });
+    temporaryDirectory = await fsp.mkdtemp(
+      path.join(os.tmpdir(), "lms-restore-"),
+    );
+    const dumpPath = path.join(temporaryDirectory, "database.dump");
+    await fsp.writeFile(dumpPath, dump, { mode: 0o600 });
+    const restoreBinary = process.env.PG_RESTORE_PATH || "pg_restore";
+    await runPostgresCommand(
+      restoreBinary,
+      ["--list", dumpPath],
+      getCommandOptions(),
+    );
+    await logDatabaseActivity(req, "Started database restore");
+    await runPostgresCommand(
+      restoreBinary,
+      [
+        ...getDatabaseArguments(),
+        "--no-password",
+        "--clean",
+        "--if-exists",
+        "--no-owner",
+        "--no-privileges",
+        "--single-transaction",
+        "--exit-on-error",
+        dumpPath,
+      ],
+      getCommandOptions(),
+    );
+    res.json({
+      success: true,
+      message: "Restore completed. Sign in again and refresh application data.",
     });
-  } catch (err) {
-    console.error("Backup route error:", err);
-    res.status(500).json({ success: false, message: "Server Error" });
+  } catch {
+    console.error("Database restore failed. Review PostgreSQL server logs.");
+    if (!res.headersSent) {
+      res
+        .status(500)
+        .json({
+          error:
+            "Restore failed. Review PostgreSQL server logs before retrying.",
+        });
+    }
+  } finally {
+    await removeTemporaryDirectory(temporaryDirectory);
+    databaseOperationRunning = false;
   }
 };
 
@@ -157,8 +220,9 @@ exports.downloadServerLogs = async (req, res) => {
     let realLogFound = false;
 
     if (fs.existsSync(logsDir)) {
-      const errorLogFiles = fs.readdirSync(logsDir)
-        .filter(f => f.startsWith("error-") && f.endsWith(".log"))
+      const errorLogFiles = fs
+        .readdirSync(logsDir)
+        .filter((f) => f.startsWith("error-") && f.endsWith(".log"))
         .sort()
         .reverse(); // most recent date first (lexicographic sort works for YYYY-MM-DD)
 
