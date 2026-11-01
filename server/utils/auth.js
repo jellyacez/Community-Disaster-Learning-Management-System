@@ -114,7 +114,7 @@ const auth = betterAuth({
       await transporter.sendMail(mailOptions);
     },
   },
-  /*emailVerification: {
+  emailVerification: {
     sendOnSignUp: false, // Disabled for development
     autoSignInAfterVerification: true,
     sendVerificationEmail: async ({ user, token }) => {
@@ -127,7 +127,7 @@ const auth = betterAuth({
       );
       await transporter.sendMail(mailOptions);
     },
-  },*/
+  },
   user: {
     additionalFields: {
       barangay_id: {
@@ -192,24 +192,24 @@ const auth = betterAuth({
         ]
       : []),
   ],
-advanced: {
-  ...(process.env.NODE_ENV === "production"
-    ? {
-        useSecureCookies: false,
-        cookiePrefix: "__Host-better-auth",
-        defaultCookieAttributes: {
-          secure: true,
-          path: "/",
-          sameSite: "lax",
-          httpOnly: true,
-        },
-      }
-    : {}),
+  advanced: {
+    ...(process.env.NODE_ENV === "production"
+      ? {
+          useSecureCookies: false,
+          cookiePrefix: "__Host-better-auth",
+          defaultCookieAttributes: {
+            secure: true,
+            path: "/",
+            sameSite: "lax",
+            httpOnly: true,
+          },
+        }
+      : {}),
 
-  ipAddress: {
-    ipAddressHeaders: ["x-forwarded-for"],
+    ipAddress: {
+      ipAddressHeaders: ["x-forwarded-for"],
+    },
   },
-},
   trustedOrigins: (() => {
     if (process.env.NODE_ENV === "production") {
       if (!process.env.FRONTEND_URL) {
@@ -226,5 +226,4 @@ advanced: {
   autoSignIn: true,
 });
 
-
-module.exports = { auth };  
+module.exports = { auth };
