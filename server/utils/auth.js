@@ -133,6 +133,7 @@ const auth = betterAuth({
       barangay_id: {
         type: "number",
         required: false,
+        input: false,
       },
       role: {
         type: "string",
@@ -152,6 +153,7 @@ const auth = betterAuth({
         type: "boolean",
         required: false,
         defaultValue: false,
+        input: false,
       },
     },
   },
