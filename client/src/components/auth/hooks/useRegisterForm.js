@@ -163,7 +163,7 @@ export function useRegisterForm({ turnstileToken, onResetTurnstile } = {}) {
         onResetTurnstile?.();
         setShowConsentModal(false);
       } else {
-        toast.success("Account created. Check your email to verify it.");
+        toast.success("Account created. You can now sign in.");
         setShowConsentModal(false);
         navigate("/verify-email-prompt", {
           state: { email: formData.email.trim() },

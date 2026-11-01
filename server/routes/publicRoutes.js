@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../config/db');
+const { isMfaEnforced } = require('../config/permissions');
 
 // Simple in-memory cache to prevent database DoS attacks
 let cachedBroadcast = null;
@@ -66,6 +67,13 @@ router.get('/status', async (req, res) => {
     console.error('Error fetching system status:', err);
     res.status(500).json({ success: false, error: 'Server Error' });
   }
+});
+
+// @route   GET /api/public/auth-policy
+// @desc    Whether 2FA is on; the client only uses it to show setup UI and redirects
+// @access  Public
+router.get('/auth-policy', (req, res) => {
+  res.json({ success: true, mfaEnabled: isMfaEnforced() });
 });
 
 // @route   GET /api/public/barangays

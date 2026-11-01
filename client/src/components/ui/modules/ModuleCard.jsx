@@ -35,7 +35,8 @@ const ModuleCard = memo(function ModuleCard({
   const location = useLocation();
   const { data: session } = authClient.useSession();
   const userRole = session?.user?.role;
-  const isAdmin = userRole && ADMIN_ROLES.includes(userRole);
+  // On learner pages an admin role can only be a super_admin impersonating a resident
+  const isAdmin = userRole && ADMIN_ROLES.includes(userRole) && !location.pathname.startsWith("/user");
 
   const isCompleted =
     enrolled && (module.progress === 100 || module.status === "Completed");

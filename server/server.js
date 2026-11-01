@@ -44,7 +44,7 @@ startAlertMonitor();
 // Behind nginx, req.ip is nginx's own address (127.0.0.1) unless Express trusts the
 // one proxy hop. Everything keyed on req.ip depends on this: session and activity-log
 // IPs, the IP blocklist and per-IP rate limits. TRUST_PROXY=1 enables it without the
-// rest of production mode (secure cookies, no MFA bypass).
+// rest of production mode (secure cookies).
 if (process.env.NODE_ENV === "production" || process.env.TRUST_PROXY === "1") {
   app.set("trust proxy", 1);
 }

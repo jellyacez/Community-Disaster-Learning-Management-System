@@ -1,6 +1,7 @@
 // --- START: AdminMfaSetupPage.jsx ---
-import { useNavigate } from "react-router-dom";
+import { Navigate, useNavigate } from "react-router-dom";
 import useDocumentTitle from "../../hooks/useDocumentTitle";
+import { useMfaEnabled } from "../../hooks/useMfaEnabled";
 import AuthLayout from "../../components/layouts/AuthLayout";
 import TwoFactorSettings from "../../components/settings/TwoFactorSettings";
 import { authClient } from "../../lib/auth-client";
@@ -12,6 +13,7 @@ export default function AdminMfaSetupPage() {
   const queryClient = useQueryClient();
   const { data: session } = authClient.useSession();
   const isMfaEnabled = session?.user?.twoFactorEnabled;
+  const mfaEnabled = useMfaEnabled();
 
   const handleContinue = () => {
     if (session?.user?.twoFactorEnabled) {
@@ -34,6 +36,9 @@ export default function AdminMfaSetupPage() {
     await authClient.signOut();
     navigate("/", { replace: true });
   };
+
+  // With 2FA off there is nothing to set up; "/" sends each role to its dashboard
+  if (mfaEnabled === false) return <Navigate to="/" replace />;
 
   return (
     <AuthLayout 
