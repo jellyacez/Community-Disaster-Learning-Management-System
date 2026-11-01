@@ -10,7 +10,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@hugeicons/core-free-icons": "4.2.0",
+    "@hugeicons/core-free-icons": "4.3.5",
     "@hugeicons/react": "1.1.6",
     "@marsidev/react-turnstile": "^1.6.1",
     "@react-pdf/renderer": "4.5.1",
