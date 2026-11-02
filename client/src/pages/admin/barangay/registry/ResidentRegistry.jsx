@@ -1,7 +1,12 @@
 import { useState, useEffect } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { RefreshIcon } from "@hugeicons/core-free-icons";
-import { useQuery, useMutation, useQueryClient, keepPreviousData } from "@tanstack/react-query";
+import {
+  useQuery,
+  useMutation,
+  useQueryClient,
+  keepPreviousData,
+} from "@tanstack/react-query";
 import toast from "react-hot-toast";
 
 import apiClient from "../../../../lib/apiClient";
@@ -26,7 +31,11 @@ export default function ResidentRegistry() {
   const [limit, setLimit] = useState(10);
   const [searchInput, setSearchInput] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("");
-  const [modalConfig, setModalConfig] = useState({ isOpen: false, userId: null, action: null });
+  const [modalConfig, setModalConfig] = useState({
+    isOpen: false,
+    userId: null,
+    action: null,
+  });
 
   const debouncedSearch = useDebounce(searchInput, 350);
   const queryClient = useQueryClient();
@@ -39,12 +48,13 @@ export default function ResidentRegistry() {
 
   const { data, isLoading, isError, refetch, isFetching } = useQuery({
     queryKey: ["adminResidents", page, limit, debouncedSearch, selectedStatus],
-    queryFn: () => fetchResidents({
-      page,
-      limit,
-      search: debouncedSearch,
-      status: selectedStatus,
-    }),
+    queryFn: () =>
+      fetchResidents({
+        page,
+        limit,
+        search: debouncedSearch,
+        status: selectedStatus,
+      }),
     placeholderData: keepPreviousData,
   });
 
@@ -53,23 +63,48 @@ export default function ResidentRegistry() {
 
   const mutation = useMutation({
     mutationFn: async ({ action, userId }) => {
-      if (action === "archive") return apiClient.patch(`/admin/users/${userId}/archive`);
-      if (action === "ban") return apiClient.patch(`/admin/users/${userId}/ban`);
+      if (action === "archive")
+        return apiClient.patch(`/admin/users/${userId}/archive`);
+      if (action === "ban") {
+        return apiClient.patch(`/admin/users/${userId}/ban`, {
+          reason: "Banned by barangay administrator",
+          expiresAt: null,
+        });
+      }
+      if (action === "unban") {
+        return apiClient.patch(`/admin/users/${userId}/unban`, {});
+      }
+      throw new Error("Unsupported resident action.");
     },
     onSuccess: (_, variables) => {
-      toast.success(`Resident ${variables.action === "ban" ? "banned" : "archived"} successfully.`);
+      toast.success(
+        variables.action === "unban"
+          ? "Resident unbanned successfully."
+          : `Resident ${variables.action === "ban" ? "banned" : "archived"} successfully.`,
+      );
       queryClient.invalidateQueries({ queryKey: ["adminResidents"] });
     },
     onError: (err) => {
-      toast.error(err?.response?.data?.error || "Action failed.");
+      toast.error(
+        err?.response?.data?.message ||
+          err?.response?.data?.error ||
+          "Action failed.",
+      );
     },
   });
 
   const confirmAction = async () => {
-    if (modalConfig.userId && modalConfig.action) {
-      await mutation.mutateAsync({ action: modalConfig.action, userId: modalConfig.userId });
+    if (mutation.isPending || !modalConfig.userId || !modalConfig.action)
+      return;
+    try {
+      await mutation.mutateAsync({
+        action: modalConfig.action,
+        userId: modalConfig.userId,
+      });
+      setModalConfig({ isOpen: false, userId: null, action: null });
+    } catch {
+      // onError displays the server's message. Keep the dialog available to retry.
     }
-    setModalConfig({ isOpen: false, userId: null, action: null });
   };
 
   const handleOpenActionModal = (userId, action) => {
@@ -80,19 +115,28 @@ export default function ResidentRegistry() {
     <div className="space-y-6">
       {/* Header & Breadcrumbs */}
       <div>
-        <nav className="flex text-sm text-gray-500 dark:text-slate-400 mb-2" aria-label="Breadcrumb">
+        <nav
+          className="flex text-sm text-gray-500 dark:text-slate-400 mb-2"
+          aria-label="Breadcrumb"
+        >
           <ol className="inline-flex items-center space-x-1 md:space-x-2">
             <li className="inline-flex items-center">Dashboard</li>
             <li>
               <div className="flex items-center">
-                <span className="mx-2 text-gray-400 dark:text-slate-500">&gt;</span>
+                <span className="mx-2 text-gray-400 dark:text-slate-500">
+                  &gt;
+                </span>
                 <span>Resident Management</span>
               </div>
             </li>
             <li>
               <div className="flex items-center">
-                <span className="mx-2 text-gray-400 dark:text-slate-500">&gt;</span>
-                <span className="text-gray-900 dark:text-slate-100 font-semibold">Residential Compliance Registry</span>
+                <span className="mx-2 text-gray-400 dark:text-slate-500">
+                  &gt;
+                </span>
+                <span className="text-gray-900 dark:text-slate-100 font-semibold">
+                  Residential Compliance Registry
+                </span>
               </div>
             </li>
           </ol>
@@ -137,6 +181,7 @@ export default function ResidentRegistry() {
         meta={meta}
         isLoading={isLoading}
         isError={isError}
+        isActionPending={mutation.isPending}
         page={page}
         limit={limit}
         onPageChange={setPage}
@@ -147,13 +192,18 @@ export default function ResidentRegistry() {
       {/* Confirmation Modal */}
       <ConfirmationModal
         isOpen={modalConfig.isOpen}
-        onClose={() => setModalConfig({ isOpen: false, userId: null, action: null })}
+        onClose={() => {
+          if (!mutation.isPending)
+            setModalConfig({ isOpen: false, userId: null, action: null });
+        }}
         onConfirm={confirmAction}
-        title={`Confirm ${modalConfig.action === 'ban' ? 'Ban' : 'Archive'}`}
-        description={`Are you sure you want to ${modalConfig.action} this resident? This action cannot be easily undone.`}
+        title={`Confirm ${modalConfig.action === "ban" ? "Ban" : modalConfig.action === "unban" ? "Unban" : "Archive"}`}
+        description={modalConfig.action === "unban"
+          ? "Remove this resident’s ban? An archived account will remain archived."
+          : `Are you sure you want to ${modalConfig.action} this resident?` }
         confirmText={`Yes, ${modalConfig.action}`}
         cancelText="Cancel"
-        type={modalConfig.action === 'ban' ? 'danger' : 'warning'}
+        type={modalConfig.action === "ban" ? "danger" : modalConfig.action === "unban" ? "success" : "warning"}
         isLoading={mutation.isPending}
       />
     </div>

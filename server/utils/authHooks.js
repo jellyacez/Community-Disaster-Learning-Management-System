@@ -1,4 +1,5 @@
-const { APIError } = require("better-auth/api");
+const { APIError, createAuthMiddleware } = require("better-auth/api");
+const { NAME_FIELDS, preparePersonName } = require("./personName");
 const pool = require("../config/db");
 const securityService = require("../services/securityService");
 const { CONSENT_VERSION } = require("../config/constants");
@@ -20,6 +21,28 @@ const securityHooksPlugin = () => {
     id: "security-hooks",
     hooks: {
       before: [
+        {
+          matcher(context) {
+            return context.path === "/sign-up/email" || context.path === "/update-user";
+          },
+          handler: createAuthMiddleware(async (ctx) => {
+            const body = ctx.body || {};
+            const changesName = Object.hasOwn(body, "name") ||
+              NAME_FIELDS.some((field) => Object.hasOwn(body, field));
+            // Avatar-only updates must continue to work for legacy accounts.
+            if (ctx.path === "/update-user" && !changesName) return {};
+
+            const { errors, data } = preparePersonName(body);
+            if (!data) {
+              throw new APIError("UNPROCESSABLE_ENTITY", {
+                code: "INVALID_PERSON_NAME",
+                message: Object.values(errors)[0],
+              });
+            }
+            // Ignore a caller-supplied display name; derive it on the server.
+            return { context: { body: { ...body, ...data } } };
+          }),
+        },
         {
           matcher(context) {
             return context.path?.includes("sign-in") || false;
@@ -290,7 +313,7 @@ const securityHooksPlugin = () => {
           },
           handler: async (ctx) => {
             if (ctx.context?.returned instanceof APIError) return {};
-            
+
             let user =
               ctx.context?.newSession?.user ||
               ctx.context?.user ||
@@ -332,8 +355,8 @@ const securityHooksPlugin = () => {
             if (userId) {
               try {
                 await pool.query(
-                  `UPDATE "user" 
-                   SET consent_given_at = CURRENT_TIMESTAMP, 
+                  `UPDATE "user"
+                   SET consent_given_at = CURRENT_TIMESTAMP,
                        consent_version = $1
                    WHERE id = $2`,
                   [CONSENT_VERSION, userId]

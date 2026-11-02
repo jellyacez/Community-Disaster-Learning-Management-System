@@ -1,5 +1,10 @@
 import { useState, useCallback, useEffect } from "react";
-import { useQuery, useMutation, useQueryClient, keepPreviousData } from "@tanstack/react-query";
+import {
+  useQuery,
+  useMutation,
+  useQueryClient,
+  keepPreviousData,
+} from "@tanstack/react-query";
 import apiClient from "../../../../../lib/apiClient";
 import toast from "react-hot-toast";
 import useDebounce from "../../../../../hooks/useDebounce";
@@ -24,7 +29,14 @@ export const useUserManagement = () => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setSelectedUserIds(new Set());
     setPage(1);
-  }, [limit, debouncedSearch, roleFilter, statusFilter, barangayFilter, setSelectedUserIds]);
+  }, [
+    limit,
+    debouncedSearch,
+    roleFilter,
+    statusFilter,
+    barangayFilter,
+    setSelectedUserIds,
+  ]);
 
   // Stable callback reference prevents re-rendering all memoized rows
   const handleManageClick = useCallback((user, tabIndex = 0) => {
@@ -33,7 +45,7 @@ export const useUserManagement = () => {
   }, []);
 
   const handleToggleSelect = useCallback((id) => {
-    setSelectedUserIds(prev => {
+    setSelectedUserIds((prev) => {
       const next = new Set(prev);
       if (next.has(id)) next.delete(id);
       else next.add(id);
@@ -42,7 +54,15 @@ export const useUserManagement = () => {
   }, []);
 
   const { data, isLoading } = useQuery({
-    queryKey: ["adminUsers", page, limit, debouncedSearch, roleFilter, statusFilter, barangayFilter],
+    queryKey: [
+      "adminUsers",
+      page,
+      limit,
+      debouncedSearch,
+      roleFilter,
+      statusFilter,
+      barangayFilter,
+    ],
     queryFn: async () => {
       const params = new URLSearchParams({ page, limit });
       if (debouncedSearch) params.set("search", debouncedSearch);
@@ -65,7 +85,10 @@ export const useUserManagement = () => {
         case "password":
           return apiClient.put(`/admin/users/${userId}/password`, payload);
         case "ban":
-          return apiClient.patch(`/admin/users/${userId}/ban`, { reason: payload?.reason });
+          return apiClient.patch(`/admin/users/${userId}/ban`, {
+            reason: payload?.reason ?? "Banned by administrator",
+            expiresAt: payload?.expiresAt ?? null,
+          });
         case "unban":
           return apiClient.patch(`/admin/users/${userId}/unban`);
         case "archive":
@@ -84,24 +107,41 @@ export const useUserManagement = () => {
 
       // Snapshot the previous value
       const previousUsersData = queryClient.getQueryData([
-        "adminUsers", page, limit, debouncedSearch, roleFilter, statusFilter, barangayFilter
+        "adminUsers",
+        page,
+        limit,
+        debouncedSearch,
+        roleFilter,
+        statusFilter,
+        barangayFilter,
       ]);
 
       // Optimistically update to the new value if it's a simple toggle like ban/unban
       if (variables.type === "ban" || variables.type === "unban") {
         queryClient.setQueryData(
-          ["adminUsers", page, limit, debouncedSearch, roleFilter, statusFilter, barangayFilter],
+          [
+            "adminUsers",
+            page,
+            limit,
+            debouncedSearch,
+            roleFilter,
+            statusFilter,
+            barangayFilter,
+          ],
           (old) => {
             if (!old || !old.data) return old;
             return {
               ...old,
-              data: old.data.map(user => 
-                user.id === variables.userId 
-                  ? { ...user, status: variables.type === "ban" ? "banned" : "active" }
-                  : user
-              )
+              data: old.data.map((user) =>
+                user.id === variables.userId
+                  ? {
+                      ...user,
+                      status: variables.type === "ban" ? "banned" : "active",
+                    }
+                  : user,
+              ),
             };
-          }
+          },
         );
       }
 
@@ -112,11 +152,23 @@ export const useUserManagement = () => {
       // Roll back
       if (context?.previousUsersData) {
         queryClient.setQueryData(
-          ["adminUsers", page, limit, debouncedSearch, roleFilter, statusFilter, barangayFilter],
-          context.previousUsersData
+          [
+            "adminUsers",
+            page,
+            limit,
+            debouncedSearch,
+            roleFilter,
+            statusFilter,
+            barangayFilter,
+          ],
+          context.previousUsersData,
         );
       }
-      toast.error(err?.response?.data?.error || "Action failed.");
+      toast.error(
+        err?.response?.data?.message ||
+          err?.response?.data?.error ||
+          "Action failed.",
+      );
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["adminUsers"] });
@@ -139,9 +191,12 @@ export const useUserManagement = () => {
     },
   });
 
-  const handleSave = useCallback(async (action) => {
-    await mutation.mutateAsync(action);
-  }, [mutation]);
+  const handleSave = useCallback(
+    async (action) => {
+      await mutation.mutateAsync(action);
+    },
+    [mutation],
+  );
 
   return {
     state: {
@@ -159,7 +214,7 @@ export const useUserManagement = () => {
       meta: data?.meta || { totalPages: 1, page: 1, total: 0 },
       isLoading,
       isMutationPending: mutation.isPending,
-      mutationType: mutation.variables?.type
+      mutationType: mutation.variables?.type,
     },
     actions: {
       setSearch,
@@ -173,7 +228,7 @@ export const useUserManagement = () => {
       setShowProvisionModal,
       handleManageClick,
       handleToggleSelect,
-      handleSave
-    }
+      handleSave,
+    },
   };
 };

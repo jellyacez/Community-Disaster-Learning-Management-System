@@ -129,6 +129,11 @@ const auth = betterAuth({
   },*/
   user: {
     additionalFields: {
+      // Nullable for existing accounts and Google sign-in. Email signup is
+      // validated by securityHooksPlugin before creating the account.
+      first_name: { type: "string", required: false, input: true },
+      middle_name: { type: "string", required: false, input: true },
+      last_name: { type: "string", required: false, input: true },
       barangay_id: {
         type: "number",
         required: false,
@@ -205,4 +210,4 @@ advanced: {
 });
 
 
-module.exports = { auth };  
+module.exports = { auth };

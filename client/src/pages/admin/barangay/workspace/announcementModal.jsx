@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useId } from "react";
+import { createPortal } from "react-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
@@ -10,9 +11,11 @@ import toast from "react-hot-toast";
 import apiClient from "../../../../lib/apiClient";
 import { invalidateAnnouncementQueries } from "../../../../hooks/useLiftAnnouncement";
 
-// Must match URGENT_DURATION_HOURS on the server (utils/validators.js)
+// Must match URGENT_DURATION_HOURS on the server (utils/validators.js).
 const URGENT_DURATIONS = [6, 12, 24, 48, 72];
 const DEFAULT_URGENT_HOURS = 24;
+const barangayLabel = (name) =>
+  /^barangay\b/i.test(name || "") ? name : `Barangay ${name}`;
 
 export default function AnnouncementModal({
   isOpen,
@@ -26,6 +29,15 @@ export default function AnnouncementModal({
   const [priority, setPriority] = useState("standard");
   const [durationHours, setDurationHours] = useState(DEFAULT_URGENT_HOURS);
   const [targetBarangayId, setTargetBarangayId] = useState("");
+  const [errors, setErrors] = useState({});
+  const [publishError, setPublishError] = useState("");
+  const [showDiscard, setShowDiscard] = useState(false);
+  const dialogRef = useRef(null);
+  const titleRef = useRef(null);
+  const contentRef = useRef(null);
+  const keepEditingRef = useRef(null);
+  const cancelRef = useRef(null);
+  const id = useId();
 
   const isHighTierAdmin = [
     "system_admin",
@@ -33,8 +45,12 @@ export default function AnnouncementModal({
     "mdrrmo_admin",
   ].includes(currentUserRole);
 
-
-  const { data: barangays = [] } = useQuery({
+  const {
+    data: barangays = [],
+    isPending: isAudienceLoading,
+    isError: isAudienceError,
+    refetch: retryAudience,
+  } = useQuery({
     queryKey: ["allBarangaysList"],
     queryFn: async () => {
       const res = await apiClient.get("/public/barangays");
@@ -49,33 +65,13 @@ export default function AnnouncementModal({
     setPriority("standard");
     setDurationHours(DEFAULT_URGENT_HOURS);
     setTargetBarangayId("");
+    setErrors({});
+    setPublishError("");
+    setShowDiscard(false);
   };
-
-  const handleSafeClose = () => {
-    if (title.trim() || content.trim()) {
-      if (window.confirm("Discard unsaved announcement draft?")) {
-        resetForm();
-        onClose();
-      }
-    } else {
-      resetForm();
-      onClose();
-    }
-  };
-
-  useEffect(() => {
-    if (!isOpen) return;
-    const handleKeyDown = (e) => {
-      if (e.key === "Escape") handleSafeClose();
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen, title, content]);
 
   const mutation = useMutation({
     mutationFn: async (payload) => {
-
       const endpoint = isHighTierAdmin
         ? "/admin/mdrrmo/announcements"
         : "/admin/barangay/announcements";
@@ -89,215 +85,529 @@ export default function AnnouncementModal({
       onClose();
     },
     onError: (err) => {
-      toast.error(err?.response?.data?.error || "Failed to publish announcement.");
+      const message =
+        err?.response?.data?.message ||
+        err?.response?.data?.error ||
+        "Failed to publish announcement.";
+      setPublishError(message);
+      toast.error(message);
     },
   });
 
-  if (!isOpen) return null;
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (!title.trim() || !content.trim()) {
-      toast.error("Please fill in both title and content.");
+  const handleSafeClose = () => {
+    if (mutation.isPending) return;
+    const hasDraft =
+      title.trim() ||
+      content.trim() ||
+      priority !== "standard" ||
+      targetBarangayId;
+    if (hasDraft) {
+      setShowDiscard(true);
       return;
     }
+    resetForm();
+    onClose();
+  };
+
+  // Lock background scrolling and return focus to the button that opened us.
+  useEffect(() => {
+    if (!isOpen) return;
+    const previousFocus = document.activeElement;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    dialogRef.current?.focus();
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      if (previousFocus?.isConnected) previousFocus.focus?.();
+    };
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (showDiscard) keepEditingRef.current?.focus();
+  }, [showDiscard]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (event) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        event.stopPropagation();
+        if (mutation.isPending) return;
+        if (showDiscard) setShowDiscard(false);
+        else handleSafeClose();
+        return;
+      }
+      if (event.key !== "Tab") return;
+      const controls = [
+        ...(dialogRef.current?.querySelectorAll(
+          'button:not([disabled]), input:not([disabled]):not([type="radio"]), input[type="radio"]:checked:not([disabled]), select:not([disabled]), textarea:not([disabled])',
+        ) || []),
+      ].filter(
+        (element) =>
+          !element.matches(":disabled") && element.getClientRects().length > 0,
+      );
+      const first = controls[0];
+      const last = controls[controls.length - 1];
+      if (!first) {
+        event.preventDefault();
+        dialogRef.current?.focus();
+        return;
+      }
+      const outside =
+        !dialogRef.current.contains(document.activeElement) ||
+        document.activeElement === dialogRef.current;
+      if (event.shiftKey && (document.activeElement === first || outside)) {
+        event.preventDefault();
+        last.focus();
+      } else if (
+        !event.shiftKey &&
+        (document.activeElement === last || outside)
+      ) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+    document.addEventListener("keydown", handleKeyDown, true);
+    return () => document.removeEventListener("keydown", handleKeyDown, true);
+    // handleSafeClose reads the current draft, rather than a stale initial value.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    isOpen,
+    title,
+    content,
+    priority,
+    targetBarangayId,
+    showDiscard,
+    mutation.isPending,
+  ]);
+
+  const handleSubmit = (event) => {
+    event.preventDefault();
+    if (mutation.isPending || showDiscard) return;
+    const nextErrors = {};
+    if (!title.trim()) nextErrors.title = "Enter an announcement title.";
+    if (!content.trim())
+      nextErrors.content = "Write the message residents should receive.";
+    setErrors(nextErrors);
+    if (nextErrors.title) return titleRef.current?.focus();
+    if (nextErrors.content) return contentRef.current?.focus();
+    if (isHighTierAdmin && (isAudienceLoading || isAudienceError)) {
+      setPublishError(
+        "Wait for the audience list to load, or use Try again before publishing.",
+      );
+      return;
+    }
+    setPublishError("");
 
     mutation.mutate({
       title,
       content,
       priority,
       duration_hours: priority === "urgent" ? durationHours : null,
-      target_barangay_id: isHighTierAdmin && targetBarangayId ? targetBarangayId : null,
+      target_barangay_id:
+        isHighTierAdmin && targetBarangayId ? targetBarangayId : null,
     });
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="bg-white dark:bg-slate-900 rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-gray-100 dark:border-slate-800 space-y-5 animate-in zoom-in-95 duration-150">
-        <div className="flex items-center justify-between border-b border-gray-100 dark:border-slate-800 pb-3">
-          <div className="flex items-center gap-2.5">
-            <div className="p-2 bg-red-50 dark:bg-red-950/60 text-red-600 dark:text-red-400 rounded-xl">
-              <HugeiconsIcon icon={Notification01Icon} className="w-5 h-5" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h3 className="text-base font-bold text-gray-900 dark:text-white">
-                  Broadcast Advisory
-                </h3>
-                <span className="text-[10px] font-mono font-bold bg-red-50 dark:bg-red-950/60 text-red-700 dark:text-red-300 px-2 py-0.5 rounded">
-                  {isHighTierAdmin ? "MDRRMO / HQ" : barangayName}
-                </span>
-              </div>
-              <p className="text-xs text-gray-500 dark:text-slate-400">
-                {isHighTierAdmin
-                  ? "Publish municipal alerts or sector-specific bulletins"
-                  : `Publish notices strictly to Barangay ${barangayName} residents`}
-              </p>
-            </div>
-          </div>
+  if (!isOpen || typeof document === "undefined") return null;
 
+  const selectedBarangay = barangays.find(
+    (b) => String(b.id) === String(targetBarangayId),
+  );
+  const audience = isHighTierAdmin
+    ? targetBarangayId
+      ? barangayLabel(selectedBarangay?.name || "selected barangay")
+      : "All barangays in Bacolor"
+    : barangayLabel(barangayName);
+  const fieldClass =
+    "mt-2 block min-h-11 w-full min-w-0 rounded-xl border border-slate-300 bg-white px-3.5 py-3 text-base text-slate-900 placeholder:text-slate-400 outline-none focus:border-red-600 focus:ring-2 focus:ring-red-600/20 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-600 dark:bg-slate-800 dark:text-white sm:text-sm";
+
+  return createPortal(
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-950/50 p-3 backdrop-blur-sm sm:p-6">
+      <section
+        ref={dialogRef}
+        tabIndex={-1}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={`${id}-title`}
+        aria-describedby={`${id}-description`}
+        aria-busy={mutation.isPending}
+        className="flex max-h-[calc(100dvh-1.5rem)] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white text-slate-900 shadow-2xl outline-none dark:border-slate-700 dark:bg-slate-900 dark:text-white sm:max-h-[calc(100dvh-3rem)]"
+      >
+        <header className="flex shrink-0 items-start gap-3 border-b border-slate-100 p-4 dark:border-slate-800 sm:px-6 sm:py-5">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-red-50 text-red-700 dark:bg-red-950/50 dark:text-red-300">
+            <HugeiconsIcon
+              icon={Notification01Icon}
+              size={22}
+              aria-hidden="true"
+            />
+          </div>
+          <div className="min-w-0 flex-1">
+            <h2
+              id={`${id}-title`}
+              className="break-words text-lg font-bold sm:text-xl"
+            >
+              Create announcement
+            </h2>
+            <p
+              id={`${id}-description`}
+              className="mt-1 text-sm leading-relaxed text-slate-500 dark:text-slate-400"
+            >
+              Share an advisory, update or safety notice with residents.
+            </p>
+          </div>
           <button
             type="button"
             onClick={handleSafeClose}
-            className="p-1.5 text-gray-400 hover:text-gray-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-lg transition cursor-pointer"
+            disabled={mutation.isPending}
+            aria-label="Close announcement form"
+            className="inline-flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600 disabled:cursor-not-allowed disabled:opacity-40 dark:text-slate-300 dark:hover:bg-slate-800"
           >
-            <HugeiconsIcon icon={Cancel01Icon} className="w-4 h-4" />
+            <HugeiconsIcon icon={Cancel01Icon} size={20} aria-hidden="true" />
           </button>
-        </div>
+        </header>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Audience selection for High-tier Admins */}
-          {isHighTierAdmin && (
-            <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-gray-600 dark:text-slate-300 mb-1.5 font-mono">
-                Target Sector / Audience
-              </label>
-              <select
-                value={targetBarangayId}
-                onChange={(e) => setTargetBarangayId(e.target.value)}
-                className="w-full px-3.5 py-2.5 text-sm bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-gray-900 dark:text-slate-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 focus:bg-white dark:focus:bg-slate-800 transition"
-              >
-                <option value="">All Barangays (Municipality-Wide Broadcast)</option>
-                {barangays.map((b) => (
-                  <option key={b.id} value={b.id}>
-                    Barangay {b.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
-
-          <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-gray-600 dark:text-slate-300 mb-1.5 font-mono">
-              Advisory Title
-            </label>
-            <input
-              type="text"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="e.g., Flood Drill Schedule / Heavy Rain Advisory"
-              className="w-full px-3.5 py-2.5 text-sm bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-gray-900 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-500 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 focus:bg-white dark:focus:bg-slate-800 transition"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-gray-600 dark:text-slate-300 mb-1.5 font-mono">
-              Content & Safety Instructions
-            </label>
-            <textarea
-              rows={4}
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              placeholder="Enter specific guidelines, evacuation assembly locations, or safety reminders..."
-              className="w-full px-3.5 py-2.5 text-sm bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-gray-900 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-500 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 focus:bg-white dark:focus:bg-slate-800 transition resize-none"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-gray-600 dark:text-slate-300 mb-2 font-mono">
-              Priority Level
-            </label>
-
-            <div className="grid sm:grid-cols-2 gap-3">
+        {showDiscard ? (
+          <div className="min-h-0 overflow-y-auto p-4 sm:p-6">
+            <h3 className="text-base font-bold">Discard this announcement?</h3>
+            <p className="mt-2 text-sm leading-relaxed text-slate-600 dark:text-slate-300">
+              Your changes have not been published. Discarding will clear this
+              draft.
+            </p>
+            <div className="mt-5 flex flex-col gap-2 sm:flex-row sm:justify-end">
               <button
+                ref={keepEditingRef}
                 type="button"
-                onClick={() => setPriority("standard")}
-                className={`rounded-xl border p-3 text-left transition cursor-pointer ${
-                  priority === "standard"
-                    ? "border-gray-900 dark:border-slate-600 bg-gray-50 dark:bg-slate-800 shadow-sm"
-                    : "border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800/40 hover:border-gray-300 dark:hover:border-slate-600"
-                }`}
+                onClick={() => {
+                  setShowDiscard(false);
+                  requestAnimationFrame(() => cancelRef.current?.focus());
+                }}
+                className="min-h-11 cursor-pointer rounded-xl border border-slate-300 px-4 py-2.5 text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600 dark:border-slate-600"
               >
-                <p className="text-sm font-bold text-gray-900 dark:text-white">Standard</p>
-                <p className="text-xs text-gray-500 dark:text-slate-400 mt-1">
-                  Regular advisory or informational post
-                </p>
+                Keep editing
               </button>
-
               <button
                 type="button"
-                onClick={() => setPriority("urgent")}
-                className={`rounded-xl border p-3 text-left transition cursor-pointer ${
-                  priority === "urgent"
-                    ? "border-red-600 dark:border-red-500 bg-red-50 dark:bg-red-950/40 shadow-sm"
-                    : "border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800/40 hover:border-gray-300 dark:hover:border-slate-600"
-                }`}
+                onClick={() => {
+                  resetForm();
+                  onClose();
+                }}
+                className="min-h-11 cursor-pointer rounded-xl bg-red-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-red-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600"
               >
-                <p className="text-sm font-bold text-red-700 dark:text-red-400">Urgent</p>
-                <p className="text-xs text-gray-500 dark:text-slate-400 mt-1">
-                  High-priority advisory requiring immediate attention
-                </p>
+                Discard draft
               </button>
             </div>
           </div>
-
-          {priority === "urgent" && (
-            <fieldset>
-              <legend className="block text-xs font-bold uppercase tracking-wider text-gray-600 dark:text-slate-300 mb-2 font-mono">
-                In effect for
-              </legend>
-              <div className="grid grid-cols-5 gap-2" role="radiogroup">
-                {URGENT_DURATIONS.map((hours) => (
-                  <button
-                    key={hours}
-                    type="button"
-                    role="radio"
-                    aria-checked={durationHours === hours}
-                    onClick={() => setDurationHours(hours)}
-                    className={`h-11 rounded-xl border text-sm font-bold tabular-nums transition cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 ${
-                      durationHours === hours
-                        ? "border-red-600 dark:border-red-500 bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-300"
-                        : "border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800/40 text-gray-700 dark:text-slate-300 hover:border-gray-300 dark:hover:border-slate-600"
-                    }`}
+        ) : (
+          <form
+            onSubmit={handleSubmit}
+            noValidate
+            className="flex min-h-0 flex-1 flex-col"
+          >
+            <div className="min-h-0 flex-1 space-y-6 overflow-y-auto overscroll-contain p-4 sm:p-6">
+              <div>
+                {isHighTierAdmin ? (
+                  <label
+                    htmlFor={`${id}-audience`}
+                    className="text-sm font-semibold"
                   >
-                    {hours}h
-                  </button>
-                ))}
+                    Audience
+                  </label>
+                ) : (
+                  <p className="text-sm font-semibold">Audience</p>
+                )}
+                {isHighTierAdmin ? (
+                  <>
+                    <select
+                      id={`${id}-audience`}
+                      value={targetBarangayId}
+                      onChange={(event) =>
+                        setTargetBarangayId(event.target.value)
+                      }
+                      disabled={
+                        mutation.isPending ||
+                        isAudienceLoading ||
+                        isAudienceError
+                      }
+                      className={`${fieldClass} cursor-pointer`}
+                      aria-describedby={`${id}-audience-help`}
+                    >
+                      <option value="">All barangays in Bacolor</option>
+                      {barangays.map((barangay) => (
+                        <option key={barangay.id} value={barangay.id}>
+                          {barangayLabel(barangay.name)}
+                        </option>
+                      ))}
+                    </select>
+                    <p
+                      id={`${id}-audience-help`}
+                      className="mt-2 text-xs text-slate-500 dark:text-slate-400"
+                    >
+                      {isAudienceLoading
+                        ? "Loading barangays…"
+                        : "Choose all barangays or one specific barangay."}
+                    </p>
+                    {isAudienceError && (
+                      <div
+                        role="alert"
+                        className="mt-2 text-sm text-red-700 dark:text-red-300"
+                      >
+                        Could not load barangays.{" "}
+                        <button
+                          type="button"
+                          disabled={mutation.isPending}
+                          onClick={() => retryAudience()}
+                          className="min-h-11 cursor-pointer px-1 font-semibold underline disabled:cursor-not-allowed"
+                        >
+                          Try again
+                        </button>
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <p
+                    id={`${id}-audience`}
+                    className="mt-2 break-words rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm dark:border-slate-700 dark:bg-slate-800"
+                  >
+                    {audience}
+                  </p>
+                )}
               </div>
-              <p className="text-xs text-gray-500 dark:text-slate-400 mt-2">
-                Pinned at the top for residents for{" "}
-                <span className="font-semibold text-gray-700 dark:text-slate-200">{durationHours} hours</span>{" "}
-                after posting. You can lift it sooner.
-              </p>
-            </fieldset>
-          )}
 
-          <div className="bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/60 text-amber-800 dark:text-amber-300 p-3 rounded-xl flex items-start gap-2.5 text-xs">
-            <HugeiconsIcon
-              icon={Alert01Icon}
-              className="w-4 h-4 shrink-0 mt-0.5 text-amber-600 dark:text-amber-400"
-            />
-            <span>
-              {isHighTierAdmin && !targetBarangayId
-                ? "This alert will be broadcast across all registered barangays."
-                : `This message will appear immediately on the boards of Barangay ${
-                    targetBarangayId
-                      ? barangays.find((b) => String(b.id) === String(targetBarangayId))?.name || "Target"
-                      : barangayName
-                  }.`}
-            </span>
-          </div>
+              <div>
+                <label
+                  htmlFor={`${id}-announcement-title`}
+                  className="text-sm font-semibold"
+                >
+                  Announcement title{" "}
+                  <span className="font-normal text-slate-500">(required)</span>
+                </label>
+                <input
+                  ref={titleRef}
+                  id={`${id}-announcement-title`}
+                  type="text"
+                  value={title}
+                  disabled={mutation.isPending}
+                  onChange={(event) => {
+                    setTitle(event.target.value);
+                    setErrors((previous) => ({
+                      ...previous,
+                      title: undefined,
+                    }));
+                  }}
+                  placeholder="e.g. Flood evacuation drill on Friday"
+                  className={fieldClass}
+                  aria-invalid={Boolean(errors.title)}
+                  aria-describedby={
+                    errors.title ? `${id}-title-error` : undefined
+                  }
+                  required
+                />
+                {errors.title && (
+                  <p
+                    id={`${id}-title-error`}
+                    role="alert"
+                    className="mt-2 text-xs text-red-700 dark:text-red-300"
+                  >
+                    {errors.title}
+                  </p>
+                )}
+              </div>
 
-          <div className="flex items-center justify-end gap-3 pt-2">
-            <button
-              type="button"
-              onClick={handleSafeClose}
-              className="px-4 py-2 text-xs font-semibold text-gray-600 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-xl transition cursor-pointer"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={mutation.isPending}
-              className="px-5 py-2 text-xs font-bold text-white bg-red-600 hover:bg-red-700 rounded-xl transition shadow-sm disabled:opacity-50 flex items-center gap-2 cursor-pointer"
-            >
-              {mutation.isPending ? "Publishing..." : "Broadcast Alert"}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+              <div>
+                <label
+                  htmlFor={`${id}-content`}
+                  className="text-sm font-semibold"
+                >
+                  Message{" "}
+                  <span className="font-normal text-slate-500">(required)</span>
+                </label>
+                <textarea
+                  ref={contentRef}
+                  id={`${id}-content`}
+                  rows={6}
+                  value={content}
+                  disabled={mutation.isPending}
+                  onChange={(event) => {
+                    setContent(event.target.value);
+                    setErrors((previous) => ({
+                      ...previous,
+                      content: undefined,
+                    }));
+                  }}
+                  placeholder="Explain what is happening, who is affected, and what residents should do. Include the time and location when relevant."
+                  className={`${fieldClass} min-h-36 resize-y leading-relaxed`}
+                  aria-invalid={Boolean(errors.content)}
+                  aria-describedby={
+                    errors.content
+                      ? `${id}-content-error`
+                      : `${id}-content-help`
+                  }
+                  required
+                />
+                {errors.content ? (
+                  <p
+                    id={`${id}-content-error`}
+                    role="alert"
+                    className="mt-2 text-xs text-red-700 dark:text-red-300"
+                  >
+                    {errors.content}
+                  </p>
+                ) : (
+                  <p
+                    id={`${id}-content-help`}
+                    className="mt-2 text-xs text-slate-500 dark:text-slate-400"
+                  >
+                    Keep instructions clear and include essential safety
+                    details.
+                  </p>
+                )}
+              </div>
+
+              <fieldset disabled={mutation.isPending}>
+                <legend className="mb-2 text-sm font-semibold">Priority</legend>
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  {[
+                    {
+                      value: "standard",
+                      label: "Standard",
+                      description: "General updates, schedules and reminders.",
+                    },
+                    {
+                      value: "urgent",
+                      label: "Urgent",
+                      description:
+                        "Time-sensitive safety information needing immediate attention.",
+                    },
+                  ].map((option) => (
+                    <label
+                      key={option.value}
+                      className="relative block min-w-0"
+                    >
+                      <input
+                        type="radio"
+                        name={`${id}-priority`}
+                        value={option.value}
+                        checked={priority === option.value}
+                        onChange={() => setPriority(option.value)}
+                        className="peer sr-only"
+                      />
+                      <span className="block h-full cursor-pointer rounded-xl border border-slate-200 bg-white p-3 peer-checked:border-red-600 peer-checked:bg-red-50 peer-focus-visible:ring-2 peer-focus-visible:ring-red-600 peer-focus-visible:ring-offset-2 peer-disabled:cursor-not-allowed peer-disabled:opacity-60 dark:border-slate-700 dark:bg-slate-800/40 dark:peer-checked:bg-red-950/30">
+                        <span className="block text-sm font-semibold">
+                          {option.label}
+                          {priority === option.value && (
+                            <span className="ml-2 text-xs text-red-700 dark:text-red-300">
+                              Selected
+                            </span>
+                          )}
+                        </span>
+                        <span className="mt-1 block text-xs leading-relaxed text-slate-500 dark:text-slate-400">
+                          {option.description}
+                        </span>
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              </fieldset>
+
+              {priority === "urgent" && (
+                <fieldset disabled={mutation.isPending}>
+                  <legend className="text-sm font-semibold">
+                    Keep urgent for
+                  </legend>
+                  <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                    Pinned for {durationHours} hours after publishing. You can
+                    lift it sooner.
+                  </p>
+                  <div className="mt-3 grid grid-cols-3 gap-2 sm:grid-cols-5">
+                    {URGENT_DURATIONS.map((hours) => (
+                      <label key={hours} className="block">
+                        <input
+                          type="radio"
+                          name={`${id}-duration`}
+                          value={hours}
+                          checked={durationHours === hours}
+                          onChange={() => setDurationHours(hours)}
+                          className="peer sr-only"
+                        />
+                        <span className="flex min-h-11 cursor-pointer items-center justify-center rounded-xl border border-slate-200 px-2 text-sm font-semibold tabular-nums peer-checked:border-red-600 peer-checked:bg-red-50 peer-checked:text-red-700 peer-focus-visible:ring-2 peer-focus-visible:ring-red-600 peer-disabled:cursor-not-allowed peer-disabled:opacity-60 dark:border-slate-700 dark:peer-checked:bg-red-950/30 dark:peer-checked:text-red-300">
+                          {hours} hours
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                </fieldset>
+              )}
+
+              <div className="flex items-start gap-2.5 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm leading-relaxed text-amber-950 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-100">
+                <HugeiconsIcon
+                  icon={Alert01Icon}
+                  size={18}
+                  className="mt-0.5 shrink-0"
+                  aria-hidden="true"
+                />
+                <p className="min-w-0 break-words">
+                  This announcement will be visible to{" "}
+                  <strong>{audience}</strong> when published.
+                </p>
+              </div>
+              {publishError && (
+                <p
+                  role="alert"
+                  className="break-words rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-800 dark:border-red-800 dark:bg-red-950/40 dark:text-red-200"
+                >
+                  {publishError}
+                </p>
+              )}
+            </div>
+
+            <footer className="shrink-0 border-t border-slate-100 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-900 sm:px-6">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <p
+                  role="status"
+                  aria-live="polite"
+                  className="text-xs text-slate-500 dark:text-slate-400"
+                >
+                  {mutation.isPending
+                    ? "Publishing… Keep this dialog open."
+                    : "Review the audience and message before publishing."}
+                </p>
+                <div className="flex flex-col-reverse gap-2 sm:shrink-0 sm:flex-row">
+                  <button
+                    ref={cancelRef}
+                    type="button"
+                    onClick={handleSafeClose}
+                    disabled={mutation.isPending}
+                    className="min-h-11 cursor-pointer rounded-xl border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-600 dark:bg-slate-800 dark:hover:bg-slate-700"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={
+                      mutation.isPending ||
+                      (isHighTierAdmin &&
+                        (isAudienceLoading || isAudienceError))
+                    }
+                    className="inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-xl bg-red-700 px-5 py-2.5 text-sm font-semibold text-white hover:bg-red-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600 focus-visible:ring-offset-2 disabled:cursor-wait disabled:opacity-60"
+                  >
+                    {mutation.isPending && (
+                      <span
+                        aria-hidden="true"
+                        className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white motion-reduce:animate-none"
+                      />
+                    )}
+                    {mutation.isPending
+                      ? "Publishing…"
+                      : "Publish announcement"}
+                  </button>
+                </div>
+              </div>
+            </footer>
+          </form>
+        )}
+      </section>
+    </div>,
+    document.body,
   );
 }

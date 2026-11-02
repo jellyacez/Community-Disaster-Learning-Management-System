@@ -283,8 +283,26 @@ const dispatchTask = async (task) => {
     case 'COMPLETE_MODULE':
       return await apiClient.post('/modules/progress', task.payload, { offlineSync: true });
 
-    case 'UPDATE_NAME':
-      return await apiClient.post('/auth/update-user', { name: task.payload.name }, { offlineSync: true });
+      case 'UPDATE_NAME': {
+           // Legacy name-only tasks cannot safely be split into first/middle/last names.
+            if (!task.payload.first_name || !task.payload.last_name) {
+              const error = new Error('Re-enter your first, middle and last names in Settings to sync this name change.');
+              error.response = { status: 422, data: { message: error.message } };
+              throw error;
+            }
+            const { error } = await authClient.updateUser({
+              first_name: task.payload.first_name,
+              middle_name: task.payload.middle_name || '',
+              last_name: task.payload.last_name,
+              name: task.payload.name,
+            });
+           if (error) {
+              const failure = new Error(error.message || 'Name update failed.');
+              if (error.status) failure.response = { status: error.status, data: { message: failure.message } };
+              throw failure;
+            }
+            return { data: { success: true } };
+          }
 
     case 'UPDATE_AVATAR':
       return await apiClient.post('/auth/update-user', { image: task.payload.image }, { offlineSync: true });

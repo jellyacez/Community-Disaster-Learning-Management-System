@@ -40,6 +40,9 @@ export default function UserLayout() {
 
   const currentUser = {
     id: activeUser?.id,
+    first_name: activeUser?.first_name,
+    middle_name: activeUser?.middle_name,
+    last_name: activeUser?.last_name,
     name:
       activeUser?.name ||
       activeUser?.fullName ||

@@ -4,19 +4,32 @@ import toast from "react-hot-toast";
 import { authClient } from "../../../lib/auth-client";
 import { meetsPasswordRules } from "../../../constants/passwordRules";
 
+import { normalizeNamePart, validateNamePart } from "../../../utils/personName";
+
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 // Order the fields appear in, so focus goes to the first one that needs fixing
-const FIELD_ORDER = ["fullName", "email", "barangay", "password", "confirmPassword"];
+const FIELD_ORDER = [
+  "first_name",
+  "middle_name",
+  "last_name",
+  "email",
+  "barangay",
+  "password",
+  "confirmPassword",
+];
 
 const validateField = (name, value, allData) => {
   let error = null;
   switch (name) {
-    case "fullName":
-      if (!value.trim()) error = "Enter your full name.";
+    case "first_name":
+    case "middle_name":
+    case "last_name":
+      error = validateNamePart(value, name);
       break;
     case "email":
       if (!value.trim()) error = "Enter your email address.";
-      else if (!EMAIL_PATTERN.test(value.trim())) error = "Enter a valid email address, like juan@gmail.com.";
+      else if (!EMAIL_PATTERN.test(value.trim()))
+        error = "Enter a valid email address, like juan@gmail.com.";
       break;
     case "barangay":
       // The barangay field only hands over a name picked from the list
@@ -24,7 +37,8 @@ const validateField = (name, value, allData) => {
       break;
     case "password":
       if (!value) error = "Enter a password.";
-      else if (!meetsPasswordRules(value)) error = "Your password needs to meet all 3 rules below.";
+      else if (!meetsPasswordRules(value))
+        error = "Your password needs to meet all 3 rules below.";
       break;
     case "confirmPassword":
       if (!value) error = "Re-enter your password.";
@@ -40,7 +54,9 @@ export function useRegisterForm({ turnstileToken, onResetTurnstile } = {}) {
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
-    fullName: "",
+    first_name: "",
+    middle_name: "",
+    last_name: "",
     email: "",
     barangay: "",
     password: "",
@@ -74,11 +90,17 @@ export function useRegisterForm({ turnstileToken, onResetTurnstile } = {}) {
       setErrors((prevErrors) => {
         const nextErrors = { ...prevErrors };
         if (nextErrors.form) nextErrors.form = null;
-        if (name === "email" && nextErrors.emailTaken) nextErrors.emailTaken = false;
-        if (nextErrors[name]) nextErrors[name] = validateField(name, value, next);
+        if (name === "email" && nextErrors.emailTaken)
+          nextErrors.emailTaken = false;
+        if (nextErrors[name])
+          nextErrors[name] = validateField(name, value, next);
         // Changing the password can fix or break the confirmation
         if (name === "password" && nextErrors.confirmPassword) {
-          nextErrors.confirmPassword = validateField("confirmPassword", next.confirmPassword, next);
+          nextErrors.confirmPassword = validateField(
+            "confirmPassword",
+            next.confirmPassword,
+            next,
+          );
         }
         return nextErrors;
       });
@@ -90,7 +112,10 @@ export function useRegisterForm({ turnstileToken, onResetTurnstile } = {}) {
     (e) => {
       if (!hasSubmitted) return;
       const { name, value } = e.target;
-      setErrors((prev) => ({ ...prev, [name]: validateField(name, value, formData) }));
+      setErrors((prev) => ({
+        ...prev,
+        [name]: validateField(name, value, formData),
+      }));
     },
     [hasSubmitted, formData],
   );
@@ -118,8 +143,22 @@ export function useRegisterForm({ turnstileToken, onResetTurnstile } = {}) {
   };
 
   const confirmRegistration = async () => {
+    if (isSubmitting) return;
+    const nameErrors = {};
+    for (const field of ["first_name", "middle_name", "last_name"]) {
+      const message = validateNamePart(formData[field], field);
+      if (message) nameErrors[field] = message;
+    }
+    if (Object.keys(nameErrors).length) {
+      setFocusTarget(Object.keys(nameErrors)[0]);
+      setErrors(nameErrors);
+      setShowConsentModal(false);
+      return;
+    }
     if (!turnstileToken) {
-      setErrors({ form: "Wait for the security check to finish, then try again." });
+      setErrors({
+        form: "Wait for the security check to finish, then try again.",
+      });
       setShowConsentModal(false);
       return;
     }
@@ -130,7 +169,14 @@ export function useRegisterForm({ turnstileToken, onResetTurnstile } = {}) {
       const { error } = await authClient.signUp.email({
         email: formData.email.trim(),
         password: formData.password,
-        name: formData.fullName.trim(),
+        first_name: normalizeNamePart(formData.first_name),
+        middle_name: normalizeNamePart(formData.middle_name),
+        last_name: normalizeNamePart(formData.last_name),
+        // Better Auth still expects name; the server independently rebuilds it.
+        name: [formData.first_name, formData.middle_name, formData.last_name]
+          .map(normalizeNamePart)
+          .filter(Boolean)
+          .join(" "),
         barangay: formData.barangay,
         fetchOptions: {
           headers: {
@@ -144,20 +190,34 @@ export function useRegisterForm({ turnstileToken, onResetTurnstile } = {}) {
 
         if (error.code === "USER_ALREADY_EXISTS") {
           // Only the email is wrong; the banner offers Sign In and Reset password
-          setErrors({ form: "An account with this email already exists.", emailTaken: true });
+          setErrors({
+            form: "An account with this email already exists.",
+            emailTaken: true,
+          });
           setFocusTarget("email");
+        } else if (error.code === "INVALID_PERSON_NAME") {
+          setErrors({ form: error.message || "Check your name fields." });
+          setFocusTarget("first_name");
         } else if (error.code === "INVALID_BARANGAY") {
           setErrors({ barangay: "Choose your barangay from the list." });
           setFocusTarget("barangay");
         } else if (error.code === "WEAK_PASSWORD") {
-          setErrors({ password: "Your password needs to meet all 3 rules below." });
+          setErrors({
+            password: "Your password needs to meet all 3 rules below.",
+          });
           setFocusTarget("password");
         } else if (error.status === 429) {
-          setErrors({ form: "Too many attempts. Wait 15 minutes, then try again." });
+          setErrors({
+            form: "Too many attempts. Wait 15 minutes, then try again.",
+          });
         } else if (error.status === 403 || error.error === "CAPTCHA_FAILED") {
-          setErrors({ form: "The security check didn't pass. Wait for it to finish again, then try." });
+          setErrors({
+            form: "The security check didn't pass. Wait for it to finish again, then try.",
+          });
         } else {
-          setErrors({ form: "We couldn't create your account. Check your connection and try again." });
+          setErrors({
+            form: "We couldn't create your account. Check your connection and try again.",
+          });
         }
 
         onResetTurnstile?.();
@@ -172,7 +232,9 @@ export function useRegisterForm({ turnstileToken, onResetTurnstile } = {}) {
       }
     } catch (err) {
       if (import.meta.env.DEV) console.error("Registration exception:", err);
-      setErrors({ form: "We couldn't create your account. Check your connection and try again." });
+      setErrors({
+        form: "We couldn't create your account. Check your connection and try again.",
+      });
       onResetTurnstile?.();
       setShowConsentModal(false);
     } finally {
@@ -181,8 +243,10 @@ export function useRegisterForm({ turnstileToken, onResetTurnstile } = {}) {
   };
 
   const getInputClass = (fieldName) => {
-    const baseClass = "w-full px-4 py-3 rounded-xl border outline-none transition-colors placeholder:text-gray-500";
-    const hasError = errors[fieldName] || (fieldName === "email" && errors.emailTaken);
+    const baseClass =
+      "w-full px-4 py-3 rounded-xl border outline-none transition-colors placeholder:text-gray-500";
+    const hasError =
+      errors[fieldName] || (fieldName === "email" && errors.emailTaken);
     return `${baseClass} ${
       hasError
         ? "border-red-600 focus:ring-2 focus:ring-red-600 bg-red-50 text-red-900"

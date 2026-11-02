@@ -118,36 +118,69 @@ export default function RegisterForm() {
           </div>
         )}
 
-        <div>
-          <label
-            htmlFor="fullName"
-            className="block text-sm font-semibold text-gray-700 mb-1"
-          >
-            Full Name
-          </label>
-          <input
-            id="fullName"
-            type="text"
-            name="fullName"
-            autoComplete="name"
-            aria-invalid={!!errors.fullName}
-            aria-describedby={errors.fullName ? "fullName-error" : undefined}
-            value={formData.fullName}
-            onChange={actions.handleChange}
-            onBlur={actions.handleBlur}
-            placeholder="e.g. Juan Dela Cruz"
-            className={actions.getInputClass("fullName")}
-            required
-          />
-          {errors.fullName && (
-            <p
-              id="fullName-error"
-              className="text-red-700 text-xs mt-1 font-medium"
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          {[
+            {
+              key: "first_name",
+              label: "First name",
+              autoComplete: "given-name",
+              placeholder: "Juan Miguel",
+            },
+            {
+              key: "middle_name",
+              label: "Middle name (optional)",
+              autoComplete: "additional-name",
+              placeholder: "Santos",
+            },
+            {
+              key: "last_name",
+              label: "Last name",
+              autoComplete: "family-name",
+              placeholder: "Dela Cruz",
+            },
+          ].map((field) => (
+            <div
+              key={field.key}
+              className={field.key === "last_name" ? "sm:col-span-2" : ""}
             >
-              {errors.fullName}
-            </p>
-          )}
+              <label
+                htmlFor={field.key}
+                className="mb-1 block text-sm font-semibold text-gray-700"
+              >
+                {field.label}
+              </label>
+              <input
+                id={field.key}
+                name={field.key}
+                type="text"
+                autoComplete={field.autoComplete}
+                aria-invalid={!!errors[field.key]}
+                aria-describedby={
+                  errors[field.key] ? `${field.key}-error` : "name-help"
+                }
+                value={formData[field.key]}
+                onChange={actions.handleChange}
+                onBlur={actions.handleBlur}
+                placeholder={field.placeholder}
+                maxLength={100}
+                required={field.key !== "middle_name"}
+                className={actions.getInputClass(field.key)}
+              />
+              {errors[field.key] && (
+                <p
+                  id={`${field.key}-error`}
+                  className="mt-1 text-xs font-medium text-red-700"
+                >
+                  {errors[field.key]}
+                </p>
+              )}
+            </div>
+          ))}
         </div>
+        <p id="name-help" className="text-xs text-gray-600">
+          Use your name as it should appear on certificates. Numbers are not
+          allowed. Leave middle name blank if you do not have one.
+        </p>
 
         <div>
           <label

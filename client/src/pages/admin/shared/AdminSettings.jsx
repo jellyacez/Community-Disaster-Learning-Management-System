@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
@@ -12,6 +12,7 @@ import {
 import { authClient } from "../../../lib/auth-client";
 import apiClient from "../../../lib/apiClient";
 import useDocumentTitle from "../../../hooks/useDocumentTitle";
+import { preparePersonName } from "../../../utils/personName";
 
 import SecuritySettings from "../../../components/settings/SecuritySettings";
 import ActiveDevices from "../../../components/settings/ActiveDevices";
@@ -19,7 +20,13 @@ import LoginHistory from "../../../components/settings/LoginHistory";
 
 
 function AdminAccountPreferences({ session }) {
-  const [name, setName] = useState("");
+  const queryClient = useQueryClient();
+  const [names, setNames] = useState({
+    first_name: "",
+    middle_name: "",
+    last_name: "",
+  });
+  const [errors, setErrors] = useState({});
   const [isUpdating, setIsUpdating] = useState(false);
 
   const user = session?.user;
@@ -27,10 +34,14 @@ function AdminAccountPreferences({ session }) {
   const isBarangayAdmin = userRole === "barangay_admin";
 
   useEffect(() => {
-    if (user?.name) {
-      setName(user.name);
-    }
-  }, [user?.name]);
+    // Existing full names cannot reliably be split into name components.
+    setNames({
+      first_name: user?.first_name || "",
+      middle_name: user?.middle_name || "",
+      last_name: user?.last_name || "",
+    });
+    setErrors({});
+  }, [user?.id, user?.first_name, user?.middle_name, user?.last_name]);
 
   const { data: barangays = [] } = useQuery({
     queryKey: ["publicBarangaysList"],
@@ -57,53 +68,107 @@ function AdminAccountPreferences({ session }) {
     return "Municipality of Bacolor (MDRRMO HQ)";
   };
 
-  const handleUpdateProfile = async (e) => {
-    e.preventDefault();
-    const trimmed = name.trim();
-    if (!trimmed) {
-      return toast.error("Display name cannot be empty.");
+  const handleUpdateProfile = async (event) => {
+    event.preventDefault();
+    if (isUpdating || !user?.id) return;
+
+    const { errors: nextErrors, data } = preparePersonName(names);
+    setErrors(nextErrors);
+    if (!data) {
+      document.getElementById(`admin-${Object.keys(nextErrors)[0]}`)?.focus();
+      return;
     }
-    if (trimmed === user?.name) {
-      return toast.error("No changes made to display name.");
+
+    const fields = ["first_name", "middle_name", "last_name"];
+    if (fields.every((field) => data[field] === (user[field] || ""))) {
+      toast("No name changes to save.");
+      return;
     }
 
     setIsUpdating(true);
     try {
-      const { error } = await authClient.updateUser({ name: trimmed });
+      // Sends all components plus the display name. The backend rebuilds name.
+      const { error } = await authClient.updateUser(data);
       if (error) {
         toast.error(error.message || "Failed to update profile.");
-      } else {
-        toast.success("Profile updated successfully!");
+        return;
       }
-    } catch (err) {
-      console.error("Failed to update admin profile:", err);
-      toast.error("Failed to update profile.");
+
+      setNames({
+        first_name: data.first_name,
+        middle_name: data.middle_name,
+        last_name: data.last_name,
+      });
+      queryClient.setQueryData(["session"], (previous) =>
+        previous?.user && String(previous.user.id) === String(user.id)
+          ? { ...previous, user: { ...previous.user, ...data } }
+          : previous,
+      );
+      queryClient.invalidateQueries({ queryKey: ["session"] });
+      toast.success("Profile updated successfully!");
+    } catch {
+      toast.error("Failed to update profile. Check your connection and try again.");
     } finally {
       setIsUpdating(false);
     }
   };
 
   return (
-    <div className="p-6 md:p-8 w-full flex flex-col space-y-2">
-      {/* Display Name Row */}
+    <form onSubmit={handleUpdateProfile} noValidate className="p-6 md:p-8 w-full flex flex-col space-y-2">
+      {/* Structured Name Row */}
       <div className="flex flex-col md:flex-row gap-8 md:gap-16 p-4 -mx-4 rounded-2xl hover:bg-gray-50/80 dark:hover:bg-slate-800/40 transition-colors group">
         <div className="md:w-1/3 shrink-0">
           <h4 className="text-base font-bold text-gray-900 dark:text-slate-100 flex items-center gap-2">
             <HugeiconsIcon icon={UserCircle02Icon} className="w-5 h-5 text-red-500" />
-            <label htmlFor="adminDisplayName">Display Name</label>
+            <span>Your name</span>
           </h4>
-          <p className="text-sm text-gray-500 dark:text-slate-400 mt-1">
-            This is your administrative display name on the portal.
+          <p id="admin-name-help" className="text-sm text-gray-500 dark:text-slate-400 mt-1">
+            Your display name is built from these fields. Numbers are not allowed.
+            Leave middle name blank if you do not have one.
           </p>
+          {!(user?.first_name && user?.last_name) && (
+            <p className="mt-3 rounded-lg bg-amber-50 p-3 text-sm text-amber-950 dark:bg-amber-950/40 dark:text-amber-100">
+              Current name: <strong className="break-words">{user?.name || "Not provided"}</strong>.
+              Enter your name in the separate fields. Your current name stays unchanged until you save.
+            </p>
+          )}
         </div>
-        <div className="md:w-2/3 max-w-md">
-          <input
-            id="adminDisplayName"
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            className="w-full rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800/80 text-gray-900 dark:text-white px-4 py-3 outline-none focus:border-red-400 transition-colors"
-          />
+        <div className="w-full min-w-0 md:w-2/3 max-w-md space-y-4">
+          {[
+            { key: "first_name", label: "First name", autoComplete: "given-name" },
+            { key: "middle_name", label: "Middle name (optional)", autoComplete: "additional-name" },
+            { key: "last_name", label: "Last name", autoComplete: "family-name" },
+          ].map((field) => (
+            <div key={field.key}>
+              <label htmlFor={`admin-${field.key}`} className="mb-1 block text-sm font-semibold text-gray-700 dark:text-slate-200">
+                {field.label}
+              </label>
+              <input
+                id={`admin-${field.key}`} name={field.key} type="text"
+                autoComplete={field.autoComplete} value={names[field.key]}
+                disabled={isUpdating} required={field.key !== "middle_name"} maxLength={100}
+                aria-invalid={Boolean(errors[field.key])}
+                aria-describedby={errors[field.key] ? `admin-${field.key}-error` : "admin-name-help"}
+                onChange={(event) => {
+                  setNames((previous) => ({ ...previous, [field.key]: event.target.value }));
+                  setErrors((previous) => ({ ...previous, [field.key]: undefined }));
+                }}
+                className={`min-h-11 w-full rounded-xl border bg-white dark:bg-slate-800/80 text-gray-900 dark:text-white px-4 py-3 outline-none focus:ring-2 focus:ring-red-500/20 transition-colors disabled:opacity-60 ${
+                  errors[field.key] ? "border-red-600" : "border-gray-200 dark:border-slate-700 focus:border-red-500"
+                }`}
+              />
+              {errors[field.key] && (
+                <p id={`admin-${field.key}-error`} role="alert" className="mt-1 text-xs text-red-700 dark:text-red-300">
+                  {errors[field.key]}
+                </p>
+              )}
+            </div>
+          ))}
+          <p className="text-xs text-gray-500 dark:text-slate-400">
+            Display name: <span className="break-words font-semibold text-gray-900 dark:text-white">
+              {preparePersonName(names).data?.name || user?.name || "Complete the fields above"}
+            </span>
+          </p>
         </div>
       </div>
 
@@ -162,17 +227,17 @@ function AdminAccountPreferences({ session }) {
         <div className="md:w-1/3 shrink-0"></div>
         <div className="md:w-2/3 max-w-md flex justify-end">
           <button
-            onClick={handleUpdateProfile}
-            disabled={isUpdating}
+            type="submit"
+            disabled={isUpdating || !user?.id}
             className={`flex items-center justify-center rounded-xl px-6 py-2.5 text-sm font-bold text-white transition-colors active:scale-95 ${
-              isUpdating ? "bg-red-400 cursor-not-allowed" : "bg-red-600 hover:bg-red-700"
+              isUpdating ? "bg-red-400 cursor-not-allowed" : "bg-red-600 hover:bg-red-700 cursor-pointer"
             }`}
           >
             {isUpdating ? "Saving..." : "Save Changes"}
           </button>
         </div>
       </div>
-    </div>
+    </form>
   );
 }
 

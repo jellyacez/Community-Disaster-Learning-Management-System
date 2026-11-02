@@ -1,10 +1,11 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useId } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   MoreHorizontalIcon,
   Archive02Icon,
   UserBlock01Icon,
 } from "@hugeicons/core-free-icons";
+import { authClient } from "../../../../../lib/auth-client";
 import StatusBadge from "../../../../../components/ui/StatusBadge";
 import { SkeletonTableRow } from "../../../../../components/ui/Skeleton";
 import AdminTablePagination from "../../../../../components/ui/pagination/AdminTablePagination";
@@ -14,6 +15,7 @@ export default function ResidentRegistryTable({
   meta = { total: 0, page: 1, limit: 10, totalPages: 1 },
   isLoading = false,
   isError = false,
+  isActionPending = false,
   page = 1,
   limit = 10,
   onPageChange,
@@ -22,6 +24,38 @@ export default function ResidentRegistryTable({
 }) {
   const [openDropdownId, setOpenDropdownId] = useState(null);
   const dropdownRef = useRef(null);
+  const { data: session, isPending: isSessionPending } = authClient.useSession();
+  const currentUser = session?.user;
+  const reasonIdPrefix = useId();
+
+  const getActionDisabledReason = (resident, action) => {
+    if (isActionPending) return "Another account action is in progress.";
+    if (isSessionPending) return "Checking your account permissions…";
+    if (!currentUser?.id) return "Sign in to manage resident accounts.";
+    const targetId = resident.id || resident._id;
+    if (!targetId) return "This account has no valid user ID.";
+    if (String(targetId) === String(currentUser.id)) {
+      return "You cannot manage your own account here.";
+    }
+    if (!resident.role) {
+      return "Account role unavailable. Its permissions cannot be verified.";
+    }
+    // Match the resident-only restriction in the barangay ban handler.
+    // Never infer a role from a person's barangay membership or display name.
+    if (resident.role !== "resident") {
+      return "This action is for residents only. Administrator accounts are protected.";
+    }
+    if (currentUser.role === "barangay_admin") {
+      if (!currentUser.barangay_id) return "Your account has no assigned barangay.";
+      if (resident.barangay_id != null &&
+          String(resident.barangay_id) !== String(currentUser.barangay_id)) {
+        return "You can only manage residents in your assigned barangay.";
+      }
+    }
+    if (action === "archive" && resident.archived) return "This resident is already archived.";
+    return "";
+  };
+
 
   // Close dropdown menu on outside click
   useEffect(() => {
@@ -68,6 +102,13 @@ export default function ResidentRegistryTable({
               residents.map((r) => {
                 const residentId = r.id || r._id;
                 const isDropdownOpen = openDropdownId === residentId;
+                const banAction = r.banned ? "unban" : "ban";
+                const banDisabledReason = getActionDisabledReason(r, banAction);
+                const archiveDisabledReason = getActionDisabledReason(r, "archive");
+                const isArchiveDisabled = Boolean(archiveDisabledReason);
+                const archiveReasonId = `${reasonIdPrefix}-archive-${residentId}`;
+                const isBanDisabled = Boolean(banDisabledReason);
+                const banReasonId = `${reasonIdPrefix}-ban-${residentId}`;
 
                 return (
                   <tr key={residentId} className="hover:bg-gray-50/60 dark:hover:bg-slate-800/40 transition-colors">
@@ -131,31 +172,57 @@ export default function ResidentRegistryTable({
                           <div className="px-3 py-1.5 border-b border-gray-50 dark:border-slate-800 mb-1">
                             <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-slate-500">Manage Resident</p>
                           </div>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              onOpenActionModal(residentId, "archive");
-                              setOpenDropdownId(null);
-                            }}
-                            className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-gray-700 dark:text-slate-200 hover:bg-gray-50 dark:hover:bg-slate-800 rounded-lg transition-colors cursor-pointer"
-                          >
-                            <HugeiconsIcon icon={Archive02Icon} size={16} />
-                            <span>Archive Record</span>
-                          </button>
-                          
+                          <div title={archiveDisabledReason || "Archive this resident"} className={isArchiveDisabled ? "cursor-not-allowed" : ""}>
+                            <button
+                              type="button"
+                              disabled={isArchiveDisabled}
+                              aria-describedby={isArchiveDisabled ? archiveReasonId : undefined}
+                              onClick={() => {
+                                if (getActionDisabledReason(r, "archive")) return;
+                                onOpenActionModal(residentId, "archive");
+                                setOpenDropdownId(null);
+                              }}
+                              className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-gray-700 dark:text-slate-200 enabled:hover:bg-gray-50 dark:enabled:hover:bg-slate-800 rounded-lg transition-colors cursor-pointer disabled:cursor-not-allowed disabled:opacity-40"
+                            >
+                              <HugeiconsIcon icon={Archive02Icon} size={16} />
+                              <span>Archive Record</span>
+                            </button>
+                            {isArchiveDisabled && (
+                              <p id={archiveReasonId} className="px-3 pb-2 text-xs leading-relaxed text-gray-500 dark:text-slate-400">{archiveDisabledReason}</p>
+                            )}
+                          </div>
+
                           <div className="my-1 border-t border-gray-100 dark:border-slate-800" />
 
-                          <button
-                            type="button"
-                            onClick={() => {
-                              onOpenActionModal(residentId, "ban");
-                              setOpenDropdownId(null);
-                            }}
-                            className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-lg transition-colors cursor-pointer"
+                          <div
+                            title={banDisabledReason || (r.banned ? "Remove this resident’s ban" : "Ban this resident")}
+                            className={isBanDisabled ? "cursor-not-allowed" : ""}
                           >
-                            <HugeiconsIcon icon={UserBlock01Icon} size={16} />
-                            <span>Ban Resident</span>
-                          </button>
+                            <button
+                              type="button"
+                              disabled={isBanDisabled}
+                              aria-describedby={isBanDisabled ? banReasonId : undefined}
+                              onClick={() => {
+                                // Check again before opening, including programmatic calls.
+                                if (getActionDisabledReason(r, banAction)) return;
+                                onOpenActionModal(residentId, banAction);
+                                setOpenDropdownId(null);
+                              }}
+                              className={`w-full flex items-center gap-2 px-3 py-2.5 text-sm rounded-lg transition-colors cursor-pointer disabled:cursor-not-allowed disabled:opacity-40 ${
+                                r.banned
+                                  ? "text-emerald-700 dark:text-emerald-400 enabled:hover:bg-emerald-50 dark:enabled:hover:bg-emerald-950/30"
+                                  : "text-red-600 dark:text-red-400 enabled:hover:bg-red-50 dark:enabled:hover:bg-red-950/30"
+                              }`}
+                            >
+                              <HugeiconsIcon icon={UserBlock01Icon} size={16} />
+                              <span>{r.banned ? "Unban Resident" : "Ban Resident"}</span>
+                            </button>
+                            {isBanDisabled && (
+                              <p id={banReasonId} className="px-3 pb-2 text-xs leading-relaxed text-gray-500 dark:text-slate-400">
+                                {banDisabledReason}
+                              </p>
+                            )}
+                          </div>
                         </div>
                       )}
                     </td>
