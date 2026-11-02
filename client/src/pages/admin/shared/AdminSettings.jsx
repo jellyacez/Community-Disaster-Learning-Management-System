@@ -12,11 +12,11 @@ import {
 import { authClient } from "../../../lib/auth-client";
 import apiClient from "../../../lib/apiClient";
 import useDocumentTitle from "../../../hooks/useDocumentTitle";
-<<<<<<< HEAD
+
 import { preparePersonName } from "../../../utils/personName";
-=======
+
 import { useMfaEnabled } from "../../../hooks/useMfaEnabled";
->>>>>>> f2f27ed7ecf2507637f47401fe7259b7a53a8eab
+
 
 import SecuritySettings from "../../../components/settings/SecuritySettings";
 import ActiveDevices from "../../../components/settings/ActiveDevices";

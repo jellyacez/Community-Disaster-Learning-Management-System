@@ -231,8 +231,5 @@ const auth = betterAuth({
   autoSignIn: true,
 });
 
-<<<<<<< HEAD
 
-=======
->>>>>>> f2f27ed7ecf2507637f47401fe7259b7a53a8eab
 module.exports = { auth };
