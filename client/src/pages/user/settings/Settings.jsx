@@ -1,6 +1,7 @@
 // --- START: UserSettings.jsx ---
 import { useOutletContext } from "react-router-dom";
 import useDocumentTitle from "../../../hooks/useDocumentTitle";
+import { useMfaEnabled } from "../../../hooks/useMfaEnabled";
 import ProfilePreferences from "../../../components/settings/ProfilePreferences";
 import SecuritySettings from "../../../components/settings/SecuritySettings";
 import ActiveDevices from "../../../components/settings/ActiveDevices";
@@ -14,6 +15,7 @@ import LoginHistory from "../../../components/settings/LoginHistory";
 export default function UserSettings() {
   useDocumentTitle("Settings | Bacolor Disaster LMS");
   const { currentUser } = useOutletContext();
+  const mfaEnabled = useMfaEnabled();
 
   return (
     <div className="animate-in fade-in duration-300 w-full pb-12 transition-colors">
@@ -45,7 +47,7 @@ export default function UserSettings() {
           </h2>
           <div className="rounded-3xl border border-gray-100 dark:border-slate-800/80 bg-white dark:bg-slate-900 shadow-sm overflow-hidden divide-y divide-gray-100 dark:divide-slate-800/80 transition-colors">
             <SecuritySettings />
-            <TwoFactorSettings />
+            {mfaEnabled && <TwoFactorSettings />}
             <ActiveDevices />
             <LoginHistory />
           </div>

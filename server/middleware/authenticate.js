@@ -1,7 +1,7 @@
 const { auth } = require("../utils/auth");
 const pool = require("../config/db");
 const { logError } = require("../utils/logger");
-const { MFA_REQUIRED_ROLES } = require("../config/permissions");
+const { MFA_REQUIRED_ROLES, isMfaEnforced } = require("../config/permissions");
 
 // Helper to safely parse cookies from header if cookie-parser is not globally loaded
 const parseCookies = (req) => {
@@ -67,11 +67,8 @@ const authenticate = async (req, res, next) => {
     }
 
     // MFA Enforcement explicitly applies only to MFA_REQUIRED_ROLES subset
-    if (MFA_REQUIRED_ROLES.includes(session.user.role)) {
-      const mfaBypass =
-        process.env.DISABLE_MFA === "true" &&
-        ["development", "test", "staging"].includes(process.env.NODE_ENV);
-      if (!session.user.twoFactorEnabled && !mfaBypass) {
+    if (isMfaEnforced() && MFA_REQUIRED_ROLES.includes(session.user.role)) {
+      if (!session.user.twoFactorEnabled) {
         return res.status(403).json({
           error: "MFA_REQUIRED",
           message: "Multi-Factor Authentication is mandatory for this role.",

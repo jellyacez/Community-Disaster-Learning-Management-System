@@ -8,6 +8,7 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import { ArrowRight01Icon } from "@hugeicons/core-free-icons";
 
 import useDocumentTitle from "../../hooks/useDocumentTitle";
+import { useMfaEnabled } from "../../hooks/useMfaEnabled";
 import LandingNavbar from "../../components/ui/landing/LandingNavbar";
 import LandingHero from "../../components/ui/landing/LandingHero";
 import LandingHazards from "../../components/ui/landing/LandingHazards";
@@ -21,6 +22,7 @@ export default function LandingPage() {
   const navigate = useNavigate();
   const reduceMotion = useReducedMotion();
   const { data: session, isPending } = authClient.useSession();
+  const mfaEnabled = useMfaEnabled();
 
   useEffect(() => {
     if (sessionStorage.getItem("isLoggingOut") === "true") {
@@ -38,9 +40,7 @@ export default function LandingPage() {
         "mdrrmo_admin",
         "barangay_admin",
       ].includes(userRole);
-      const mfaBypass = import.meta.env.VITE_DISABLE_MFA === "true";
-
-      if (isAdmin && !session.user.twoFactorEnabled && !mfaBypass) {
+      if (mfaEnabled === true && isAdmin && !session.user.twoFactorEnabled) {
         navigate("/admin/mfa-setup", { replace: true });
         return;
       }
@@ -72,7 +72,7 @@ export default function LandingPage() {
           }
         });
     }
-  }, [session, isPending, navigate]);
+  }, [session, isPending, navigate, mfaEnabled]);
 
   return (
     <MotionConfig reducedMotion="user">

@@ -5,7 +5,7 @@ import { Mail01Icon, ArrowLeft01Icon } from "@hugeicons/core-free-icons";
 import useDocumentTitle from "../../hooks/useDocumentTitle";
 
 export default function VerifyEmailPromptPage() {
-  useDocumentTitle("Check Your Email | Bacolor Disaster LMS");
+  useDocumentTitle("Account Created | Bacolor Disaster LMS");
 
   const location = useLocation();
   const email = location.state?.email;
@@ -22,20 +22,19 @@ export default function VerifyEmailPromptPage() {
         </div>
 
         <h1 className="text-2xl font-extrabold text-gray-900 mb-2">
-          Verify Your Email
+          Account Created
         </h1>
 
         <p className="text-gray-600 mb-6 leading-relaxed">
-          We've sent a verification link to <br />
+          Your account is ready for <br />
           <span className="font-bold text-gray-900">{email}</span>
         </p>
 
         <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 mb-8 text-sm text-blue-800 text-left">
           <p className="font-semibold mb-1">Next Steps:</p>
           <ul className="list-disc pl-5 space-y-1">
-            <li>Open your email inbox</li>
-            <li>Click the verification link we sent you</li>
-            <li>You will be automatically logged in!</li>
+            <li>Sign in with this email and your password</li>
+            <li>Open the module catalog to start your training</li>
           </ul>
         </div>
 

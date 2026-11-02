@@ -10,6 +10,7 @@ const {
 } = require("./emailTemplates");
 const { securityHooksPlugin } = require("./authHooks");
 const { getOrgSettings } = require("./settings");
+const { isMfaEnforced } = require("../config/permissions");
 
 const parseSecrets = () => {
   if (process.env.BETTER_AUTH_SECRETS) {
@@ -113,7 +114,7 @@ const auth = betterAuth({
       await transporter.sendMail(mailOptions);
     },
   },
-  /*emailVerification: {
+  emailVerification: {
     sendOnSignUp: false, // Disabled for development
     autoSignInAfterVerification: true,
     sendVerificationEmail: async ({ user, token }) => {
@@ -126,7 +127,7 @@ const auth = betterAuth({
       );
       await transporter.sendMail(mailOptions);
     },
-  },*/
+  },
   user: {
     additionalFields: {
       // Nullable for existing accounts and Google sign-in. Email signup is
@@ -137,6 +138,7 @@ const auth = betterAuth({
       barangay_id: {
         type: "number",
         required: false,
+        input: false,
       },
       role: {
         type: "string",
@@ -156,6 +158,7 @@ const auth = betterAuth({
         type: "boolean",
         required: false,
         defaultValue: false,
+        input: false,
       },
     },
   },
@@ -174,25 +177,44 @@ const auth = betterAuth({
         resident: {},
       },
     }),
+    // Registered only with MFA_ENABLED=true, so the 2FA endpoints and sign-in challenge follow the same flag
+    ...(isMfaEnforced()
+      ? [
+          twoFactor({
+            otpOptions: {
+              sendOTP: async ({ user, otp }) => {
+                const { orgFooterText, supportEmail } = await getOrgSettings();
+                const mailOptions = getOTPEmail(
+                  user,
+                  otp,
+                  orgFooterText,
+                  supportEmail,
+                );
+                await transporter.sendMail(mailOptions);
+              },
+            },
+          }),
+        ]
+      : []),
   ],
-advanced: {
-  ...(process.env.NODE_ENV === "production"
-    ? {
-        useSecureCookies: false,
-        cookiePrefix: "__Host-better-auth",
-        defaultCookieAttributes: {
-          secure: true,
-          path: "/",
-          sameSite: "lax",
-          httpOnly: true,
-        },
-      }
-    : {}),
+  advanced: {
+    ...(process.env.NODE_ENV === "production"
+      ? {
+          useSecureCookies: false,
+          cookiePrefix: "__Host-better-auth",
+          defaultCookieAttributes: {
+            secure: true,
+            path: "/",
+            sameSite: "lax",
+            httpOnly: true,
+          },
+        }
+      : {}),
 
-  ipAddress: {
-    ipAddressHeaders: ["x-forwarded-for"],
+    ipAddress: {
+      ipAddressHeaders: ["x-forwarded-for"],
+    },
   },
-},
   trustedOrigins: (() => {
     if (process.env.NODE_ENV === "production") {
       if (!process.env.FRONTEND_URL) {
@@ -209,5 +231,8 @@ advanced: {
   autoSignIn: true,
 });
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> f2f27ed7ecf2507637f47401fe7259b7a53a8eab
 module.exports = { auth };

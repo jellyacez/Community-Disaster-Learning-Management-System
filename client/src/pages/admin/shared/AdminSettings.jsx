@@ -12,7 +12,11 @@ import {
 import { authClient } from "../../../lib/auth-client";
 import apiClient from "../../../lib/apiClient";
 import useDocumentTitle from "../../../hooks/useDocumentTitle";
+<<<<<<< HEAD
 import { preparePersonName } from "../../../utils/personName";
+=======
+import { useMfaEnabled } from "../../../hooks/useMfaEnabled";
+>>>>>>> f2f27ed7ecf2507637f47401fe7259b7a53a8eab
 
 import SecuritySettings from "../../../components/settings/SecuritySettings";
 import ActiveDevices from "../../../components/settings/ActiveDevices";
@@ -284,6 +288,7 @@ function AdminTwoFactorStatus({ session }) {
 export default function AdminSettings() {
   useDocumentTitle("Settings | DRRM Portal");
   const { data: session } = authClient.useSession();
+  const mfaEnabled = useMfaEnabled();
 
   return (
     <div className="animate-in fade-in duration-300 w-full pb-12 transition-colors">
@@ -314,7 +319,7 @@ export default function AdminSettings() {
           </h2>
           <div className="rounded-3xl border border-gray-100 dark:border-slate-800/80 bg-white dark:bg-slate-900 shadow-sm overflow-hidden divide-y divide-gray-100 dark:divide-slate-800/80 transition-colors">
             <SecuritySettings />
-            <AdminTwoFactorStatus session={session} />
+            {mfaEnabled && <AdminTwoFactorStatus session={session} />}
             <ActiveDevices />
             <LoginHistory />
           </div>
