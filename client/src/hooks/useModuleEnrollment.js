@@ -3,6 +3,9 @@ import apiClient from "../lib/apiClient";
 import toast from "react-hot-toast";
 import { useQueryClient } from "@tanstack/react-query";
 
+// Problems with the code itself are shown inline by the code modal instead of as a toast
+const CODE_ERRORS = ["INVALID_ENROLLMENT_CODE", "ENROLLMENT_CODE_REQUIRED", "TOO_MANY_ATTEMPTS"];
+
 export function useModuleEnrollment({
   moduleId,
   moduleTitle,
@@ -14,18 +17,20 @@ export function useModuleEnrollment({
   const isEnrollingRef = useRef(false);
   const queryClient = useQueryClient();
 
-  const handleEnroll = useCallback(async () => {
-    if (isEnrollingRef.current) return;
+  // Resolves to { success, message? } so the caller can show a wrong-code error inline
+  const handleEnroll = useCallback(async (code) => {
+    if (isEnrollingRef.current) return { success: false };
     isEnrollingRef.current = true;
     setIsEnrolling(true);
 
-    // Optimistically update the UI instantly
-    setLocalEnrolled(true);
+    // Guard against being used directly as an onClick handler (code would be an event object)
+    const submittedCode = typeof code === "string" ? code : undefined;
 
     try {
-      const response = await apiClient.post(`/modules/${moduleId}/enroll`);
+      const response = await apiClient.post(`/modules/${moduleId}/enroll`, { code: submittedCode });
 
       if (response.data.success) {
+        setLocalEnrolled(true);
         toast.success(
           `Enrollment Success! You are now enrolled in ${moduleTitle}.`,
         );
@@ -49,18 +54,18 @@ export function useModuleEnrollment({
         }
 
         if (onEnrollSuccess) onEnrollSuccess(moduleId);
-      } else {
-        // Rollback if the server indicates failure despite a 200 OK
-        setLocalEnrolled(false);
+        return { success: true };
       }
+      return { success: false };
     } catch (error) {
-      // Rollback on error
-      setLocalEnrolled(false);
       console.error("Enrollment error:", error);
-      toast.error(
-        error.response?.data?.message ||
-          "Failed to enroll in module. Please try again.",
-      );
+      const data = error.response?.data;
+      // Only suppress the toast when a code was actually sent (the code modal shows the message)
+      if (submittedCode && CODE_ERRORS.includes(data?.code)) {
+        return { success: false, message: data.message };
+      }
+      toast.error(data?.message || "Failed to enroll in module. Please try again.");
+      return { success: false, message: data?.message };
     } finally {
       isEnrollingRef.current = false;
       setIsEnrolling(false);

@@ -1,5 +1,6 @@
 const pool = require("../../config/db");
 const { cleanRichText } = require("../../utils/sanitizeHtml");
+const { generateEnrollmentCode, codesMatch } = require("../../utils/enrollmentCode");
 const { UNSCOPED_ACCESS_ROLES } = require("../../config/permissions");
 
 const MODULE_STATUSES = new Set(["draft", "pending_review", "published", "rejected", "archived"]);
@@ -325,9 +326,9 @@ class ModuleService {
       await client.query("BEGIN");
 
       const moduleCreation = await client.query(
-        `INSERT INTO public.module_data (modname, modcat, description, level, duration, video_url, image_url, status, author_id)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING mod_id`,
-        [moduleName, moduleCategory, safeDescription, level, duration, video_url, image_url, status || 'draft', author_id || null]
+        `INSERT INTO public.module_data (modname, modcat, description, level, duration, video_url, image_url, status, author_id, enrollment_code)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING mod_id`,
+        [moduleName, moduleCategory, safeDescription, level, duration, video_url, image_url, status || 'draft', author_id || null, generateEnrollmentCode()]
       );
       const mod_id = moduleCreation.rows[0].mod_id;
 
@@ -538,6 +539,33 @@ class ModuleService {
        ON CONFLICT (user_id, mod_id) DO NOTHING`,
       [user_id, mod_id]
     );
+  }
+
+  // --- Enrollment codes (kept out of getModuleById so the code never travels with general module objects) ---
+  async verifyEnrollmentCode(mod_id, submitted) {
+    const { rows } = await pool.query(
+      "SELECT enrollment_code FROM public.module_data WHERE mod_id = $1",
+      [mod_id]
+    );
+    return codesMatch(rows[0]?.enrollment_code, submitted);
+  }
+
+  async getEnrollmentCode(mod_id) {
+    const { rows } = await pool.query(
+      "SELECT enrollment_code FROM public.module_data WHERE mod_id = $1",
+      [mod_id]
+    );
+    return rows[0] || null;
+  }
+
+  // Also updates any draft revision cloned from this module, so approving it later doesn't bring back an old code
+  async regenerateEnrollmentCode(mod_id) {
+    const code = generateEnrollmentCode();
+    await pool.query(
+      "UPDATE public.module_data SET enrollment_code = $1 WHERE mod_id = $2 OR parent_mod_id = $2",
+      [code, mod_id]
+    );
+    return code;
   }
 
   async getEnrollmentData(user_id, mod_id) {

@@ -1,4 +1,4 @@
-import { memo } from "react";
+import { memo, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { authClient } from "../../../lib/auth-client";
@@ -13,6 +13,7 @@ import { useModuleEnrollment } from "../../../hooks/useModuleEnrollment";
 import DOMPurify from "dompurify";
 import toast from "react-hot-toast";
 import { decodeHtml } from "../../../utils/textUtils";
+import EnrollCodeModal from "../modals/EnrollCodeModal.jsx";
 
 const getCategoryIcon = (category) => {
   const cat = (category || "").toLowerCase();
@@ -30,6 +31,7 @@ const ModuleCard = memo(function ModuleCard({
   onEnrollSuccess,
   onManageClick,
   onEnrollClick,
+  onShowCodeClick,
 }) {
   const navigate = useNavigate();
   const location = useLocation();
@@ -37,6 +39,8 @@ const ModuleCard = memo(function ModuleCard({
   const userRole = session?.user?.role;
   // On learner pages an admin role can only be a super_admin impersonating a resident
   const isAdmin = userRole && ADMIN_ROLES.includes(userRole) && !location.pathname.startsWith("/user");
+  // Enrollment codes are for the roles that create modules; the parent page only passes onShowCodeClick to them
+  const canShowCode = Boolean(onShowCodeClick) && ["mdrrmo_admin", "super_admin"].includes(userRole);
 
   const isCompleted =
     enrolled && (module.progress === 100 || module.status === "Completed");
@@ -47,6 +51,16 @@ const ModuleCard = memo(function ModuleCard({
     initialEnrolled: enrolled,
     onEnrollSuccess,
   });
+
+  // Used only when the parent doesn't supply its own onEnrollClick
+  const [showCodeModal, setShowCodeModal] = useState(false);
+  const [codeError, setCodeError] = useState("");
+  const handleCodeSubmit = async (code) => {
+    setCodeError("");
+    const result = await handleEnroll(code);
+    if (result?.success) setShowCodeModal(false);
+    else if (result?.message) setCodeError(result.message);
+  };
 
   // An enrollment on an archived version can't be opened; send learners to the updated module
   const isRetired = localEnrolled && !isAdminView && module.module_status === "archived";
@@ -130,7 +144,8 @@ const ModuleCard = memo(function ModuleCard({
     if (onEnrollClick) {
       return onEnrollClick(module);
     }
-    handleEnroll();
+    setCodeError("");
+    setShowCodeModal(true);
   };
 
   const isRejected = isAdminView && module.status === "draft" && module.rejection_reason;
@@ -385,6 +400,18 @@ const ModuleCard = memo(function ModuleCard({
                 >
                   View Details
                 </button>
+                {canShowCode && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onShowCodeClick(module);
+                    }}
+                    title="View or regenerate the enrollment code"
+                    className="flex-1 rounded-xl border border-gray-200 px-2 sm:px-4 py-2.5 text-xs sm:text-sm font-bold text-gray-700 hover:bg-gray-50 transition cursor-pointer truncate"
+                  >
+                    Enroll Code
+                  </button>
+                )}
               </>
             )
           ) : (
@@ -410,6 +437,16 @@ const ModuleCard = memo(function ModuleCard({
           )}
         </div>
       </div>
+
+      <EnrollCodeModal
+        isOpen={showCodeModal}
+        moduleTitle={decodeHtml(module.title)}
+        onClose={() => !isEnrolling && setShowCodeModal(false)}
+        onSubmit={handleCodeSubmit}
+        isLoading={isEnrolling}
+        error={codeError}
+        onInputChange={() => codeError && setCodeError("")}
+      />
     </div>
   );
 });
