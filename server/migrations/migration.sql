@@ -9,3 +9,8 @@ WHERE table_schema = 'public'
     'last_name'
   )
 ORDER BY column_name;
+ALTER TABLE public.module_data
+  ADD COLUMN IF NOT EXISTS enrollment_code VARCHAR(12);
+UPDATE public.module_data
+SET enrollment_code = upper(substr(md5(random()::text || mod_id::text), 1, 6))
+WHERE enrollment_code IS NULL;
