@@ -12,8 +12,21 @@ function isUnscopedRole(role) {
 // @access  Private (admin only — actor must strictly outrank target)
 exports.archiveUser = async (req, res) => {
   const { id } = req.params;
-  const archived = req.body.archived === true || req.body.archived === "true";
+
   try {
+    const requestedStatus = req.body?.archived;
+
+    if (![true, false, "true", "false"].includes(requestedStatus)) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Send archived: true to archive or archived: false to restore.",
+      });
+    }
+
+    const archived =
+      requestedStatus === true || requestedStatus === "true";
+
     const adminContext = req.user;
 
     let targetQuery = 'SELECT id, role, email FROM "user" WHERE id = $1';

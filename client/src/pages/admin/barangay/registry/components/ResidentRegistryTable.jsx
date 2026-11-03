@@ -104,7 +104,8 @@ export default function ResidentRegistryTable({
                 const isDropdownOpen = openDropdownId === residentId;
                 const banAction = r.banned ? "unban" : "ban";
                 const banDisabledReason = getActionDisabledReason(r, banAction);
-                const archiveDisabledReason = getActionDisabledReason(r, "archive");
+                const archiveAction = r.archived ? "restore" : "archive";
+                const archiveDisabledReason = getActionDisabledReason(r, archiveAction);
                 const isArchiveDisabled = Boolean(archiveDisabledReason);
                 const archiveReasonId = `${reasonIdPrefix}-archive-${residentId}`;
                 const isBanDisabled = Boolean(banDisabledReason);
@@ -172,27 +173,42 @@ export default function ResidentRegistryTable({
                           <div className="px-3 py-1.5 border-b border-gray-50 dark:border-slate-800 mb-1">
                             <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-slate-500">Manage Resident</p>
                           </div>
-                          <div title={archiveDisabledReason || "Archive this resident"} className={isArchiveDisabled ? "cursor-not-allowed" : ""}>
+                          <div
+                            title={
+                              archiveDisabledReason ||
+                              (r.archived ? "Restore this resident" : "Archive this resident")
+                            }
+                            className={isArchiveDisabled ? "cursor-not-allowed" : ""}
+                          >
                             <button
                               type="button"
                               disabled={isArchiveDisabled}
                               aria-describedby={isArchiveDisabled ? archiveReasonId : undefined}
                               onClick={() => {
-                                if (getActionDisabledReason(r, "archive")) return;
-                                onOpenActionModal(residentId, "archive");
+                                if (getActionDisabledReason(r, archiveAction)) return;
+
+                                onOpenActionModal(residentId, archiveAction);
                                 setOpenDropdownId(null);
                               }}
-                              className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-gray-700 dark:text-slate-200 enabled:hover:bg-gray-50 dark:enabled:hover:bg-slate-800 rounded-lg transition-colors cursor-pointer disabled:cursor-not-allowed disabled:opacity-40"
+                              className={`w-full flex items-center gap-2 px-3 py-2.5 text-sm rounded-lg transition-colors cursor-pointer disabled:cursor-not-allowed disabled:opacity-40 ${
+                                r.archived
+                                  ? "text-emerald-700 dark:text-emerald-400 enabled:hover:bg-emerald-50 dark:enabled:hover:bg-emerald-950/30"
+                                  : "text-gray-700 dark:text-slate-200 enabled:hover:bg-gray-50 dark:enabled:hover:bg-slate-800"
+                              }`}
                             >
                               <HugeiconsIcon icon={Archive02Icon} size={16} />
-                              <span>Archive Record</span>
+                              <span>{r.archived ? "Restore Record" : "Archive Record"}</span>
                             </button>
+
                             {isArchiveDisabled && (
-                              <p id={archiveReasonId} className="px-3 pb-2 text-xs leading-relaxed text-gray-500 dark:text-slate-400">{archiveDisabledReason}</p>
+                              <p
+                                id={archiveReasonId}
+                                className="px-3 pb-2 text-xs leading-relaxed text-gray-500 dark:text-slate-400"
+                              >
+                                {archiveDisabledReason}
+                              </p>
                             )}
                           </div>
-
-                          <div className="my-1 border-t border-gray-100 dark:border-slate-800" />
 
                           <div
                             title={banDisabledReason || (r.banned ? "Remove this resident’s ban" : "Ban this resident")}

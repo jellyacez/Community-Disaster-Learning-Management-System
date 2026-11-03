@@ -63,24 +63,28 @@ export default function ResidentRegistry() {
 
   const mutation = useMutation({
     mutationFn: async ({ action, userId }) => {
-      if (action === "archive")
-        return apiClient.patch(`/admin/users/${userId}/archive`);
+
+      if (action === "restore") {
+        return apiClient.patch(`/admin/users/${userId}/archive`, {
+          archived: false,
+        });
+      }
+      if (action === "archive") {
+        return apiClient.patch(`/admin/users/${userId}/archive`, {
+          archived: true,
+        });
+      }
       if (action === "ban") {
         return apiClient.patch(`/admin/users/${userId}/ban`, {
           reason: "Banned by barangay administrator",
           expiresAt: null,
         });
       }
-      if (action === "unban") {
-        return apiClient.patch(`/admin/users/${userId}/unban`, {});
-      }
       throw new Error("Unsupported resident action.");
     },
     onSuccess: (_, variables) => {
       toast.success(
-        variables.action === "unban"
-          ? "Resident unbanned successfully."
-          : `Resident ${variables.action === "ban" ? "banned" : "archived"} successfully.`,
+        `Resident ${variables.action === "ban" ? "banned" : "archived"} successfully.`,
       );
       queryClient.invalidateQueries({ queryKey: ["adminResidents"] });
     },
@@ -181,7 +185,6 @@ export default function ResidentRegistry() {
         meta={meta}
         isLoading={isLoading}
         isError={isError}
-        isActionPending={mutation.isPending}
         page={page}
         limit={limit}
         onPageChange={setPage}
@@ -197,13 +200,24 @@ export default function ResidentRegistry() {
             setModalConfig({ isOpen: false, userId: null, action: null });
         }}
         onConfirm={confirmAction}
-        title={`Confirm ${modalConfig.action === "ban" ? "Ban" : modalConfig.action === "unban" ? "Unban" : "Archive"}`}
-        description={modalConfig.action === "unban"
-          ? "Remove this resident’s ban? An archived account will remain archived."
-          : `Are you sure you want to ${modalConfig.action} this resident?` }
-        confirmText={`Yes, ${modalConfig.action}`}
-        cancelText="Cancel"
-        type={modalConfig.action === "ban" ? "danger" : modalConfig.action === "unban" ? "success" : "warning"}
+        title={
+          modalConfig.action === "restore"
+            ? "Restore resident?"
+            : modalConfig.action === "ban"
+              ? "Ban resident?"
+              : "Archive resident?"
+        }
+        description={
+          modalConfig.action === "restore"
+            ? "Restore this resident’s account from the archive? Any existing ban will remain."
+            : `Are you sure you want to ${modalConfig.action} this resident?`
+        }
+        confirmText={
+          modalConfig.action === "restore"
+            ? "Restore account"
+            : `Yes, ${modalConfig.action}`
+        }
+        type={modalConfig.action === "restore" ? "success" : "warning"}
         isLoading={mutation.isPending}
       />
     </div>
