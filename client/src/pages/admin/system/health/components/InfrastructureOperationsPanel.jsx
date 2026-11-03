@@ -156,11 +156,11 @@ export default function InfrastructureOperationsPanel() {
         }
         isLoading={isDownloadingBackup}
         title="Download Database Backup?"
-        description="Enter your own account password to authorize this download. The backup uses the designated recovery password configured on the server."
+        description="Enter your own account password to authorize this download. The ZIP uses the designated recovery password configured on the server."
         confirmText="Download ZIP"
         type="warning"
       >
-        <label className="block text-sm">
+        <label className="block text-sm text-gray-700 dark:text-slate-200">
           Your account password
           <input
             type="password"
@@ -168,14 +168,14 @@ export default function InfrastructureOperationsPanel() {
             disabled={isDownloadingBackup}
             value={accountPassword}
             onChange={(e) => setAccountPassword(e.target.value)}
-            className="mt-2 w-full rounded border p-2"
+            className="mt-2 w-full rounded-lg border border-gray-300 bg-white p-2 text-gray-900 dark:border-slate-600 dark:bg-slate-800 dark:text-white"
           />
         </label>
       </ConfirmationModal>
       <button
         type="button"
         onClick={() => setShowRestore(true)}
-        className="mt-4 cursor-pointer rounded-xl border p-3 text-white bg-red-600  border-transparent hover:bg-red-900 hover:border-red-900"
+        className="mt-4 rounded-xl border border-red-300 p-3 text-red-700"
       >
         Restore encrypted database backup
       </button>
@@ -521,7 +521,7 @@ function RestoreBackupDialog({ isRestoring, onRestore, onClose }) {
               <button
                 type="submit"
                 disabled={isRestoring}
-                className="min-h-11 cursor-pointer rounded-xl bg-red-700 px-5 py-2.5 text-sm font-semibold text-white hover:bg-red-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600 disabled:cursor-wait disabled:opacity-60"
+                className="min-h-11 rounded-xl bg-red-700 px-5 py-2.5 text-sm font-semibold text-white hover:bg-red-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600 disabled:cursor-wait disabled:opacity-60"
               >
                 {isRestoring ? "Restoring…" : "Restore database"}
               </button>
