@@ -2,6 +2,7 @@ const pool = require("../../config/db");
 const { cleanRichText } = require("../../utils/sanitizeHtml");
 const { generateEnrollmentCode, codesMatch } = require("../../utils/enrollmentCode");
 const { UNSCOPED_ACCESS_ROLES } = require("../../config/permissions");
+const sseService = require("../notif/sseService");
 
 const MODULE_STATUSES = new Set(["draft", "pending_review", "published", "rejected", "archived"]);
 
@@ -978,14 +979,27 @@ class ModuleService {
     );
 
     // Optional notification insertion
-    await pool.query(
+    const notified = await pool.query(
       `INSERT INTO public.user_notification (user_id, type, message) VALUES ($1::text, $2, $3)`,
       [
         reqData.user_id,
         "code_approved",
         `Your request for "${reqData.module_title}" has been approved. Your code is: ${reqData.enrollment_code}`
       ]
-    ).catch(() => {});
+    ).then(() => true).catch(() => false);
+
+    // Push it live so the learner sees it without refreshing (same event the module approval flow uses)
+    if (notified) {
+      try {
+        sseService.broadcastWhere(
+          (client) => String(client.userId) === String(reqData.user_id),
+          "USER_NOTIFICATION",
+          {},
+        );
+      } catch (err) {
+        console.warn("Could not push code-approved notification live:", err.message);
+      }
+    }
 
     return reqData.enrollment_code;
   }
