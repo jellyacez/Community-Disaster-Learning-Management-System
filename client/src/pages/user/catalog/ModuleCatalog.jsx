@@ -12,7 +12,7 @@ import ModuleSkeleton from "../../../components/ui/modules/ModuleSkeleton.jsx";
 import continuousLearningImg from "../../../assets/continuous-learning.svg";
 import useDebounce from "../../../hooks/useDebounce";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { Search01Icon, Book02Icon } from "@hugeicons/core-free-icons";
+import { Search01Icon, Book02Icon, HelpSquareIcon } from "@hugeicons/core-free-icons";
 import { decodeHtml } from "../../../utils/textUtils";
 import { useOfflineSession } from "../../../hooks/offlineSession";
 import noInternetIMG from "../../../assets/undraw-Question.svg";
@@ -32,7 +32,9 @@ export default function UserModuleCatalog() {
   const itemsPerPage = 8;
 
   const [pendingEnrollModule, setPendingEnrollModule] = useState(null);
+  const [showRequestConfirmModal, setShowRequestConfirmModal] = useState(false); // Controls the confirmation modal
   const [isEnrolling, setIsEnrolling] = useState(false);
+  const [isRequestingCode, setIsRequestingCode] = useState(false);
   const [enrollError, setEnrollError] = useState("");
   const debouncedSearch = useDebounce(searchInput, 350);
 
@@ -48,7 +50,6 @@ export default function UserModuleCatalog() {
         return undefined;
       }
     },
-    // The offline copy may predate an enrollment made elsewhere, so show it but refetch on mount
     initialDataUpdatedAt: 0,
     queryFn: async () => {
       try {
@@ -130,8 +131,9 @@ export default function UserModuleCatalog() {
   };
 
   const handleCloseEnrollModal = () => {
-    if (isEnrolling) return;
+    if (isEnrolling || isRequestingCode) return;
     setPendingEnrollModule(null);
+    setShowRequestConfirmModal(false);
     setEnrollError("");
   };
 
@@ -153,13 +155,33 @@ export default function UserModuleCatalog() {
       const data = err?.response?.data;
       const codeProblems = ["INVALID_ENROLLMENT_CODE", "ENROLLMENT_CODE_REQUIRED", "TOO_MANY_ATTEMPTS"];
       if (codeProblems.includes(data?.code)) {
-        // Keep the modal open so the learner can retry
         setEnrollError(data.message);
       } else {
-        toast.error(data?.message || "Failed to enroll in the module. Please try again.");
+        toast.error(data?.message || "In development. Please try again.");
       }
     } finally {
       setIsEnrolling(false);
+    }
+  };
+
+  // Called when user hits "Confirm" on the Send Request modal
+  const handleConfirmRequestCode = async () => {
+    if (!pendingEnrollModule || isRequestingCode) return;
+
+    try {
+      setIsRequestingCode(true);
+      const res = await apiClient.post(`/modules/${pendingEnrollModule.id}/request-code`);
+
+      if (res.data?.success || res.status === 200) {
+        toast.success("Code request sent to admin successfully!");
+        setShowRequestConfirmModal(false);
+        setPendingEnrollModule(null); // Close code input modal as well
+      }
+    } catch (err) {
+      const data = err?.response?.data;
+      toast.error(data?.message || "In development. Please try again.");
+    } finally {
+      setIsRequestingCode(false);
     }
   };
 
@@ -227,15 +249,12 @@ export default function UserModuleCatalog() {
         </div>
       ) : (
         <div className="flex flex-col items-center justify-center py-16 text-center bg-white rounded-3xl border border-gray-200 shadow-sm">
-          {/* 1. OFFLINE STATE */}
           {!navigator.onLine && rawModules.length === 0 ? (
             <>
               <img src={noInternetIMG} alt="No Internet Connection" className="w-48 h-48 mb-6 opacity-80" />
-              <h2 className="text-xl font-extrabold text-gray-900 mb-2">
-                You're Offline
-              </h2>
+              <h2 className="text-xl font-extrabold text-gray-900 mb-2">You're Offline</h2>
               <p className="text-sm text-gray-500 max-w-sm mb-6">
-                Connect to the internet to browse the module catalog. Any modules you have already enrolled in and saved can be accessed in the Enrolled Modules tab.
+                Connect to the internet to browse the module catalog.
               </p>
               <button
                 onClick={() => window.location.reload()}
@@ -244,48 +263,65 @@ export default function UserModuleCatalog() {
                 Refresh Page
               </button>
             </>
-
-          /* 2. SEARCH NOT FOUND STATE */
           ) : debouncedSearch || selectedCategory !== "all" ? (
             <>
               <HugeiconsIcon icon={Search01Icon} className="w-12 h-12 text-gray-300 mb-4" />
               <h3 className="text-xl font-bold text-gray-900 mb-2">No matching modules found</h3>
-              <p className="text-gray-500 text-sm max-w-sm">
-                Try adjusting your search query or category filter to discover other available training modules.
-              </p>
             </>
-
-          /* 3. ALL CAUGHT UP STATE */
           ) : (
             <>
               <img src={continuousLearningImg} alt="Maximum Preparedness" className="w-44 h-44 mb-5 opacity-90 drop-shadow-sm" />
-              <h2 className="text-xl font-extrabold text-gray-900 mb-2">
-                All Caught Up!
-              </h2>
-              <p className="text-sm text-gray-500 max-w-sm mb-6">
-                You have explored or enrolled in all available modules. Check back later for newdisaster risk reduction courses!
-              </p>
-              <button
-                onClick={() => navigate("/user/enrolled")}
-                className="px-6 py-2.5 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl text-sm transition-all shadow-sm flex items-center justify-center gap-2 mx-auto"
-              >
-                <HugeiconsIcon icon={Book02Icon} className="w-4 h-4" />
-                <span>Go to Enrolled Modules</span>
-              </button>
+              <h2 className="text-xl font-extrabold text-gray-900 mb-2">All Caught Up!</h2>
             </>
           )}
         </div>
       )}
 
+      {/* Primary Enrollment / Code Entry Modal */}
       <EnrollCodeModal
         isOpen={Boolean(pendingEnrollModule)}
         moduleTitle={pendingEnrollModule ? decodeHtml(pendingEnrollModule.title) : ""}
         onClose={handleCloseEnrollModal}
         onSubmit={handleConfirmEnroll}
+        onRequestCode={() => setShowRequestConfirmModal(true)} // Opens confirmation sub-modal
         isLoading={isEnrolling}
+        isRequesting={isRequestingCode}
         error={enrollError}
         onInputChange={() => enrollError && setEnrollError("")}
       />
+
+      {/* Secondary Confirmation Modal for Requesting Code */}
+      {showRequestConfirmModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm animate-in fade-in duration-150">
+          <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl text-center">
+            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-red-50 text-red-600 mb-4">
+              <HugeiconsIcon icon={HelpSquareIcon} className="h-6 w-6" />
+            </div>
+            <h3 className="text-lg font-extrabold text-gray-900">Send Request to Admin?</h3>
+            <p className="mt-1 text-sm text-gray-500 mb-6">
+              This will notify the admin to send an enrollment code for <span className="font-semibold text-gray-700">"{pendingEnrollModule ? decodeHtml(pendingEnrollModule.title) : ""}"</span>.
+            </p>
+            <div className="flex items-center justify-center gap-3">
+              <button
+                type="button"
+                onClick={() => setShowRequestConfirmModal(false)}
+                disabled={isRequestingCode}
+                className="flex-1 rounded-xl border border-gray-300 px-4 py-2.5 text-sm font-bold text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmRequestCode}
+                disabled={isRequestingCode}
+                className="flex-1 rounded-xl bg-red-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-red-700 shadow-sm disabled:opacity-50"
+              >
+                {isRequestingCode ? "Sending..." : "Confirm"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

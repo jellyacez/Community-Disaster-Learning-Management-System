@@ -12,6 +12,7 @@ import {
   Award01Icon,
   CheckmarkBadge01Icon,
   Building03Icon,
+  ClipboardListIcon,
 } from "@hugeicons/core-free-icons";
 
 export const ROLE_BASED_LINKS = {
@@ -65,6 +66,11 @@ export const ROLE_BASED_LINKS = {
     {
       category: "Content & Operations",
       items: [
+        {
+          name: "Module Request",
+          path: "/admin/mdrrmo/module-requests",
+          icon: ClipboardListIcon,
+        },        
         {
           name: "Training Modules",
           path: "/admin/mdrrmo/modules",
@@ -176,6 +182,11 @@ export const ROLE_BASED_LINKS = {
       category: "Curriculum & Content",
       items: [
         {
+          name: "Module Request",
+          path: "/admin/mdrrmo/module-requests",
+          icon: ClipboardListIcon,
+        },   
+        {
           name: "Training Modules",
           path: "/admin/mdrrmo/modules",
           icon: FolderAddIcon,
@@ -232,6 +243,11 @@ export const ROLE_BASED_LINKS = {
     {
       category: "Curriculum & Content",
       items: [
+        {
+          name: "Module Request",
+          path: "/admin/mdrrmo/module-requests",
+          icon: FolderAddIcon,
+        },        
         {
           name: "Training Modules",
           path: "/admin/mdrrmo/modules",

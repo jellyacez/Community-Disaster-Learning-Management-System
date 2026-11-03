@@ -2025,7 +2025,17 @@ CHECK (modcat IN ('Fundamentals', 'Flood', 'Earthquake', 'Fire', 'General'));
 
 ALTER TYPE public.user_role ADD VALUE 'super_admin';
 
+CREATE TABLE IF NOT EXISTS public.enrollment_requests (
+  id SERIAL PRIMARY KEY,
+  user_id TEXT NOT NULL,
+  module_id INT NOT NULL,
+  status VARCHAR(20) DEFAULT 'pending', 
+  requested_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);	
 
+-- Optional index for faster admin queries
+CREATE INDEX IF NOT EXISTS idx_enrollment_requests_status ON public.enrollment_requests(status);
 
 -- Completed on 2026-08-21 15:49:58
 

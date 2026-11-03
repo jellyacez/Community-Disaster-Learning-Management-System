@@ -166,7 +166,7 @@ class ModuleService {
          ORDER BY mod_id, modact_id DESC
        ) um ON um.mod_id = md.mod_id
        LEFT JOIN ancestor_activity aa ON aa.descendant_id = md.mod_id
-       WHERE md.moddateremove IS NULL AND md.status = 'published'
+       WHERE md.moddateremove IS NULL AND md.status = 'published' 
        ORDER BY md.mod_id DESC`,
       [user_id]
     );
@@ -217,7 +217,6 @@ class ModuleService {
 
     let targetModule = moduleRes.rows[0];
 
-    // Compute prerequisite status if user context is provided
     if (user_id) {
       const publishedRes = await pool.query(
         `SELECT mod_id, modname, modcat, level FROM public.module_data WHERE status = 'published' AND moddateremove IS NULL`
@@ -265,7 +264,6 @@ class ModuleService {
     };
   }
 
-  // Inserts a step's questions and their choices in two batched statements (create and update share this)
   async insertStepQuestions(client, mod_id, step_id, quizQuestions) {
     const qTexts = [];
     const qPoints = [];
@@ -333,7 +331,6 @@ class ModuleService {
       const mod_id = moduleCreation.rows[0].mod_id;
 
       for (const lvl of levels) {
-        // Guard against multiple final assessments per level
         const finalAssessmentsCount = (lvl.steps || []).filter(s => s.is_final_assessment).length;
         if (finalAssessmentsCount > 1) {
           throw new Error(`Validation Error: Level "${lvl.levelTitle || lvl.levelOrder}" contains multiple Final Assessments. Only one final assessment is permitted per level.`);
@@ -351,7 +348,6 @@ class ModuleService {
         let lastLearningStepId = null;
 
         for (const step of (lvl.steps || [])) {
-          // Calculate loop_back_step_id if it's a quiz
           let loopBackId = null;
           if ((step.stepType === 'quiz' || step.stepType === 'situational') && lastLearningStepId) {
              loopBackId = lastLearningStepId;
@@ -517,7 +513,7 @@ class ModuleService {
         m.rejection_reason,
         u.name AS author_name 
       FROM module_data m 
-      LEFT JOIN "user" u ON m.author_id = u.id 
+      LEFT JOIN "user" u ON m.author_id::text = u.id::text 
       WHERE m.status != 'draft' OR (m.status = 'draft' AND m.rejection_reason IS NOT NULL)
       ORDER BY m.moddateadd DESC
     `);
@@ -526,7 +522,7 @@ class ModuleService {
 
   async checkUserEnrollment(user_id, mod_id) {
     const enrollmentCheck = await pool.query(
-      "SELECT 1 FROM module_activity WHERE user_id = $1 AND mod_id = $2 LIMIT 1",
+      "SELECT 1 FROM module_activity WHERE user_id::text = $1::text AND mod_id = $2 LIMIT 1",
       [user_id, mod_id]
     );
     return enrollmentCheck.rowCount > 0;
@@ -541,7 +537,6 @@ class ModuleService {
     );
   }
 
-  // --- Enrollment codes (kept out of getModuleById so the code never travels with general module objects) ---
   async verifyEnrollmentCode(mod_id, submitted) {
     const { rows } = await pool.query(
       "SELECT enrollment_code FROM public.module_data WHERE mod_id = $1",
@@ -558,7 +553,6 @@ class ModuleService {
     return rows[0] || null;
   }
 
-  // Also updates any draft revision cloned from this module, so approving it later doesn't bring back an old code
   async regenerateEnrollmentCode(mod_id) {
     const code = generateEnrollmentCode();
     await pool.query(
@@ -570,7 +564,7 @@ class ModuleService {
 
   async getEnrollmentData(user_id, mod_id) {
     const existing = await pool.query(
-      `SELECT * FROM public.module_activity WHERE user_id = $1 AND mod_id = $2`,
+      `SELECT * FROM public.module_activity WHERE user_id::text = $1::text AND mod_id = $2`,
       [user_id, mod_id]
     );
     return existing.rowCount > 0 ? existing.rows[0] : null;
@@ -603,13 +597,13 @@ class ModuleService {
        FROM user_step_progress usp
        JOIN module_steps ms ON usp.step_id = ms.step_id
        JOIN levels l ON ms.level_id = l.level_id
-       WHERE usp.user_id = $1 AND l.mod_id = $2`,
+       WHERE usp.user_id::text = $1::text AND l.mod_id = $2`,
       [user_id, mod_id]
     );
     const completedStepIds = progressResult.rows.map(r => r.step_id);
 
     const passedLevelsResult = await pool.query(
-      `SELECT DISTINCT level_id FROM results WHERE user_id = $1 AND mod_id = $2 AND passed = true`,
+      `SELECT DISTINCT level_id FROM results WHERE user_id::text = $1::text AND mod_id = $2 AND passed = true`,
       [user_id, mod_id]
     );
     const passedLevelIds = passedLevelsResult.rows.map(r => r.level_id);
@@ -810,7 +804,6 @@ class ModuleService {
     }
 
     if (search) {
-      // Escape LIKE wildcards so a typed % or _ is matched literally
       conditions.push(`modname ILIKE $${idx}`);
       values.push(`%${String(search).replace(/[\\%_]/g, "\\$&")}%`);
       idx++;
@@ -828,7 +821,6 @@ class ModuleService {
       idx++;
     }
 
-    // Unknown statuses are ignored rather than matching nothing
     if (MODULE_STATUSES.has(status)) {
       conditions.push(`status = $${idx}`);
       values.push(status);
@@ -862,9 +854,6 @@ class ModuleService {
     };
   }
 
-  // Reviews a module still pending review; returns undefined if it wasn't pending.
-  // Publishing a revision archives the version it replaces in the same transaction,
-  // so a failure can't leave two published versions.
   async reviewModule(mod_id, status, rejection_reason) {
     const client = await pool.connect();
     try {
@@ -891,6 +880,114 @@ class ModuleService {
     } finally {
       client.release();
     }
+  }
+
+  // --- Enrollment Code Request Workflow Methods (using module_activity) ---
+
+ async requestModuleCode(userId, moduleId) {
+  // Enforce eligibility before creating a request.
+  const eligible = await this.checkPrerequisitesMet(userId, moduleId);
+
+  if (!eligible) {
+    throw new Error(
+      "Prerequisites not met. Complete foundational and lower-tier modules first."
+    );
+  }
+
+  const checkEnrollment = await pool.query(
+    `SELECT * FROM public.module_activity
+     WHERE user_id::text = $1::text AND mod_id = $2`,
+    [userId, moduleId]
+  );
+
+  if (checkEnrollment.rows.length > 0) {
+    throw new Error("You are already enrolled in this module.");
+  }
+
+  const existingReq = await pool.query(
+    `SELECT * FROM public.enrollment_requests
+     WHERE user_id::text = $1::text
+     AND module_id = $2
+     AND status = 'pending'`,
+    [userId, moduleId]
+  );
+
+  if (existingReq.rows.length > 0) {
+    throw new Error("You already have a pending request for this module.");
+  }
+
+  await pool.query(
+    `INSERT INTO public.enrollment_requests
+     (user_id, module_id, status)
+     VALUES ($1, $2, 'pending')`,
+    [userId, moduleId]
+  );
+}
+
+  async getPendingModuleRequests(status = "pending") {
+    const allowedStatuses = ["pending", "approved"];
+
+    if (!allowedStatuses.includes(status)) {
+      throw new Error("Invalid enrollment request status.");
+    }
+
+    const query = `
+      SELECT
+        er.id AS request_id,
+        er.status,
+        er.requested_at,
+        er.updated_at,
+        u.id AS user_id,
+        u.name AS user_name,
+        u.email AS user_email,
+        m.mod_id AS module_id,
+        m.modname AS module_title
+      FROM public.enrollment_requests er
+      JOIN "user" u ON er.user_id::text = u.id::text
+      JOIN public.module_data m ON er.module_id = m.mod_id
+      WHERE er.status = $1
+      ORDER BY er.requested_at DESC
+    `;
+
+    const result = await pool.query(query, [status]);
+    return result.rows;
+  }
+
+  async approveModuleRequest(requestId) {
+    const requestQuery = `
+      SELECT 
+        er.id,
+        er.user_id,
+        er.module_id,
+        m.enrollment_code,
+        m.modname AS module_title
+      FROM public.enrollment_requests er
+      JOIN public.module_data m ON er.module_id = m.mod_id
+      WHERE er.id = $1
+    `;
+    const requestResult = await pool.query(requestQuery, [requestId]);
+    if (requestResult.rows.length === 0) {
+      throw new Error("Enrollment request not found.");
+    }
+
+    const reqData = requestResult.rows[0];
+
+    await pool.query(
+      `UPDATE public.enrollment_requests SET status = 'approved', updated_at = CURRENT_TIMESTAMP WHERE id = $1`,
+      [requestId]
+    );
+
+    // Optional notification insertion
+    await pool.query(
+      `INSERT INTO public.user_notification (user_id, type, message) VALUES ($1::text, $2, $3)`,
+      [
+        reqData.user_id,
+        "code_approved",
+        `Your request for "${reqData.module_title}" has been approved. Your code is: ${reqData.enrollment_code}`
+      ]
+    ).catch(() => {});
+
+    return reqData.enrollment_code;
   }
 }
 
