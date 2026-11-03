@@ -2,8 +2,6 @@ import { lazy, Suspense, useEffect } from "react";
 import { Routes, Route, Navigate, useNavigate, useLocation } from "react-router-dom";
 import { authClient } from "./lib/auth-client";
 import { Toaster } from "react-hot-toast";
-import { HugeiconsIcon } from "@hugeicons/react";
-import { CheckmarkCircle02Icon, Alert02Icon } from "@hugeicons/core-free-icons";
 import ErrorBoundary from "./components/ErrorBoundary";
 import useNetworkSync from "./hooks/useNetworkSync";
 import { useRealtimeEvents } from "./hooks/useRealtimeEvents";
@@ -18,8 +16,7 @@ const PrivacyPolicyPage = lazy(
   () => import("./pages/public/PrivacyPolicyPage"),
 );
 const RegisterPage = lazy(() => import("./pages/auth/RegisterPage"));
-// Loaded up front: it is the usual way in, so it should not wait on a second download
-import SignInPage from "./pages/auth/SignInPage";
+const SignInPage = lazy(() => import("./pages/auth/SignInPage"));
 const ForgotPasswordPage = lazy(
   () => import("./pages/auth/ForgotPasswordPage"),
 );
@@ -128,6 +125,9 @@ const BarangayCertifications = lazy(
 const CertificatePDF = lazy(
   () => import("./pages/user/certificates/certTemplate"),
 );
+const MdrrmoModuleRequests = lazy(
+  () => import("./pages/admin/mdrrmo/module-requests/moduleRequest")
+);
 const ProtectedRoute = lazy(() => import("./components/auth/ProtectedRoute"));
 const UserLayout = lazy(() => import("./components/layouts/UserLayout"));
 const AdminLayout = lazy(() => import("./components/layouts/AdminLayout"));
@@ -139,21 +139,6 @@ import AdminModuleApprovals from "./pages/admin/mdrrmo/module-management/AdminAp
 const VerifyCertificate = lazy(
   () => import("./pages/public/VerifyCertificate"),
 );
-
-import { useOfflineSession } from "./hooks/offlineSession";
-function AppEntry() {
-  const { data: session, isOffline } = useOfflineSession();
-
-  const isLearner = ["resident", "user"].includes(
-    session?.user?.role
-  );
-
-  if (isOffline && isLearner) {
-    return <Navigate to="/userDashboard" replace />;
-  }
-
-  return <LandingPage />;
-}
 
 export default function App() {
   useNetworkSync();
@@ -188,7 +173,6 @@ export default function App() {
       <GlobalBroadcastBanner />
       <Toaster
         position="top-center"
-        containerStyle={{ zIndex: 10000 }}
         toastOptions={{
           duration: 3000,
           className: "dark:!bg-slate-800 dark:!text-slate-100 dark:!border dark:!border-slate-700 shadow-xl",
@@ -203,20 +187,25 @@ export default function App() {
               color: "#f8fafc",
             },
           },
-          // green-700 / red-700 keep white text above 4.5:1
           success: {
             style: {
-              background: "#15803d",
+              background: "#22c55e",
               color: "#fff",
             },
-            icon: <HugeiconsIcon aria-hidden="true" icon={CheckmarkCircle02Icon} className="h-5 w-5 shrink-0 text-white" />,
+            iconTheme: {
+              primary: "#fff",
+              secondary: "#22c55e",
+            },
           },
           error: {
             style: {
-              background: "#b91c1c",
+              background: "#ef4444",
               color: "#fff",
             },
-            icon: <HugeiconsIcon aria-hidden="true" icon={Alert02Icon} className="h-5 w-5 shrink-0 text-white" />,
+            iconTheme: {
+              primary: "#fff",
+              secondary: "#ef4444",
+            },
           },
         }}
       />
@@ -228,13 +217,13 @@ export default function App() {
             className="min-h-screen flex items-center justify-center bg-white dark:bg-[#030712]"
             aria-hidden="true"
           >
-            <div className="w-10 h-10 border-4 border-red-200 dark:border-red-950 border-t-red-600 rounded-full animate-spin motion-reduce:animate-none"></div>
+            <div className="w-10 h-10 border-4 border-red-200 dark:border-red-950 border-t-red-600 rounded-full animate-spin"></div>
           </div>
         }
       >
         <Routes>
           {/* PUBLIC ROUTES */}
-          <Route path="/" element={<AppEntry />} />
+          <Route path="/" element={<LandingPage />} />
           <Route path="/verify" element={<VerifyCertificate />} />
           <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
           <Route path="/register" element={<RegisterPage />} />
@@ -316,7 +305,7 @@ export default function App() {
                   <Route path="health" element={<SystemHealth />} />
                   <Route path="security" element={<SystemSecurity />} />
                 </Route>
-              </Route>
+              </Route>              
 
               <Route
                 element={<ProtectedRoute allowedRoles={["super_admin", "system_admin"]} />}
@@ -354,6 +343,7 @@ export default function App() {
                     path="sector-overview"
                     element={<MdrrmoSectorOverview />}
                   />
+                  <Route path="module-requests" element={<MdrrmoModuleRequests />} />
                   <Route
                     path="certifications"
                     element={<MdrrmoCertifications />}

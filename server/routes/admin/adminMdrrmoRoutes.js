@@ -241,4 +241,7 @@ router.post(
   barangayController.createBarangayAnnouncement
 );
 
+router.get("/module-requests", moduleController.getPendingModuleRequests);
+router.post("/module-requests/:requestId/approve", moduleController.approveModuleRequest);
+
 module.exports = router;

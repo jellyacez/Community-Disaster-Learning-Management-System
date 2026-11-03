@@ -149,4 +149,7 @@ router.post("/attempts/:attemptId/tab-switches", quizAttemptController.reportTab
 // @access  Private
 router.post("/attempts/:attemptId/submit", quizAttemptController.submitAttempt);
 
+
+router.post("/:id/request-code", moduleController.requestCode);
+
 module.exports = router;

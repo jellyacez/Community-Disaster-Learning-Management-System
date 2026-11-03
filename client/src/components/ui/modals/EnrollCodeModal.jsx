@@ -1,24 +1,21 @@
 import { useState, useEffect, useRef } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { Book02Icon } from "@hugeicons/core-free-icons";
+import { Book02Icon, HelpSquareIcon } from "@hugeicons/core-free-icons";
 
-/**
- * Asks the learner for the module's enrollment code before enrolling.
- * The code is only ever checked by the server; this component just collects it.
- */
 export default function EnrollCodeModal({
   isOpen,
   moduleTitle = "",
   onClose,
   onSubmit,
+  onRequestCode,
   isLoading = false,
+  isRequesting = false,
   error = "",
   onInputChange,
 }) {
   const [code, setCode] = useState("");
   const inputRef = useRef(null);
 
-  // Fresh, focused input every time the modal opens
   useEffect(() => {
     if (isOpen) {
       setCode("");
@@ -30,23 +27,22 @@ export default function EnrollCodeModal({
   useEffect(() => {
     if (!isOpen) return;
     const onKeyDown = (e) => {
-      if (e.key === "Escape" && !isLoading) onClose();
+      if (e.key === "Escape" && !isLoading && !isRequesting) onClose();
     };
     document.addEventListener("keydown", onKeyDown);
     return () => document.removeEventListener("keydown", onKeyDown);
-  }, [isOpen, isLoading, onClose]);
+  }, [isOpen, isLoading, isRequesting, onClose]);
 
   if (!isOpen) return null;
 
   const handleChange = (e) => {
-    // Uppercase and drop spaces/dashes so pasted codes like "abc-123" still work
     setCode(e.target.value.toUpperCase().replace(/[\s-]/g, ""));
     onInputChange?.();
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!code || isLoading) return;
+    if (!code || isLoading || isRequesting) return;
     onSubmit(code);
   };
 
@@ -54,7 +50,7 @@ export default function EnrollCodeModal({
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm animate-in fade-in duration-150"
       onMouseDown={(e) => {
-        if (e.target === e.currentTarget && !isLoading) onClose();
+        if (e.target === e.currentTarget && !isLoading && !isRequesting) onClose();
       }}
     >
       <div
@@ -72,7 +68,7 @@ export default function EnrollCodeModal({
               Enter Enrollment Code
             </h2>
             <p className="mt-1 text-sm text-gray-500">
-              Ask your MDRRMO for the code to join{" "}
+              Ask your MDRRMO or request a code to join{" "}
               <span className="font-semibold text-gray-700">"{moduleTitle}"</span>.
             </p>
           </div>
@@ -92,8 +88,8 @@ export default function EnrollCodeModal({
             autoComplete="off"
             autoCapitalize="characters"
             spellCheck={false}
-            disabled={isLoading}
-            placeholder="ABC123"
+            disabled={isLoading || isRequesting}
+            placeholder="******"
             aria-invalid={Boolean(error)}
             aria-describedby={error ? "enroll-code-error" : undefined}
             className={`w-full rounded-xl border px-4 py-3 text-center font-mono text-2xl font-bold tracking-[0.3em] text-gray-900 placeholder:text-gray-300 focus:outline-none focus:ring-2 disabled:bg-gray-50 ${
@@ -111,22 +107,34 @@ export default function EnrollCodeModal({
             {error || " "}
           </p>
 
-          <div className="mt-4 flex justify-end gap-3">
+          <div className="mt-4 flex items-center justify-between gap-3">
             <button
               type="button"
-              onClick={onClose}
-              disabled={isLoading}
-              className="rounded-xl border border-gray-300 px-5 py-2.5 text-sm font-bold text-gray-700 transition-colors hover:bg-gray-50 disabled:opacity-50"
+              onClick={onRequestCode}
+              disabled={isLoading || isRequesting}
+              className="inline-flex items-center gap-1.5 rounded-xl border border-gray-300 px-3.5 py-2.5 text-xs font-bold text-gray-700 transition-colors hover:bg-gray-50 disabled:opacity-50"
             >
-              Cancel
+              <HugeiconsIcon icon={HelpSquareIcon} className="h-4 w-4 text-gray-500" />
+              <span>Request Code</span>
             </button>
-            <button
-              type="submit"
-              disabled={!code || isLoading}
-              className="rounded-xl bg-red-600 px-5 py-2.5 text-sm font-bold text-white shadow-sm transition-colors hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              {isLoading ? "Checking..." : "Enroll"}
-            </button>
+
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={onClose}
+                disabled={isLoading || isRequesting}
+                className="rounded-xl border border-gray-300 px-4 py-2.5 text-sm font-bold text-gray-700 transition-colors hover:bg-gray-50 disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={!code || isLoading || isRequesting}
+                className="rounded-xl bg-red-600 px-5 py-2.5 text-sm font-bold text-white shadow-sm transition-colors hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {isLoading ? "Checking..." : "Enroll"}
+              </button>
+            </div>
           </div>
         </form>
       </div>

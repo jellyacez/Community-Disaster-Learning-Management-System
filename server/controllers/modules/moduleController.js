@@ -753,3 +753,110 @@ exports.getModuleForEditing = async (req, res) => {
     });
   }
 };
+
+// @desc    Request an enrollment code for a module from the admin
+// @access  Private
+exports.requestCode = async (req, res) => {
+  const { id: mod_id } = req.params;
+  const user_id = req.user?.id || req.user?.userId;
+
+  if (!user_id) {
+    return res.status(401).json({
+      success: false,
+      message: "Unauthorized.",
+    });
+  }
+
+  try {
+    const parsedModId = parseInt(mod_id, 10);
+
+    if (isNaN(parsedModId) || parsedModId <= 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid module ID format.",
+      });
+    }
+
+    // Check prerequisites BEFORE creating an enrollment request.
+    const eligible = await ModuleService.checkPrerequisitesMet(
+      user_id,
+      parsedModId
+    );
+
+    if (!eligible) {
+      return res.status(403).json({
+        success: false,
+        eligible: false,
+        message:
+          "Prerequisites not met. Complete foundational and lower-tier modules first.",
+      });
+    }
+
+    // Only eligible users can request an enrollment code.
+    await ModuleService.requestModuleCode(user_id, parsedModId);
+
+    return res.status(200).json({
+      success: true,
+      eligible: true,
+      message: "Code request sent to admin successfully.",
+    });
+  } catch (error) {
+    console.error("Error requesting module code:", error);
+
+    return res.status(400).json({
+      success: false,
+      message: error.message || "Failed to request code.",
+    });
+  }
+};
+
+// @desc    Get all pending module requests for admins
+// @access  Private (Admin)
+exports.getPendingModuleRequests = async (req, res) => {
+  try {
+    // Default to pending if no status is provided
+    const status = req.query.status || "pending";
+
+    // Only allow these two statuses
+    if (!["pending", "approved"].includes(status)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid request status. Use 'pending' or 'approved'.",
+      });
+    }
+
+    const requests = await ModuleService.getPendingModuleRequests(status);
+
+    return res.status(200).json({
+      success: true,
+      data: requests,
+    });
+  } catch (error) {
+    console.error("Error fetching module requests:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch module requests.",
+    });
+  }
+};
+
+// @desc    Approve a user's module request and return the code
+// @access  Private (Admin)
+exports.approveModuleRequest = async (req, res) => {
+  const { requestId } = req.params;
+  try {
+    const code = await ModuleService.approveModuleRequest(requestId);
+    return res.status(200).json({
+      success: true,
+      message: "Request approved successfully!",
+      code,
+    });
+  } catch (error) {
+    console.error("Error approving module request:", error);
+    return res.status(400).json({
+      success: false,
+      message: error.message || "Failed to approve request.",
+    });
+  }
+};
