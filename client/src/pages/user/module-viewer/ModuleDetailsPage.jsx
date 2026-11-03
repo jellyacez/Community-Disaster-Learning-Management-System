@@ -5,7 +5,6 @@ import DOMPurify from "dompurify";
 import toast from "react-hot-toast";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
-  Book02Icon,
   CloudDownloadIcon,
   CheckmarkBadge01Icon,
   Delete02Icon,
@@ -18,6 +17,7 @@ import { ADMIN_ROLES } from "../../../constants/roles";
 import { decodeHtml } from "../../../utils/textUtils";
 import PublishedModulePreviewModal from "../../../components/ui/modules/viewer/PublishedModulePreviewModal";
 import ConfirmationModal from "../../../components/ui/modals/ConfirmationModal";
+import EnrollCodeModal from "../../../components/ui/modals/EnrollCodeModal";
 
 const resolveImageUrl = (url) => {
   if (!url) return null;
@@ -90,6 +90,7 @@ export default function ModuleDetailsPage() {
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [showEnrollModal, setShowEnrollModal] = useState(false);
   const [isEnrolling, setIsEnrolling] = useState(false);
+  const [enrollError, setEnrollError] = useState("");
   const [showDownloadModal, setShowDownloadModal] = useState(false);
 
   // Hook manages IndexedDB persistence and status checking
@@ -140,11 +141,12 @@ export default function ModuleDetailsPage() {
     retry: 1,
   });
 
-  const handleEnroll = async () => {
+  const handleEnroll = async (code) => {
     if (isEnrolling || isAdmin) return;
     setIsEnrolling(true);
+    setEnrollError("");
     try {
-      const res = await apiClient.post(`/modules/${id}/enroll`);
+      const res = await apiClient.post(`/modules/${id}/enroll`, { code });
       if (res.data?.success || res.status === 200) {
         toast.success(`Enrollment Success! You are now enrolled in ${decodeHtml(data?.module?.modname) || "this module"}.`);
         queryClient.invalidateQueries({ queryKey: ["moduleDetails", id, session?.user?.id] });
@@ -155,7 +157,13 @@ export default function ModuleDetailsPage() {
       }
     } catch (err) {
       console.error("Enrollment error:", err);
-      toast.error(err.response?.data?.message || "Failed to enroll in module. Please try again.");
+      const body = err.response?.data;
+      if (["INVALID_ENROLLMENT_CODE", "ENROLLMENT_CODE_REQUIRED", "TOO_MANY_ATTEMPTS"].includes(body?.code)) {
+        // Keep the modal open so the learner can retry
+        setEnrollError(body.message);
+      } else {
+        toast.error(body?.message || "Failed to enroll in module. Please try again.");
+      }
     } finally {
       setIsEnrolling(false);
     }
@@ -509,18 +517,19 @@ export default function ModuleDetailsPage() {
         moduleId={module.mod_id || module.id}
       />
 
-      {/* 2. Enrollment Confirmation Modal */}
-      <ConfirmationModal
+      {/* 2. Enrollment Code Modal */}
+      <EnrollCodeModal
         isOpen={showEnrollModal}
-        onClose={() => !isEnrolling && setShowEnrollModal(false)}
-        onConfirm={handleEnroll}
-        title="Confirm Module Enrollment"
-        description={`Are you sure you want to enroll in "${decodeHtml(module?.modname)}"? You will be able to start learning immediately.`}
-        confirmText="Confirm & Enroll"
-        cancelText="Cancel"
-        type="primary"
-        icon={Book02Icon}
+        moduleTitle={decodeHtml(module?.modname)}
+        onClose={() => {
+          if (isEnrolling) return;
+          setShowEnrollModal(false);
+          setEnrollError("");
+        }}
+        onSubmit={handleEnroll}
         isLoading={isEnrolling}
+        error={enrollError}
+        onInputChange={() => enrollError && setEnrollError("")}
       />
 
       {/* 3. Offline Save Confirmation Modal */}

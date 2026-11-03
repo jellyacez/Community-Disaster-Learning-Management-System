@@ -1,4 +1,5 @@
 const express = require("express");
+const rateLimit = require("express-rate-limit");
 const router = express.Router();
 const { authenticate } = require("../../middleware/authenticate");
 
@@ -13,9 +14,28 @@ const quizAttemptController = require("../../controllers/modules/quizAttemptCont
 const requireRole = require("../../middleware/requireRole");
 const { ADMIN_ROLES, MODULE_VIEWER_ROLES } = require("../../config/permissions");
 
+// Only the roles that create modules may see or regenerate enrollment codes (the head approver is excluded).
+// Matches canCreateModule in ModuleManagement.jsx; consider moving this into config/permissions.js.
+const ENROLLMENT_CODE_ROLES = ["mdrrmo_admin", "super_admin"];
+
 
 const requirePermission = require("../../middleware/requirePermission");
 const uploadMiddleware = require("../../middleware/uploadMiddleware");
+
+// Limits wrong enrollment-code guesses per user (successful enrollments don't count)
+const enrollAttemptLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  skipSuccessfulRequests: true,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => `enroll:${req.user?.id ?? "anon"}`,
+  message: {
+    success: false,
+    code: "TOO_MANY_ATTEMPTS",
+    message: "Too many incorrect attempts. Please try again in 15 minutes.",
+  },
+});
 
 // @route   POST /api/modules
 // @desc    Create a new training module
@@ -67,7 +87,17 @@ router.get("/available", moduleController.getAvailableModules);
 // @route   POST /api/modules/:id/enroll
 // @desc    Enroll the current user in a module
 // @access  Private
-router.post("/:id/enroll", moduleController.enrollInModule);
+router.post("/:id/enroll", enrollAttemptLimiter, moduleController.enrollInModule);
+
+// @route   GET /api/modules/:id/enrollment-code
+// @desc    Get the module's enrollment code
+// @access  Private (admin only with manage_modules permission)
+router.get("/:id/enrollment-code", requireRole(ENROLLMENT_CODE_ROLES), requirePermission('manage_modules'), moduleController.getEnrollmentCode);
+
+// @route   POST /api/modules/:id/enrollment-code/regenerate
+// @desc    Generate a new enrollment code (existing enrollees are unaffected)
+// @access  Private (admin only with manage_modules permission)
+router.post("/:id/enrollment-code/regenerate", requireRole(ENROLLMENT_CODE_ROLES), requirePermission('manage_modules'), moduleController.regenerateEnrollmentCode);
 
 // @route   GET /api/modules/:id/viewer
 // @desc    Get module data, steps, and progress for the viewer

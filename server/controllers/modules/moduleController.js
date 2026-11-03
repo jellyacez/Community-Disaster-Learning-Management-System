@@ -135,8 +135,12 @@ exports.updateModule = async (req, res) => {
 
       const new_mod_id = await ModuleService.createModuleTransaction(payload);
 
+      // The revision inherits the published module's enrollment code
       await pool.query(
-        "UPDATE module_data SET parent_mod_id = $1 WHERE mod_id = $2",
+        `UPDATE module_data
+         SET parent_mod_id = $1,
+             enrollment_code = (SELECT enrollment_code FROM module_data WHERE mod_id = $1)
+         WHERE mod_id = $2`,
         [parsedModId, new_mod_id],
       );
 
@@ -247,6 +251,35 @@ exports.enrollInModule = async (req, res) => {
       }
     }
 
+    // Enrollment code check (admins bypass; already-enrolled users don't need to re-enter it)
+    if (!isAdmin) {
+      const alreadyEnrolled = await ModuleService.checkUserEnrollment(
+        user_id,
+        parsedModId,
+      );
+      if (!alreadyEnrolled) {
+        const submittedCode = req.body?.code;
+        if (typeof submittedCode !== "string" || !submittedCode.trim()) {
+          return res.status(400).json({
+            success: false,
+            code: "ENROLLMENT_CODE_REQUIRED",
+            message: "Enter the enrollment code provided by your MDRRMO.",
+          });
+        }
+        const codeOk = await ModuleService.verifyEnrollmentCode(
+          parsedModId,
+          submittedCode,
+        );
+        if (!codeOk) {
+          return res.status(403).json({
+            success: false,
+            code: "INVALID_ENROLLMENT_CODE",
+            message: "Invalid enrollment code. Please check it and try again.",
+          });
+        }
+      }
+    }
+
     // No-op when already enrolled (ON CONFLICT DO NOTHING)
     await ModuleService.enrollUserInModule(user_id, parsedModId);
 
@@ -279,6 +312,80 @@ exports.enrollInModule = async (req, res) => {
   }
 };
 // --- End of enrollInModule ---
+
+// @desc    Get a module's enrollment code (for the admin to share with learners)
+// @access  Private (admin with manage_modules)
+exports.getEnrollmentCode = async (req, res) => {
+  const parsedModId = parseInt(req.params.id, 10);
+  if (isNaN(parsedModId) || parsedModId <= 0) {
+    return res
+      .status(400)
+      .json({ success: false, message: "Invalid module ID format." });
+  }
+
+  try {
+    const row = await ModuleService.getEnrollmentCode(parsedModId);
+    if (!row) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Module not found." });
+    }
+    return res.status(200).json({
+      success: true,
+      data: { enrollment_code: row.enrollment_code },
+    });
+  } catch (error) {
+    console.error("Error fetching enrollment code:", error);
+    return res
+      .status(500)
+      .json({ success: false, message: "Failed to fetch enrollment code." });
+  }
+};
+
+// @desc    Generate a new enrollment code. Existing enrollees keep their access.
+// @access  Private (admin with manage_modules)
+exports.regenerateEnrollmentCode = async (req, res) => {
+  const parsedModId = parseInt(req.params.id, 10);
+  if (isNaN(parsedModId) || parsedModId <= 0) {
+    return res
+      .status(400)
+      .json({ success: false, message: "Invalid module ID format." });
+  }
+
+  try {
+    const current = await ModuleService.getModuleById(parsedModId);
+    if (!current) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Module not found." });
+    }
+    if (current.status === "archived") {
+      return res.status(400).json({
+        success: false,
+        message: "Archived modules cannot be changed.",
+      });
+    }
+
+    const code = await ModuleService.regenerateEnrollmentCode(parsedModId);
+
+    // The code itself is never written to the activity log
+    await logActivity(
+      req.user.id,
+      `Regenerated enrollment code for module ID ${parsedModId}`,
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: "Enrollment code regenerated.",
+      data: { enrollment_code: code },
+    });
+  } catch (error) {
+    console.error("Error regenerating enrollment code:", error);
+    return res
+      .status(500)
+      .json({ success: false, message: "Failed to regenerate enrollment code." });
+  }
+};
 
 // @desc    Get module data and steps for the Module Viewer
 // @access  Private

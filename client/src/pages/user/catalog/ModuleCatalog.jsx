@@ -5,7 +5,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import apiClient from "../../../lib/apiClient";
 import useDocumentTitle from "../../../hooks/useDocumentTitle";
 import SearchBar from "../../../components/ui/inputs/SearchBar.jsx";
-import ConfirmationModal from "../../../components/ui/modals/ConfirmationModal.jsx";
+import EnrollCodeModal from "../../../components/ui/modals/EnrollCodeModal.jsx";
 import PaginationControls from "../../../components/ui/PaginationControls.jsx";
 import ModuleCard from "../../../components/ui/modules/ModuleCard.jsx";
 import ModuleSkeleton from "../../../components/ui/modules/ModuleSkeleton.jsx";
@@ -33,6 +33,7 @@ export default function UserModuleCatalog() {
 
   const [pendingEnrollModule, setPendingEnrollModule] = useState(null);
   const [isEnrolling, setIsEnrolling] = useState(false);
+  const [enrollError, setEnrollError] = useState("");
   const debouncedSearch = useDebounce(searchInput, 350);
 
   const { data: rawModules = [], isLoading } = useQuery({
@@ -124,15 +125,23 @@ export default function UserModuleCatalog() {
   };
 
   const handleOpenEnrollConfirm = (module) => {
+    setEnrollError("");
     setPendingEnrollModule(module);
   };
 
-  const handleConfirmEnroll = async () => {
+  const handleCloseEnrollModal = () => {
+    if (isEnrolling) return;
+    setPendingEnrollModule(null);
+    setEnrollError("");
+  };
+
+  const handleConfirmEnroll = async (code) => {
     if (!pendingEnrollModule || isEnrolling) return;
 
     try {
       setIsEnrolling(true);
-      const res = await apiClient.post(`/modules/${pendingEnrollModule.id}/enroll`);
+      setEnrollError("");
+      const res = await apiClient.post(`/modules/${pendingEnrollModule.id}/enroll`, { code });
 
       if (res.data?.success || res.status === 200) {
         toast.success(`Enrollment Success! You are now enrolled in ${decodeHtml(pendingEnrollModule.title)}.`);
@@ -141,7 +150,14 @@ export default function UserModuleCatalog() {
         navigate("/user/enrolled");
       }
     } catch (err) {
-      toast.error(err?.response?.data?.message || "Failed to enroll in the module. Please try again.");
+      const data = err?.response?.data;
+      const codeProblems = ["INVALID_ENROLLMENT_CODE", "ENROLLMENT_CODE_REQUIRED", "TOO_MANY_ATTEMPTS"];
+      if (codeProblems.includes(data?.code)) {
+        // Keep the modal open so the learner can retry
+        setEnrollError(data.message);
+      } else {
+        toast.error(data?.message || "Failed to enroll in the module. Please try again.");
+      }
     } finally {
       setIsEnrolling(false);
     }
@@ -261,21 +277,14 @@ export default function UserModuleCatalog() {
         </div>
       )}
 
-      <ConfirmationModal
+      <EnrollCodeModal
         isOpen={Boolean(pendingEnrollModule)}
-        onClose={() => !isEnrolling && setPendingEnrollModule(null)}
-        onConfirm={handleConfirmEnroll}
-        title="Confirm Module Enrollment"
-        description={
-          pendingEnrollModule
-            ? `Are you sure you want to enroll in "${decodeHtml(pendingEnrollModule.title)}"? You can start learning immediately.`
-            : ""
-        }
-        confirmText="Confirm & Enroll"
-        cancelText="Cancel"
-        type="primary"
-        icon={Book02Icon}
+        moduleTitle={pendingEnrollModule ? decodeHtml(pendingEnrollModule.title) : ""}
+        onClose={handleCloseEnrollModal}
+        onSubmit={handleConfirmEnroll}
         isLoading={isEnrolling}
+        error={enrollError}
+        onInputChange={() => enrollError && setEnrollError("")}
       />
     </div>
   );

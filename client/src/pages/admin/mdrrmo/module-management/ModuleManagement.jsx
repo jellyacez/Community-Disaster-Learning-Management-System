@@ -9,6 +9,7 @@ import { authClient } from "../../../../lib/auth-client";
 import { useModuleBuilder } from "../../../../hooks/useModuleBuilder";
 import useDebounce from "../../../../hooks/useDebounce";
 import { decodeHtml } from "../../../../utils/textUtils";
+import EnrollmentCodeDialog from "../../../../components/ui/modules/EnrollmentCodeDialog.jsx";
 
 const ITEMS_PER_PAGE = 6;
 
@@ -67,6 +68,7 @@ export default function ModuleManagement() {
 
   const [isWizardOpen, setIsWizardOpen] = useState(false);
   const [showPreviewModal, setShowPreviewModal] = useState(false);
+  const [codeModule, setCodeModule] = useState(null);
 
   // Dashboard UI State
   const [searchQuery, setSearchQuery] = useState("");
@@ -127,6 +129,14 @@ export default function ModuleManagement() {
     }
   };
 
+  const handleShowCode = (module) => {
+    if (!canCreateModule) {
+      toast.error("Access Denied: Insufficient Authority Level");
+      return;
+    }
+    setCodeModule(module);
+  };
+
   return (
     <>
       <div id="training-modules-top" className="max-w-7xl mx-auto animate-in fade-in duration-150 px-6 md:px-12 pt-2 md:pt-2 pb-12">
@@ -156,12 +166,17 @@ export default function ModuleManagement() {
           setCurrentPage={setCurrentPage}
           handleOpenWizard={handleOpenWizard}
           handleEditModule={handleEditModule}
+          onShowCodeClick={canCreateModule ? handleShowCode : undefined}
           setSearchQuery={setSearchQuery}
           setFilterCategory={setFilterCategory}
           setFilterLevel={setFilterLevel}
           setFilterStatus={setFilterStatus}
         />
       </div>
+
+      {canCreateModule && (
+        <EnrollmentCodeDialog module={codeModule} onClose={() => setCodeModule(null)} />
+      )}
 
       {canCreateModule && (
         <ModuleBuilderWizard

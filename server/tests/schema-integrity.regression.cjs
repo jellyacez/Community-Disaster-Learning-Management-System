@@ -23,6 +23,8 @@ const { auth } = require("../utils/auth");
 const BASE_URL = process.env.TEST_BASE_URL || "http://localhost:5000";
 const UA = "schema-integrity-regression/1.0";
 const RUN = `regress_si_${crypto.randomBytes(4).toString("hex")}`;
+// Enrolling now requires the module's enrollment code, so the fixture module gets a known one
+const ENROLL_CODE = "REGR01";
 
 const created = { userIds: [], modIds: [] };
 
@@ -56,9 +58,9 @@ async function createResident() {
 
 async function createModule() {
   const { rows } = await pool.query(
-    `INSERT INTO module_data (modname, modcat, description, level, duration, status)
-     VALUES ($1, 'General', 'Schema integrity regression fixture', 'Beginner', '5 mins', 'published') RETURNING mod_id`,
-    [RUN]
+    `INSERT INTO module_data (modname, modcat, description, level, duration, status, enrollment_code)
+     VALUES ($1, 'General', 'Schema integrity regression fixture', 'Beginner', '5 mins', 'published', $2) RETURNING mod_id`,
+    [RUN, ENROLL_CODE]
   );
   created.modIds.push(rows[0].mod_id);
   return rows[0].mod_id;
@@ -68,6 +70,7 @@ async function enroll(user, modId) {
   const res = await fetch(`${BASE_URL}/api/modules/${modId}/enroll`, {
     method: "POST",
     headers: { "Content-Type": "application/json", Accept: "application/json", "User-Agent": UA, Cookie: user.cookie },
+    body: JSON.stringify({ code: ENROLL_CODE }),
   });
   return { status: res.status, body: await res.json() };
 }
