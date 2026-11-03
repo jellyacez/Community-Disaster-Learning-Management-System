@@ -112,7 +112,7 @@ export default function EnrollCodeModal({
               type="button"
               onClick={onRequestCode}
               disabled={isLoading || isRequesting}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-gray-300 px-3.5 py-2.5 text-xs font-bold text-gray-700 transition-colors hover:bg-gray-50 disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-gray-300 px-3.5 py-2.5 text-xs font-bold text-gray-700 transition-colors hover:bg-gray-50 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
             >
               <HugeiconsIcon icon={HelpSquareIcon} className="h-4 w-4 text-gray-500" />
               <span>Request Code</span>
@@ -123,14 +123,14 @@ export default function EnrollCodeModal({
                 type="button"
                 onClick={onClose}
                 disabled={isLoading || isRequesting}
-                className="rounded-xl border border-gray-300 px-4 py-2.5 text-sm font-bold text-gray-700 transition-colors hover:bg-gray-50 disabled:opacity-50"
+                className="rounded-xl border border-gray-300 px-4 py-2.5 text-sm font-bold text-gray-700 transition-colors hover:bg-gray-50 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={!code || isLoading || isRequesting}
-                className="rounded-xl bg-red-600 px-5 py-2.5 text-sm font-bold text-white shadow-sm transition-colors hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
+                className="rounded-xl bg-red-600 px-5 py-2.5 text-sm font-bold text-white shadow-sm transition-colors hover:bg-red-700 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {isLoading ? "Checking..." : "Enroll"}
               </button>

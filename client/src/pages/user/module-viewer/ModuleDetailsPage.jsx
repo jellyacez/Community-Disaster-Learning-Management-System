@@ -91,6 +91,7 @@ export default function ModuleDetailsPage() {
   const [showEnrollModal, setShowEnrollModal] = useState(false);
   const [isEnrolling, setIsEnrolling] = useState(false);
   const [enrollError, setEnrollError] = useState("");
+  const [isRequestingCode, setIsRequestingCode] = useState(false);
   const [showDownloadModal, setShowDownloadModal] = useState(false);
 
   // Hook manages IndexedDB persistence and status checking
@@ -166,6 +167,20 @@ export default function ModuleDetailsPage() {
       }
     } finally {
       setIsEnrolling(false);
+    }
+  };
+
+  // "Request Code" button in the enrollment modal: asks the MDRRMO admin to send the code
+  const handleRequestCode = async () => {
+    if (isRequestingCode || isEnrolling || isAdmin) return;
+    setIsRequestingCode(true);
+    try {
+      const res = await apiClient.post(`/modules/${id}/request-code`);
+      toast.success(res.data?.message || "Code request sent to admin successfully.");
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to request code. Please try again.");
+    } finally {
+      setIsRequestingCode(false);
     }
   };
 
@@ -522,11 +537,13 @@ export default function ModuleDetailsPage() {
         isOpen={showEnrollModal}
         moduleTitle={decodeHtml(module?.modname)}
         onClose={() => {
-          if (isEnrolling) return;
+          if (isEnrolling || isRequestingCode) return;
           setShowEnrollModal(false);
           setEnrollError("");
         }}
         onSubmit={handleEnroll}
+        onRequestCode={handleRequestCode}
+        isRequesting={isRequestingCode}
         isLoading={isEnrolling}
         error={enrollError}
         onInputChange={() => enrollError && setEnrollError("")}
