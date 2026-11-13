@@ -318,7 +318,7 @@ const dispatchTask = async (task) => {
 /**
  * Main synchronization loop to process queued offline tasks
  */
-export const processOfflineQueue = async (currentUserId) => {
+export const processOfflineQueue = async () => {
   if (!navigator.onLine) return;
 
   if (isSyncing) {
@@ -338,7 +338,7 @@ export const processOfflineQueue = async (currentUserId) => {
 
     // Queued actions use whoever is signed in when they sync, so hold back items
     // recorded by a different user (e.g. after a logout with unsynced progress).
-    // Callers may pass the user id; otherwise look it up from the session.
+    // The signed-in user comes from the session.
     const userId = await getCurrentUserId();
     if (!userId) return;
     const tasksToProcess = (await getAllPendingWrites()).filter((t) => {

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { UserCircle02Icon, Mail01Icon } from "@hugeicons/core-free-icons";
@@ -7,7 +7,6 @@ import { saveOfflinePersonName } from "../../lib/LocalSave/nameService";
 import { preparePersonName } from "../../utils/personName";
 import toast from "react-hot-toast";
 
-const EMPTY_NAME = { first_name: "", middle_name: "", last_name: "" };
 const NAME_INPUTS = [
   { key: "first_name", label: "First name", autoComplete: "given-name" },
   {
@@ -20,27 +19,32 @@ const NAME_INPUTS = [
 
 export default function ProfilePreferences({ currentUser }) {
   const queryClient = useQueryClient();
-  const [names, setNames] = useState(EMPTY_NAME);
+  // Never guess name components by splitting a legacy full name.
+  const namesFromUser = () => ({
+    first_name: currentUser?.first_name || "",
+    middle_name: currentUser?.middle_name || "",
+    last_name: currentUser?.last_name || "",
+  });
+  const [names, setNames] = useState(namesFromUser);
   const [errors, setErrors] = useState({});
   const [isUpdating, setIsUpdating] = useState(false);
   const hasStructuredName = Boolean(
     currentUser?.first_name && currentUser?.last_name,
   );
 
-  useEffect(() => {
-    // Never guess name components by splitting a legacy full name.
-    setNames({
-      first_name: currentUser?.first_name || "",
-      middle_name: currentUser?.middle_name || "",
-      last_name: currentUser?.last_name || "",
-    });
-    setErrors({});
-  }, [
+  // Reload the fields when the user or their saved name changes (adjusted during render, not in an effect)
+  const userNameKey = [
     currentUser?.id,
     currentUser?.first_name,
     currentUser?.middle_name,
     currentUser?.last_name,
-  ]);
+  ].join("\u0000");
+  const [loadedNameKey, setLoadedNameKey] = useState(userNameKey);
+  if (userNameKey !== loadedNameKey) {
+    setLoadedNameKey(userNameKey);
+    setNames(namesFromUser());
+    setErrors({});
+  }
 
   const refreshUser = (data) => {
     // Update an existing cached session; never create a partial auth session.

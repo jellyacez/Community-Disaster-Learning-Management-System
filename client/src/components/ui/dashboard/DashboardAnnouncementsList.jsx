@@ -1,10 +1,12 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Notification03Icon, AlertCircleIcon } from "@hugeicons/core-free-icons";
 import AnnouncementSkeleton from "../announcements/AnnouncementSkeleton.jsx";
 
 export default function DashboardAnnouncementsList({ displayData, loading, navigate }) {
   const announcements = displayData?.announcements || [];
+  // Read the clock once per mount; calling Date.now() during render gives a different answer each render
+  const [now] = useState(() => Date.now());
 
   // Precompute advisory sequence numbers per calendar year (Jan 1 reset)
   const itemsWithSequence = useMemo(() => {
@@ -15,12 +17,12 @@ export default function DashboardAnnouncementsList({ displayData, loading, navig
       }
 
       // 2. Client-side fallback: calculate sequence within the same calendar year
-      const itemDate = new Date(item.date || item.created_at || Date.now());
+      const itemDate = new Date(item.date || item.created_at || now);
       const itemYear = itemDate.getFullYear();
 
       const sameYearItems = announcements
         .filter((a) => {
-          const d = new Date(a.date || a.created_at || Date.now());
+          const d = new Date(a.date || a.created_at || now);
           return d.getFullYear() === itemYear;
         })
         .sort((a, b) => new Date(a.date || a.created_at) - new Date(b.date || b.created_at));
@@ -31,12 +33,12 @@ export default function DashboardAnnouncementsList({ displayData, loading, navig
         seqNum: idx !== -1 ? idx + 1 : item.id || 1,
       };
     });
-  }, [announcements]);
+  }, [announcements, now]);
 
   // Determine if an announcement was issued within the last 48 hours
   const checkIsNew = (item) => {
-    const postDate = new Date(item.date || item.created_at || Date.now());
-    const hoursSince = (Date.now() - postDate.getTime()) / (1000 * 60 * 60);
+    const postDate = new Date(item.date || item.created_at || now);
+    const hoursSince = (now - postDate.getTime()) / (1000 * 60 * 60);
     return hoursSince <= 48;
   };
 

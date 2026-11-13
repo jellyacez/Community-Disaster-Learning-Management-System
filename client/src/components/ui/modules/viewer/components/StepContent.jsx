@@ -25,13 +25,19 @@ export default function StepContent({
   const [savedMedia, setSavedMedia] = useState(null);
   useEffect(() => {
     let cancelled = false, objectUrl;
-    setSavedMedia(null);
     readMedia(originalUrl, userId).then(blob => {
       if (!blob || cancelled) return;
       objectUrl = URL.createObjectURL(blob);
       setSavedMedia({ originalUrl, url: objectUrl });
     }).catch(() => {});
-    return () => { cancelled = true; if (objectUrl) URL.revokeObjectURL(objectUrl); };
+    return () => {
+      cancelled = true;
+      if (objectUrl) {
+        URL.revokeObjectURL(objectUrl);
+        // Drop the copy whose URL was just revoked, so returning to this step can't play it
+        setSavedMedia((current) => (current?.url === objectUrl ? null : current));
+      }
+    };
   }, [originalUrl, userId]);
   const mediaUrl = originalUrl;
   const playbackUrl = savedMedia?.originalUrl === originalUrl ? savedMedia.url : originalUrl;

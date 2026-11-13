@@ -20,17 +20,17 @@ export function useFeedbackHistory(userId, activeTab) {
   const PAGE_SIZE = 10;
 
   // Load offline feedback items and replies from Dexie and in-memory queue
-  const loadOfflineFeedbacks = async () => {
-    try {
-      const allItems = await getAllSyncQueueItems();
-      const items = allItems.filter(
-        (t) => t.action_type === "SUBMIT_FEEDBACK" || t.action_type === "REPLY_FEEDBACK"
-      );
-      setOfflineFeedbackItems(items);
-    } catch (e) {
-      console.error("Error loading offline feedback from Dexie:", e);
-    }
-  };
+  const loadOfflineFeedbacks = () =>
+    getAllSyncQueueItems()
+      .then((allItems) => {
+        const items = allItems.filter(
+          (t) => t.action_type === "SUBMIT_FEEDBACK" || t.action_type === "REPLY_FEEDBACK"
+        );
+        setOfflineFeedbackItems(items);
+      })
+      .catch((e) => {
+        console.error("Error loading offline feedback from Dexie:", e);
+      });
 
   useEffect(() => {
     loadOfflineFeedbacks();

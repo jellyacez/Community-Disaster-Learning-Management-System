@@ -16,9 +16,15 @@ export default function EnrollCodeModal({
   const [code, setCode] = useState("");
   const inputRef = useRef(null);
 
+  // Clear the field each time the modal opens (adjusted during render, not in an effect)
+  const [wasOpen, setWasOpen] = useState(isOpen);
+  if (isOpen !== wasOpen) {
+    setWasOpen(isOpen);
+    if (isOpen) setCode("");
+  }
+
   useEffect(() => {
     if (isOpen) {
-      setCode("");
       const t = setTimeout(() => inputRef.current?.focus(), 50);
       return () => clearTimeout(t);
     }

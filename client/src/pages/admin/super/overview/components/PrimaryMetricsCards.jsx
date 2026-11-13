@@ -12,10 +12,7 @@ function AnimatedNumber({ value }) {
 
   useEffect(() => {
     const end = Number(value) || 0;
-    if (end === 0) {
-      setCurrent(0);
-      return;
-    }
+    if (end === 0) return;
     let start = 0;
     const duration = 1600; // Increased from 650ms to 1600ms for a slower count roll
     const stepTime = 25;
@@ -34,7 +31,7 @@ function AnimatedNumber({ value }) {
     return () => clearInterval(timer);
   }, [value]);
 
-  return <span className="stat-number-animate">{current}</span>;
+  return <span className="stat-number-animate">{Number(value) ? current : 0}</span>;
 }
 
 export default function PrimaryMetricsCards({ stats, loading, totalBarangaysCount }) {

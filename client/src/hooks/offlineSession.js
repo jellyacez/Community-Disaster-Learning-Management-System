@@ -76,6 +76,8 @@ export function useOfflineSession() {
   // Sync live session from Better Auth into local storage
   useEffect(() => {
     if (liveSession?.user) {
+      // Syncs an external store (localStorage); updateCachedSession is a no-op when nothing changed
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       updateCachedSession(liveSession);
     } else if (!isPending && !liveSession && !isOffline && !error) {
       // Server confirmed the user is logged out while online
