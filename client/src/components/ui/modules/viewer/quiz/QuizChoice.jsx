@@ -10,7 +10,6 @@ export default function QuizChoice({ opt, isSelected, hasSubmitted, onChoiceClic
       rowClasses += " bg-transparent hover:bg-gray-100/80 text-gray-800 border border-gray-200/80 cursor-pointer dark:hover:bg-slate-800/60 dark:text-slate-200 dark:border-slate-800";
     }
   } else {
-    // Evaluated State
     if (isSelected && opt.isCorrect) {
       rowClasses += " bg-emerald-50 text-emerald-950 font-medium border border-emerald-300 dark:bg-emerald-950/40 dark:text-emerald-200 dark:border-emerald-800/60";
     } else if (isSelected && !opt.isCorrect) {

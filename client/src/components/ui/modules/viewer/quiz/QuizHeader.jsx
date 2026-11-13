@@ -14,7 +14,6 @@ export default function QuizHeader({ currentQIndex, totalQuestions, timeLeft }) 
         )}
       </div>
       
-      {/* Subtle Progress Bar Line */}
       <div className="w-full h-1 bg-gray-100 dark:bg-slate-800 rounded-full overflow-hidden">
         <div 
           className="h-full bg-red-600 transition-all duration-300 ease-out" 

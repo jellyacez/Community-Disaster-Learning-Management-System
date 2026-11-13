@@ -67,9 +67,7 @@ export default function OnboardingModal({ currentUser, onSuccess }) {
     enabled: !isImpersonating && !isSuccess && !!currentUser && (!currentUser.name || !currentUser.barangay_id)
   });
 
-  // 1. Never show if impersonation is active
-  // 2. Never show to any admin role (super_admin, system_admin, etc.)
-  // 3. Never show if user already has a barangay
+  // never for impersonation, admin roles, or users who already have a barangay
   const isAdminRole = [
     "super_admin",
     "system_admin",
@@ -108,7 +106,7 @@ export default function OnboardingModal({ currentUser, onSuccess }) {
         barangayId: selectedBarangay.id
       });
 
-      // Update offline session cache in localStorage if present
+      // keep the offline session cache in step, if there is one
       try {
         const rawSess = localStorage.getItem("lms_offline_session");
         if (rawSess) {

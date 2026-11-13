@@ -3,7 +3,6 @@ export default function WelcomeBanner({ userName, onBrowse, onResume, hasActiveM
   return (
     <section className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-red-700 via-red-600 to-rose-600 p-8 text-white shadow-lg">
       
-      {/* Background Graphic (Shield) */}
       <svg 
         aria-hidden="true"
         className="absolute -right-12 -bottom-16 w-80 h-80 text-white opacity-[0.07] rotate-[15deg] pointer-events-none" 

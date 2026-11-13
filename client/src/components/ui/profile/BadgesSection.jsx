@@ -22,7 +22,6 @@ export default function BadgesSection({ enrolledModules = [], categoryTotals = {
 
     const totalCompleted = enrolledModules.filter((m) => m.progress === 100).length;
 
-    // Completed counts per category
     const floodCompleted = enrolledModules.filter((m) =>
       m.category?.toLowerCase().includes("flood") && m.progress === 100
     ).length;
@@ -39,7 +38,6 @@ export default function BadgesSection({ enrolledModules = [], categoryTotals = {
       m.category?.toLowerCase().includes("fire") && m.progress === 100
     ).length;
 
-    // Helper to calculate total catalog modules for a category from system totals
     const getCategoryCatalogTotal = (catKeyword) => {
       let sum = 0;
       if (categoryTotals && typeof categoryTotals === "object") {
@@ -62,7 +60,7 @@ export default function BadgesSection({ enrolledModules = [], categoryTotals = {
     const totalFundamentalCatalog = getCategoryCatalogTotal("fundamental");
 
     const badgeDefinitions = [
-      // ---------------- ACHIEVEMENTS ----------------
+      // achievements
       {
         id: "first_module",
         type: "achievement",
@@ -112,7 +110,7 @@ export default function BadgesSection({ enrolledModules = [], categoryTotals = {
         },
       },
 
-      // ---------------- BADGES ----------------
+      // badges
       {
         id: "flood_master",
         type: "badge",
@@ -192,7 +190,6 @@ export default function BadgesSection({ enrolledModules = [], categoryTotals = {
   return (
     <section className="rounded-3xl border border-gray-100 bg-white p-6 shadow-sm h-full flex flex-col justify-between">
       <div>
-        {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-black text-gray-900 flex items-center gap-2">
             <HugeiconsIcon icon={Award02Icon} className="h-6 w-6 text-yellow-500" />
@@ -237,7 +234,6 @@ export default function BadgesSection({ enrolledModules = [], categoryTotals = {
                 );
               }
 
-              // Locked Achievement
               return (
                 <div key={item.id} className="relative p-3 rounded-2xl border border-dashed border-gray-200 bg-gray-50/70 opacity-75 transition-all duration-300 hover:opacity-100">
                   <div className="flex items-center gap-3">
@@ -258,7 +254,6 @@ export default function BadgesSection({ enrolledModules = [], categoryTotals = {
           </div>
         </div>
 
-        {/* --- BADGES SECTION (GRID STYLE) --- */}
         <div>
           <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Course Badges</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -288,7 +283,6 @@ export default function BadgesSection({ enrolledModules = [], categoryTotals = {
                 );
               }
 
-              // Locked Badge
               return (
                 <div key={badge.id} className="relative p-3.5 rounded-2xl border border-dashed border-gray-200 bg-gray-50/70 opacity-75 transition-all duration-300 hover:opacity-100">
                   <div className="flex items-start gap-3">
@@ -310,7 +304,6 @@ export default function BadgesSection({ enrolledModules = [], categoryTotals = {
         </div>
       </div>
 
-      {/* Certificate Link Footer */}
       <div className="mt-6 pt-4 border-t border-gray-100 flex items-center justify-between">
         <div className="flex items-center gap-2 text-xs text-gray-500 font-medium">
           <HugeiconsIcon icon={Certificate01Icon} className="w-4 h-4 text-red-600" />

@@ -28,7 +28,6 @@ export default function CurriculumMap({
 }) {
   return (
     <div className="w-full min-w-0 max-w-6xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500 pb-12 px-0 sm:px-2">
-      {/* Header */}
       <div className="text-center mb-8 xl:mb-14">
         <h1 className="text-3xl sm:text-4xl xl:text-5xl font-black text-gray-900 dark:text-white mb-3 tracking-tighter">
           Curriculum Map
@@ -39,7 +38,6 @@ export default function CurriculumMap({
       </div>
 
       <div className="relative">
-        {/* Center Connecting Line */}
         <div className="absolute left-6 xl:left-1/2 top-8 bottom-8 w-1 bg-gray-200 dark:bg-slate-700 rounded-full -ml-0.5 xl:ml-0 xl:-translate-x-1/2 z-0 opacity-60 dark:opacity-80" />
 
         <div className="space-y-10 xl:space-y-20">
@@ -59,7 +57,6 @@ export default function CurriculumMap({
                 key={lvl.id || lvl.level_order || idx}
                 className="relative z-10 flex flex-col xl:flex-row items-center gap-6 xl:gap-0"
               >
-                {/* 1. Center Circle Node */}
                 <div
                   className={`absolute left-6 xl:left-1/2 -ml-6 xl:ml-0 xl:-translate-x-1/2 w-12 h-12 rounded-full border-[3px] flex items-center justify-center bg-white dark:bg-slate-900 shadow-md z-20 transition-all ${
                     isLevelUnlocked
@@ -74,7 +71,6 @@ export default function CurriculumMap({
                   )}
                 </div>
 
-                {/* 2. LEFT SIDE CONTAINER */}
                 <div className="w-full xl:w-1/2 pl-12 sm:pl-16 xl:pl-0 xl:pr-14 flex justify-center xl:justify-end">
                   {!isEven ? (
                     /* C2, C4, C6... Main Card on Left */
@@ -100,7 +96,6 @@ export default function CurriculumMap({
                   )}
                 </div>
 
-                {/* 3. RIGHT SIDE CONTAINER */}
                 <div className="w-full xl:w-1/2 pl-12 sm:pl-16 xl:pl-14 flex justify-center xl:justify-start">
                   {isEven ? (
                     /* C1, C3, C5... Main Card on Right */
@@ -134,9 +129,6 @@ export default function CurriculumMap({
   );
 }
 
-/**
- * The Opposite Side Motivational Image / Placeholder Card
- */
 function LevelOppositeImage({
   coverImg,
   lvl,
@@ -162,13 +154,11 @@ function LevelOppositeImage({
                 isLevelUnlocked ? "group-hover:scale-105" : ""
               }`}
             />
-            {/* Subtle Gradient Pill Overlay */}
             <div className="absolute bottom-3 left-3 bg-black/60 backdrop-blur-md px-3 py-1 rounded-full text-white text-[11px] font-bold tracking-wider uppercase border border-white/10 shadow-sm">
               Phase {lvl.level_order || idx + 1} Motivator
             </div>
           </>
         ) : (
-          /* Visual Placeholder when no photo is uploaded yet */
           <div className="flex flex-col items-center justify-center p-6 text-center space-y-3">
             <div
               className={`w-16 h-16 rounded-2xl flex items-center justify-center shadow-xs transition-colors ${
@@ -194,9 +184,6 @@ function LevelOppositeImage({
   );
 }
 
-/**
- * The Interactive Phase Step List Card
- */
 function LevelContentCard({
   lvl,
   idx,
@@ -214,7 +201,6 @@ function LevelContentCard({
           : "bg-gray-50/50 dark:bg-slate-900/40 border-gray-200 dark:border-slate-800 opacity-70"
       }`}
     >
-      {/* Title & Phase Badge Header */}
       <div className="flex min-w-0 flex-wrap items-center gap-2 mb-3">
         <div className="shrink-0 whitespace-nowrap px-3 py-1 rounded-xl bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-300 border border-red-100 dark:border-red-900/50 font-black text-xs uppercase tracking-wider">
           Phase {lvl.level_order || idx + 1}
@@ -228,7 +214,6 @@ function LevelContentCard({
         </h3>
       </div>
 
-      {/* Description */}
       {lvl.description && (
         <div
           className="text-xs sm:text-sm font-medium text-gray-500 dark:text-slate-400 mb-5 leading-relaxed prose prose-sm dark:prose-invert max-w-none [&>p]:m-0"
@@ -238,7 +223,6 @@ function LevelContentCard({
         />
       )}
 
-      {/* Steps List */}
       <div className="space-y-2.5">
         {(lvl.steps || []).map((step) => {
           const isCompleted = step.isCompleted ?? completedStepIds.includes(step.id);

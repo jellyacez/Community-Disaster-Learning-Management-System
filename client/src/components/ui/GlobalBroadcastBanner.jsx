@@ -14,7 +14,7 @@ export default function GlobalBroadcastBanner() {
       const res = await apiClient.get("/public/broadcast");
       return res.data;
     },
-    refetchInterval: 1000 * 60 * 5, // Check every *5* minutes
+    refetchInterval: 1000 * 60 * 5,
     staleTime: 30000,
     retry: false,
   });
@@ -23,7 +23,6 @@ export default function GlobalBroadcastBanner() {
     return null;
   }
 
-  // Determine styling based on severity (default to warning)
   const severity = data.severity || "warning";
   
   const styles = {

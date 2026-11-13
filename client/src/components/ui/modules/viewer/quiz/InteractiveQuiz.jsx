@@ -24,7 +24,6 @@ function restoreOrder(questions, order) {
   return restored.length === questions.length && restored.every(Boolean) ? restored : null;
 }
 
-// Fisher-Yates shuffle
 function shuffle(array) {
   const newArray = [...array];
   for (let i = newArray.length - 1; i > 0; i--) {
@@ -53,7 +52,7 @@ export default function InteractiveQuiz({ stepId, stepType, questions = [], isLo
   );
   const submittedRef = useRef(false);
 
-  // 1. DYNAMIC RANDOMIZATION (kept stable when resuming)
+  // shuffle once; keep the saved order when resuming
   const shuffledQuestions = useMemo(() => {
     if (!questions || questions.length === 0) return [];
     const restored = savedSession?.order ? restoreOrder(questions, savedSession.order) : null;
@@ -79,7 +78,7 @@ export default function InteractiveQuiz({ stepId, stepType, questions = [], isLo
   
   const isLocked = tabSwitchWarnings >= 2;
 
-  // 2. THE VISIBILITY API (Tab-Switching Detection)
+  // count tab switches; the second one locks the quiz
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'hidden' && !isLocked && !hasSubmitted && currentQ && !isPreviewMode) {
@@ -103,8 +102,7 @@ export default function InteractiveQuiz({ stepId, stepType, questions = [], isLo
     selectedChoiceIdsRef.current = selectedChoiceIds;
   }, [selectedChoiceIds]);
 
-  // 3. STRICT DEADLINE-BASED TIMER
-  // Measured against an absolute deadline, so time spent away from the quiz still counts.
+  // Runs against an absolute deadline, so time spent away from the quiz still counts.
   useEffect(() => {
     if (!currentQ || hasSubmitted || isLocked || isPreviewMode) return;
 
@@ -160,7 +158,6 @@ export default function InteractiveQuiz({ stepId, stepType, questions = [], isLo
     onCompleteStep(finalAnswers);
   };
 
-  // Reset state for next question
   const handleNextQuestion = () => {
     if (currentQIndex < shuffledQuestions.length - 1) {
       setCurrentQIndex(prev => prev + 1);
@@ -231,12 +228,10 @@ export default function InteractiveQuiz({ stepId, stepType, questions = [], isLo
         timeLeft={isPreviewMode ? null : timeLeft} 
       />
 
-      {/* Question */}
       <h2 className="text-xl font-semibold text-gray-900 mb-6 leading-snug">
         {decodeHtml(currentQ.question_text)}
       </h2>
 
-      {/* Choices */}
       <div className="space-y-2.5 mb-6">
         {currentQ.options.map((opt) => (
           <QuizChoice 
@@ -262,7 +257,6 @@ export default function InteractiveQuiz({ stepId, stepType, questions = [], isLo
         </div>
       )}
 
-      {/* Footer Area with Next Action */}
       <div className="mt-6">
         {(hasSubmitted || isLocked) && !isPreviewMode && (
           <QuizFeedback 

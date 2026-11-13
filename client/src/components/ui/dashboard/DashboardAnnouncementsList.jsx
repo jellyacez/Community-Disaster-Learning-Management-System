@@ -11,12 +11,12 @@ export default function DashboardAnnouncementsList({ displayData, loading, navig
   // Precompute advisory sequence numbers per calendar year (Jan 1 reset)
   const itemsWithSequence = useMemo(() => {
     return announcements.map((item) => {
-      // 1. If the API controller provided advisory_number, use it directly
+      // use the server's advisory_number when present
       if (item.advisory_number) {
         return { ...item, seqNum: item.advisory_number };
       }
 
-      // 2. Client-side fallback: calculate sequence within the same calendar year
+      // otherwise count within the calendar year
       const itemDate = new Date(item.date || item.created_at || now);
       const itemYear = itemDate.getFullYear();
 
@@ -35,7 +35,6 @@ export default function DashboardAnnouncementsList({ displayData, loading, navig
     });
   }, [announcements, now]);
 
-  // Determine if an announcement was issued within the last 48 hours
   const checkIsNew = (item) => {
     const postDate = new Date(item.date || item.created_at || now);
     const hoursSince = (now - postDate.getTime()) / (1000 * 60 * 60);
@@ -93,10 +92,8 @@ export default function DashboardAnnouncementsList({ displayData, loading, navig
                 }}
                 className="rounded-2xl bg-gray-50 p-4 hover:bg-gray-100 transition cursor-pointer border border-transparent hover:border-gray-200 focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 outline-hidden space-y-2"
               >
-                {/* Top Pill Strip: Advisory # + New status + Urgent (author removed) */}
                 <div className="flex items-center justify-between gap-2 flex-wrap">
                   <div className="flex items-center gap-1.5">
-                    {/* Status Pill */}
                     <span
                       className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold border ${
                         isNew
@@ -112,7 +109,6 @@ export default function DashboardAnnouncementsList({ displayData, loading, navig
                       Advisory #{item.seqNum} {isNew && "• New"}
                     </span>
 
-                    {/* Urgent Tag */}
                     {isUrgent && (
                       <span className="inline-flex items-center gap-0.5 rounded-full bg-red-600 px-2 py-0.5 text-[10px] font-bold text-white uppercase tracking-wider">
                         <HugeiconsIcon icon={AlertCircleIcon} className="w-2.5 h-2.5" />

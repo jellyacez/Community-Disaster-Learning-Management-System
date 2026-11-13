@@ -144,7 +144,6 @@ export function SkeletonChart({ type = "donut", height = 220 }) {
     );
   }
 
-  // Area / Bar chart skeleton wireframe
   return (
     <div className="flex flex-col justify-end p-4 animate-pulse gap-2" style={{ height }}>
       <div className="flex items-end justify-between gap-3 h-full pb-4 border-b border-gray-200 dark:border-slate-800">

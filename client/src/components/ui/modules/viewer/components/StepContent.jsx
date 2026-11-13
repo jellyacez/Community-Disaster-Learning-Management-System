@@ -66,7 +66,6 @@ export default function StepContent({
   const lastPlayTimeRef = useRef(0);
   const hasMetNinetyRef = useRef(false);
 
-  // Initialize or reset tracking whenever activeStep changes
   useEffect(() => {
     if (!isVideo) return;
     if (isAlreadyCompleted) {
@@ -140,7 +139,6 @@ export default function StepContent({
         {decodeHtml(activeStep.title)}
       </h1>
 
-      {/* MEDIA COMPONENT: EXPLICIT BRANCHING FOR PDF, VIDEO, AND IMAGE */}
       {mediaUrl && (
         <>
           {isPdf ? (
@@ -211,7 +209,6 @@ export default function StepContent({
         </>
       )}
 
-      {/* RICH TEXT CONTENT */}
       {activeStep.content && activeStep.content !== "<p></p>" && (
         <div
           className="prose prose-neutral dark:prose-invert max-w-none text-gray-800 dark:text-slate-200 leading-relaxed font-normal mb-8 prose-headings:font-bold prose-headings:text-gray-900 dark:prose-headings:text-white prose-p:text-base prose-p:leading-relaxed prose-li:marker:text-gray-400 dark:prose-li:marker:text-slate-500 prose-a:text-red-600 dark:prose-a:text-red-400 hover:prose-a:text-red-700 dark:hover:prose-a:text-red-300"
@@ -219,7 +216,6 @@ export default function StepContent({
         />
       )}
 
-      {/* INTERACTIVE QUIZ COMPONENT */}
       {isAssessment && (
         <div className="mt-6">
           {!isPreviewMode && completedStepIds.includes(activeStep.id) ? (

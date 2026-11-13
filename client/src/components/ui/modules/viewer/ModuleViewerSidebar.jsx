@@ -20,7 +20,6 @@ export default function ModuleViewerSidebar({
     }
   };
 
-  // Calculate overall module progress
   const totalSteps = levels.reduce((acc, lvl) => acc + (lvl.steps?.length || 0), 0);
   const progressPercentage = totalSteps > 0 ? Math.round((completedStepIds.length / totalSteps) * 100) : 0;
 

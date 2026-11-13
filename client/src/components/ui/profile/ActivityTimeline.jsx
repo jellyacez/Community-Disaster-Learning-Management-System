@@ -52,7 +52,7 @@ export default function ActivityTimeline({ enrolledModules }) {
       return b.progress - a.progress;
     });
 
-    return logs.slice(0, 5); // Limit to top 5 recent activities
+    return logs.slice(0, 5);
   }, [enrolledModules]);
 
   return (
@@ -73,7 +73,6 @@ export default function ActivityTimeline({ enrolledModules }) {
         <div className="relative border-l-2 border-gray-100 ml-3 space-y-6 flex-1 my-1">
           {activities.map((act, idx) => (
             <article key={idx} className="relative pl-6 group">
-              {/* Bullet Dot */}
               <span
                 className={`absolute -left-[9px] top-1.5 h-4 w-4 rounded-full ring-4 ring-white shadow-xs transition-transform group-hover:scale-125 ${act.dotColor}`}
               />

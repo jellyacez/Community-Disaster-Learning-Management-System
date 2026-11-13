@@ -49,7 +49,6 @@ export default function VerificationResultCard({
 
   return (
     <div className="space-y-4 animate-in fade-in zoom-in-95 duration-200">
-      {/* Banner */}
       <div className={`p-4 rounded-xl border flex items-center justify-between ${theme.wrapper}`}>
         <div className="flex items-center gap-3">
           <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${theme.iconBg}`}>
@@ -65,7 +64,6 @@ export default function VerificationResultCard({
         <CertificateLifecycleBadge status={certData.status} />
       </div>
 
-      {/* Certificate Details */}
       <div className="bg-gray-50 dark:bg-slate-800/60 rounded-xl p-4 border border-gray-200/80 dark:border-slate-700/80 space-y-3">
         <div className="grid grid-cols-2 gap-3 text-xs">
           <div>
@@ -103,7 +101,6 @@ export default function VerificationResultCard({
         </div>
       </div>
 
-      {/* Action CTA */}
       <div className="flex gap-2">
         <button
           type="button"

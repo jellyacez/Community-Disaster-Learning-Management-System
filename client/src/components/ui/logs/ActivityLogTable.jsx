@@ -88,7 +88,6 @@ export default function ActivityLogTable({ logs, isLoading, meta, setPage, limit
         </table>
       </div>
 
-      {/* Sticky Pagination */}
       <AdminTablePagination
         page={meta?.page || 1}
         totalPages={meta?.totalPages || 1}

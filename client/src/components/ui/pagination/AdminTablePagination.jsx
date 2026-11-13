@@ -90,7 +90,6 @@ const AdminTablePagination = memo(function AdminTablePagination({
       aria-label="Table pagination navigation"
       className={`px-6 py-3.5 flex flex-col md:flex-row items-center justify-between gap-4 transition-all duration-200 ${stickyStyles} ${className}`}
     >
-      {/* Left: Summary and Rows per page */}
       <div className="flex flex-wrap items-center gap-4 text-xs font-medium text-gray-500 dark:text-slate-400">
         <span>
           Showing <span className="font-bold text-gray-900 dark:text-slate-100">{start}</span> to{" "}
@@ -119,7 +118,6 @@ const AdminTablePagination = memo(function AdminTablePagination({
         )}
       </div>
 
-      {/* Right: Previous, Numbered Page Pills, and Next */}
       {totalPages > 1 ? (
         <div className="flex items-center gap-1.5 sm:gap-2">
           <button
@@ -133,7 +131,6 @@ const AdminTablePagination = memo(function AdminTablePagination({
             <span className="hidden sm:inline">Previous</span>
           </button>
 
-          {/* Page Pills */}
           <div className="flex items-center gap-1">
             {pageNumbers.map((p, idx) => {
               if (p === "...") {

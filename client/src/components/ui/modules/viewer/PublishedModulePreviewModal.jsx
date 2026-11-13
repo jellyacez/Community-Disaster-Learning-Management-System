@@ -16,10 +16,9 @@ export default function PublishedModulePreviewModal({
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [activeStepId, setActiveStepId] = useState(null);
   
-  // Local state to track progress safely without mutating backend
+  // local only, so previewing never touches real progress
   const [localCompletedStepIds, setLocalCompletedStepIds] = useState([]);
 
-  // Fetch published module data
   const { data, isLoading, isError } = useQuery({
     queryKey: ['adminModulePreview', moduleId],
     queryFn: async () => {
@@ -79,7 +78,6 @@ export default function PublishedModulePreviewModal({
     };
   };
 
-  // Prevent background scrolling when modal is open
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = "hidden";
@@ -124,10 +122,8 @@ export default function PublishedModulePreviewModal({
   const handleNextStep = () => {
     if (!activeStep) return;
     
-    // Mark current as completed in local state
     setLocalCompletedStepIds(prev => Array.from(new Set([...prev, activeStep.id])));
 
-    // Find next uncompleted step in sequence
     const currentIndex = allSteps.findIndex(s => s.id === activeStep.id);
     const nextStep = allSteps[currentIndex + 1];
     
@@ -149,7 +145,6 @@ export default function PublishedModulePreviewModal({
   return (
     <div className="fixed inset-0 z-[100] flex bg-gray-50 dark:bg-[#030712] overflow-hidden text-left">
       
-      {/* Mobile Header */}
       <div className="md:hidden absolute top-0 left-0 right-0 flex items-center justify-between bg-white dark:bg-slate-900 border-b border-gray-200 dark:border-slate-800 p-4 z-[120] shadow-sm">
         <button onClick={onClose} className="text-gray-500 dark:text-slate-400 hover:text-gray-900 dark:hover:text-slate-100 transition flex items-center gap-2 text-sm font-semibold cursor-pointer">
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
@@ -162,7 +157,6 @@ export default function PublishedModulePreviewModal({
         </button>
       </div>
 
-      {/* Mobile Sidebar Overlay */}
       {isSidebarOpen && (
         <div 
           className="fixed inset-0 bg-black/50 z-[110] md:hidden animate-in fade-in"
@@ -170,7 +164,6 @@ export default function PublishedModulePreviewModal({
         />
       )}
 
-      {/* Main Layout Area */}
       <div className="flex w-full h-full pt-[68px] md:pt-0 relative z-[115]">
         <ModuleViewerSidebar 
           module={module}
@@ -184,10 +177,8 @@ export default function PublishedModulePreviewModal({
           isPreviewMode={true}
         />
 
-        {/* Content Wrapper */}
         <div className="flex-1 flex flex-col min-w-0 bg-white dark:bg-slate-900 relative">
           
-          {/* Admin Notice Banner */}
           <div className="bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border-b border-transparent dark:border-amber-900/50 px-4 py-2 text-center text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 shadow-sm z-[110]">
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
             Live Player Preview Mode (Read-Only)

@@ -155,7 +155,6 @@ export default function UnsyncedQueueIndicator() {
 
   return (
     <>
-      {/* Trigger Badge Button */}
       <button
         type="button"
         onClick={() => setIsOpen(true)}
@@ -189,7 +188,6 @@ export default function UnsyncedQueueIndicator() {
         </span>
       </button>
 
-      {/* Slide-Over Drawer / Modal */}
       {isOpen &&
         typeof document !== "undefined" &&
         createPortal(
@@ -200,7 +198,6 @@ export default function UnsyncedQueueIndicator() {
             }}
           >
             <div className="bg-white dark:bg-slate-900 w-full max-w-lg rounded-2xl sm:rounded-3xl shadow-2xl border border-gray-100 dark:border-slate-800 overflow-hidden flex flex-col max-h-[88vh] sm:max-h-[85vh] animate-in fade-in zoom-in-95 duration-150">
-              {/* Header */}
               <div className="px-4 sm:px-6 py-3.5 sm:py-5 border-b border-gray-100 dark:border-slate-800 flex items-center justify-between gap-3 bg-gray-50/50 dark:bg-slate-900">
                 <div className="min-w-0">
                   <h3 className="font-bold text-base sm:text-lg text-gray-900 dark:text-white flex items-center gap-2 truncate">
@@ -238,7 +235,6 @@ export default function UnsyncedQueueIndicator() {
                 </button>
               </div>
 
-              {/* Content List */}
               <div className="p-3.5 sm:p-6 overflow-y-auto space-y-2.5 sm:space-y-3 flex-1">
                 {queueItems.map((task) => {
                   const ItemIcon = getItemIcon(task.action_type);
@@ -291,7 +287,6 @@ export default function UnsyncedQueueIndicator() {
                           </div>
                         </div>
 
-                        {/* Status Tag & Session Badge */}
                         <div className="flex items-center gap-1.5 flex-wrap sm:justify-end shrink-0 self-end sm:self-start">
                           {task.is_memory_only && (
                             <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 dark:bg-amber-950/70 text-amber-800 dark:text-amber-300 border border-amber-300/80 dark:border-amber-800 whitespace-nowrap">
@@ -320,7 +315,6 @@ export default function UnsyncedQueueIndicator() {
                         </div>
                       </div>
 
-                      {/* Conflict Explanation */}
                       {isConflict && (
                         <div className="mt-2.5 p-2.5 bg-amber-50/70 dark:bg-amber-950/40 rounded-xl border border-amber-200/80 dark:border-amber-900/60 text-xs">
                           <div className="flex items-center gap-1.5 flex-wrap text-amber-900 dark:text-amber-300 font-semibold text-[11px]">
@@ -341,7 +335,6 @@ export default function UnsyncedQueueIndicator() {
                         </div>
                       )}
 
-                      {/* Error / Backoff details if any (and not conflict) */}
                       {task.last_error && !isConflict && (
                         <div className="mt-2.5 p-2.5 bg-white dark:bg-slate-900/80 rounded-xl border border-gray-200/80 dark:border-slate-700 text-xs">
                           <p className="text-gray-500 dark:text-slate-400 font-semibold text-[11px] sm:text-xs">
@@ -365,7 +358,6 @@ export default function UnsyncedQueueIndicator() {
                         </div>
                       )}
 
-                      {/* Action buttons (Suppress Retry for Conflicts) */}
                       {isConflict ? (
                         <div className="mt-3 flex items-center justify-end gap-2 sm:gap-3 border-t border-amber-200/60 dark:border-amber-900/40 pt-2.5 sm:pt-3">
                           <button
@@ -418,7 +410,6 @@ export default function UnsyncedQueueIndicator() {
                 })}
               </div>
 
-              {/* Footer Bulk Actions */}
               {attentionItems.length > 1 && (
                 <div className="px-4 sm:px-6 py-3 sm:py-4 bg-gray-50 dark:bg-slate-900 border-t border-gray-100 dark:border-slate-800 flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-2.5 sm:gap-3">
                   <button
@@ -464,7 +455,6 @@ export default function UnsyncedQueueIndicator() {
           document.body
         )}
 
-      {/* Confirmation Modal for Single Discard */}
       <ConfirmationModal
         isOpen={Boolean(confirmDiscardTask)}
         onClose={() => setConfirmDiscardTask(null)}
@@ -495,7 +485,6 @@ export default function UnsyncedQueueIndicator() {
         }
       />
 
-      {/* Confirmation Modal for Discard All */}
       <ConfirmationModal
         isOpen={confirmDiscardAllModal}
         onClose={() => setConfirmDiscardAllModal(false)}

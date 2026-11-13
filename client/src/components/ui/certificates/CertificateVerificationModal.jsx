@@ -22,17 +22,14 @@ export default function CertificateVerificationModal({ isOpen, onClose }) {
   const [certData, setCertData] = useState(null);
   const [verifyError, setVerifyError] = useState(null);
 
-  // Camera state
   const [scannerStarted, setScannerStarted] = useState(false);
   const [cameraError, setCameraError] = useState(null);
   const scannerRef = useRef(null);
 
-  // Helper to extract UUID token from raw text or URL
   const extractToken = (rawText) => {
     if (!rawText) return "";
     const trimmed = rawText.trim();
     
-    // Check if it's a URL
     try {
       if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
         const url = new URL(trimmed);
@@ -40,10 +37,9 @@ export default function CertificateVerificationModal({ isOpen, onClose }) {
         if (tokenParam) return tokenParam.trim();
       }
     } catch {
-      // Not a valid URL, treat as direct string
+      // not a URL; treat it as a raw token
     }
 
-    // UUID regex match
     const uuidMatch = trimmed.match(/[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}/);
     if (uuidMatch) {
       return uuidMatch[0];
@@ -52,7 +48,6 @@ export default function CertificateVerificationModal({ isOpen, onClose }) {
     return trimmed;
   };
 
-  // Perform verification API call
   const verifyToken = async (token) => {
     const cleanToken = extractToken(token);
     if (!cleanToken) {
@@ -88,7 +83,6 @@ export default function CertificateVerificationModal({ isOpen, onClose }) {
     }
   };
 
-  // Start Camera Scanner
   const startScanner = async () => {
     if (scannerStarted || !isOpen || activeTab !== "camera" || certData || isVerifying) return;
 
@@ -121,7 +115,6 @@ export default function CertificateVerificationModal({ isOpen, onClose }) {
     }
   };
 
-  // Stop Camera Scanner
   const stopScanner = async () => {
     if (scannerRef.current && scannerStarted) {
       try {
@@ -133,7 +126,6 @@ export default function CertificateVerificationModal({ isOpen, onClose }) {
     }
   };
 
-  // Handle Tab Switch
   const handleTabChange = (tab) => {
     if (tab !== "camera") {
       stopScanner();
@@ -141,7 +133,6 @@ export default function CertificateVerificationModal({ isOpen, onClose }) {
     setActiveTab(tab);
   };
 
-  // Reset to scan another certificate
   const handleScanAnother = () => {
     setCertData(null);
     setVerifyError(null);
@@ -154,7 +145,6 @@ export default function CertificateVerificationModal({ isOpen, onClose }) {
     }
   };
 
-  // Lifecycle effects
   useEffect(() => {
     if (isOpen && activeTab === "camera" && !certData && !isVerifying) {
       const timer = setTimeout(() => {
@@ -170,7 +160,6 @@ export default function CertificateVerificationModal({ isOpen, onClose }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, activeTab, certData, isVerifying]);
 
-  // Clean up scanner on unmount
   useEffect(() => {
     return () => {
       stopScanner();
@@ -183,7 +172,6 @@ export default function CertificateVerificationModal({ isOpen, onClose }) {
     onClose();
   };
 
-  // Keyboard shortcut: Escape to close
   useEffect(() => {
     if (!isOpen) return;
     const handleKeyDown = (e) => {
@@ -213,7 +201,6 @@ export default function CertificateVerificationModal({ isOpen, onClose }) {
         aria-labelledby="verify-modal-title"
         className="relative w-full max-w-lg rounded-2xl bg-white dark:bg-slate-900 shadow-2xl overflow-hidden border border-gray-100 dark:border-slate-800 animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]"
       >
-        {/* Modal Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-slate-800 bg-gray-50/50 dark:bg-slate-900">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-red-100 dark:bg-red-950/60 text-red-600 dark:text-red-400 shadow-sm">
@@ -237,9 +224,7 @@ export default function CertificateVerificationModal({ isOpen, onClose }) {
           </button>
         </div>
 
-        {/* Modal Body */}
         <div className="p-6 overflow-y-auto space-y-5">
-          {/* Mode Tabs (only visible when not displaying a finished result) */}
           {!certData && !verifyError && (
             <div className="flex p-1 bg-gray-100 dark:bg-slate-800 rounded-xl border border-transparent dark:border-slate-700/60">
               <button
@@ -269,7 +254,6 @@ export default function CertificateVerificationModal({ isOpen, onClose }) {
             </div>
           )}
 
-          {/* Loading Indicator */}
           {isVerifying && (
             <div className="py-12 flex flex-col items-center justify-center text-center space-y-3">
               <Spinner className="w-8 h-8 text-red-600" />
@@ -277,7 +261,6 @@ export default function CertificateVerificationModal({ isOpen, onClose }) {
             </div>
           )}
 
-          {/* Tab 1: Camera Scanner */}
           {!isVerifying && !certData && !verifyError && activeTab === "camera" && (
             <CameraScannerView
               scannerStarted={scannerStarted}
@@ -286,7 +269,6 @@ export default function CertificateVerificationModal({ isOpen, onClose }) {
             />
           )}
 
-          {/* Tab 2: Manual Token Input */}
           {!isVerifying && !certData && !verifyError && activeTab === "manual" && (
             <ManualTokenForm
               tokenInput={tokenInput}
@@ -295,7 +277,6 @@ export default function CertificateVerificationModal({ isOpen, onClose }) {
             />
           )}
 
-          {/* Verification Result Card */}
           {!isVerifying && certData && (
             <VerificationResultCard
               certData={certData}
@@ -304,7 +285,6 @@ export default function CertificateVerificationModal({ isOpen, onClose }) {
             />
           )}
 
-          {/* Verification Error State */}
           {!isVerifying && verifyError && (
             <VerificationErrorState
               verifyError={verifyError}

@@ -26,11 +26,6 @@ export default function ModuleViewerContent({
   navigate,
   setIsSidebarOpen,
 }) {
-  /*
-   * ---------------------------------------------------------
-   * Assessment data
-   * ---------------------------------------------------------
-   */
   const assessmentData = activeStep
     ? getAssessmentForStep(activeStep.id)
     : {
@@ -48,11 +43,6 @@ export default function ModuleViewerContent({
       "action_sequence",
     ].includes(activeStep?.type);
 
-  /*
-   * ---------------------------------------------------------
-   * Video detection
-   * ---------------------------------------------------------
-   */
   const isVideoMedia = Boolean(
     activeStep?.media_url &&
       /\.(mp4|webm|ogg|mov)($|\?)/i.test(activeStep.media_url)
@@ -67,18 +57,8 @@ export default function ModuleViewerContent({
       )
   );
 
-  /*
-   * ---------------------------------------------------------
-   * Video progress
-   * ---------------------------------------------------------
-   */
   const [videoProgressMap, setVideoProgressMap] = useState({});
 
-  /*
-   * ---------------------------------------------------------
-   * Offline status
-   * ---------------------------------------------------------
-   */
   const [isOffline, setIsOffline] = useState(() =>
     typeof navigator !== "undefined"
       ? !navigator.onLine
@@ -103,11 +83,6 @@ export default function ModuleViewerContent({
     };
   }, []);
 
-  /*
-   * ---------------------------------------------------------
-   * Video progress callback
-   * ---------------------------------------------------------
-   */
   const handleVideoProgress = useCallback(
     ({ stepId, watchedRatio = 0, canContinue = false }) => {
       if (!stepId) return;
@@ -132,11 +107,6 @@ export default function ModuleViewerContent({
     []
   );
 
-  /*
-   * ---------------------------------------------------------
-   * Current step status
-   * ---------------------------------------------------------
-   */
   const isAlreadyCompleted = Boolean(
     activeStep &&
       (
@@ -149,26 +119,13 @@ export default function ModuleViewerContent({
     ? videoProgressMap[activeStep.id]
     : null;
 
-  /*
-   * ---------------------------------------------------------
-   * Video gate
-   *
-   * Video requires 90% watched before continuing.
-   * Previously completed steps bypass the gate.
-   * Offline mode also bypasses the gate.
-   * ---------------------------------------------------------
-   */
+  // video steps need 90% watched; already-completed steps and offline mode skip the gate
   const isVideoGated = Boolean(
     isVideoStep &&
       !isAlreadyCompleted &&
       !currentVideoProgress?.canContinue
   );
 
-  /*
-   * ---------------------------------------------------------
-   * Determine last step
-   * ---------------------------------------------------------
-   */
   const lastLevel =
     levels.length > 0
       ? levels[levels.length - 1]
@@ -193,11 +150,6 @@ export default function ModuleViewerContent({
       lastStep?.id === activeStep.id
   );
 
-  /*
-   * ---------------------------------------------------------
-   * Step icon
-   * ---------------------------------------------------------
-   */
   const getStepIcon = (type) => {
     switch (type) {
       case "video":
@@ -212,24 +164,13 @@ export default function ModuleViewerContent({
     }
   };
 
-  /*
-   * ---------------------------------------------------------
-   * Render
-   * ---------------------------------------------------------
-   */
   return (
     <main className="flex-1 flex flex-col min-h-0 min-w-0 bg-white relative">
-      {/* -----------------------------------------------------
-          LOOP BACK MODAL
-          ----------------------------------------------------- */}
       <LoopBackModal
         acknowledgeLoopBack={acknowledgeLoopBack}
         loopBackData={loopBackData}
       />
 
-      {/* -----------------------------------------------------
-          OFFLINE BANNER
-          ----------------------------------------------------- */}
       {isOffline && (
         <div className="bg-amber-500 text-amber-50 text-[11px] sm:text-xs font-bold text-center py-1.5 px-4 flex items-center justify-center gap-2 z-20">
           <svg
@@ -253,11 +194,7 @@ export default function ModuleViewerContent({
         </div>
       )}
 
-      {/* -----------------------------------------------------
-          TOP BAR
-          ----------------------------------------------------- */}
       <header className="border-b border-gray-200 bg-white px-4 py-3 xl:px-12 flex items-center justify-between z-10 shrink-0">
-        {/* Exit button */}
         <button
           type="button"
           onClick={() =>
@@ -284,7 +221,6 @@ export default function ModuleViewerContent({
           <span>Exit to Dashboard</span>
         </button>
 
-        {/* Progress */}
         <div className="flex items-center gap-2 sm:gap-3">
           <span className="text-xs font-medium text-gray-500">
             {activeStep
@@ -311,7 +247,6 @@ export default function ModuleViewerContent({
             />
           </div>
 
-          {/* Mobile sidebar button */}
           {setIsSidebarOpen && (
             <button
               type="button"
@@ -325,13 +260,9 @@ export default function ModuleViewerContent({
         </div>
       </header>
 
-      {/* -----------------------------------------------------
-          MAIN CONTENT
-          ----------------------------------------------------- */}
       <div className="flex-1 min-w-0 overflow-y-auto px-4 py-6 xl:px-12 xl:py-10">
         {activeStep ? (
           <div className="space-y-4">
-            {/* Offline video warning */}
             {isOffline && isVideoStep && (
               <div className="bg-red-50 border border-red-200 text-red-800 text-xs font-medium px-4 py-3 rounded-xl flex items-start gap-2">
                 <svg
@@ -356,7 +287,6 @@ export default function ModuleViewerContent({
               </div>
             )}
 
-            {/* Step content */}
             <StepContent
               activeStep={activeStep}
               assessmentData={assessmentData}
@@ -373,7 +303,6 @@ export default function ModuleViewerContent({
             />
           </div>
         ) : (
-          /* Curriculum map */
           <CurriculumMap
             completedStepIds={completedStepIds}
             getStepIcon={getStepIcon}
@@ -384,13 +313,9 @@ export default function ModuleViewerContent({
         )}
       </div>
 
-      {/* -----------------------------------------------------
-          BOTTOM ACTION BAR
-          ----------------------------------------------------- */}
       {activeStep && (
         <div className="border-t border-gray-200 bg-white px-3 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:px-6 xl:px-12 z-10 shrink-0">
           <div className="max-w-3xl mx-auto grid grid-cols-2 items-center gap-2 xl:flex xl:justify-between xl:gap-4">
-            {/* View map */}
             <button
               type="button"
               onClick={() => handleStepClick(null)}
@@ -413,10 +338,8 @@ export default function ModuleViewerContent({
               View Map
             </button>
 
-            {/* Normal content completion */}
             {!isAssessment && (
               <div className="contents xl:flex xl:min-w-0 xl:items-center xl:gap-3">
-                {/* Video not watched enough */}
                 {isVideoGated && !isOffline && (
                   <div
                     id="video-watch-hint"
@@ -447,7 +370,6 @@ export default function ModuleViewerContent({
                   </div>
                 )}
 
-                {/* Video requirement met */}
                 {isVideoStep &&
                   !isAlreadyCompleted &&
                   (currentVideoProgress?.canContinue || isOffline) && (
@@ -480,7 +402,6 @@ export default function ModuleViewerContent({
                     </div>
                   )}
 
-                {/* Complete / continue button */}
                 <button
                   id="complete-continue-btn"
                   type="button"

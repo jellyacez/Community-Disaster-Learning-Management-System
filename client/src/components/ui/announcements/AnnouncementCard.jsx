@@ -13,7 +13,6 @@ const AnnouncementCard = memo(function AnnouncementCard({ item }) {
 
   const advisoryLabel = formatAdvisoryLabel(item);
 
-  // Check if announcement was posted within the last 48 hours
   const isNew = useMemo(() => {
     const postDate = new Date(item?.date || item?.created_at || Date.now());
     const hoursSince = (Date.now() - postDate.getTime()) / (1000 * 60 * 60);
@@ -38,10 +37,8 @@ const AnnouncementCard = memo(function AnnouncementCard({ item }) {
           : "border-gray-200 dark:border-slate-800"
       }`}
     >
-      {/* Top Advisory Pill Header */}
       <div className="flex flex-wrap items-center justify-between gap-2 pb-3 mb-3 border-b border-gray-100 dark:border-slate-800">
         <div className="flex items-center gap-2">
-          {/* Simple Clean Pill: Advisory # with New indicator */}
           <span
             className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold ${
               isNew
@@ -57,7 +54,6 @@ const AnnouncementCard = memo(function AnnouncementCard({ item }) {
             {advisoryLabel} {isNew && "• New"}
           </span>
 
-          {/* Urgent Badge */}
           {isUrgent && (
             <span className="inline-flex items-center gap-1 rounded-full bg-red-600 px-2.5 py-0.5 text-[11px] font-bold text-white uppercase tracking-wider">
               <HugeiconsIcon icon={Alert01Icon} className="h-3 w-3" />
@@ -71,7 +67,6 @@ const AnnouncementCard = memo(function AnnouncementCard({ item }) {
           )}
         </div>
 
-        {/* Date */}
         {formattedDate && (
           <div className="flex items-center gap-1.5 text-xs text-gray-400">
             <HugeiconsIcon icon={Calendar01Icon} className="w-3.5 h-3.5" />
@@ -86,7 +81,7 @@ const AnnouncementCard = memo(function AnnouncementCard({ item }) {
         </p>
       )}
 
-      {/* Title & Body (Author/Issuer footer intentionally removed) */}
+      {/* title and body; no author/issuer footer, on purpose */}
       <div className="space-y-1.5">
         <h2 className="text-lg font-bold text-gray-900 dark:text-white leading-snug">
           {item?.title}

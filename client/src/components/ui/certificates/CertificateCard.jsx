@@ -61,7 +61,6 @@ const CertificateCard = memo(function CertificateCard({ cert, offlineReady = fal
       className={`rounded-2xl border bg-white shadow-sm p-6 flex flex-col justify-between gap-5 transition-all duration-200 hover:shadow-md ${cfg.border}`}
     >
       <div className="space-y-4">
-        {/* Top Header Row: Status Badge + Control Number */}
         <div className="flex items-center justify-between gap-3 pb-3 border-b border-gray-100">
           <span
             className={`inline-flex items-center gap-1.5 text-xs font-extrabold px-3 py-1 rounded-full border ${cfg.badge}`}
@@ -78,7 +77,6 @@ const CertificateCard = memo(function CertificateCard({ cert, offlineReady = fal
           </span>
         </div>
 
-        {/* Certificate Title & Subject */}
         <div>
           <h3
             className="text-lg font-black leading-snug text-gray-900"
@@ -91,7 +89,6 @@ const CertificateCard = memo(function CertificateCard({ cert, offlineReady = fal
           </p>
         </div>
 
-        {/* Issued and Validity Details */}
         <div className="grid grid-cols-2 gap-3 py-3 px-3.5 bg-gray-50/80 rounded-xl border border-gray-100 text-xs">
           <div className="flex items-center gap-2">
             <HugeiconsIcon icon={Calendar03Icon} className="w-4 h-4 text-gray-400 shrink-0" />
@@ -122,7 +119,6 @@ const CertificateCard = memo(function CertificateCard({ cert, offlineReady = fal
       </div>
 
       <p className="text-xs text-gray-500">{offlineReady ? "Saved details available for offline PDF viewing" : "Offline PDF not saved yet — open online to prepare"}</p>
-      {/* Action Buttons */}
       <div className="flex items-center gap-3 pt-2">
         {isExpired ? (
           <>

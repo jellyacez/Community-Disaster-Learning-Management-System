@@ -4,12 +4,11 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import { Activity01Icon, Alert01Icon, Book01Icon } from "@hugeicons/core-free-icons";
 import { decodeHtml } from "../../../utils/textUtils";
 
-// Helper for category icons
 const getCategoryIcon = (category) => {
   const cat = (category || "").toLowerCase();
   if (cat.includes("flood") || cat.includes("water")) return Activity01Icon;
   if (cat.includes("earthquake") || cat.includes("seismic")) return Alert01Icon;
-  return Book01Icon; // default icon
+  return Book01Icon;
 };
 
 const resolveImageUrl = (url) => {
@@ -21,7 +20,6 @@ const resolveImageUrl = (url) => {
 const EnrolledModuleCard = memo(function EnrolledModuleCard({ module, onResume }) {
   return (
     <div className="rounded-2xl border border-gray-200 p-4 hover:border-red-200 hover:shadow-md transition-all duration-300 cursor-pointer bg-white group flex flex-col sm:flex-row gap-5">
-      {/* Thumbnail */}
       <div className="hidden sm:block w-28 h-full shrink-0 overflow-hidden rounded-xl bg-gray-100 relative min-h-[130px]">
         {module.image_url ? (
           <img 

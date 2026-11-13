@@ -1,9 +1,7 @@
 import { useEffect } from "react";
 import EnrollmentCodePanel from "./EnrollmentCodePanel.jsx";
 
-/**
- * Modal wrapper around EnrollmentCodePanel. Pass the module row ({ id, title }) to open it, null to close.
- */
+/** Pass the module row ({ id, title }) to open, null to close. */
 export default function EnrollmentCodeDialog({ module, onClose }) {
   useEffect(() => {
     if (!module) return;

@@ -36,12 +36,11 @@ export default function ProfileAvatar({ currentUser, userInitials }) {
           toast.success("Offline: Profile picture saved locally.");
         }
 
-        // Force TanStack Query to refresh the UI with the local Dexie data
+        // refresh the UI from the local Dexie data
         queryClient.invalidateQueries({ queryKey: ["userDashboard"] });
         return;
       }
 
-      // 3. Online Execution: Send to backend
       const { error } = await authClient.updateUser({
         image: compressedBase64
       });

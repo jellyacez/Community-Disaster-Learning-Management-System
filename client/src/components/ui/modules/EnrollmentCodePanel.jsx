@@ -3,11 +3,7 @@ import toast from "react-hot-toast";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import apiClient from "../../../lib/apiClient";
 
-/**
- * Shows a module's enrollment code with Copy and Regenerate.
- * The server only returns the code to the roles that create modules.
- * Used inside EnrollmentCodeDialog (opened from the admin module card).
- */
+/** Copy and Regenerate for a module's enrollment code. The server only returns it to the roles that create modules. */
 export default function EnrollmentCodePanel({ moduleId, moduleTitle = "" }) {
   const queryClient = useQueryClient();
   const queryKey = ["enrollmentCode", moduleId];

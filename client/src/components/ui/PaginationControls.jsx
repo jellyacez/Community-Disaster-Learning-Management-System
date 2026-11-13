@@ -82,7 +82,6 @@ const PaginationControls = memo(function PaginationControls({
       aria-label="Pagination Navigation"
       className={`flex flex-col sm:flex-row items-center justify-between gap-4 px-6 py-4 bg-white dark:bg-slate-900 rounded-2xl border border-gray-200 dark:border-slate-800 shadow-sm ${className}`}
     >
-      {/* Left Item Counter / Page Label */}
       <div className="text-xs text-gray-500 dark:text-slate-400 font-medium">
         {totalItems !== undefined && itemsPerPage ? (
           <span>
@@ -98,7 +97,6 @@ const PaginationControls = memo(function PaginationControls({
         )}
       </div>
 
-      {/* Right Navigation & Numeric Pills */}
       <div className="flex items-center gap-1.5 sm:gap-2">
         <button
           type="button"
@@ -111,7 +109,6 @@ const PaginationControls = memo(function PaginationControls({
           <span className="hidden xs:inline">Previous</span>
         </button>
 
-        {/* Numeric Page Buttons */}
         <div className="flex items-center gap-1">
           {pageNumbers.map((page, idx) => {
             if (page === "...") {

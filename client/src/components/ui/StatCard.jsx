@@ -60,7 +60,6 @@ export default function StatCard({
           {icon && <HugeiconsIcon icon={icon} className="w-7 h-7" />}
         </div>
 
-        {/* Support for trendText badge */}
         {trendText && !trend && (() => {
           const lower = trendText.toLowerCase();
           let badgeClass = "bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-slate-300";
