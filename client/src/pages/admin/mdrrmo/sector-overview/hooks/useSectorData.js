@@ -22,7 +22,7 @@ export function useSectorData(selectedBarangayId) {
     queryKey: ["sectorOverview"],
     queryFn: fetchSectorOverview,
     retry: 1,
-    refetchInterval: 60000 // Automatically refresh every 60 seconds
+    refetchInterval: 60000
   });
 
   const sectorData = sectorResponse?.data || [];
@@ -32,7 +32,7 @@ export function useSectorData(selectedBarangayId) {
     queryKey: ["categoryBreakdown", selectedBarangayId],
     queryFn: () => fetchCategoryBreakdown(selectedBarangayId),
     retry: 1,
-    refetchInterval: 60000 // Automatically refresh every 60 seconds
+    refetchInterval: 60000
   });
 
   const totalResidents = sectorData.reduce((acc, curr) => acc + curr.resident_count, 0);
@@ -47,13 +47,11 @@ export function useSectorData(selectedBarangayId) {
     const coveredBarangays = realBarangays.filter(b => b.resident_count > 0).length;
     const belowThreshold = realBarangays.filter(b => b.resident_count > 0 && b.avg_completion_rate === 0).length;
 
-    // Calculate municipality-wide average completion rate across active sectors
     const activeBarangays = realBarangays.filter(b => b.resident_count > 0);
     const avgCompletionRate = activeBarangays.length > 0
       ? Math.round(activeBarangays.reduce((acc, curr) => acc + (curr.avg_completion_rate || 0), 0) / activeBarangays.length)
       : 0;
 
-    // Most active: sort by avg_completion_rate desc, then certificates_issued desc
     const activeSorted = [...realBarangays].sort((a, b) => b.avg_completion_rate - a.avg_completion_rate || b.certificates_issued - a.certificates_issued);
     const mostActive = activeSorted[0];
 
@@ -67,7 +65,6 @@ export function useSectorData(selectedBarangayId) {
     };
   }, [sectorData]);
 
-  // Derived data for Leaderboard
   const { top5, bottom5 } = useMemo(() => {
     if (!sectorData || sectorData.length === 0) return { top5: [], bottom5: [] };
     const realBarangays = sectorData.filter(b => b.barangay !== 'Unassigned' && b.resident_count > 0);

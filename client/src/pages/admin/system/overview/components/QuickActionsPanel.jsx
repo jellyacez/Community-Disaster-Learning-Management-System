@@ -85,7 +85,6 @@ export default function QuickActionsPanel({
           <h2 className="text-base font-bold text-gray-900">Quick Actions</h2>
         </div>
 
-        {/* Broadcast Advisory Button */}
         <button
           type="button"
           onClick={onOpenAnnouncementModal}
@@ -109,7 +108,6 @@ export default function QuickActionsPanel({
           </span>
         </button>
 
-        {/* Maintenance Toggle Button */}
         <button
           onClick={() => setShowConfirmModal(true)}
           disabled={toggleMaintenanceMutation.isLoading}
@@ -132,7 +130,6 @@ export default function QuickActionsPanel({
           )}
         </button>
 
-        {/* Export System Logs */}
         <button
           onClick={() => setShowExportModal(true)}
           className="w-full flex items-center justify-between p-3 rounded-xl border border-gray-200 bg-gray-50 text-gray-800 hover:bg-gray-100 transition-colors cursor-pointer"
@@ -143,7 +140,6 @@ export default function QuickActionsPanel({
           </div>
         </button>
 
-        {/* Download DB Backup */}
         <button
           type="button"
           disabled={isDownloadingBackup}
@@ -162,7 +158,6 @@ export default function QuickActionsPanel({
           <div className="text-xs font-bold text-gray-400">DATA</div>
         </button>
 
-        {/* Export Server Error Logs */}
         <button
           onClick={() => setShowLogsModal(true)}
           className="w-full flex items-center justify-between p-3 rounded-xl border border-gray-200 bg-gray-50 text-gray-800 hover:bg-gray-100 transition-colors cursor-pointer"
@@ -225,7 +220,7 @@ export default function QuickActionsPanel({
             return;
           }
 
-          // The updated hook expects the account password before the callback.
+          // downloadBackup takes the account password before the callback
           downloadBackup(accountPassword, () => {
             setShowBackupModal(false);
             setAccountPassword("");

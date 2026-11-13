@@ -14,7 +14,7 @@ function AnimatedNumber({ value }) {
     const end = Number(value) || 0;
     if (end === 0) return;
     let start = 0;
-    const duration = 1600; // Increased from 650ms to 1600ms for a slower count roll
+    const duration = 1600;
     const stepTime = 25;
     const increment = end / (duration / stepTime);
 

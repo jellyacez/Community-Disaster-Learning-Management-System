@@ -24,7 +24,6 @@ export const useUserManagement = () => {
   const [initialModalTab, setInitialModalTab] = useState(0);
   const [showProvisionModal, setShowProvisionModal] = useState(false);
 
-  // Clear selections when filters or pagination change
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setSelectedUserIds(new Set());
@@ -102,10 +101,8 @@ export const useUserManagement = () => {
       }
     },
     onMutate: async (variables) => {
-      // Cancel any outgoing refetches
       await queryClient.cancelQueries({ queryKey: ["adminUsers"] });
 
-      // Snapshot the previous value
       const previousUsersData = queryClient.getQueryData([
         "adminUsers",
         page,
@@ -145,11 +142,9 @@ export const useUserManagement = () => {
         );
       }
 
-      // Return context
       return { previousUsersData };
     },
     onError: (err, variables, context) => {
-      // Roll back
       if (context?.previousUsersData) {
         queryClient.setQueryData(
           [

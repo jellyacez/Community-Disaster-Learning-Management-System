@@ -117,7 +117,6 @@ export default function BarangayTelemetryChart({ timelineData = [] }) {
             </linearGradient>
           </defs>
 
-          {/* Grid lines */}
           {[0, 0.33, 0.66, 1].map((pct, i) => {
             const usableHeight = chartHeight - paddingY * 2 - baselineOffset;
             const y = baselineFloor - pct * usableHeight;
@@ -147,7 +146,6 @@ export default function BarangayTelemetryChart({ timelineData = [] }) {
             );
           })}
 
-          {/* Rising Area Fill */}
           {residentAreaPath && (
             <path
               d={residentAreaPath}
@@ -156,7 +154,6 @@ export default function BarangayTelemetryChart({ timelineData = [] }) {
             />
           )}
 
-          {/* Animated Stroke Curve: Red Line */}
           {residentCurve && (
             <path
               d={residentCurve}
@@ -168,7 +165,6 @@ export default function BarangayTelemetryChart({ timelineData = [] }) {
             />
           )}
 
-          {/* Animated Stroke Curve: Certified Line */}
           {trainedCurve && (
             <path
               d={trainedCurve}
@@ -180,7 +176,6 @@ export default function BarangayTelemetryChart({ timelineData = [] }) {
             />
           )}
 
-          {/* Hover interactive points */}
           {points.residentPts.map((pt, i) => {
             const isHovered = hoveredIndex === i;
             const trainPt = points.trainedPts[i];
@@ -232,7 +227,6 @@ export default function BarangayTelemetryChart({ timelineData = [] }) {
             );
           })}
 
-          {/* Sector Labels */}
           {points.residentPts.map((pt, i) => {
             const showLabel = i % 2 === 0 || points.residentPts.length <= 10;
             if (!showLabel) return null;

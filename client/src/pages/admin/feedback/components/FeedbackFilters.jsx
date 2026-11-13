@@ -12,7 +12,6 @@ export default function FeedbackFilters({
 }) {
   return (
     <div className="w-full max-w-full space-y-3.5 sm:space-y-4 mb-4 sm:mb-5">
-      {/* Header & Filter Tabs */}
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
         <h2 className="text-lg sm:text-xl font-black text-gray-900 dark:text-slate-100 tracking-tight shrink-0">
           Incoming Communication Queue
@@ -43,9 +42,7 @@ export default function FeedbackFilters({
         </div>
       </div>
 
-      {/* Search + Sort Controls */}
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 sm:gap-3 w-full">
-        {/* Search Input */}
         <div className="relative flex-1 min-w-0">
           <HugeiconsIcon
             icon={Search01Icon}
@@ -60,7 +57,6 @@ export default function FeedbackFilters({
           />
         </div>
 
-        {/* Sort Select */}
         <div className="flex items-center gap-2 shrink-0 w-full sm:w-auto">
           <label className="text-[11px] sm:text-xs font-bold text-gray-500 dark:text-slate-400 uppercase tracking-wider shrink-0">
             Sort:

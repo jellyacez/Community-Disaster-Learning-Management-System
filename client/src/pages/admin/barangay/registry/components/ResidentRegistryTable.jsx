@@ -57,7 +57,6 @@ export default function ResidentRegistryTable({
   };
 
 
-  // Close dropdown menu on outside click
   useEffect(() => {
     function handleClickOutside(event) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -113,7 +112,6 @@ export default function ResidentRegistryTable({
 
                 return (
                   <tr key={residentId} className="hover:bg-gray-50/60 dark:hover:bg-slate-800/40 transition-colors">
-                    {/* Resident Info: Avatar + Name + Email subtitle */}
                     <td className="py-4 px-6">
                       <div className="flex items-center gap-3">
                         <div className="h-9 w-9 rounded-full bg-blue-100 dark:bg-blue-950/60 flex items-center justify-center flex-shrink-0 text-blue-700 dark:text-blue-300 font-bold text-xs border border-blue-200/50 dark:border-blue-800/50">
@@ -130,17 +128,14 @@ export default function ResidentRegistryTable({
                       </div>
                     </td>
 
-                    {/* Barangay */}
                     <td className="py-4 px-6 text-sm font-medium text-gray-600 dark:text-slate-300">
                       {r.barangay || "N/A"}
                     </td>
 
-                    {/* Modules Completed */}
                     <td className="py-4 px-6 text-center font-bold text-gray-900 dark:text-slate-100 text-sm">
                       {r.modulesCompleted ?? 0} {r.modulesCompleted === 1 ? "Module" : "Modules"} Completed
                     </td>
 
-                    {/* Account Standing State */}
                     <td className="py-4 px-6 text-center">
                       {r.banned ? (
                         <StatusBadge color="red">Banned</StatusBadge>
@@ -151,7 +146,6 @@ export default function ResidentRegistryTable({
                       )}
                     </td>
 
-                    {/* Actions Menu */}
                     <td className="py-4 px-6 text-right relative">
                       <button
                         type="button"
@@ -250,7 +244,6 @@ export default function ResidentRegistryTable({
         </table>
       </div>
 
-      {/* Standardized Sticky Pagination Footer */}
       {!isLoading && !isError && (
         <AdminTablePagination
           page={page}

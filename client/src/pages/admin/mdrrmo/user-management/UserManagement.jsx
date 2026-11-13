@@ -20,7 +20,6 @@ export default function UserManagement() {
 
   return (
     <div className="space-y-6 animate-in fade-in duration-150">
-      {/* Header & Breadcrumb */}
       <div className="mb-8">
         <nav className="flex text-sm text-gray-500 mb-2" aria-label="Breadcrumb">
           <ol className="inline-flex items-center space-x-1 md:space-x-2">
@@ -63,7 +62,6 @@ export default function UserManagement() {
           </button>
         </div>
 
-        {/* Basic Hierarchy-Independent Filters (Search + Role) */}
         <div className="px-6 py-3.5 bg-gray-50/50 border-b border-gray-100 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
           <div className="relative flex-1">
             <HugeiconsIcon icon={Search01Icon} className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />

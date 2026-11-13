@@ -3,10 +3,7 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import { Alert02Icon, Cancel01Icon } from "@hugeicons/core-free-icons";
 
 export default function SystemAlertBanner({ healthData }) {
-  // We use local component state for dismissal. This ensures the alert stays 
-  // dismissed during the current local session/view to avoid constant nagging,
-  // but will correctly resurface on a full page refresh if the underlying 
-  // system memory condition is still critical.
+  // Dismissal is local: hidden for this view, back on refresh if memory is still critical.
   const [dismissed, setDismissed] = useState(false);
 
   if (!healthData || dismissed) return null;
@@ -26,7 +23,6 @@ export default function SystemAlertBanner({ healthData }) {
 
   return (
     <div className="relative overflow-hidden bg-red-50 border border-red-100 border-l-4 border-l-red-500 rounded-xl p-5 flex items-start gap-4 shadow-md mb-6 transition-all">
-      {/* Decorative background glow */}
       <div className="absolute top-0 right-0 -mt-4 -mr-4 w-32 h-32 bg-red-500 opacity-10 rounded-full blur-3xl pointer-events-none"></div>
       
       <div className="mt-0.5 text-red-600 bg-red-100 p-2 rounded-full relative shrink-0">

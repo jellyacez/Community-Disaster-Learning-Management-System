@@ -22,7 +22,6 @@ export default function AssessmentEditor({
 
   return (
     <div className="space-y-4 text-sm animate-in fade-in slide-in-from-bottom-2 duration-300">
-      {/* 3. Formative Assessment Checkbox */}
       <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
         <h4 className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wide">
           Assessment Configuration

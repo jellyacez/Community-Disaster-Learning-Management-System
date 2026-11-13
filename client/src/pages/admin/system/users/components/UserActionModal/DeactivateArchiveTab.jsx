@@ -54,7 +54,6 @@ export default function DeactivateArchiveTab({ user, onSave }) {
           </div>
         )}
 
-        {/* Ban / Unban */}
         <form onSubmit={handleBanSubmit} className="p-5 rounded-2xl border border-red-100 dark:border-red-900/40 bg-red-50 dark:bg-red-950/30 space-y-3">
           <div className="flex items-center justify-between">
             <div>
@@ -93,7 +92,6 @@ export default function DeactivateArchiveTab({ user, onSave }) {
           </button>
         </form>
 
-        {/* Archive / Restore */}
         <div className={`p-5 rounded-2xl border space-y-3 ${user.archived ? "border-emerald-100 dark:border-emerald-900/40 bg-emerald-50 dark:bg-emerald-950/30" : "border-gray-100 dark:border-slate-800 bg-gray-50 dark:bg-slate-800/50"}`}>
           <div className="flex items-center justify-between">
             <div>
@@ -121,7 +119,6 @@ export default function DeactivateArchiveTab({ user, onSave }) {
           </button>
         </div>
 
-        {/* Hard Delete */}
         <div className="p-5 rounded-2xl border border-red-200 dark:border-red-900/60 bg-red-50 dark:bg-red-950/40 space-y-3">
           <div className="flex items-center justify-between">
             <div>

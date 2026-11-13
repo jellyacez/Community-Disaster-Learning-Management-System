@@ -18,7 +18,6 @@ export default function ActivityLog() {
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(25);
 
-  // Reset page on filter changes
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setPage(1);

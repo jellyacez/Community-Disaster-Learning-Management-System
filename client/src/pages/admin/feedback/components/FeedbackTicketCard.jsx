@@ -50,7 +50,6 @@ export default function FeedbackTicketCard({
 
   return (
     <div className={`rounded-2xl border border-gray-100 dark:border-slate-800 bg-gray-50/60 dark:bg-slate-900/60 overflow-hidden ${isExpanded ? "border-b-2 border-gray-200 dark:border-slate-700 pb-6 mb-6" : ""}`}>
-      {/* Summary row */}
       <button
         type="button"
         aria-expanded={isExpanded}
@@ -84,10 +83,8 @@ export default function FeedbackTicketCard({
         </div>
       </button>
 
-      {/* Expanded content */}
       {isExpanded && (
         <div className="border-t border-gray-100 dark:border-slate-800">
-          {/* Metadata header — flush left */}
           <div className="px-5 pt-3">
             <div className="flex flex-wrap items-center gap-2 text-xs font-bold text-gray-500 dark:text-slate-400">
               <HugeiconsIcon icon={UserCircleIcon} className="w-4 h-4 text-gray-400 dark:text-slate-500" />
@@ -107,7 +104,6 @@ export default function FeedbackTicketCard({
             <hr className="my-3 border-gray-100 dark:border-slate-800" />
           </div>
 
-          {/* Message Thread — grouped consecutive messages */}
           <div className="px-5 flex flex-col gap-1">
             {item.thread?.map((msg, idx) => {
               const isAdmin = msg.sender_type === "admin";
@@ -150,11 +146,9 @@ export default function FeedbackTicketCard({
             })}
           </div>
 
-          {/* Inline Reply + Close Actions */}
           {item.status !== "Closed" && (
             <div className="px-5 mt-4 pt-4 border-t border-gray-100 dark:border-slate-800 space-y-2">
               {confirmingClose ? (
-                /* ── Close confirmation banner ── */
                 <div className="bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/50 rounded-lg p-4 flex justify-between items-center gap-4">
                   <div className="flex items-center gap-3">
                     <HugeiconsIcon icon={Alert01Icon} className="w-5 h-5 text-red-600 dark:text-red-400 shrink-0" />

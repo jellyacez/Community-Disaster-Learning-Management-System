@@ -102,7 +102,6 @@ export default function ModuleGrid({
         ))}
       </div>
 
-      {/* Pagination Controls */}
       {totalPages > 1 && (() => {
         const handlePageChange = (newPage) => {
           if (newPage < 1 || newPage > totalPages || newPage === currentPage) return;

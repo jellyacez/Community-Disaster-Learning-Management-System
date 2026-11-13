@@ -65,7 +65,6 @@ export default function SystemOverview() {
       <PlatformOverviewGrid stats={s} loading={statsLoading} />
 
       <div className="grid lg:grid-cols-3 gap-6">
-        {/* Left Side: Charts & Logs */}
         <div className="lg:col-span-2 flex flex-col gap-6">
           <Suspense
             fallback={
@@ -79,7 +78,6 @@ export default function SystemOverview() {
           <RecentActivityFeed />
         </div>
 
-        {/* Right Side: Actions and Health */}
         <div className="lg:col-span-1 space-y-6">
           <QuickActionsPanel
             settingsData={settingsData}

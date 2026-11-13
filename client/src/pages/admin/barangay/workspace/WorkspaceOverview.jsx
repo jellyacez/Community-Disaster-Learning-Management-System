@@ -24,7 +24,6 @@ const CertificateVerificationModal = lazy(() =>
   import("../../../../components/ui/certificates/CertificateVerificationModal")
 );
 
-// Modular sub-components
 import WorkspaceKpiGrid from "./components/WorkspaceKpiGrid";
 import CommunityComplianceCard from "./components/CommunityComplianceCard";
 import CurriculumReadinessCard from "./components/CurriculumReadinessCard";
@@ -166,7 +165,6 @@ export default function WorkspaceOverview() {
 
   return (
     <div className="w-full max-w-full space-y-4 sm:space-y-6 font-sans animate-in fade-in duration-150 pb-8 sm:pb-12">
-      {/* Header Row */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 p-4 sm:p-6 bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-[0_2px_12px_-3px_rgba(0,0,0,0.06)]">
         <div className="min-w-0">
           <h1 className="text-xl sm:text-2xl md:text-3xl font-black text-gray-900 dark:text-slate-100 tracking-tight leading-snug break-words">
@@ -202,7 +200,6 @@ export default function WorkspaceOverview() {
 
       <ActiveAdvisoriesPanel />
 
-      {/* Row 1: KPI Metrics Grid */}
       <div className="w-full min-w-0">
         <WorkspaceKpiGrid
           totalResidents={totalResidents}
@@ -214,7 +211,6 @@ export default function WorkspaceOverview() {
         />
       </div>
 
-      {/* Row 2: Analytics Visualizers */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-4 sm:gap-6 items-stretch w-full min-w-0">
         <div className="lg:col-span-4 min-w-0 flex flex-col">
           <CommunityComplianceCard
@@ -244,7 +240,6 @@ export default function WorkspaceOverview() {
         </div>
       </div>
 
-      {/* Row 3: High Density Resident Table & Live Selection Inspector */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 items-start w-full min-w-0">
         <div className="lg:col-span-8 min-w-0 overflow-x-auto">
           <MonitoredCitizenTable

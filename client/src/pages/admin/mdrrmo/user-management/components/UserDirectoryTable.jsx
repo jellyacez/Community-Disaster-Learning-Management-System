@@ -146,7 +146,6 @@ export default function UserDirectoryTable({ users, isLoading, meta, setPage, li
         </table>
       </div>
 
-      {/* Sticky Pagination Controls */}
       <AdminTablePagination
         page={meta?.page || 1}
         totalPages={meta?.totalPages || 1}

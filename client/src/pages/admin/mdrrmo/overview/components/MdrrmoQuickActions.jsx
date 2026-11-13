@@ -20,7 +20,6 @@ export default function MdrrmoQuickActions({ pendingReviewsCount = 0 }) {
   const isStandardMdrrmo = userRole === "mdrrmo_admin";
 
   const actions = [
-    // Strictly mdrrmo_admin only
     ...(isStandardMdrrmo
       ? [
           {

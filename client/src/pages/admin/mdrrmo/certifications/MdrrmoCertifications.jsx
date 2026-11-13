@@ -35,7 +35,6 @@ export default function MdrrmoCertifications() {
 
   return (
     <div className="max-w-7xl mx-auto space-y-8 pb-12">
-      {/* 3-Level Breadcrumb Navigation (Matching MDRRMO convention) */}
       <nav className="flex text-sm text-gray-500 mb-2" aria-label="Breadcrumb">
         <ol className="inline-flex items-center space-x-1 md:space-x-2">
           <li className="inline-flex items-center">
@@ -58,7 +57,6 @@ export default function MdrrmoCertifications() {
         </ol>
       </nav>
 
-      {/* Header Row (No icon next to H1) */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-black text-gray-900 tracking-tight">
@@ -82,13 +80,11 @@ export default function MdrrmoCertifications() {
         </button>
       </div>
 
-      {/* Tier 1: 5 Standard KPI StatCards */}
       <CertAnalyticsKPIs
         summary={analyticsData?.summary}
         isLoading={isAnalyticsLoading}
       />
 
-      {/* Tier 2: Visual Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2">
           <BarangayComplianceChart
@@ -112,7 +108,6 @@ export default function MdrrmoCertifications() {
         </div>
       </div>
 
-      {/* Tier 3: Decoupled Expiring Credentials Action Feed */}
       <ExpiringCredentialsFeed
         feedQuery={feedQuery}
         modules={analyticsData?.modules || []}

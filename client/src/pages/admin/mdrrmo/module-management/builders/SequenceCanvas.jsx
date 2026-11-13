@@ -31,7 +31,6 @@ export default function SequenceCanvas({
     (flow) => flow.levelOrder === activeLevelOrder
   );
 
-  // File Upload Handler (reads file as base64 Data URL)
   const handleFileChange = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -107,7 +106,6 @@ export default function SequenceCanvas({
 
   return (
     <div className="bg-transparent space-y-6">
-      {/* Header Bar */}
       <div className="flex items-center justify-between mb-4">
         <div>
           <h3 className="text-xl font-bold text-gray-900 dark:text-slate-100 tracking-tight">
@@ -137,7 +135,6 @@ export default function SequenceCanvas({
         </div>
       </div>
 
-      {/* ADMIN PHOTO UPLOADER FOR ACTIVE LEVEL */}
       <div className="rounded-2xl border border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-xs">
         <input
           ref={fileInputRef}
@@ -148,7 +145,6 @@ export default function SequenceCanvas({
         />
 
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-5">
-          {/* Left Column: Info & Actions */}
           <div className="flex-1 min-w-0 space-y-1.5">
             <div className="flex items-center gap-2">
               <span className="p-1.5 rounded-lg bg-red-50 dark:bg-red-950/50 text-red-600 dark:text-red-400 shrink-0">
@@ -188,7 +184,6 @@ export default function SequenceCanvas({
             )}
           </div>
 
-          {/* Right Column: Upload Box or Image Preview */}
           <div className="w-full sm:w-60 md:w-64 shrink-0">
             {currentCoverImage ? (
               <div className="relative aspect-video rounded-xl overflow-hidden border border-gray-200 dark:border-slate-700 shadow-xs group">
@@ -231,9 +226,7 @@ export default function SequenceCanvas({
         </div>
       </div>
 
-      {/* Visual Sequence Flow */}
       <div className="flex flex-col items-center">
-        {/* Start Node */}
         <div className="flex items-center gap-3 bg-white dark:bg-slate-800 px-6 py-2.5 rounded-full shadow-sm border border-gray-100 dark:border-slate-700 z-10 font-bold text-gray-800 dark:text-slate-200 tracking-wide">
           <HugeiconsIcon icon={Flag01Icon} className="w-5 h-5 text-gray-400 dark:text-slate-500" />
           Level {activeLevelOrder} Start

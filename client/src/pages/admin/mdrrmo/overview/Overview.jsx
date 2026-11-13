@@ -120,7 +120,6 @@ export default function Overview() {
 
   return (
     <div className="space-y-4 sm:space-y-6 animate-in fade-in duration-150 pb-8 sm:pb-12 max-w-full">
-      {/* Header Row */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 sm:gap-6 bg-white dark:bg-slate-900 p-4 sm:p-6 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-[0_2px_12px_-3px_rgba(0,0,0,0.06)]">
         <div className="min-w-0">
           <h1 className="text-xl sm:text-2xl md:text-3xl font-black text-gray-900 dark:text-slate-100 tracking-tight leading-snug break-words">
@@ -152,7 +151,6 @@ export default function Overview() {
             <span>+ Broadcast Advisory</span>
           </button>
 
-          {/* Rendered strictly for standard MDRRMO Admin */}
           {isStandardMdrrmo && (
             <Link
               to="/admin/mdrrmo/modules"
@@ -164,7 +162,6 @@ export default function Overview() {
         </div>
       </div>
 
-      {/* Metrics Row (Fluid 5-card layout) */}
       <div>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3.5 sm:gap-4">
           <StatCard
@@ -226,7 +223,6 @@ export default function Overview() {
         </div>
       </div>
 
-      {/* Row 2: Operational & Curriculum Triad */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 items-stretch">
         <div className="w-full">
           <MdrrmoRecentActivity />
@@ -255,7 +251,6 @@ export default function Overview() {
         </div>
       </div>
 
-      {/* Row 3: Management Catalog & Activity Analytics */}
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6 items-stretch">
         <div className="w-full min-w-0 overflow-hidden">
           <Suspense
@@ -278,7 +273,6 @@ export default function Overview() {
         </div>
       </div>
 
-      {/* Upgraded Modal with MDRRMO Jurisdictional Scope */}
       <AnnouncementModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}

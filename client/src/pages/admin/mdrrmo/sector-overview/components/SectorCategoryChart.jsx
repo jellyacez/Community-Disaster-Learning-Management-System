@@ -86,7 +86,6 @@ export default function SectorCategoryChart({
             </ResponsiveContainer>
           </div>
 
-          {/* Category Metric Pills / Grid */}
           <div className="w-full mt-2 pt-3 border-t border-gray-100 dark:border-slate-800 grid grid-cols-2 gap-2 shrink-0">
             {breakdownData.map((item) => {
               const percent = totalCerts > 0 ? Math.round((item.value / totalCerts) * 100) : 0;

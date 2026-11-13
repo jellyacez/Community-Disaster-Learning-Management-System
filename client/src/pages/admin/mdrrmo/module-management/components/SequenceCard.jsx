@@ -54,10 +54,8 @@ export default function SequenceCard({
 }) {
   return (
     <div className="w-full flex flex-col items-center relative group">
-      {/* Connecting Line above card */}
       <div className="h-10 border-l-2 border-dashed border-gray-300 dark:border-slate-700 group-hover:border-gray-400 dark:group-hover:border-slate-600 transition-colors"></div>
       
-      {/* Card */}
       <div 
         draggable 
         onDragStart={(e) => handleDragStart(e, index)} 
@@ -77,12 +75,10 @@ export default function SequenceCard({
           <HugeiconsIcon icon={Menu01Icon} className="w-5 h-5 text-gray-400 dark:text-slate-500" />
         </div>
         
-        {/* Icon Box */}
         <div className="w-12 h-12 shrink-0 bg-gradient-to-br from-red-500 to-red-600 rounded-2xl flex items-center justify-center text-white shadow-inner">
           <HugeiconsIcon icon={getIconForType(flow.type)} className="w-6 h-6" />
         </div>
         
-        {/* Content */}
         <div className="flex-1 min-w-0">
             <div className="flex items-center gap-3 mb-1 flex-wrap">
               <h4 className="text-[17px] font-bold text-gray-900 dark:text-slate-100 truncate">{flow.title}</h4>
@@ -110,7 +106,6 @@ export default function SequenceCard({
             )}
         </div>
         
-        {/* Right Actions */}
         <div className="flex items-center gap-3 shrink-0 ml-4">
             {moduleStatus === 'published' ? (
               <span className="flex items-center gap-1.5 px-2.5 py-1 bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 text-xs font-bold rounded-lg border border-emerald-100 dark:border-emerald-800/60">

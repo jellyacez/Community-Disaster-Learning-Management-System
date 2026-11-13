@@ -16,7 +16,6 @@ export default function UserActionModal({ user, onClose, onSave, initialTab = 0 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/60 dark:bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-150">
       <div className="w-full max-w-lg bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-gray-100 dark:border-slate-800 overflow-hidden flex flex-col max-h-[90vh]">
-        {/* Header */}
         <div className="px-6 py-5 border-b border-gray-100 dark:border-slate-800 flex items-center justify-between bg-white dark:bg-slate-900">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-full bg-gray-100 dark:bg-slate-800 flex items-center justify-center font-bold text-gray-600 dark:text-slate-300 text-sm uppercase">
@@ -35,7 +34,6 @@ export default function UserActionModal({ user, onClose, onSave, initialTab = 0 
           </button>
         </div>
 
-        {/* Tabs */}
         <div className="flex border-b border-gray-100 dark:border-slate-800 overflow-x-auto">
           {TABS.map((t, i) => (
             <button
@@ -52,7 +50,6 @@ export default function UserActionModal({ user, onClose, onSave, initialTab = 0 
           ))}
         </div>
 
-        {/* Body */}
         <div className="p-6 overflow-y-auto h-[400px] custom-scrollbar">
           {tab === 0 && <EditDetailsTab user={user} onSave={onSave} />}
           {tab === 1 && <ChangeRoleTab user={user} onSave={onSave} />}

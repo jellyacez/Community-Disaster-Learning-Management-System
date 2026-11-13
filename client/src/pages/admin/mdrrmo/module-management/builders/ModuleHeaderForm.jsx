@@ -87,7 +87,6 @@ export default function ModuleHeaderForm({ moduleForm, setModuleForm, formErrors
 
   return (
     <div className="bg-white dark:bg-slate-900 rounded-3xl border border-gray-100 dark:border-slate-800 shadow-sm overflow-hidden">
-      {/* Banner / Thumbnail Area */}
       <div className="w-full h-40 max-h-[240px] relative bg-gradient-to-r from-red-500 to-red-700 flex flex-col items-center justify-center p-4 text-center group">
         {moduleForm.image_url ? (
           <img 
@@ -101,7 +100,6 @@ export default function ModuleHeaderForm({ moduleForm, setModuleForm, formErrors
         )}
         <div className="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-colors"></div>
         
-        {/* Floating Thumbnail Controls */}
         <div className="relative z-10 bg-white/90 dark:bg-slate-900/90 dark:border dark:border-slate-700 backdrop-blur-sm p-2 rounded-xl shadow-lg w-full max-w-md mx-auto flex items-center gap-2 transform translate-y-4 opacity-0 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300">
           <HugeiconsIcon icon={Link01Icon} className="w-5 h-5 text-gray-400 dark:text-slate-500 ml-2 shrink-0" />
           <input 
@@ -126,7 +124,6 @@ export default function ModuleHeaderForm({ moduleForm, setModuleForm, formErrors
       </div>
 
       <div className="p-6 md:p-8 space-y-6">
-        {/* Title Input */}
         <div>
           <input 
             type="text" 
@@ -138,7 +135,6 @@ export default function ModuleHeaderForm({ moduleForm, setModuleForm, formErrors
           {formErrors.title && <p className="text-red-500 text-sm mt-1 font-bold flex items-center gap-1"><HugeiconsIcon icon={Alert01Icon} className="w-4 h-4" />{formErrors.title}</p>}
         </div>
 
-        {/* Metadata Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="flex flex-col gap-1.5">
             <label className="text-[10px] font-bold text-gray-500 dark:text-slate-400 uppercase tracking-widest flex items-center gap-2">

@@ -6,7 +6,7 @@ import {
   Alert01Icon,
   PlusSignIcon,
   Calendar01Icon,
-  UserIcon, // 👈 updated
+  UserIcon,
   Location01Icon,
 } from "@hugeicons/core-free-icons";
 import apiClient from "../../../lib/apiClient";
@@ -23,25 +23,20 @@ export default function LiveAlerts() {
 const { data, isLoading, isError } = useQuery({
     queryKey: ["announcementsFeed", page],
     queryFn: async () => {
-      // Points to the active Express endpoint
       const res = await apiClient.get("/admin/barangay/announcements");
-      // Returns an array directly
       return res.data?.data || res.data || [];
     },
     refetchInterval: 60000,
   });
 
-  // Handle data as a direct array
   const rawList = Array.isArray(data) ? data : [];
   
-  // Client-side pagination
   const total = rawList.length;
   const totalPages = Math.max(1, Math.ceil(total / limit));
   const announcements = rawList.slice((page - 1) * limit, page * limit);
   const pagination = { totalPages, total };
   return (
     <div className="space-y-6 animate-in fade-in duration-150 pb-10">
-      {/* Header Section */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-gray-100 shadow-[0_2px_12px_-3px_rgba(0,0,0,0.06)]">
         <div>
           <div className="flex items-center gap-2">
@@ -67,7 +62,6 @@ const { data, isLoading, isError } = useQuery({
         </button>
       </div>
 
-      {/* Main Content Area */}
       {isLoading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {[1, 2, 3, 4, 5, 6].map((i) => (
@@ -116,7 +110,6 @@ const { data, isLoading, isError } = useQuery({
               }`}
             >
               <div className="space-y-3">
-                {/* Badges Bar */}
                 <div className="flex items-center justify-between gap-2">
                   <span
                     className={`text-[10px] font-mono font-bold uppercase px-2 py-0.5 rounded ${
@@ -134,7 +127,6 @@ const { data, isLoading, isError } = useQuery({
                   </span>
                 </div>
 
-                {/* Title and Content */}
                 <div>
                   <h3 className="font-bold text-gray-900 text-base leading-snug line-clamp-2">
                     {item.title}
@@ -161,7 +153,6 @@ const { data, isLoading, isError } = useQuery({
                 )}
               </div>
 
-              {/* Card Footer */}
               <div className="pt-4 mt-4 border-t border-gray-100 flex items-center justify-between text-[11px] text-gray-400">
                 <span className="flex items-center gap-1">
                     <HugeiconsIcon icon={UserIcon} className="w-3.5 h-3.5 text-gray-400" />
@@ -178,7 +169,6 @@ const { data, isLoading, isError } = useQuery({
         </div>
       )}
 
-      {/* Pagination Controls */}
       {pagination.totalPages > 1 && (
         <div className="flex items-center justify-between bg-white px-5 py-3 rounded-2xl border border-gray-100 text-xs">
           <button
@@ -202,7 +192,6 @@ const { data, isLoading, isError } = useQuery({
         </div>
       )}
 
-      {/* Modal Integration with multi-role capability */}
       <AnnouncementModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}

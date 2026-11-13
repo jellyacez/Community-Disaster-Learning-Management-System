@@ -49,7 +49,6 @@ export default function ExpiringCredentialsFeed({
 
   return (
     <div className="space-y-4">
-      {/* Header & Description */}
       <div>
         <h2 className="text-xl font-bold text-gray-900 dark:text-slate-100 tracking-tight">
           Expiring Credentials & Municipal Compliance Feed
@@ -59,9 +58,7 @@ export default function ExpiringCredentialsFeed({
         </p>
       </div>
 
-      {/* Tactical Deployment Filters Bar */}
       <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-gray-200 dark:border-slate-800 shadow-sm flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
-        {/* Reusable SearchBar Component */}
         <SearchBar
           value={searchInput}
           onChange={(e) => setSearchInput(e.target.value)}
@@ -71,9 +68,7 @@ export default function ExpiringCredentialsFeed({
           containerClassName="relative flex-1"
         />
 
-        {/* Dropdown Filters */}
         <div className="flex flex-wrap items-center gap-3">
-          {/* Barangay Filter */}
           <div className="relative min-w-[170px]">
             <select
               value={selectedBarangay}
@@ -91,7 +86,6 @@ export default function ExpiringCredentialsFeed({
             </select>
           </div>
 
-          {/* Module Filter */}
           <div className="relative min-w-[200px]">
             <select
               value={selectedModule}
@@ -109,7 +103,6 @@ export default function ExpiringCredentialsFeed({
             </select>
           </div>
 
-          {/* Lifecycle Status Filter */}
           <div className="relative min-w-[160px]">
             <select
               value={selectedStatus}
@@ -124,7 +117,6 @@ export default function ExpiringCredentialsFeed({
             </select>
           </div>
 
-          {/* Reset Filters Button */}
           {hasActiveFilters && (
             <button
               onClick={handleResetFilters}
@@ -136,7 +128,6 @@ export default function ExpiringCredentialsFeed({
         </div>
       </div>
 
-      {/* Action Table Shell (Matches ActivityLogTable.jsx exactly) */}
       <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm overflow-hidden">
         {isError ? (
           <div className="p-8 text-center bg-red-50/50 dark:bg-red-950/20">
@@ -184,7 +175,6 @@ export default function ExpiringCredentialsFeed({
                     ))
                   : certificates.map((cert) => (
                       <tr key={cert.cert_id} className="hover:bg-gray-50/60 dark:hover:bg-slate-800/40 transition-colors">
-                        {/* Resident & Barangay */}
                         <td className="px-6 py-4">
                           <div className="font-semibold text-gray-900 dark:text-slate-100 text-sm">{cert.resident_name}</div>
                           <div className="text-xs text-gray-500 dark:text-slate-400">{cert.resident_email}</div>
@@ -195,7 +185,6 @@ export default function ExpiringCredentialsFeed({
                           </div>
                         </td>
 
-                        {/* Module */}
                         <td className="px-6 py-4">
                           <div className="font-medium text-gray-900 dark:text-slate-100 text-sm">{decodeHtml(cert.module_title)}</div>
                           {cert.module_category && (
@@ -205,17 +194,14 @@ export default function ExpiringCredentialsFeed({
                           )}
                         </td>
 
-                        {/* Control No */}
                         <td className="px-6 py-4 font-mono text-xs text-gray-700 dark:text-slate-300 font-semibold">
                           {cert.cert_rec}
                         </td>
 
-                        {/* Issued Date */}
                         <td className="px-6 py-4 text-sm text-gray-600 dark:text-slate-400 whitespace-nowrap">
                           {formatDate(cert.completion_date)}
                         </td>
 
-                        {/* Expires Date */}
                         <td className="px-6 py-4 text-sm whitespace-nowrap">
                           <span
                             className={
@@ -230,7 +216,6 @@ export default function ExpiringCredentialsFeed({
                           </span>
                         </td>
 
-                        {/* Lifecycle Status Badge */}
                         <td className="px-6 py-4 text-center">
                           <CertificateLifecycleBadge status={cert.computed_status} />
                           {cert.computed_status === "revoked" && cert.revocation_reason && (
@@ -246,7 +231,6 @@ export default function ExpiringCredentialsFeed({
           </div>
         )}
 
-        {/* Table Pagination Footer */}
         {!isLoading && !isError && certificates.length > 0 && (
           <div className="px-6 py-4 border-t border-gray-100 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3 bg-gray-50/50 dark:bg-slate-800/50">
             <div className="text-xs text-gray-500 dark:text-slate-400 font-medium">

@@ -33,7 +33,6 @@ export default function SectorDataTable({
     currentPage * ITEMS_PER_PAGE
   );
 
-  // Smart Windowed Pagination
   const visiblePageNumbers = useMemo(() => {
     if (totalPages <= 5) {
       return Array.from({ length: totalPages }, (_, i) => i + 1);
@@ -61,7 +60,6 @@ export default function SectorDataTable({
       id="auditable-ledger"
       className="w-full max-w-full bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-xs scroll-mt-24"
     >
-      {/* Top Bar: Title, Search & Filter Trigger */}
       <div className="p-3.5 sm:p-4 border-b border-gray-100 dark:border-slate-800 bg-gray-50/50 dark:bg-slate-800/50 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 sm:gap-4 rounded-t-2xl">
         <div className="min-w-0">
           <h3 className="text-sm sm:text-base font-bold text-gray-800 dark:text-slate-200 truncate">
@@ -120,7 +118,6 @@ export default function SectorDataTable({
             )}
           </button>
 
-          {/* Filter Popover  */}
           {showFilters && (
             <div className="absolute top-full right-0 mt-2 w-[calc(100vw-2rem)] max-w-xs sm:w-72 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 shadow-xl rounded-2xl z-50 p-4 animate-in fade-in slide-in-from-top-2 duration-150">
               <div className="flex justify-between items-center mb-3.5">
@@ -220,7 +217,6 @@ export default function SectorDataTable({
         </div>
       </div>
 
-      {/* Active Filter Chips */}
       {activeFiltersCount > 0 && (
         <div className="px-3.5 sm:px-4 py-2 border-b border-gray-100 dark:border-slate-800 bg-white dark:bg-slate-900 flex flex-wrap items-center gap-1.5 sm:gap-2">
           <span className="text-[10px] font-bold text-gray-400 dark:text-slate-500 uppercase tracking-wider mr-1">
@@ -291,7 +287,6 @@ export default function SectorDataTable({
         </div>
       )}
 
-      {/*  Table Viewport */}
       <div
         className={`overflow-x-auto max-h-[460px] overflow-y-auto ${
           totalPages <= 1 ? "rounded-b-2xl" : ""
@@ -451,7 +446,6 @@ export default function SectorDataTable({
         </table>
       </div>
 
-      {/* Pagination Controls */}
       {totalPages > 1 && (
         <div className="p-3.5 sm:p-4 border-t border-gray-100 dark:border-slate-800 bg-gray-50/30 dark:bg-slate-800/30 flex flex-col sm:flex-row items-center justify-between gap-3 rounded-b-2xl">
           <p className="text-xs text-gray-500 dark:text-slate-400 font-medium text-center sm:text-left">

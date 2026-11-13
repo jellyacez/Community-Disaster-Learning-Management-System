@@ -14,7 +14,6 @@ export default function CertificationsKpiRow({
 }) {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-      {/* Total Certified */}
       <StatCard
         icon={Award01Icon}
         color="blue"
@@ -26,7 +25,6 @@ export default function CertificationsKpiRow({
         isActive={selectedStatus === ""}
       />
 
-      {/* Active */}
       <StatCard
         icon={CheckmarkCircle01Icon}
         color="green"
@@ -38,7 +36,6 @@ export default function CertificationsKpiRow({
         isActive={selectedStatus === "active"}
       />
 
-      {/* Expiring Soon */}
       <StatCard
         icon={Clock01Icon}
         color="amber"
@@ -50,7 +47,6 @@ export default function CertificationsKpiRow({
         isActive={selectedStatus === "expiring_soon"}
       />
 
-      {/* Expired */}
       <StatCard
         icon={CancelCircleIcon}
         color="red"

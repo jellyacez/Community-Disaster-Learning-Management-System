@@ -9,7 +9,6 @@ export default function ResidentRegistryFilterBar({
 }) {
   return (
     <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-gray-200 dark:border-slate-800 shadow-sm flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
-      {/* Reusable SearchBar Component */}
       <SearchBar
         value={searchInput}
         onChange={(e) => onSearchChange(e.target.value)}
@@ -19,9 +18,7 @@ export default function ResidentRegistryFilterBar({
         containerClassName="relative flex-1"
       />
 
-      {/* Dropdown Filters */}
       <div className="flex flex-wrap items-center gap-3">
-        {/* Status Filter */}
         <div className="relative min-w-[160px]">
           <select
             value={selectedStatus}

@@ -39,7 +39,6 @@ export default function FeedbackHeader({
         </p>
       </div>
 
-      {/* BARANGAY FILTER (ONLY VISIBLE FOR MDRRMO / SYSTEM ADMIN) */}
       {isMdrrmoOrSystem && (
         <div className="flex items-center gap-2 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-2xl px-4 py-2 shadow-sm">
           <HugeiconsIcon icon={FilterIcon} className="w-4 h-4 text-gray-500 dark:text-slate-400" />

@@ -66,7 +66,6 @@ export default function ModuleBuilderWizard({
     handleEditStep,
   } = actions;
 
-  // Sync uploaded photo directly into the active level inside stagedLevels
   const handleUpdateLevelImage = (targetLevelOrder, newCoverImage) => {
     setStagedLevels((prevLevels) =>
       prevLevels.map((lvl) =>

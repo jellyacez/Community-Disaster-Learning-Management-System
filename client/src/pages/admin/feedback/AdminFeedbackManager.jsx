@@ -2,11 +2,9 @@ import { useState } from "react";
 import useDocumentTitle from "../../../hooks/useDocumentTitle";
 import { authClient } from "../../../lib/auth-client";
 
-// Hooks
 import { useAdminFeedbacks } from "./hooks/useAdminFeedbacks";
 import { useFeedbackFilters, buildFeedbackTabs } from "./hooks/useFeedbackFilters";
 
-// Components
 import FeedbackHeader from "./components/FeedbackHeader";
 import FeedbackFilters from "./components/FeedbackFilters";
 import FeedbackList from "./components/FeedbackList";
@@ -14,14 +12,12 @@ import FeedbackList from "./components/FeedbackList";
 export default function AdminFeedbackManager() {
   useDocumentTitle("Feedback Management | Bacolor Disaster LMS Admin");
 
-  // 1. Get logged-in admin session & role
   const { data: session } = authClient.useSession();
   const adminId = session?.user?.id;
   const adminRole = session?.user?.role || "barangay_admin";
   const isMdrrmoOrSystem =
     adminRole.includes("mdrrmo") || adminRole === "system_admin";
 
-  // Expansion state
   const [expandedIds, setExpandedIds] = useState(new Set());
 
   const toggleExpand = (id) => {
@@ -33,7 +29,6 @@ export default function AdminFeedbackManager() {
     });
   };
 
-  // 2. Custom hooks
   const [selectedBarangayFilter, setSelectedBarangayFilter] = useState("all");
 
   const {
@@ -83,14 +78,12 @@ export default function AdminFeedbackManager() {
 
   return (
     <div className="animate-in fade-in duration-300 space-y-6">
-      {/* Header */}
       <FeedbackHeader
         isMdrrmoOrSystem={isMdrrmoOrSystem}
         selectedBarangayFilter={selectedBarangayFilter}
         setSelectedBarangayFilter={handleBarangayFilterChange}
       />
 
-      {/* Main Inbox */}
       <div className="bg-white dark:bg-slate-900 rounded-3xl border border-gray-100 dark:border-slate-800 shadow-sm p-6">
         <FeedbackFilters
           tabs={tabs}

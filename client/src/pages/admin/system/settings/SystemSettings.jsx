@@ -84,7 +84,6 @@ export default function SystemSettings() {
         </p>
       </div>
 
-      {/* Maintenance Mode — Actionable */}
       <div>
         <h2 className="text-sm font-bold uppercase tracking-widest text-gray-500 dark:text-slate-400 mb-3 mt-8">
           System State
@@ -108,7 +107,6 @@ export default function SystemSettings() {
                 </div>
               </div>
 
-              {/* Toggle */}
               <div className="flex flex-col sm:items-end gap-2 w-full sm:w-auto mt-4 sm:mt-0">
                 <button
                   onClick={() => setShowMaintenanceModal(true)}
@@ -134,13 +132,11 @@ export default function SystemSettings() {
         </div>
       </div>
 
-      {/* Branding & Appearance */}
       <div>
         <h2 className="text-sm font-bold uppercase tracking-widest text-gray-500 mb-3 mt-8">
           Branding & Appearance
         </h2>
         
-        {/* Interface Theme Switcher Card */}
         <div className="mb-6 rounded-2xl border border-gray-100 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div className="flex items-start gap-3">

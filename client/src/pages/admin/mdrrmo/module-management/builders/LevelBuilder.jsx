@@ -119,7 +119,6 @@ export default function LevelSelector({
         </div>
       </div>
 
-      {/* Level Tabs */}
       <div className="flex items-center flex-wrap gap-2 pt-2">
         {stagedLevels.map((lvl) => {
           const stepCount = stagedFlows.filter(
@@ -144,7 +143,6 @@ export default function LevelSelector({
         })}
       </div>
 
-      {/* Metadata Fields for Active Level */}
       {activeLevelData && (
         <div
           key={activeLevelData.levelOrder}

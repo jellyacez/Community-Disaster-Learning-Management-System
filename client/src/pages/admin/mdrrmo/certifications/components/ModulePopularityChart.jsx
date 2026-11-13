@@ -32,7 +32,6 @@ const CustomPieTooltip = ({ active, payload }) => {
 };
 
 export default function ModulePopularityChart({ modules = [], isLoading }) {
-  // Aggregate certificates by category
   const categoryMap = {};
   modules.forEach((mod) => {
     const cat = mod.category || "General";
@@ -96,7 +95,6 @@ export default function ModulePopularityChart({ modules = [], isLoading }) {
             </ResponsiveContainer>
           </div>
 
-          {/* Module Engagement List */}
           <div className="mt-4 border-t border-gray-100 dark:border-slate-800 pt-3 space-y-2 max-h-[140px] overflow-y-auto pr-1">
             {modules.slice(0, 4).map((mod) => (
               <div key={mod.module_id} className="flex items-center justify-between text-xs py-1">

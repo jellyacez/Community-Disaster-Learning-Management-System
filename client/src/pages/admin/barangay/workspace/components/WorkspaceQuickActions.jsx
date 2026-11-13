@@ -24,7 +24,6 @@ export default function WorkspaceQuickActions({
       </div>
 
       <div className="flex-1 flex flex-col justify-between gap-2">
-        {/* Verify Certificate */}
         <button
           type="button"
           onClick={onOpenVerifyModal}
@@ -42,7 +41,6 @@ export default function WorkspaceQuickActions({
           <HugeiconsIcon icon={ArrowRight01Icon} className="w-3.5 h-3.5 text-gray-400 dark:text-slate-500 group-hover:text-gray-700 dark:group-hover:text-slate-300 group-hover:translate-x-0.5 transition-all shrink-0 ml-1.5" />
         </button>
 
-        {/* Post Announcement (Primary High-Priority Action) */}
         <button
           type="button"
           onClick={onOpenAnnouncementModal}
@@ -63,7 +61,6 @@ export default function WorkspaceQuickActions({
           <HugeiconsIcon icon={ArrowRight01Icon} className="w-3.5 h-3.5 text-red-500 dark:text-red-400 group-hover:text-red-700 dark:group-hover:text-red-300 group-hover:translate-x-0.5 transition-all shrink-0 ml-1.5" />
         </button>
 
-        {/* Manage Residents */}
         <button
           type="button"
           onClick={() => navigate("/admin/barangay/residents")}
@@ -81,7 +78,6 @@ export default function WorkspaceQuickActions({
           <HugeiconsIcon icon={ArrowRight01Icon} className="w-3.5 h-3.5 text-gray-400 dark:text-slate-500 group-hover:text-gray-700 dark:group-hover:text-slate-300 group-hover:translate-x-0.5 transition-all shrink-0 ml-1.5" />
         </button>
 
-        {/* Certification Roster */}
         <button
           type="button"
           onClick={() => navigate("/admin/barangay/certifications")}
@@ -99,7 +95,6 @@ export default function WorkspaceQuickActions({
           <HugeiconsIcon icon={ArrowRight01Icon} className="w-3.5 h-3.5 text-gray-400 dark:text-slate-500 group-hover:text-gray-700 dark:group-hover:text-slate-300 group-hover:translate-x-0.5 transition-all shrink-0 ml-1.5" />
         </button>
 
-        {/* Resident Feedback */}
         <button
           type="button"
           onClick={() => navigate("/admin/barangay/feedback")}

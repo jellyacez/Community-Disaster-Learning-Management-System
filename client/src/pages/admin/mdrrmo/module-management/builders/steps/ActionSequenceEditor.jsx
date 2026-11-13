@@ -38,7 +38,6 @@ export default function ActionSequenceEditor({
     const updated = [...stepsList];
     updated.splice(index, 1);
     
-    // Re-normalize the 'order' values
     updated.forEach((step) => {
       if (step.order > updated.length) {
         step.order = updated.length;

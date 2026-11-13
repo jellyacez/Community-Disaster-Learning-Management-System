@@ -52,7 +52,6 @@ export default function SystemCharts({ stats = {}, loading }) {
     refetchInterval: 60000,
   });
 
-  // Premium Gradient Palette
   const pieData = [
     { name: "Residents", value: Number(stats.resident_users || 0), gradientId: "gradResident", color1: "#cbd5e1", color2: "#94a3b8", dotColor: "#94a3b8" }, 
     { name: "Barangay Admins", value: Number(stats.barangay_admin_users || 0), gradientId: "gradBrgy", color1: "#2dd4bf", color2: "#0f766e", dotColor: "#14b8a6" }, 
@@ -64,7 +63,6 @@ export default function SystemCharts({ stats = {}, loading }) {
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full h-full">
-      {/* User Distribution */}
       <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-[0_2px_12px_-3px_rgba(0,0,0,0.06)] p-6 flex flex-col h-full min-h-[350px] transition-all hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)]">
         <h2 className="text-base font-bold text-gray-900 dark:text-white mb-6">User Distribution</h2>
         
@@ -138,7 +136,6 @@ export default function SystemCharts({ stats = {}, loading }) {
         )}
       </div>
 
-      {/* Traffic Chart */}
       <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-[0_2px_12px_-3px_rgba(0,0,0,0.06)] p-6 flex flex-col h-full min-h-[350px] transition-all hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)]">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-base font-bold text-gray-900 dark:text-white">Active Users Trend</h2>

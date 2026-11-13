@@ -10,7 +10,6 @@ export default function SystemAdminRoot() {
     <div className="w-full h-full font-sans">
       <div className="max-w-7xl mx-auto space-y-6">
 
-        {/* Main Header - Only show on dashboard index */}
         {isDashboard && (
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden p-6 md:px-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
@@ -30,7 +29,6 @@ export default function SystemAdminRoot() {
           </div>
         )}
 
-        {/* Render Active Sub-page */}
         <div className="min-h-[600px] animate-in fade-in duration-200">
           <Outlet />
         </div>

@@ -72,7 +72,6 @@ export default function IPBlocklistPanel() {
         Manage the global IP blocklist. Connections from these addresses will be rejected before reaching application logic.
       </p>
 
-      {/* Add New IP Form */}
       <form onSubmit={handleSubmit} className="mb-6">
         <div className="flex flex-col sm:flex-row gap-3">
           <div className="flex-1 flex flex-col">
@@ -109,7 +108,6 @@ export default function IPBlocklistPanel() {
         {ipError && <p className="text-[11px] font-semibold text-red-600 mt-1.5 ml-1">{ipError}</p>}
       </form>
 
-      {/* Blocked IPs Table */}
       <div className="border border-gray-100 rounded-xl overflow-hidden bg-gray-50">
         <table className="w-full text-left text-sm">
           <thead className="bg-white border-b border-gray-100">

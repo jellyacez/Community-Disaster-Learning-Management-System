@@ -114,7 +114,6 @@ export default function GovernanceLog() {
       </div>
 
       <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-200/80 dark:border-slate-800/80 shadow-2xs overflow-hidden">
-        {/* Filters Header */}
         <div className="p-4 border-b border-gray-100 dark:border-slate-800/80 flex flex-col sm:flex-row items-stretch sm:items-center gap-3 justify-between bg-gray-50/50 dark:bg-slate-900/50">
           <div className="relative flex-1 max-w-md">
             <HugeiconsIcon
@@ -169,7 +168,6 @@ export default function GovernanceLog() {
           </div>
         </div>
 
-        {/* Logs Table */}
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
@@ -264,7 +262,6 @@ export default function GovernanceLog() {
           </table>
         </div>
 
-        {/* Pagination Footer */}
         <div className="p-3 border-t border-gray-100 dark:border-slate-800">
           <AdminTablePagination
             page={meta.page}

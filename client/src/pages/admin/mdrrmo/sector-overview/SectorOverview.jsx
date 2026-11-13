@@ -17,7 +17,6 @@ export default function SectorOverview() {
 
   const [selectedBarangayId, setSelectedBarangayId] = useState(null);
 
-  // Data fetching & derived state
   const {
     sectorData,
     trends,
@@ -32,7 +31,6 @@ export default function SectorOverview() {
     lastUpdated,
   } = useSectorData(selectedBarangayId);
 
-  // Table state & handlers
   const {
     sortConfig,
     searchQuery,
@@ -73,7 +71,6 @@ export default function SectorOverview() {
 
           <SectorKPIs kpiData={kpiData} trends={trends} isLoading={isLoading} />
 
-          {/* Tier 2: Chart Row */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
             <SectorLeaderboard
               top5={top5}

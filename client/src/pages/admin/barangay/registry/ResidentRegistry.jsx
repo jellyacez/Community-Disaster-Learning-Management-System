@@ -40,7 +40,6 @@ export default function ResidentRegistry() {
   const debouncedSearch = useDebounce(searchInput, 350);
   const queryClient = useQueryClient();
 
-  // Reset pagination to page 1 on filter or limit changes
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setPage(1);
@@ -117,7 +116,6 @@ export default function ResidentRegistry() {
 
   return (
     <div className="space-y-6">
-      {/* Header & Breadcrumbs */}
       <div>
         <nav
           className="flex text-sm text-gray-500 dark:text-slate-400 mb-2"
@@ -170,7 +168,6 @@ export default function ResidentRegistry() {
         </div>
       </div>
 
-      {/* Filter and Search Bar */}
       <ResidentRegistryFilterBar
         searchInput={searchInput}
         onSearchChange={setSearchInput}
@@ -179,7 +176,6 @@ export default function ResidentRegistry() {
         onStatusChange={setSelectedStatus}
       />
 
-      {/* Registry Table */}
       <ResidentRegistryTable
         residents={residents}
         meta={meta}
@@ -192,7 +188,6 @@ export default function ResidentRegistry() {
         onOpenActionModal={handleOpenActionModal}
       />
 
-      {/* Confirmation Modal */}
       <ConfirmationModal
         isOpen={modalConfig.isOpen}
         onClose={() => {

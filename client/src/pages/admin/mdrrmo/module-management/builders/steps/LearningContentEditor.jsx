@@ -41,7 +41,6 @@ export default function LearningContentEditor({
 
   return (
     <div className="space-y-4 pt-2">
-      {/* 1. Learning Content Instructions Accordion */}
       <div className="border border-slate-200 dark:border-slate-800 rounded-xl bg-white dark:bg-slate-900 overflow-hidden shadow-sm animate-in fade-in slide-in-from-bottom-2 duration-300">
         <button
           type="button"
@@ -79,7 +78,6 @@ export default function LearningContentEditor({
         )}
       </div>
 
-      {/* 2. Media & Document Upload Accordion */}
       <div className="border border-slate-200 dark:border-slate-800 rounded-xl bg-white dark:bg-slate-900 overflow-hidden shadow-sm animate-in fade-in slide-in-from-bottom-2 duration-300">
         <button
           type="button"

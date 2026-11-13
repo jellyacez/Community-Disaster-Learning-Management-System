@@ -32,7 +32,7 @@ export default function AdminProvisionModal({ onClose }) {
     mutationFn: async (data) => {
       const payload = { ...data };
       if (showAutoGenerate) {
-        delete payload.password; // backend will auto-generate
+        delete payload.password; // empty password: the server generates one
       }
       const res = await apiClient.post("/admin/users/provision", payload);
       return res.data;

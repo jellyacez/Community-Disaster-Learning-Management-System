@@ -38,12 +38,11 @@ export default function AdminModuleApprovals() {
       const response = await apiClient.get("/admin/mdrrmo/approvals");
       return response.data.data || [];
     },
-    refetchInterval: 60000, // Poll every 60s for new approval requests
+    refetchInterval: 60000,
   });
 
   const actionMutation = useMutation({
       mutationFn: async ({ moduleId, action, remarks }) => {
-        // Map frontend 'action' to your backend 'status' enums
         const targetStatus = action === "approve" ? "published" : "rejected";
 
         const response = await apiClient.put(`/admin/mdrrmo/module/${moduleId}/review`, {
@@ -214,7 +213,6 @@ export default function AdminModuleApprovals() {
           </div>
 
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-            {/* Search Input */}
             <div className="relative w-full sm:w-64">
               <HugeiconsIcon icon={Search01Icon} className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-slate-500" />
               <input
@@ -241,7 +239,6 @@ export default function AdminModuleApprovals() {
               )}
             </div>
 
-            {/* Filter Tabs */}
             <div className="flex flex-wrap gap-1.5 p-1 bg-gray-100 dark:bg-slate-800/80 rounded-2xl border border-gray-200/60 dark:border-slate-700/60">
               {tabs.map((tab) => (
                 <button
@@ -369,7 +366,6 @@ export default function AdminModuleApprovals() {
               ))}
             </div>
 
-            {/* Pagination Controls */}
             {totalPages > 1 && (
               <div className="flex items-center justify-center gap-2 pt-4 border-t border-gray-100 dark:border-slate-800">
                 <button 
@@ -410,7 +406,6 @@ export default function AdminModuleApprovals() {
         )}
       </div>
 
-      {/* REJECTION MODAL */}
       {selectedModule && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm animate-in fade-in">
           <div className="w-full max-w-md bg-white dark:bg-slate-900 rounded-3xl border border-gray-100 dark:border-slate-800 shadow-2xl p-6">

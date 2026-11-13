@@ -120,7 +120,6 @@ function AdminAccountPreferences({ session }) {
 
   return (
     <form onSubmit={handleUpdateProfile} noValidate className="p-6 md:p-8 w-full flex flex-col space-y-2">
-      {/* Structured Name Row */}
       <div className="flex flex-col md:flex-row gap-8 md:gap-16 p-4 -mx-4 rounded-2xl hover:bg-gray-50/80 dark:hover:bg-slate-800/40 transition-colors group">
         <div className="md:w-1/3 shrink-0">
           <h4 className="text-base font-bold text-gray-900 dark:text-slate-100 flex items-center gap-2">
@@ -177,7 +176,6 @@ function AdminAccountPreferences({ session }) {
         </div>
       </div>
 
-      {/* Email Row */}
       <div className="flex flex-col md:flex-row gap-8 md:gap-16 p-4 -mx-4 rounded-2xl hover:bg-gray-50/80 dark:hover:bg-slate-800/40 transition-colors group">
         <div className="md:w-1/3 shrink-0">
           <h4 className="text-base font-bold text-gray-900 dark:text-slate-100 flex items-center gap-2">
@@ -203,7 +201,6 @@ function AdminAccountPreferences({ session }) {
         </div>
       </div>
 
-      {/* Jurisdiction Row */}
       <div className="flex flex-col md:flex-row gap-8 md:gap-16 p-4 -mx-4 rounded-2xl hover:bg-gray-50/80 dark:hover:bg-slate-800/40 transition-colors group">
         <div className="md:w-1/3 shrink-0">
           <h4 className="text-base font-bold text-gray-900 dark:text-slate-100 flex items-center gap-2">
@@ -227,7 +224,6 @@ function AdminAccountPreferences({ session }) {
         </div>
       </div>
 
-      {/* Save Button Row */}
       <div className="flex flex-col md:flex-row gap-8 md:gap-16 pt-2">
         <div className="md:w-1/3 shrink-0"></div>
         <div className="md:w-2/3 max-w-md flex justify-end">
@@ -303,7 +299,6 @@ export default function AdminSettings() {
       </div>
 
       <div className="space-y-10">
-        {/* Group 1: Account Preferences */}
         <section>
           <h2 className="text-sm font-bold text-gray-900 dark:text-slate-200 uppercase tracking-wider mb-4 px-1">
             Account Preferences
@@ -313,7 +308,6 @@ export default function AdminSettings() {
           </div>
         </section>
 
-        {/* Group 2: Security & Activity */}
         <section>
           <h2 className="text-sm font-bold text-gray-900 dark:text-slate-200 uppercase tracking-wider mb-4 px-1">
             Security & Activity

@@ -18,7 +18,6 @@ export default function SystemLogs() {
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(25);
 
-  // Reset page on filter changes
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setPage(1);
@@ -40,9 +39,7 @@ export default function SystemLogs() {
   const meta = data?.meta || { totalPages: 1, page: 1, total: 0 };
 
   const handleExportLogs = () => {
-    // Wait, barangay controller doesn't have an export endpoint!
-    // I will mock this for now or remove the export button if there's no endpoint.
-    // Actually, I'll just show a toast since implementing CSV export is backend work.
+    // barangay controller has no export endpoint yet
     toast.error("Export is not yet supported for Barangay Admin logs.");
   };
 

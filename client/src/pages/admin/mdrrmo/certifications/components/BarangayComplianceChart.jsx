@@ -14,18 +14,15 @@ export default function BarangayComplianceChart({ barangays = [], isLoading }) {
   const [page, setPage] = useState(1);
   const pageSize = 5;
 
-  // Handle tab change and reset page
   const handleTabChange = (tab) => {
     setActiveTab(tab);
     setPage(1);
   };
 
-  // Sort descending by compliance rate
   const sorted = [...barangays].sort((a, b) => b.compliance_rate - a.compliance_rate);
   const topPerforming = sorted.filter((b) => b.compliance_rate > 0).slice(0, 5);
   const needsAttentionAll = sorted.slice().reverse();
 
-  // Full dataset for selected tab
   const rawList =
     activeTab === "top"
       ? topPerforming.length > 0 ? topPerforming : sorted.slice(0, 5)
@@ -33,7 +30,7 @@ export default function BarangayComplianceChart({ barangays = [], isLoading }) {
       ? needsAttentionAll
       : sorted;
 
-  // Pagination calculations (Top 5 is fixed and unpaginated)
+  // Top 5 is fixed and never paginated
   const isPaginated = activeTab !== "top" && rawList.length > pageSize;
   const totalPages = Math.ceil(rawList.length / pageSize) || 1;
   const displayList = isPaginated
@@ -57,7 +54,6 @@ export default function BarangayComplianceChart({ barangays = [], isLoading }) {
           </p>
         </div>
 
-        {/* View Toggle Tabs */}
         <div className="flex items-center bg-gray-100 dark:bg-slate-800 p-1 rounded-xl text-xs font-semibold self-start sm:self-auto">
           <button
             onClick={() => handleTabChange("top")}
@@ -144,7 +140,6 @@ export default function BarangayComplianceChart({ barangays = [], isLoading }) {
                     </div>
                   </div>
 
-                  {/* Progress Track */}
                   <div className="h-2 w-full bg-gray-200 dark:bg-slate-700 border border-gray-300/80 dark:border-slate-500 rounded-full overflow-hidden">
                     <div
                       className={`h-full rounded-full transition-all duration-500 ${getBarColor(
@@ -158,7 +153,6 @@ export default function BarangayComplianceChart({ barangays = [], isLoading }) {
             })}
           </div>
 
-          {/* Pagination Controls for Needs Attention & All 21 */}
           {isPaginated && (
             <div className="mt-4 pt-3 border-t border-gray-100 dark:border-slate-800 flex items-center justify-between">
               <span className="text-xs text-gray-500 font-medium">

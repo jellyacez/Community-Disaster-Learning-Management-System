@@ -3,7 +3,6 @@ import { SkeletonBlock } from "../../../../components/ui/Skeleton";
 export default function WorkspaceOverviewSkeleton() {
   return (
     <div className="space-y-6 animate-pulse pb-10">
-      {/* Header Card Skeleton */}
       <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-[0_2px_12px_-3px_rgba(0,0,0,0.06)] flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <SkeletonBlock className="h-8 w-80 mb-2 rounded-lg" />
@@ -16,7 +15,6 @@ export default function WorkspaceOverviewSkeleton() {
         </div>
       </div>
 
-      {/* 5 Metric Cards Skeleton */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
         {[1, 2, 3, 4, 5].map((i) => (
           <div key={i} className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm w-full h-[120px] flex flex-col justify-between">
@@ -32,7 +30,6 @@ export default function WorkspaceOverviewSkeleton() {
         ))}
       </div>
 
-      {/* Body Content Skeleton */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
         <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm lg:col-span-4 h-[360px] flex flex-col justify-between">
           <div className="border-b border-gray-100 pb-3">

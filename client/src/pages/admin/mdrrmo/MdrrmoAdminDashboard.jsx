@@ -8,7 +8,6 @@ export default function MdrrmoAdminDashboard() {
     <div className="w-full h-full font-sans">
       <div className="max-w-7xl mx-auto space-y-6">
         
-        {/* Render Active Component */}
         <div className="min-h-[600px] animate-in fade-in duration-200">
           <Outlet />
         </div>

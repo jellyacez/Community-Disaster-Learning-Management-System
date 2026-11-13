@@ -46,7 +46,6 @@ export default function BrandingPanel({ settingsData }) {
           }
 
           if (file && file.size > 0) {
-            // Convert to Base64 using FileReader
             system_logo = await new Promise((resolve, reject) => {
               const reader = new FileReader();
               reader.onload = () => resolve(reader.result);

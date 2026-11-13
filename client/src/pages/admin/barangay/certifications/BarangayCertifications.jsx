@@ -35,7 +35,6 @@ export default function BarangayCertifications() {
   const debouncedSearch = useDebounce(searchInput, 350);
   const [limit, setLimit] = useState(10);
 
-  // Reset pagination to page 1 whenever filters or limit change
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setPage(1);
@@ -67,7 +66,6 @@ export default function BarangayCertifications() {
 
   return (
     <div className="space-y-6">
-      {/* Header & Breadcrumbs */}
       <div>
         <nav className="flex text-sm text-gray-500 mb-2" aria-label="Breadcrumb">
           <ol className="inline-flex items-center space-x-1 md:space-x-2">
@@ -114,7 +112,6 @@ export default function BarangayCertifications() {
         </div>
       </div>
 
-      {/* KPI Summary Cards */}
       <CertificationsKpiRow
         summary={summary}
         isLoading={isLoading}
@@ -122,7 +119,6 @@ export default function BarangayCertifications() {
         onStatusFilterChange={setSelectedStatus}
       />
 
-      {/* Search & Tactical Filters Bar */}
       <CertificationsFilterBar
         searchInput={searchInput}
         onSearchChange={setSearchInput}
@@ -135,7 +131,6 @@ export default function BarangayCertifications() {
         onResetFilters={handleResetFilters}
       />
 
-      {/* Certificates Data Table */}
       <CertificationsTable
         certificates={certificates}
         meta={meta}
@@ -150,7 +145,6 @@ export default function BarangayCertifications() {
         onResetFilters={handleResetFilters}
       />
 
-      {/* In-Portal Certificate Verification Modal */}
       {isVerifyModalOpen && (
         <Suspense
           fallback={

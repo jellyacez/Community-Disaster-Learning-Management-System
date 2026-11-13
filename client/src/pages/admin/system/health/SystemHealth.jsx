@@ -4,7 +4,6 @@ import useDocumentTitle from "../../../../hooks/useDocumentTitle";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Settings01Icon, Time02Icon, RefreshIcon, Database01Icon, Notification01Icon, Folder01Icon, Alert01Icon, Shield01Icon } from "@hugeicons/core-free-icons";
 
-// We reuse these components from the Overview section to maintain design consistency
 import StatCard from "../../../../components/ui/StatCard";
 import HealthRow from "../components/HealthRow";
 
@@ -29,10 +28,9 @@ export default function SystemHealth() {
       const res = await apiClient.get("/admin/health");
       return res.data.data;
     },
-    refetchInterval: 60000, // Faster refresh to see the CPU "heartbeat"
+    refetchInterval: 60000,
   });
 
-  // Calculate dynamic states
   const dbStatus = healthData?.db_status === "connected" ? "Healthy" : "Offline";
   
   const latency = healthData?.db_latency_ms;
@@ -73,7 +71,6 @@ export default function SystemHealth() {
         </p>
       </div>
 
-      {/* ZONE 1: The "Pulse" Row (StatCards) */}
       <div>
         <h2 className="text-sm font-bold uppercase tracking-widest text-gray-500 mb-3 mt-8">
           System Pulse
@@ -114,7 +111,6 @@ export default function SystemHealth() {
           Infrastructure Observability
         </h2>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* ZONE 2: The "Capacity" Section */}
           <div className="lg:col-span-2">
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 h-full">
               <h2 className="text-base font-bold text-gray-900 mb-2">Resource Capacity</h2>
@@ -140,7 +136,6 @@ export default function SystemHealth() {
             </div>
           </div>
 
-          {/* ZONE 3: The "Service Connectivity" List */}
           <div className="lg:col-span-1">
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 h-full">
               <h2 className="text-base font-bold text-gray-900 mb-2">Service Connectivity</h2>

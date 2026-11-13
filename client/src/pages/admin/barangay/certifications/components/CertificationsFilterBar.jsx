@@ -16,7 +16,6 @@ export default function CertificationsFilterBar({
 
   return (
     <div className="bg-white p-4 rounded-2xl border border-gray-200 shadow-sm flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
-      {/* Reusable SearchBar Component */}
       <SearchBar
         value={searchInput}
         onChange={(e) => onSearchChange(e.target.value)}
@@ -26,9 +25,7 @@ export default function CertificationsFilterBar({
         containerClassName="relative flex-1"
       />
 
-      {/* Dropdown Filters */}
       <div className="flex flex-wrap items-center gap-3">
-        {/* Module Filter */}
         <div className="relative min-w-[200px]">
           <select
             value={selectedModule}
@@ -46,7 +43,6 @@ export default function CertificationsFilterBar({
           </select>
         </div>
 
-        {/* Status Filter */}
         <div className="relative min-w-[160px]">
           <select
             value={selectedStatus}
@@ -60,7 +56,6 @@ export default function CertificationsFilterBar({
           </select>
         </div>
 
-        {/* Reset Filters */}
         {hasActiveFilters && (
           <button
             type="button"

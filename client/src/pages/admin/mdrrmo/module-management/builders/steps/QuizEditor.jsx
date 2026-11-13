@@ -142,9 +142,8 @@ export default function QuizEditor({
     }
 
     if (newCount < plannedQuestionCount) {
-      // Decrease
       if (newCount < currentFilledCount) {
-        // Edge Case 2: Reduce below filled count -> prompt confirmation
+        // reducing below the filled count asks first
         const discardCount = currentFilledCount - newCount;
         setReductionConfirmation({
           newCount,
@@ -154,7 +153,7 @@ export default function QuizEditor({
         return false;
       }
 
-      // Edge Case 2: Decrease >= filled count -> trim only empty trailing slots
+      // otherwise only trim empty trailing slots
       const targetSlots =
         currentFilledCount < 5
           ? Math.min(newCount, 5)
@@ -182,7 +181,7 @@ export default function QuizEditor({
     }
 
     if (newCount > plannedQuestionCount) {
-      // Edge Case 1: Increase -> tops up to Math.min(newCount, 5) slots without touching filled
+      // increasing tops up to min(newCount, 5) slots without touching filled ones
       const targetSlots =
         currentFilledCount < 5
           ? Math.min(newCount, 5)
@@ -222,7 +221,7 @@ export default function QuizEditor({
       return;
     }
     const parsed = parseInt(trimmed, 10);
-    // Edge Case 3: Enforce min="0" and clamp negative values to 0
+    // clamp negatives (and NaN) to 0
     const clamped = isNaN(parsed) || parsed < 0 ? 0 : parsed;
     const applied = applyPlannedCount(clamped);
     if (applied) setRawPlannedInput(null);
@@ -364,8 +363,7 @@ export default function QuizEditor({
 
     const newFilledCount = updated.filter(isQuestionFilled).length;
 
-    // Edge Case 4: Batch generation beyond 5
-    // Once current batch of slots is completely filled, auto-generate the next batch of Math.min(remaining, 5) slots
+    // Once the current batch of slots is filled, generate the next batch of min(remaining, 5).
     const allSlotsFilled = updated.every(isQuestionFilled);
     if (allSlotsFilled && newFilledCount < plannedQuestionCount) {
       const remaining = plannedQuestionCount - newFilledCount;
@@ -375,7 +373,7 @@ export default function QuizEditor({
       );
       const finalQuestions = [...updated, ...newSlots];
       setCurrentFlowStep({ ...currentFlowStep, quizQuestions: finalQuestions });
-      setActiveSlotIndex(updated.length); // Advance to first newly generated slot
+      setActiveSlotIndex(updated.length);
       toast.success(
         `Question staged! Generated next ${nextBatch} question slot${
           nextBatch > 1 ? "s" : ""
@@ -387,7 +385,6 @@ export default function QuizEditor({
         toast.success(`Question in Slot ${safeActiveSlotIndex + 1} updated!`);
       } else {
         toast.success(`Question staged into Slot ${safeActiveSlotIndex + 1}!`);
-        // Advance to next empty slot if any
         const nextEmpty = updated.findIndex(
           (s, idx) => idx > safeActiveSlotIndex && !isQuestionFilled(s)
         );
@@ -459,7 +456,6 @@ export default function QuizEditor({
 
   return (
     <div className="space-y-4 pt-2">
-      {/* 1. Assessment Config */}
       <div className="border border-slate-200 dark:border-slate-800 rounded-xl bg-white dark:bg-slate-900 overflow-hidden shadow-sm animate-in fade-in slide-in-from-bottom-2 duration-300">
         <button
           type="button"
@@ -544,7 +540,6 @@ export default function QuizEditor({
               </p>
             </div>
 
-            {/* Question Slot Selector Tabs */}
             {slots.length > 0 && (
               <div className="pt-2 border-t border-slate-200 dark:border-slate-800">
                 <div className="flex items-center justify-between mb-2">
@@ -596,7 +591,6 @@ export default function QuizEditor({
         )}
       </div>
 
-      {/* When 0 slots exist */}
       {slots.length === 0 ? (
         <div className="p-8 text-center bg-slate-50 dark:bg-slate-900/40 border border-dashed border-slate-300 dark:border-slate-700 rounded-xl animate-in fade-in duration-300">
           <p className="text-sm font-semibold text-slate-500 dark:text-slate-400">
@@ -605,7 +599,6 @@ export default function QuizEditor({
         </div>
       ) : (
         <>
-          {/* 2. Question Prompt */}
           <div className="border border-slate-200 dark:border-slate-800 rounded-xl bg-white dark:bg-slate-900 overflow-hidden shadow-sm animate-in fade-in slide-in-from-bottom-2 duration-300">
             <button
               type="button"
@@ -649,7 +642,6 @@ export default function QuizEditor({
             )}
           </div>
 
-          {/* 3. Multiple Choice Options */}
           {currentQuestionType === "multiple_choice" && activeSlot && (
             <div className="border border-slate-200 dark:border-slate-800 rounded-xl bg-white dark:bg-slate-900 overflow-hidden shadow-sm animate-in fade-in slide-in-from-bottom-2 duration-300">
               <button
@@ -748,7 +740,6 @@ export default function QuizEditor({
             </div>
           )}
 
-          {/* 4. Question Staging Actions */}
           <div className="pt-2">
             <button
               type="button"
@@ -769,7 +760,6 @@ export default function QuizEditor({
             </button>
           </div>
 
-          {/* Staged Question Pool / Slots List */}
           {slots.length > 0 && (
             <div className="pt-4 border-t border-slate-200 dark:border-slate-800 space-y-3">
               <div className="flex items-center justify-between">
@@ -873,7 +863,6 @@ export default function QuizEditor({
         </>
       )}
 
-      {/* Reduction Confirmation Modal */}
       {reductionConfirmation && (
         <ConfirmationModal
           isOpen={true}
@@ -890,7 +879,6 @@ export default function QuizEditor({
         />
       )}
 
-      {/* Delete Question Confirmation Modal */}
       {questionToDelete && (
         <ConfirmationModal
           isOpen={true}

@@ -47,7 +47,7 @@ export default function StepBuilder({
   };
 
   const handleSaveClick = () => {
-    const success = addStepToFlow(); // Execute the save pipeline
+    const success = addStepToFlow();
     if (success) {
       toast.success(`Saved step "${currentFlowStep.title}" into Level ${activeLevelOrder}!`);
     }
@@ -80,7 +80,6 @@ export default function StepBuilder({
           {formErrors.stepTitle && <p className="text-red-500 text-xs mt-1.5 font-bold flex items-center gap-1"><HugeiconsIcon icon={Alert01Icon} className="w-4 h-4" />{formErrors.stepTitle}</p>}
         </div>
 
-        {/* Step Type Selector */}
         <div>
           <label className="block text-xs font-bold text-gray-600 dark:text-slate-400 uppercase tracking-wide mb-2">
              Content Type

@@ -114,7 +114,6 @@ export default function SituationalEditor({
 
   return (
     <div className="space-y-4 pt-2">
-      {/* 1. Scenario Context & Description Accordion */}
       <div className="border border-slate-200 dark:border-slate-800 rounded-xl bg-white dark:bg-slate-900 overflow-hidden shadow-sm animate-in fade-in slide-in-from-bottom-2 duration-300">
         <button
           type="button"
@@ -160,7 +159,6 @@ export default function SituationalEditor({
               )}
             </div>
 
-            {/* Scenario Scene Image Upload */}
             <div>
               <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1.5">
                 Attach Scenario Illustration / Diagram (Optional)
@@ -189,7 +187,6 @@ export default function SituationalEditor({
         )}
       </div>
 
-      {/* 2. Interaction Mechanism Accordion */}
       <div className="border border-slate-200 dark:border-slate-800 rounded-xl bg-white dark:bg-slate-900 overflow-hidden shadow-sm animate-in fade-in slide-in-from-bottom-2 duration-300">
         <button
           type="button"
@@ -247,7 +244,6 @@ export default function SituationalEditor({
               </div>
             </div>
 
-            {/* Render Specific Interaction Sub-Editor */}
             {currentSituationalData.interactionType === "priority_action" && (
               <PriorityActionEditor
                 currentSituationalData={currentSituationalData}
@@ -276,7 +272,6 @@ export default function SituationalEditor({
         )}
       </div>
 
-      {/* 3. Action Commit / Staging Trigger */}
       <div className="pt-2">
         <button
           type="button"
@@ -288,7 +283,6 @@ export default function SituationalEditor({
         </button>
       </div>
 
-      {/* 4. Staged Scenarios List */}
       {currentFlowStep.situationalScenarios?.length > 0 && (
         <div className="pt-4 border-t border-slate-200 dark:border-slate-800 space-y-3">
           <div className="flex items-center justify-between">
@@ -356,7 +350,6 @@ export default function SituationalEditor({
         </div>
       )}
 
-      {/* 5. Delete Confirmation Modal */}
       {scenarioToDelete && (
         <ConfirmationModal
           isOpen={true}

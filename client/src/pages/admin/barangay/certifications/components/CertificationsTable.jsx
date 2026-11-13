@@ -82,13 +82,11 @@ export default function CertificationsTable({
                   ))
                 : certificates.map((cert) => (
                     <tr key={cert.cert_id} className="hover:bg-gray-50/60 transition-colors">
-                      {/* Resident */}
                       <td className="px-6 py-4">
                         <div className="font-semibold text-gray-900 text-sm">{cert.resident_name}</div>
                         <div className="text-xs text-gray-500">{cert.resident_email}</div>
                       </td>
 
-                      {/* Module */}
                       <td className="px-6 py-4">
                         <div className="font-medium text-gray-900 text-sm">{decodeHtml(cert.module_title)}</div>
                         {cert.module_category && (
@@ -98,17 +96,14 @@ export default function CertificationsTable({
                         )}
                       </td>
 
-                      {/* Control No */}
                       <td className="px-6 py-4 font-mono text-xs text-gray-700 font-semibold">
                         {cert.cert_rec}
                       </td>
 
-                      {/* Issued Date */}
                       <td className="px-6 py-4 text-sm text-gray-600 whitespace-nowrap">
                         {formatDate(cert.completion_date)}
                       </td>
 
-                      {/* Expires Date */}
                       <td className="px-6 py-4 text-sm whitespace-nowrap">
                         <span
                           className={
@@ -123,7 +118,6 @@ export default function CertificationsTable({
                         </span>
                       </td>
 
-                      {/* Status Badge */}
                       <td className="px-6 py-4 text-center whitespace-nowrap">
                         <CertificateLifecycleBadge status={cert.computed_status} />
                       </td>
@@ -134,7 +128,6 @@ export default function CertificationsTable({
         </div>
       )}
 
-      {/* Standardized Sticky Pagination Footer */}
       {!isLoading && !isError && certificates.length > 0 && (
         <AdminTablePagination
           page={page}

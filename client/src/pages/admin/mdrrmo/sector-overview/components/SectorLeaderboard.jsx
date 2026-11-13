@@ -18,7 +18,6 @@ export default function SectorLeaderboard({ top5 = [], bottom5 = [], selectedBar
           </p>
         </div>
 
-        {/* Segmented Toggle */}
         <div className="flex items-center p-1 bg-gray-100 dark:bg-slate-800 rounded-xl shrink-0 self-start sm:self-auto border border-gray-200/60 dark:border-slate-700/60">
           <button
             type="button"

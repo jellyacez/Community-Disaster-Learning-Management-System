@@ -47,7 +47,7 @@ export default function useInfrastructureOperations() {
         { responseType: "blob", timeout: 330000 },
       );
 
-      // If the response is actually JSON, it means the API returned an error rather than a blob.
+      // a JSON body here is an error response, not the backup blob
       if (response.data.type === "application/json") {
         const text = await response.data.text();
         const errorData = JSON.parse(text);

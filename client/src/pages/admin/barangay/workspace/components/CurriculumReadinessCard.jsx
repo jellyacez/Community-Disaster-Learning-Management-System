@@ -58,7 +58,6 @@ export default function CurriculumReadinessCard({
         )}
       </div>
 
-      {/* Table / List Pagination Footer */}
       <div className="pt-3 border-t border-gray-100 dark:border-slate-800 space-y-2.5">
         {totalModules > 0 && (
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
