@@ -9,65 +9,43 @@ const { authenticate } = require("../../middleware/authenticate");
 const requirePermission = require("../../middleware/requirePermission");
 
 // @route   GET /api/users/me/provider
-// @desc    Get current user's auth providers
-// @access  Private
 router.get("/me/provider", authenticate, userController.getProviders);
 
 
 // @route   POST /api/users/onboarding
 // @desc    Complete user profile after Google OAuth
-// @access  Private
 router.post("/onboarding", authenticate, userController.onboarding);
 
 // @route   GET /api/users/announcements
-// @desc    Get paginated announcements
-// @access  Private
 router.get("/announcements", authenticate, announcementController.getPaginatedAnnouncements);
 
 
 // @route   GET /api/users
-// @desc    Get all users (for admin dashboard)
-// @access  Private (admin only)
 router.get("/", authenticate, requireRole(ADMIN_ROLES), requirePermission('view_users'), userController.getAllUsers);
 
 // @route   DELETE /api/users/me
 // @desc    Hard delete the current user's account (Right to Be Forgotten)
-// @access  Private
 router.delete("/me", authenticate, userController.deleteAccount);
 
 // @route   GET /api/users/certificates/:token
-// @desc    Get certificate data for the current user
-// @access  Private
 router.get("/certificates/:token", authenticate, userController.getCertificateData);
 
 // @route   GET /api/users/me/export
-// @desc    Export current user's data
-// @access  Private
 router.get("/me/export", authenticate, userController.exportUserData);
 
 // @route   GET /api/users/me/settings
-// @desc    Get user's notification settings
-// @access  Private
 router.get("/me/settings", authenticate, userController.getUserSettings);
 
 // @route   PUT /api/users/me/settings
-// @desc    Update user's notification settings
-// @access  Private
 router.put("/me/settings", authenticate, userController.updateUserSettings);
 
 // @route   GET /api/users/me/notifications
-// @desc    Get the current user's latest in-app notifications
-// @access  Private
 router.get("/me/notifications", authenticate, userController.getNotifications);
 
 // @route   PATCH /api/users/me/notifications/read
-// @desc    Mark all of the current user's notifications as read
-// @access  Private
 router.patch("/me/notifications/read", authenticate, userController.markNotificationsRead);
 
 // @route   GET /api/users/me/sessions
-// @desc    Get active login sessions / telemetry for current user
-// @access  Private
 router.get("/me/sessions", authenticate, userSettingsController.getUserSessions);
 
 module.exports = router;

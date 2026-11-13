@@ -7,12 +7,12 @@ const mdrrmoOverviewService = require("../../services/admin/MdrrmoOverviewServic
 const activityLogService = require("../../services/admin/ActivityLogService");
 const { logActivity } = require("../../utils/logger");
 
-// 1. Health check
+// @route   GET /api/admin/super/ping
 router.get("/super/ping", requireRole(["super_admin"]), (req, res) => {
   res.json({ message: "Super admin route connected" });
 });
 
-// 2. Real-time Barangay Telemetry & Sector Analytics
+// @route   GET /api/admin/super/analytics/barangays
 router.get(
   "/super/analytics/barangays",
   requireRole(["super_admin"]),
@@ -39,7 +39,7 @@ router.get(
   }
 );
 
-// 3. Super Admin Dedicated Governance Logs
+// @route   GET /api/admin/super/activity-log
 router.get(
   "/super/activity-log",
   requireRole(["super_admin"]),
@@ -73,7 +73,7 @@ router.get(
   }
 );
 
-// 4. POST /api/admin/super/impersonate/:userId
+// @route   POST /api/admin/super/impersonate/:userId
 router.post(
   "/super/impersonate/:userId",
   requireRole(["super_admin"]),
@@ -117,7 +117,6 @@ router.post(
 
       const targetUser = userResult.rows[0];
 
-      // Audit Log: Record impersonation initiation
       await logActivity(
         superAdminId,
         `Started impersonating user "${targetUser.name}" (${targetUser.email}, Role: ${targetUser.role}, ID: ${targetUser.id})`,
@@ -155,7 +154,7 @@ router.post(
   }
 );
 
-// 5. POST /api/admin/super/stop-impersonating
+// @route   POST /api/admin/super/stop-impersonating
 router.post("/super/stop-impersonating", async (req, res) => {
   try {
     // Only trust the impersonation pair that `authenticate` validated against the

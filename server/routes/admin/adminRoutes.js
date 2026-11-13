@@ -2,7 +2,6 @@ const express = require("express");
 const router = express.Router();
 const { authenticate } = require("../../middleware/authenticate");
 
-// All admin routes require authentication first
 router.use(authenticate);
 
 const { isMaintenanceActive } = require("../../middleware/maintenanceMiddleware");
@@ -23,12 +22,11 @@ router.use(async (req, res, next) => {
       });
     }
   } catch {
-    // If check fails, safely proceed
+    // fail open if the maintenance check itself errors
   }
   next();
 });
 
-// Mount modular sub-routers
 router.use("/", require("./adminUserRoutes"));
 router.use("/", require("./adminSystemRoutes"));
 router.use("/", require("./adminMdrrmoRoutes"));

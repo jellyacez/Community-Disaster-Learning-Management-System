@@ -4,7 +4,6 @@ const sseService = require("../../services/notif/sseService");
 const { authenticate } = require("../../middleware/authenticate");
 
 router.get("/stream", authenticate, (req, res) => {
-  // Set headers required for Server-Sent Events
   res.writeHead(200, {
     "Content-Type": "text/event-stream",
     "Cache-Control": "no-cache, no-transform",
@@ -12,7 +11,6 @@ router.get("/stream", authenticate, (req, res) => {
     "X-Accel-Buffering": "no", // Disables reverse-proxy buffering
   });
 
-  // Initial connection ping
   res.write(": connected\n\n");
 
   const clientId = `${req.user?.id || "anon"}-${Date.now()}`;

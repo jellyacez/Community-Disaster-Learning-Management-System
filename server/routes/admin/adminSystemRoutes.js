@@ -42,18 +42,13 @@ const ipBlocklistController = require("../../controllers/admin/ipBlocklistContro
 const infrastructureController = require("../../controllers/admin/infrastructureController");
 const alertController = require("../../controllers/admin/alertController");
 // @route   GET /api/admin/alerts/active
-// @desc    Get all active critical system alerts
-// @access  Private (admin only)
 router.get(
   "/alerts/active",
   requireRole(ADMIN_ROLES),
   alertController.getActiveAlerts,
 );
 
-// System Admin specific routes
 // @route   GET /api/admin/stats
-// @desc    Get system-wide statistics
-// @access  Private (system_admin only)
 router.get(
   "/stats",
   requireRole(ADMIN_ROLES),
@@ -62,8 +57,6 @@ router.get(
 );
 
 // @route   GET /api/admin/activity-log
-// @desc    Get paginated activity log
-// @access  Private (system_admin only)
 router.get(
   "/activity-log",
   requireRole(ADMIN_ROLES),
@@ -72,8 +65,6 @@ router.get(
 );
 
 // @route   GET /api/admin/activity-log/export
-// @desc    Export activity log to CSV
-// @access  Private (system_admin only)
 router.get(
   "/activity-log/export",
   requireRole(ADMIN_ROLES),
@@ -82,8 +73,6 @@ router.get(
 );
 
 // @route   GET /api/admin/analytics/traffic
-// @desc    Get 24h traffic analytics
-// @access  Private (system_admin only)
 router.get(
   "/analytics/traffic",
   requireRole(ADMIN_ROLES),
@@ -92,8 +81,6 @@ router.get(
 );
 
 // @route   GET /api/admin/settings
-// @desc    Get system settings
-// @access  Private (system_admin only)
 router.get(
   "/settings",
   requireRole(ADMIN_ROLES),
@@ -102,7 +89,6 @@ router.get(
 );
 // @route   GET /api/admin/settings/logo
 // @desc    Retrieve the logo separately from polled settings
-// @access  Private (requires manage_system_settings)
 router.get(
   "/settings/logo",
   requireRole(ADMIN_ROLES),
@@ -112,8 +98,6 @@ router.get(
 
 // @route   PATCH /api/admin/settings/branding
 // @desc    Update system branding (name and logo)
-// @access  Private (system_admin only)
-//
 router.patch(
   "/settings/branding",
   requireRole(ADMIN_ROLES),
@@ -122,8 +106,6 @@ router.patch(
 );
 
 // @route   PATCH /api/admin/settings/maintenance
-// @desc    Toggle maintenance mode
-// @access  Private (system_admin only)
 router.patch(
   "/settings/maintenance",
   requireRole(ADMIN_ROLES),
@@ -132,8 +114,6 @@ router.patch(
 );
 
 // @route   PATCH /api/admin/settings/broadcast
-// @desc    Update broadcast message
-// @access  Private (system_admin only)
 router.patch(
   "/settings/broadcast",
   requireRole(ADMIN_ROLES),
@@ -142,8 +122,6 @@ router.patch(
 );
 
 // @route   PATCH /api/admin/settings/organization
-// @desc    Update organization details
-// @access  Private (system_admin only)
 router.patch(
   "/settings/organization",
   requireRole(ADMIN_ROLES),
@@ -184,8 +162,6 @@ router.post(
 );
 
 // @route   GET /api/admin/health
-// @desc    Get system health status
-// @access  Private (system_admin only)
 router.get(
   "/health",
   requireRole(ADMIN_ROLES),
@@ -195,7 +171,6 @@ router.get(
 
 // @route   POST /api/admin/infrastructure/backup
 // @desc    Verify account password, then download an encrypted database ZIP
-// @access  Private (system_admin or super_admin with manage_security)
 
 
 router.post(
@@ -225,8 +200,6 @@ router.post(
 );
 
 // @route   GET /api/admin/infrastructure/logs
-// @desc    Download server logs
-// @access  Private (system_admin only)
 router.get(
   "/infrastructure/logs",
   requireRole(ADMIN_ROLES),

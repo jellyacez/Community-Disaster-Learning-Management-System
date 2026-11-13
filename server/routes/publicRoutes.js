@@ -3,24 +3,20 @@ const router = express.Router();
 const pool = require('../config/db');
 const { isMfaEnforced } = require('../config/permissions');
 
-// Simple in-memory cache to prevent database DoS attacks
+// in-memory cache so this public endpoint can't be used to hammer the DB
 let cachedBroadcast = null;
 let lastFetchTime = 0;
-const CACHE_TTL_MS = 30000; // 30 seconds
+const CACHE_TTL_MS = 30000;
 
 // @route   GET /api/public/broadcast
-// @desc    Get system-wide active broadcast
-// @access  Public
 router.get('/broadcast', async (req, res) => {
   try {
     const now = Date.now();
     
-    // Serve from cache if valid
     if (cachedBroadcast && (now - lastFetchTime < CACHE_TTL_MS)) {
       return res.json(cachedBroadcast);
     }
 
-    // Otherwise, hit the database
     const result = await pool.query(
       `SELECT key, value FROM public.system_settings WHERE key IN ('broadcast_active', 'broadcast_message', 'broadcast_severity')`
     );
@@ -37,7 +33,6 @@ router.get('/broadcast', async (req, res) => {
     
     const responseData = { success: true, active, message, severity };
     
-    // Update cache
     cachedBroadcast = responseData;
     lastFetchTime = now;
 
@@ -50,7 +45,6 @@ router.get('/broadcast', async (req, res) => {
 
 // @route   GET /api/public/status
 // @desc    Lightweight check for maintenance mode (for ProtectedRoute)
-// @access  Public
 router.get('/status', async (req, res) => {
   try {
     const result = await pool.query(
@@ -71,14 +65,11 @@ router.get('/status', async (req, res) => {
 
 // @route   GET /api/public/auth-policy
 // @desc    Whether 2FA is on; the client only uses it to show setup UI and redirects
-// @access  Public
 router.get('/auth-policy', (req, res) => {
   res.json({ success: true, mfaEnabled: isMfaEnforced() });
 });
 
 // @route   GET /api/public/barangays
-// @desc    Get list of all barangays
-// @access  Public
 router.get('/barangays', async (req, res) => {
   try {
     const result = await pool.query('SELECT id, name FROM public.barangays ORDER BY name ASC');

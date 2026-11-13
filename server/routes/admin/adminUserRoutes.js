@@ -9,8 +9,6 @@ const { adminDataLimiter, adminWriteLimiter, destructiveActionLimiter } = requir
 const userManagementController = require("../../controllers/admin/user-management");
 
 // @route   GET /api/admin/residents
-// @desc    Get all residents with pagination and scoping
-// @access  Private (admin/system_admin only)
 router.get(
   "/residents",
   requireRole(ADMIN_ROLES),
@@ -20,8 +18,6 @@ router.get(
 );
 
 // @route   POST /api/admin/users/provision
-// @desc    Provision a new Admin Account
-// @access  Private (system_admin only)
 router.post(
   "/users/provision",
   requireRole(ADMIN_ROLES),
@@ -31,8 +27,6 @@ router.post(
 );
 
 // @route   PUT /api/admin/users/:id
-// @desc    Update a user
-// @access  Private (admin only)
 router.put(
   "/users/:id",
   requireRole(ADMIN_ROLES),
@@ -42,7 +36,6 @@ router.put(
 
 // @route   DELETE /api/admin/users/:id
 // @desc    Admin-initiated hard delete of a user
-// @access  Private (system_admin only)
 router.delete(
   "/users/:id",
   requireRole(ADMIN_ROLES),
@@ -51,8 +44,6 @@ router.delete(
 );
 
 // @route   PUT /api/admin/users/:id/password
-// @desc    Reset user password (admin only)
-// @access  Private (admin only)
 router.put(
   "/users/:id/password",
   requireRole(ADMIN_ROLES),
@@ -61,8 +52,6 @@ router.put(
 );
 
 // @route   PATCH /api/admin/users/:id/role
-// @desc    Update a user's role
-// @access  Private (system_admin only)
 router.patch(
   "/users/:id/role",
   requireRole(ADMIN_ROLES),
@@ -72,8 +61,6 @@ router.patch(
 );
 
 // @route   PATCH /api/admin/users/:id/ban
-// @desc    Ban a user
-// @access  Private (system_admin only)
 router.patch(
   "/users/:id/ban",
   requireRole(ADMIN_ROLES),
@@ -83,8 +70,6 @@ router.patch(
 );
 
 // @route   PATCH /api/admin/users/:id/unban
-// @desc    Unban a user
-// @access  Private (system_admin only)
 router.patch(
   "/users/:id/unban",
   requireRole(ADMIN_ROLES),
@@ -94,8 +79,6 @@ router.patch(
 );
 
 // @route   PATCH /api/admin/users/:id/archive
-// @desc    Archive or unarchive a user
-// @access  Private (system_admin only)
 router.patch(
   "/users/:id/archive",
   requireRole(ADMIN_ROLES),
@@ -105,8 +88,6 @@ router.patch(
 );
 
 // @route   PATCH /api/admin/users/bulk-archive
-// @desc    Bulk archive users
-// @access  Private (system_admin only)
 router.patch(
   "/users/bulk-archive",
   requireRole(ADMIN_ROLES),

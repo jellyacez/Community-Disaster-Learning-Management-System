@@ -19,8 +19,6 @@ const activityLogController = require("../../controllers/admin/activityLogContro
 const barangayController = require("../../controllers/admin/barangayController");
 
 // @route   GET /api/admin/modules
-// @desc    Get all modules with pagination and scoping
-// @access  Private (admin/system_admin only)
 router.get(
   "/modules",
   requireRole(["super_admin","system_admin", "mdrrmo_admin", "head_mdrrmo_admin"]),
@@ -30,8 +28,6 @@ router.get(
 );
 
 // @route   GET /api/admin/certificates
-// @desc    Get all certificates with pagination and scoping
-// @access  Private (admin only)
 router.get(
   "/certificates",
   requireRole(ADMIN_ROLES),
@@ -42,7 +38,6 @@ router.get(
 
 // @route   PATCH /api/admin/certificates/:certId/revoke
 // @desc    [DEPRECATED] Revocation deprecated in favor of annual recertification
-// @access  Private (admin only)
 router.patch(
   "/certificates/:certId/revoke",
   requireRole(ADMIN_ROLES),
@@ -56,7 +51,6 @@ router.patch(
 
 // @route   PATCH /api/admin/certificates/:certId/reinstate
 // @desc    [DEPRECATED] Reinstatement deprecated along with revocation
-// @access  Private (admin only)
 router.patch(
   "/certificates/:certId/reinstate",
   requireRole(ADMIN_ROLES),
@@ -68,13 +62,8 @@ router.patch(
   }
 );
 
-// ==========================================
-// MDRRMO Admin Dashboards (also accessible by System Admin)
-// ==========================================
 
 // @route   GET /api/admin/mdrrmo/metrics
-// @desc    Get MDRRMO dashboard metrics
-// @access  Private (mdrrmo_admin, system_admin)
 router.get(
   "/mdrrmo/metrics",
   requireRole(MDRRMO_DASHBOARD_ROLES),
@@ -84,7 +73,6 @@ router.get(
 
 // @route   GET /api/admin/mdrrmo/report/export
 // @desc    Export the training accomplishment report (.xlsx) for a date range
-// @access  Private (mdrrmo_admin, head_mdrrmo_admin, system_admin)
 router.get(
   "/mdrrmo/report/export",
   requireRole(MDRRMO_DASHBOARD_ROLES),
@@ -93,8 +81,6 @@ router.get(
 );
 
 // @route   GET /api/admin/mdrrmo/module-distribution
-// @desc    Get module distribution by category
-// @access  Private (mdrrmo_admin, system_admin)
 router.get(
   "/mdrrmo/module-distribution",
   requireRole(MDRRMO_DASHBOARD_ROLES),
@@ -104,7 +90,6 @@ router.get(
 
 // @route   GET /api/admin/mdrrmo/enrollment-trend
 // @desc    Get 7-day enrollment trend
-// @access  Private (mdrrmo_admin, system_admin)
 router.get(
   "/mdrrmo/enrollment-trend",
   requireRole(MDRRMO_DASHBOARD_ROLES),
@@ -113,8 +98,6 @@ router.get(
 );
 
 // @route   GET /api/admin/mdrrmo/recent-activity
-// @desc    Get recent activity logs
-// @access  Private (mdrrmo_admin, system_admin)
 router.get(
   "/mdrrmo/recent-activity",
   requireRole(MDRRMO_DASHBOARD_ROLES),
@@ -124,7 +107,6 @@ router.get(
 
 // @route   GET /api/admin/mdrrmo/activity-log
 // @desc    Get paginated MDRRMO activity log (excludes system admin actions)
-// @access  Private (mdrrmo_admin, system_admin)
 router.get(
   "/mdrrmo/activity-log",
   requireRole(MDRRMO_DASHBOARD_ROLES),
@@ -134,7 +116,6 @@ router.get(
 
 // @route   GET /api/admin/mdrrmo/activity-log/export
 // @desc    Export MDRRMO activity log to CSV (excludes system admin actions)
-// @access  Private (mdrrmo_admin, system_admin)
 router.get(
   "/mdrrmo/activity-log/export",
   requireRole(MDRRMO_DASHBOARD_ROLES),
@@ -143,7 +124,6 @@ router.get(
 );
 
 // @route   GET /api/admin/mdrrmo/sector-overview
-// @desc    Get aggregate data per barangay for Sector Overview
 router.get(
   "/mdrrmo/sector-overview",
   requireRole(MDRRMO_DASHBOARD_ROLES),
@@ -152,7 +132,6 @@ router.get(
 );
 
 // @route   GET /api/admin/mdrrmo/sector-overview/category-breakdown
-// @desc    Get category breakdown for certificates per barangay
 router.get(
   "/mdrrmo/sector-overview/category-breakdown",
   requireRole(MDRRMO_DASHBOARD_ROLES),
@@ -160,13 +139,9 @@ router.get(
   mdrrmoOverviewController.getSectorOverviewCategoryBreakdown
 );
 
-// ==========================================
-// Admin Feedback Management Routes
-// ==========================================
 
 // @route   GET /api/admin/mdrrmo/feedback
 // @desc    Get scoped feedback list (MDRRMO sees all/filtered, Barangay Admin sees own barangay)
-// @access  Private (mdrrmo_admin, barangay_admin, system_admin)
 router.get(
   "/mdrrmo/feedback",
   requireRole(ADMIN_ROLES),
@@ -176,7 +151,6 @@ router.get(
 
 // @route   PUT /api/admin/mdrrmo/feedback/:id/reply
 // @desc    Submit an official reply and update ticket status
-// @access  Private (mdrrmo_admin, barangay_admin, system_admin)
 router.put(
   "/mdrrmo/feedback/:id/reply",
   requireRole(ADMIN_ROLES),
@@ -185,8 +159,6 @@ router.put(
 );
 
 // @route   PUT /api/admin/mdrrmo/feedback/:id/close
-// @desc    Close a feedback ticket
-// @access  Private (mdrrmo_admin, barangay_admin, system_admin)
 router.put(
   "/mdrrmo/feedback/:id/close",
   requireRole(ADMIN_ROLES),
@@ -211,8 +183,6 @@ router.put(
 );
 
 // @route   GET /api/admin/mdrrmo/certifications/analytics
-// @desc    Get municipal-wide certification analytics and compliance data
-// @access  Private (mdrrmo_admin, system_admin)
 router.get(
   "/mdrrmo/certifications/analytics",
   requireRole(["super_admin","system_admin", "mdrrmo_admin", "head_mdrrmo_admin"]),
@@ -221,8 +191,6 @@ router.get(
 );
 
 // @route   GET /api/admin/mdrrmo/certifications/feed
-// @desc    Get municipal-wide paginated certificate action feed
-// @access  Private (mdrrmo_admin, system_admin)
 router.get(
   "/mdrrmo/certifications/feed",
   requireRole(["super_admin","system_admin", "mdrrmo_admin", "head_mdrrmo_admin"]),
@@ -232,7 +200,6 @@ router.get(
 
 // @route   POST /api/admin/mdrrmo/announcements
 // @desc    Broadcast municipal advisory (all sectors or targeted barangay)
-// @access  Private (mdrrmo_admin, head_mdrrmo_admin, system_admin)
 router.post(
   "/mdrrmo/announcements",
   requireRole(["super_admin","system_admin", "mdrrmo_admin", "head_mdrrmo_admin"]),
