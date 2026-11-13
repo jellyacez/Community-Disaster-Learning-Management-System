@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
-import { Link, useOutletContext } from "react-router-dom"; // Added useOutletContext
-import { useUserDashboard } from "../../../hooks/useUserDashboard"; // Imported new hook
+import { Link, useOutletContext } from "react-router-dom";
+import { useUserDashboard } from "../../../hooks/useUserDashboard";
 import educationImg from "../../../assets/education.svg";
 import ModuleCard from "../../../components/ui/modules/ModuleCard.jsx";
 import ModuleSkeleton from "../../../components/ui/modules/ModuleSkeleton.jsx";
@@ -33,10 +33,8 @@ export default function UserEnrolledModules() {
   const debouncedSearch = useDebounce(searchInput, 350);
   const { currentUser } = useOutletContext();
 
-  // Replaced useQuery with the unified dashboard hook
   const { data: dashboardData, isLoading } = useUserDashboard(currentUser?.id);
 
-  // Normalize dataset
   const enrolledModules = useMemo(() => {
     const rawModules = dashboardData?.enrolledModules
       ? dashboardData.enrolledModules
@@ -62,7 +60,6 @@ export default function UserEnrolledModules() {
     }));
   }, [dashboardData]);
 
-  // Extract categories
   const categories = useMemo(() => {
     const cats = new Set();
     enrolledModules.forEach((m) => {
@@ -79,7 +76,6 @@ export default function UserEnrolledModules() {
     return enrolledModules.filter(isCompleted).length;
   }, [enrolledModules]);
 
-  // Filter modules
   const filteredModules = useMemo(() => {
     let list = enrolledModules;
 

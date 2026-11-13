@@ -1,5 +1,4 @@
 import { useOfflineSession } from "../../hooks/offlineSession";
-// --- START: SignInPage.jsx ---
 import { useState, useEffect } from "react";
 import {
   Link,
@@ -239,4 +238,3 @@ export default function SignInPage() {
     </AuthLayout>
   );
 }
-// --- END: SignInPage.jsx ---

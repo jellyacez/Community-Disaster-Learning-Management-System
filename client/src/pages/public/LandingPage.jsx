@@ -1,4 +1,3 @@
-// --- START: LandingPage.jsx ---
 import { useEffect } from "react";
 import { motion, MotionConfig, useReducedMotion } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
@@ -94,7 +93,6 @@ export default function LandingPage() {
           <LandingFeatures />
           <LandingSteps />
 
-          {/* Who publishes the training */}
           <section className="py-8 sm:py-10 bg-gray-50 dark:bg-slate-900/60 border-y border-gray-100 dark:border-slate-800">
             <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
               <p className="mx-auto max-w-2xl text-sm sm:text-base text-gray-700 dark:text-slate-200 leading-relaxed text-balance">
@@ -131,10 +129,8 @@ export default function LandingPage() {
             </div>
           </section>
 
-          {/* FAQ Section */}
           <LandingFAQ />
 
-          {/* CTA Section */}
           <section className="py-16 sm:py-20 lg:py-24 bg-gray-50 border-t border-gray-200">
             <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
               <motion.div
@@ -177,4 +173,3 @@ export default function LandingPage() {
     </MotionConfig>
   );
 }
-// --- END: LandingPage.jsx ---

@@ -19,7 +19,6 @@ const styles = StyleSheet.create({
   innerBorder: { border: "2pt solid #b89f5d", flexGrow: 1, paddingTop: 30, paddingBottom: 25, paddingHorizontal: 40, alignItems: "center", position: "relative" },
   content: { width: "100%", alignItems: "center" },
 
-  // Top corner elements
   qrCode: { position: "absolute", top: 20, left: 30, width: 55, height: 55 },
   certNumber: { position: "absolute", top: 20, right: 30, fontSize: 8, color: "#888" },
   hoursText: { fontSize: 10, fontWeight: "bold", color: "#1e3a8a", marginBottom: 12, textTransform: "uppercase", letterSpacing: 0.5 },
@@ -161,7 +160,7 @@ export default function CertificateTemplate() {
         <View style={styles.outerBorder}>
           <View style={styles.innerBorder}>
 
-            {/* Zero-network local QR code generator (PNG base64 Data URI) */}
+            {/* QR generated locally, no network */}
             {qrDataUrl && <Image style={styles.qrCode} src={qrDataUrl} />}
 
             <Text style={styles.certNumber}>Control No. {certId}</Text>

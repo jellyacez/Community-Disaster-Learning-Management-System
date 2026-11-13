@@ -62,7 +62,6 @@ export default function UserCertificates() {
 
   return (
     <div className="w-full space-y-6 animate-in fade-in duration-200">
-      {/* Page Header (Open layout matching 'Enrolled Modules') */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl sm:text-3xl font-black text-gray-900 dark:text-slate-100 tracking-tight">
@@ -88,7 +87,6 @@ export default function UserCertificates() {
         {" "}Current validity requires online verification.
         {snapshot.persisted === false && " Device storage unavailable: this list was not saved."}
       </p>}
-      {/* Dismissible Notice (Edge-to-edge with matching radius) */}
       {!infoDismissed && (
         <div className="flex items-center gap-3 bg-blue-50/80 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900/40 rounded-2xl px-5 py-3.5 shadow-2xs">
           <HugeiconsIcon icon={InformationCircleIcon} className="w-5 h-5 text-blue-600 dark:text-blue-400 shrink-0" />
@@ -106,7 +104,6 @@ export default function UserCertificates() {
         </div>
       )}
 
-      {/* 2-Column Full-Width Grid Matching Reference */}
       {isLoading ? (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 w-full">
           {[1, 2, 3, 4].map((i) => (

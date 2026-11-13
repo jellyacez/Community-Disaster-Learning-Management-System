@@ -1,4 +1,3 @@
-// --- START: UserSettings.jsx ---
 import { useOutletContext } from "react-router-dom";
 import useDocumentTitle from "../../../hooks/useDocumentTitle";
 import { useMfaEnabled } from "../../../hooks/useMfaEnabled";
@@ -29,7 +28,6 @@ export default function UserSettings() {
       </div>
 
       <div className="space-y-10">
-        {/* Group 1: Account Preferences */}
         <section>
           <h2 className="text-sm font-bold text-gray-900 dark:text-slate-200 uppercase tracking-wider mb-4 px-1">
             Account Preferences
@@ -40,7 +38,6 @@ export default function UserSettings() {
           </div>
         </section>
 
-        {/* Group 2: Security & Activity */}
         <section>
           <h2 className="text-sm font-bold text-gray-900 dark:text-slate-200 uppercase tracking-wider mb-4 px-1">
             Security & Activity
@@ -53,7 +50,6 @@ export default function UserSettings() {
           </div>
         </section>
 
-        {/* Group 3: Communications & Help */}
         <section>
           <h2 className="text-sm font-bold text-gray-900 dark:text-slate-200 uppercase tracking-wider mb-4 px-1">
             Communications & Help
@@ -64,7 +60,6 @@ export default function UserSettings() {
           </div>
         </section>
 
-        {/* Group 4: Danger Zone */}
         <section>
           <h2 className="text-sm font-bold text-red-600 uppercase tracking-wider mb-4 px-1">
             Danger Zone
@@ -77,4 +72,3 @@ export default function UserSettings() {
     </div>
   );
 }
-// --- END: UserSettings.jsx ---

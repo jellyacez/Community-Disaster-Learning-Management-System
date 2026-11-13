@@ -1,4 +1,3 @@
-// --- START: VerifyEmail.jsx ---
 import { useEffect, useState, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { authClient } from "../../lib/auth-client";
@@ -98,4 +97,3 @@ export default function VerifyEmail() {
     </div>
   );
 }
-// --- END: VerifyEmail.jsx ---

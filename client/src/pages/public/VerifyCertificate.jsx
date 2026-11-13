@@ -172,7 +172,6 @@ export default function VerifyCertificate() {
 
       return (
         <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden mt-8 animate-in fade-in duration-200">
-          {/* Status Header Banner */}
           <div className={`p-6 flex items-start gap-4 border-b ${statusColor}`}>
             {statusIcon}
             <div className="flex-1 min-w-0">
@@ -190,7 +189,7 @@ export default function VerifyCertificate() {
             </div>
           </div>
 
-          {/* Core Certificate Meta (Data Minimization: Strictly Non-Sensitive) */}
+          {/* non-sensitive fields only (data minimization) */}
           <div className="p-6 sm:p-8 space-y-6">
             <div className="grid gap-6 sm:grid-cols-2">
               <div>
@@ -242,7 +241,6 @@ export default function VerifyCertificate() {
               </div>
             </div>
 
-            {/* Issuing Authority Badge */}
             <div className="pt-6 border-t border-gray-100 flex items-center gap-3.5 bg-gray-50/80 -mx-6 -mb-6 sm:-mx-8 sm:-mb-8 p-5 sm:px-8">
               <div className="w-10 h-10 rounded-xl bg-red-100 border border-red-200 flex items-center justify-center shrink-0">
                 <HugeiconsIcon
@@ -271,7 +269,6 @@ export default function VerifyCertificate() {
   return (
     <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8 flex flex-col justify-between">
       <div className="max-w-2xl mx-auto w-full">
-        {/* Portal Header */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center gap-2 px-3 py-1 bg-red-50 border border-red-200 text-red-700 rounded-full text-xs font-bold mb-3">
             <HugeiconsIcon
@@ -289,7 +286,6 @@ export default function VerifyCertificate() {
           </p>
         </div>
 
-        {/* Verification Input Form */}
         <form
           onSubmit={handleVerify}
           className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100"
@@ -322,7 +318,6 @@ export default function VerifyCertificate() {
         {renderContent()}
       </div>
 
-      {/* R.A. 10173 Data Privacy Compliance Notice */}
       <footer className="mt-12 text-center text-xs text-gray-400 max-w-md mx-auto leading-relaxed border-t border-gray-200/60 pt-6">
         <p className="font-semibold text-gray-500 mb-1">
           Republic Act No. 10173 — Data Privacy Act of 2012

@@ -1,4 +1,3 @@
-// --- START: UserAnnouncements.jsx ---
 
 import AnnouncementCard from "../../../components/ui/announcements/AnnouncementCard";
 import useDocumentTitle from "../../../hooks/useDocumentTitle";
@@ -72,7 +71,6 @@ export default function UserAnnouncements() {
               ))}
             </div>
 
-            {/* Pagination Controls */}
             <PaginationControls
               currentPage={currentPage}
               totalPages={totalPages}

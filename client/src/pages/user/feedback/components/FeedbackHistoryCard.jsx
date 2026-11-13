@@ -25,7 +25,6 @@ export default function FeedbackHistoryCard({
 
   return (
     <div className={`rounded-2xl border ${isFailed ? "border-red-200 bg-red-50/30" : "border-gray-100 bg-gray-50/70"} overflow-hidden transition-all ${isExpanded ? "border-b-2 border-gray-200 pb-6 mb-6" : ""}`}>
-      {/* Summary row */}
       <div className="flex items-center justify-between">
         <button
           type="button"
@@ -65,7 +64,6 @@ export default function FeedbackHistoryCard({
           </div>
         </button>
 
-        {/* Quick action for offline items directly on the card */}
         {item.isOfflineItem && (
           <div className="pr-4 flex items-center gap-2">
             <button
@@ -86,10 +84,8 @@ export default function FeedbackHistoryCard({
         )}
       </div>
 
-      {/* Expanded thread */}
       {isExpanded && (
         <div className="border-t border-gray-100">
-          {/* Metadata header */}
           <div className="px-5 pt-3">
             <p className="text-xs text-gray-400">
               Submitted: {new Date(item.created_at || item.createdAt).toLocaleString()}
@@ -124,7 +120,6 @@ export default function FeedbackHistoryCard({
             <hr className="my-3 border-gray-100" />
           </div>
 
-          {/* Message Thread */}
           <div className="px-5 flex flex-col gap-1">
             {item.thread?.map((msg, idx) => {
               const isResident = msg.sender_type === "resident";
@@ -214,7 +209,7 @@ export default function FeedbackHistoryCard({
             })}
           </div>
 
-          {/* Reply Input (only for live server tickets) */}
+          {/* reply box: live, open tickets an admin has answered */}
           {!item.isOfflineItem && item.status !== "Closed" && item.thread?.some((m) => m.sender_type === "admin") && (
             <div className="px-5 mt-4 pt-4 border-t border-gray-100">
               <textarea

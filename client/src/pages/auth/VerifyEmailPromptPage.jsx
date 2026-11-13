@@ -1,4 +1,3 @@
-// --- START: VerifyEmailPromptPage.jsx ---
 import { Link, useLocation, Navigate } from "react-router-dom";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Mail01Icon, ArrowLeft01Icon } from "@hugeicons/core-free-icons";
@@ -49,4 +48,3 @@ export default function VerifyEmailPromptPage() {
     </div>
   );
 }
-// --- END: VerifyEmailPromptPage.jsx ---

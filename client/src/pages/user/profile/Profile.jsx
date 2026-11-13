@@ -1,4 +1,3 @@
-// --- START: UserProfile.jsx ---
 import { useMemo } from "react";
 import { useOutletContext } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -15,12 +14,10 @@ export default function UserProfile() {
 
   const { currentUser, userInitials } = useOutletContext();
 
-  // Fetch dashboardData (uses React Query cache to avoid redundant API calls)
   const { data: dashboardData } = useQuery({
     queryKey: ['userDashboard'],
     queryFn: async () => {
       const response = await apiClient.get('/user/dashboard');
-      // Return raw response.data to handle both old and new backend shapes gracefully
       return response.data;
     }
   });
@@ -42,7 +39,6 @@ export default function UserProfile() {
         : {};
   }, [dashboardData]);
 
-  // Derived state memoization to prevent expensive calculations on re-renders
   const { totalCompleted, totalHours, activeModules } = useMemo(() => {
     let completed = 0;
     let hours = 0;
@@ -94,7 +90,6 @@ export default function UserProfile() {
           <AccountDetails currentUser={enrichedUser} />
         </div>
 
-        {/* Gamification & Learning Metrics Section */}
         <div className="mt-8 space-y-6">
           <StatsOverview totalCompleted={totalCompleted} totalHours={totalHours} activeModules={activeModules} />
           <div className="grid gap-6 lg:grid-cols-2 items-stretch">
@@ -106,4 +101,3 @@ export default function UserProfile() {
     </div>
   );
 }
-// --- END: UserProfile.jsx ---

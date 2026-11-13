@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import apiClient from "../../../../lib/apiClient";
-import { enqueueSyncTask } from "../../../../lib/LocalSave/syncManager"; // For offline queueing with fallback
+import { enqueueSyncTask } from "../../../../lib/LocalSave/syncManager";
 
 export function useFeedbackSubmit(userId, setActiveTab, onDone) {
   const queryClient = useQueryClient();
@@ -24,7 +24,7 @@ export function useFeedbackSubmit(userId, setActiveTab, onDone) {
     mutationFn: async (payload) => {
       if (!userId) throw new Error("You must be logged in to send a message.");
 
-      // OFFLINE GUARD: Queue in localDb if disconnected
+      // offline: queue in localDb
       if (!navigator.onLine) {
         const res = await enqueueSyncTask("SUBMIT_FEEDBACK", { ...payload, user_id: userId });
         if (res?.status === 'failed') {
@@ -60,7 +60,6 @@ export function useFeedbackSubmit(userId, setActiveTab, onDone) {
         toast.success("Your message has been submitted.");
       }
       
-      // TanStack Query v5 object syntax
       queryClient.invalidateQueries({ queryKey: ["userFeedbacks", userId] });
       
       setFormData({

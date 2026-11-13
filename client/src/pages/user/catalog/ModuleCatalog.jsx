@@ -32,7 +32,7 @@ export default function UserModuleCatalog() {
   const itemsPerPage = 8;
 
   const [pendingEnrollModule, setPendingEnrollModule] = useState(null);
-  const [showRequestConfirmModal, setShowRequestConfirmModal] = useState(false); // Controls the confirmation modal
+  const [showRequestConfirmModal, setShowRequestConfirmModal] = useState(false);
   const [isEnrolling, setIsEnrolling] = useState(false);
   const [isRequestingCode, setIsRequestingCode] = useState(false);
   const [enrollError, setEnrollError] = useState("");
@@ -168,7 +168,6 @@ export default function UserModuleCatalog() {
     }
   };
 
-  // Called when user hits "Confirm" on the Send Request modal
   const handleConfirmRequestCode = async () => {
     if (!pendingEnrollModule || isRequestingCode) return;
 
@@ -179,7 +178,7 @@ export default function UserModuleCatalog() {
       if (res.data?.success || res.status === 200) {
         toast.success("Code request sent to admin successfully!");
         setShowRequestConfirmModal(false);
-        setPendingEnrollModule(null); // Close code input modal as well
+        setPendingEnrollModule(null);
       }
     } catch (err) {
       const data = err?.response?.data;
@@ -281,20 +280,18 @@ export default function UserModuleCatalog() {
         </div>
       )}
 
-      {/* Primary Enrollment / Code Entry Modal */}
       <EnrollCodeModal
         isOpen={Boolean(pendingEnrollModule)}
         moduleTitle={pendingEnrollModule ? decodeHtml(pendingEnrollModule.title) : ""}
         onClose={handleCloseEnrollModal}
         onSubmit={handleConfirmEnroll}
-        onRequestCode={() => setShowRequestConfirmModal(true)} // Opens confirmation sub-modal
+        onRequestCode={() => setShowRequestConfirmModal(true)}
         isLoading={isEnrolling}
         isRequesting={isRequestingCode}
         error={enrollError}
         onInputChange={() => enrollError && setEnrollError("")}
       />
 
-      {/* Secondary Confirmation Modal for Requesting Code */}
       {showRequestConfirmModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm animate-in fade-in duration-150">
           <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl text-center">

@@ -1,4 +1,3 @@
-// --- START: ForgotPasswordPage.jsx ---
 import { useState } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
@@ -140,4 +139,3 @@ export default function ForgotPasswordPage() {
     </AuthLayout>
   );
 }
-// --- END: ForgotPasswordPage.jsx ---

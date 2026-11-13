@@ -33,7 +33,7 @@ export default function PrivacyPolicyPage() {
         </div>
         
         <div className="w-full flex flex-col items-center bg-white">
-          {/* Iframe to load the massive Termly HTML securely without breaking React */}
+          {/* Termly's HTML is huge and breaks React when inlined, so it loads in an iframe */}
           <iframe 
             src="/termly-privacy.html" 
             title="Termly Privacy Policy"
@@ -44,14 +44,13 @@ export default function PrivacyPolicyPage() {
               try {
                 const iframe = e.target;
                 const height = iframe.contentWindow.document.documentElement.scrollHeight;
-                iframe.style.height = height + 50 + 'px'; // Add a little padding at the bottom
+                iframe.style.height = height + 50 + 'px';
               } catch (err) {
                 console.error("Iframe resize error:", err);
               }
             }}
           />
           
-          {/* Bottom Navigation for Long Documents */}
           <div className="w-full flex justify-between items-center px-8 py-6 bg-gray-50 border-t border-gray-100 rounded-b-2xl">
             <button 
               onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
@@ -67,7 +66,6 @@ export default function PrivacyPolicyPage() {
           </div>
         </div>
       </div>
-      {/* Floating Back to Top Button */}
       {showScrollTop && (
         <button
           onClick={scrollToTop}

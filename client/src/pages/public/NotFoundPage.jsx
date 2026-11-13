@@ -1,4 +1,3 @@
-// --- START: NotFoundPage.jsx ---
 import { Link } from "react-router-dom";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { DiscoverCircleIcon, Home09Icon } from "@hugeicons/core-free-icons";
@@ -44,4 +43,3 @@ export default function NotFoundPage() {
     </div>
   );
 }
-// --- END: NotFoundPage.jsx ---

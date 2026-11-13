@@ -1,4 +1,3 @@
-// --- START: AdminMfaSetupPage.jsx ---
 import { Navigate, useNavigate } from "react-router-dom";
 import useDocumentTitle from "../../hooks/useDocumentTitle";
 import { useMfaEnabled } from "../../hooks/useMfaEnabled";
@@ -52,7 +51,6 @@ export default function AdminMfaSetupPage() {
       </div>
       
       <div>
-        {/* Component contains the actual QR generation and verification logic */}
         <TwoFactorSettings />
       </div>
 
@@ -70,4 +68,3 @@ export default function AdminMfaSetupPage() {
     </AuthLayout>
   );
 }
-// --- END: AdminMfaSetupPage.jsx ---

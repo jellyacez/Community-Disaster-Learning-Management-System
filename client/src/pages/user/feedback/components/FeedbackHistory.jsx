@@ -57,7 +57,6 @@ export default function FeedbackHistory({ userId, activeTab, setActiveTab }) {
         </div>
       </div>
 
-      {/* Search */}
       <div className="relative mb-4">
         <HugeiconsIcon icon={Search01Icon} className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
         <input
@@ -69,7 +68,6 @@ export default function FeedbackHistory({ userId, activeTab, setActiveTab }) {
         />
       </div>
 
-      {/* Result count */}
       {!isLoading && filteredSubmissions.length > 0 && (
         <p className="text-xs text-gray-400 font-semibold mb-3">
           Showing {filteredSubmissions.length === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1}–{Math.min(currentPage * PAGE_SIZE, filteredSubmissions.length)} of {filteredSubmissions.length} message{filteredSubmissions.length !== 1 ? "s" : ""}
@@ -129,7 +127,6 @@ export default function FeedbackHistory({ userId, activeTab, setActiveTab }) {
         </div>
       )}
 
-      {/* Pagination */}
       {!isLoading && totalPages > 1 && (
         <div className="flex items-center justify-between mt-5 pt-4 border-t border-gray-100">
           <button

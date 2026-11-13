@@ -46,11 +46,7 @@ function writeLocalCache(key, value) {
   }
 }
 
-/**
- * Helper: Separates Urgent and Standard announcements,
- * assigns independent sequential numbers (1, 2, 3...) per group,
- * and positions all Urgent announcements in the front slots.
- */
+/** Urgent posts first; urgent and standard are numbered separately (1, 2, 3...). */
 function organizeAnnouncements(rawList = []) {
   const urgentList = [];
   const standardList = [];
@@ -100,7 +96,6 @@ export default function UserDashboard() {
   // Read the clock once per mount for the 48-hour "new" badge
   const [now] = useState(() => Date.now());
 
-  // Infinite Carousel State
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(true);
   const [isPaused, setIsPaused] = useState(false);
@@ -180,7 +175,6 @@ export default function UserDashboard() {
       !effectiveUser.barangay,
   );
 
-  // Sanitize and filter out null, undefined, or empty announcements
   const resolvedAnnouncements = useMemo(() => {
     const rawList =
       Array.isArray(announcementsData) && announcementsData.length > 0
@@ -195,7 +189,6 @@ export default function UserDashboard() {
     });
   }, [announcementsData, rawData.announcements]);
 
-  // Organize into Urgent-first array with independent sequencing
   const sortedAnnouncements = useMemo(() => {
     return organizeAnnouncements(resolvedAnnouncements);
   }, [resolvedAnnouncements]);
@@ -223,27 +216,25 @@ export default function UserDashboard() {
   );
   const topActiveModule = activeModules[0];
 
-  // Clone first item to the end for seamless loop
+  // clone the first item to the end so the loop wraps without a jump
   const carouselItems = useMemo(() => {
     if (sortedAnnouncements.length <= 1) return sortedAnnouncements;
     return [...sortedAnnouncements, sortedAnnouncements[0]];
   }, [sortedAnnouncements]);
 
-  // Advance forward (right-to-left)
   const handleNextSlide = useCallback(() => {
     if (sortedAnnouncements.length <= 1) return;
     setIsTransitioning(true);
     setCurrentSlide((prev) => prev + 1);
   }, [sortedAnnouncements.length]);
 
-  // Advance backward (left-to-right)
   const handlePrevSlide = useCallback(() => {
     if (sortedAnnouncements.length <= 1) return;
     setIsTransitioning(true);
     setCurrentSlide((prev) => (prev === 0 ? sortedAnnouncements.length - 1 : prev - 1));
   }, [sortedAnnouncements.length]);
 
-  // Reset silently from clone to index 0 after transition ends
+  // after the transition, snap from the clone back to index 0 without animating
   const handleTransitionEnd = () => {
     if (currentSlide >= sortedAnnouncements.length) {
       setIsTransitioning(false);
@@ -251,7 +242,6 @@ export default function UserDashboard() {
     }
   };
 
-  // Auto-play interval: Advances every 5 seconds
   useEffect(() => {
     if (sortedAnnouncements.length <= 1 || isPaused) return;
 
@@ -325,9 +315,6 @@ export default function UserDashboard() {
       />
 
       <div className="space-y-6 sm:space-y-8">
-      {/* =========================================================================
-                HERO PORTION: Announcements on Top, Welcome Remarks on Bottom
-                ========================================================================= */}
             <div
               className="relative overflow-hidden rounded-2xl sm:rounded-3xl bg-white dark:bg-slate-900 border border-neutral-200 dark:border-white/[0.06] shadow-sm dark:shadow-none p-[clamp(1rem,2vw+0.5rem,2rem)] space-y-[clamp(1rem,1.5vw,1.5rem)]"
               onMouseEnter={() => setIsPaused(true)}
@@ -337,7 +324,6 @@ export default function UserDashboard() {
                 <div className="h-28 sm:h-32 animate-pulse bg-neutral-100 dark:bg-slate-800 rounded-2xl" />
               ) : sortedAnnouncements.length > 0 ? (
                 <div className="w-full overflow-hidden">
-                  {/* Carousel Track Viewport */}
                   <div className="relative w-full overflow-hidden min-h-[110px] sm:min-h-[120px]">
                     <div
                       onTransitionEnd={handleTransitionEnd}
@@ -369,7 +355,6 @@ export default function UserDashboard() {
                             }`}
                           >
                             <div className="flex flex-col justify-center space-y-2 text-left w-full">
-                              {/* Top Advisory Pill Header */}
                               <div className="flex items-center gap-2 flex-wrap">
                                 {isUrgent ? (
                                   <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 dark:bg-amber-500/10 px-2.5 sm:px-3.5 py-1 text-[11px] sm:text-xs font-bold tracking-wide text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-500/30 shrink-0">
@@ -408,12 +393,10 @@ export default function UserDashboard() {
                                 )}
                               </div>
 
-                              {/* Title */}
                               <h2 className="text-[clamp(1.125rem,1.2vw+0.9rem,1.875rem)] font-extrabold tracking-tight text-neutral-900 dark:text-white truncate group-hover:text-red-600 dark:group-hover:text-red-400 transition-colors w-full leading-snug">
                                 {itemTitle}
                               </h2>
 
-                              {/* Content */}
                               {itemContent ? (
                                 <p className="text-xs sm:text-sm text-neutral-500 dark:text-neutral-400 line-clamp-2 max-w-4xl leading-relaxed break-words">
                                   {itemContent}
@@ -426,7 +409,6 @@ export default function UserDashboard() {
                     </div>
                   </div>
 
-                  {/* Slider Controls */}
                   <div className="relative flex flex-wrap sm:flex-nowrap items-center justify-between pt-3 gap-2.5">
                     <div className="flex items-center gap-1.5 shrink-0">
                       <button
@@ -481,7 +463,6 @@ export default function UserDashboard() {
                 </div>
               ) : null}
 
-              {/* BOTTOM SECTION: Welcome Remarks & Action Button */}
               <div className="pt-[clamp(1rem,1.5vw,1.25rem)] border-t border-neutral-100 dark:border-white/[0.06] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div className="space-y-1.5 text-left">
                   <div className="flex items-center">
@@ -505,10 +486,8 @@ export default function UserDashboard() {
               </div>
             </div>
 
-        {/* Dashboard Stats */}
         <DashboardStats displayData={displayData} loading={loading} navigate={navigate} />
 
-        {/* Lower Main Content Section */}
         <section className="grid gap-6 lg:grid-cols-3 items-start">
           <div className="lg:col-span-2 min-w-0">
             <DashboardEnrolledList
@@ -519,7 +498,6 @@ export default function UserDashboard() {
             />
           </div>
 
-          {/* Lower Right Column: Emergency Contacts & Support */}
           <div className="space-y-6 lg:sticky lg:top-24 self-start min-w-0">
             <DashboardEmergencyContacts />
 

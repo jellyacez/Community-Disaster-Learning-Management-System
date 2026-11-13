@@ -94,13 +94,10 @@ export default function ModuleDetailsPage() {
   const [isRequestingCode, setIsRequestingCode] = useState(false);
   const [showDownloadModal, setShowDownloadModal] = useState(false);
 
-  // Hook manages IndexedDB persistence and status checking
   const { isDownloaded, isDownloading, downloadModule, removeDownload } = useOfflineDownload(id);
 
-  // Read session with offline fallback
   const { data: session } = useOfflineSession();
 
-  // Read impersonated target if active
   const impersonatedTarget = useMemo(() => {
     try {
       const stored =
@@ -376,7 +373,6 @@ export default function ModuleDetailsPage() {
                     <span>{isCompleted ? "Review Module Content" : "Launch Learning Viewer"}</span>
                   </button>
 
-                  {/* Manual Offline Download Toggle */}
                   {!isDownloaded ? (
                     <button
                       type="button"
@@ -521,18 +517,13 @@ export default function ModuleDetailsPage() {
         </div>
       </div>
 
-      {/* =========================================================================
-          MODALS SECTION (Admin Preview, Enrollment, and Offline Save)
-          ========================================================================= */}
 
-      {/* 1. Admin Preview Modal */}
       <PublishedModulePreviewModal
         isOpen={isPreviewOpen}
         onClose={() => setIsPreviewOpen(false)}
         moduleId={module.mod_id || module.id}
       />
 
-      {/* 2. Enrollment Code Modal */}
       <EnrollCodeModal
         isOpen={showEnrollModal}
         moduleTitle={decodeHtml(module?.modname)}
@@ -549,7 +540,6 @@ export default function ModuleDetailsPage() {
         onInputChange={() => enrollError && setEnrollError("")}
       />
 
-      {/* 3. Offline Save Confirmation Modal */}
       <ConfirmationModal
         isOpen={showDownloadModal}
         onClose={() => !isDownloading && setShowDownloadModal(false)}
