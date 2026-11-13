@@ -51,7 +51,7 @@ export function useModuleSubmit({
     );
 
     try {
-      // 1. PRE-UPLOAD ALL MEDIA FIRST (Bounded concurrency pool, max 3 in-flight)
+      // upload all media first, at most 3 at a time
       const CONCURRENCY_LIMIT = 3;
       const abortController = new AbortController();
       const uploadTasks = stagedFlows
@@ -126,7 +126,7 @@ export function useModuleSubmit({
 
       toast.loading("Synchronizing module data to database...", { id: loadingToastId });
 
-      // 2. CREATE NESTED PAYLOAD (INCLUDING LEVEL MOTIVATOR COVER PHOTOS)
+      // build the nested payload, level cover photos included
       const levelsPayload = stagedLevels.map((lvl) => {
         const levelFlows = uploadedFlows.filter((f) => f.levelOrder === lvl.levelOrder);
 
@@ -196,7 +196,6 @@ export function useModuleSubmit({
           levelDescription: lvl.levelDescription,
           passing_threshold: Number(lvl.passing_threshold) || 80,
           is_locked_by_default: lvl.is_locked_by_default ?? true,
-          // Attaches the motivator cover photo so PostgreSQL stores it
           cover_image: lvl.cover_image || lvl.coverImage || null,
           coverImage: lvl.cover_image || lvl.coverImage || null,
           steps: stepsPayload,
@@ -230,8 +229,7 @@ export function useModuleSubmit({
         });
       }
 
-      // 3. CACHE INVALIDATION
-      // Invalidate the learner-side viewer query cache so newly saved images appear immediately
+      // invalidate the learner viewer cache so newly saved images show up immediately
       if (submittedId) {
         queryClient.invalidateQueries({ queryKey: ["moduleViewer", String(submittedId)] });
         queryClient.invalidateQueries({ queryKey: ["moduleViewer", Number(submittedId)] });
@@ -241,7 +239,6 @@ export function useModuleSubmit({
       queryClient.invalidateQueries({ queryKey: ["adminModules"] });
       queryClient.invalidateQueries({ queryKey: ["userDashboard"] });
 
-      // 4. RESET STATE
       setEditingModuleId(null);
       setModuleForm({
         title: "",

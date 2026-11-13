@@ -68,20 +68,19 @@ export function useModuleViewer(moduleId) {
       window.removeEventListener(RECERT_RETAKES_UPDATED, handleRetakesUpdated);
   }, [moduleId]);
 
-  // 1. Fetch module data (With Offline IndexedDB Fallback)
+  // module data, falling back to IndexedDB offline
   const { data, isLoading, error } = useQuery({
     queryKey: ["moduleViewer", moduleId, userId],
-    networkMode: "offlineFirst", // Allow running while offline
+    networkMode: "offlineFirst",
     queryFn: async () => {
       try {
         const response = await apiClient.get(`/modules/${moduleId}/viewer`);
         const payload = response.data.data;
 
-        // Cache the structure for offline use in the background
         if (payload?.module && payload?.levels) {
           cacheModuleStructureOffline(payload.module, payload.levels);
 
-          // Also save an offline localStorage copy for quick UI hydration
+          // plus a localStorage copy for fast UI hydration
           localStorage.setItem(
             `lms_offline_module_${userId}_${moduleId}`,
             JSON.stringify(payload),
@@ -215,7 +214,6 @@ export function useModuleViewer(moduleId) {
     [allSteps, activeStepId],
   );
 
-  // Preload assessments lazily
   const isAssessmentStepType = (type) => {
     return [
       "quiz",
@@ -229,7 +227,7 @@ export function useModuleViewer(moduleId) {
   const assessmentQueries = useQueries({
     queries: allSteps.map((step) => ({
       queryKey: ["stepAssessment", step.id, userId],
-      networkMode: "offlineFirst", // Allow running while offline
+      networkMode: "offlineFirst",
       queryFn: async () => {
         try {
           const res = await apiClient.get(
@@ -248,7 +246,6 @@ export function useModuleViewer(moduleId) {
             })),
           }));
 
-          // Cache the assessment questions for offline use
           localStorage.setItem(
             `lms_offline_assessment_${userId}_${step.id}`,
             JSON.stringify(questions),
@@ -288,7 +285,6 @@ export function useModuleViewer(moduleId) {
     };
   };
 
-  // 2. Step completion mutation
   const completeStepMutation = useMutation({
     networkMode: "always",
     mutationFn: async ({ stepId, answers, attemptId }) => {
@@ -413,14 +409,12 @@ export function useModuleViewer(moduleId) {
         return base;
       };
 
-      // 1. OFFLINE HANDLING
       if (!navigator.onLine) {
         return saveOffline(
           "You are offline. Progress saved locally and will sync when reconnected.",
         );
       }
 
-      // 2. ONLINE HANDLING
       try {
         const response = await apiClient.post(endpoint, { answers });
         return response.data;
@@ -458,7 +452,7 @@ export function useModuleViewer(moduleId) {
           return;
         }
 
-        // If the server has flagged this step as needing a recertification retake, remove it from the pending list
+        // completed now, so drop it from the pending retakes
         if (retakeStepIds.includes(stepId)) {
           setPendingRetakes(
             moduleId,
@@ -466,8 +460,7 @@ export function useModuleViewer(moduleId) {
           );
         }
 
-        // Update the cached module viewer data to reflect the newly completed step,
-        // but only if it wasn't already marked as completed
+        // mark the step completed in the cached viewer data, once
         queryClient.setQueryData(["moduleViewer", moduleId, userId], (old) =>
           old && !(old.completedStepIds || []).includes(stepId)
             ? {

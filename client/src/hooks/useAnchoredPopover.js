@@ -41,7 +41,6 @@ export function useAnchoredPopover(isOpen, setIsOpen, align = "right") {
     };
   }, [isOpen, setIsOpen, align]);
 
-  // Only listen for outside clicks while open
   useEffect(() => {
     if (!isOpen) return;
     const handleClickOutside = (event) => {

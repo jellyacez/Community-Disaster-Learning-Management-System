@@ -65,7 +65,6 @@ export function useModuleBuilder() {
         image_url: data.image_url || ""
       });
 
-      // Hydrate Levels (NOW INCLUDES COVER_IMAGE)
       const levels = (data.levels || []).map((lvl) => ({
         levelId: lvl.levelId || lvl.level_id,
         levelOrder: lvl.levelOrder ?? lvl.level_order,
@@ -73,7 +72,7 @@ export function useModuleBuilder() {
         levelDescription: lvl.levelDescription || lvl.level_description || "",
         passing_threshold: lvl.passing_threshold || 80,
         is_locked_by_default: lvl.is_locked_by_default ?? true,
-        // Hydrate both keys so builder components and submit hooks receive the image
+        // set both keys: builder components and submit hooks read different ones
         cover_image: lvl.cover_image || lvl.coverImage || null,
         coverImage: lvl.cover_image || lvl.coverImage || null
       }));
@@ -85,7 +84,6 @@ export function useModuleBuilder() {
       );
       setActiveLevelOrder(1);
 
-      // Hydrate Flows / Steps
       const flows = [];
       (data.levels || []).forEach((lvl) => {
         const currentOrder = lvl.levelOrder ?? lvl.level_order;

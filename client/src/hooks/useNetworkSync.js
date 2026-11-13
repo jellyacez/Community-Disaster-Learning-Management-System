@@ -9,7 +9,6 @@ export default function useNetworkSync() {
   const queryClient = useQueryClient();
   const userId = session?.user?.id;
 
-  // Mount-time sync
   useEffect(() => {
     if (!isPending && userId && !hasInitialSyncedRef.current) {
       hasInitialSyncedRef.current = true;
@@ -17,7 +16,6 @@ export default function useNetworkSync() {
     }
   }, [userId, isPending]);
 
-  // Event listeners
   useEffect(() => {
     const handleOnline = () => {
       if (userId) processOfflineQueue(userId);

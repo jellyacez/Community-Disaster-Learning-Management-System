@@ -37,8 +37,7 @@ export function ThemeProvider({ children }) {
   const { data: session, isOffline } = useOfflineSession();
   const userId = session?.user?.id;
 
-  // Dark mode is restricted exclusively to authenticated user/admin portals.
-  // Public facing pages (e.g. landing page, sign in, register, privacy policy) must never be affected.
+  // Dark mode only applies inside the signed-in portals; public pages (landing, sign-in, register, privacy policy) stay light.
   const isPortalRoute =
     location.pathname.startsWith("/user") ||
     location.pathname.startsWith("/admin");
@@ -60,7 +59,6 @@ export function ThemeProvider({ children }) {
   const [systemTheme, setSystemTheme] = useState(getSystemTheme);
   const hydratedForUserRef = useRef(null);
 
-  // Fetch persisted settings from the database when inside an authenticated portal
   const { data: userSettings } = useQuery({
     queryKey: ["userSettings"],
     queryFn: async () => {
@@ -71,7 +69,6 @@ export function ThemeProvider({ children }) {
     staleTime: 1000 * 60 * 5,
   });
 
-  // Hydrate theme preference from DB whenever user logs in or portal mounts
   useEffect(() => {
     if (!isOffline && isAuthenticatedPortal && userId && userSettings?.theme) {
       const dbTheme = userSettings.theme;
@@ -85,7 +82,6 @@ export function ThemeProvider({ children }) {
     }
   }, [isOffline, isAuthenticatedPortal, userId, userSettings?.theme]);
 
-  // Listen to OS theme changes
   useEffect(() => {
     if (typeof window === "undefined" || !window.matchMedia) return;
 
@@ -98,8 +94,7 @@ export function ThemeProvider({ children }) {
     return () => mediaQuery.removeEventListener("change", handleChange);
   }, []);
 
-  // Dark mode only takes effect when inside an authenticated portal route WITH an active session.
-  // Public-facing routes (landing, sign-in, register, privacy policy) are strictly locked to light mode.
+  // needs both a portal route and a session; public routes stay light
   const effectiveTheme =
     isAuthenticatedPortal &&
     (themeMode === "system" ? systemTheme : themeMode) === "dark"
@@ -117,7 +112,7 @@ export function ThemeProvider({ children }) {
     async (mode) => {
       if (!userId) return;
       try {
-        // Optimistically update React Query cache so settings are unified
+        // keep the userSettings cache in step with the change
         queryClient.setQueryData(["userSettings"], (prev) => ({
           ...(prev || {}),
           theme: mode,

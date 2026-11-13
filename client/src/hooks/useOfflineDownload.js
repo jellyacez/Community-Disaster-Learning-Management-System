@@ -9,7 +9,7 @@ export function useOfflineDownload(moduleId) {
   const { data: session } = useOfflineSession();
   const userId = session?.user?.id;
   const [isDownloaded, setIsDownloaded] = useState(() => {
-    // Check localStorage immediately on initial render (fixes cold-boot flash)
+    // read localStorage on first render to avoid a cold-boot flash
     try {
       return Boolean(localStorage.getItem(`lms_offline_complete_${userId}_${moduleId}`));
     } catch {
@@ -53,7 +53,6 @@ export function useOfflineDownload(moduleId) {
         throw new Error("Invalid module data received.");
       }
 
-      // Cache all step assessments locally
       for (const level of (payload.levels || [])) {
         for (const step of (level.steps || [])) {
           if (!step.is_final_assessment && ["quiz", "situational", "priority_action", "hazard_identification", "action_sequence"].includes(step.type)) {
@@ -70,7 +69,6 @@ export function useOfflineDownload(moduleId) {
       // Download full media before declaring this module available offline.
       for (const url of mediaUrls(payload)) await saveMedia(url, userId);
 
-      // Save structure to Dexie
       await localDb.transaction("rw", localDb.module_data, localDb.levels, localDb.module_steps, async () => {
         await localDb.module_data.put({
           mod_id: payload.module.id,
@@ -98,7 +96,6 @@ export function useOfflineDownload(moduleId) {
         }
       });
 
-      // Save fast JSON payload to localStorage
       localStorage.setItem(`lms_offline_module_${userId}_${moduleId}`, JSON.stringify(payload));
 
       localStorage.setItem(`lms_offline_complete_${userId}_${moduleId}`, "true");

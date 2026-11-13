@@ -35,7 +35,6 @@ export function useModuleEnrollment({
           `Enrollment Success! You are now enrolled in ${moduleTitle}.`,
         );
 
-        // Invalidate relevant queries to refresh data
         queryClient.invalidateQueries({ queryKey: ["userDashboard"] });
         queryClient.invalidateQueries({ queryKey: ["moduleCatalog"] });
         queryClient.invalidateQueries({ queryKey: ["enrolledModules"] });

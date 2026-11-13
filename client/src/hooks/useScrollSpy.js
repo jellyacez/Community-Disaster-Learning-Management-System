@@ -22,12 +22,12 @@ export function useScrollSpy(sectionIds, triggerOffset = 250) {
       setActiveId((prev) => (prev !== newActiveId ? newActiveId : prev));
     };
 
-    // Use capture: true to catch scroll events from ANY scrollable container
+    // capture, so scrolls inside any scrollable container count
     window.addEventListener("scroll", handleScroll, { capture: true, passive: true });
-    handleScroll(); // Initial check
+    handleScroll();
 
     return () => window.removeEventListener("scroll", handleScroll, { capture: true });
-  }, [sectionIds, triggerOffset]); // Added dependencies for safety
+  }, [sectionIds, triggerOffset]);
 
   return activeId;
 }

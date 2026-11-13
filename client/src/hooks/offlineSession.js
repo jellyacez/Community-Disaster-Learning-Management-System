@@ -12,7 +12,6 @@ function readCachedSession() {
     if (!saved) return null;
     const parsed = JSON.parse(saved);
 
-    // Remove if expired
     if (parsed?.session?.expiresAt && new Date(parsed.session.expiresAt) < new Date()) {
       localStorage.removeItem(SESSION_STORAGE_KEY);
       return null;
@@ -30,7 +29,6 @@ export function useOfflineSession() {
     typeof navigator !== 'undefined' ? !navigator.onLine : false
   );
 
-  // Helper to manually update or clear both localStorage and React state
   const updateCachedSession = useCallback((newSession) => {
     try {
       if (newSession?.user) {
@@ -48,7 +46,7 @@ export function useOfflineSession() {
       }
       window.dispatchEvent(new StorageEvent("storage", { key: SESSION_STORAGE_KEY }));
     } catch {
-      // Ignore storage quota or private browsing errors
+      // storage quota or private browsing
     }
   }, []);
 
@@ -73,7 +71,6 @@ export function useOfflineSession() {
     };
   }, []);
 
-  // Sync live session from Better Auth into local storage
   useEffect(() => {
     if (liveSession?.user) {
       // Syncs an external store (localStorage); updateCachedSession is a no-op when nothing changed
