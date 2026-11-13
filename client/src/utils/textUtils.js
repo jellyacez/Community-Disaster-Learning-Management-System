@@ -1,18 +1,8 @@
-/**
- * Decodes HTML entities (e.g., &amp;, &lt;, &gt;, &quot;, &#39;, &apos;)
- * into clean plain text for UI rendering.
- *
- * Prevents raw HTML entity display across module titles, level titles,
- * step titles, questions, choices, and metadata.
- *
- * @param {string} str - Raw string possibly containing HTML entities
- * @returns {string} - Decoded plain-text string
- */
+/** Decodes HTML entities (&amp;, &lt;, &#39;, ...) so titles, questions and choices render as plain text. */
 export function decodeHtml(str) {
   if (!str || typeof str !== "string") return str || "";
   if (!str.includes("&")) return str;
 
-  // Browser standard entity decoding using DOMParser
   if (typeof window !== "undefined" && typeof DOMParser !== "undefined") {
     try {
       const doc = new DOMParser().parseFromString(str, "text/html");
@@ -23,7 +13,7 @@ export function decodeHtml(str) {
       }
       return decoded;
     } catch {
-      // Fall through to regex fallback if DOMParser fails
+      // fall through to the regex fallback
     }
   }
 

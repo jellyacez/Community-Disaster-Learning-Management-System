@@ -1,4 +1,4 @@
-// Keep this policy in sync with client/src/utils/personName.js.
+// Keep this policy in sync with server/utils/personName.js.
 const NAME_FIELDS = ["first_name", "middle_name", "last_name"];
 const LABELS = {
   first_name: "First name",

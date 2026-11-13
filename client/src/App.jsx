@@ -222,7 +222,6 @@ export default function App() {
         }
       >
         <Routes>
-          {/* PUBLIC ROUTES */}
           <Route path="/" element={<LandingPage />} />
           <Route path="/verify" element={<VerifyCertificate />} />
           <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
