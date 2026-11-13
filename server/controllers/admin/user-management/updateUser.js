@@ -65,8 +65,10 @@ exports.updateUser = async (req, res) => {
       assertActorOutranksTarget(adminContext.role, targetUser.role);
     }
 
-    let updateQuery = 'UPDATE "user" SET name = $1, email = $2, archived = $3 WHERE id = $4';
-    let updateValues = [name, email, archived, id];
+    // Leave archived unchanged when the request doesn't send it (the edit form sends only name/email)
+    const archivedValue = archived === undefined ? null : archived === true || archived === "true";
+    let updateQuery = 'UPDATE "user" SET name = $1, email = $2, archived = COALESCE($3::boolean, archived) WHERE id = $4';
+    let updateValues = [name, email, archivedValue, id];
 
     if (adminContext.role === 'barangay_admin') {
       updateQuery += ' AND barangay_id = $5';

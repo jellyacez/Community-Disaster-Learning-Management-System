@@ -46,6 +46,11 @@ exports.replyToFeedback = async (req, res) => {
       return res.status(400).json({ success: false, error: "Reply text and status are required." });
     }
 
+    // An admin reply hands the ticket back to the resident; it can't put it back in the Pending queue
+    if (!["Replied", "Closed"].includes(status)) {
+      return res.status(400).json({ success: false, error: "Status must be 'Replied' or 'Closed'." });
+    }
+
     const adminContext = {
       id: adminId,
       role: adminRole,
