@@ -2,10 +2,7 @@ const pool = require("../../config/db");
 const logger = require("../../utils/logger");
 
 class ActivityLogService {
-  /**
-   * System Admin Activity Logs
-   * Filters OUT super_admin logs completely so lower-tier admins cannot see Super Admin events.
-   */
+  /** Leaves out super_admin events so lower-tier admins never see them. */
   async getActivityLog(queryParams) {
     const page = parseInt(queryParams.page, 10) || 1;
     const limit = Math.min(parseInt(queryParams.limit, 10) || 20, 100);
@@ -146,10 +143,7 @@ class ActivityLogService {
     return csvContent;
   }
 
-  /**
-   * MDRRMO Activity Logs
-   * Filters OUT both system_admin AND super_admin
-   */
+  /** Leaves out system_admin and super_admin events. */
   async getMdrrmoActivityLog(queryParams) {
     const page = parseInt(queryParams.page, 10) || 1;
     const limit = Math.min(parseInt(queryParams.limit, 10) || 20, 100);
@@ -276,10 +270,7 @@ class ActivityLogService {
     return csvContent;
   }
 
-  /**
-   * Super Admin Governance Logs
-   * Unrestricted platform-wide audit trail with support for searching and role filtering.
-   */
+  /** Unfiltered audit trail across every role, with search and role filters. */
   async getSuperAdminActivityLog(queryParams) {
     const page = parseInt(queryParams.page, 10) || 1;
     const limit = Math.min(parseInt(queryParams.limit, 10) || 20, 100);

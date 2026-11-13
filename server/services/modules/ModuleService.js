@@ -15,9 +15,6 @@ const MODULE_SORTS = {
 };
 
 class ModuleService {
-  /**
-   * Evaluates progression locking logic for a set of modules against a user's completion records.
-   */
   computeProgressionStatus(allPublishedModules, userCompletions) {
     const completedModIds = new Set(
       userCompletions
@@ -25,7 +22,6 @@ class ModuleService {
         .map(c => c.mod_id)
     );
 
-    // 1. Identify all published Fundamentals
     const fundamentalModules = allPublishedModules.filter(
       m => (m.category || m.modcat || '').trim().toLowerCase() === 'fundamentals'
     );
@@ -33,7 +29,6 @@ class ModuleService {
       completedModIds.has(m.id || m.mod_id)
     );
 
-    // 2. Map lock conditions per module
     return allPublishedModules.map(mod => {
       const modId = mod.id || mod.mod_id;
       const category = (mod.category || mod.modcat || '').trim();
@@ -883,10 +878,8 @@ class ModuleService {
     }
   }
 
-  // --- Enrollment Code Request Workflow Methods (using module_activity) ---
 
  async requestModuleCode(userId, moduleId) {
-  // Enforce eligibility before creating a request.
   const eligible = await this.checkPrerequisitesMet(userId, moduleId);
 
   if (!eligible) {

@@ -17,7 +17,6 @@ class SSEService {
     });
   }
 
-  // Broadcast to all connected clients
   broadcast(event, data) {
     const payload = `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
     for (const [, client] of this.clients) {
@@ -25,7 +24,6 @@ class SSEService {
     }
   }
 
-  // Broadcast only to users with a specific role
   broadcastToRole(role, event, data) {
     const payload = `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
     for (const [, client] of this.clients) {
@@ -35,7 +33,6 @@ class SSEService {
     }
   }
 
-  // Broadcast only to users of a specific barangay
   broadcastToBarangay(barangayId, event, data) {
     const payload = `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
     for (const [, client] of this.clients) {

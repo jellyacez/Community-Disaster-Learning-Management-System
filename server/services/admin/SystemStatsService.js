@@ -5,12 +5,10 @@ const fs = require("fs");
 class SystemStatsService {
   async getSystemStats() {
     const [brgyStats, certStats, userStats, logStats, alertStats] = await Promise.all([
-      // 0. Barangays
       pool.query(`
         SELECT COUNT(*) AS total_barangays FROM public.barangays
       `).catch(() => ({ rows: [{ total_barangays: 0 }] })),
 
-      // 1. Certificates
       pool.query(`
         SELECT COUNT(*) AS total_certificates
         FROM public.certificates
@@ -19,7 +17,6 @@ class SystemStatsService {
         pool.query(`SELECT COUNT(*) AS total_certificates FROM public.certificates`)
       ).catch(() => ({ rows: [{ total_certificates: 0 }] })),
 
-      // 2. Users
       pool.query(`
         SELECT
           COUNT(*) AS total_users,
@@ -34,12 +31,10 @@ class SystemStatsService {
         FROM public."user"
       `),
 
-      // 3. Activity Logs
       pool.query(`
         SELECT COUNT(*) AS total_log_entries FROM public.activity_log
       `),
 
-      // 4. Alerts
       pool.query(`
         SELECT COUNT(*) AS active_alerts
         FROM public.announcements

@@ -4,12 +4,10 @@ const { getAccountNoticeEmail } = require("../utils/emailTemplates");
 const { getOrgSettings } = require("../utils/settings");
 
 /**
- * Emails a user about a change to their account. Never throws: a mail failure
- * must not fail the admin action that triggered it (mailer.js raises SMTP_DOWN).
- *
- * @param {string|{name, email}} userOrId - user id, or { name, email } when the row is already gone (deletion)
+ * Emails a user about an account change. Never throws: a mail failure must not fail the
+ * admin action that triggered it (mailer.js raises SMTP_DOWN).
+ * @param {string|{name, email}} userOrId - user id, or { name, email } once the row is gone (deletion)
  * @param {string} kind - a key of NOTICES in templates/accountNotices.js
- * @param {object} [details]
  */
 const sendAccountNotice = async (userOrId, kind, details = {}) => {
   try {

@@ -61,7 +61,7 @@ class UserService {
     const isActorSuperAdmin = adminContext.role === "super_admin";
     const isUnscoped = isActorSuperAdmin || (Array.isArray(UNSCOPED_ACCESS_ROLES) && UNSCOPED_ACCESS_ROLES.includes(adminContext.role));
 
-    // 1. Structural visibility & tenant scoping
+    // barangay admins only see their own barangay
     if (adminContext.role === 'barangay_admin') {
       if (!adminContext.barangay_id) {
         throw new Error("SECURITY_FAULT: barangay_admin context missing barangay identifier for scoping.");
@@ -83,12 +83,11 @@ class UserService {
       throw new Error(`SECURITY_FAULT: Unauthorized role '${adminContext.role}' attempted to access user records.`);
     }
 
-    // 2. Hide Super Admin accounts from all lower tiers (system_admin, mdrrmo, barangay_admin, etc.)
+    // super_admin accounts are hidden from every lower tier
     if (!isActorSuperAdmin) {
       conditions.push(`u.role != 'super_admin'`);
     }
 
-    // 3. Search and filter conditions
     if (search) {
       conditions.push(`(u.name ILIKE $${idx} OR u.email ILIKE $${idx})`);
       values.push(`%${search}%`);

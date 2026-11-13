@@ -1,50 +1,31 @@
 const os = require("os");
 const pool = require("../config/db");
 
-// Encapsulated state: an in-memory Map of active alerts.
-// Using a Map ensures O(1) lookups and updates, and prevents duplicates.
+// keyed by alert id, so raising the same alert again updates it instead of duplicating
 let activeAlerts = new Map();
 
-/**
- * Manually set an alert (useful for reactive checks like SMTP)
- * @param {string} id - Unique identifier for the alert (e.g. 'SMTP_DOWN')
- * @param {object} payload - Alert details (type, title, message)
- */
+/** For reactive checks such as SMTP_DOWN. Setting an existing id refreshes its timestamp. */
 function setAlert(id, payload) {
-  // If the alert already exists, we just update the timestamp.
   activeAlerts.set(id, { id, timestamp: Date.now(), ...payload });
 }
 
-/**
- * Remove an active alert
- * @param {string} id - Unique identifier
- */
 function removeAlert(id) {
   activeAlerts.delete(id);
 }
 
-/**
- * Get all active alerts, sorted by newest first.
- * @returns {Array} Array of alert objects
- */
+/** Newest first. */
 function getActiveAlerts() {
   return Array.from(activeAlerts.values()).sort(
     (a, b) => b.timestamp - a.timestamp,
   );
 }
 
-/**
- * Start the background worker to continuously poll OS and DB metrics.
- */
 function startAlertMonitor() {
   console.log("Starting Critical Alert Monitor Service...");
 
-  // Run every 60 seconds
   setInterval(async () => {
-    // 1. Check Memory (Imminent Resource Exhaustion)
     const memUsage = 1 - os.freemem() / os.totalmem();
     if (memUsage > 0.9) {
-      // 90% threshold
       setAlert("MEM_CRITICAL", {
         type: "danger",
         title: "Critical Memory Warning",
@@ -55,7 +36,6 @@ function startAlertMonitor() {
       removeAlert("MEM_CRITICAL");
     }
 
-    // 2. Check Database Connection (Service Dependency Failure)
     try {
       await pool.query("SELECT 1");
       removeAlert("DB_DISCONNECT");
@@ -68,7 +48,6 @@ function startAlertMonitor() {
       });
     }
 
-    // 3. Brute Force Check (Active Security Threat)
     try {
       const bruteForceRes = await pool.query(`
         SELECT COUNT(*) 
@@ -98,7 +77,7 @@ function startAlertMonitor() {
       });
     }
 
-    // 4. Intentional Administrative Overrides
+    // admin overrides: maintenance mode and emergency broadcasts
     try {
       const settingsRes = await pool.query(`
         SELECT key, value 
@@ -142,7 +121,7 @@ function startAlertMonitor() {
         removeAlert("EMERGENCY_BROADCAST");
       }
     } catch {
-      // Don't log spam if DB is disconnected, DB_DISCONNECT will catch it
+      // DB_DISCONNECT already covers a dead DB; don't spam the log
     }
   }, 60000);
 }

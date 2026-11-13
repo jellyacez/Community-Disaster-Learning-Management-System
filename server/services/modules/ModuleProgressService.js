@@ -12,7 +12,6 @@ const isAttemptStep = (step) => GRADED_STEP_TYPES.includes(step.step_type) && Bo
 class ModuleProgressService {
   // `options.viaAttempt` is set only by QuizAttemptService when submitting a recorded attempt
   async completeModuleStep(user_id, mod_id, stepId, answers, options = {}) {
-    // Verify user enrollment
     const enrollmentCheck = await pool.query(
       "SELECT 1 FROM module_activity WHERE user_id = $1 AND mod_id = $2 LIMIT 1",
       [user_id, mod_id]
@@ -22,7 +21,6 @@ class ModuleProgressService {
       throw new Error("NOT_ENROLLED");
     }
 
-    // Get step details
     const stepResult = await pool.query(
       `SELECT ms.step_order, ms.step_type, ms.is_final_assessment, ms.loop_back_step_id, l.level_id, l.passing_threshold, ms.step_title
        FROM module_steps ms
@@ -42,7 +40,6 @@ class ModuleProgressService {
       throw new Error("ATTEMPT_REQUIRED");
     }
 
-    // If step is a quiz, grade it
     let score = 0;
     let totalPoints = 0;
     let passed;
@@ -76,7 +73,6 @@ class ModuleProgressService {
             interactionTypeMap[q.question_id] = q.interaction_type;
         });
 
-        // Dynamically grade each question based on its characteristics
         const correctChoicesMap = {};
         const sequenceMap = {};
         
@@ -139,7 +135,6 @@ class ModuleProgressService {
         const percentage = totalPoints > 0 ? (score / totalPoints) * 100 : 100;
         passed = percentage >= passingThreshold;
 
-        // Save result
         await pool.query(
             `INSERT INTO public.results (mod_id, level_id, step_id, user_id, score, total_points, passed)
              VALUES ($1, $2, $3, $4, $5, $6, $7)`,
@@ -174,7 +169,6 @@ class ModuleProgressService {
         }
     }
 
-    // Update progress transaction
     const client = await pool.connect();
     let moduleCompleted;
     let recertificationRequired = false;
@@ -188,14 +182,12 @@ class ModuleProgressService {
         [user_id, stepId]
       );
 
-      // Check total steps in the entire module
       const totalStepsRes = await client.query(
         `SELECT COUNT(step_id) as total_steps FROM module_steps WHERE level_id IN (SELECT level_id FROM levels WHERE mod_id = $1)`, 
         [mod_id]
       );
       const totalSteps = parseInt(totalStepsRes.rows[0].total_steps, 10);
 
-      // Check how many unique steps this user has completed for this module
       const completedStepsRes = await client.query(
         `SELECT COUNT(DISTINCT usp.step_id) as completed_steps 
          FROM user_step_progress usp
@@ -220,7 +212,6 @@ class ModuleProgressService {
       
       const modact_id = updateResult.rows[0]?.modact_id;
 
-      // Handle Completion logic & Certificates
       let verificationToken = null;
       // Sent after COMMIT so a rolled-back completion never notifies
       let certNotice = null;
@@ -230,7 +221,6 @@ class ModuleProgressService {
 
         logger.logActivity(user_id, `Completed module: ${modTitle}`);
 
-        // Check if certificate already exists for renewal or fresh issuance
         const certCheck = await client.query(
           `SELECT cert_id, verification_token, status, expires_at, revoked_at, revoked_by, revocation_reason 
            FROM certificates 
@@ -241,7 +231,7 @@ class ModuleProgressService {
         const { RECERTIFICATION_INTERVAL_YEARS } = require("../../config/constants");
 
         if (certCheck.rowCount === 0) {
-          // Fix 3: Get the correct result_id, prioritizing final assessments and higher levels
+          // prefer the final assessment's result, then higher levels
           const resultIdCheck = await client.query(
             `SELECT r.result_id 
              FROM results r
@@ -292,7 +282,7 @@ class ModuleProgressService {
              }
           }
         } else {
-          // Existing Certificate — Handle Renewal / Recertification
+          // existing certificate: renewal / recertification
           const existingCert = certCheck.rows[0];
           // A revoked certificate is never renewed here; only reinstateCertificate clears a revocation
           const isRevoked = existingCert.status === "revoked";
@@ -355,7 +345,7 @@ class ModuleProgressService {
               `Your certificate for "${modTitle}" was renewed for ${RECERTIFICATION_INTERVAL_YEARS} year${RECERTIFICATION_INTERVAL_YEARS === 1 ? "" : "s"}.`,
             ];
           } else {
-            // Still active with > 30 days remaining, return existing verification token
+            // still active with more than 30 days left: reuse the existing token
             verificationToken = existingCert.verification_token;
           }
         }
@@ -445,7 +435,6 @@ class ModuleProgressService {
     const values = [];
     let idx = 1;
 
-    // Structural enforcement of barangay scoping
     if (adminContext.role === 'barangay_admin') {
       if (!adminContext.barangay_id) {
         throw new Error("SECURITY_FAULT: barangay_admin context missing barangay identifier for scoping.");
@@ -539,7 +528,6 @@ class ModuleProgressService {
 
     const { UNSCOPED_ACCESS_ROLES } = require("../../config/permissions");
     
-    // First fetch the cert to check scope
       const certQuery = await pool.query(
       `SELECT c.cert_id, c.cert_rec, u.barangay_id as learner_barangay_id, u.id as learner_id, m.modname
        FROM certificates c
@@ -555,7 +543,6 @@ class ModuleProgressService {
 
     const cert = certQuery.rows[0];
 
-    // Structural scoping check
     if (adminContext.role === 'barangay_admin') {
       if (!adminContext.barangay_id || cert.learner_barangay_id !== adminContext.barangay_id) {
         throw new Error("SECURITY_FAULT: Out-of-scope target. Cannot revoke certificate for a resident outside your barangay.");
@@ -564,7 +551,7 @@ class ModuleProgressService {
       throw new Error(`SECURITY_FAULT: Unauthorized role '${adminContext.role}' attempted to revoke certificate.`);
     }
 
-    // Perform revocation (soft delete)
+    // soft delete
     await pool.query(
       `UPDATE certificates 
        SET status = 'revoked',
@@ -575,7 +562,6 @@ class ModuleProgressService {
       [certId, reason, adminUserId]
     );
 
-    // Log the deliberate action using logActivity per instructions
     logger.logActivity(adminUserId, `Revoked certificate ${cert.cert_rec} for user ${cert.learner_id}. Reason: ${reason}`);
     sendAccountNotice(cert.learner_id, "certificateRevoked", {
       moduleName: cert.modname || "Training module",
@@ -592,14 +578,9 @@ class ModuleProgressService {
   }
 
   /**
-   * Explicitly reinstates a revoked certificate by an authorized admin.
-   * This is the ONLY path to clear a revocation after the V-02 fix — module
-   * completion no longer silently resets revocation fields.
-   *
-   * @param {string|number} certId
-   * @param {string}        reinstateReason  - Required, recorded in activity log
-   * @param {object}        adminContext     - { role, barangay_id }
-   * @param {string}        adminUserId
+   * The only path that clears a revocation; completing the module again doesn't reset it.
+   * @param {string} reinstateReason - required, recorded in the activity log
+   * @param {object} adminContext - { role, barangay_id }
    */
   async reinstateCertificate(certId, reinstateReason, adminContext, adminUserId) {
     if (!adminContext || !adminContext.role) {
@@ -612,7 +593,7 @@ class ModuleProgressService {
 
     const { UNSCOPED_ACCESS_ROLES } = require("../../config/permissions");
 
-    // Fetch the cert; only revoked certs can be reinstated
+    // only revoked certs can be reinstated
     const certQuery = await pool.query(
       `SELECT c.cert_id, c.cert_rec, c.status, u.barangay_id as learner_barangay_id, u.id as learner_id
        FROM certificates c
@@ -631,7 +612,7 @@ class ModuleProgressService {
       throw new Error("VALIDATION_ERROR: Only revoked certificates can be reinstated.");
     }
 
-    // Scope check — same as revokeCertificate
+    // same scope check as revokeCertificate
     if (adminContext.role === "barangay_admin") {
       if (!adminContext.barangay_id || cert.learner_barangay_id !== adminContext.barangay_id) {
         throw new Error("SECURITY_FAULT: Out-of-scope target. Cannot reinstate certificate for a resident outside your barangay.");
@@ -642,7 +623,7 @@ class ModuleProgressService {
 
     const { RECERTIFICATION_INTERVAL_YEARS } = require("../../config/constants");
 
-    // Reinstate: reset revocation fields and extend validity from now
+    // clear the revocation and restart validity from now
     await pool.query(
       `UPDATE certificates
        SET status = 'active',
