@@ -905,6 +905,12 @@ class ModuleService {
     throw new Error("You are already enrolled in this module.");
   }
 
+  // Only a module learners can enroll in can be requested
+  const mod = await this.getModuleById(moduleId);
+  if (!mod || mod.status !== "published" || mod.moddateremove) {
+    throw new Error("This module is not open for enrollment.");
+  }
+
   const existingReq = await pool.query(
     `SELECT * FROM public.enrollment_requests
      WHERE user_id::text = $1::text
@@ -917,16 +923,24 @@ class ModuleService {
     throw new Error("You already have a pending request for this module.");
   }
 
-  await pool.query(
-    `INSERT INTO public.enrollment_requests
-     (user_id, module_id, status)
-     VALUES ($1, $2, 'pending')`,
-    [userId, moduleId]
-  );
+  try {
+    await pool.query(
+      `INSERT INTO public.enrollment_requests
+       (user_id, module_id, status)
+       VALUES ($1, $2, 'pending')`,
+      [userId, moduleId]
+    );
+  } catch (error) {
+    // uq_enrollment_requests_one_pending: a simultaneous request got there first
+    if (error.code === "23505") {
+      throw new Error("You already have a pending request for this module.", { cause: error });
+    }
+    throw error;
+  }
 }
 
   async getPendingModuleRequests(status = "pending") {
-    const allowedStatuses = ["pending", "approved"];
+    const allowedStatuses = ["pending", "approved", "rejected"];
 
     if (!allowedStatuses.includes(status)) {
       throw new Error("Invalid enrollment request status.");
@@ -954,38 +968,61 @@ class ModuleService {
     return result.rows;
   }
 
-  async approveModuleRequest(requestId) {
-    const requestQuery = `
-      SELECT 
-        er.id,
-        er.user_id,
-        er.module_id,
-        m.enrollment_code,
-        m.modname AS module_title
-      FROM public.enrollment_requests er
-      JOIN public.module_data m ON er.module_id = m.mod_id
-      WHERE er.id = $1
-    `;
-    const requestResult = await pool.query(requestQuery, [requestId]);
-    if (requestResult.rows.length === 0) {
-      throw new Error("Enrollment request not found.");
-    }
-
-    const reqData = requestResult.rows[0];
-
-    await pool.query(
-      `UPDATE public.enrollment_requests SET status = 'approved', updated_at = CURRENT_TIMESTAMP WHERE id = $1`,
-      [requestId]
+  // Moves a pending request to approved or rejected. The status check is in the UPDATE,
+  // so a stale page or a double click can't decide the same request twice.
+  async decideModuleRequest(requestId, decision) {
+    const { rows } = await pool.query(
+      `UPDATE public.enrollment_requests er
+       SET status = $2, updated_at = CURRENT_TIMESTAMP
+       FROM public.module_data m
+       WHERE er.id = $1 AND er.status = 'pending' AND m.mod_id = er.module_id
+       RETURNING er.user_id, m.enrollment_code, m.modname AS module_title`,
+      [requestId, decision]
     );
 
-    // Optional notification insertion
+    if (rows.length === 0) {
+      const exists = await pool.query(
+        `SELECT 1 FROM public.enrollment_requests WHERE id = $1`,
+        [requestId]
+      );
+      const error = new Error(
+        exists.rowCount > 0
+          ? "This request was already handled. Refresh the list."
+          : "Enrollment request not found."
+      );
+      error.statusCode = exists.rowCount > 0 ? 409 : 404;
+      throw error;
+    }
+
+    return rows[0];
+  }
+
+  // Decides many pending requests at once; requests already handled (or missing) are skipped
+  async decideModuleRequests(requestIds, decision) {
+    const { rows } = await pool.query(
+      `UPDATE public.enrollment_requests er
+       SET status = $2, updated_at = CURRENT_TIMESTAMP
+       FROM public.module_data m
+       WHERE er.id = ANY($1::int[]) AND er.status = 'pending' AND m.mod_id = er.module_id
+       RETURNING er.id, er.user_id, m.enrollment_code, m.modname AS module_title`,
+      [requestIds, decision]
+    );
+    for (const row of rows) {
+      await this.notifyRequestDecision(row, decision);
+    }
+    return rows.map((r) => r.id);
+  }
+
+  // Tells the learner the outcome; a failed notification doesn't undo the decision
+  async notifyRequestDecision(reqData, decision) {
+    const [type, message] =
+      decision === "approved"
+        ? ["code_approved", `Your request for "${reqData.module_title}" has been approved. Your code is: ${reqData.enrollment_code}`]
+        : ["code_rejected", `Your request for "${reqData.module_title}" was declined. Contact your MDRRMO if you think this is a mistake.`];
+
     const notified = await pool.query(
       `INSERT INTO public.user_notification (user_id, type, message) VALUES ($1::text, $2, $3)`,
-      [
-        reqData.user_id,
-        "code_approved",
-        `Your request for "${reqData.module_title}" has been approved. Your code is: ${reqData.enrollment_code}`
-      ]
+      [reqData.user_id, type, message]
     ).then(() => true).catch(() => false);
 
     // Push it live so the learner sees it without refreshing (same event the module approval flow uses)
@@ -997,11 +1034,20 @@ class ModuleService {
           {},
         );
       } catch (err) {
-        console.warn("Could not push code-approved notification live:", err.message);
+        console.warn(`Could not push ${type} notification live:`, err.message);
       }
     }
+  }
 
+  async approveModuleRequest(requestId) {
+    const reqData = await this.decideModuleRequest(requestId, "approved");
+    await this.notifyRequestDecision(reqData, "approved");
     return reqData.enrollment_code;
+  }
+
+  async rejectModuleRequest(requestId) {
+    const reqData = await this.decideModuleRequest(requestId, "rejected");
+    await this.notifyRequestDecision(reqData, "rejected");
   }
 }
 

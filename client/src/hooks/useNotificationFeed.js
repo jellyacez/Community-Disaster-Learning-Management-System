@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import apiClient from "../lib/apiClient";
 
 // Personal notification types shown with an amber (needs attention) dot instead of green
-export const WARNING_NOTIFICATION_TYPES = new Set(["module_rejected", "certificate_revoked", "recert_reminder"]);
+export const WARNING_NOTIFICATION_TYPES = new Set(["module_rejected", "certificate_revoked", "recert_reminder", "code_rejected"]);
 
 // The server pushes USER_NOTIFICATION over SSE (useRealtimeEvents); polling only covers a dropped stream
 const FALLBACK_POLL_MS = 5 * 60 * 1000;

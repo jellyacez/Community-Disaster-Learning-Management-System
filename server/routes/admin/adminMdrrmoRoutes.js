@@ -241,7 +241,37 @@ router.post(
   barangayController.createBarangayAnnouncement
 );
 
-router.get("/module-requests", moduleController.getPendingModuleRequests);
-router.post("/module-requests/:requestId/approve", moduleController.approveModuleRequest);
+// Same roles that see the Module Request page (adminNavLinks.js, App.jsx)
+const MODULE_REQUEST_ROLES = ["super_admin", "head_mdrrmo_admin", "mdrrmo_admin"];
+
+router.get(
+  "/module-requests",
+  requireRole(MODULE_REQUEST_ROLES),
+  adminDataLimiter,
+  requirePermission("manage_modules"),
+  moduleController.getPendingModuleRequests
+);
+// One write for a whole selection, so a long queue doesn't run into adminWriteLimiter
+router.post(
+  "/module-requests/bulk-decide",
+  requireRole(MODULE_REQUEST_ROLES),
+  adminWriteLimiter,
+  requirePermission("manage_modules"),
+  moduleController.bulkDecideModuleRequests
+);
+router.post(
+  "/module-requests/:requestId/approve",
+  requireRole(MODULE_REQUEST_ROLES),
+  adminWriteLimiter,
+  requirePermission("manage_modules"),
+  moduleController.approveModuleRequest
+);
+router.post(
+  "/module-requests/:requestId/reject",
+  requireRole(MODULE_REQUEST_ROLES),
+  adminWriteLimiter,
+  requirePermission("manage_modules"),
+  moduleController.rejectModuleRequest
+);
 
 module.exports = router;

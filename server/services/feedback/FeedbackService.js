@@ -103,6 +103,12 @@ class FeedbackService {
       `;
       const { rows } = await client.query(insertMsg, [feedbackId, userId, reply]);
 
+      // A resident follow-up needs an admin again, so it goes back to the Pending queue
+      await client.query(
+        `UPDATE public.feedbacks SET status = 'Pending' WHERE id = $1 AND status = 'Replied'`,
+        [feedbackId]
+      );
+
       await client.query("COMMIT");
       return rows[0];
     } catch (err) {

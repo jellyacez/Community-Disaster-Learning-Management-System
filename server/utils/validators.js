@@ -36,6 +36,11 @@ exports.validateModuleCreation = (payload) => {
     return { isValid: false, error: "Module description is required." };
   }
 
+  // Authors can only save a draft or submit for review; publishing goes through the review endpoint
+  if (payload.status !== undefined && !["draft", "pending_review"].includes(payload.status)) {
+    return { isValid: false, error: "Status must be 'draft' or 'pending_review'." };
+  }
+
   const validateUrl = (urlString, fieldName, requireImageExtension = false) => {
     if (!urlString || typeof urlString !== "string" || urlString.trim() === "") return null;
     try {

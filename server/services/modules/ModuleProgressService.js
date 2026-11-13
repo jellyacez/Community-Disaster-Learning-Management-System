@@ -294,8 +294,10 @@ class ModuleProgressService {
         } else {
           // Existing Certificate — Handle Renewal / Recertification
           const existingCert = certCheck.rows[0];
-          const isExpired = new Date(existingCert.expires_at) < new Date();
-          const isExpiringSoon = new Date(existingCert.expires_at) <= new Date(Date.now() + RENEWAL_WINDOW_DAYS * 86400 * 1000);
+          // A revoked certificate is never renewed here; only reinstateCertificate clears a revocation
+          const isRevoked = existingCert.status === "revoked";
+          const isExpired = !isRevoked && new Date(existingCert.expires_at) < new Date();
+          const isExpiringSoon = !isRevoked && new Date(existingCert.expires_at) <= new Date(Date.now() + RENEWAL_WINDOW_DAYS * 86400 * 1000);
 
           // Renewal requires re-passing the module's assessment inside the renewal window.
           // Step progress persists from the first completion, so completion alone proves nothing.
