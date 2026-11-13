@@ -29,7 +29,6 @@ export default function AdminSidebar({ sidebarOpen, setSidebarOpen }) {
 
   const [expandedMenus, setExpandedMenus] = useState({});
 
-  // Detect active impersonation target from storage
   const impersonatedTarget = useMemo(() => {
     try {
       const stored =

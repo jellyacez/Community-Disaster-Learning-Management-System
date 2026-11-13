@@ -31,7 +31,6 @@ export default function DashboardLayout({
         setSidebarOpen={setSidebarOpen}
       />
 
-      {/* Main Column */}
       <div
         className={`lg:pl-72 flex flex-col ${
           isPinned ? "h-screen overflow-hidden flex-1" : "flex-1 min-h-screen"
@@ -43,7 +42,6 @@ export default function DashboardLayout({
           setSidebarOpen={setSidebarOpen}
         />
 
-        {/* Dynamic Content Area */}
         <main
           className={`px-4 py-6 sm:px-6 lg:px-8 flex-1 ${
             isPinned ? "overflow-y-auto" : ""
@@ -52,7 +50,6 @@ export default function DashboardLayout({
           {children}
         </main>
 
-        {/* Render footer if pinned or scroll mode is active */}
         {footerMode !== "none" && <PortalFooter />}
       </div>
     </div>

@@ -9,7 +9,6 @@ export default function HelpSupport() {
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-red-50 text-red-600">
-            {/* HelpCircle Icon (Native SVG) */}
             <svg
               className="h-5 w-5"
               fill="none"
@@ -44,7 +43,6 @@ export default function HelpSupport() {
           onClick={() => navigate("/user/feedback")}
           className="inline-flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
         >
-          {/* MessageSquare Icon (Native SVG) */}
           <svg
             className="h-4 w-4"
             fill="none"

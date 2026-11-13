@@ -35,7 +35,6 @@ export default function UserNavbar({
     <header className="sticky top-0 z-30 border-b border-gray-200 dark:border-slate-800 bg-white/90 dark:bg-slate-950/90 backdrop-blur transition-colors duration-200">
       <div className="flex items-center justify-between px-3 sm:px-6 lg:px-8 py-3 sm:py-4 gap-1.5 sm:gap-3">
 
-        {/* Left Section: Menu Toggle & Title */}
         <div className="flex flex-1 items-center gap-2 sm:gap-3 min-w-0">
           <button
             onClick={() => setSidebarOpen(true)}
@@ -56,7 +55,6 @@ export default function UserNavbar({
           </div>
         </div>
 
-        {/* Right Section: Action Controls */}
         <div className="flex min-w-0 items-center justify-end gap-1.5 sm:gap-3 shrink-0 flex-none">
           {isOffline && (
             <span
@@ -72,10 +70,8 @@ export default function UserNavbar({
           <NotificationDropdown />
           <ThemeToggle />
 
-          {/* Divider visible only on larger screens */}
           <div className="hidden sm:block w-px h-6 bg-gray-200 dark:bg-slate-800 mx-1" />
 
-          {/* User Profile Button */}
           <button
             onClick={() => navigate('/user/profile')}
             aria-label="User profile settings"

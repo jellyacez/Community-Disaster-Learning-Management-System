@@ -98,7 +98,6 @@ export default function UserSidebar({
     }
 
       try {
-        // Safely sweep ALL offline caches
         const keysToRemove = [];
         for (let i = 0; i < localStorage.length; i++) {
           const key = localStorage.key(i);

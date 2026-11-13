@@ -5,8 +5,7 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import { Alert01Icon, Cancel01Icon } from "@hugeicons/core-free-icons";
 
 export default function CriticalAlertBanner() {
-  // Local state to track which alerts the admin has intentionally hidden.
-  // This state is cleared when the page refreshes, satisfying backend authority.
+  // dismissals are local and reset on refresh; the server stays the source of truth
   const [dismissedAlerts, setDismissedAlerts] = useState([]);
 
   const { data, isError } = useQuery({
@@ -15,12 +14,11 @@ export default function CriticalAlertBanner() {
       const res = await apiClient.get("/admin/alerts/active");
       return res.data.data;
     },
-    refetchInterval: 60000, // Poll every 60 seconds
+    refetchInterval: 60000,
   });
 
   const alerts = data || [];
 
-  // Filter out alerts that the user has clicked [X] on
   const visibleAlerts = alerts.filter(alert => !dismissedAlerts.includes(alert.id));
 
   if (isError || visibleAlerts.length === 0) return null;

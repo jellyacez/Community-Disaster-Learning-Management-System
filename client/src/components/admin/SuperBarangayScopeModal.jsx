@@ -53,7 +53,6 @@ export default function SuperBarangayScopeModal() {
 
   return (
     <>
-      {/* Light & Dark Adaptive Scope Switcher Bar */}
       <div className="mb-6 flex items-center justify-between p-4 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-2xl shadow-sm transition-colors duration-200">
         <div className="flex items-center gap-3">
           <div className="p-2.5 rounded-xl bg-red-50 dark:bg-red-950/60 text-red-600 dark:text-red-400">
@@ -78,7 +77,6 @@ export default function SuperBarangayScopeModal() {
         </button>
       </div>
 
-      {/* Modal Popup */}
       {isOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs p-4 animate-in fade-in duration-200">
           <div className="w-full max-w-md bg-white dark:bg-slate-900 rounded-3xl p-6 border border-gray-200 dark:border-slate-800 shadow-2xl transition-colors duration-200">

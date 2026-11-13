@@ -18,7 +18,6 @@ export default function LocalizationSettings() {
 
   return (
     <div className="p-6 md:p-8 w-full flex flex-col space-y-4">
-      {/* Language Preference Row */}
       <div className="flex flex-col md:flex-row gap-8 md:gap-16 p-4 -mx-4 rounded-2xl hover:bg-gray-50/80 dark:hover:bg-slate-800/50 transition-colors group">
         <div className="md:w-1/3 shrink-0">
           <h4 className="text-base font-bold text-gray-900 dark:text-white flex items-center gap-2">
@@ -63,7 +62,6 @@ export default function LocalizationSettings() {
         </div>
       </div>
 
-      {/* Theme Row */}
       <div className="flex flex-col md:flex-row gap-8 md:gap-16 p-4 -mx-4 rounded-2xl hover:bg-gray-50/80 dark:hover:bg-slate-800/50 transition-colors group">
         <div className="md:w-1/3 shrink-0">
           <h4 className="text-base font-bold text-gray-900 dark:text-white flex items-center gap-2">
@@ -77,7 +75,6 @@ export default function LocalizationSettings() {
 
         <div className="md:w-2/3 max-w-md">
           <div className="flex flex-wrap items-center gap-2 bg-gray-100/70 dark:bg-slate-800/80 p-1.5 rounded-2xl border border-gray-200 dark:border-slate-700 w-fit">
-            {/* Light Mode Button */}
             <button
               type="button"
               onClick={() => handleSetTheme("light")}
@@ -94,7 +91,6 @@ export default function LocalizationSettings() {
               Light
             </button>
 
-            {/* Dark Mode Button */}
             <button
               type="button"
               onClick={() => handleSetTheme("dark")}
@@ -111,7 +107,6 @@ export default function LocalizationSettings() {
               Dark
             </button>
 
-            {/* System Default Button */}
             <button
               type="button"
               onClick={() => handleSetTheme("system")}

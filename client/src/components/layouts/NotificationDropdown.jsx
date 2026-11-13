@@ -15,7 +15,6 @@ export default function NotificationDropdown() {
   const { wrapperRef: dropdownRef, panelRef, triggerRef, position } = useAnchoredPopover(isOpen, setIsOpen, "right");
   const navigate = useNavigate();
 
-  // Pull settings from DB via our custom hook
   const { settings, updatePreference } = useNotificationPreferences();
   const lastSeenId = settings?.lastSeenAnnouncementId || null;
 
@@ -88,7 +87,6 @@ export default function NotificationDropdown() {
             style={{...position, maxHeight: `calc(100dvh - ${position.top + 12}px)`}}
             className="fixed rounded-2xl bg-white dark:bg-slate-900 shadow-xl border border-gray-100 dark:border-slate-800 ring-1 ring-black/5 z-[100] overflow-hidden flex flex-col min-w-0"
           >
-            {/* Dropdown Header */}
             <div className="px-4 py-3 border-b border-gray-100 dark:border-slate-800 bg-gray-50/50 dark:bg-slate-900 flex items-center justify-between gap-2">
               <h3 className="text-xs sm:text-sm font-bold text-gray-900 dark:text-white truncate">
                 Notifications
@@ -100,7 +98,6 @@ export default function NotificationDropdown() {
               )}
             </div>
 
-            {/* Notification List */}
             <div className="min-h-0 flex-1 max-h-[55vh] sm:max-h-[420px] overflow-y-auto overscroll-contain p-1.5 sm:p-2">
               {personal.length > 0 && (
                 <div className="flex flex-col gap-1 pb-2 mb-1.5 border-b border-gray-100 dark:border-slate-800">
@@ -165,7 +162,6 @@ export default function NotificationDropdown() {
               )}
             </div>
 
-            {/* Footer Action */}
             <button
               type="button"
               onClick={() => {

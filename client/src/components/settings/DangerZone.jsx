@@ -10,7 +10,6 @@ export default function DangerZone() {
 
   return (
     <div className="rounded-3xl border border-red-200 bg-red-50/30 p-6 md:p-8 shadow-sm flex flex-col space-y-8">
-      {/* Export Row */}
       <div className="flex flex-col md:flex-row gap-8 md:gap-16">
         <div className="md:w-1/3 shrink-0">
           <h4 className="text-base font-bold text-gray-900 flex items-center gap-2">
@@ -39,7 +38,6 @@ export default function DangerZone() {
 
       <hr className="border-red-200/50" />
 
-      {/* Deactivate Row */}
       <div className="flex flex-col md:flex-row gap-8 md:gap-16">
         <div className="md:w-1/3 shrink-0">
           <h4 className="text-base font-bold text-gray-900 flex items-center gap-2">

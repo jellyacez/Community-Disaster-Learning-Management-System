@@ -5,9 +5,7 @@ import { authClient } from "../../lib/auth-client";
 export default function GoogleSignInButton({ clearGlobalError }) {
   const [isLoading, setIsLoading] = useState(false);
 
-  // Fix for bfcache (browser back button): 
-  // If user clicks "Sign in with Google", gets redirected, and hits back, 
-  // the page is restored from cache and would be stuck in 'isLoading = true'.
+  // The back button after the Google redirect restores this page from bfcache with isLoading still true.
   useEffect(() => {
     const handlePageShow = (event) => {
       if (event.persisted) {

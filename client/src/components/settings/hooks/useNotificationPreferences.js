@@ -17,7 +17,6 @@ export function useNotificationPreferences() {
       const response = await apiClient.get("/users/me/settings");
       return response.data;
     },
-    // Set default initial data while fetching
     initialData: { announcements: true, reminders: true },
   });
 

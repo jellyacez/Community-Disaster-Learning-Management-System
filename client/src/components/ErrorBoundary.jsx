@@ -10,7 +10,7 @@ function getRoleDashboard(role, pathname = "") {
   if (role === "system_admin") return "/admin/system/dashboard";
   if (role === "resident") return "/userDashboard";
 
-  // Pathname-based fallback if session role is not yet resolved
+  // role isn't resolved yet, so go by the pathname
   if (pathname.startsWith("/admin/barangay")) return "/admin/barangay/dashboard";
   if (pathname.startsWith("/admin/mdrrmo")) return "/admin/mdrrmo/dashboard";
   if (pathname.startsWith("/admin/system")) return "/admin/system/dashboard";
@@ -31,12 +31,10 @@ class ErrorBoundary extends React.Component {
   }
 
   static getDerivedStateFromError(error) {
-    // Update state so the next render will show the fallback UI.
     return { hasError: true, isChunkError: CHUNK_ERROR.test(error?.message || "") };
   }
 
   componentDidCatch(error, errorInfo) {
-    // You can also log the error to an error reporting service
     console.error("ErrorBoundary caught an error:", error, errorInfo);
     this.setState({ error, errorInfo });
 
@@ -59,7 +57,6 @@ class ErrorBoundary extends React.Component {
     if (this.state.hasError) {
       if (this.state.reloading) return null;
       const offline = this.state.isChunkError && !navigator.onLine;
-      // You can render any custom fallback UI
       return (
         <div className="min-h-screen bg-gray-50 dark:bg-slate-950 flex items-center justify-center p-6 transition-colors">
           <div className="bg-white dark:bg-slate-900 max-w-md w-full rounded-3xl shadow-xl border border-red-100 dark:border-red-950/60 p-8 text-center animate-in fade-in zoom-in duration-300">
