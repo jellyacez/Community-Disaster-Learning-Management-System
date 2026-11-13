@@ -1,11 +1,9 @@
 require("dotenv").config();
 
-// Check if required env variables are present
 const requiredEnvVars = ["DB_USER", "DB_PASSWORD", "DB_DATABASE"];
 
 const missingVars = requiredEnvVars.filter((varName) => !process.env[varName]);
 
-// Require at least one of the better-auth secrets
 if (!process.env.BETTER_AUTH_SECRET && !process.env.BETTER_AUTH_SECRETS) {
   missingVars.push("BETTER_AUTH_SECRET or BETTER_AUTH_SECRETS");
 }
@@ -36,7 +34,6 @@ const verifyTurnstile = require("./middleware/verifyTurnstile");
 
 const app = express();
 
-// Start background cron jobs
 startLogRetentionCron();
 startCertificateExpiryCron();
 startAlertMonitor();
@@ -53,8 +50,7 @@ app.use(express.json({ limit: "800kb" }));
 app.use(
   "/uploads",
   express.static(path.join(__dirname, "uploads"), {
-    // Allow safe viewable media (PDFs, videos, standard images) to display inline.
-    // Untrusted or executable types default to attachment to prevent inline HTML/SVG/JS execution.
+    // Serve viewable media (PDFs, video, standard images) inline. Everything else is an attachment so HTML/SVG/JS can't execute.
     setHeaders: (res, filePath) => {
       const ext = path.extname(filePath).toLowerCase();
       if (
@@ -87,11 +83,11 @@ app.use(
         ],
         styleSrc: ["'self'", "'unsafe-inline'"],
         imgSrc: ["'self'", "data:", "https:", "blob:"],
-        mediaSrc: ["'self'", "https:", "blob:"], // Allow HTML5 <video> from AWS S3 and blob: previews
+        mediaSrc: ["'self'", "https:", "blob:"], // S3 video and blob: previews
         frameSrc: [
           "'self'",
           "https://challenges.cloudflare.com",
-        ], // Removed youtube and vimeo
+        ],
         frameAncestors: ["'none'"],
         objectSrc: ["'none'"],
         upgradeInsecureRequests: [],
@@ -111,7 +107,7 @@ app.use(
             process.env.FRONTEND_URL,
             "http://localhost:5173",
             "http://localhost:5174",
-            "http://localhost:4173", // Allows Vite preview (PWA test port)
+            "http://localhost:4173", // vite preview (PWA testing)
           ].filter(Boolean),
     credentials: true,
   }),
@@ -138,7 +134,7 @@ app.use(maintenanceMiddleware);
 const customAuthRoutes = require("./routes/auth/authRoutes");
 const apiCacheMiddleware = require("./middleware/apiCacheMiddleware");
 
-// Apply no-store caching globally to all API routes to prevent 304 ghost caching
+// no-store on all API responses; avoids stale 304s
 app.use("/api", apiCacheMiddleware);
 
 app.post("/api/auth/sign-in/email", verifyTurnstile);
@@ -164,7 +160,6 @@ app.use("/api/auth", (req, res, next) => {
 });
 app.use("/api/auth", toNodeHandler(auth));
 
-// Import routes
 const adminRoutes = require("./routes/admin/adminRoutes");
 const userRoutes = require("./routes/users/userRoutes");
 const userDashboardRoutes = require("./routes/users/userDashboardRoutes");
@@ -176,12 +171,10 @@ const certificatesRoutes = require("./routes/certificatesRoutes");
 
 const apiSecurityMiddleware = require("./middleware/apiSecurityMiddleware");
 
-// Notif Route
 app.use("/api/notif", require("./routes/notif/sseRoutes"));
 
-// API Routes (Business logic protected by security middleware)
 app.use("/api/public", publicRoutes);
-app.use("/api/certificates", certificatesRoutes); // Public verification endpoint
+app.use("/api/certificates", certificatesRoutes); // public verification endpoint
 app.use("/api/admin", apiSecurityMiddleware, adminRoutes);
 app.use("/api/users", apiSecurityMiddleware, userRoutes);
 app.use("/api/user/dashboard", apiSecurityMiddleware, userDashboardRoutes);
@@ -198,12 +191,10 @@ app.use("/api", (req, res, next) => {
   });
   next();
 });
-// 404 Catch-All Route
 app.use((req, res) => {
   res.status(404).json({ error: "Route not found" });
 });
 
-// Global Error Handler
 // eslint-disable-next-line no-unused-vars
 app.use((err, req, res, next) => {
   require("./utils/logger").logError("global_unhandled_error", {

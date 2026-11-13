@@ -3,7 +3,7 @@ const pool = require("../config/db");
 const { logError } = require("../utils/logger");
 const { MFA_REQUIRED_ROLES, isMfaEnforced } = require("../config/permissions");
 
-// Helper to safely parse cookies from header if cookie-parser is not globally loaded
+// cookie-parser isn't mounted globally
 const parseCookies = (req) => {
   if (req.cookies) return req.cookies;
   const list = {};
@@ -20,8 +20,7 @@ const parseCookies = (req) => {
   return list;
 };
 
-// @desc    Core authentication middleware (session, archive check, MFA, activity tracking, impersonation)
-// @access  Public (applied to all protected routes)
+// Session check, archive check, MFA enforcement, activity tracking and impersonation.
 const authenticate = async (req, res, next) => {
   try {
     const session = await auth.api.getSession({ headers: req.headers });
@@ -30,7 +29,7 @@ const authenticate = async (req, res, next) => {
       return res.status(401).json({ error: "Unauthorized. Please Log In" });
     }
 
-    // ─── CLIENT ANOMALY / SESSION HIJACK DEFENSE ──────────────────────────────
+    // a user-agent mismatch on an existing session is treated as a stolen token
     const incomingUserAgent = req.headers["user-agent"] || "";
     const sessionRecord = session.session;
 
@@ -42,7 +41,6 @@ const authenticate = async (req, res, next) => {
         ip: req.ip,
       });
 
-      // Invalidate the compromised session token immediately
       try {
         await auth.api.revokeSession({
           body: { token: sessionRecord.token },
@@ -57,7 +55,6 @@ const authenticate = async (req, res, next) => {
         message: "Session terminated due to client fingerprint anomaly.",
       });
     }
-    // ─────────────────────────────────────────────────────────────────────────
 
     if (session.user.archived) {
       return res.status(403).json({
@@ -66,7 +63,6 @@ const authenticate = async (req, res, next) => {
       });
     }
 
-    // MFA Enforcement explicitly applies only to MFA_REQUIRED_ROLES subset
     if (isMfaEnforced() && MFA_REQUIRED_ROLES.includes(session.user.role)) {
       if (!session.user.twoFactorEnabled) {
         return res.status(403).json({
@@ -76,7 +72,6 @@ const authenticate = async (req, res, next) => {
       }
     }
 
-    // Default authenticated user context
     req.user = session.user;
     const cookies = parseCookies(req);
     const targetUserId = cookies.impersonated_target_id;
@@ -119,7 +114,7 @@ const authenticate = async (req, res, next) => {
       }
     }
 
-    // Fire-and-forget throttled update for Online Users tracking
+    // throttled to one write a minute; feeds the online-users count
     pool
       .query(
         `
@@ -150,8 +145,7 @@ const authenticate = async (req, res, next) => {
   }
 };
 
-// @desc    Optional session hydrator for public endpoints with tiered rate limits
-// @access  Public (does not reject unauthenticated requests)
+// Attaches req.user when a session exists; never rejects the request.
 const optionalAuthenticate = async (req, res, next) => {
   try {
     const session = await auth.api.getSession({ headers: req.headers });
@@ -159,7 +153,7 @@ const optionalAuthenticate = async (req, res, next) => {
       req.user = session.user;
     }
   } catch {
-    // Graceful fallback for unauthenticated public traffic
+    // anonymous public traffic
   }
   next();
 };

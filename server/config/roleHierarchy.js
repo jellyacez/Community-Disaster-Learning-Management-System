@@ -1,11 +1,4 @@
-/**
- * Canonical role rank table and hierarchy enforcement helpers.
- *
- * All admin controllers that act on a target user MUST call
- * assertActorOutranksTarget() before executing any privileged mutation.
- * This is the single source of truth for role ordering — never duplicate
- * rank constants in individual controllers.
- */
+// Role ranks live only here. Admin controllers acting on another user must call assertActorOutranksTarget() first.
 
 const ROLE_RANKS = {
   super_admin: 6,
@@ -16,29 +9,14 @@ const ROLE_RANKS = {
   resident: 1,
 };
 
-/**
- * Returns the numeric rank for a role string. Unknown roles resolve to 0,
- * so they are always considered lower than any known role.
- *
- * @param {string} role
- * @returns {number}
- */
+/** Unknown roles rank 0, below every known role. */
 function getRank(role) {
   return ROLE_RANKS[role] ?? 0;
 }
 
 /**
- * Throws a SECURITY_FAULT error if the actor's role does NOT strictly
- * outrank the target's role (actorRank > targetRank).
- *
- * system_admin is still subject to this check — they cannot act on
- * other system_admins via this helper. Any bypass for system_admin
- * (e.g. demoting themselves or deleting) must be handled explicitly
- * at the call site with an additional guard.
- *
- * @param {string} actorRole   - Role of the admin performing the action
- * @param {string} targetRole  - Current role of the user being acted on
- * @throws {Error} SECURITY_FAULT if the actor does not outrank the target
+ * Throws SECURITY_FAULT unless actorRole strictly outranks targetRole.
+ * Applies to system_admin too: any system_admin exception has to be handled at the call site.
  */
 function assertActorOutranksTarget(actorRole, targetRole) {
   const actorRank = getRank(actorRole);
@@ -52,21 +30,11 @@ function assertActorOutranksTarget(actorRole, targetRole) {
   }
 }
 
-/**
- * For provisioning only: the actor must be exactly ONE tier above the
- * role being created (system_admin→head_mdrrmo_admin, head→mdrrmo_admin,
- * mdrrmo_admin→barangay_admin). Peer provisioning is not allowed even
- * though the requesting actor already passes requirePermission().
- *
- * @param {string} actorRole     - Role of the provisioning admin
- * @param {string} newUserRole   - Role requested for the new account
- * @throws {Error} SECURITY_FAULT if the actor is not exactly one tier above
- */
+/** Provisioning: the new account's role must rank below the actor's. Throws SECURITY_FAULT. */
 function assertCanProvision(actorRole, newUserRole) {
   const actorRank = getRank(actorRole);
   const newUserRank = getRank(newUserRole);
 
-  // System admin can provision any role below system admin
   if (actorRole === "system_admin") {
     if (newUserRank >= actorRank) {
       throw new Error("SECURITY_FAULT: Cannot provision equal or higher rank.");
@@ -74,7 +42,6 @@ function assertCanProvision(actorRole, newUserRole) {
     return;
   }
 
-  // Other administrative roles can only provision roles lower than their own
   if (actorRank <= newUserRank) {
     throw new Error(
       `SECURITY_FAULT: Provisioning role '${newUserRole}' (rank ${newUserRank}) is not allowed ` +

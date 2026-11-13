@@ -11,10 +11,7 @@ const dbConfig = {
   database: pool.options.database,
 };
 
-// M-7 FIX: authRateLimiter is now a plain rate-limit middleware instance.
-// It is mounted globally on the /api/auth/* path prefix in server.js, meaning
-// ALL auth endpoints are covered automatically — no fragile path substring
-// matching that could miss new Better Auth endpoints.
+// Mounted on /api/auth/* in server.js, so new better-auth endpoints are covered without path matching.
 const authRateLimiter = rateLimit({
   store: new PostgresStore(dbConfig, "auth_"),
   windowMs: 15 * 60 * 1000,
@@ -37,11 +34,10 @@ const adminDataLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: process.env.NODE_ENV === 'development' ? 1000 : 200,
   keyGenerator: (req) => {
-    // Key by the authenticated user's ID to prevent token abuse,
-    // rather than IP, to protect shared NATs and track compromised accounts.
+    // keyed by user ID, not IP, so shared NATs aren't throttled together and a compromised account is tracked
     if (req.user?.id) return String(req.user.id);
 
-    // Fallback for missing user context. Use library's native IP normalizer to prevent IPv6 bypass.
+    // ipKeyGenerator normalizes IPv6 so the limit can't be dodged by varying the address
     return `anon_${ipKeyGenerator(req.ip)}`;
   },
   message: {

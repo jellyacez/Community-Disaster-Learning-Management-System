@@ -1,14 +1,6 @@
 /**
- * rotate-better-auth.js
- *
- * Rotates ONLY the Better Auth secret in .env.
- * Keeps the previous secret for one cycle so existing sessions
- * remain valid (Better Auth multi-secret / key rotation support).
- *
- * Usage:
- *   npm run rotate-better-auth
- *
- * No external tools required — only Node built-ins (crypto, fs, path).
+ * Rotates only the Better Auth secret in .env, keeping the previous one for a
+ * cycle so existing sessions stay valid. Usage: npm run rotate-better-auth
  */
 
 const crypto = require('crypto');
@@ -17,14 +9,8 @@ const path = require('path');
 
 const ENV_PATH = path.resolve(__dirname, '.env');
 
-// ─── helpers ────────────────────────────────────────────────────────────────
 
-/**
- * Read the .env file into a key→value map.
- * Handles single-quoted, double-quoted, and unquoted values.
- * Collapses accidental physical line continuations in multiline values
- * (e.g., a value broken across two lines by a stray newline).
- */
+/** Handles quoted and unquoted values, and rejoins values split across lines by a stray newline. */
 function readEnv(filePath) {
   const raw = fs.readFileSync(filePath, 'utf8').replace(/\r\n/g, '\n');
   const map = {};
@@ -44,10 +30,7 @@ function readEnv(filePath) {
   return map;
 }
 
-/**
- * Write (or append) a single key=value line in the .env file.
- * Replaces the existing line for that key if found (handles quoted values).
- */
+/** Replaces the key's existing line (quoted or not), or appends it. */
 function writeEnvKey(filePath, key, value) {
   let raw = fs.readFileSync(filePath, 'utf8');
   const singleLineRe = new RegExp(`^(${key}=)(['"]?).*\\2[ \\t]*$`, 'm');
@@ -60,7 +43,6 @@ function writeEnvKey(filePath, key, value) {
   fs.writeFileSync(filePath, raw, 'utf8');
 }
 
-// ─── parse / format BETTER_AUTH_SECRETS envelope ────────────────────────────
 
 function parseEnvelope(str) {
   const parts = str.split(',').map(s => s.trim()).filter(Boolean);
@@ -80,7 +62,6 @@ function formatEnvelope(secrets) {
   return secrets.map(s => `${s.version}:${s.secret}`).join(',');
 }
 
-// ─── main ────────────────────────────────────────────────────────────────────
 
 console.log('🔄  Starting Better Auth secret rotation...\n');
 
@@ -91,7 +72,6 @@ if (!fs.existsSync(ENV_PATH)) {
 
 const env = readEnv(ENV_PATH);
 
-// ── Resolve existing secrets ──────────────────────────────────────────────────
 let existingSecrets = [];
 
 const envelopeRaw = (env['BETTER_AUTH_SECRETS'] || '').replace(/\s/g, '');
@@ -110,7 +90,6 @@ if (existingSecrets.length === 0) {
   console.log('  ℹ️   No existing secret found — initialising fresh envelope at version 1.');
 }
 
-// ── Generate the new secret ───────────────────────────────────────────────────
 const newSecret = crypto.randomBytes(32).toString('base64');
 const nextVersion = existingSecrets.length > 0
   ? existingSecrets[0].version + 1
@@ -118,16 +97,13 @@ const nextVersion = existingSecrets.length > 0
 
 console.log(`✅  Generated new base64 secret (version ${nextVersion}) — equivalent to \`openssl rand -base64 32\`.`);
 
-// Keep only the immediately previous secret for graceful session drain.
-// Active users whose session tokens were signed with version N-1 will still
-// authenticate; anyone on an older version is asked to re-login.
+// Keep only the previous secret: sessions signed with version N-1 still work, anything older has to sign in again.
 const retained = existingSecrets.slice(0, 1);
 const newSecrets = [{ version: nextVersion, secret: newSecret }, ...retained];
 
 const newEnvelope = formatEnvelope(newSecrets);
 writeEnvKey(ENV_PATH, 'BETTER_AUTH_SECRETS', newEnvelope);
 
-// Remove legacy singular key if it was there
 if (env['BETTER_AUTH_SECRET']) {
   let raw = fs.readFileSync(ENV_PATH, 'utf8');
   raw = raw.replace(/^BETTER_AUTH_SECRET=.*$/m, '# BETTER_AUTH_SECRET migrated → BETTER_AUTH_SECRETS');
@@ -135,7 +111,6 @@ if (env['BETTER_AUTH_SECRET']) {
   console.log('  ℹ️   BETTER_AUTH_SECRET removed from .env (migrated).');
 }
 
-// ─── summary ─────────────────────────────────────────────────────────────────
 const retainedVersions = retained.map(s => `v${s.version}`).join(', ') || 'none';
 
 console.log(`

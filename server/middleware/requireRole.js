@@ -1,10 +1,8 @@
 const { logError } = require("../utils/logger");
 
-// @desc    Synchronous role checker middleware
-// @access  Private
 const requireRole = (allowedRoles) => {
   return (req, res, next) => {
-    // This MUST run after `authenticate` which sets req.user
+    // needs authenticate to have set req.user
     if (!req.user || !req.user.role) {
       logError('role_middleware_routing_bug', {
         route: req.originalUrl,

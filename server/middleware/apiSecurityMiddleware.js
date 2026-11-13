@@ -1,7 +1,5 @@
-// @desc    Prevents direct API access via browser navigation by inspecting headers
-// @access  Global API routes
+// rejects direct browser navigation to the API
 const apiSecurityMiddleware = (req, res, next) => {
-  // basic check to ensure requests come from the browser
   if (req.headers['sec-fetch-mode'] === 'navigate') {
     return res.status(403).json({ 
       error: "Forbidden", 
@@ -9,7 +7,7 @@ const apiSecurityMiddleware = (req, res, next) => {
     });
   }
 
-  // Fallback for older browsers: Check if they are explicitly asking for an HTML webpage
+  // older browsers don't send sec-fetch-mode, so fall back to the Accept header
   const acceptHeader = req.headers['accept'] || "";
   if (acceptHeader.includes('text/html')) {
     return res.status(403).json({ 

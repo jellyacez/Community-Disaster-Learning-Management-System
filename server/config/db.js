@@ -8,10 +8,7 @@ const pool = new Pool({
     database: process.env.DB_DATABASE,
     password: process.env.DB_PASSWORD,
     port: process.env.DB_PORT,
-    // M-9 FIX: rejectUnauthorized was false, accepting ANY SSL cert (including self-signed
-    // or expired), making the connection vulnerable to MITM attacks in production.
-    // Now defaults to true. If you use a self-signed cert in production, set
-    // DB_SSL_CA_PATH=/path/to/ca-certificate.crt in your environment instead.
+    // Verify the server cert in production. For a self-signed cert, point DB_SSL_CA_PATH at its CA instead of turning this off.
     ssl: process.env.NODE_ENV === "production" ? {
         rejectUnauthorized: true,
         ...(process.env.DB_SSL_CA_PATH ? {

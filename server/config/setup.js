@@ -3,19 +3,15 @@ const path = require("path");
 const { Pool } = require("pg");
 require("dotenv").config({ path: path.join(__dirname, "..", ".env") });
 
-// DON'T RUN THIS SCRIPT IN PRODUCTION! It will drop all tables and data in the database.
-// IT IS INTENDED FOR DEVELOPMENT PURPOSES ONLY.
+// DEV ONLY: drops every table and all data. Never run this against production.
 //
 // Usage: node config/setup.js
-//
-// What this script does:
-//   1. Connects to the default "postgres" database to create LMS_db if it doesn't exist.
-//   2. Drops and recreates the public and rate_limit schemas for a clean slate.
-//   3. Runs migrations/schema.sql to create all tables.
+//   1. creates LMS_db (via the default "postgres" DB) if it doesn't exist
+//   2. drops and recreates the public and rate_limit schemas
+//   3. runs migrations/schema.sql
 
 const DB_NAME = process.env.DB_DATABASE || "LMS_db";
 
-// ── Helper: build a Pool for a specific database ─────────────────────────────
 function makePool(database) {
   return new Pool({
     user: process.env.DB_USER,
@@ -30,7 +26,6 @@ function makePool(database) {
 async function setupDatabase() {
   console.log("🚀 Starting database setup...");
 
-  // ── Guard: warn if .env is missing ──────────────────────────────────────────
   const envPath = path.join(__dirname, "..", ".env");
   if (!fs.existsSync(envPath)) {
     console.warn(
@@ -38,16 +33,13 @@ async function setupDatabase() {
     );
   }
 
-  // ── Guard: check schema.sql exists early ────────────────────────────────────
   const schemaPath = path.join(__dirname, "..", "migrations", "schema.sql");
   if (!fs.existsSync(schemaPath)) {
     console.error(`❌ schema.sql not found at: ${schemaPath}`);
     process.exit(1);
   }
 
-  // ── Step 1: Connect to "postgres" DB and create LMS_db if missing ───────────
-  // We must connect to a database that already exists (postgres is always there).
-  // We can't connect to LMS_db if it doesn't exist yet.
+  // LMS_db may not exist yet, so connect to the always-present postgres DB first.
   console.log(`🔌 Connecting to "postgres" database to check if "${DB_NAME}" exists...`);
   const bootstrapPool = makePool("postgres");
   const bootstrapClient = await bootstrapPool.connect().catch((err) => {
@@ -76,7 +68,6 @@ async function setupDatabase() {
     await bootstrapPool.end();
   }
 
-  // ── Step 2: Connect to LMS_db and reset schemas ──────────────────────────────
   console.log(`🔌 Connecting to "${DB_NAME}"...`);
   const appPool = makePool(DB_NAME);
   const client = await appPool.connect().catch((err) => {
@@ -94,21 +85,16 @@ async function setupDatabase() {
     await client.query("GRANT ALL ON SCHEMA public TO public");
     console.log("✅ Schemas reset.");
 
-    // ── Step 3: Run schema.sql ─────────────────────────────────────────────────
     console.log("📄 Running schema.sql...");
     let schema = fs.readFileSync(schemaPath, "utf8");
 
-    // Strip psql-only meta-commands (\restrict, \unrestrict, etc.) that the
-    // pg Node.js driver does not understand and would throw a syntax error on.
+    // pg can't run psql meta-commands (\restrict, \unrestrict, ...)
     schema = schema.replace(/^\\[a-z].*$/gim, "");
 
-    // Strip CREATE/ALTER SCHEMA statements — setup.js already creates the
-    // schemas fresh above, so running them again would cause a "already exists" error.
+    // schemas were created above; running CREATE SCHEMA again fails with "already exists"
     schema = schema.replace(/^(CREATE|ALTER)\s+SCHEMA\b.*$/gim, "");
 
-    // Strip ownership changes. The dump assigns every object to the role that produced
-    // it (lms_admin), which usually doesn't exist on another machine; objects should
-    // simply belong to DB_USER, the role running this setup.
+    // The dump assigns every object to lms_admin, which usually doesn't exist on another machine. Let objects belong to DB_USER instead.
     schema = schema.replace(/^ALTER\s+.+\s+OWNER\s+TO\s+\S+;\s*$/gim, "");
 
     await client.query(schema);
@@ -122,9 +108,7 @@ async function setupDatabase() {
     await client.query("DROP SCHEMA IF EXISTS rate_limit CASCADE");
     await client.query("CREATE SCHEMA rate_limit");
 
-    // ── Step 4: Run numbered migration/seed files in order ────────────────────
-    // Any file matching /^\d+_.*\.sql$/ in the migrations folder is run in
-    // alphabetical (numeric) order. This includes seed files like 04_seed_barangays.sql.
+    // runs every NN_*.sql in migrations/ in numeric order, seeds included (e.g. 04_seed_barangays.sql)
     const migrationsDir = path.join(__dirname, "..", "migrations");
     const migrationFiles = fs
       .readdirSync(migrationsDir)

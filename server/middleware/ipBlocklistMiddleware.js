@@ -10,13 +10,12 @@ const ipBlocklistMiddleware = async (req, res, next) => {
   // (configured in server.js for production). Reading req.headers['x-forwarded-for']
   // directly is spoofable by any client that can forge that header.
   const clientIp = req.ip || req.socket.remoteAddress;
-  // Normalize IPv6 localhost to IPv4 if needed
+  // treat IPv6 localhost as 127.0.0.1
   const normalizedIp = clientIp === '::1' ? '127.0.0.1' : clientIp?.split(',')[0].trim();
   
   try {
     const now = Date.now();
     
-    // Refresh cache periodically
     if (now - lastCacheTime > CACHE_TTL) {
       const result = await pool.query(`SELECT ip_address FROM public.blocked_ips`);
       blockedIpsCache = new Set(result.rows.map(row => row.ip_address));

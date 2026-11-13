@@ -1,10 +1,8 @@
 const { ROLE_PERMISSIONS } = require("../config/permissions");
 
-// @desc    Ensures the authenticated user has the specified granular permission
-// @access  Used after authentication middleware (e.g., adminMiddleware)
+// checks a single granular permission; mount after authenticate
 const requirePermission = (permission) => {
   return (req, res, next) => {
-    // Failsafe: Ensure previous middleware actually attached the user object
     if (!req.user || !req.user.role) {
       return res.status(401).json({ error: "Unauthorized: User session not attached." });
     }

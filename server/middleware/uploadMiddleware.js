@@ -8,9 +8,7 @@ require('dotenv').config();
 const useS3 = process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY;
 const bucketName = process.env.AWS_S3_BUCKET_NAME || 'bacolor-lms-media';
 
-// ─── SECURITY: Strict MIME type + extension whitelist ────────────────────────
-// Two-layer check: MIME type AND file extension must both be on the allow-list.
-// This prevents MIME spoofing (e.g. a .php file renamed to .mp4).
+// MIME type and extension must both be allowed, so a .php renamed to .mp4 is rejected.
 const ALLOWED_MIME_TYPES = new Set([
   'video/mp4',
   'video/webm',
@@ -40,14 +38,13 @@ const fileFilter = (req, file, cb) => {
     return cb(null, true);
   }
 
-  // Reject — create a typed error so the wrapper can return the right response
+  // typed error so the wrapper can return a 400 with the reason
   const err = new Error(
     `File type not permitted. Only videos (MP4, WebM, OGG), documents (PDF, DOCX), and images are accepted. Received: ${file.mimetype}`
   );
   err.code = 'INVALID_FILE_TYPE';
   return cb(err, false);
 };
-// ─────────────────────────────────────────────────────────────────────────────
 
 let storage;
 
@@ -65,7 +62,7 @@ if (useS3) {
     }
   });
 } else {
-  // Local fallback for development
+  // local fallback for development
   const uploadDir = path.join(__dirname, '..', 'uploads');
   if (!fs.existsSync(uploadDir)) {
     fs.mkdirSync(uploadDir, { recursive: true });
@@ -86,7 +83,7 @@ const upload = multer({
   storage: storage,
   fileFilter: fileFilter,
   limits: {
-    fileSize: 50 * 1024 * 1024, // 50 MB limit for strict Node.js memory defense
+    fileSize: 50 * 1024 * 1024, // keeps uploads from exhausting Node memory
   }
 });
 
@@ -103,7 +100,6 @@ const uploadMiddleware = (req, res, next) => {
       }
       return res.status(400).json({ success: false, message: err.message });
     } else if (err && err.code === 'INVALID_FILE_TYPE') {
-      // Rejected by our fileFilter — return a clean 400 with the reason
       return res.status(400).json({ success: false, message: err.message });
     } else if (err) {
       console.error("Upload Error:", err);
