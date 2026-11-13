@@ -817,11 +817,10 @@ exports.getPendingModuleRequests = async (req, res) => {
     // Default to pending if no status is provided
     const status = req.query.status || "pending";
 
-    // Only allow these two statuses
-    if (!["pending", "approved"].includes(status)) {
+    if (!["pending", "approved", "rejected"].includes(status)) {
       return res.status(400).json({
         success: false,
-        message: "Invalid request status. Use 'pending' or 'approved'.",
+        message: "Invalid request status. Use 'pending', 'approved' or 'rejected'.",
       });
     }
 
@@ -847,6 +846,7 @@ exports.approveModuleRequest = async (req, res) => {
   const { requestId } = req.params;
   try {
     const code = await ModuleService.approveModuleRequest(requestId);
+    await logActivity(req.user.id, `Approved enrollment code request #${requestId}`);
     return res.status(200).json({
       success: true,
       message: "Request approved successfully!",
@@ -854,9 +854,63 @@ exports.approveModuleRequest = async (req, res) => {
     });
   } catch (error) {
     console.error("Error approving module request:", error);
-    return res.status(400).json({
+    return res.status(error.statusCode || 400).json({
       success: false,
       message: error.message || "Failed to approve request.",
+    });
+  }
+};
+
+// @desc    Accept or decline several pending module requests at once
+// @access  Private (Admin)
+exports.bulkDecideModuleRequests = async (req, res) => {
+  const { requestIds, decision } = req.body || {};
+
+  if (!["approved", "rejected"].includes(decision)) {
+    return res.status(400).json({ success: false, message: "Decision must be 'approved' or 'rejected'." });
+  }
+  if (
+    !Array.isArray(requestIds) ||
+    requestIds.length === 0 ||
+    requestIds.length > 100 ||
+    !requestIds.every((id) => Number.isInteger(id) && id > 0)
+  ) {
+    return res.status(400).json({ success: false, message: "Send 1 to 100 request IDs." });
+  }
+
+  try {
+    const decided = await ModuleService.decideModuleRequests([...new Set(requestIds)], decision);
+    const verb = decision === "approved" ? "Approved" : "Declined";
+    if (decided.length > 0) {
+      await logActivity(req.user.id, `${verb} ${decided.length} enrollment code request(s): #${decided.join(", #")}`);
+    }
+    return res.status(200).json({
+      success: true,
+      decided,
+      skipped: requestIds.length - decided.length,
+    });
+  } catch (error) {
+    console.error("Error deciding module requests:", error);
+    return res.status(500).json({ success: false, message: "Failed to update requests." });
+  }
+};
+
+// @desc    Decline a user's module request
+// @access  Private (Admin)
+exports.rejectModuleRequest = async (req, res) => {
+  const { requestId } = req.params;
+  try {
+    await ModuleService.rejectModuleRequest(requestId);
+    await logActivity(req.user.id, `Declined enrollment code request #${requestId}`);
+    return res.status(200).json({
+      success: true,
+      message: "Request declined.",
+    });
+  } catch (error) {
+    console.error("Error declining module request:", error);
+    return res.status(error.statusCode || 400).json({
+      success: false,
+      message: error.message || "Failed to decline request.",
     });
   }
 };
