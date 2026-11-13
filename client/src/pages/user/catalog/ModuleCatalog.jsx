@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -12,7 +12,7 @@ import ModuleSkeleton from "../../../components/ui/modules/ModuleSkeleton.jsx";
 import continuousLearningImg from "../../../assets/continuous-learning.svg";
 import useDebounce from "../../../hooks/useDebounce";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { Search01Icon, Book02Icon, HelpSquareIcon } from "@hugeicons/core-free-icons";
+import { Search01Icon, HelpSquareIcon } from "@hugeicons/core-free-icons";
 import { decodeHtml } from "../../../utils/textUtils";
 import { useOfflineSession } from "../../../hooks/offlineSession";
 import noInternetIMG from "../../../assets/undraw-Question.svg";
@@ -110,9 +110,13 @@ export default function UserModuleCatalog() {
     return result;
   }, [modules, selectedCategory, debouncedSearch]);
 
-  useEffect(() => {
+  // Back to page 1 when the search or category changes (adjusted during render, not in an effect)
+  const filterKey = `${debouncedSearch}\u0000${selectedCategory}`;
+  const [pagedFilterKey, setPagedFilterKey] = useState(filterKey);
+  if (filterKey !== pagedFilterKey) {
+    setPagedFilterKey(filterKey);
     setCurrentPage(1);
-  }, [debouncedSearch, selectedCategory]);
+  }
 
   const totalPages = Math.ceil(filteredModules.length / itemsPerPage) || 1;
   const paginatedModules = useMemo(() => {

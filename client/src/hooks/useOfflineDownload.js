@@ -27,7 +27,6 @@ export function useOfflineDownload(moduleId) {
           setIsDownloaded(true);
           return;
         }
-        const exists = await localDb.module_data.get(moduleId);
         setIsDownloaded(false); // Structure alone is not a completed download.
       } catch (err) {
         console.warn("Failed to check offline status:", err);
@@ -62,7 +61,7 @@ export function useOfflineDownload(moduleId) {
               const quizRes = await apiClient.get(`/modules/steps/${step.id}/assessment`);
               localStorage.setItem(`lms_offline_assessment_${userId}_${step.id}`, JSON.stringify(quizRes.data?.data || []));
             } catch (error) {
-              throw new Error(`Assessment ${step.id} could not be downloaded: ${error.message}`);
+              throw new Error(`Assessment ${step.id} could not be downloaded: ${error.message}`, { cause: error });
             }
           }
         }

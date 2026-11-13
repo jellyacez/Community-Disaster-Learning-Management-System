@@ -40,6 +40,11 @@ export default function ProtectedRoute({ allowedRoles = [] }) {
     impersonatedUser = null;
   }
 
+  // Offline navigation skips the network status check (adjusted during render, not in an effect)
+  if (isOffline && !isMaintenanceChecked) {
+    setIsMaintenanceChecked(true);
+  }
+
   const isSuperAdmin = session?.user?.role === "super_admin";
   const isAdmin = (session?.user?.role && ADMIN_ROLES.includes(session.user.role)) || isSuperAdmin;
 
@@ -59,7 +64,6 @@ export default function ProtectedRoute({ allowedRoles = [] }) {
 
     // Skip network status check if offline so offline navigation is instant
     if (isOffline) {
-      setIsMaintenanceChecked(true);
       return () => {
         isMounted = false;
       };

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import apiClient from "../../../../../lib/apiClient";
 import useDebounce from "../../../../../hooks/useDebounce";
@@ -13,10 +13,13 @@ export function useExpiringFeed() {
 
   const debouncedSearch = useDebounce(searchInput, 350);
 
-  // Automatically reset to page 1 whenever any filter or search changes
-  useEffect(() => {
+  // Reset to page 1 whenever any filter or search changes (adjusted during render, not in an effect)
+  const filterKey = [debouncedSearch, selectedBarangay, selectedModule, selectedStatus].join("\u0000");
+  const [pagedFilterKey, setPagedFilterKey] = useState(filterKey);
+  if (filterKey !== pagedFilterKey) {
+    setPagedFilterKey(filterKey);
     setPage(1);
-  }, [debouncedSearch, selectedBarangay, selectedModule, selectedStatus]);
+  }
 
   const query = useQuery({
     queryKey: [

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import { HugeiconsIcon } from "@hugeicons/react";
@@ -25,27 +25,28 @@ import LoginHistory from "../../../components/settings/LoginHistory";
 
 function AdminAccountPreferences({ session }) {
   const queryClient = useQueryClient();
-  const [names, setNames] = useState({
-    first_name: "",
-    middle_name: "",
-    last_name: "",
+  const user = session?.user;
+  // Existing full names cannot reliably be split into name components.
+  const namesFromUser = () => ({
+    first_name: user?.first_name || "",
+    middle_name: user?.middle_name || "",
+    last_name: user?.last_name || "",
   });
+  const [names, setNames] = useState(namesFromUser);
   const [errors, setErrors] = useState({});
   const [isUpdating, setIsUpdating] = useState(false);
 
-  const user = session?.user;
   const userRole = user?.role || "admin";
   const isBarangayAdmin = userRole === "barangay_admin";
 
-  useEffect(() => {
-    // Existing full names cannot reliably be split into name components.
-    setNames({
-      first_name: user?.first_name || "",
-      middle_name: user?.middle_name || "",
-      last_name: user?.last_name || "",
-    });
+  // Reload the fields when the user or their saved name changes (adjusted during render, not in an effect)
+  const userNameKey = [user?.id, user?.first_name, user?.middle_name, user?.last_name].join("\u0000");
+  const [loadedNameKey, setLoadedNameKey] = useState(userNameKey);
+  if (userNameKey !== loadedNameKey) {
+    setLoadedNameKey(userNameKey);
+    setNames(namesFromUser());
     setErrors({});
-  }, [user?.id, user?.first_name, user?.middle_name, user?.last_name]);
+  }
 
   const { data: barangays = [] } = useQuery({
     queryKey: ["publicBarangaysList"],

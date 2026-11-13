@@ -27,7 +27,7 @@ function validateNamePart(value, field) {
   if (clean.length > 100)
     return `${LABELS[field]} must be 100 characters or fewer.`;
   if (/\p{N}/u.test(clean)) return `${LABELS[field]} cannot contain numbers.`;
-  if (!/^[\p{L}\p{M} .'’\-]+$/u.test(clean) || !/\p{L}/u.test(clean)) {
+  if (!/^[\p{L}\p{M} .'’-]+$/u.test(clean) || !/\p{L}/u.test(clean)) {
     return `${LABELS[field]} can contain letters, spaces, apostrophes, hyphens and periods.`;
   }
   return null;

@@ -29,11 +29,14 @@ export default function SuperBarangayScopeModal() {
       .catch((err) => console.error("Failed to load barangays", err));
   }, [isSuperAdmin]);
 
-  useEffect(() => {
-    if (isSuperAdmin && isBarangayRoute && !selectedId) {
-      setIsOpen(true);
-    }
-  }, [isSuperAdmin, isBarangayRoute, selectedId]);
+  // Open the picker when a barangay route needs a scope and none is chosen yet
+  // (adjusted during render when the condition turns on, not in an effect)
+  const needsScope = Boolean(isSuperAdmin && isBarangayRoute && !selectedId);
+  const [neededScope, setNeededScope] = useState(false);
+  if (needsScope !== neededScope) {
+    setNeededScope(needsScope);
+    if (needsScope) setIsOpen(true);
+  }
 
   if (!isSuperAdmin || !isBarangayRoute) return null;
 

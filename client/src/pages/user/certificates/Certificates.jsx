@@ -21,7 +21,7 @@ export default function UserCertificates() {
 
   const {data: session} = useOfflineSession();
   const userId = session?.user?.id;
-  const { data: snapshot, isLoading, isError, error } = useQuery({
+  const { data: snapshot, isLoading, isError } = useQuery({
     queryKey: ["offlineCertificates", userId],
     enabled: Boolean(userId), networkMode: "offlineFirst", retry: false,
     queryFn: () => loadContent(userId, "certificates", async () => {

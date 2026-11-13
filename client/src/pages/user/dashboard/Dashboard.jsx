@@ -2,7 +2,6 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import { useOutletContext, useLocation, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import apiClient from "../../../lib/apiClient";
-import { useOfflineSession } from "../../../hooks/offlineSession";
 import { useUserDashboard } from "../../../hooks/useUserDashboard";
 import WelcomeModal from "../../../components/ui/modals/WelcomeModal.jsx";
 import DashboardStats from "../../../components/ui/dashboard/DashboardStats.jsx";
@@ -98,7 +97,8 @@ export default function UserDashboard() {
   const navigate = useNavigate();
 
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
-  const { data: session } = useOfflineSession();
+  // Read the clock once per mount for the 48-hour "new" badge
+  const [now] = useState(() => Date.now());
 
   // Infinite Carousel State
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -200,11 +200,13 @@ export default function UserDashboard() {
     return organizeAnnouncements(resolvedAnnouncements);
   }, [resolvedAnnouncements]);
 
-  // Reset slider index if the announcement list changes or shrinks
-  useEffect(() => {
+  // Reset slider index if the announcement list changes or shrinks (adjusted during render, not in an effect)
+  const [slideCount, setSlideCount] = useState(sortedAnnouncements.length);
+  if (sortedAnnouncements.length !== slideCount) {
+    setSlideCount(sortedAnnouncements.length);
     setCurrentSlide(0);
     setIsTransitioning(false);
-  }, [sortedAnnouncements.length]);
+  }
 
   const displayData = useMemo(() => ({
     totalModules: rawData.totalModules || 0,
@@ -264,13 +266,14 @@ export default function UserDashboard() {
     ? `hasSeenWelcome_${effectiveUser.id}`
     : "hasSeenWelcome";
 
+  const effectiveUserId = effectiveUser?.id;
   const handleOnboardingSuccess = useCallback(() => {
     setTimeout(() => setShowWelcomeModal(true), 0);
-    if (effectiveUser?.id) {
-      sessionStorage.setItem(`hasSeenWelcome_${effectiveUser.id}`, "true");
+    if (effectiveUserId) {
+      sessionStorage.setItem(`hasSeenWelcome_${effectiveUserId}`, "true");
     }
     sessionStorage.setItem("hasSeenWelcome", "true");
-  }, [effectiveUser?.id]);
+  }, [effectiveUserId]);
 
   useEffect(() => {
     if (!effectiveUser || needsOnboarding) return;
@@ -284,6 +287,8 @@ export default function UserDashboard() {
       location.state?.showWelcome === true;
 
     if (shouldShowFromRegistration && !hasSeenWelcome) {
+      // Depends on sessionStorage and router state, which render can't read safely
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setShowWelcomeModal(true);
       sessionStorage.removeItem("newlyRegistered");
       sessionStorage.setItem(welcomeKey, "true");
@@ -345,12 +350,12 @@ export default function UserDashboard() {
                     >
                       {carouselItems.map((item, index) => {
                         const rawTitle = item.title || item.headline || item.subject || "Notice";
-                        const itemTitle = rawTitle.replace(/^Advisory\s*\d*[:\-]?\s*/i, "");
+                        const itemTitle = rawTitle.replace(/^Advisory\s*\d*[:-]?\s*/i, "");
                         const itemContent = item.content || item.description || item.body || "";
                         const itemDate = item.created_at || item.createdAt || item.date;
 
-                        const postTime = new Date(itemDate || Date.now()).getTime();
-                        const isNew = (Date.now() - postTime) / (1000 * 60 * 60) <= 48;
+                        const postTime = new Date(itemDate || now).getTime();
+                        const isNew = (now - postTime) / (1000 * 60 * 60) <= 48;
                         const isUrgent = item.isUrgent || item.priority === "urgent";
 
                         return (

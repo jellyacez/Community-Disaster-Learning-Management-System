@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { Link, useOutletContext } from "react-router-dom"; // Added useOutletContext
 import { useUserDashboard } from "../../../hooks/useUserDashboard"; // Imported new hook
 import educationImg from "../../../assets/education.svg";
@@ -104,9 +104,13 @@ export default function UserEnrolledModules() {
     return list;
   }, [enrolledModules, activeTab, selectedCategory, debouncedSearch]);
 
-  useEffect(() => {
+  // Back to page 1 when the search, tab or category changes (adjusted during render, not in an effect)
+  const filterKey = [debouncedSearch, activeTab, selectedCategory].join("\u0000");
+  const [pagedFilterKey, setPagedFilterKey] = useState(filterKey);
+  if (filterKey !== pagedFilterKey) {
+    setPagedFilterKey(filterKey);
     setCurrentPage(1);
-  }, [debouncedSearch, activeTab, selectedCategory]);
+  }
 
   const totalPages = Math.ceil(filteredModules.length / itemsPerPage) || 1;
   const paginatedModules = useMemo(() => {
