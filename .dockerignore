@@ -18,7 +18,10 @@
 **/dist
 
 # Runtime-generated directories
-**/logs
+# Not **/logs: that also strips source folders such as client/src/pages/admin/*/logs/
+logs
+server/logs
+client/logs
 **/tmp
 **/uploads
 
