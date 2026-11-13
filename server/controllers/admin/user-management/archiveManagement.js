@@ -8,8 +8,6 @@ function isUnscopedRole(role) {
   return role === "super_admin" || (Array.isArray(UNSCOPED_ACCESS_ROLES) && UNSCOPED_ACCESS_ROLES.includes(role));
 }
 
-// @desc    Archive or unarchive a user
-// @access  Private (admin only — actor must strictly outrank target)
 exports.archiveUser = async (req, res) => {
   const { id } = req.params;
 
@@ -49,7 +47,6 @@ exports.archiveUser = async (req, res) => {
 
     const targetUser = targetResult.rows[0];
 
-    // Protect super_admin from being archived
     if (targetUser.role === 'super_admin') {
       return res.status(403).json({ success: false, message: 'Super Administrator accounts cannot be archived.' });
     }
@@ -83,8 +80,6 @@ exports.archiveUser = async (req, res) => {
   }
 };
 
-// @desc    Bulk archive or unarchive users
-// @access  Private (admin only — actor must strictly outrank every target)
 exports.bulkArchiveUsers = async (req, res) => {
   const { userIds, archived } = req.body;
   if (!Array.isArray(userIds) || userIds.length === 0) {

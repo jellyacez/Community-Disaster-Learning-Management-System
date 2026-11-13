@@ -74,7 +74,6 @@ exports.replyToFeedback = async (req, res) => {
   }
 };
 
-// @desc    Close a feedback ticket
 // @route   PUT /api/admin/mdrrmo/feedback/:id/close
 exports.closeFeedbackThread = async (req, res) => {
   try {

@@ -36,7 +36,6 @@ const handle = (fn) => async (req, res) => {
 const invalidId = (res) => res.status(400).json({ success: false, message: "Invalid identifier." });
 
 // @desc    Start or resume the learner's attempt at a final assessment
-// @access  Private (enrolled learners; admins may preview unpublished modules)
 exports.startAttempt = handle(async (req, res) => {
   const modId = parseId(req.params.id);
   const stepId = parseId(req.params.stepId);
@@ -49,7 +48,6 @@ exports.startAttempt = handle(async (req, res) => {
 });
 
 // @desc    Lock in an answer to the current question and receive its feedback
-// @access  Private (attempt owner)
 exports.answerQuestion = handle(async (req, res) => {
   const attemptId = parseId(req.params.attemptId);
   const questionId = parseId(req.body?.questionId);
@@ -60,7 +58,6 @@ exports.answerQuestion = handle(async (req, res) => {
 });
 
 // @desc    Move to the next question (starts its clock)
-// @access  Private (attempt owner)
 exports.nextQuestion = handle(async (req, res) => {
   const attemptId = parseId(req.params.attemptId);
   if (!attemptId) return invalidId(res);
@@ -70,8 +67,6 @@ exports.nextQuestion = handle(async (req, res) => {
   return res.json({ success: true, data });
 });
 
-// @desc    Record that the learner left the browser tab during the attempt
-// @access  Private (attempt owner)
 exports.reportTabSwitch = handle(async (req, res) => {
   const attemptId = parseId(req.params.attemptId);
   if (!attemptId) return invalidId(res);
@@ -81,7 +76,6 @@ exports.reportTabSwitch = handle(async (req, res) => {
 });
 
 // @desc    Grade the recorded answers and complete the step
-// @access  Private (attempt owner)
 exports.submitAttempt = handle(async (req, res) => {
   const attemptId = parseId(req.params.attemptId);
   if (!attemptId) return invalidId(res);

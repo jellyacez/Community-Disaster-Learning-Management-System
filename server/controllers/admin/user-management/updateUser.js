@@ -8,7 +8,6 @@ function isUnscopedRole(role) {
 }
 
 // @desc    Updates user demographic details and archived status
-// @access  Private (admin only — actor must strictly outrank target)
 exports.updateUser = async (req, res) => {
   const { id } = req.params;
   const { name, email, archived } = req.body;
@@ -23,7 +22,7 @@ exports.updateUser = async (req, res) => {
     return res.status(401).json({ success: false, message: "Unauthorized." });
   }
 
-  // Anti-Lockout Safeguard: Cannot archive or ban yourself
+  // can't archive yourself
   if (String(adminContext.id) === String(id) && (archived === true || archived === "true")) {
     return res.status(400).json({
       success: false,
@@ -60,7 +59,7 @@ exports.updateUser = async (req, res) => {
       });
     }
 
-    // super_admin outranks all subordinate roles; otherwise enforce standard hierarchy
+    // super_admin outranks everyone; other actors go through the rank check
     if (adminContext.role !== 'super_admin') {
       assertActorOutranksTarget(adminContext.role, targetUser.role);
     }

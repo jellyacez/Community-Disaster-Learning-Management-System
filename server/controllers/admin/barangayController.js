@@ -17,7 +17,7 @@ function resolveBarangayId(req) {
   return req.user?.barangay_id || null;
 }
 
-// 1. GET /api/admin/barangay/analytics
+// @route   GET /api/admin/barangay/analytics
 exports.getBarangayAnalytics = async (req, res) => {
   try {
     const barangayId = resolveBarangayId(req);
@@ -40,7 +40,7 @@ exports.getBarangayAnalytics = async (req, res) => {
   }
 };
 
-// 2. GET /api/admin/barangay/announcements
+// @route   GET /api/admin/barangay/announcements
 exports.getBarangayAnnouncements = async (req, res) => {
   try {
     const barangayId = resolveBarangayId(req);
@@ -60,7 +60,7 @@ exports.getBarangayAnnouncements = async (req, res) => {
   }
 };
 
-// 3. POST /api/admin/barangay/announcements
+// @route   POST /api/admin/barangay/announcements
 exports.createBarangayAnnouncement = async (req, res) => {
   try {
     const { title, content, priority, target_barangay_id, duration_hours } = req.body;
@@ -135,7 +135,7 @@ exports.createBarangayAnnouncement = async (req, res) => {
   }
 };
 
-// PATCH /api/admin/barangay/announcements/:id/lift
+// @route   PATCH /api/admin/barangay/announcements/:id/lift
 exports.liftAnnouncement = async (req, res) => {
   try {
     const announcementId = parseInt(req.params.id, 10);
@@ -173,7 +173,7 @@ exports.liftAnnouncement = async (req, res) => {
   }
 };
 
-// 4. GET /api/admin/barangay/activity-log
+// @route   GET /api/admin/barangay/activity-log
 exports.getBarangayActivityLog = async (req, res) => {
   try {
     const barangayId = resolveBarangayId(req);
@@ -196,7 +196,7 @@ exports.getBarangayActivityLog = async (req, res) => {
   }
 };
 
-// 5. GET /api/admin/barangay/certifications
+// @route   GET /api/admin/barangay/certifications
 exports.getBarangayCertifications = async (req, res) => {
   try {
     const barangayId = resolveBarangayId(req);
@@ -222,7 +222,7 @@ exports.getBarangayCertifications = async (req, res) => {
     });
   }
 };
-// 6. GET /api/admin/barangay/report/export?from=YYYY-MM-DD&to=YYYY-MM-DD&sheets=...
+// @route   GET /api/admin/barangay/report/export?from=YYYY-MM-DD&to=YYYY-MM-DD&sheets=...
 // Same accomplishment report as the MDRRMO one, limited to this barangay's residents
 const mdrrmoReportService = require("../../services/admin/MdrrmoReportService");
 const { buildMdrrmoReportWorkbook } = require("../../utils/mdrrmoReportWorkbook");

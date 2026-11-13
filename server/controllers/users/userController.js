@@ -3,8 +3,6 @@ const UserService = require("../../services/users/UserService");
 const { logActivity } = require("../../utils/logger");
 const { sendAccountNotice } = require("../../services/accountNoticeService");
 
-// @desc    Retrieves a list of authentication providers linked to the current user
-// @access  Private
 exports.getProviders = async (req, res) => {
   try {
     const providers = await UserService.getProviders(req.user.id);
@@ -14,10 +12,8 @@ exports.getProviders = async (req, res) => {
     res.status(500).json({ success: false, message: "Failed to retrieve providers." });
   }
 };
-// --- End of getProviders ---
 
 // @desc    Completes a new user's profile by saving required demographic information
-// @access  Private
 exports.onboarding = async (req, res) => {
   const { name, barangay } = req.body;
 
@@ -42,10 +38,7 @@ exports.onboarding = async (req, res) => {
     res.status(500).json({ success: false, message: "Failed to complete onboarding." });
   }
 };
-// --- End of onboarding ---
 
-// @desc    Retrieves all registered users and their details for the admin dashboard
-// @access  Private (admin only)
 exports.getAllUsers = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
@@ -70,10 +63,8 @@ exports.getAllUsers = async (req, res) => {
     res.status(500).json({ success: false, message: "Failed to retrieve users." });
   }
 };
-// --- End of getAllUsers ---
 
 // @desc    Hard deletes a user's account and anonymizes their certificates (Right to Be Forgotten)
-// @access  Private
 exports.deleteAccount = async (req, res) => {
   try {
     const deletedUser = await UserService.deleteAccount(req.user.id);
@@ -99,10 +90,7 @@ exports.deleteAccount = async (req, res) => {
     res.status(500).json({ success: false, message: "Failed to delete account." });
   }
 };
-// --- End of deleteAccount ---
 
-// @desc    Retrieves a specific certificate for the logged in user
-// @access  Private
 exports.getCertificateData = async (req, res) => {
   try {
     const { token } = req.params;
@@ -118,10 +106,8 @@ exports.getCertificateData = async (req, res) => {
     res.status(500).json({ success: false, message: "Failed to retrieve certificate." });
   }
 };
-// --- End of getCertificateData ---
 
 // @desc    Exports the current user's profile, activity, and learning data as JSON
-// @access  Private
 exports.exportUserData = async (req, res) => {
   try {
     const exportData = await UserService.exportUserData(req.user.id);
@@ -141,10 +127,7 @@ exports.exportUserData = async (req, res) => {
     res.status(500).json({ success: false, message: "Failed to export data." });
   }
 };
-// --- End of exportUserData ---
 
-// @desc    Get user's notification settings
-// @access  Private
 exports.getUserSettings = async (req, res) => {
   try {
     const settings = await UserService.getUserSettings(req.user.id);
@@ -157,7 +140,6 @@ exports.getUserSettings = async (req, res) => {
     res.status(500).json({ success: false, message: "Failed to retrieve settings." });
   }
 };
-// --- End of getUserSettings ---
 
 exports.updateUserSettings = async (req, res) => {
   try {
@@ -171,10 +153,7 @@ exports.updateUserSettings = async (req, res) => {
     res.status(500).json({ success: false, message: "Failed to update settings." });
   }
 };
-// --- End of updateUserSettings ---
 
-// @desc    Get the current user's latest in-app notifications
-// @access  Private
 exports.getNotifications = async (req, res) => {
   try {
     const data = await UserService.getNotifications(req.user.id);
@@ -185,8 +164,6 @@ exports.getNotifications = async (req, res) => {
   }
 };
 
-// @desc    Mark all of the current user's notifications as read
-// @access  Private
 exports.markNotificationsRead = async (req, res) => {
   try {
     await UserService.markNotificationsRead(req.user.id);

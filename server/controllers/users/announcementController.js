@@ -6,7 +6,6 @@ const inEffectSql = (t) =>
   `(${t}.priority = 'urgent' AND ${t}.lifted_at IS NULL AND (${t}.expires_at IS NULL OR ${t}.expires_at > NOW()))`;
 
 // @desc    Get paginated announcements: in-effect urgent advisories first, then newest first
-// @access  Private
 exports.getPaginatedAnnouncements = async (req, res) => {
   try {
     const page = parseInt(req.query.page, 10) || 1;
@@ -96,7 +95,7 @@ exports.getPaginatedAnnouncements = async (req, res) => {
         issuer: a.issuer,
         expires_at: a.expires_at,
         lifted_at: a.lifted_at,
-        created_at: a.date, // Preserves raw timestamp for 48h recency calculations
+        created_at: a.date, // raw timestamp for the 48h recency check
         date: dateObj.toLocaleDateString("en-US", {
           month: "short",
           day: "numeric",

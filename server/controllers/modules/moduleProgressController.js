@@ -30,7 +30,6 @@ const formatCompletionResult = (result) => {
 exports.formatCompletionResult = formatCompletionResult;
 
 // @desc    Mark a step as complete (and optionally grade a quiz), update progress
-// @access  Private
 exports.completeModuleStep = async (req, res) => {
   const { id: mod_id, stepId } = req.params;
   const user_id = req.user?.id;
@@ -75,8 +74,6 @@ exports.completeModuleStep = async (req, res) => {
   }
 };
 
-// @desc    Get the overall progress percentage for a module
-// @access  Private
 exports.getModuleProgress = async (req, res) => {
     const { id: moduleId } = req.params;
     const userId = req.user?.id;
@@ -102,8 +99,6 @@ exports.getModuleProgress = async (req, res) => {
     }
 };
 
-// @desc    Synchronize/recalculate overall progress percentage for a module
-// @access  Private
 exports.syncModuleProgress = async (req, res) => {
   const userId = req.user?.id;
   const modId = req.body?.mod_id || req.body?.moduleId;

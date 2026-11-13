@@ -5,7 +5,6 @@ const getAllCertificates = async (req, res) => {
   try {
     const { page = 1, limit = 10, search = "", status = "" } = req.query;
     
-    // Construct admin context from req.user
     const adminContext = {
       role: req.user.role,
       barangay_id: req.user.barangay_id
@@ -43,7 +42,6 @@ const revokeCertificate = async (req, res) => {
     const { certId } = req.params;
     const { reason } = req.body;
 
-    // Construct admin context from req.user
     const adminContext = {
       role: req.user.role,
       barangay_id: req.user.barangay_id

@@ -4,8 +4,6 @@ const { logActivity, logError } = require("../../../utils/logger");
 const { ROLE_RANKS } = require("../../../config/roleHierarchy");
 const { sendAccountNotice } = require("../../../services/accountNoticeService");
 
-// @desc    Update a user's role
-// @access  Private (system_admin and super_admin)
 exports.updateUserRole = async (req, res) => {
   const { id } = req.params;
   const { role } = req.body;
@@ -28,7 +26,7 @@ exports.updateUserRole = async (req, res) => {
 
   const isSuperAdmin = adminContext.role === 'super_admin';
 
-  // Strict Safeguard: Only super_admin can grant the super_admin role
+  // only a super_admin can grant super_admin
   if (role === 'super_admin' && !isSuperAdmin) {
     return res.status(403).json({
       success: false,
@@ -36,7 +34,7 @@ exports.updateUserRole = async (req, res) => {
     });
   }
 
-  // Self-demotion safeguard
+  // can't change your own role
   if (String(adminContext.id) === String(id) && role !== adminContext.role) {
     return res.status(400).json({
       success: false,
@@ -77,7 +75,6 @@ exports.updateUserRole = async (req, res) => {
     const targetCurrentRank = ROLE_RANKS[targetUser.role] || 0;
     const newRoleRank = ROLE_RANKS[role] || 0;
 
-    // Standard hierarchy for non-super_admin actors
     if (!isSuperAdmin) {
       if (targetCurrentRank >= adminRank) {
         throw new Error(`SECURITY_FAULT: Cannot modify role of a user with equal or higher role rank (${targetUser.role}).`);
@@ -87,7 +84,7 @@ exports.updateUserRole = async (req, res) => {
       }
     }
 
-    // Failsafe: Prevent last system_admin or super_admin from demoting out of existence
+    // never demote the last system_admin or super_admin
     if (targetUser.role === 'system_admin' && role !== 'system_admin') {
       const sysAdminCount = await pool.query('SELECT COUNT(*) FROM "user" WHERE role = \'system_admin\'');
       if (parseInt(sysAdminCount.rows[0].count, 10) <= 1) {
@@ -104,7 +101,7 @@ exports.updateUserRole = async (req, res) => {
 
     const result = await pool.query('UPDATE "user" SET role = $1 WHERE id = $2 RETURNING id, email', [role, id]);
 
-    // Revoke sessions on role change so user must re-authenticate with new permissions
+    // revoke sessions so the new permissions apply on next sign-in
     await pool.query('DELETE FROM "session" WHERE "userId" = $1', [id]);
 
     const scopeStr = adminContext.role === 'barangay_admin' ? `Barangay ${adminContext.barangay_id}` : 'Unscoped';

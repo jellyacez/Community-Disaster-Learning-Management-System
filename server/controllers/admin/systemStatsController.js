@@ -1,7 +1,5 @@
 const systemStatsService = require("../../services/admin/SystemStatsService");
 
-// @desc    Get system-wide statistics
-// @access  Private (system_admin only)
 exports.getSystemStats = async (req, res) => {
   try {
     const data = await systemStatsService.getSystemStats();
@@ -13,7 +11,6 @@ exports.getSystemStats = async (req, res) => {
 };
 
 // @desc    Get 24h Traffic Analytics
-// @access  Private (system_admin only)
 exports.getTrafficAnalytics = async (req, res) => {
   try {
     const data = await systemStatsService.getTrafficAnalytics();
@@ -24,8 +21,6 @@ exports.getTrafficAnalytics = async (req, res) => {
   }
 };
 
-// @desc    Get DB health status
-// @access  Private (system_admin only)
 exports.getHealthStatus = async (req, res) => {
   try {
     const data = await systemStatsService.getHealthStatus();

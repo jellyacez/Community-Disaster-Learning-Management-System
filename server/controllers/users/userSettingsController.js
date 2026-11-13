@@ -1,5 +1,4 @@
-const pool = require("../../config/db"); // or "../config/db" depending on folder depth
-// 
+const pool = require("../../config/db");
  exports.getUserSessions = async (req, res) => {
   try {
     const userId = req.user?.id || req.session?.userId;

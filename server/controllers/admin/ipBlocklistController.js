@@ -1,7 +1,5 @@
 const pool = require("../../config/db");
 
-// @desc    Get all blocked IPs
-// @access  Private (system_admin only)
 exports.getBlockedIps = async (req, res) => {
   try {
     const result = await pool.query(
@@ -14,8 +12,6 @@ exports.getBlockedIps = async (req, res) => {
   }
 };
 
-// @desc    Force logout all users globally
-// @access  Private (system_admin only)
 exports.forceLogoutAll = async (req, res) => {
   try {
     const currentUserId = req.user.id;
@@ -38,8 +34,6 @@ exports.forceLogoutAll = async (req, res) => {
   }
 };
 
-// @desc    Add a blocked IP
-// @access  Private (system_admin only)
 exports.addBlockedIp = async (req, res) => {
   const { ip_address, reason } = req.body;
   if (!ip_address) {
@@ -69,8 +63,6 @@ exports.addBlockedIp = async (req, res) => {
   }
 };
 
-// @desc    Remove a blocked IP
-// @access  Private (system_admin only)
 exports.removeBlockedIp = async (req, res) => {
   const { id } = req.params;
   try {

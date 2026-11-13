@@ -201,21 +201,18 @@ exports.restoreDatabaseBackup = async (req, res) => {
 };
 
 // @desc    Download raw server error logs (.log)
-// @access  Private (system_admin only)
 exports.downloadServerLogs = async (req, res) => {
   try {
     const dateStr = new Date().toISOString().replace(/[:.]/g, "-");
     const filename = `server_error_${dateStr}.log`;
     const logsPath = path.join(__dirname, "..", "..", "tmp", filename);
 
-    // Ensure tmp directory exists
     const tmpDir = path.dirname(logsPath);
     if (!fs.existsSync(tmpDir)) {
       fs.mkdirSync(tmpDir, { recursive: true });
     }
 
-    // Scan the logs/ directory for the most recent daily-rotating error log file
-    // (logger.js produces files named error-YYYY-MM-DD.log, not a fixed error.log)
+    // logger.js rotates daily (error-YYYY-MM-DD.log), so pick the newest file
     const logsDir = path.join(__dirname, "..", "..", "logs");
     let realLogFound = false;
 
@@ -224,7 +221,7 @@ exports.downloadServerLogs = async (req, res) => {
         .readdirSync(logsDir)
         .filter((f) => f.startsWith("error-") && f.endsWith(".log"))
         .sort()
-        .reverse(); // most recent date first (lexicographic sort works for YYYY-MM-DD)
+        .reverse(); // newest first; YYYY-MM-DD sorts lexicographically
 
       if (errorLogFiles.length > 0) {
         const mostRecentLog = path.join(logsDir, errorLogFiles[0]);
@@ -234,8 +231,7 @@ exports.downloadServerLogs = async (req, res) => {
     }
 
     if (!realLogFound) {
-      // If no real logs exist (e.g., local dev environment without a file logger),
-      // provide a clean fallback message instead of a fake error trace.
+      // Local dev may run without the file logger, so send a placeholder instead of a fake trace.
       const fallbackLogContent = `[${new Date().toISOString()}] [INFO] System Log Export\nNo active server error log file was found at export time.\nThe system is currently operating normally or file-based logging is disabled in this environment.\n`;
       fs.writeFileSync(logsPath, fallbackLogContent);
     }

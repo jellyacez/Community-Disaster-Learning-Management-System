@@ -1,7 +1,5 @@
 const activityLogService = require("../../services/admin/ActivityLogService");
 
-// @desc    Get paginated activity log
-// @access  Private (system_admin only)
 exports.getActivityLog = async (req, res) => {
   try {
     const result = await activityLogService.getActivityLog(req.query);
@@ -12,8 +10,6 @@ exports.getActivityLog = async (req, res) => {
   }
 };
 
-// @desc    Export activity log to CSV
-// @access  Private (system_admin only)
 exports.exportActivityLog = async (req, res) => {
   try {
     const csvContent = await activityLogService.exportActivityLog(req.user?.id);
@@ -27,7 +23,6 @@ exports.exportActivityLog = async (req, res) => {
 };
 
 // @desc    Get paginated MDRRMO activity log (excludes system admin actions)
-// @access  Private (mdrrmo_admin, head_mdrrmo_admin)
 exports.getMdrrmoActivityLog = async (req, res) => {
   try {
     const result = await activityLogService.getMdrrmoActivityLog(req.query);
@@ -39,7 +34,6 @@ exports.getMdrrmoActivityLog = async (req, res) => {
 };
 
 // @desc    Export MDRRMO activity log to CSV (excludes system admin actions)
-// @access  Private (mdrrmo_admin, head_mdrrmo_admin)
 exports.exportMdrrmoActivityLog = async (req, res) => {
   try {
     const csvContent = await activityLogService.exportMdrrmoActivityLog(req.user?.id);

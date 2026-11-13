@@ -5,7 +5,7 @@ const { validate: isUUID } = require("uuid");
 const verifyCertificate = async (req, res) => {
   const { token } = req.params;
 
-  // 1. Identical generic response for malformed and not-found
+  // same response for malformed and unknown tokens
   const notFoundResponse = { success: false, message: "`Certificate not found." };
 
   if (!token || !isUUID(token)) {
@@ -19,8 +19,7 @@ const verifyCertificate = async (req, res) => {
       return res.status(404).json(notFoundResponse);
     }
 
-    // 2. Return ONLY learner display name, module title, completion_date, expires_at, status
-    // No PII (email, user_id, cert_rec, etc.)
+    // public endpoint: learner name, module title, dates and status only; no PII (email, user_id, cert_rec)
     return res.json({
       success: true,
       data: {
@@ -28,12 +27,11 @@ const verifyCertificate = async (req, res) => {
         module_title: cert.module_title,
         completion_date: cert.completion_date,
         expires_at: cert.expires_at,
-        status: cert.status, // Live-computed in the query (expired if expires_at < NOW())
+        status: cert.status, // computed in the query: expired once expires_at < NOW()
       }
     });
 
   } catch (err) {
-    // 3. Any new catch blocks use logger.logError
     logger.logError('certificate_verification_failure', { 
       token, 
       message: err.message, 

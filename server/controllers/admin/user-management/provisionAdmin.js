@@ -6,8 +6,6 @@ const { getOrgSettings } = require("../../../utils/settings");
 const { generateSecurePassword } = require("../../../utils/passwordGenerator");
 const { assertCanProvision } = require("../../../config/roleHierarchy");
 
-// @desc    Provision a new Admin Account
-// @access  Private (super_admin, system_admin, head_mdrrmo_admin, mdrrmo_admin)
 exports.provisionAdmin = async (req, res) => {
   const { name, email, role, barangay } = req.body;
   let { password } = req.body;
@@ -38,7 +36,7 @@ exports.provisionAdmin = async (req, res) => {
     });
   }
 
-  // Hierarchy enforcement: super_admin bypasses
+  // super_admin skips the hierarchy check
   if (!isSuperAdmin) {
     try {
       assertCanProvision(req.user.role, role);

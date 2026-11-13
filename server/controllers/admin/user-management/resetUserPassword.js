@@ -16,7 +16,6 @@ function isUnscopedRole(role) {
 }
 
 // @desc    Resets a user's password using better-auth admin API (auto-generates if none provided)
-// @access  Private (admin only)
 exports.resetUserPassword = async (req, res) => {
   const { id } = req.params;
   let { password } = req.body;
@@ -58,7 +57,7 @@ exports.resetUserPassword = async (req, res) => {
     }
     const user = userResult.rows[0];
 
-    // Explicit safeguard: non-super_admin cannot touch a super_admin's password
+    // non-super_admins can't reset a super_admin's password
     if (user.role === "super_admin" && adminContext.role !== "super_admin") {
       return res.status(403).json({
         success: false,
@@ -66,12 +65,11 @@ exports.resetUserPassword = async (req, res) => {
       });
     }
 
-    // Enforce rank hierarchy unless caller is super_admin
+    // super_admin skips the rank check
     if (adminContext.role !== "super_admin") {
       assertActorOutranksTarget(adminContext.role, user.role);
     }
 
-    // Set the new password via Better Auth Admin API
     try {
       await auth.api.setUserPassword({
         body: {
@@ -81,7 +79,7 @@ exports.resetUserPassword = async (req, res) => {
         headers: req.headers,
       });
     } catch (authApiErr) {
-      // Fallback: If Better Auth admin plugin method is not enabled, update DB directly using scrypt
+      // fallback when the better-auth admin method isn't enabled: write the scrypt hash directly
       const context = await auth.$context;
       const hasher = context?.password?.hash || context?.auth?.options?.password?.hash;
       
@@ -102,7 +100,7 @@ exports.resetUserPassword = async (req, res) => {
       }
     }
 
-    // Invalidate user sessions so they must log in with the new password
+    // drop existing sessions so the new password is required
     await pool.query('DELETE FROM "session" WHERE "userId" = $1', [id]);
 
     let emailSent = false;

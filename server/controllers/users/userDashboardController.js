@@ -1,7 +1,6 @@
 const DashboardService = require("../../services/users/DashboardService");
 
 // @desc    Fetches aggregated dashboard metrics, active announcements, and current enrollments for the user
-// @access  Private (authenticated users)
 exports.getDashboardData = async (req, res) => {
   try {
     const userId = req.user?.id;

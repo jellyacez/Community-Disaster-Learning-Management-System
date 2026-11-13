@@ -5,13 +5,10 @@ const { logActivity, logError } = require("../../utils/logger");
 const { isAttemptStep } = require("../../services/modules/QuizAttemptService");
 const sseService = require("../../services/notif/sseService");
 
-// Helper function to determine if a module is open to learners
 const isOpenToLearners = (mod) =>
   Boolean(mod) && mod.status === "published" && !mod.moddateremove;
 
-/**
- * Helper function to normalize level payloads so cover_image is never lost
- */
+// keeps cover_image from getting lost in level payloads
 function normalizeLevels(levels = []) {
   if (!Array.isArray(levels)) return [];
 
@@ -29,7 +26,6 @@ function normalizeLevels(levels = []) {
 }
 
 // @desc    Creates a new module and all its nested levels and steps in a transaction
-// @access  Private (admin only)
 exports.createModule = async (req, res) => {
   const validation = validateModuleCreation(req.body);
   if (!validation.isValid) {
@@ -48,7 +44,6 @@ exports.createModule = async (req, res) => {
 
     const mod_id = await ModuleService.createModuleTransaction(payload);
 
-    // Log module creation to activity_log
     const safeModuleName = String(req.body.moduleName || "").replace(
       /[\r\n]/g,
       " ",
@@ -69,10 +64,8 @@ exports.createModule = async (req, res) => {
     });
   }
 };
-// --- End of createModule ---
 
 // @desc    Updates an existing module and reconciles all nested levels and steps in a transaction
-// @access  Private (admin only)
 exports.updateModule = async (req, res) => {
   const { id: mod_id } = req.params;
 
@@ -186,10 +179,8 @@ exports.updateModule = async (req, res) => {
     });
   }
 };
-// --- End of updateModule ---
 
 // @desc    Fetches all modules that the current user is not enrolled in
-// @access  Private
 exports.getAvailableModules = async (req, res) => {
   const user_id = req.user?.id;
   if (!user_id) {
@@ -205,10 +196,7 @@ exports.getAvailableModules = async (req, res) => {
       .json({ success: false, message: "Failed to fetch available modules." });
   }
 };
-// --- End of getAvailableModules ---
 
-// @desc    Enrolls the current authenticated user into a specific module
-// @access  Private
 exports.enrollInModule = async (req, res) => {
   const { id: mod_id } = req.params;
   const user_id = req.user?.id || req.user?.userId;
@@ -236,7 +224,6 @@ exports.enrollInModule = async (req, res) => {
         .json({ success: false, message: "Target training module not found." });
     }
 
-    // Verify Prerequisites
     if (!isAdmin) {
       const allowed = await ModuleService.checkPrerequisitesMet(
         user_id,
@@ -311,10 +298,7 @@ exports.enrollInModule = async (req, res) => {
     });
   }
 };
-// --- End of enrollInModule ---
 
-// @desc    Get a module's enrollment code (for the admin to share with learners)
-// @access  Private (admin with manage_modules)
 exports.getEnrollmentCode = async (req, res) => {
   const parsedModId = parseInt(req.params.id, 10);
   if (isNaN(parsedModId) || parsedModId <= 0) {
@@ -343,7 +327,6 @@ exports.getEnrollmentCode = async (req, res) => {
 };
 
 // @desc    Generate a new enrollment code. Existing enrollees keep their access.
-// @access  Private (admin with manage_modules)
 exports.regenerateEnrollmentCode = async (req, res) => {
   const parsedModId = parseInt(req.params.id, 10);
   if (isNaN(parsedModId) || parsedModId <= 0) {
@@ -387,8 +370,6 @@ exports.regenerateEnrollmentCode = async (req, res) => {
   }
 };
 
-// @desc    Get module data and steps for the Module Viewer
-// @access  Private
 exports.getModuleViewerData = async (req, res) => {
   const { id: mod_id } = req.params;
   const user_id = req.user?.id;
@@ -423,7 +404,6 @@ exports.getModuleViewerData = async (req, res) => {
       });
     }
 
-    // Prerequisite check for non-admin viewers
     if (!isAdmin) {
       const allowed = await ModuleService.checkPrerequisitesMet(
         user_id,
@@ -456,10 +436,7 @@ exports.getModuleViewerData = async (req, res) => {
       .json({ success: false, message: "Internal server error" });
   }
 };
-// --- End of getModuleViewerData ---
 
-// @desc    Get assessment data (questions and choices) for a specific step
-// @access  Private
 exports.getStepAssessment = async (req, res) => {
   const { stepId } = req.params;
 
@@ -503,8 +480,6 @@ exports.getStepAssessment = async (req, res) => {
   }
 };
 
-// @desc    Gets detailed module, level, and step properties (hierarchical view)
-// @access  Private
 exports.getModuleSyllabusDetails = async (req, res) => {
   const { id: mod_id } = req.params;
 
@@ -551,10 +526,7 @@ exports.getModuleSyllabusDetails = async (req, res) => {
     });
   }
 };
-// --- End of getModuleSyllabusDetails ---
 
-// @desc    Get all modules with pagination and optional filters
-// @access  Private (admin/system_admin only)
 exports.getAllModules = async (req, res) => {
   try {
     const {
@@ -593,8 +565,6 @@ exports.getAllModules = async (req, res) => {
   }
 };
 
-// @desc    Update module status (e.g. approve/reject)
-// @access  Private (head_mdrrmo_admin)
 exports.updateModuleStatus = async (req, res) => {
   const { id } = req.params;
   const { status, rejection_reason } = req.body;
@@ -704,8 +674,6 @@ exports.updateModuleStatus = async (req, res) => {
   }
 };
 
-// @desc    Get pending modules for review
-// @access  Private (head_mdrrmo_admin)
 exports.getPendingModulesReview = async (req, res) => {
   try {
     const modules = await ModuleService.getPendingModulesReview();
@@ -721,8 +689,6 @@ exports.getPendingModulesReview = async (req, res) => {
   }
 };
 
-// @desc    Get complete module structure for builder editing/hydration
-// @access  Private (admin only)
 exports.getModuleForEditing = async (req, res) => {
   const { id: mod_id } = req.params;
 
@@ -754,8 +720,6 @@ exports.getModuleForEditing = async (req, res) => {
   }
 };
 
-// @desc    Request an enrollment code for a module from the admin
-// @access  Private
 exports.requestCode = async (req, res) => {
   const { id: mod_id } = req.params;
   const user_id = req.user?.id || req.user?.userId;
@@ -777,7 +741,7 @@ exports.requestCode = async (req, res) => {
       });
     }
 
-    // Check prerequisites BEFORE creating an enrollment request.
+    // check prerequisites first; only eligible users can request a code
     const eligible = await ModuleService.checkPrerequisitesMet(
       user_id,
       parsedModId
@@ -792,7 +756,6 @@ exports.requestCode = async (req, res) => {
       });
     }
 
-    // Only eligible users can request an enrollment code.
     await ModuleService.requestModuleCode(user_id, parsedModId);
 
     return res.status(200).json({
@@ -810,11 +773,8 @@ exports.requestCode = async (req, res) => {
   }
 };
 
-// @desc    Get all pending module requests for admins
-// @access  Private (Admin)
 exports.getPendingModuleRequests = async (req, res) => {
   try {
-    // Default to pending if no status is provided
     const status = req.query.status || "pending";
 
     if (!["pending", "approved", "rejected"].includes(status)) {
@@ -841,7 +801,6 @@ exports.getPendingModuleRequests = async (req, res) => {
 };
 
 // @desc    Approve a user's module request and return the code
-// @access  Private (Admin)
 exports.approveModuleRequest = async (req, res) => {
   const { requestId } = req.params;
   try {
@@ -861,8 +820,6 @@ exports.approveModuleRequest = async (req, res) => {
   }
 };
 
-// @desc    Accept or decline several pending module requests at once
-// @access  Private (Admin)
 exports.bulkDecideModuleRequests = async (req, res) => {
   const { requestIds, decision } = req.body || {};
 
@@ -895,8 +852,6 @@ exports.bulkDecideModuleRequests = async (req, res) => {
   }
 };
 
-// @desc    Decline a user's module request
-// @access  Private (Admin)
 exports.rejectModuleRequest = async (req, res) => {
   const { requestId } = req.params;
   try {

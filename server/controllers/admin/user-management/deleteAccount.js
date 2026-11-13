@@ -4,9 +4,7 @@ const UserService = require("../../../services/users/UserService");
 const { sendAccountNotice } = require("../../../services/accountNoticeService");
 
 // @desc    Admin hard delete a user's account and anonymize certificates
-// @access  Private (system_admin and super_admin only)
 exports.deleteAccount = async (req, res) => {
-  // Allow both super_admin and system_admin
   if (req.user.role !== 'system_admin' && req.user.role !== 'super_admin') {
     return res.status(403).json({ success: false, message: 'Unauthorized to permanently delete users.' });
   }
@@ -23,7 +21,7 @@ exports.deleteAccount = async (req, res) => {
   }
 
   try {
-    // Fetch user details for logging before they are deleted
+    // read before the delete, for the log entry
     const userRes = await pool.query('SELECT u.email, u.role, b.name AS barangay_name FROM "user" u LEFT JOIN barangays b ON u.barangay_id = b.id WHERE u.id = $1', [id]);
     if (userRes.rows.length === 0) {
       return res.status(404).json({ success: false, message: 'User not found.' });
@@ -39,7 +37,6 @@ exports.deleteAccount = async (req, res) => {
       return res.status(403).json({ success: false, message: 'System administrator accounts can only be deleted by a Super Administrator.' });
     }
 
-    // Call the existing pipeline
     const deletedUser = await UserService.deleteAccount(id);
 
     logActivity(req.user.id, `Permanently deleted user ${email} from ${barangay_name || 'No Barangay'}`);

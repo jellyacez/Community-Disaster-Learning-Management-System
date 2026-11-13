@@ -12,8 +12,6 @@ function isUnscopedRole(role) {
   );
 }
 
-// @desc    Ban a user
-// @access  Private (admin only — actor must strictly outrank target)
 exports.banUser = async (req, res) => {
   const { id } = req.params;
 
@@ -161,8 +159,6 @@ exports.banUser = async (req, res) => {
   }
 };
 
-// @desc    Unban a user
-// @access  Private (admin only — actor must strictly outrank target)
 exports.unbanUser = async (req, res) => {
   const { id } = req.params;
   try {

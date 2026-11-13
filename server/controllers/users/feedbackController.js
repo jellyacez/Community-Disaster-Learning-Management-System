@@ -1,7 +1,6 @@
 const feedbackService = require("../../services/feedback/FeedbackService");
 const sseService = require("../../services/notif/sseService");
 
-// @desc    Get logged-in resident's feedback history
 // @route   GET /api/feedbacks/my-submissions
 exports.getFeedbacks = async (req, res) => {
   try {
@@ -17,7 +16,6 @@ exports.getFeedbacks = async (req, res) => {
   }
 };
 
-// @desc    Submit new feedback, inquiry, concern, or report
 // @route   POST /api/feedbacks
 exports.submitFeedback = async (req, res) => {
   try {
@@ -45,7 +43,6 @@ exports.submitFeedback = async (req, res) => {
   }
 };
 
-// @desc    Reply to an existing feedback ticket
 // @route   PUT /api/feedbacks/:id/reply
 exports.userReplyToFeedback = async (req, res) => {
   try {
