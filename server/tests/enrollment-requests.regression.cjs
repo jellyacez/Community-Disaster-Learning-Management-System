@@ -215,7 +215,7 @@ async function main() {
     assert.equal(results.filter((r) => r.status === 200).length, 1);
   });
 
-  // --- Bulk decisions ---
+  // bulk decisions
   const bulkLearners = [];
   for (const label of ["bulk1", "bulk2", "bulk3"]) {
     const learner = await createUser(label, "resident");

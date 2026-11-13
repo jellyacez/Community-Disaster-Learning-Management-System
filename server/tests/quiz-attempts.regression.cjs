@@ -171,7 +171,7 @@ async function main() {
     console.log(`ok - ${name}`);
   };
 
-  // --- The answer key is not exposed --------------------------------------------------
+  // the answer key is not exposed
   const resAssess = await api(a, "GET", `/modules/steps/${mod.stepId}/assessment`);
   check("resident assessment fetch has no answer key", () => {
     assert.equal(resAssess.status, 200);
@@ -192,7 +192,7 @@ async function main() {
     assert.equal(legacyResults.rows[0].n, 0);
   });
 
-  // --- Start, resume, and per-question reveal ----------------------------------------
+  // start, resume, and per-question reveal
   const first = await start(a);
   const s1 = first.body.data;
   check("start returns an open attempt without the key", () => {
@@ -258,7 +258,7 @@ async function main() {
     assert.equal(doubleClick.currentIndex, 1);
   });
 
-  // --- Deadline enforcement ------------------------------------------------------------
+  // deadline enforcement
   await pool.query(
     "UPDATE quiz_attempts SET question_deadline = NOW() - INTERVAL '10 seconds' WHERE attempt_id = $1",
     [s1.attemptId]
@@ -274,7 +274,7 @@ async function main() {
     assert.equal(q.answer.correct, false);
   });
 
-  // --- Grading from recorded answers only ---------------------------------------------
+  // grading from recorded answers only
   const graded = await api(a, "POST", `/modules/attempts/${s1.attemptId}/submit`, { answers: allCorrect });
   check("submit grades the recorded answers, ignoring the request body", () => {
     assert.equal(graded.status, 200);
@@ -292,7 +292,7 @@ async function main() {
     assert.equal(fresh.currentIndex, 0);
   });
 
-  // --- Tab-switch lock -------------------------------------------------------------------
+  // tab-switch lock
   await api(a, "POST", `/modules/attempts/${fresh.attemptId}/tab-switches`);
   const locked = (await api(a, "POST", `/modules/attempts/${fresh.attemptId}/tab-switches`)).body.data;
   const afterLock = await api(a, "POST", `/modules/attempts/${fresh.attemptId}/answers`, {
@@ -307,7 +307,7 @@ async function main() {
     assert.equal(restarted.status, "open");
   });
 
-  // --- A clean pass still issues the certificate ------------------------------------------
+  // a clean pass still issues the certificate
   let state = (await start(b)).body.data;
   for (let i = 0; i < state.total; i++) {
     const qid = currentQuestion(state).question_id;

@@ -147,7 +147,7 @@ async function main() {
     }
   };
 
-  // --- 1. Module status from the request body ---
+  // 1. module status from the request body
   const author = await createUser("author", "mdrrmo_admin");
   const authorCookie = await sessionCookie(author);
 
@@ -174,7 +174,7 @@ async function main() {
     assert.equal(rows.length, 0);
   });
 
-  // --- 2. Revoked certificate renewal ---
+  // 2. revoked certificate renewal
   await check("completing a module doesn't renew a revoked certificate", async () => {
     const ModuleProgressService = require("../services/modules/ModuleProgressService");
     const learner = await createUser("learner", "resident");
@@ -209,7 +209,7 @@ async function main() {
     assert.ok(rows[0].revoked_at, "revocation fields were cleared");
   });
 
-  // --- 3. Editing details of an archived user ---
+  // 3. editing details of an archived user
   const sysAdmin = await createUser("sysadmin", "system_admin");
   const sysCookie = await sessionCookie(sysAdmin);
 
@@ -236,7 +236,7 @@ async function main() {
     assert.equal(rows[0].archived, false);
   });
 
-  // --- 4. Feedback status ---
+  // 4. feedback status
   const resident = await createUser("resident", "resident");
   const residentCookie = await sessionCookie(resident);
   const { rows: fb } = await pool.query(

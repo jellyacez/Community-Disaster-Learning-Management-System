@@ -199,7 +199,7 @@ async function main() {
   };
   const byId = (questions, id) => questions.find((q) => q.question_id === id);
 
-  // --- What each role receives --------------------------------------------------------
+  // what each role receives
   const practiceView = await api(a, "GET", `/modules/steps/${mod.practiceStepId}/assessment`);
   check("practice assessment carries the stored type and explanation", () => {
     assert.equal(practiceView.status, 200);
@@ -220,7 +220,7 @@ async function main() {
     assert.equal(byId(adminView.body.data, mod.final.sequenceId).rationale, EXPLANATION);
   });
 
-  // --- Practice grading: a single required hazard is still multi-select ----------------
+  // practice grading: a single required hazard is still multi-select
   const p = mod.practice;
   const overSelected = await api(a, "POST", `/modules/${mod.modId}/steps/${mod.practiceStepId}/complete`, {
     answers: [
@@ -244,7 +244,7 @@ async function main() {
     assert.equal(exact.body.score, 20);
   });
 
-  // --- Final attempt: kind, hidden explanation, reveal, grading -------------------------
+  // final attempt: kind, hidden explanation, reveal, grading
   const f = mod.final;
   let state = (await api(a, "POST", `/modules/${mod.modId}/steps/${mod.finalStepId}/attempts`)).body.data;
   check("attempt marks the hazard question multi-select and hides explanations", () => {
