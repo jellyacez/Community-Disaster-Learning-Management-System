@@ -12,7 +12,7 @@ function patchOfflineSession(userId, data) {
     localStorage.setItem(key, JSON.stringify(session));
     window.dispatchEvent(new StorageEvent("storage", { key }));
   } catch {
-    // The queued write remains usable if the optional session cache is unavailable.
+    // the queued write still works without the session cache
   }
 }
 

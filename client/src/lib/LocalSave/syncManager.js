@@ -5,8 +5,8 @@ import { authClient } from '../auth-client';
 
 export const MAX_RETRY_COUNT = 5;
 export const MAX_AUTH_RETRY_COUNT = 3; // Bounded retries for transient auth (401) races
-export const BASE_DELAY_MS = 10000; // 10 seconds
-export const MAX_DELAY_MS = 1800000; // 30 minutes
+export const BASE_DELAY_MS = 10000;
+export const MAX_DELAY_MS = 1800000;
 
 let retryTimeoutId = null;
 let isSyncing = false;
@@ -23,22 +23,17 @@ export const calculateBackoff = (retryCount) => {
   return baseBackoff + jitter;
 };
 
-/**
- * Distinguish between transient and terminal errors
- */
 export const isTransientError = (error, retryCount = 0) => {
   if (error.message?.startsWith('Terminal:')) return false;
   // Device network error or timeout while browser reports online
   if (!error.response && navigator.onLine) return true;
   if (error.code === 'ECONNABORTED' || error.code === 'ERR_NETWORK') return true;
 
-  // Rate-limiting (429) is transient
   if (error.response?.status === 429) return true;
 
-  // Server-side errors (500–599) are transient
   if (error.response?.status >= 500 && error.response?.status <= 599) return true;
 
-  // Auth race condition (401 Unauthorized) is transient ONLY within bounded retry budget
+  // a 401 can be an auth race, so retry it within MAX_AUTH_RETRY_COUNT
   if (error.response?.status === 401 && retryCount < MAX_AUTH_RETRY_COUNT) return true;
 
   // Everything else (400, 403, 404, 422, unhandled schema, or 401 past budget) is terminal
@@ -46,9 +41,6 @@ export const isTransientError = (error, retryCount = 0) => {
 };
 
 
-/**
- * Human-readable error message extractor
- */
 export const extractErrorMessage = (error) => {
   if (error.response?.data?.message) return error.response.data.message;
   if (error.response?.data?.error) return error.response.data.error;
@@ -62,9 +54,6 @@ export const extractErrorMessage = (error) => {
   return 'Unknown error during offline synchronization.';
 };
 
-/**
- * Action human-readable labels for notifications and UI
- */
 export const getActionDescription = (task) => {
   if (!task) return 'Unknown Action';
   const p = task.payload || {};
@@ -206,9 +195,7 @@ export const getUnsyncedCount = async () => {
   return items.length;
 };
 
-/**
- * Id of the user currently signed in, or null if it can't be determined.
- */
+/** null when it can't be determined. */
 const getCurrentUserId = async () => {
   try {
     const res = await authClient.getSession();
@@ -247,9 +234,6 @@ export const discardFailedTask = async (syncId) => {
   window.dispatchEvent(new CustomEvent('offline-sync-queue-updated'));
 };
 
-/**
- * Dispatch an individual task based on action_type
- */
 const dispatchTask = async (task) => {
   switch (task.action_type) {
     case 'SUBMIT_FEEDBACK':
@@ -315,9 +299,6 @@ const dispatchTask = async (task) => {
   }
 };
 
-/**
- * Main synchronization loop to process queued offline tasks
- */
 export const processOfflineQueue = async () => {
   if (!navigator.onLine) return;
 
@@ -336,9 +317,8 @@ export const processOfflineQueue = async () => {
       retryTimeoutId = null;
     }
 
-    // Queued actions use whoever is signed in when they sync, so hold back items
-    // recorded by a different user (e.g. after a logout with unsynced progress).
-    // The signed-in user comes from the session.
+    // Queued actions sync as whoever is signed in, so hold back items recorded by a different
+    // user (e.g. after a logout with unsynced progress).
     const userId = await getCurrentUserId();
     if (!userId) return;
     const tasksToProcess = (await getAllPendingWrites()).filter((t) => {
@@ -357,7 +337,7 @@ export const processOfflineQueue = async () => {
 
     for (const task of tasksToProcess) {
       if (String(await getCurrentUserId()) !== String(userId)) break;
-      // Abort loop immediately if device goes offline mid-batch
+      // stop the batch if the device goes offline
       if (!navigator.onLine) {
         console.warn('[SyncManager] Network disconnected mid-sync. Pausing queue.');
         break;
@@ -366,7 +346,6 @@ export const processOfflineQueue = async () => {
       try {
         const res = await dispatchTask(task);
 
-        // Successfully synced: delete from localDb
         await dequeueWrite(task.sync_id);
         console.log(`[SyncManager] Successfully synced task ${task.sync_id} (${task.action_type})`);
 
@@ -378,7 +357,7 @@ export const processOfflineQueue = async () => {
         );
         window.dispatchEvent(new CustomEvent('offline-sync-queue-updated'));
       } catch (error) {
-        // If network dropped mid-request, pause without burning a retry attempt
+        // network dropped mid-request: pause without spending a retry
         if (!navigator.onLine) {
           console.warn(`[SyncManager] Network lost during task ${task.sync_id}. Retaining attempt budget.`);
           break;
@@ -391,7 +370,6 @@ export const processOfflineQueue = async () => {
         const isTransient = isTransientError(error, task.retry_count || 0);
 
         if (isTransient && currentRetries < maxAllowedRetries) {
-          // Schedule next exponential backoff
           const backoffDelay = calculateBackoff(currentRetries);
           const nextRetryAt = Date.now() + backoffDelay;
 
@@ -462,9 +440,7 @@ export const processOfflineQueue = async () => {
   }
 };
 
-/**
- * Check if any tasks are in 'retrying' state and schedule a timer for the earliest next_retry_at
- */
+/** Schedules a timer for the earliest next_retry_at among retrying tasks. */
 const scheduleNextRetryIfNeeded = async () => {
   if (!navigator.onLine) return;
 

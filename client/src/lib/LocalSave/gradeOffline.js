@@ -1,10 +1,8 @@
 /**
- * Provisional offline quiz grading. Mirrors ModuleProgressService.completeModuleStep
- * on the server. The server re-grades the queued answers on sync and stays authoritative.
- *
- * @param {Array} questions Cached assessment questions for the step
+ * Provisional offline grading, mirroring ModuleProgressService.completeModuleStep.
+ * The server re-grades the queued answers on sync and stays authoritative.
  * @param {Array} answers [{ questionId, selectedChoiceIds }]
- * @param {number} passingThreshold Level passing threshold (percent)
+ * @param {number} passingThreshold level passing threshold, in percent
  */
 export function gradeQuizOffline(questions, answers, passingThreshold = 80) {
   let score = 0;

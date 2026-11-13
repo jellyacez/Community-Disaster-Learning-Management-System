@@ -3,11 +3,8 @@ import toast from "react-hot-toast";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { RefreshIcon } from "@hugeicons/core-free-icons";
 
-// Recertification retake tracking
-// - Stores a list of stepIds that the user has pending retakes for, per module
-// - Fires a custom event when the list is updated, so other components can listen for changes
-// - Uses localStorage to persist across sessions, but will fail gracefully if storage is blocked
-// - Provides a helper to show a toast notification when recertification is required
+// Pending recertification retakes per module, kept in localStorage. Fires an event on change;
+// storage failures are ignored.
 const storageKey = (moduleId) => `lms_recert_retake_${moduleId}`;
 
 export const RECERT_RETAKES_UPDATED = "recertification-retakes-updated";
@@ -29,7 +26,7 @@ export const setPendingRetakes = (moduleId, stepIds) => {
       localStorage.removeItem(storageKey(moduleId));
     }
   } catch {
-    // Ignore storage errors (e.g., quota exceeded, storage disabled)
+    // quota exceeded or storage disabled
   }
   window.dispatchEvent(
     new CustomEvent(RECERT_RETAKES_UPDATED, {
