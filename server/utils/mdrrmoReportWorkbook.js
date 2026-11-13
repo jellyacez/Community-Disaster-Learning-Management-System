@@ -172,7 +172,6 @@ async function buildMdrrmoReportWorkbook(
   };
   const { summary: s, certificationStatus: c } = data;
 
-  // --- Summary sheet ---
   const ws = wb.addWorksheet("Summary", {
     pageSetup: { orientation: "portrait", fitToPage: true, fitToWidth: 1, fitToHeight: 0, paperSize: 9 },
   });
@@ -250,7 +249,6 @@ async function buildMdrrmoReportWorkbook(
     row += 1;
   });
 
-  // Signature block
   row += 2;
   ws.getCell(row, 1).value = "Prepared by:";
   ws.getCell(row, 3).value = "Noted by:";
@@ -272,7 +270,6 @@ async function buildMdrrmoReportWorkbook(
   ws.getCell(row, 1).alignment = { horizontal: "center" };
   ws.getCell(row, 3).alignment = { horizontal: "center" };
 
-  // --- Monthly sheet ---
   const monthlyCols = [
     { header: "Month", key: "month", width: 14, align: "left" },
     { header: "New Residents", key: "new_residents", width: 14 },
@@ -292,7 +289,6 @@ async function buildMdrrmoReportWorkbook(
     pass_rate: s.pass_rate,
   });
 
-  // --- Barangay sheet ---
   const barangayCols = [
     { header: "Barangay", key: "barangay", width: 24, align: "left" },
     { header: "Active Registered Residents", key: "registered_residents", width: 14 },
@@ -318,7 +314,7 @@ async function buildMdrrmoReportWorkbook(
     avg_score: s.avg_score,
   });
 
-  // --- Resident roster (barangay report only) ---
+  // resident roster: barangay report only
   const residentCols = [
     { header: "Resident", key: "name", width: 26, align: "left" },
     { header: "Email", key: "email", width: 30, align: "left" },
@@ -348,7 +344,6 @@ async function buildMdrrmoReportWorkbook(
     });
   }
 
-  // --- Module sheet ---
   const moduleCols = [
     { header: "Module ID", key: "mod_id", width: 10, align: "center" },
     { header: "Module Title", key: "title", width: 40, align: "left", wrap: true },

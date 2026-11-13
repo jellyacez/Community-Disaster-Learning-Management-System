@@ -6,19 +6,15 @@ const { getRecertificationReminderEmail } = require("./emailTemplates");
 const { notifyUser } = require("../services/notif/userNotificationService");
 
 /**
- * runCertificateMaintenanceJob
- * 
- * 1. Flips certificates whose expires_at < NOW() and status = 'active' to 'expired'.
- * 2. Queries active certificates within the 30-day window (expires_at <= NOW() + INTERVAL '30 days')
- *    where recert_notified_at IS NULL.
- * 3. Sends recertification reminder email and immediately stamps recert_notified_at = NOW() per certificate.
+ * Expires lapsed certificates, then emails one recertification reminder per certificate
+ * within 30 days of expiry (tracked by recert_notified_at).
  */
 async function runCertificateMaintenanceJob() {
   logger.logInfo("certificate_cron_start", {
     message: "Daily certificate maintenance cron starting."
   });
 
-  // Step 1: Flip expired active certificates (Write-side backstop)
+  // write-side backstop: flip lapsed active certificates to expired
   let expiredCount = 0;
   try {
     const expiryResult = await pool.query(`
@@ -39,7 +35,7 @@ async function runCertificateMaintenanceJob() {
     });
   }
 
-  // Step 2: Fetch active candidates inside the 30-day window that have NOT been notified
+  // active certificates inside the 30-day window that haven't been reminded yet
   let notifiedCount = 0;
   let failedCount = 0;
   try {
@@ -71,10 +67,8 @@ async function runCertificateMaintenanceJob() {
           Math.max(1, row.days_remaining)
         );
 
-        // Send email via nodemailer transporter
         await transporter.sendMail(emailOptions);
 
-        // Immediately stamp recert_notified_at for this specific certificate
         await pool.query(
           `UPDATE certificates SET recert_notified_at = NOW() WHERE cert_id = $1`,
           [row.cert_id]
@@ -97,7 +91,7 @@ async function runCertificateMaintenanceJob() {
           email: row.user_email,
           error: sendErr.message
         });
-        // Row remains recert_notified_at = NULL to be retried on next cron run
+        // left unstamped, so the next run retries it
       }
     }
 

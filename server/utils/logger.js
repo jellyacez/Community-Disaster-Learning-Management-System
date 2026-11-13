@@ -21,10 +21,7 @@ const writeToDisk = (prefix, line) => {
   }
 };
 
-/**
- * Centralized activity logger utility.
- * Extracts client IP safely from Express req or Better Auth ctx headers.
- */
+/** Takes the client IP from an Express req or from better-auth ctx headers. */
 
 exports.logActivity = async (userId, action, context = null, clientIp = null) => {
   if (!userId || !action) return;

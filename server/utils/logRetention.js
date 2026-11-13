@@ -7,13 +7,7 @@ const logger = require("./logger");
 const LOGS_DIR = path.join(__dirname, "../logs");
 const RETENTION_DAYS = 90;
 
-/**
- * Executes the log retention cleanup:
- * 1. Purges database activity_log records older than RETENTION_DAYS (90 days).
- * 2. Purges physical server log files in server/logs/ older than RETENTION_DAYS.
- * 
- * @returns {Promise<{ dbRowsDeleted: number, filesDeleted: number, success: boolean }>}
- */
+/** Deletes activity_log rows and server/logs files older than RETENTION_DAYS. */
 async function runLogRetentionCleanup() {
   logger.logInfo("log_retention_cron_start", {
     message: `Starting daily log retention cleanup (retention window: ${RETENTION_DAYS} days).`
@@ -23,7 +17,6 @@ async function runLogRetentionCleanup() {
   let filesDeleted = 0;
 
   try {
-    // 1. Delete old activity log rows from the database
     const dbRes = await pool.query(
       `DELETE FROM activity_log WHERE act_date < NOW() - INTERVAL '1 day' * $1`,
       [RETENTION_DAYS]
@@ -38,7 +31,6 @@ async function runLogRetentionCleanup() {
   }
 
   try {
-    // 2. Delete old physical log files from server/logs/
     if (fs.existsSync(LOGS_DIR)) {
       const files = fs.readdirSync(LOGS_DIR);
       const cutoffTime = Date.now() - RETENTION_DAYS * 24 * 60 * 60 * 1000;
@@ -57,7 +49,7 @@ async function runLogRetentionCleanup() {
             }
           }
 
-          // Fallback to filesystem modification time if filename parsing wasn't conclusive
+          // fall back to mtime when the filename has no date
           if (!isExpired) {
             const stats = fs.statSync(filePath);
             if (stats.mtimeMs < cutoffTime) {

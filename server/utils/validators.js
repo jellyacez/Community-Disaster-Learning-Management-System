@@ -1,10 +1,7 @@
 const Joi = require("joi");
 const { GRADED_STEP_TYPES, INTERACTION_TYPES } = require("../config/constants");
 
-/**
- * Validates the module creation payload manually.
- * Returns an object { isValid: boolean, error: string | null }
- */
+/** Returns { isValid, error }. */
 exports.validateModuleCreation = (payload) => {
   if (!payload) return { isValid: false, error: "Payload is empty." };
 
@@ -123,11 +120,7 @@ exports.validateModuleCreation = (payload) => {
   return { isValid: true, error: null };
 };
 
-// ---------------------------------------------------------------------
-// Joi Validation Schemas
-// ---------------------------------------------------------------------
 
-// Announcement schema
 // How long an urgent advisory stays in effect (pinned) unless an admin lifts it sooner
 const URGENT_DURATION_HOURS = [6, 12, 24, 48, 72];
 const DEFAULT_URGENT_HOURS = 24;
@@ -147,7 +140,6 @@ const announcementSchema = Joi.object({
   target_barangay_id: Joi.number().integer().positive().allow(null, ""),
 });
 
-// Certificate generation & training hours snapshot
 const issueCertificateSchema = Joi.object({
   moduleId: Joi.number().integer().positive().required().messages({
     "any.required": "Module ID is required.",
@@ -159,14 +151,12 @@ const issueCertificateSchema = Joi.object({
   }),
 });
 
-// Route parameter ID verification (:id)
 const idParamSchema = Joi.object({
   id: Joi.number().integer().positive().required().messages({
     "number.base": "ID must be a valid number.",
   }),
 });
 
-// Query string pagination & filters
 const paginationQuerySchema = Joi.object({
   limit: Joi.number().integer().min(1).max(100).default(50),
   page: Joi.number().integer().min(1).default(1),

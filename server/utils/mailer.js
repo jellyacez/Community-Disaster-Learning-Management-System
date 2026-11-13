@@ -13,7 +13,7 @@ const originalSendMail = transporter.sendMail.bind(transporter);
 transporter.sendMail = async function (mailOptions) {
   try {
     const result = await originalSendMail(mailOptions);
-    // Reactive Check: Email sent successfully, clear any lingering SMTP alert
+    // a send worked, so clear any SMTP_DOWN alert
     require("../services/alertMonitorService").removeAlert("SMTP_DOWN");
     return result;
   } catch (error) {

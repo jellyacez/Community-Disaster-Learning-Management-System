@@ -22,7 +22,6 @@ const parseSecrets = () => {
   return undefined;
 };
 
-// Check if valid Google OAuth keys exist before mounting the provider
 const isGoogleAuthValid = Boolean(
   process.env.GOOGLE_CLIENT_ID &&
   process.env.GOOGLE_CLIENT_SECRET &&
@@ -37,7 +36,7 @@ const auth = betterAuth({
     ? { secret: process.env.BETTER_AUTH_SECRET }
     : {}),
 
-  // 1. Google OAuth Guard to prevent CLIENT_ID_AND_SECRET_REQUIRED crash
+  // without valid keys better-auth crashes with CLIENT_ID_AND_SECRET_REQUIRED
   socialProviders: {
     ...(isGoogleAuthValid
       ? {
@@ -49,7 +48,7 @@ const auth = betterAuth({
       : {}),
   },
 
-  // 2. Map camelCase queries to PostgreSQL snake_case schema columns
+  // map better-auth's camelCase fields to our snake_case columns
   schema: {
     session: {
       fields: {
@@ -91,10 +90,10 @@ const auth = betterAuth({
   },
 
   session: {
-    expiresIn: 60 * 60 * 24 * 7, // Absolute expiration set to 7 days
+    expiresIn: 60 * 60 * 24 * 7,
     updateAge: 60 * 60 * 24, // Roll the session forward if active within 24 hours
     cookieCache: {
-      enabled: false, // Disabled to ensure instant session invalidation for Global Force Logout
+      enabled: false, // off so a global force logout takes effect immediately
       maxAge: 5 * 60,
     },
   },
@@ -102,7 +101,7 @@ const auth = betterAuth({
     enabled: true,
     revokeSessionsOnPasswordReset: true,
     requireEmailVerification: false, // Disabled for development
-    passwordResetTokenExpiresIn: 15 * 60, // 15 minutes in seconds
+    passwordResetTokenExpiresIn: 15 * 60,
     sendResetPassword: async ({ user, token }) => {
       const { orgFooterText, supportEmail } = await getOrgSettings();
       const mailOptions = getResetPasswordEmail(

@@ -1,11 +1,6 @@
 const crypto = require("crypto");
 
-/**
- * Generates a robust 12-character password that passes strict enterprise policies.
- * Contains at least one uppercase letter, one lowercase letter, one number, and one special character.
- * Characters are shuffled using a cryptographically secure Fisher-Yates shuffle.
- * @returns {string} The generated password.
- */
+/** 12 chars with at least one upper, lower, digit and symbol, shuffled with a crypto RNG. */
 function generateSecurePassword() {
   const upper = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
   const lower = "abcdefghijklmnopqrstuvwxyz";
@@ -23,7 +18,6 @@ function generateSecurePassword() {
     pass += all[crypto.randomInt(all.length)];
   }
   
-  // Shuffle the characters cryptographically securely (Fisher-Yates)
   const arr = pass.split('');
   for (let i = arr.length - 1; i > 0; i--) {
     const j = crypto.randomInt(i + 1);
