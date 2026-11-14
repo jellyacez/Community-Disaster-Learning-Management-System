@@ -41,6 +41,35 @@ async function logDatabaseActivity(req, message) {
   }
 }
 
+function getSafetyDumpPath() {
+  return path.resolve(
+    process.env.RESTORE_SAFETY_DUMP_PATH ||
+      path.join(__dirname, "..", "..", "backups", "pre-restore-safety.dump"),
+  );
+}
+
+// Snapshot of the live database taken right before a restore. Server-side only;
+// overwritten each time. Written to a temp file and renamed so a planted symlink at
+// the fixed path is replaced rather than followed.
+async function takeSafetyDump() {
+  const target = getSafetyDumpPath();
+  await fsp.mkdir(path.dirname(target), { recursive: true, mode: 0o700 });
+  const partial = `${target}.${process.pid}.partial`;
+  try {
+    await runPostgresCommand(
+      process.env.PG_DUMP_PATH || "pg_dump",
+      [...getDatabaseArguments(), "--no-password", "-F", "c", "-f", partial],
+      getCommandOptions(),
+    );
+    await fsp.chmod(partial, 0o600);
+    await fsp.rename(partial, target);
+  } catch (error) {
+    await fsp.rm(partial, { force: true });
+    throw error;
+  }
+  return target;
+}
+
 async function removeTemporaryDirectory(directory) {
   if (!directory) return;
   try {
@@ -191,6 +220,8 @@ exports.restoreDatabaseBackup = async (req, res) => {
       ["--list", dumpPath],
       getCommandOptions(),
     );
+    // Abort the restore if the live data cannot be saved first.
+    await takeSafetyDump();
     await logDatabaseActivity(req, "Started database restore");
     await runPostgresCommand(
       restoreBinary,

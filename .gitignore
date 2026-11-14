@@ -34,6 +34,7 @@ node_modules/
 # ── Uploaded / Generated Files ────────────────────────────────────────────────
 /server/uploads/
 /server/tmp/
+/server/backups/
 
 # ── Logs ──────────────────────────────────────────────────────────────────────
 logs/
