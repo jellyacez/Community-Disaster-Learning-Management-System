@@ -121,13 +121,14 @@ async function main() {
   assert.equal((await stored(enrolled.id)).twoFactorEnabled, true, "an enabled flag must not be cleared through update-user");
   console.log("ok - twoFactorEnabled=false cannot clear an enabled flag");
 
-  const renamed = await updateUser(admin, { name: "Regression Renamed" });
+  // Name changes go through first/middle/last_name; the server derives `name` (personName.js)
+  const renamed = await updateUser(admin, { first_name: "Regression", last_name: "Renamed" });
   assert.equal(renamed.ok, true, `name update must still work (${JSON.stringify(renamed)})`);
   assert.equal((await stored(admin.id)).name, "Regression Renamed");
   console.log("ok - name update still works");
 
   const signUp = await auth.api.signUpEmail({
-    body: { email: SIGNUP_EMAIL, password: `Zz-${crypto.randomBytes(6).toString("hex")}-Aa1!`, name: "Regression Signup", barangay: other.name },
+    body: { email: SIGNUP_EMAIL, password: `Zz-${crypto.randomBytes(6).toString("hex")}-Aa1!`, name: "Regression Signup", first_name: "Regression", last_name: "Signup", barangay: other.name },
     headers: new Headers({ "user-agent": UA }),
   });
   created.userIds.push(signUp.user.id);

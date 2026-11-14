@@ -30,7 +30,7 @@ const securityHooksPlugin = () => {
             const changesName = Object.hasOwn(body, "name") ||
               NAME_FIELDS.some((field) => Object.hasOwn(body, field));
             // Avatar-only updates must continue to work for legacy accounts.
-            if (ctx.path === "/update-user" && !changesName) return {};
+            if (ctx.path === "/update-user" && !changesName) return;
 
             const { errors, data } = preparePersonName(body);
             if (!data) {
