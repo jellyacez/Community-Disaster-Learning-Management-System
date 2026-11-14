@@ -1,0 +1,191 @@
+name: Backfill emailVerified (manual)
+
+# One-off: mark accounts verified that were created while email verification was off.
+# Run dry-run first, then apply with expected_count = the accounts_to_verify the dry run printed.
+
+on:
+  workflow_dispatch:
+    inputs:
+      cutoff:
+        description: "Include accounts created before this time, with a UTC offset (e.g. 2026-11-14 18:00:00+08)"
+        required: true
+        type: string
+      mode:
+        description: "dry-run prints counts only; apply runs the UPDATE"
+        required: true
+        type: choice
+        options:
+          - dry-run
+          - apply
+        default: dry-run
+      expected_count:
+        description: "apply only: accounts_to_verify from the dry run"
+        required: false
+        type: string
+      confirm:
+        description: "apply only: type BACKFILL"
+        required: false
+        type: string
+      smtp_check:
+        description: "Also verify SMTP on EC2 and send one email to the SMTP_TEST_TO secret"
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: backfill-email-verified
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    outputs:
+      cutoff: ${{ steps.check.outputs.cutoff }}
+    steps:
+      - name: Check inputs
+        id: check
+        env:
+          CUTOFF: ${{ inputs.cutoff }}
+          MODE: ${{ inputs.mode }}
+          EXPECTED: ${{ inputs.expected_count }}
+          CONFIRM: ${{ inputs.confirm }}
+        run: |
+          set -euo pipefail
+          # These values end up in a shell on EC2, so only these exact shapes are accepted
+          cutoff_re='^[0-9]{4}-[0-9]{2}-[0-9]{2}[ T][0-9]{2}:[0-9]{2}(:[0-9]{2})?([+-][0-9]{2}(:?[0-9]{2})?|Z)$'
+          if ! [[ "$CUTOFF" =~ $cutoff_re ]]; then
+            echo "::error::cutoff must be a date, time and UTC offset, e.g. 2026-11-14 18:00:00+08"
+            exit 1
+          fi
+          case "$MODE" in
+            dry-run) ;;
+            apply)
+              if ! [[ "$EXPECTED" =~ ^[0-9]+$ ]]; then
+                echo "::error::expected_count must be a whole number when mode is apply"
+                exit 1
+              fi
+              if [ "$CONFIRM" != "BACKFILL" ]; then
+                echo "::error::confirm must be BACKFILL when mode is apply"
+                exit 1
+              fi
+              ;;
+            *)
+              echo "::error::mode must be dry-run or apply"
+              exit 1
+              ;;
+          esac
+          # ISO 8601 'T' instead of the space, so the value has no characters a shell treats specially
+          echo "cutoff=${CUTOFF/ /T}" >> "$GITHUB_OUTPUT"
+          echo "mode=$MODE, cutoff=${CUTOFF/ /T}"
+
+  backfill:
+    needs: validate
+    runs-on: ubuntu-latest
+    environment: production-db
+    steps:
+      - name: Back up the database and run the backfill on EC2
+        uses: appleboy/ssh-action@v1.0.3
+        env:
+          CUTOFF: ${{ needs.validate.outputs.cutoff }}
+          MODE: ${{ inputs.mode }}
+          EXPECTED: ${{ inputs.expected_count }}
+          SCRIPT_SHA: ${{ github.sha }}
+        with:
+          host: ${{ secrets.EC2HOST }}
+          username: ${{ secrets.EC2USER }}
+          key: ${{ secrets.EC2SSHKEY }}
+          command_timeout: 30m
+          envs: CUTOFF,MODE,EXPECTED,SCRIPT_SHA
+          script: |
+            set -e
+
+            echo "1. Fetching the script from the commit that started this run..."
+            cd /var/www/lms/Community-Disaster-Learning-Management-System
+            git fetch --no-tags origin "$SCRIPT_SHA"
+            SQL_FILE=$(mktemp /tmp/backfill-email-verified.XXXXXX)
+            trap 'rm -f "$SQL_FILE"' EXIT
+            git show "$SCRIPT_SHA:server/scripts/backfill-email-verified.sql" > "$SQL_FILE"
+            echo "   server/scripts/backfill-email-verified.sql @ $SCRIPT_SHA"
+
+            cd server
+            export $(grep -v '^#' .env | xargs)
+            if [ -z "${DATABASE_URL:-}" ]; then
+              echo "ERROR: DATABASE_URL is not set in server/.env." >&2
+              exit 1
+            fi
+
+            echo "2. Backing up the database..."
+            # Same pg_dump selection as deploy.yml: one whose major version is at least the server's
+            SERVER_MAJOR=$(psql "$DATABASE_URL" -tAc "SHOW server_version_num" | cut -c1-2)
+            if [ -z "$SERVER_MAJOR" ]; then
+              echo "ERROR: could not read the PostgreSQL server version with psql. Check DATABASE_URL in server/.env." >&2
+              exit 1
+            fi
+            PG_DUMP=""
+            for candidate in "${PG_DUMP_PATH:-}" pg_dump "/usr/lib/postgresql/$SERVER_MAJOR/bin/pg_dump" "/usr/pgsql-$SERVER_MAJOR/bin/pg_dump"; do
+              [ -n "$candidate" ] && command -v "$candidate" >/dev/null 2>&1 || continue
+              DUMP_MAJOR=$("$candidate" --version | grep -oE '[0-9]+' | head -1)
+              if [ "$DUMP_MAJOR" -ge "$SERVER_MAJOR" ]; then PG_DUMP="$candidate"; break; fi
+            done
+            if [ -z "$PG_DUMP" ]; then
+              echo "ERROR: no pg_dump for PostgreSQL $SERVER_MAJOR found. Install postgresql-client-$SERVER_MAJOR (Ubuntu) or postgresql$SERVER_MAJOR (Amazon Linux), or set PG_DUMP_PATH in server/.env." >&2
+              exit 1
+            fi
+            mkdir -p "$HOME/backups"
+            chmod 700 "$HOME/backups"
+            BACKUP="$HOME/backups/pre-backfill-email-verified-$(date +%Y%m%d-%H%M%S).dump"
+            # Temp name first so a failed dump never counts as a backup; kept on the server only
+            (umask 077 && "$PG_DUMP" "$DATABASE_URL" -Fc -f "$BACKUP.partial")
+            mv "$BACKUP.partial" "$BACKUP"
+            echo "   backup saved: $BACKUP ($(du -h "$BACKUP" | cut -f1))"
+
+            echo "3. Running the backfill ($MODE)..."
+            if [ "$MODE" = "apply" ]; then
+              psql "$DATABASE_URL" -X -v cutoff="$CUTOFF" -v apply=true -v expected="$EXPECTED" -f "$SQL_FILE"
+            else
+              psql "$DATABASE_URL" -X -v cutoff="$CUTOFF" -f "$SQL_FILE"
+            fi
+            echo "Done."
+
+  smtp-check:
+    needs: validate
+    if: ${{ inputs.smtp_check }}
+    runs-on: ubuntu-latest
+    environment: production-db
+    steps:
+      - name: Verify SMTP and send one test email from EC2
+        uses: appleboy/ssh-action@v1.0.3
+        env:
+          # A secret, not an input, so the address never appears in the run's inputs or logs
+          SMTP_TEST_TO: ${{ secrets.SMTP_TEST_TO }}
+        with:
+          host: ${{ secrets.EC2HOST }}
+          username: ${{ secrets.EC2USER }}
+          key: ${{ secrets.EC2SSHKEY }}
+          envs: SMTP_TEST_TO
+          script: |
+            set -e
+            cd /var/www/lms/Community-Disaster-Learning-Management-System/server
+            node -e '
+              require("dotenv").config({ quiet: true });
+              const { transporter } = require("./utils/mailer");
+              (async () => {
+                if (!process.env.SMTP_TEST_TO) throw Object.assign(new Error("SMTP_TEST_TO secret is not set"), { code: "NO_RECIPIENT" });
+                await transporter.verify();
+                const info = await transporter.sendMail({
+                  from: process.env.EMAIL_USER,
+                  to: process.env.SMTP_TEST_TO,
+                  subject: "DRRM Bacolor LMS: production SMTP check",
+                  text: "Sent by the backfill-email-verified workflow from EC2 with the production .env. No action needed.",
+                });
+                console.log("smtp response:", String(info.response).split(" ")[0]);
+                console.log("message id:", info.messageId);
+                process.exit(0);
+              })().catch((e) => {
+                console.log("smtp check failed:", e.responseCode || e.code || "error");
+                process.exit(1);
+              });
+            '
