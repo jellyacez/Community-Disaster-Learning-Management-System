@@ -1,5 +1,8 @@
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Settings01Icon } from "@hugeicons/core-free-icons";
+import StatusBadge from "../../../../../components/ui/StatusBadge";
+
+const PLATFORM_NAMES = { win32: "Windows", linux: "Linux", darwin: "macOS" };
 
 function SettingRow({ label, value, description, mono = false }) {
   return (
@@ -15,7 +18,12 @@ function SettingRow({ label, value, description, mono = false }) {
   );
 }
 
-export default function RuntimeInfoPanel({ isLoading }) {
+export default function RuntimeInfoPanel({ healthData, uptimeLabel, isLoading }) {
+  const missing = healthData?.config_missing;
+  const platform = healthData?.platform
+    ? `${PLATFORM_NAMES[healthData.platform] || healthData.platform} ${healthData.os_release ?? ""}`.trim()
+    : null;
+
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
       <div className="flex items-center gap-2 mb-2">
@@ -29,20 +37,37 @@ export default function RuntimeInfoPanel({ isLoading }) {
         </div>
       ) : (
         <>
-          <SettingRow 
-            label="Node.js Engine" 
-            value="Active (LTS)" 
-            description="Server runtime status" 
+          <SettingRow
+            label="Node.js"
+            value={healthData?.node_version}
+            description="Version the server runs on"
+            mono
           />
-          <SettingRow 
-            label="Host OS" 
-            value="Online" 
-            description="Underlying operating system" 
+          <SettingRow
+            label="Operating system"
+            value={platform}
+            description="Host platform and release"
+            mono
           />
-          <SettingRow 
-            label="Configuration Readiness" 
-            value="Secured" 
-            description="Environment variables (SMTP, DB, JWT)" 
+          <SettingRow
+            label="Uptime"
+            value={uptimeLabel}
+            description="Since the server last started"
+          />
+          <SettingRow
+            label="Configuration"
+            value={
+              Array.isArray(missing) ? (
+                <StatusBadge color={missing.length ? "red" : "emerald"}>
+                  {missing.length ? `${missing.length} missing` : "All set"}
+                </StatusBadge>
+              ) : null
+            }
+            description={
+              missing?.length
+                ? `Not set: ${missing.join(", ")}`
+                : "Required environment variables are set"
+            }
           />
         </>
       )}

@@ -14,14 +14,6 @@ import InfrastructureOperationsPanel from "./components/InfrastructureOperations
 export default function SystemHealth() {
   useDocumentTitle("System Health | Admin Console");
 
-  const { data: settingsData, isLoading: isSettingsLoading } = useQuery({
-    queryKey: ["systemSettings"],
-    queryFn: async () => {
-      const res = await apiClient.get("/admin/settings");
-      return res.data.data;
-    },
-  });
-
   const { data: healthData, isLoading: isHealthLoading } = useQuery({
     queryKey: ["systemHealth"],
     queryFn: async () => {
@@ -186,7 +178,11 @@ export default function SystemHealth() {
           Configuration & Maintenance
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <RuntimeInfoPanel settingsData={settingsData} isLoading={isSettingsLoading} />
+          <RuntimeInfoPanel
+            healthData={healthData}
+            uptimeLabel={formatUptime(healthData?.uptime_seconds)}
+            isLoading={isHealthLoading}
+          />
           <InfrastructureOperationsPanel />
         </div>
       </div>
