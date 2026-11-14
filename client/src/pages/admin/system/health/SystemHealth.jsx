@@ -155,7 +155,13 @@ export default function SystemHealth() {
                     </div>
                     <span className="text-sm font-semibold text-gray-800">Email SMTP</span>
                   </div>
-                  <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full flex items-center gap-1"><HugeiconsIcon icon={Shield01Icon} className="w-3.5 h-3.5" /> Connected</span>
+                  {healthData?.smtp_status === "connected" ? (
+                    <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full flex items-center gap-1"><HugeiconsIcon icon={Shield01Icon} className="w-3.5 h-3.5" /> Connected</span>
+                  ) : healthData?.smtp_status === "error" ? (
+                    <span className="text-xs font-bold text-red-600 bg-red-50 px-2.5 py-1 rounded-full flex items-center gap-1"><HugeiconsIcon icon={Alert01Icon} className="w-3.5 h-3.5" /> Error</span>
+                  ) : (
+                    <span className="text-xs font-bold text-gray-500 bg-gray-100 px-2.5 py-1 rounded-full flex items-center gap-1">Checking</span>
+                  )}
                 </div>
 
                 <div className="flex items-center justify-between">
@@ -165,7 +171,11 @@ export default function SystemHealth() {
                     </div>
                     <span className="text-sm font-semibold text-gray-800">AWS S3</span>
                   </div>
-                  <span className="text-xs font-bold text-gray-500 bg-gray-100 px-2.5 py-1 rounded-full flex items-center gap-1">Pending Setup</span>
+                  {healthData?.s3_configured ? (
+                    <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full flex items-center gap-1"><HugeiconsIcon icon={Shield01Icon} className="w-3.5 h-3.5" /> Configured</span>
+                  ) : (
+                    <span className="text-xs font-bold text-gray-500 bg-gray-100 px-2.5 py-1 rounded-full flex items-center gap-1">Not configured</span>
+                  )}
                 </div>
               </div>
             </div>
