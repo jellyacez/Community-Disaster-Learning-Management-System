@@ -150,10 +150,11 @@ export default function EmailSignInForm({ initialEmail = "", errorMessage, clear
         errorMsg = "Too many login attempts. Please wait 15 minutes and try again.";
         toast.error(errorMsg);
       } else if (
+        error.code === "EMAIL_NOT_VERIFIED" ||
         rawMsg.includes("not verified") ||
         rawMsg.includes("verify your email")
       ) {
-        errorMsg = "Please verify your email address before signing in. Check your inbox!";
+        errorMsg = "Your email isn't verified yet. We've sent you a new verification link, so check your inbox.";
       } else if (error.status === 403 || rawMsg.includes("archived") || rawMsg.includes("banned")) {
         errorMsg = error.message;
       }

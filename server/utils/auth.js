@@ -115,6 +115,7 @@ const auth = betterAuth({
   },
   emailVerification: {
     sendOnSignUp: true, // Disabled for development
+    sendOnSignIn: true, // unverified sign-ins get a fresh link
     autoSignInAfterVerification: true,
     sendVerificationEmail: async ({ user, token }) => {
       const { orgFooterText, supportEmail } = await getOrgSettings();
