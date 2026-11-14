@@ -79,6 +79,8 @@ node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
 >
 > **For Option B (Docker):** Change it to `DB_HOST=db` — Docker Compose sets this automatically via its environment block, so you can leave `server/.env` as `localhost` and Docker will override it.
 
+**Database restore (System Health → Restore).** Off unless `ENABLE_DATABASE_RESTORE=true`. Set it only for the maintenance window, restart the server, and set it back to `false` afterwards. A restore also needs maintenance mode on, replaces all data (including passwords and bans) with the backup's, and signs everyone out. Before restoring, the server saves the current database to `server/backups/pre-restore-safety.dump` (or `RESTORE_SAFETY_DUMP_PATH`), overwriting the previous one. The restore lock is per process, so run a single server instance while restoring.
+
 ### Client environment
 
 ```bash
