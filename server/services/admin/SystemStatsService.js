@@ -151,6 +151,9 @@ class SystemStatsService {
       memory_usage_percent: Math.round((usedMemBytes / totalMemBytes) * 100),
       cpu_load_percent: cpuLoadPercent,
       disk_usage_percent: diskUsagePercent,
+      node_version: process.version,
+      platform,
+      os_release: os.release(),
     };
   }
 }
