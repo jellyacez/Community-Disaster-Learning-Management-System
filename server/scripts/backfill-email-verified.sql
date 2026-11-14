@@ -40,7 +40,7 @@ WHERE "emailVerified" = false
 SELECT to_char(date_trunc('month', "createdAt" AT TIME ZONE '+08'), 'YYYY-MM') AS created_month,
        role,
        lower(split_part(email, '@', 2)) AS email_domain,
-       (lower(split_part(email, '@', 2)) IN ('example.com', 'test.local')
+       (lower(split_part(email, '@', 2)) IN ('example.com', 'test.local', 'test.com', 'sample.com')
          OR lower(split_part(email, '@', 2)) LIKE '%.invalid') AS unreachable,
        count(*) AS accounts
 FROM public."user"
