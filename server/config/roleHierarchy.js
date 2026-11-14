@@ -30,7 +30,16 @@ function assertActorOutranksTarget(actorRole, targetRole) {
   }
 }
 
-/** Provisioning: the new account's role must rank below the actor's. Throws SECURITY_FAULT. */
+/**
+ * For provisioning only: the actor must be exactly ONE tier above the
+ * role being created (system_admin→head_mdrrmo_admin, head→mdrrmo_admin,
+ * mdrrmo_admin→barangay_admin). Peer provisioning is not allowed even
+ * though the requesting actor already passes requirePermission().
+ *
+ * @param {string} actorRole     - Role of the provisioning admin
+ * @param {string} newUserRole   - Role requested for the new account
+ * @throws {Error} SECURITY_FAULT if the actor is not exactly one tier above
+ */
 function assertCanProvision(actorRole, newUserRole) {
   const actorRank = getRank(actorRole);
   const newUserRank = getRank(newUserRole);
