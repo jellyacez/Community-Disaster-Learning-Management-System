@@ -148,10 +148,12 @@ const auth = betterAuth({
         type: "boolean",
         required: false,
         defaultValue: false,
+        input: false,
       },
       lastPasswordChange: {
         type: "date",
         required: false,
+        input: false,
       },
       twoFactorEnabled: {
         type: "boolean",

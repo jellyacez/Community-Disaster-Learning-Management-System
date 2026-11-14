@@ -122,6 +122,16 @@ async function main() {
   console.log("ok - twoFactorEnabled=false cannot clear an enabled flag");
 
   // Name changes go through first/middle/last_name; the server derives `name` (personName.js)
+  // Only the server writes these: archive endpoints and the password-change cooldown
+  const archivedSelf = await updateUser(admin, { archived: true });
+  assert.equal(archivedSelf.ok, false, "archived must not be settable through update-user");
+  const cooldownReset = await updateUser(admin, { lastPasswordChange: "2000-01-01T00:00:00.000Z" });
+  assert.equal(cooldownReset.ok, false, "lastPasswordChange must not be settable through update-user");
+  const lockedCols = (await pool.query(`SELECT archived, "lastPasswordChange" FROM "user" WHERE id = $1`, [admin.id])).rows[0];
+  assert.equal(lockedCols.archived, false, "archived must stay false");
+  assert.equal(lockedCols.lastPasswordChange, null, "lastPasswordChange must stay unset");
+  console.log("ok - archived and lastPasswordChange rejected");
+
   const renamed = await updateUser(admin, { first_name: "Regression", last_name: "Renamed" });
   assert.equal(renamed.ok, true, `name update must still work (${JSON.stringify(renamed)})`);
   assert.equal((await stored(admin.id)).name, "Regression Renamed");
