@@ -90,6 +90,7 @@ async function main() {
   }));
   assert.equal(filled.isValid, true, filled.error);
   console.log("ok: validator accepts a situational step with questions");
+  console.log("PASS: situational-edit regression");
 }
 
 main().catch((err) => {
