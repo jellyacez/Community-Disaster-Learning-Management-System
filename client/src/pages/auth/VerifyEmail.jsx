@@ -35,7 +35,12 @@ export default function VerifyEmail() {
         setTimeout(() => navigate("/userDashboard"), 3000);
       } catch (err) {
         console.error("Verification failed:", err);
-        setErrorMessage(err.message || err.error?.message || JSON.stringify(err) || "Unknown error");
+        // A status means the server answered (bad or expired token); no status means the request failed
+        setErrorMessage(
+          err?.status
+            ? "This verification link is invalid or has expired. Sign in with your email and password and we'll send you a new one."
+            : "We couldn't reach the server. Check your connection and open the link again."
+        );
         setStatus("error");
       }
     };
@@ -83,7 +88,7 @@ export default function VerifyEmail() {
               Verification Failed
             </h2>
             <p className="text-gray-500 mt-2">
-              {errorMessage ? `Error: ${errorMessage}` : "The link may be expired or invalid."}
+              {errorMessage || "The link may be expired or invalid."}
             </p>
             <button
               onClick={() => navigate("/signin")}

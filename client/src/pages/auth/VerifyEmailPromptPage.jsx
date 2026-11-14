@@ -21,19 +21,20 @@ export default function VerifyEmailPromptPage() {
         </div>
 
         <h1 className="text-2xl font-extrabold text-gray-900 mb-2">
-          Account Created
+          Check your email
         </h1>
 
         <p className="text-gray-600 mb-6 leading-relaxed">
-          Your account is ready for <br />
+          We sent a verification link to <br />
           <span className="font-bold text-gray-900">{email}</span>
         </p>
 
         <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 mb-8 text-sm text-blue-800 text-left">
           <p className="font-semibold mb-1">Next Steps:</p>
           <ul className="list-disc pl-5 space-y-1">
-            <li>Sign in with this email and your password</li>
-            <li>Open the module catalog to start your training</li>
+            <li>Open the link in that email to verify your account</li>
+            <li>You'll be signed in automatically and can start your training</li>
+            <li>No email? Check spam, or sign in to get a new link</li>
           </ul>
         </div>
 

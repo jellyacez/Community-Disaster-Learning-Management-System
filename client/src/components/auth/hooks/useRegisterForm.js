@@ -223,7 +223,7 @@ export function useRegisterForm({ turnstileToken, onResetTurnstile } = {}) {
         onResetTurnstile?.();
         setShowConsentModal(false);
       } else {
-        toast.success("Account created. You can now sign in.");
+        toast.success("Account created. Check your email for a verification link.");
         setShowConsentModal(false);
         navigate("/verify-email-prompt", {
           state: { email: formData.email.trim() },
