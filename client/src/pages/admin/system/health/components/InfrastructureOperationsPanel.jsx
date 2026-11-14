@@ -3,6 +3,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   Database01Icon,
+  DatabaseRestoreIcon,
   Download01Icon,
   Alert01Icon,
 } from "@hugeicons/core-free-icons";
@@ -140,6 +141,35 @@ export default function InfrastructureOperationsPanel() {
                 : "Download .log File"}
             </button>
           </div>
+
+          <div className="border-t border-gray-100 pt-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 p-4 rounded-xl border border-gray-100 bg-gray-50/50">
+              <div className="flex items-start gap-4 flex-1 w-full">
+                <div className="w-10 h-10 rounded-full bg-red-50 flex items-center justify-center shrink-0">
+                  <HugeiconsIcon
+                    icon={DatabaseRestoreIcon}
+                    className="w-5 h-5 text-red-600"
+                  />
+                </div>
+                <div className="flex-1">
+                  <h4 className="text-sm font-bold text-gray-900">
+                    Restore Database Backup
+                  </h4>
+                  <p className="text-xs text-gray-500 mt-1 max-w-md">
+                    Replace all data with an encrypted backup ZIP. Requires maintenance mode.
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowRestore(true)}
+                className="w-full sm:w-auto justify-center flex items-center gap-2 px-4 py-2 bg-white border border-red-300 text-red-700 rounded-lg text-sm font-semibold hover:bg-red-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600 transition-colors shrink-0 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-950/40"
+              >
+                <HugeiconsIcon icon={DatabaseRestoreIcon} className="w-4 h-4" />
+                Restore from ZIP
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -175,13 +205,6 @@ export default function InfrastructureOperationsPanel() {
           />
         </label>
       </ConfirmationModal>
-      <button
-        type="button"
-        onClick={() => setShowRestore(true)}
-        className="mt-4 rounded-xl border border-red-300 p-3 text-red-700"
-      >
-        Restore encrypted database backup
-      </button>
       {showRestore && (
         <RestoreBackupDialog
           isRestoring={isRestoringBackup}
