@@ -114,7 +114,8 @@ exports.downloadDatabaseBackup = async (req, res) => {
   }
 };
 
-exports.restoreDatabaseBackup = async (req, res) => {
+// Runs before the upload is parsed, so a disabled server never buffers the file.
+exports.requireRestoreEnabled = (req, res, next) => {
   res.set("Cache-Control", "no-store");
   if (process.env.ENABLE_DATABASE_RESTORE !== "true") {
     return res
@@ -124,6 +125,11 @@ exports.restoreDatabaseBackup = async (req, res) => {
           "Database restore is disabled. Enable it only during a maintenance window.",
       });
   }
+  next();
+};
+
+exports.restoreDatabaseBackup = async (req, res) => {
+  res.set("Cache-Control", "no-store");
   if (databaseOperationRunning) {
     return res
       .status(409)
