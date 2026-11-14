@@ -49,7 +49,7 @@ export default function InfrastructureOperationsPanel() {
                 </h4>
                 <p className="text-xs text-gray-500 mt-1 max-w-md">
                   Verify your account password to download an encrypted database
-                  backup. The recovery password is managed separately.
+                  backup. The ZIP is locked with the backup password, which is managed separately.
                 </p>
               </div>
             </div>
@@ -159,7 +159,7 @@ export default function InfrastructureOperationsPanel() {
         }
         isLoading={isDownloadingBackup}
         title="Download Database Backup?"
-        description="Enter your own account password to authorize this download. The ZIP uses the designated recovery password configured on the server."
+        description="Enter your own account password to authorize this download. The ZIP is locked with the backup password configured on the server."
         confirmText="Download ZIP"
         type="warning"
       >
