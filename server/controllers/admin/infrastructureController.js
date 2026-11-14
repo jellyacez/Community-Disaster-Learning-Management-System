@@ -6,6 +6,9 @@ const path = require("node:path");
 const os = require("node:os");
 const secureBackup = require("../../services/secureBackup");
 const pool = require("../../config/db");
+const {
+  clearMaintenanceCache,
+} = require("../../middleware/maintenanceMiddleware");
 
 const runPostgresCommand = promisify(execFile);
 // This lock covers one Node process. Restore requires a single app instance.
@@ -194,6 +197,7 @@ exports.restoreDatabaseBackup = async (req, res) => {
 
   databaseOperationRunning = true;
   let temporaryDirectory;
+  let restored = false;
   try {
     let dump;
     try {
@@ -221,8 +225,7 @@ exports.restoreDatabaseBackup = async (req, res) => {
       getCommandOptions(),
     );
     // Abort the restore if the live data cannot be saved first.
-    await takeSafetyDump();
-    await logDatabaseActivity(req, "Started database restore");
+    const safetyDumpPath = await takeSafetyDump();
     await runPostgresCommand(
       restoreBinary,
       [
@@ -238,19 +241,52 @@ exports.restoreDatabaseBackup = async (req, res) => {
       ],
       getCommandOptions(),
     );
+    restored = true;
+
+    // The backup carries its own maintenance_mode and sessions; keep the system
+    // closed and make everyone sign in again against the restored accounts.
+    const client = await pool.connect();
+    try {
+      await client.query("BEGIN");
+      await client.query(
+        `INSERT INTO public.system_settings (key, value, updated_at)
+         VALUES ('maintenance_mode', 'true', NOW())
+         ON CONFLICT (key) DO UPDATE SET value = 'true', updated_at = NOW()`,
+      );
+      await client.query('DELETE FROM public."session"');
+      await client.query("COMMIT");
+    } catch (error) {
+      await client.query("ROLLBACK").catch(() => {});
+      throw error;
+    } finally {
+      client.release();
+    }
+    clearMaintenanceCache();
+
+    // Written after the restore, otherwise the restored activity_log would erase it.
+    await logDatabaseActivity(
+      req,
+      `Completed database restore (backup ${req.file.size} bytes, safety dump: ${safetyDumpPath})`,
+    );
     res.json({
       success: true,
-      message: "Restore completed. Sign in again and refresh application data.",
+      message:
+        "Restore completed. Everyone has been signed out and maintenance mode is on. Sign in again.",
     });
   } catch {
     console.error("Database restore failed. Review PostgreSQL server logs.");
+    await logDatabaseActivity(
+      req,
+      restored
+        ? "Database restore failed after the data was replaced: maintenance mode and session cleanup did not finish"
+        : "Database restore failed; the database was not changed",
+    );
     if (!res.headersSent) {
-      res
-        .status(500)
-        .json({
-          error:
-            "Restore failed. Review PostgreSQL server logs before retrying.",
-        });
+      res.status(500).json({
+        error: restored
+          ? "The data was restored, but turning on maintenance mode and signing everyone out failed. Do both manually now."
+          : "Restore failed. Review PostgreSQL server logs before retrying.",
+      });
     }
   } finally {
     await removeTemporaryDirectory(temporaryDirectory);
