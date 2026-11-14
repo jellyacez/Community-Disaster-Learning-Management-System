@@ -224,6 +224,15 @@ async function main() {
     assert.equal(res.status, 409);
   });
 
+  await check("2b. restore-status reports the flag, maintenance and last backup", async () => {
+    const res = await fetch(`${base}/infrastructure/restore-status`, { headers: headersFor(admin) });
+    assert.equal(res.status, 200);
+    const { data } = await res.json();
+    assert.equal(data.restoreEnabled, true);
+    assert.equal(data.maintenanceMode, false);
+    assert.ok(data.lastBackupAt && !Number.isNaN(Date.parse(data.lastBackupAt)), "lastBackupAt missing");
+  });
+
   await setMaintenance(true);
 
   await check("3a. wrong account password -> 403", async () => {

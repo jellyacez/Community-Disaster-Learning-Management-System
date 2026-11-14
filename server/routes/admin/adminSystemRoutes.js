@@ -185,6 +185,14 @@ router.post(
   infrastructureController.downloadDatabaseBackup,
 );
 
+// @route   GET /api/admin/infrastructure/restore-status
+router.get(
+  "/infrastructure/restore-status",
+  requireRole(BACKUP_ROLES),
+  requirePermission("manage_security"),
+  infrastructureController.getRestoreStatus,
+);
+
 router.post(
   "/infrastructure/restore",
   requireRole(BACKUP_ROLES),

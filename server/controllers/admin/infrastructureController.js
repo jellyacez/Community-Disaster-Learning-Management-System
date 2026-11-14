@@ -181,6 +181,30 @@ exports.requireMaintenanceMode = async (req, res, next) => {
   next();
 };
 
+// lastBackupAt is the last backup download recorded in activity_log, not a stored backup.
+exports.getRestoreStatus = async (req, res) => {
+  res.set("Cache-Control", "no-store");
+  try {
+    const { rows } = await pool.query(
+      `SELECT
+         (SELECT value FROM public.system_settings WHERE key = 'maintenance_mode') AS maintenance_mode,
+         (SELECT act_date FROM public.activity_log
+           WHERE act_log = 'Generated encrypted database backup'
+           ORDER BY act_date DESC LIMIT 1) AS last_backup_at`,
+    );
+    res.json({
+      success: true,
+      data: {
+        restoreEnabled: process.env.ENABLE_DATABASE_RESTORE === "true",
+        maintenanceMode: rows[0].maintenance_mode === "true",
+        lastBackupAt: rows[0].last_backup_at,
+      },
+    });
+  } catch {
+    res.status(500).json({ error: "Could not load restore status." });
+  }
+};
+
 exports.restoreDatabaseBackup = async (req, res) => {
   res.set("Cache-Control", "no-store");
   if (databaseOperationRunning) {
