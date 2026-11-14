@@ -16,7 +16,8 @@ const PasswordInput = memo(function PasswordInput({
   describedBy,
   placeholder = "Enter password",
   required = true,
-  autoComplete = "current-password"
+  autoComplete = "current-password",
+  disabled = false
 }) {
   const [showPassword, setShowPassword] = useState(false);
   const [capsLockOn, setCapsLockOn] = useState(false);
@@ -53,13 +54,15 @@ const PasswordInput = memo(function PasswordInput({
           onKeyDown={checkCapsLock}
           onKeyUp={checkCapsLock}
           placeholder={placeholder}
-          className={`${inputClass} pr-14 placeholder:text-gray-500`}
+          className={`${inputClass} pr-14 placeholder:text-gray-500 disabled:opacity-60`}
           required={required}
+          disabled={disabled}
         />
         <button
           type="button"
           aria-label={showPassword ? "Hide password" : "Show password"}
           onClick={() => setShowPassword(!showPassword)}
+          disabled={disabled}
           className="absolute right-1 top-1/2 -translate-y-1/2 inline-flex h-11 w-11 items-center justify-center rounded-lg text-gray-600 hover:text-gray-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-900"
         >
           {showPassword ? (
