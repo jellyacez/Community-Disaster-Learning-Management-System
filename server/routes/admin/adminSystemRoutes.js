@@ -187,6 +187,7 @@ router.post(
   requireRole(BACKUP_ROLES),
   requirePermission("manage_security"),
   infrastructureController.requireRestoreEnabled,
+  infrastructureController.requireMaintenanceMode,
   (req, res, next) => {
     backupUpload.single("backup")(req, res, (error) => {
       if (error) {

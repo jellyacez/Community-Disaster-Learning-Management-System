@@ -5,6 +5,7 @@ const fsp = fs.promises;
 const path = require("node:path");
 const os = require("node:os");
 const secureBackup = require("../../services/secureBackup");
+const pool = require("../../config/db");
 
 const runPostgresCommand = promisify(execFile);
 // This lock covers one Node process. Restore requires a single app instance.
@@ -124,6 +125,26 @@ exports.requireRestoreEnabled = (req, res, next) => {
         error:
           "Database restore is disabled. Enable it only during a maintenance window.",
       });
+  }
+  next();
+};
+
+// Reads the setting directly; the maintenance middleware's 15-second cache could be stale.
+exports.requireMaintenanceMode = async (req, res, next) => {
+  try {
+    const { rows } = await pool.query(
+      "SELECT value FROM public.system_settings WHERE key = 'maintenance_mode'",
+    );
+    if (rows[0]?.value !== "true") {
+      return res.status(409).json({
+        error:
+          "Turn on maintenance mode in System Settings before restoring a backup.",
+      });
+    }
+  } catch {
+    return res
+      .status(503)
+      .json({ error: "Could not confirm maintenance mode. Try again." });
   }
   next();
 };
