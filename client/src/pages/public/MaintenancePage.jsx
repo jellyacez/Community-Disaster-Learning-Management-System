@@ -3,6 +3,7 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import { Settings02Icon, ArrowRight01Icon, Logout01Icon } from "@hugeicons/core-free-icons";
 import apiClient from "../../lib/apiClient";
 import { authClient } from "../../lib/auth-client";
+import { clearLocalUserData } from "../../lib/offlineContent";
 import { useNavigate, Link } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import useDocumentTitle from "../../hooks/useDocumentTitle";
@@ -20,6 +21,7 @@ export default function MaintenancePage() {
     setIsSigningOut(true);
     try {
       sessionStorage.setItem("isLoggingOut", "true");
+      clearLocalUserData();
       queryClient.cancelQueries();
       queryClient.clear();
       await authClient.signOut({

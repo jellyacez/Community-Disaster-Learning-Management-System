@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import apiClient from "../../../lib/apiClient";
 import { authClient } from "../../../lib/auth-client";
+import { clearLocalUserData } from "../../../lib/offlineContent";
 import { useQueryClient } from "@tanstack/react-query";
 
 export function useDangerZone() {
@@ -37,6 +38,7 @@ export function useDangerZone() {
     setIsDeactivating(true);
     try {
       await apiClient.delete("/users/me");
+      clearLocalUserData();
       queryClient.cancelQueries();
       queryClient.clear();
       await authClient.signOut({

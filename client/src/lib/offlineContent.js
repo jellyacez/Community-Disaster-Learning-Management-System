@@ -1,5 +1,14 @@
 export const CONTENT_KEY_PREFIX = "lms_content_v1:";
 export const contentKey = (owner, kind) => `${CONTENT_KEY_PREFIX}${encodeURIComponent(owner)}:${kind}`;
+
+// Sign-out: drop this device's cached user data (offline session, downloads, content snapshots)
+export function clearLocalUserData() {
+  try {
+    Object.keys(localStorage)
+      .filter((key) => key.startsWith("lms_offline_") || key.startsWith(CONTENT_KEY_PREFIX))
+      .forEach((key) => localStorage.removeItem(key));
+  } catch { /* storage unavailable */ }
+}
 export function readContent(owner, kind) {
   if (!owner) return null;
   try {

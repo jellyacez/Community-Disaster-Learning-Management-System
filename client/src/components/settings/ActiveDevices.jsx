@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { authClient } from "../../lib/auth-client";
+import { clearLocalUserData } from "../../lib/offlineContent";
 import toast from "react-hot-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import ConfirmationModal from "../ui/modals/ConfirmationModal";
@@ -33,6 +34,7 @@ export default function ActiveDevices() {
       await authClient.revokeOtherSessions();
       sessionStorage.setItem("isLoggingOut", "true");
       sessionStorage.setItem("showLogoutModal", "true");
+      clearLocalUserData();
       queryClient.cancelQueries();
       queryClient.clear();
       await authClient.signOut();
@@ -45,6 +47,7 @@ export default function ActiveDevices() {
     if (isCurrentSession) {
       sessionStorage.setItem("isLoggingOut", "true");
       sessionStorage.setItem("showLogoutModal", "true");
+      clearLocalUserData();
       queryClient.clear();
       await authClient.signOut();
       return;
