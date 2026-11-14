@@ -12,14 +12,14 @@ const backupUpload = multer({
   limits: {
     fileSize: 65 * 1024 * 1024,
     files: 1,
-    fields: 2,
-    parts: 3,
+    fields: 3,
+    parts: 4,
     fieldSize: 1024,
   },
 });
 
 // The route already requires authentication before this per-account limiter.
-const backupPasswordLimiter = rateLimit({
+const passwordLimiterOptions = {
   windowMs: 15 * 60 * 1000,
   limit: 5,
   keyGenerator: (req) => String(req.user.id),
@@ -29,7 +29,10 @@ const backupPasswordLimiter = rateLimit({
   message: {
     error: "Too many failed backup attempts. Try again in 15 minutes.",
   },
-});
+};
+const backupPasswordLimiter = rateLimit(passwordLimiterOptions);
+// Separate counter: also limits guesses at the backup ZIP password.
+const restorePasswordLimiter = rateLimit(passwordLimiterOptions);
 
 const requireRole = require("../../middleware/requireRole");
 const { ADMIN_ROLES } = require("../../config/permissions");
@@ -188,6 +191,7 @@ router.post(
   requirePermission("manage_security"),
   infrastructureController.requireRestoreEnabled,
   infrastructureController.requireMaintenanceMode,
+  restorePasswordLimiter,
   (req, res, next) => {
     backupUpload.single("backup")(req, res, (error) => {
       if (error) {
@@ -198,6 +202,7 @@ router.post(
       next();
     });
   },
+  verifyBackupPassword,
   infrastructureController.restoreDatabaseBackup,
 );
 
