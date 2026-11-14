@@ -35,8 +35,8 @@ export default function InfrastructureOperationsPanel() {
             Infrastructure Operations
           </h3>
         </div>
-        <div className="p-5 space-y-4">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 p-4 rounded-xl border border-gray-100 bg-gray-50/50">
+        <div className="@container p-5 space-y-4">
+          <div className="flex flex-col @md:flex-row items-start @md:items-center gap-4 p-4 rounded-xl border border-gray-100 bg-gray-50/50">
             <div className="flex items-start gap-4 flex-1 w-full">
               <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center shrink-0">
                 <HugeiconsIcon
@@ -57,7 +57,7 @@ export default function InfrastructureOperationsPanel() {
             <button
               onClick={() => setShowBackupModal(true)}
               disabled={isDownloadingBackup}
-              className="w-full sm:w-auto justify-center flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-800 rounded-lg text-sm font-semibold hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
+              className="w-full @md:w-auto justify-center flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-800 rounded-lg text-sm font-semibold hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
             >
               {isDownloadingBackup ? (
                 <svg
@@ -89,7 +89,7 @@ export default function InfrastructureOperationsPanel() {
             </button>
           </div>
 
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 p-4 rounded-xl border border-gray-100 bg-gray-50/50">
+          <div className="flex flex-col @md:flex-row items-start @md:items-center gap-4 p-4 rounded-xl border border-gray-100 bg-gray-50/50">
             <div className="flex items-start gap-4 flex-1 w-full">
               <div className="w-10 h-10 rounded-full bg-red-50 flex items-center justify-center shrink-0">
                 <HugeiconsIcon
@@ -110,7 +110,7 @@ export default function InfrastructureOperationsPanel() {
             <button
               onClick={() => setShowLogsModal(true)}
               disabled={isDownloadingServerLogs}
-              className="w-full sm:w-auto justify-center flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-800 rounded-lg text-sm font-semibold hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
+              className="w-full @md:w-auto justify-center flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-800 rounded-lg text-sm font-semibold hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
             >
               {isDownloadingServerLogs ? (
                 <svg
@@ -143,7 +143,7 @@ export default function InfrastructureOperationsPanel() {
           </div>
 
           <div className="border-t border-gray-100 pt-4">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 p-4 rounded-xl border border-gray-100 bg-gray-50/50">
+            <div className="flex flex-col @md:flex-row items-start @md:items-center gap-4 p-4 rounded-xl border border-gray-100 bg-gray-50/50">
               <div className="flex items-start gap-4 flex-1 w-full">
                 <div className="w-10 h-10 rounded-full bg-red-50 flex items-center justify-center shrink-0">
                   <HugeiconsIcon
@@ -163,7 +163,7 @@ export default function InfrastructureOperationsPanel() {
               <button
                 type="button"
                 onClick={() => setShowRestore(true)}
-                className="w-full sm:w-auto justify-center flex items-center gap-2 px-4 py-2 bg-white border border-red-300 text-red-700 rounded-lg text-sm font-semibold hover:bg-red-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600 transition-colors shrink-0 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-950/40"
+                className="w-full @md:w-auto justify-center flex items-center gap-2 px-4 py-2 bg-white border border-red-300 text-red-700 rounded-lg text-sm font-semibold hover:bg-red-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600 transition-colors shrink-0 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-950/40"
               >
                 <HugeiconsIcon icon={DatabaseRestoreIcon} className="w-4 h-4" />
                 Restore from ZIP
