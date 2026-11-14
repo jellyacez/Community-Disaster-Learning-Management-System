@@ -115,11 +115,10 @@ class SystemStatsService {
     const usedMemBytes = totalMemBytes - freeMemBytes;
 
     const platform = os.platform();
-    let cpuLoadPercent;
+    // Windows has no load average (os.loadavg() is all zeros); report unknown.
+    let cpuLoadPercent = null;
 
-    if (platform === "win32") {
-      cpuLoadPercent = parseFloat((12 + Math.random() * 6).toFixed(1));
-    } else {
+    if (platform !== "win32") {
       const cpus = os.cpus().length;
       const load = os.loadavg()[0];
       cpuLoadPercent = Math.min(
