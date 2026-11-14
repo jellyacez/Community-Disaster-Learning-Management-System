@@ -30,7 +30,7 @@ export default function InfrastructureOperationsPanel() {
   return (
     <>
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-        <div className="px-5 py-4 border-b border-gray-50">
+        <div className="px-5 py-4 border-b border-gray-50 dark:border-slate-800">
           <h3 className="text-sm font-bold text-gray-900">
             Infrastructure Operations
           </h3>

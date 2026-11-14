@@ -6,7 +6,7 @@ const PLATFORM_NAMES = { win32: "Windows", linux: "Linux", darwin: "macOS" };
 
 function SettingRow({ label, value, description, mono = false }) {
   return (
-    <div className="flex flex-col sm:flex-row sm:items-center justify-between py-4 border-b border-gray-50 last:border-0 gap-1">
+    <div className="flex flex-col sm:flex-row sm:items-center justify-between py-4 border-b border-gray-50 dark:border-slate-800 last:border-0 gap-1">
       <div>
         <p className="text-sm font-semibold text-gray-800">{label}</p>
         {description && <p className="text-xs text-gray-500 mt-0.5">{description}</p>}
