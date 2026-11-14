@@ -100,7 +100,7 @@ const auth = betterAuth({
   emailAndPassword: {
     enabled: true,
     revokeSessionsOnPasswordReset: true,
-    requireEmailVerification: true, // Disabled for development
+    requireEmailVerification: true, // no session at sign-up or sign-in until the email is verified
     passwordResetTokenExpiresIn: 15 * 60,
     sendResetPassword: async ({ user, token }) => {
       const { orgFooterText, supportEmail } = await getOrgSettings();
@@ -114,7 +114,7 @@ const auth = betterAuth({
     },
   },
   emailVerification: {
-    sendOnSignUp: true, // Disabled for development
+    sendOnSignUp: true, // link goes out as soon as the account is created
     sendOnSignIn: true, // unverified sign-ins get a fresh link
     autoSignInAfterVerification: true,
     sendVerificationEmail: async ({ user, token }) => {
@@ -230,7 +230,6 @@ const auth = betterAuth({
       "http://localhost:4173",
     ];
   })(),
-  autoSignIn: false, // Must be false — autoSignIn: true skips sendVerificationEmail
 });
 
 
