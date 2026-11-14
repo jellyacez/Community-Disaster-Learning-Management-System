@@ -52,12 +52,15 @@ function getSafetyDumpPath() {
 }
 
 // Snapshot of the live database taken right before a restore. Server-side only;
-// overwritten each time. Written to a temp file and renamed so a planted symlink at
-// the fixed path is replaced rather than followed.
+// overwritten each time. pg_dump writes into a fresh private directory and the file
+// is renamed into place, so a symlink planted at either path is never followed.
 async function takeSafetyDump() {
   const target = getSafetyDumpPath();
   await fsp.mkdir(path.dirname(target), { recursive: true, mode: 0o700 });
-  const partial = `${target}.${process.pid}.partial`;
+  const workDirectory = await fsp.mkdtemp(
+    path.join(path.dirname(target), ".safety-"),
+  );
+  const partial = path.join(workDirectory, "database.dump");
   try {
     await runPostgresCommand(
       process.env.PG_DUMP_PATH || "pg_dump",
@@ -66,9 +69,8 @@ async function takeSafetyDump() {
     );
     await fsp.chmod(partial, 0o600);
     await fsp.rename(partial, target);
-  } catch (error) {
-    await fsp.rm(partial, { force: true });
-    throw error;
+  } finally {
+    await removeTemporaryDirectory(workDirectory);
   }
   return target;
 }
