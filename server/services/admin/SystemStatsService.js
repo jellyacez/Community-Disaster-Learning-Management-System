@@ -1,8 +1,45 @@
 const pool = require("../../config/db");
 const os = require("os");
 const fs = require("fs");
+const { transporter } = require("../../utils/mailer");
+
+// Names only; values are never read into the response.
+const REQUIRED_ENV = [
+  "DB_HOST",
+  "DB_PORT",
+  "DB_DATABASE",
+  "DB_USER",
+  "DB_PASSWORD",
+  "BETTER_AUTH_URL",
+  "FRONTEND_URL",
+  "EMAIL_USER",
+  "EMAIL_APP_PASSWORD",
+  "BACKUP_ENCRYPTION_KEY",
+  "BACKUP_ZIP_PASSWORD",
+];
+const S3_ENV = ["AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "AWS_S3_BUCKET_NAME"];
+
+// verify() opens an SMTP connection, so run it at most every 5 minutes, off the request path.
+const SMTP_CHECK_INTERVAL_MS = 5 * 60 * 1000;
+let smtpStatus = "unknown";
+let smtpCheckedAt = 0;
+let smtpCheck = null;
 
 class SystemStatsService {
+  refreshSmtpStatus() {
+    if (!smtpCheck) {
+      smtpCheck = transporter
+        .verify()
+        .then(() => "connected", () => "error")
+        .then((status) => {
+          smtpStatus = status;
+          smtpCheckedAt = Date.now();
+          smtpCheck = null;
+        });
+    }
+    return smtpCheck;
+  }
+
   async getSystemStats() {
     const [brgyStats, certStats, userStats, logStats, alertStats] = await Promise.all([
       pool.query(`
@@ -141,6 +178,14 @@ class SystemStatsService {
       // Disk stats are optional; leave usage as null
     }
 
+    if (Date.now() - smtpCheckedAt > SMTP_CHECK_INTERVAL_MS) {
+      this.refreshSmtpStatus();
+    }
+    const configMissing = REQUIRED_ENV.filter((name) => !process.env[name]);
+    if (!process.env.BETTER_AUTH_SECRETS && !process.env.BETTER_AUTH_SECRET) {
+      configMissing.push("BETTER_AUTH_SECRETS");
+    }
+
     return {
       db_status: "connected",
       db_latency_ms: latency,
@@ -153,6 +198,9 @@ class SystemStatsService {
       node_version: process.version,
       platform,
       os_release: os.release(),
+      smtp_status: smtpStatus,
+      s3_configured: S3_ENV.every((name) => Boolean(process.env[name])),
+      config_missing: configMissing,
     };
   }
 }
