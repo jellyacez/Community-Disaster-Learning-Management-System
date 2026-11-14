@@ -153,22 +153,27 @@ export default function useInfrastructureOperations() {
     }
   };
 
-  const restoreBackup = async (file, password, confirmation, onSuccess) => {
+  // Returns { ok, message } or { ok: false, error } so the dialog can show the result inline.
+  const restoreBackup = async ({ file, password, accountPassword, confirmation }) => {
     setIsRestoringBackup(true);
     try {
       const body = new FormData();
       body.append("backup", file);
       body.append("password", password);
+      body.append("accountPassword", accountPassword);
       body.append("confirmation", confirmation);
       const response = await apiClient.post(
         "/admin/infrastructure/restore",
         body,
         { headers: { "Content-Type": undefined }, timeout: 330000 },
       );
-      toast.success(response.data.message);
-      onSuccess?.();
+      return { ok: true, message: response.data.message };
     } catch (error) {
-      toast.error(error.response?.data?.error || "Restore failed.");
+      // Axios errors contain the request body; do not log submitted passwords.
+      return {
+        ok: false,
+        error: error.response?.data?.error || "Restore failed. Check your connection and try again.",
+      };
     } finally {
       setIsRestoringBackup(false);
     }
