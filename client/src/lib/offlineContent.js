@@ -1,4 +1,5 @@
-export const contentKey = (owner, kind) => `lms_content_v1:${encodeURIComponent(owner)}:${kind}`;
+export const CONTENT_KEY_PREFIX = "lms_content_v1:";
+export const contentKey = (owner, kind) => `${CONTENT_KEY_PREFIX}${encodeURIComponent(owner)}:${kind}`;
 export function readContent(owner, kind) {
   if (!owner) return null;
   try {

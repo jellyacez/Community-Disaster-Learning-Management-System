@@ -20,6 +20,7 @@ import toast from "react-hot-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { useTheme } from "../../hooks/context/themeContext";
 import { getUnsyncedCount, processOfflineQueue } from "../../lib/LocalSave/syncManager";
+import { CONTENT_KEY_PREFIX } from "../../lib/offlineContent";
 
 const navItems = [
   {
@@ -101,7 +102,7 @@ export default function UserSidebar({
         const keysToRemove = [];
         for (let i = 0; i < localStorage.length; i++) {
           const key = localStorage.key(i);
-          if (key && key.startsWith('lms_offline_')) {
+          if (key && (key.startsWith('lms_offline_') || key.startsWith(CONTENT_KEY_PREFIX))) {
             keysToRemove.push(key);
           }
         }
