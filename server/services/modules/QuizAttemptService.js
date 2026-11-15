@@ -207,9 +207,8 @@ class QuizAttemptService {
     if (!step) throw fail("NOT_FOUND");
     if (!isAttemptStep(step)) throw fail("NOT_ATTEMPT_STEP");
 
-    if (!isAdmin) {
-      const mod = await ModuleService.getModuleById(modId);
-      if (!mod || mod.status !== "published" || mod.moddateremove) throw fail("NOT_FOUND");
+    if (!isAdmin && !(await ModuleService.canLearnerAccessModule(userId, modId))) {
+      throw fail("NOT_FOUND");
     }
 
     const enrolled = await pool.query(

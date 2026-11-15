@@ -516,6 +516,17 @@ class ModuleService {
     return result.rows;
   }
 
+  // Learner access to an existing module version: any published module, or an archived
+  // version the learner already enrolled in (a newer version replaced it mid-course).
+  // Drafts, pending, rejected and removed modules stay hidden. New enrollment is stricter
+  // (published only) and admins are checked by the callers.
+  async canLearnerAccessModule(user_id, mod_id) {
+    const mod = await this.getModuleById(mod_id);
+    if (!mod || mod.moddateremove) return false;
+    if (mod.status === "published") return true;
+    return mod.status === "archived" && (await this.checkUserEnrollment(user_id, mod_id));
+  }
+
   async checkUserEnrollment(user_id, mod_id) {
     const enrollmentCheck = await pool.query(
       "SELECT 1 FROM module_activity WHERE user_id::text = $1::text AND mod_id = $2 LIMIT 1",

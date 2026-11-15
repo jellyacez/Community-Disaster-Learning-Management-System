@@ -385,7 +385,7 @@ exports.getModuleViewerData = async (req, res) => {
     const isAdmin = ADMIN_ROLES.includes(req.user?.role);
     if (
       !isAdmin &&
-      !isOpenToLearners(await ModuleService.getModuleById(parsedModId))
+      !(await ModuleService.canLearnerAccessModule(user_id, parsedModId))
     ) {
       return res
         .status(404)
@@ -492,16 +492,16 @@ exports.getModuleSyllabusDetails = async (req, res) => {
 
   try {
     const isAdmin = ADMIN_ROLES.includes(req.user?.role);
+    const user_id = req.user?.id || req.user?.userId;
     if (
       !isAdmin &&
-      !isOpenToLearners(await ModuleService.getModuleById(parsedModId))
+      !(await ModuleService.canLearnerAccessModule(user_id, parsedModId))
     ) {
       return res
         .status(404)
         .json({ success: false, message: "Module not found." });
     }
 
-    const user_id = req.user?.id || req.user?.userId;
     const details = await ModuleService.getModuleSyllabusDetails(
       parsedModId,
       user_id,
