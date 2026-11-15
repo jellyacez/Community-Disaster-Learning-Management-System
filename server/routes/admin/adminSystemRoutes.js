@@ -4,6 +4,7 @@ const multer = require("multer");
 const { rateLimit } = require("express-rate-limit");
 const {
   verifyBackupPassword,
+  verifyRestorePassword,
 } = require("../../middleware/verifyBackupPassword");
 const BACKUP_ROLES = ["system_admin", "super_admin"];
 
@@ -210,7 +211,7 @@ router.post(
       next();
     });
   },
-  verifyBackupPassword,
+  verifyRestorePassword,
   infrastructureController.restoreDatabaseBackup,
 );
 

@@ -1,24 +1,28 @@
 // Reauthenticate the current session; never accept an email/user ID from the form.
 const BACKUP_ROLES = new Set(["system_admin", "super_admin"]);
 
-function createBackupPasswordVerifier(getAuth) {
+// wording: { verb, action }, e.g. { verb: "create", action: "creating a backup" }.
+function createBackupPasswordVerifier(
+  getAuth,
+  { verb, action } = { verb: "create", action: "creating a backup" },
+) {
   return async function verifyBackupPassword(req, res, next) {
     res.set("Cache-Control", "no-store");
 
     if (!req.user) {
       return res
         .status(401)
-        .json({ error: "Sign in before creating a backup." });
+        .json({ error: `Sign in before ${action}.` });
     }
     if (!BACKUP_ROLES.has(req.user.role)) {
       return res
         .status(403)
-        .json({ error: "Your role cannot create database backups." });
+        .json({ error: `Your role cannot ${verb} database backups.` });
     }
     if (req.isImpersonating || req.impersonator || req.user.isImpersonated) {
       return res
         .status(403)
-        .json({ error: "Exit impersonation before creating a backup." });
+        .json({ error: `Exit impersonation before ${action}.` });
     }
 
     const accountPassword = req.body?.accountPassword;
@@ -58,7 +62,7 @@ function createBackupPasswordVerifier(getAuth) {
       ) {
         return res
           .status(403)
-          .json({ error: "This session cannot create database backups." });
+          .json({ error: `This session cannot ${verb} database backups.` });
       }
 
       const result = await auth.api.verifyPassword({
@@ -88,8 +92,13 @@ function createBackupPasswordVerifier(getAuth) {
 const verifyBackupPassword = createBackupPasswordVerifier(
   () => require("../utils/auth").auth,
 );
+const verifyRestorePassword = createBackupPasswordVerifier(
+  () => require("../utils/auth").auth,
+  { verb: "restore", action: "restoring a backup" },
+);
 
 module.exports = {
   verifyBackupPassword,
+  verifyRestorePassword,
   createBackupPasswordVerifier,
 };

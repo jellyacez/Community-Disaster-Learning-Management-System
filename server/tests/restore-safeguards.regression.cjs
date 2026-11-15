@@ -277,8 +277,22 @@ async function main() {
     const body = await res.json().catch(() => ({}));
     console.log(`      impersonated restore: ${res.status} ${JSON.stringify(body)}`);
     assert.equal(res.status, 403);
-    assert.match(body.error || "", /impersonation/i);
+    assert.equal(body.error, "Exit impersonation before restoring a backup.");
     assert.equal(await markerExists(), true, "data changed during an impersonated restore");
+  });
+
+  await check("3d. backup while impersonating keeps the backup wording", async () => {
+    const res = await fetch(`${base}/infrastructure/backup`, {
+      method: "POST",
+      headers: {
+        ...headersFor(superAdmin),
+        cookie: `${superAdmin.cookie}; impersonated_target_id=${impersonatedAdmin.id}; impersonator_id=${superAdmin.id}`,
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({ accountPassword: PASSWORD }),
+    });
+    assert.equal(res.status, 403);
+    assert.equal((await res.json()).error, "Exit impersonation before creating a backup.");
   });
 
   await check("4. failed safety dump aborts the restore and logs a failure", async () => {
