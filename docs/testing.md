@@ -1,0 +1,40 @@
+# Regression tests
+
+Plain Node scripts in `server/tests/*.regression.cjs`. There is no test runner and `npm test` isn't configured. Run each script from the repository root:
+
+```bash
+node server/tests/enrollment-requests.regression.cjs
+```
+
+Each prints `ok` / `not ok` (or `PASS` / `FAIL`) lines and exits non-zero on failure.
+
+## Safety guards
+
+- Every script that touches a database refuses to run unless the database is on a loopback address (`localhost`, `127.x`, `::1`).
+- Fixtures are created with random `zz_…@example.invalid` emails and deleted by exact ID at the end. The scripts print the remaining counts, which should all be 0.
+- Outgoing email is stubbed in the test process.
+
+## What each script needs
+
+| Script | Needs the API running | Database it uses |
+|---|---|---|
+| `barangay-readiness`, `enrollment-requests`, `h1-quiz-scoring`, `question-explanations`, `quiz-attempts`, `review-status-guard`, `schema-integrity`, `state-transitions` | **Yes**, at `TEST_BASE_URL` (default `http://localhost:5000`) | `DB_DATABASE` from `server/.env`, which must be the same database the API uses |
+| `health-status`, `register-existing-email`, `user-field-lock` | No | `DB_DATABASE` |
+| `restore-safeguards`, `create-first-admin` | No (they start what they need in-process) | Their own scratch database, created and dropped by the script |
+| `situational-edit` | No | None |
+
+Typical run against a local database:
+
+```bash
+# terminal 1
+cd server && npm run dev
+
+# terminal 2, repo root
+for f in server/tests/*.regression.cjs; do node "$f" || echo "FAILED: $f"; done
+```
+
+To run the HTTP tests against another local API or database, set both variables for the test process: `DB_DATABASE=other_db TEST_BASE_URL=http://localhost:5055 node server/tests/…`. The API on that port must use the same database.
+
+## Known limitation
+
+The enrollment tests create residents who must meet module prerequisites. On a database that already has a published Fundamentals module those residents haven't completed, `enrollment-requests` and `schema-integrity` fail with "Prerequisites not met". Run them on a database without such a module, for example a fresh `npm run db:setup`.

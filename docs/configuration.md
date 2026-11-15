@@ -37,7 +37,7 @@ The server refuses to start unless `DB_USER`, `DB_PASSWORD`, `DB_DATABASE` and o
 
 | Variable | Required | Default | Purpose |
 |---|---|---|---|
-| `BETTER_AUTH_SECRETS` | **One of these two** | | Versioned secrets, newest first, e.g. `"2:<new>, 1:<old>"`. Generate or rotate with `npm run rotate-better-auth` (keeps the previous secret so sessions survive). |
+| `BETTER_AUTH_SECRETS` | **One of these two** | | Versioned secrets, newest first, e.g. `"2:<new>, 1:<old>"`. Generate or rotate with `npm run rotate-better-auth`. It keeps only the previous secret: sessions signed with it still work, older ones must sign in again (`server/rotate-better-auth.js:100-101`). |
 | `BETTER_AUTH_SECRET` | | | Single-secret form; used only if `BETTER_AUTH_SECRETS` is unset. |
 | `BETTER_AUTH_URL` | Set it | | The API's public origin, passed to Better Auth as `baseURL` (`server/utils/auth.js:33`), e.g. `http://localhost:5000`. |
 | `EMAIL_USER` | **Yes, for any email** | | Gmail account Nodemailer sends from (`service: "gmail"`, `server/utils/mailer.js`). Also the fallback support address. There are no `SMTP_*` variables. |
@@ -70,7 +70,7 @@ The server refuses to start unless `DB_USER`, `DB_PASSWORD`, `DB_DATABASE` and o
 
 | Variable | Used by | Purpose |
 |---|---|---|
-| `FIRST_ADMIN_PASSWORD` | `npm run create-first-admin` | Password for a new first admin when not typed at the prompt. See [setup.md](setup.md#4-create-the-first-admin). |
+| `FIRST_ADMIN_PASSWORD` | `npm run create-first-admin` | Password for a new first admin when not typed at the prompt. See [setup.md](setup.md#create-the-first-admin). |
 | `TEST_BASE_URL` | `server/tests/*.regression.cjs` | API the HTTP tests call; default `http://localhost:5000`. |
 
 ## Client (`client/.env`)
