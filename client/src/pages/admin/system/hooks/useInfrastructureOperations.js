@@ -153,7 +153,7 @@ export default function useInfrastructureOperations() {
     }
   };
 
-  // Returns { ok, message } or { ok: false, error } so the dialog can show the result inline.
+  // Returns { ok, message } or { ok: false, error, restoreApplied } so the dialog can show the result inline.
   const restoreBackup = async ({ file, password, accountPassword, confirmation }) => {
     setIsRestoringBackup(true);
     try {
@@ -173,6 +173,7 @@ export default function useInfrastructureOperations() {
       return {
         ok: false,
         error: error.response?.data?.error || "Restore failed. Check your connection and try again.",
+        restoreApplied: error.response?.data?.restoreApplied === true,
       };
     } finally {
       setIsRestoringBackup(false);

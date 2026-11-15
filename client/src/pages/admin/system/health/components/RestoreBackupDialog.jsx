@@ -92,7 +92,8 @@ export default function RestoreBackupDialog({
   const [accountPassword, setAccountPassword] = useState("");
   const [confirmation, setConfirmation] = useState("");
   const [serverError, setServerError] = useState("");
-  const [completedMessage, setCompletedMessage] = useState("");
+  // { cleanupFailed, message } once the server has replaced the data.
+  const [outcome, setOutcome] = useState(null);
   const dialogRef = useRef(null);
   const fileInputRef = useRef(null);
   const id = useId();
@@ -179,7 +180,10 @@ export default function RestoreBackupDialog({
       confirmation,
     });
     if (result.ok) {
-      setCompletedMessage(result.message);
+      setOutcome({ cleanupFailed: false, message: result.message });
+    } else if (result.restoreApplied) {
+      // The data is already replaced; showing the form again would invite a second restore.
+      setOutcome({ cleanupFailed: true, message: result.error });
     } else {
       setServerError(result.error);
     }
@@ -223,28 +227,43 @@ export default function RestoreBackupDialog({
           </button>
         </header>
 
-        {completedMessage ? (
+        {outcome ? (
           <>
             <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-3 overflow-y-auto px-6 py-12 text-center">
               <HugeiconsIcon
-                icon={CheckmarkCircle02Icon}
-                className="h-12 w-12 text-emerald-600 dark:text-emerald-400"
+                icon={outcome.cleanupFailed ? Alert02Icon : CheckmarkCircle02Icon}
+                className={`h-12 w-12 ${
+                  outcome.cleanupFailed
+                    ? "text-amber-600 dark:text-amber-400"
+                    : "text-emerald-600 dark:text-emerald-400"
+                }`}
                 aria-hidden="true"
               />
-              <p role="status" className="max-w-md text-base font-semibold text-gray-900">
-                {completedMessage}
+              <p
+                role={outcome.cleanupFailed ? "alert" : "status"}
+                className="max-w-md text-base font-semibold text-gray-900"
+              >
+                {outcome.message}
               </p>
               <p className="max-w-md text-sm text-gray-500">
-                After signing in, check the restored data, then turn off maintenance mode.
+                {outcome.cleanupFailed
+                  ? "Don't restore again. Use Sign out all users on the Security page, then check the restored data."
+                  : "After signing in, check the restored data, then turn off maintenance mode."}
               </p>
             </div>
             <footer className="flex shrink-0 justify-end border-t border-gray-100 bg-gray-50 px-5 py-4 sm:px-6">
               <button
                 type="button"
-                onClick={() => window.location.assign("/signin")}
+                onClick={() =>
+                  window.location.assign(
+                    outcome.cleanupFailed
+                      ? window.location.pathname.replace(/\/health$/, "/security")
+                      : "/signin",
+                  )
+                }
                 className="min-h-11 rounded-xl bg-red-700 px-5 py-2.5 text-sm font-semibold text-white hover:bg-red-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600"
               >
-                Sign in again
+                {outcome.cleanupFailed ? "Go to Security" : "Sign in again"}
               </button>
             </footer>
           </>

@@ -85,6 +85,26 @@ async function takeSafetyDump() {
   return target;
 }
 
+const MAINTENANCE_ON_SQL = `INSERT INTO public.system_settings (key, value, updated_at)
+  VALUES ('maintenance_mode', 'true', NOW())
+  ON CONFLICT (key) DO UPDATE SET value = 'true', updated_at = NOW()`;
+
+// Used when the post-restore transaction failed: the restored data may have
+// maintenance off, so keep trying to close the system. Returns whether it worked.
+async function forceMaintenanceOn() {
+  for (let attempt = 1; attempt <= 3; attempt += 1) {
+    try {
+      await pool.query(MAINTENANCE_ON_SQL);
+      clearMaintenanceCache();
+      return true;
+    } catch {
+      await new Promise((resolve) => setTimeout(resolve, 500 * attempt));
+    }
+  }
+  console.error("Could not turn maintenance mode back on after a restore.");
+  return false;
+}
+
 async function removeTemporaryDirectory(directory) {
   if (!directory) return;
   try {
@@ -233,7 +253,6 @@ exports.restoreDatabaseBackup = async (req, res) => {
 
   databaseOperationRunning = true;
   let temporaryDirectory;
-  let restored = false;
   try {
     let dump;
     try {
@@ -277,27 +296,40 @@ exports.restoreDatabaseBackup = async (req, res) => {
       ],
       getCommandOptions(),
     );
-    restored = true;
 
-    // The backup carries its own maintenance_mode and sessions; keep the system
-    // closed and make everyone sign in again against the restored accounts.
-    const client = await pool.connect();
+    // The data is replaced from here on. The backup carries its own maintenance_mode
+    // and sessions; keep the system closed and make everyone sign in again.
     try {
-      await client.query("BEGIN");
-      await client.query(
-        `INSERT INTO public.system_settings (key, value, updated_at)
-         VALUES ('maintenance_mode', 'true', NOW())
-         ON CONFLICT (key) DO UPDATE SET value = 'true', updated_at = NOW()`,
+      const client = await pool.connect();
+      try {
+        await client.query("BEGIN");
+        await client.query(MAINTENANCE_ON_SQL);
+        await client.query('DELETE FROM public."session"');
+        await client.query("COMMIT");
+      } catch (error) {
+        await client.query("ROLLBACK").catch(() => {});
+        throw error;
+      } finally {
+        client.release();
+      }
+      clearMaintenanceCache();
+    } catch {
+      const maintenanceOn = await forceMaintenanceOn();
+      await logDatabaseActivity(
+        req,
+        `Database restore applied, but post-restore cleanup failed: sessions may still be active${
+          maintenanceOn ? "" : "; maintenance mode could not be turned on"
+        }`,
       );
-      await client.query('DELETE FROM public."session"');
-      await client.query("COMMIT");
-    } catch (error) {
-      await client.query("ROLLBACK").catch(() => {});
-      throw error;
-    } finally {
-      client.release();
+      return res.status(500).json({
+        restoreApplied: true,
+        error: `Restore applied, but cleanup failed: sessions may still be active, sign out all users from Security.${
+          maintenanceOn
+            ? ""
+            : " Maintenance mode could not be turned on; turn it on in System Settings."
+        }`,
+      });
     }
-    clearMaintenanceCache();
 
     // Written after the restore, otherwise the restored activity_log would erase it.
     await logDatabaseActivity(
@@ -313,15 +345,11 @@ exports.restoreDatabaseBackup = async (req, res) => {
     console.error("Database restore failed. Review PostgreSQL server logs.");
     await logDatabaseActivity(
       req,
-      restored
-        ? "Database restore failed after the data was replaced: maintenance mode and session cleanup did not finish"
-        : "Database restore failed; the database was not changed",
+      "Database restore failed; the database was not changed",
     );
     if (!res.headersSent) {
       res.status(500).json({
-        error: restored
-          ? "The data was restored, but turning on maintenance mode and signing everyone out failed. Do both manually now."
-          : "Restore failed. Review PostgreSQL server logs before retrying.",
+        error: "Restore failed. Review PostgreSQL server logs before retrying.",
       });
     }
   } finally {

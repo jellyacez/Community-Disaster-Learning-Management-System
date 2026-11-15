@@ -9,6 +9,8 @@
  *   5. a successful restore: encrypted safety dump written (mode 600 off Windows), data
  *      reverted, every session deleted, maintenance_mode back to 'true', completion
  *      entry in activity_log naming the backup size and the safety-dump path
+ *   6. if the post-restore cleanup fails, maintenance stays on, a failure entry is
+ *      logged, and the response says the restore was applied but cleanup failed
  *
  * Everything runs against a scratch database created by this script from
  * migrations/schema.sql plus the numbered migrations, and dropped at the end. The main
@@ -158,7 +160,26 @@ async function main() {
       returnHeaders: true,
     });
     const cookie = signIn.headers.getSetCookie().map((c) => c.split(";")[0]).join("; ");
-    return { id: signUp.user.id, cookie };
+    return { id: signUp.user.id, email, cookie };
+  }
+
+  async function signInAgain(user) {
+    const signIn = await auth.api.signInEmail({
+      body: { email: user.email, password: PASSWORD },
+      headers: new Headers({ "user-agent": UA }),
+      returnHeaders: true,
+    });
+    user.cookie = signIn.headers.getSetCookie().map((c) => c.split(";")[0]).join("; ");
+  }
+
+  async function downloadBackup(user) {
+    const res = await fetch(`${base}/infrastructure/backup`, {
+      method: "POST",
+      headers: { ...headersFor(user), "content-type": "application/json" },
+      body: JSON.stringify({ accountPassword: PASSWORD }),
+    });
+    assert.equal(res.status, 200, `backup failed with ${res.status}`);
+    return Buffer.from(await res.arrayBuffer());
   }
 
   const headersFor = (admin) => ({ cookie: admin.cookie, "user-agent": UA, accept: "application/json" });
@@ -188,13 +209,7 @@ async function main() {
   const limitedAdmin = await createAdmin("limited");
 
   await setMaintenance(false);
-  const backupRes = await fetch(`${base}/infrastructure/backup`, {
-    method: "POST",
-    headers: { ...headersFor(admin), "content-type": "application/json" },
-    body: JSON.stringify({ accountPassword: PASSWORD }),
-  });
-  assert.equal(backupRes.status, 200, `backup setup failed with ${backupRes.status}`);
-  const zip = Buffer.from(await backupRes.arrayBuffer());
+  const zip = await downloadBackup(admin);
   console.log(`backup ZIP: ${zip.length} bytes`);
 
   // Written after the backup, so a real restore must remove it.
@@ -310,6 +325,40 @@ async function main() {
     assert.equal(rows.length, 1, "no completion entry");
     assert.ok(rows[0].act_log.includes(SAFETY_PATH), "entry does not name the safety-dump path");
     assert.match(rows[0].act_log, /\d+ bytes/, "entry does not state the backup size");
+  });
+
+  await check("6. cleanup failure after restore keeps maintenance on and says so", async () => {
+    await signInAgain(admin);
+    // A trigger that rejects DELETE on session travels inside the next backup, so the
+    // restored database refuses the post-restore session wipe.
+    await pool.query(`
+      CREATE FUNCTION zz_block_session_delete() RETURNS trigger LANGUAGE plpgsql
+        AS $$ BEGIN RAISE EXCEPTION 'zz test: session delete blocked'; END $$;
+      CREATE TRIGGER zz_block_session_delete BEFORE DELETE ON public."session"
+        FOR EACH STATEMENT EXECUTE FUNCTION zz_block_session_delete();`);
+    await setMaintenance(false); // captured in the backup, so the restore turns it off
+    const blockedZip = await downloadBackup(admin);
+    await setMaintenance(true);
+
+    const res = await restore(admin, restoreForm(blockedZip));
+    const body = await res.json().catch(() => ({}));
+    console.log(`      cleanup-failure restore: ${res.status} ${JSON.stringify(body)}`);
+    assert.equal(res.status, 500);
+    assert.equal(body.restoreApplied, true, "response does not say the restore was applied");
+    assert.equal(
+      body.error,
+      "Restore applied, but cleanup failed: sessions may still be active, sign out all users from Security.",
+    );
+    const { rows } = await pool.query(`SELECT
+      (SELECT value FROM system_settings WHERE key = 'maintenance_mode') AS maintenance,
+      (SELECT COUNT(*)::int FROM "session") AS sessions`);
+    assert.equal(rows[0].maintenance, "true", "maintenance mode was left off");
+    assert.ok(rows[0].sessions > 0, "sessions were deleted, so the cleanup did not fail");
+    const { rowCount } = await pool.query(
+      "SELECT 1 FROM activity_log WHERE user_id = $1 AND act_log LIKE 'Database restore applied, but post-restore cleanup failed%'",
+      [admin.id],
+    );
+    assert.equal(rowCount, 1, "no cleanup-failure entry in activity_log");
   });
 
   await new Promise((resolve) => server.close(resolve));
