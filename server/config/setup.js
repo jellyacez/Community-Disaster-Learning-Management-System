@@ -8,7 +8,11 @@ require("dotenv").config({ path: path.join(__dirname, "..", ".env") });
 // Usage: node config/setup.js
 //   1. creates LMS_db (via the default "postgres" DB) if it doesn't exist
 //   2. drops and recreates the public and rate_limit schemas
-//   3. runs migrations/schema.sql
+//   3. runs migrations/schema.sql (the production schema), then migrations/migration.sql
+//      (the idempotent deploy script, for changes not yet in schema.sql), then
+//      migrations/seed.sql (barangays and system_settings defaults)
+// The numbered NN_*.sql files are history for upgrading old databases by hand; schema.sql
+// already contains them, so setup no longer runs them.
 
 const DB_NAME = process.env.DB_DATABASE || "LMS_db";
 
@@ -108,21 +112,12 @@ async function setupDatabase() {
     await client.query("DROP SCHEMA IF EXISTS rate_limit CASCADE");
     await client.query("CREATE SCHEMA rate_limit");
 
-    // runs every NN_*.sql in migrations/ in numeric order, seeds included (e.g. 04_seed_barangays.sql)
+    // Same order as a production deploy: migration.sql brings schema.sql up to date,
+    // then the reference data a fresh install needs.
     const migrationsDir = path.join(__dirname, "..", "migrations");
-    const migrationFiles = fs
-      .readdirSync(migrationsDir)
-      .filter((f) => /^\d+.*\.sql$/i.test(f))
-      .sort();
-
-    if (migrationFiles.length > 0) {
-      console.log(`\n📂 Running ${migrationFiles.length} migration/seed file(s)...`);
-      for (const file of migrationFiles) {
-        const filePath = path.join(migrationsDir, file);
-        const sql = fs.readFileSync(filePath, "utf8");
-        await client.query(sql);
-        console.log(`   ✅ ${file}`);
-      }
+    for (const file of ["migration.sql", "seed.sql"]) {
+      await client.query(fs.readFileSync(path.join(migrationsDir, file), "utf8"));
+      console.log(`   ✅ ${file}`);
     }
 
     console.log("\n🎉 Database setup completed successfully!");
