@@ -1,236 +1,78 @@
 # Community Disaster Learning Management System
 
-A progressive, multi-level web application designed to train and certify residents of Bacolor, Pampanga in Disaster Risk Reduction and Management (DRRM). The platform aligns with PRC and NDRRMC standards and covers local hazards including flooding, earthquakes, and fire safety.
+A web application for training and certifying residents of Bacolor, Pampanga in Disaster Risk Reduction and Management (DRRM). Residents take multi-level modules on local hazards (flood, earthquake, fire) and earn verifiable PDF certificates. Barangay and MDRRMO staff manage modules, enrollment and residents.
 
----
+## Features
 
-## 🌟 Key Features
+- **Learning:** multi-level modules with lessons, quizzes and situational questions. Final assessments are graded on the server, and certificates come with annual recertification.
+- **Roles:** resident, barangay_admin, mdrrmo_admin, head_mdrrmo_admin, system_admin and super_admin, each with its own dashboard. Module changes go through review (head_mdrrmo_admin) before publishing.
+- **Enrollment codes:** learners request a module's code, and MDRRMO staff approve or decline the request.
+- **Accounts:** Better Auth sessions in HTTP-only cookies, email verification, and optional Google sign-in. 2FA is available but off by default.
+- **Administration:** activity log, IP blocklist, Force Logout All Users, maintenance mode and broadcasts, system health, and encrypted database backup and restore.
+- **Works offline (PWA):** residents can keep using cached content offline.
 
-- **Progressive Learning** — Multi-level modules tailored to local hazards with quiz-based assessments and verifiable PDF certificates
-- **Role-Based Access Control** — Partitioned dashboards for Residents, Barangay Admins, MDRRMO Admins, and System Admins with least-privilege UI generation
-- **Enterprise-Grade Auth** — Powered by Better Auth with HTTP-only session cookies, versioned secret rotation, and strict backend middleware protection
-- **Multi-Factor Authentication** — Optional 2FA for residents; mandatory enforced MFA for all admin roles via TOTP
-- **Feedback & Communication** — Residents can submit tickets and communicate directly with Barangay and MDRRMO offices
-- **Real-time Admin Dashboards** — Live data visualization, server health monitoring, and sector/barangay performance tracking
-- **Responsive UI** — Mobile-first design built with React, Tailwind CSS, Framer Motion, and Hugeicons
-- **Security Hardened** — Rate limiting (PostgreSQL-backed), Helmet, CORS, HPP, XSS sanitization, payload validation, and strict startup environment checks
-
----
-
-## 🛠️ Tech Stack
+## Tech stack
 
 | Layer | Technology |
 |---|---|
-| **Backend** | Node.js, Express 5, PostgreSQL, Better Auth |
-| **Frontend** | React 19, Vite, Tailwind CSS v4, Framer Motion |
-| **Auth** | Better Auth (sessions, RBAC admin plugin, 2FA/TOTP) |
-| **Email** | Nodemailer (Gmail SMTP / App Password) |
-| **PDF** | @react-pdf/renderer |
-| **Charts** | Recharts |
-| **Icons** | Hugeicons |
-| **Dev Tools** | nodemon, ESLint |
-| **Containers** | Docker, Docker Compose, nginx |
+| API | Node.js, Express 5, PostgreSQL (`pg`), Better Auth |
+| Web app | React 19, Vite 8, Tailwind CSS 4, TanStack Query, Framer Motion, Hugeicons |
+| Email | Nodemailer (Gmail) |
+| PDF | @react-pdf/renderer |
+| Production | AWS EC2, pm2, nginx, deployed by GitHub Actions |
+| Local alternative | Docker Compose (development only) |
 
----
+## Getting started
 
-## 🚀 Getting Started
+Follow [docs/setup.md](docs/setup.md). In short:
 
-There are three ways to run the project. Pick the one that suits you.
+1. Copy `docker/env/*.env.example` to `server/.env` and `client/.env` and fill them in.
+2. Run `npm ci` in `server/` and `client/`.
+3. Run `npm run db:setup` (**drops and recreates the database schemas**).
+4. Run `npm run create-first-admin -- --email … --name …`.
+5. Run `npm run dev` in both `server/` and `client/`, then open http://localhost:5173.
 
----
+## Documentation
 
-### Option A — Local Dev (Node + Postgres on your machine)
-
-**Prerequisites:** Node.js v22+, PostgreSQL 16
-
-#### 1. Clone the repo
-
-```bash
-git clone https://github.com/jellyacez/Community-Disaster-Learning-Management-System.git
-cd Community-Disaster-Learning-Management-System
-```
-
-#### 2. Set up environment files
-
-```bash
-# Server
-copy docker\env\server.env.example server\.env
-
-# Client
-copy docker\env\client.env.example client\.env
-```
-
-Open `server/.env` and fill in your database credentials and secrets. See the [Environment Variables](#-environment-variables) section below.
-
-#### 3. Install dependencies
-
-```bash
-# Server
-cd server && npm install
-
-# Client (in a new terminal)
-cd client && npm install
-```
-
-#### 4. Initialize the database
-
-Create a PostgreSQL database (e.g. `LMS_db`), then run:
-
-```bash
-cd server
-node config/setup.js
-```
-
-#### 5. Start the dev servers
-
-**Terminal 1 — Server:**
-```bash
-cd server && npm run dev
-# → http://localhost:5000
-```
-
-**Terminal 2 — Client:**
-```bash
-cd client && npm run dev
-# → http://localhost:5173
-```
-
----
-
-### Option B — Docker Dev (hot reload, no local Node/Postgres needed)
-
-**Prerequisites:** Docker Desktop only
-
-```bash
-# Copy and fill in server/.env first (see Environment Variables below)
-copy docker\env\server.env.example server\.env
-
-docker compose -f docker-compose.dev.yml up --build
-```
-
-| Service | URL |
+| Topic | Where |
 |---|---|
-| Frontend (Vite + HMR) | http://localhost:5173 |
-| Backend API | http://localhost:5000 |
-| Database | `localhost:5432` |
+| Local setup | [docs/setup.md](docs/setup.md) |
+| Docker (local development) | [docker/SETUP.md](docker/SETUP.md) |
+| Environment variables | [docs/configuration.md](docs/configuration.md) |
+| Database, migrations, seeding | [docs/database.md](docs/database.md) |
+| Production deployment | [docs/deployment.md](docs/deployment.md) |
+| Backup and restore | [docs/backup-restore.md](docs/backup-restore.md) |
+| Authentication, email verification, 2FA | [docs/auth.md](docs/auth.md) |
+| Regression tests | [docs/testing.md](docs/testing.md) |
+| Architecture decisions | [docs/adr/](docs/adr/) |
+| Known issues and history | [TECH_DEBT.md](TECH_DEBT.md) |
 
-Edit files on your machine normally — Vite hot-reloads the browser, nodemon restarts the server. Git works as usual.
+## Security
 
-See [`docker/SETUP.md`](docker/SETUP.md) for full details.
+- **Auth checks:** every admin route goes through `authenticate` (session, archived account, 2FA when enabled), then `requireRole` and `requirePermission` (`server/middleware/`). The web app's `ProtectedRoute` only controls what is shown; the server is the authority.
+- **Rate limiting:** the auth, global and admin-data limiters are stored in PostgreSQL (`@acpr/rate-limit-postgresql`). The backup, restore and enrollment limiters are in memory.
+- **Requests:** Helmet headers, CORS limited to `FRONTEND_URL` in production, HPP, `sanitize-html` for rich text, parameterized SQL everywhere, and an 800 KB JSON body limit.
+- **Bots:** Cloudflare Turnstile on email sign-in and sign-up.
+- **Sessions:** 7 days, rolled forward on use within 24 hours, and revocable per device or all at once. A manual password change is refused within 24 hours of the last one.
+- **Startup check:** the server won't start without `DB_USER`, `DB_PASSWORD`, `DB_DATABASE` and a Better Auth secret.
+- **Logs:** activity-log rows and server log files older than 90 days are deleted daily (`server/utils/logRetention.js`).
+- **Secrets:** `npm run rotate-better-auth` adds a new Better Auth secret and keeps only the previous one. Sessions signed with it still work; older sessions must sign in again.
 
----
-
-### Option C — Docker Full Stack (nginx, production build)
-
-**Prerequisites:** Docker Desktop only
-
-```bash
-copy docker\env\server.env.example server\.env
-
-docker compose up --build
-```
-
-| Service | URL |
-|---|---|
-| Frontend (nginx) | http://localhost |
-| Backend API | http://localhost:5000 |
-
-No hot reload — use this to test the production build. See [`docker/SETUP.md`](docker/SETUP.md) for full details.
-
----
-
-## 🔐 Environment Variables
-
-Copy `docker/env/server.env.example` to `server/.env` and fill in:
-
-| Variable | Description |
-|---|---|
-| `DB_HOST` | `localhost` for local dev; Docker overrides to `db` automatically |
-| `DB_PORT` | `5432` |
-| `DB_DATABASE` | Your database name (e.g. `LMS_db`) |
-| `DB_USER` | Your Postgres user |
-| `DB_PASSWORD` | Your Postgres password |
-| `JWT_SECRET` | Generate: `node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"` |
-| `BETTER_AUTH_URL` | `http://localhost:5000` |
-| `BETTER_AUTH_SECRETS` | Generate: `npm run rotate-better-auth` |
-| `EMAIL_USER` | Gmail address for sending emails |
-| `EMAIL_APP_PASSWORD` | Gmail App Password |
-| `GOOGLE_CLIENT_ID` | Google OAuth client ID |
-| `GOOGLE_CLIENT_SECRET` | Google OAuth client secret |
-| `FRONTEND_URL` | `http://localhost:5173` (dev) |
-| `NODE_ENV` | `development` or `production` |
-
-**Generate fresh auth secrets any time:**
-```bash
-cd server
-npm run rotate-better-auth   # rotates BETTER_AUTH_SECRETS only
-npm run rotate-secrets       # rotates both JWT_SECRET and BETTER_AUTH_SECRETS
-```
-
----
-
-## 🛡️ Security Architecture
-
-1. **Protected Routes** — `<ProtectedRoute />` checks active sessions and role scopes; unauthorized access shows a full-screen denial overlay and redirects
-2. **Auth Middleware** — `betterAuthMiddleware.js` validates every request has an active Better Auth session
-3. **Admin Middleware** — `adminMiddleware.js` validates the session role before any sensitive query runs
-4. **Rate Limiting** — PostgreSQL-backed distributed rate limiting via `@acpr/rate-limit-postgresql`; effective across multi-process deployments
-5. **SQL Injection Prevention** — All queries use parameterized statements via `pg`
-6. **XSS Sanitization** — `sanitize-html` scrubs rich-text module content; allows safe formatting, strips `<script>`, inline styles, and `<iframe>`
-7. **HTTP Security Headers** — Helmet sets CSP, HSTS, X-Frame-Options, and more
-8. **CORS** — Strict origin allowlist; production locks to `FRONTEND_URL` only
-9. **HPP** — HTTP Parameter Pollution protection on all query strings
-10. **Payload Limits** — JSON body capped at 500 KB; Base64 uploads capped at 2 MB
-11. **MFA Enforcement** — Admin roles are redirected to a mandatory TOTP setup flow if 2FA is not configured
-12. **Secret Rotation** — `npm run rotate-secrets` / `rotate-better-auth` rotate cryptographic keys using versioned envelope encryption without invalidating active sessions
-13. **Startup Validation** — Server crashes immediately on boot if any critical env variable is missing
-14. **Session Management** — HTTP-only cookies, 7-day expiry with 24-hour rolling refresh; users can revoke individual or all sessions from Settings
-15. **Password Security** — 24-hour cooldown on manual password changes; bypass only via email recovery flow
-16. **Data Privacy (R.A. 10173)** — 90-day log retention, hard-deletion pipelines for analytics PII, strict PII redaction in system logs
-17. **Dual-Layer Logging** — Audit logs (security events) in PostgreSQL for the Admin UI; crash logs (stack traces) to local `.log` files for visibility during DB failure
-
----
-
-## 📁 Project Structure
+## Project structure
 
 ```
-├── client/                 ← React + Vite frontend
-│   ├── src/
-│   │   ├── pages/          ← Route-level page components
-│   │   ├── components/     ← Shared UI components
-│   │   ├── hooks/          ← Custom React hooks
-│   │   └── lib/            ← API client, auth client config
-│   └── .env                ← Copy from docker/env/client.env.example
-│
-├── server/                 ← Express.js backend
-│   ├── controllers/        ← Route handler logic
-│   ├── routes/             ← Express router definitions
-│   ├── middleware/         ← Auth, admin, rate-limit guards
-│   ├── services/           ← Business logic / DB queries
-│   ├── utils/              ← Auth config, mailer, logger, cron jobs
-│   ├── migrations/         ← SQL migration files
-│   └── .env                ← Copy from docker/env/server.env.example
-│
-├── docker/
-│   ├── client/
-│   │   ├── Dockerfile      ← Production build (nginx)
-│   │   ├── Dockerfile.dev  ← Development build (Vite)
-│   │   └── nginx.conf      ← nginx SPA + API proxy config
-│   ├── server/
-│   │   ├── Dockerfile      ← Production image
-│   │   └── Dockerfile.dev  ← Development image (nodemon)
-│   ├── env/
-│   │   ├── client.env.example
-│   │   └── server.env.example
-│   └── SETUP.md            ← Detailed Docker setup guide
-│
-├── docker-compose.yml      ← Production stack (nginx, no hot reload)
-├── docker-compose.dev.yml  ← Development stack (Vite HMR + nodemon)
-└── .dockerignore
+client/                React + Vite web app
+server/
+  config/              database pool, permissions, db:setup (setup.js)
+  controllers/ routes/ services/ middleware/ utils/
+  migrations/          schema.sql, migration.sql, seed.sql (+ historical NN_*.sql)
+  scripts/             create-first-admin, clean-schema-dump, backfill-email-verified.sql
+  tests/               *.regression.cjs
+docker/                Dockerfiles, Docker nginx config, env examples, SETUP.md
+docs/                  guides and ADRs
+.github/workflows/     deploy, CI, Docker build check, npm audit, email backfill
 ```
 
----
+## License
 
-## 📜 License
-
-For academic/capstone use — Municipality of Bacolor, Pampanga MDRRMO.
+For academic/capstone use: Municipality of Bacolor, Pampanga MDRRMO.

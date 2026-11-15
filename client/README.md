@@ -1,16 +1,10 @@
-# React + Vite
+# Web app (React + Vite)
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+The resident and admin web app. Setup and commands are in the repository's [docs/setup.md](../docs/setup.md); its environment variables (`VITE_API_URL`, `VITE_BASE_URL`, `VITE_TURNSTILE_SITE_KEY`) are in [docs/configuration.md](../docs/configuration.md#client-clientenv).
 
-Currently, two official plugins are available:
-
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
-
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+| Command | What it does |
+|---|---|
+| `npm run dev` | Vite dev server on http://localhost:5173 |
+| `npm run build` | Production build into `dist/` (environment values are baked in at build time) |
+| `npm run preview` | Serve the build locally |
+| `npm run lint` | ESLint |
