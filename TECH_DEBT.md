@@ -778,9 +778,11 @@ This document tracks identified technical debt, architectural decisions, missing
 
 ### 8. Database Restore Follow-ups (2026-11-15)
 - **Source:** System Health restore redesign (branch `feat/restore-ui-redesign`).
-- **`schema.sql` drift:** `server/migrations/schema.sql` (and so `npm run db:setup`) lacks columns the code needs:
-  - `public."user"`: `first_name`, `middle_name`, `last_name` (Better Auth `additionalFields` in `server/utils/auth.js`; sign-up fails with a schema-mismatch error).
-  - `public.activity_log`: `ip_address` (written by `server/utils/logger.js`; every activity-log write fails).
-  - The restore regression test patches these on its scratch database only (`getMigrations(auth.options).runMigrations()` plus `ALTER TABLE activity_log ADD COLUMN ip_address`). Regenerate `schema.sql` from a current database or add a numbered migration.
+- **RESOLVED (2026-11-15, branch `chore/schema-and-docs`): `schema.sql` drift.** `schema.sql` lacked `user.first_name`/`middle_name`/`last_name`, `activity_log.ip_address` and `module_data.enrollment_code`, and production lacked migrations 15 and 16.
+  - `f353262`: migrations 15 and 16 appended to `migration.sql`, so the next deploy adds the one-pending enrollment-request index production was missing.
+  - `0719741`: `schema.sql` regenerated from the production schema with `server/scripts/clean-schema-dump.js`.
+  - `dc3181a`: `db:setup` runs `schema.sql`, then `migration.sql`, then `seed.sql` (barangays, `system_settings` defaults).
+  - `f86a340`: `npm run create-first-admin` for the first system_admin.
+  - Verified on an empty database: `db:setup`, then sign-up/verify/sign-in, provisioning, module create and publish, enrollment, quiz and certificate; all 14 `server/tests/*.regression.cjs` pass; `migration.sql` runs twice without changes. The restore test's own column patch is now redundant but harmless.
 - **Admin writes during maintenance:** `server/middleware/maintenanceMiddleware.js` lets every `/api/admin` request through, and `server/routes/admin/adminRoutes.js` admits any `system_admin`/`super_admin`. Another admin can therefore write while a restore runs. `pg_restore --single-transaction` holds its locks, so those writes block or fail rather than corrupt data, but nothing stops them.
 - **"Last backup downloaded" after a restore:** the restore dialog reads the newest `Generated encrypted database backup` row in `activity_log`. That row is written after `pg_dump` finishes, so it is never inside the backup it describes. Right after a restore the label shows "None recorded" (or an older download) even though a backup was just used.
