@@ -774,3 +774,13 @@ This document tracks identified technical debt, architectural decisions, missing
   - **`/uploads` through nginx:** relative module image URLs now resolve to same-origin `/uploads/...` in production; confirm nginx on EC2 forwards `/uploads` to the API (not verified).
   - **`localhost:*` in the production CSP meta tag:** `client/index.html:25` allows `http://localhost:*` / `ws://localhost:*` in img/connect/media/frame-src on the deployed site.
 
+---
+
+### 8. Database Restore Follow-ups (2026-11-15)
+- **Source:** System Health restore redesign (branch `feat/restore-ui-redesign`).
+- **`schema.sql` drift:** `server/migrations/schema.sql` (and so `npm run db:setup`) lacks columns the code needs:
+  - `public."user"`: `first_name`, `middle_name`, `last_name` (Better Auth `additionalFields` in `server/utils/auth.js`; sign-up fails with a schema-mismatch error).
+  - `public.activity_log`: `ip_address` (written by `server/utils/logger.js`; every activity-log write fails).
+  - The restore regression test patches these on its scratch database only (`getMigrations(auth.options).runMigrations()` plus `ALTER TABLE activity_log ADD COLUMN ip_address`). Regenerate `schema.sql` from a current database or add a numbered migration.
+- **Admin writes during maintenance:** `server/middleware/maintenanceMiddleware.js` lets every `/api/admin` request through, and `server/routes/admin/adminRoutes.js` admits any `system_admin`/`super_admin`. Another admin can therefore write while a restore runs. `pg_restore --single-transaction` holds its locks, so those writes block or fail rather than corrupt data, but nothing stops them.
+- **"Last backup downloaded" after a restore:** the restore dialog reads the newest `Generated encrypted database backup` row in `activity_log`. That row is written after `pg_dump` finishes, so it is never inside the backup it describes. Right after a restore the label shows "None recorded" (or an older download) even though a backup was just used.
