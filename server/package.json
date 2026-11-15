@@ -10,7 +10,8 @@
     "dev": "nodemon server.js",
     "rotate-secrets": "node rotate-secrets.js",
     "rotate-better-auth": "node rotate-better-auth.js",
-    "db:setup": "node config/setup.js"
+    "db:setup": "node config/setup.js",
+    "create-first-admin": "node scripts/create-first-admin.js"
   },
   "keywords": [],
   "author": "",
