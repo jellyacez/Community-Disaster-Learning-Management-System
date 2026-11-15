@@ -6,7 +6,7 @@
  *   2. maintenance mode off -> 409
  *   3. wrong account password -> 403; the 6th failed attempt in the window -> 429
  *   4. a failing safety dump aborts the restore (500, data untouched, failure logged)
- *   5. a successful restore: safety dump written (PGDMP, mode 600 off Windows), data
+ *   5. a successful restore: encrypted safety dump written (mode 600 off Windows), data
  *      reverted, every session deleted, maintenance_mode back to 'true', completion
  *      entry in activity_log naming the backup size and the safety-dump path
  *
@@ -276,9 +276,13 @@ async function main() {
     assert.equal(await markerExists(), false, "marker written after the backup still exists");
   });
 
-  await check("5b. safety dump written to the fixed path", async () => {
+  await check("5b. safety dump written to the fixed path, encrypted", async () => {
     assert.equal(successRes.status, 200, "restore did not succeed");
-    const dump = fs.readFileSync(SAFETY_PATH);
+    const file = fs.readFileSync(SAFETY_PATH);
+    assert.notEqual(file.subarray(0, 5).toString(), "PGDMP", "safety dump is a plaintext pg_dump");
+    assert.equal(file.subarray(0, 2).toString(), "PK", "safety dump is not a ZIP");
+    // Same format as a downloaded backup: opens with the backup password and server key.
+    const dump = await require("../services/secureBackup").unpack(file, ZIP_PASSWORD);
     assert.equal(dump.subarray(0, 5).toString(), "PGDMP");
     if (process.platform !== "win32") {
       assert.equal(fs.statSync(SAFETY_PATH).mode & 0o777, 0o600);

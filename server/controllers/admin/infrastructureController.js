@@ -52,23 +52,33 @@ function getSafetyDumpPath() {
 }
 
 // Snapshot of the live database taken right before a restore. Server-side only;
-// overwritten each time. pg_dump writes into a fresh private directory and the file
-// is renamed into place, so a symlink planted at either path is never followed.
+// overwritten each time. Encrypted exactly like a downloaded backup (same key and
+// ZIP password), so it can be restored through the same dialog. The plaintext dump
+// exists only in a fresh private directory; the ZIP is renamed into place, so a
+// symlink planted at either path is never followed.
 async function takeSafetyDump() {
   const target = getSafetyDumpPath();
   await fsp.mkdir(path.dirname(target), { recursive: true, mode: 0o700 });
   const workDirectory = await fsp.mkdtemp(
     path.join(path.dirname(target), ".safety-"),
   );
-  const partial = path.join(workDirectory, "database.dump");
+  const dumpPath = path.join(workDirectory, "database.dump");
+  const zipPath = path.join(workDirectory, "database.zip");
   try {
     await runPostgresCommand(
       process.env.PG_DUMP_PATH || "pg_dump",
-      [...getDatabaseArguments(), "--no-password", "-F", "c", "-f", partial],
+      [...getDatabaseArguments(), "--no-password", "-F", "c", "-f", dumpPath],
       getCommandOptions(),
     );
-    await fsp.chmod(partial, 0o600);
-    await fsp.rename(partial, target);
+    // Throws (and so aborts the restore) if the key or ZIP password is not
+    // configured, or the dump exceeds the 64 MiB backup limit.
+    const zip = await secureBackup.pack(
+      await fsp.readFile(dumpPath),
+      process.env.BACKUP_ZIP_PASSWORD,
+    );
+    await fsp.writeFile(zipPath, zip, { mode: 0o600 });
+    await fsp.chmod(zipPath, 0o600);
+    await fsp.rename(zipPath, target);
   } finally {
     await removeTemporaryDirectory(workDirectory);
   }
