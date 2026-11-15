@@ -4,7 +4,8 @@
  *   1. restore disabled -> 503 before the upload is parsed (a malformed multipart body
  *      still gets 503, not multer's 400)
  *   2. maintenance mode off -> 409
- *   3. wrong account password -> 403; the 6th failed attempt in the window -> 429
+ *   3. wrong account password -> 403; the 6th failed attempt in the window -> 429;
+ *      a super_admin impersonating a system_admin -> 403
  *   4. a failing safety dump aborts the restore (500, data untouched, failure logged)
  *   5. a successful restore: encrypted safety dump written (mode 600 off Windows), data
  *      reverted, every session deleted, maintenance_mode back to 'true', completion
@@ -147,13 +148,13 @@ async function main() {
   });
   const base = `http://127.0.0.1:${server.address().port}/api/admin`;
 
-  async function createAdmin(label) {
+  async function createAdmin(label, role = "system_admin") {
     const email = `zz_restore_${label}_${crypto.randomBytes(3).toString("hex")}@example.invalid`;
     const signUp = await auth.api.signUpEmail({
       body: { email, password: PASSWORD, name: `ZZ ${label}`, first_name: "ZZ", last_name: label, barangay: "Balas" },
       headers: new Headers({ "user-agent": UA }),
     });
-    await pool.query(`UPDATE "user" SET "emailVerified" = true, role = 'system_admin' WHERE id = $1`, [signUp.user.id]);
+    await pool.query(`UPDATE "user" SET "emailVerified" = true, role = $2 WHERE id = $1`, [signUp.user.id, role]);
     const signIn = await auth.api.signInEmail({
       body: { email, password: PASSWORD },
       headers: new Headers({ "user-agent": UA }),
@@ -207,6 +208,8 @@ async function main() {
 
   const admin = await createAdmin("main");
   const limitedAdmin = await createAdmin("limited");
+  const impersonatedAdmin = await createAdmin("target");
+  const superAdmin = await createAdmin("super", "super_admin");
 
   await setMaintenance(false);
   const zip = await downloadBackup(admin);
@@ -263,6 +266,19 @@ async function main() {
     }
     console.log(`      attempts 2-6: ${statuses.join(", ")}`);
     assert.equal(statuses[statuses.length - 1], 429);
+  });
+
+  await check("3c. restore while impersonating -> 403, nothing restored", async () => {
+    // authenticate() swaps req.user to the target when a super_admin carries these cookies.
+    const impersonating = {
+      cookie: `${superAdmin.cookie}; impersonated_target_id=${impersonatedAdmin.id}; impersonator_id=${superAdmin.id}`,
+    };
+    const res = await restore(impersonating, restoreForm(zip));
+    const body = await res.json().catch(() => ({}));
+    console.log(`      impersonated restore: ${res.status} ${JSON.stringify(body)}`);
+    assert.equal(res.status, 403);
+    assert.match(body.error || "", /impersonation/i);
+    assert.equal(await markerExists(), true, "data changed during an impersonated restore");
   });
 
   await check("4. failed safety dump aborts the restore and logs a failure", async () => {
