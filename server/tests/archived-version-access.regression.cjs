@@ -9,6 +9,9 @@
  *   d) draft / pending_review: 404 for learners, even with a stray enrollment row
  *   e) published module: behaviour unchanged (enrolled 200s; not enrolled: details 200,
  *      viewer 403, enroll without a code 400)
+ *   f) dashboard payload + the client's In Progress rule (client/src/utils/enrollmentFilters.js):
+ *      archived versions with 0 < progress < 100 are in progress; an archived version at 0%
+ *      with a newer published version stays hidden; completed and 0% archived are not
  *
  * Sends real HTTP requests to a RUNNING LOCAL server. Fixtures (users, sessions, modules,
  * enrollments) are seeded directly into the database from server/.env and removed by exact
@@ -18,6 +21,8 @@
  * Optional: TEST_BASE_URL (default http://localhost:5000)
  */
 const crypto = require("crypto");
+const path = require("path");
+const { pathToFileURL } = require("url");
 const assert = require("assert/strict");
 const pool = require("../config/db");
 const { auth } = require("../utils/auth");
@@ -237,6 +242,42 @@ async function main() {
     assert.equal((await api(outsider, "GET", `/modules/${modE.modId}/details`)).status, 200);
     assert.equal((await api(outsider, "GET", `/modules/${modE.modId}/viewer`)).status, 403);
     assert.equal((await api(outsider, "POST", `/modules/${modE.modId}/enroll`, {})).status, 400);
+  });
+
+  // f) a learner whose versions were replaced by newer published ones
+  const dash = await createUser("dashboard");
+  const replaced = async (label, modstatus, progress) => {
+    const old = await createModule(label, "published");
+    await enroll(dash, old, modstatus, progress);
+    const newer = await createModule(`${label}_v2`, "published");
+    await pool.query("UPDATE module_data SET parent_mod_id = $1 WHERE mod_id = $2", [old.modId, newer.modId]);
+    await setStatus(old, "archived");
+    return old;
+  };
+  const archHalf = await replaced("dash_archived_half", "In Progress", 50);
+  const archZeroNewer = await replaced("dash_archived_zero", "In Progress", 0);
+  const archDone = await replaced("dash_archived_done", "Completed", 100);
+  const archZeroAlone = await createModule("dash_archived_zero_alone", "archived");
+  await enroll(dash, archZeroAlone, "In Progress", 0);
+  const pubPart = await createModule("dash_published_part", "published");
+  await enroll(dash, pubPart, "In Progress", 30);
+
+  await check("f) dashboard: archived versions with 0 < progress < 100 are in progress", async () => {
+    const res = await api(dash, "GET", "/user/dashboard");
+    assert.equal(res.status, 200);
+    const listed = res.body.data.enrolledModules;
+    const ids = new Set(listed.map((m) => m.id));
+    assert.ok(ids.has(archHalf.modId) && ids.has(archDone.modId) && ids.has(archZeroAlone.modId) && ids.has(pubPart.modId), "an expected enrollment is missing from the payload");
+    assert.ok(!ids.has(archZeroNewer.modId), "archived 0% version with a newer version should stay hidden");
+    const { canResumeEnrollment } = await import(
+      pathToFileURL(path.join(__dirname, "../../client/src/utils/enrollmentFilters.js")).href
+    );
+    // Same filter as the dashboard's Resume / Continue list (Dashboard.jsx activeModules)
+    const inProgress = new Set(listed.filter((m) => m.progress < 100 && canResumeEnrollment(m)).map((m) => m.id));
+    assert.ok(inProgress.has(archHalf.modId), "archived version at 50% is not in progress");
+    assert.ok(inProgress.has(pubPart.modId), "published module at 30% is not in progress");
+    assert.ok(!inProgress.has(archZeroAlone.modId), "archived version at 0% should not be in progress");
+    assert.ok(!inProgress.has(archDone.modId), "completed archived version should not be in progress");
   });
 }
 
