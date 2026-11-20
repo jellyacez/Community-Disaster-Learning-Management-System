@@ -28,7 +28,7 @@ The rule was decided without recording reasons against these. Their trade-offs:
 ## Consequences
 - **Two versions at once:** a learner can be on an old version while new learners take the new one. Certificates name the version the learner completed.
 - **Tests:** `server/tests/archived-version-access.regression.cjs` covers the rule: enrolled in progress, enrolled completed, not enrolled, draft/pending, published unchanged. A browser check on a scratch database opened both an in-progress and a completed archived version from Enrolled Modules.
-- **Follow-ups (not decided):**
-  - The dashboard and the Enrolled Modules "In Progress" tab still leave out unfinished archived versions (`client/src/pages/user/enrolled-modules/EnrolledModules.jsx:21-22`, `client/src/pages/user/dashboard/Dashboard.jsx:214`).
-  - The dashboard query hides an archived version with no progress when a newer version exists (`server/services/users/DashboardService.js`).
-  - `GET /api/modules/steps/:stepId/assessment` checks neither status nor enrollment.
+- **Follow-ups done** (branch `fix/archived-followups`):
+  - Archived versions with 0 < progress < 100 now appear in the Enrolled Modules "In Progress" tab and the dashboard Resume / Continue list (`client/src/utils/enrollmentFilters.js`).
+  - Archived versions at 0% that have a newer version stay hidden (`server/services/users/DashboardService.js`), as before.
+  - `GET /api/modules/steps/:stepId/assessment` now answers only admins and learners enrolled in a version they may access.

@@ -18,7 +18,7 @@ Each prints `ok` / `not ok` (or `PASS` / `FAIL`) lines and exits non-zero on fai
 
 | Script | Needs the API running | Database it uses |
 |---|---|---|
-| `archived-version-access`, `barangay-readiness`, `enrollment-requests`, `h1-quiz-scoring`, `question-explanations`, `quiz-attempts`, `review-status-guard`, `schema-integrity`, `state-transitions` | **Yes**, at `TEST_BASE_URL` (default `http://localhost:5000`) | `DB_DATABASE` from `server/.env`, which must be the same database the API uses |
+| `archived-version-access`, `barangay-readiness`, `enrollment-requests`, `h1-quiz-scoring`, `question-explanations`, `quiz-attempts`, `review-status-guard`, `schema-integrity`, `state-transitions`, `step-assessment-access` | **Yes**, at `TEST_BASE_URL` (default `http://localhost:5000`) | `DB_DATABASE` from `server/.env`, which must be the same database the API uses |
 | `health-status`, `register-existing-email`, `user-field-lock` | No | `DB_DATABASE` |
 | `restore-safeguards`, `create-first-admin` | No (they start what they need in-process) | Their own scratch database, created and dropped by the script |
 | `situational-edit` | No | None |

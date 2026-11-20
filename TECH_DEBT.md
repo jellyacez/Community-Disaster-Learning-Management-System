@@ -749,12 +749,13 @@ This document tracks identified technical debt, architectural decisions, missing
   - **H3 — Better Auth `update-user` accepts `twoFactorEnabled` / `barangay_id`:** field write reproduced; MFA bypass not reproducible locally (MFA disabled), needs a test with MFA enforced.
   - **Open (reproduced locally):** M10 (maintenance `"false"` enables; unvalidated broadcast severity / support email).
   - **Resolved:** H6. New enrollment and code requests require `status = 'published'` and no `moddateremove` (`ec54ad7`, `b84a32b`); enrolled learners keep their archived version (branch `fix/archived-version-access`: `3a0e1fd` server, `93674cd` client). `server/tests/archived-version-access.regression.cjs` covers enroll on an archived module (404); enroll on draft/pending uses the same check (`moduleController.js:221`) but isn't called by that test.
-  - **Open (not yet reproduced):** H2, H5, H7, M11 (stop-impersonating role gate), remaining M/L items.
+  - **Open (not yet reproduced):** H2, H7, M11 (stop-impersonating role gate), remaining M/L items.
+  - **Narrowed:** H5. `GET /api/modules/steps/:stepId/assessment` now answers only admins and learners enrolled in a module version they may access (404 otherwise, drafts included; branch `fix/archived-followups`, `f34b74b`, test `server/tests/step-assessment-access.regression.cjs`). Enrolled learners still receive the answer keys of non-final graded steps, by design: the offline grader (`client/src/lib/LocalSave/gradeOffline.js`) needs them. Final assessments stay stripped and are graded on the server (H1).
   - **Also pending:** dead `POST /api/modules/:moduleId/results` route + controller and duplicate `/:id/enroll` registration (L8).
 - **Constraints for remaining fixes:**
   - **General:** No validation change may turn an offline-queue replay into a terminal 400.
   - **H6:** Archived modules stay readable/writable for residents with an existing `module_activity` row; only new enrollment requires `status = 'published'`. Enforced by `ModuleService.canLearnerAccessModule` ([ADR 0005](docs/adr/0005-module-versioning.md)).
-  - **H5:** Partly by design — offline grading needs answer keys on the client. The real protection is server-side grading (H1).
+  - **H5:** Partly by design — offline grading needs answer keys on the client, so enrolled learners get them for non-final steps. The real protection is server-side grading (H1).
 
 ---
 
