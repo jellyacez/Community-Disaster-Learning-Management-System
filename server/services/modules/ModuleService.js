@@ -483,7 +483,9 @@ class ModuleService {
 
   async getStepMeta(stepId) {
     const { rows } = await pool.query(
-      "SELECT step_id, step_type, is_final_assessment FROM module_steps WHERE step_id = $1",
+      `SELECT ms.step_id, ms.step_type, ms.is_final_assessment, l.mod_id
+       FROM module_steps ms JOIN levels l ON l.level_id = ms.level_id
+       WHERE ms.step_id = $1`,
       [stepId]
     );
     return rows[0] || null;

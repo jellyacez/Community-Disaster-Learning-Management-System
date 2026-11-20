@@ -448,6 +448,21 @@ exports.getStepAssessment = async (req, res) => {
   }
 
   try {
+    const isAdmin = ADMIN_ROLES.includes(req.user?.role);
+    const stepMeta = await ModuleService.getStepMeta(parsedStepId);
+    // Learners reach questions only through the viewer and offline download of a module
+    // they're enrolled in; anything else answers like a missing step.
+    const learnerAllowed =
+      !isAdmin &&
+      stepMeta &&
+      (await ModuleService.canLearnerAccessModule(req.user?.id, stepMeta.mod_id)) &&
+      (await ModuleService.checkUserEnrollment(req.user?.id, stepMeta.mod_id));
+    if (!stepMeta || (!isAdmin && !learnerAllowed)) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Step not found." });
+    }
+
     let data = await ModuleService.getStepAssessment(parsedStepId);
     if (!data) {
       return res
@@ -457,10 +472,7 @@ exports.getStepAssessment = async (req, res) => {
 
     // Final assessments run as server attempts: learners never receive their answer key.
     // Admins keep it for module previews.
-    if (
-      !ADMIN_ROLES.includes(req.user?.role) &&
-      isAttemptStep(await ModuleService.getStepMeta(parsedStepId))
-    ) {
+    if (!isAdmin && isAttemptStep(stepMeta)) {
       data = data.map((q) => ({
         ...q,
         rationale: undefined,
