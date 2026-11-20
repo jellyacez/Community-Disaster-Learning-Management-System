@@ -195,12 +195,14 @@ class DashboardService {
 
     const enrolledModules = enrolledModulesQuery.rows;
 
-    // An archived version the learner never finished can't be continued, so it doesn't count
+    // Same rule as the In Progress lists (client/src/utils/enrollmentFilters.js): learners keep
+    // their archived version (ADR 0005), so one they have started counts; an archived version
+    // at 0% doesn't. The query above already drops those that have a newer version.
     const countedModules = enrolledModules.filter(
       (mod) =>
         mod.module_status !== "archived" ||
         mod.enrollment_status === "Completed" ||
-        mod.progress === 100,
+        mod.progress > 0,
     );
     let completionRate = 0;
     if (countedModules.length > 0) {

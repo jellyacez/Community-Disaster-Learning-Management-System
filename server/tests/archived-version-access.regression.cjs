@@ -11,7 +11,8 @@
  *      viewer 403, enroll without a code 400)
  *   f) dashboard payload + the client's In Progress rule (client/src/utils/enrollmentFilters.js):
  *      archived versions with 0 < progress < 100 are in progress; an archived version at 0%
- *      with a newer published version stays hidden; completed and 0% archived are not
+ *      with a newer published version stays hidden; completed and 0% archived are not;
+ *      the dashboard completionRate counts the same archived versions (progress > 0)
  *
  * Sends real HTTP requests to a RUNNING LOCAL server. Fixtures (users, sessions, modules,
  * enrollments) are seeded directly into the database from server/.env and removed by exact
@@ -278,6 +279,9 @@ async function main() {
     assert.ok(inProgress.has(pubPart.modId), "published module at 30% is not in progress");
     assert.ok(!inProgress.has(archZeroAlone.modId), "archived version at 0% should not be in progress");
     assert.ok(!inProgress.has(archDone.modId), "completed archived version should not be in progress");
+    // Completion rate counts the same enrollments: published 30, archived 50 and archived 100
+    // (archived 0% versions don't count): (30 + 50 + 100) / 3 = 60
+    assert.equal(res.body.data.completionRate, 60, "completionRate");
   });
 }
 
