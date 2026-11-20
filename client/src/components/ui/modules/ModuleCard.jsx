@@ -62,19 +62,6 @@ const ModuleCard = memo(function ModuleCard({
     else if (result?.message) setCodeError(result.message);
   };
 
-  // An enrollment on an archived version can't be opened; send learners to the updated module
-  const isRetired = localEnrolled && !isAdminView && module.module_status === "archived";
-  const openUpdatedModule = () => {
-    if (module.latest_published_id) navigate(`/user/modules/${module.latest_published_id}/details`);
-  };
-  const retiredCopy = !isRetired
-    ? null
-    : !module.latest_published_id
-      ? { note: "This module has been retired.", label: "No longer available" }
-      : isCompleted
-        ? { note: "You completed a previous version of this module.", label: "View updated module" }
-        : { note: "This module was updated. Progress on the old version can't continue.", label: "Start updated version" };
-
   const resolveImageUrl = (url) => {
     if (!url) return null;
     if (url.startsWith("http://") || url.startsWith("https://")) return url;
@@ -87,7 +74,6 @@ const ModuleCard = memo(function ModuleCard({
     if (isPreview) {
       return toast.error("Navigation is disabled in Live Preview Mode.");
     }
-    if (isRetired) return openUpdatedModule();
     navigate(`/user/modules/${module.id}`);
   };
 
@@ -106,8 +92,6 @@ const ModuleCard = memo(function ModuleCard({
       } else {
         navigate(`/admin/mdrrmo/modules/${module.id}/details`);
       }
-    } else if (isRetired) {
-      openUpdatedModule();
     } else {
       navigate(`/user/modules/${module.id}/details`);
     }
@@ -242,8 +226,7 @@ const ModuleCard = memo(function ModuleCard({
                 Previous version
               </span>
             )}
-            {/* A retired enrollment's main button already opens the newer version */}
-            {module.has_newer_version && !isRetired && (
+            {module.has_newer_version && (
               module.latest_published_id ? (
                 <button
                   type="button"
@@ -323,9 +306,6 @@ const ModuleCard = memo(function ModuleCard({
               <span>You completed an earlier version</span>
             </p>
           )}
-          {retiredCopy && (
-            <p className="mt-2 text-xs font-semibold text-slate-600 dark:text-slate-300">{retiredCopy.note}</p>
-          )}
         </div>
 
         {localEnrolled && (
@@ -353,16 +333,13 @@ const ModuleCard = memo(function ModuleCard({
           {localEnrolled ? (
             <button
               onClick={handleLaunchViewer}
-              disabled={isRetired && !module.latest_published_id}
               className={`flex-1 rounded-xl px-2 sm:px-4 py-2.5 text-xs sm:text-sm font-bold text-white transition cursor-pointer truncate disabled:cursor-not-allowed disabled:bg-gray-400 ${
                 isCompleted
                   ? "bg-green-600 hover:bg-green-700"
                   : "bg-red-600 hover:bg-red-700"
               }`}
             >
-              {retiredCopy
-                ? retiredCopy.label
-                : isCompleted ? "Review Module" : module.progress === 0 ? "Start" : "Continue"}
+              {isCompleted ? "Review Module" : module.progress === 0 ? "Start" : "Continue"}
             </button>
           ) : isAdminView ? (
             module.status === "archived" ? (
