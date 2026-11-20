@@ -16,10 +16,10 @@ import {
 import SearchBar from "../../../components/ui/inputs/SearchBar.jsx";
 import PaginationControls from "../../../components/ui/PaginationControls.jsx";
 import useDebounce from "../../../hooks/useDebounce";
+import { canResumeEnrollment } from "../../../utils/enrollmentFilters";
 
 const isCompleted = (m) => m.status === "Completed" || m.progress === 100;
-// An unfinished archived version can't be continued, so it only appears under All Enrolled
-const isInProgress = (m) => !isCompleted(m) && m.module_status !== "archived";
+const isInProgress = (m) => !isCompleted(m) && canResumeEnrollment(m);
 
 export default function UserEnrolledModules() {
   useDocumentTitle("Enrolled Modules | Bacolor Disaster LMS");

@@ -10,6 +10,7 @@ import DashboardEmergencyContacts from "../../../components/ui/dashboard/Dashboa
 
 import useDocumentTitle from "../../../hooks/useDocumentTitle";
 import OnboardingModal from "../../../components/ui/modals/OnboardingModal.jsx";
+import { canResumeEnrollment } from "../../../utils/enrollmentFilters";
 
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
@@ -210,8 +211,7 @@ export default function UserDashboard() {
   }), [rawData, sortedAnnouncements]);
 
   const activeModules = useMemo(
-    // Archived versions can't be resumed; their cards point to the updated module instead
-    () => displayData.enrolledModules.filter((m) => m.progress < 100 && m.module_status !== "archived"),
+    () => displayData.enrolledModules.filter((m) => m.progress < 100 && canResumeEnrollment(m)),
     [displayData.enrolledModules],
   );
   const topActiveModule = activeModules[0];
