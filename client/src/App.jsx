@@ -54,6 +54,9 @@ const AdminFeedbackManager = lazy(
 const AdminSettings = lazy(
   () => import("./pages/admin/shared/AdminSettings"),
 );
+const EmergencyContactsManager = lazy(
+  () => import("./pages/admin/shared/EmergencyContactsManager"),
+);
 const UserFeedback = lazy(() => import("./pages/user/feedback/UserFeedback"));
 
 const UserDashboard = lazy(() => import("./pages/user/dashboard/Dashboard"));
@@ -301,6 +304,7 @@ export default function App() {
                   <Route path="users" element={<SystemUserManagement />} />
                   <Route path="logs" element={<GovernanceLog />} />
                   <Route path="settings" element={<SystemSettings />} />
+                  <Route path="emergency-contacts" element={<EmergencyContactsManager />} />
                   <Route path="health" element={<SystemHealth />} />
                   <Route path="security" element={<SystemSecurity />} />
                 </Route>
@@ -319,6 +323,7 @@ export default function App() {
                   <Route path="users" element={<SystemUserManagement />} />
                   <Route path="logs" element={<SystemActivityLog />} />
                   <Route path="settings" element={<SystemSettings />} />
+                  <Route path="emergency-contacts" element={<EmergencyContactsManager />} />
                   <Route path="health" element={<SystemHealth />} />
                   <Route path="security" element={<SystemSecurity />} />
                   <Route
@@ -369,6 +374,7 @@ export default function App() {
                   <Route path="alerts" element={<LiveAlerts />} />
                   <Route path="feedback" element={<AdminFeedbackManager />} />
                   <Route path="settings" element={<AdminSettings />} />
+                  <Route path="emergency-contacts" element={<EmergencyContactsManager />} />
                   <Route
                     path="overview"
                     element={<Navigate to="dashboard" replace />}

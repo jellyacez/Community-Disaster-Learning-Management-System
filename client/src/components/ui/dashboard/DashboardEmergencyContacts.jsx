@@ -8,12 +8,14 @@ import toast from "react-hot-toast";
 import { useEmergencyContacts } from "../../../hooks/useEmergencyContacts";
 import HotlineEntry from "../HotlineEntry";
 
-export default function DashboardEmergencyContacts() {
+// `contacts` overrides the live list (the admin editor previews its draft with it)
+export default function DashboardEmergencyContacts({ contacts: draft }) {
   const isTouchDevice =
     typeof window !== "undefined" &&
     window.matchMedia("(pointer: coarse)").matches;
 
-  const contacts = useEmergencyContacts().contacts.map((c) => ({
+  const live = useEmergencyContacts().contacts;
+  const contacts = (draft ?? live).map((c) => ({
     ...c,
     name: `${c.agency} (${c.label})`,
   }));
@@ -73,7 +75,7 @@ export default function DashboardEmergencyContacts() {
                   </span>
                 </div>
                 <div className="flex flex-wrap items-center justify-end gap-1.5">
-                  <span className={`text-xs sm:text-sm font-bold font-mono tracking-tight ${sampleTag ? "text-gray-500" : "text-red-600"}`}>
+                  <span className={`whitespace-nowrap text-xs sm:text-sm font-bold font-mono tracking-tight ${sampleTag ? "text-gray-500" : "text-red-600"}`}>
                     {c.phone}
                   </span>
                   {sampleTag}

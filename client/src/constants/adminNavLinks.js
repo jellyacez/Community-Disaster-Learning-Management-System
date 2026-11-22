@@ -13,6 +13,7 @@ import {
   CheckmarkBadge01Icon,
   Building03Icon,
   ClipboardListIcon,
+  Call02Icon,
 } from "@hugeicons/core-free-icons";
 
 export const ROLE_BASED_LINKS = {
@@ -97,6 +98,11 @@ export const ROLE_BASED_LINKS = {
           icon: Settings01Icon,
         },
         {
+          name: "Emergency Hotlines",
+          path: "/admin/super/emergency-contacts",
+          icon: Call02Icon,
+        },
+        {
           name: "System Health",
           path: "/admin/super/health",
           icon: Activity01Icon,
@@ -138,6 +144,11 @@ export const ROLE_BASED_LINKS = {
           name: "System Settings",
           path: "/admin/system/settings",
           icon: Settings01Icon,
+        },
+        {
+          name: "Emergency Hotlines",
+          path: "/admin/system/emergency-contacts",
+          icon: Call02Icon,
         },
         {
           name: "System Health",
@@ -207,6 +218,11 @@ export const ROLE_BASED_LINKS = {
           icon: Notification01Icon,
         },
         {
+          name: "Emergency Hotlines",
+          path: "/admin/mdrrmo/emergency-contacts",
+          icon: Call02Icon,
+        },
+        {
           name: "Settings",
           path: "/admin/mdrrmo/settings",
           icon: Settings01Icon,
@@ -272,6 +288,11 @@ export const ROLE_BASED_LINKS = {
           name: "System Announcements",
           path: "/admin/mdrrmo/alerts",
           icon: Notification01Icon,
+        },
+        {
+          name: "Emergency Hotlines",
+          path: "/admin/mdrrmo/emergency-contacts",
+          icon: Call02Icon,
         },
         {
           name: "Settings",
