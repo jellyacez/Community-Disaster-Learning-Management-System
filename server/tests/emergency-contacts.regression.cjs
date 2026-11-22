@@ -266,6 +266,8 @@ async function main() {
       );
       assert.match(rows[0].act_log, /^Updated emergency contacts: /);
       assert.match(rows[0].act_log, /Regression Agency\/Mobile/);
+      // The audit trail records which number residents will now dial
+      assert.ok(rows[0].act_log.includes("to +63 917-765-4321"), rows[0].act_log);
 
       const noop = await call(admin, "PUT", ADMIN_PATH, { version: saved.body.version, contacts });
       assert.equal(noop.status, 200, JSON.stringify(noop.body));

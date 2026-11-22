@@ -130,12 +130,13 @@ function summarize(before, after, removed) {
   after.forEach((row, i) => {
     const old = row.id === undefined ? null : byId.get(row.id);
     if (!old) {
-      parts.push(`added ${name(row)}`);
+      parts.push(`added ${name(row)} (${row.phone})`);
       return;
     }
     if (old.sort_order !== i + 1) reordered = true;
     const changed = ["agency", "label", "phone"].filter((f) => old[f] !== row[f]);
-    if (changed.length) parts.push(`changed ${changed.join(", ")} of ${name(row)}`);
+    // Name the new number: the audit trail must show what residents will dial
+    if (changed.length) parts.push(`changed ${changed.join(", ")} of ${name(row)}${changed.includes("phone") ? ` to ${row.phone}` : ""}`);
     if (old.active !== row.active) parts.push(`${row.active ? "activated" : "deactivated"} ${name(row)}`);
     if (old.is_sample !== row.is_sample) {
       parts.push(`marked ${name(row)} as ${row.is_sample ? "a sample" : "a real number"}`);

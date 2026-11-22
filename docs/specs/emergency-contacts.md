@@ -111,8 +111,9 @@ and the seed guard does nothing. The seed copy is there so `seed.sql` still desc
   each other; otherwise it writes the list and increments the version. The UI reloads and keeps the
   user's draft.
 - The server writes one `activity_log` entry per saved PUT that changed something. It summarises the
-  change, e.g. `Updated emergency contacts: added PNP Bacolor/Police station; changed phone of MDRRMO
-  Bacolor/Globe; deactivated BFP Bacolor/Fire station`, cut to the 500-char column limit. A no-op PUT
+  change, e.g. `Updated emergency contacts: added PNP Bacolor/Police station (0918 111 2222); changed phone
+  of MDRRMO Bacolor/Globe to 0917 555-0101; deactivated BFP Bacolor/Fire station`. New and changed
+  numbers are always named, so the log shows what residents will dial, cut to the 500-char column limit. A no-op PUT
   writes no entry and doesn't bump the version.
 
 **Validation (sharp edges)**: a bad body returns 400 with `{ success: false, errors: [{ index, field, message }] }`
