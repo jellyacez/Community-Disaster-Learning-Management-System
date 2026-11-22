@@ -97,7 +97,6 @@ export default function ModuleGrid({
             isAdminView={true}
             onManageClick={() => handleEditModule(mod.id)}
             onShowCodeClick={onShowCodeClick}
-            onPreviewClick={() => {}}
           />
         ))}
       </div>

@@ -11,7 +11,6 @@ import {
 } from "@hugeicons/core-free-icons";
 import { useModuleEnrollment } from "../../../hooks/useModuleEnrollment";
 import DOMPurify from "dompurify";
-import toast from "react-hot-toast";
 import { decodeHtml } from "../../../utils/textUtils";
 import EnrollCodeModal from "../modals/EnrollCodeModal.jsx";
 
@@ -25,9 +24,7 @@ const getCategoryIcon = (category) => {
 const ModuleCard = memo(function ModuleCard({
   module,
   enrolled = false,
-  isPreview = false,
   isAdminView = false,
-  onPreviewClick,
   onEnrollSuccess,
   onManageClick,
   onEnrollClick,
@@ -70,19 +67,11 @@ const ModuleCard = memo(function ModuleCard({
 
   const handleLaunchViewer = (e) => {
     e.stopPropagation();
-    if (isPreview && onPreviewClick) return onPreviewClick();
-    if (isPreview) {
-      return toast.error("Navigation is disabled in Live Preview Mode.");
-    }
     navigate(`/user/modules/${module.id}`);
   };
 
   const handleViewDetails = (e) => {
     e.stopPropagation();
-    if (isPreview && onPreviewClick) return onPreviewClick();
-    if (isPreview) {
-      return toast.error("Navigation is disabled in Live Preview Mode.");
-    }
 
     if (isAdmin || isAdminView) {
       navigate(`/admin/mdrrmo/modules/${module.id}/details`);
@@ -96,10 +85,6 @@ const ModuleCard = memo(function ModuleCard({
       e.stopPropagation();
       e.preventDefault();
     }
-    if (isPreview && onPreviewClick) return onPreviewClick();
-    if (isPreview) {
-      return toast.error("Navigation is disabled in Live Preview Mode.");
-    }
 
     if (onManageClick) {
       return onManageClick(module.id || module.mod_id);
@@ -108,10 +93,6 @@ const ModuleCard = memo(function ModuleCard({
 
   const handleEnrollClick = (e) => {
     e.stopPropagation();
-    if (isPreview && onPreviewClick) return onPreviewClick();
-    if (isPreview) {
-      return toast.error("Enrollment is disabled in Live Preview Mode.");
-    }
 
     if (onEnrollClick) {
       return onEnrollClick(module);
