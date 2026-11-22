@@ -29,7 +29,7 @@ export function useModuleBuilder() {
     currentSituationalData, setCurrentSituationalData,
     situationalImage, setSituationalImage,
     writtenMaterialFile, setWrittenMaterialFile,
-    addStepToFlow, addQuizQuestionToStep, addSituationalScenarioToStep, handleEditStep
+    addStepToFlow, addSituationalScenarioToStep, handleEditStep
   } = useStepStager(activeLevelOrder, setFormErrors);
 
   const { handleModuleSubmit } = useModuleSubmit({
@@ -102,14 +102,6 @@ export function useModuleBuilder() {
     }
   }, [setEditingModuleId, setModuleForm, setStagedLevels, setActiveLevelOrder, setStagedFlows]);
 
-  const triggerFlowSequencePreview = () => {
-    if (stagedFlows.length === 0) {
-      toast.error("System Error: No curriculum sequences detected. Please stage at least one sequence step to initiate the preview.");
-      return false;
-    }
-    return true;
-  };
-
   const resetForm = () => {
     setEditingModuleId(null);
     setModuleForm({ title: "", category: "General", level: "Level 1", duration: "15 mins", description: "", image_url: "" });
@@ -171,10 +163,8 @@ export function useModuleBuilder() {
     },
     actions: {
       addStepToFlow: () => addStepToFlow(formErrors),
-      addQuizQuestionToStep: () => addQuizQuestionToStep(formErrors),
       addSituationalScenarioToStep: () => addSituationalScenarioToStep(formErrors),
       handleModuleSubmit,
-      triggerFlowSequencePreview,
       resetForm,
       handleEditStep,
       loadModuleForEdit

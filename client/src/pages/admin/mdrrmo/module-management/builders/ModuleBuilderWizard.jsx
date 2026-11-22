@@ -61,7 +61,6 @@ export default function ModuleBuilderWizard({
 
   const {
     addStepToFlow,
-    addQuizQuestionToStep,
     handleModuleSubmit,
     handleEditStep,
   } = actions;
@@ -305,7 +304,6 @@ export default function ModuleBuilderWizard({
                     setCurrentQuizQuestion={setCurrentQuizQuestion}
                     currentSituationalData={currentSituationalData}
                     setCurrentSituationalData={setCurrentSituationalData}
-                    addQuizQuestionToStep={addQuizQuestionToStep}
                     situationalImage={situationalImage}
                     setSituationalImage={setSituationalImage}
                     addStepToFlow={addStepToFlow}

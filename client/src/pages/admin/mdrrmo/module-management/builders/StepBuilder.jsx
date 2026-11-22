@@ -21,7 +21,6 @@ export default function StepBuilder({
   setCurrentQuizQuestion, 
   currentSituationalData,
   setCurrentSituationalData,
-  addQuizQuestionToStep,
   addSituationalScenarioToStep,
   situationalImage, 
   setSituationalImage, 
@@ -129,7 +128,6 @@ export default function StepBuilder({
                setCurrentQuizQuestion={setCurrentQuizQuestion}
                currentSituationalData={currentSituationalData}
                setCurrentSituationalData={setCurrentSituationalData}
-               addQuizQuestionToStep={addQuizQuestionToStep}
                addSituationalScenarioToStep={addSituationalScenarioToStep}
                situationalImage={situationalImage}
                setSituationalImage={setSituationalImage}

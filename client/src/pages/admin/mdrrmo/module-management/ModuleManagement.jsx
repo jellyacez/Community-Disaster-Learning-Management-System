@@ -64,7 +64,7 @@ export default function ModuleManagement() {
   const canCreateModule = userRole === "mdrrmo_admin" || userRole === "super_admin";
 
   const { state, setters, actions } = useModuleBuilder();
-  const { triggerFlowSequencePreview, loadModuleForEdit, resetForm } = actions;
+  const { loadModuleForEdit, resetForm } = actions;
 
   const [isWizardOpen, setIsWizardOpen] = useState(false);
   const [showPreviewModal, setShowPreviewModal] = useState(false);
@@ -189,7 +189,6 @@ export default function ModuleManagement() {
           setters={setters}
           actions={actions}
           refetchModules={refetch}
-          triggerFlowSequencePreview={triggerFlowSequencePreview}
           showPreviewModal={showPreviewModal}
           setShowPreviewModal={setShowPreviewModal}
         />

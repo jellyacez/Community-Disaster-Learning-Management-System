@@ -244,53 +244,6 @@ export function useStepStager(activeLevelOrder, setFormErrors) {
     return true;
   };
 
-  const addQuizQuestionToStep = (formErrors) => {
-    const errors = {};
-    if (!currentQuizQuestion.questionText.trim()) {
-      errors.questionText = "Question text is required to proceed.";
-    }
-
-    if (
-      currentQuizQuestion.questionType === "multiple_choice" &&
-      currentQuizQuestion.options.some((opt) => !opt.text.trim())
-    ) {
-      errors.options = "All four multiple-choice options must be populated.";
-    }
-
-    if (
-      currentQuizQuestion.questionType === "multiple_choice" &&
-      currentQuizQuestion.options.some((opt) => !opt.rationale.trim())
-    ) {
-      errors.options =
-        "Rationale / Formative Feedback is required for all options to ensure pedagogical effectiveness.";
-    }
-
-    if (Object.keys(errors).length > 0) {
-      setFormErrors({ ...formErrors, ...errors, _scrollTrigger: Date.now() });
-      return;
-    }
-
-    setCurrentFlowStep({
-      ...currentFlowStep,
-      quizQuestions: [...currentFlowStep.quizQuestions, currentQuizQuestion],
-    });
-
-    setCurrentQuizQuestion({
-      questionType: "multiple_choice",
-      questionText: "",
-      correctAnswerIndex: 0,
-      options: [
-        { text: "", rationale: "" },
-        { text: "", rationale: "" },
-        { text: "", rationale: "" },
-        { text: "", rationale: "" },
-      ],
-    });
-
-    setFormErrors({});
-    toast.success("Quiz question added to step!");
-  };
-
   const addSituationalScenarioToStep = () => {
     try {
       const errors = {};
@@ -392,7 +345,6 @@ export function useStepStager(activeLevelOrder, setFormErrors) {
     setWrittenMaterialFile,
     editingStepId,
     addStepToFlow,
-    addQuizQuestionToStep,
     addSituationalScenarioToStep,
     handleEditStep,
   };
