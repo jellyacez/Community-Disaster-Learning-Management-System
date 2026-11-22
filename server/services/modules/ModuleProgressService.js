@@ -283,7 +283,8 @@ class ModuleProgressService {
         } else {
           // existing certificate: renewal / recertification
           const existingCert = certCheck.rows[0];
-          // A revoked certificate is never renewed here; only reinstateCertificate clears a revocation
+          // A revoked certificate is never renewed here. Revocation is deprecated (PATCH .../revoke answers 410) and
+          // reinstating was removed, so nothing in the app sets or clears a revocation; a revoked row is old data.
           const isRevoked = existingCert.status === "revoked";
           const isExpired = !isRevoked && new Date(existingCert.expires_at) < new Date();
           const isExpiringSoon = !isRevoked && new Date(existingCert.expires_at) <= new Date(Date.now() + RENEWAL_WINDOW_DAYS * 86400 * 1000);
