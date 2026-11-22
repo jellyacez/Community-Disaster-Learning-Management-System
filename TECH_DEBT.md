@@ -788,3 +788,10 @@ This document tracks identified technical debt, architectural decisions, missing
   - Verified on an empty database: `db:setup`, then sign-up/verify/sign-in, provisioning, module create and publish, enrollment, quiz and certificate; all 14 `server/tests/*.regression.cjs` pass; `migration.sql` runs twice without changes. The restore test's own column patch is now redundant but harmless.
 - **Admin writes during maintenance:** `server/middleware/maintenanceMiddleware.js` lets every `/api/admin` request through, and `server/routes/admin/adminRoutes.js` admits any `system_admin`/`super_admin`. Another admin can therefore write while a restore runs. `pg_restore --single-transaction` holds its locks, so those writes block or fail rather than corrupt data, but nothing stops them.
 - **"Last backup downloaded" after a restore:** the restore dialog reads the newest `Generated encrypted database backup` row in `activity_log`. That row is written after `pg_dump` finishes, so it is never inside the backup it describes. Right after a restore the label shows "None recorded" (or an older download) even though a backup was just used.
+
+---
+
+### 9. Placeholder contact in the privacy policy (2026-11-22)
+- **Location:** `client/public/termly-privacy.html` ("by phone at +63 123 456 7890").
+- **Issue:** The privacy policy lists a placeholder phone number as the data-controller contact. It was left out of `feat/emergency-contacts` because it is a legal document, not a hotline.
+- **Action:** Replace it with the real contact before handover.
