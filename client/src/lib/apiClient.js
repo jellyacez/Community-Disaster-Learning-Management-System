@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { SESSION_BROWSER_CHANGED, setAuthNotice } from './authNotices';
 
 const isDev = import.meta.env.DEV;
 export const API_BASE_URL = import.meta.env.VITE_API_URL || (isDev ? "http://localhost:5000/api" : "/api");
@@ -23,6 +24,12 @@ apiClient.interceptors.request.use(
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
+    // Matches on the code, never the message. Set for queued syncs too, which don't redirect,
+    // so the notice still shows at the next sign-in; the queued write stays in the queue.
+    if (error.response?.status === 401 && error.response.data?.error === SESSION_BROWSER_CHANGED) {
+      setAuthNotice(SESSION_BROWSER_CHANGED);
+    }
+
     if (error.response && error.response.status === 401 && !error.config?.offlineSync) {
       if (window.location.pathname !== '/signin' && window.location.pathname !== '/register' && window.location.pathname !== '/') {
         window.location.href = '/signin';

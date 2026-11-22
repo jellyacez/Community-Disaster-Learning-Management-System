@@ -12,6 +12,7 @@ import { CheckmarkCircle02Icon } from "@hugeicons/core-free-icons";
 import { useQueryClient } from "@tanstack/react-query";
 import { authClient } from "../../lib/auth-client";
 import apiClient from "../../lib/apiClient";
+import { readAuthNotice, clearAuthNotice } from "../../lib/authNotices";
 import useDocumentTitle from "../../hooks/useDocumentTitle";
 import { useMfaEnabled } from "../../hooks/useMfaEnabled";
 import AuthLayout from "../../components/layouts/AuthLayout";
@@ -33,7 +34,13 @@ export default function SignInPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const urlError = searchParams.get("error");
 
-  let errorMessage = location.state?.error;
+  // shown once: read into state, cleared from storage on mount, dropped when the user types
+  const [authNotice, setAuthNoticeText] = useState(readAuthNotice);
+  useEffect(() => {
+    clearAuthNotice();
+  }, []);
+
+  let errorMessage = location.state?.error || authNotice;
   if (!errorMessage && urlError) {
     if (urlError === "access_denied") {
       errorMessage = "Google sign-in was cancelled.";
@@ -51,6 +58,10 @@ export default function SignInPage() {
     }
     if (location.state?.error) {
       navigate(location.pathname, { replace: true, state: {} });
+      cleared = true;
+    }
+    if (authNotice) {
+      setAuthNoticeText(null);
       cleared = true;
     }
     return cleared;
