@@ -12,9 +12,15 @@
  *      entry in activity_log naming the backup size and the safety-dump path
  *   6. if the post-restore cleanup fails, maintenance stays on, a failure entry is
  *      logged, and the response says the restore was applied but cleanup failed
+ *   7. a backup taken before emergency_contacts and user_known_devices existed restores
+ *      onto the current schema: migration.sql recreates them, the backup's data comes back,
+ *      sessions are cleared, maintenance is on, and the safety dump holds the newer tables
+ *   8. a dump pg_restore cannot list fails before anything changes; a truncated dump and a
+ *      backup migration.sql cannot upgrade both fail after the schema reset and are put
+ *      back from the safety dump
  *
- * Everything runs against a scratch database created by this script from
- * migrations/schema.sql plus the numbered migrations, and dropped at the end. The main
+ * Everything runs against a scratch database created by this script the way db:setup
+ * does (schema.sql, migration.sql, seed.sql), and dropped at the end. The main
  * database is never touched: DB_DATABASE is overridden before any app module loads.
  * Refuses to run unless DB_HOST resolves to a loopback address. Outgoing email is stubbed.
  *
@@ -28,7 +34,7 @@ const assert = require("assert/strict");
 const { Pool } = require("pg");
 require("dotenv").config({ path: path.join(__dirname, "..", ".env") });
 
-const SCRATCH_DB = `lms_restore_scratch_${crypto.randomBytes(4).toString("hex")}`;
+const SCRATCH_DB = `lms_c_restore_${crypto.randomBytes(4).toString("hex")}`;
 const SAFETY_DIR = fs.mkdtempSync(path.join(os.tmpdir(), "lms-restore-test-"));
 const SAFETY_PATH = path.join(SAFETY_DIR, "pre-restore-safety.dump");
 const UA = "restore-safeguards-regression/1.0";
@@ -88,7 +94,7 @@ async function createScratchDatabase() {
   await scratch.query(schema);
   await scratch.query("DROP SCHEMA IF EXISTS rate_limit CASCADE");
   await scratch.query("CREATE SCHEMA rate_limit");
-  for (const file of fs.readdirSync(migrations).filter((f) => /^\d+.*\.sql$/i.test(f)).sort()) {
+  for (const file of ["migration.sql", "seed.sql"]) {
     await scratch.query(fs.readFileSync(path.join(migrations, file), "utf8"));
   }
   await scratch.end();
@@ -210,6 +216,8 @@ async function main() {
   const limitedAdmin = await createAdmin("limited");
   const impersonatedAdmin = await createAdmin("target");
   const superAdmin = await createAdmin("super", "super_admin");
+  // Own failure budget: checks 7 and 8 fail on purpose and would trip admin's limiter.
+  const olderAdmin = await createAdmin("older");
 
   await setMaintenance(false);
   const zip = await downloadBackup(admin);
@@ -389,6 +397,197 @@ async function main() {
       [admin.id],
     );
     assert.equal(rowCount, 1, "no cleanup-failure entry in activity_log");
+  });
+
+  // ---- 7/8: backups older than the current schema ----
+  const secureBackup = require("../services/secureBackup");
+  const { execFileSync } = require("child_process");
+  const NEWER_TABLES = ["emergency_contacts", "user_known_devices"];
+  const migrationSql = fs.readFileSync(path.join(__dirname, "..", "migrations", "migration.sql"), "utf8");
+
+  async function publicColumns() {
+    const { rows } = await pool.query(`SELECT table_name, column_name, data_type FROM information_schema.columns
+      WHERE table_schema = 'public' ORDER BY table_name, column_name`);
+    return rows.map((r) => `${r.table_name}.${r.column_name}:${r.data_type}`);
+  }
+
+  // One md5 per public table. Left out: sessions (the restore clears them),
+  // system_settings.updated_at (maintenance is rewritten), activity_log rows logged later.
+  async function fingerprint({ skip = [], maxActId }) {
+    const { rows: tables } = await pool.query(`SELECT table_name FROM information_schema.tables
+      WHERE table_schema = 'public' AND table_type = 'BASE TABLE' ORDER BY table_name`);
+    const out = {};
+    for (const { table_name: t } of tables) {
+      if (t === "session" || skip.includes(t)) continue;
+      let source = `SELECT * FROM public."${t}"`;
+      if (t === "system_settings") source = "SELECT key, value FROM public.system_settings";
+      if (t === "activity_log") source = `SELECT * FROM public.activity_log WHERE act_id <= ${Number(maxActId)}`;
+      const { rows } = await pool.query(
+        `SELECT COUNT(*)::int AS n, md5(COALESCE(string_agg(x::text, '|' ORDER BY x::text), '')) AS h FROM (${source}) x`,
+      );
+      out[t] = `${rows[0].n}:${rows[0].h}`;
+    }
+    return out;
+  }
+  const maxActId = async () =>
+    (await pool.query("SELECT COALESCE(MAX(act_id), 0)::int AS n FROM activity_log")).rows[0].n;
+  const packDump = (dump) => secureBackup.pack(dump, ZIP_PASSWORD);
+  const addNewerRows = async () => {
+    await pool.query(
+      `INSERT INTO emergency_contacts (agency, label, phone, sort_order, updated_by)
+       VALUES ('ZZ Live Agency', 'Live line', '0912 000 0000', 99, $1)`,
+      [olderAdmin.id],
+    );
+    await pool.query(
+      `INSERT INTO user_known_devices (user_id, browser_family, os_family) VALUES ($1, 'ZZ', 'ZZ')`,
+      [olderAdmin.id],
+    );
+  };
+
+  // Check 6's trigger travelled with its restore and would block every later session wipe.
+  await pool.query(`DROP TRIGGER IF EXISTS zz_block_session_delete ON public."session";
+    DROP FUNCTION IF EXISTS zz_block_session_delete();`);
+  await setMaintenance(true);
+  await signInAgain(olderAdmin);
+  const currentColumns = await publicColumns();
+
+  // Older schema: this database without the two newer tables.
+  await pool.query("DROP TABLE public.emergency_contacts, public.user_known_devices");
+  const oldMarker = `zz-old-backup-${crypto.randomBytes(4).toString("hex")}`;
+  await pool.query(
+    `INSERT INTO system_settings (key, value, updated_at) VALUES ($1, 'in-old-backup', NOW())`,
+    [oldMarker],
+  );
+  const oldActId = await maxActId();
+  const oldFingerprint = await fingerprint({ maxActId: oldActId });
+  const oldZip = await downloadBackup(olderAdmin);
+  const oldDump = await secureBackup.unpack(oldZip, ZIP_PASSWORD);
+
+  // Back to the current schema, with rows in the newer tables that reference "user".
+  await pool.query(migrationSql);
+  await addNewerRows();
+  const lateMarker = `zz-after-old-backup-${crypto.randomBytes(4).toString("hex")}`;
+  await pool.query(
+    `INSERT INTO system_settings (key, value, updated_at) VALUES ($1, 'after', NOW())`,
+    [lateMarker],
+  );
+  assert.deepEqual(await publicColumns(), currentColumns, "test setup: live schema is not current");
+
+  async function expectLiveUnchanged(before, actId) {
+    assert.deepEqual(await fingerprint({ maxActId: actId }), before, "live data changed");
+    assert.deepEqual(await publicColumns(), currentColumns, "live schema changed");
+    const { rows } = await pool.query(`SELECT value FROM system_settings WHERE key = 'maintenance_mode'`);
+    assert.equal(rows[0].value, "true", "maintenance is off after a failed restore");
+  }
+
+  await check("8a. unlistable dump fails before anything changes", async () => {
+    const actId = await maxActId();
+    const before = await fingerprint({ maxActId: actId });
+    const res = await restore(olderAdmin, restoreForm(await packDump(Buffer.from("PGDMP not a real dump"))));
+    assert.equal(res.status, 500);
+    await expectLiveUnchanged(before, actId);
+  });
+
+  await check("8b. truncated dump fails in pg_restore and the live data is put back", async () => {
+    const actId = await maxActId();
+    const before = await fingerprint({ maxActId: actId });
+    const truncated = oldDump.subarray(0, Math.floor(oldDump.length * 0.6));
+    const res = await restore(olderAdmin, restoreForm(await packDump(truncated)));
+    const body = await res.json().catch(() => ({}));
+    console.log(`      truncated restore: ${res.status} ${JSON.stringify(body)}`);
+    assert.equal(res.status, 500);
+    assert.match(body.error ?? "", /put back from the safety dump/);
+    await expectLiveUnchanged(before, actId);
+  });
+
+  await check("8c. backup migration.sql cannot upgrade is put back from the safety dump", async () => {
+    // emergency_contacts without its columns: pg_restore succeeds, migration.sql's INSERT fails.
+    const copyDb = `${SCRATCH_DB}_m`;
+    const bootstrap = makePool("postgres");
+    await bootstrap.query(`CREATE DATABASE "${copyDb}"`);
+    await bootstrap.end();
+    const pgArgs = ["-U", process.env.DB_USER, "-h", process.env.DB_HOST, "-p", String(process.env.DB_PORT), "--no-password"];
+    const env = { ...process.env, PGPASSWORD: process.env.DB_PASSWORD || "" };
+    const work = fs.mkdtempSync(path.join(SAFETY_DIR, "m-"));
+    try {
+      fs.writeFileSync(path.join(work, "old.dump"), oldDump);
+      execFileSync(
+        process.env.PG_RESTORE_PATH || "pg_restore",
+        [...pgArgs, "-d", copyDb, "--no-owner", "--no-privileges", "--exit-on-error", path.join(work, "old.dump")],
+        { env },
+      );
+      const copy = makePool(copyDb);
+      await copy.query("CREATE TABLE public.emergency_contacts (id integer)");
+      await copy.end();
+      execFileSync(
+        process.env.PG_DUMP_PATH || "pg_dump",
+        [...pgArgs, "-d", copyDb, "-F", "c", "-f", path.join(work, "bad.dump")],
+        { env },
+      );
+      const badZip = await packDump(fs.readFileSync(path.join(work, "bad.dump")));
+
+      const actId = await maxActId();
+      const before = await fingerprint({ maxActId: actId });
+      const res = await restore(olderAdmin, restoreForm(badZip));
+      const body = await res.json().catch(() => ({}));
+      console.log(`      unmigratable restore: ${res.status} ${JSON.stringify(body)}`);
+      assert.equal(res.status, 500);
+      assert.match(body.error ?? "", /put back from the safety dump/);
+      await expectLiveUnchanged(before, actId);
+    } finally {
+      const drop = makePool("postgres");
+      await drop.query(`DROP DATABASE IF EXISTS "${copyDb}" WITH (FORCE)`);
+      await drop.end();
+    }
+  });
+
+  fs.rmSync(SAFETY_PATH, { force: true });
+  await signInAgain(olderAdmin);
+  const oldRes = await restore(olderAdmin, restoreForm(oldZip));
+  const oldBody = await oldRes.json().catch(() => ({}));
+  console.log(`older-backup restore: ${oldRes.status} ${JSON.stringify(oldBody)}`);
+
+  await check("7a. backup older than the schema restores", async () => {
+    assert.equal(oldRes.status, 200);
+  });
+
+  await check("7b. every current table and column exists afterwards", async () => {
+    assert.equal(oldRes.status, 200, "restore did not succeed");
+    assert.deepEqual(await publicColumns(), currentColumns);
+    const { rows } = await pool.query(`SELECT
+      (SELECT COUNT(*)::int FROM emergency_contacts WHERE agency = 'ZZ Live Agency') AS live_contacts,
+      (SELECT COUNT(*)::int FROM emergency_contacts) AS contacts,
+      (SELECT COUNT(*)::int FROM user_known_devices) AS devices`);
+    assert.equal(rows[0].live_contacts, 0, "a contact written after the backup survived");
+    assert.ok(rows[0].contacts > 0, "migration.sql did not seed the default contacts");
+    assert.equal(rows[0].devices, 0, "known devices written after the backup survived");
+  });
+
+  await check("7c. data equals the backup", async () => {
+    assert.equal(oldRes.status, 200, "restore did not succeed");
+    assert.deepEqual(await fingerprint({ skip: NEWER_TABLES, maxActId: oldActId }), oldFingerprint);
+    const { rows } = await pool.query("SELECT key FROM system_settings WHERE key IN ($1, $2)", [oldMarker, lateMarker]);
+    assert.deepEqual(rows.map((r) => r.key), [oldMarker]);
+  });
+
+  await check("7d. sessions cleared and maintenance on", async () => {
+    assert.equal(oldRes.status, 200, "restore did not succeed");
+    const { rows } = await pool.query(`SELECT
+      (SELECT value FROM system_settings WHERE key = 'maintenance_mode') AS maintenance,
+      (SELECT COUNT(*)::int FROM "session") AS sessions`);
+    assert.equal(rows[0].maintenance, "true");
+    assert.equal(rows[0].sessions, 0);
+  });
+
+  await check("7e. safety dump taken first holds the newer tables", async () => {
+    assert.equal(oldRes.status, 200, "restore did not succeed");
+    const dump = await secureBackup.unpack(fs.readFileSync(SAFETY_PATH), ZIP_PASSWORD);
+    const dumpFile = path.join(SAFETY_DIR, "safety-check.dump");
+    fs.writeFileSync(dumpFile, dump);
+    const list = execFileSync(process.env.PG_RESTORE_PATH || "pg_restore", ["--list", dumpFile], { encoding: "utf8" });
+    for (const t of NEWER_TABLES) {
+      assert.match(list, new RegExp(`TABLE DATA public ${t} `), `safety dump lacks ${t}`);
+    }
   });
 
   await new Promise((resolve) => server.close(resolve));
