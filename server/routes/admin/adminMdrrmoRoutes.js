@@ -13,7 +13,6 @@ const MDRRMO_DASHBOARD_ROLES = ["super_admin", "system_admin", "mdrrmo_admin", "
 
 const moduleController = require("../../controllers/modules/moduleController");
 const mdrrmoOverviewController = require("../../controllers/admin/mdrrmoOverviewController");
-const certificateManagementController = require("../../controllers/admin/certificateManagement");
 const adminFeedbacksController = require("../../controllers/admin/adminFeedbacks");
 const activityLogController = require("../../controllers/admin/activityLogController");
 const barangayController = require("../../controllers/admin/barangayController");

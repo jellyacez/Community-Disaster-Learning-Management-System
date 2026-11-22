@@ -99,20 +99,6 @@ const NOTICES = {
       ${p("Two-factor authentication was turned off for your DRRM Bacolor account. Signing in now only requires your password.")}
       ${warningLine("If you did not make this change, change your password and contact an administrator immediately.")}`,
   }),
-
-  certificateRevoked: ({ moduleName, certRec, reason }, supportEmail) => ({
-    subject: "Your certificate has been revoked",
-    title: "Certificate Revoked",
-    body: `
-      ${p("An administrator revoked one of your DRRM Bacolor training certificates. It will no longer pass verification.")}
-      ${infoBox(`
-        <p style="margin: 0 0 10px 0; font-size: 14px; color: #334155;"><strong>Module:</strong> ${escapeHtml(moduleName)}</p>
-        <p style="margin: 0 0 10px 0; font-size: 14px; color: #334155;"><strong>Certificate No.:</strong> ${escapeHtml(certRec)}</p>
-        <p style="margin: 0; font-size: 14px; color: #334155;"><strong>Reason:</strong> ${escapeHtml(reason)}</p>
-      `)}
-      ${p("You can earn a new certificate by retaking the module's final assessment.")}
-      ${contactLine(supportEmail)}`,
-  }),
 };
 
 const getAccountNoticeEmail = (kind, user, details, orgFooterText, supportEmail) => {
