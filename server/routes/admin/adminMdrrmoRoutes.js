@@ -27,15 +27,6 @@ router.get(
   moduleController.getAllModules
 );
 
-// @route   GET /api/admin/certificates
-router.get(
-  "/certificates",
-  requireRole(ADMIN_ROLES),
-  adminDataLimiter,
-  requirePermission("view_users"),
-  certificateManagementController.getAllCertificates
-);
-
 // @route   PATCH /api/admin/certificates/:certId/revoke
 // @desc    [DEPRECATED] Revocation deprecated in favor of annual recertification
 router.patch(

@@ -1,42 +1,6 @@
 const ModuleProgressService = require("../../services/modules/ModuleProgressService");
 const logger = require("../../utils/logger");
 
-const getAllCertificates = async (req, res) => {
-  try {
-    const { page = 1, limit = 10, search = "", status = "" } = req.query;
-    
-    const adminContext = {
-      role: req.user.role,
-      barangay_id: req.user.barangay_id
-    };
-
-    const result = await ModuleProgressService.getAllCertificates(
-      page,
-      limit,
-      search,
-      status,
-      adminContext
-    );
-
-    return res.json({ success: true, ...result });
-  } catch (err) {
-    if (err.message.startsWith("SECURITY_FAULT")) {
-      logger.logError('admin_certificate_access_denied', { 
-        userId: req.user?.id, 
-        message: err.message 
-      });
-      return res.status(403).json({ success: false, error: err.message });
-    }
-    
-    logger.logError('admin_certificate_fetch_error', { 
-      userId: req.user?.id, 
-      message: err.message, 
-      stack: err.stack 
-    });
-    return res.status(500).json({ success: false, message: "`Server error fetching certificates." });
-  }
-};
-
 const revokeCertificate = async (req, res) => {
   try {
     const { certId } = req.params;
@@ -116,7 +80,6 @@ const reinstateCertificate = async (req, res) => {
 };
 
 module.exports = {
-  getAllCertificates,
   revokeCertificate,
   reinstateCertificate,
 };
