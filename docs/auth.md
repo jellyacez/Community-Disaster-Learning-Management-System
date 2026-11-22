@@ -21,7 +21,7 @@ Each session stores the raw `User-Agent` from sign-in (`session.userAgent`). `au
 | request has no or an empty `User-Agent` | 200, `session_client_change_noted` with `reason: "ua_missing"` |
 | browser family (Chrome to Firefox, browser to script) | **401 `SESSION_BROWSER_CHANGED`**, that one session is revoked, `session_hijack_attempt_detected` logged with `reason: "browser_family_changed"` |
 
-Log lines carry `expected` and `received` normalized objects; the revoke event also keeps the raw strings. `session_client_change_noted` is logged once per session and distinct change. Sessions created before this change are normalized when compared, so no migration was needed. Only the User-Agent is compared; the IP address is stored but never compared. Rationale: [ADR 0007](adr/0007-session-binding-limited-to-browser-family.md).
+Log lines carry `expected` and `received` normalized objects; the revoke event also keeps the raw strings. `session_client_change_noted` is logged once per session and reason (so a client rotating its version cannot flood the log). Sessions created before this change are normalized when compared, so no migration was needed. Only the User-Agent is compared; the IP address is stored but never compared. Rationale: [ADR 0007](adr/0007-session-binding-limited-to-browser-family.md).
 
 **New-login email:** after a sign-in, `handleNewDeviceLoginCheck` (`server/services/securityService.js`) emails the user unless another live session has the same browser family and OS (`isNewDevice` in `server/utils/userAgent.js`). A browser update is therefore not a new device; a different browser or OS is. The first session of an account still sends the email. A sign-in without a User-Agent sends nothing.
 
