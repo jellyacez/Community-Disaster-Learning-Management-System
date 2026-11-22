@@ -4,6 +4,7 @@ import { useMfaEnabled } from "../../hooks/useMfaEnabled";
 import AuthLayout from "../../components/layouts/AuthLayout";
 import TwoFactorSettings from "../../components/settings/TwoFactorSettings";
 import { authClient } from "../../lib/auth-client";
+import { clearAuthNotice } from "../../lib/authNotices";
 import { useQueryClient } from "@tanstack/react-query";
 
 export default function AdminMfaSetupPage() {
@@ -32,6 +33,7 @@ export default function AdminMfaSetupPage() {
     sessionStorage.setItem("isLoggingOut", "true");
     queryClient.cancelQueries();
     queryClient.clear();
+    clearAuthNotice();
     await authClient.signOut();
     navigate("/", { replace: true });
   };

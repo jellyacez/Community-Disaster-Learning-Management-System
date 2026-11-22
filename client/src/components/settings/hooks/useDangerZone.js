@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import apiClient from "../../../lib/apiClient";
 import { authClient } from "../../../lib/auth-client";
+import { clearAuthNotice } from "../../../lib/authNotices";
 import { clearLocalUserData } from "../../../lib/offlineContent";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -41,6 +42,7 @@ export function useDangerZone() {
       clearLocalUserData();
       queryClient.cancelQueries();
       queryClient.clear();
+      clearAuthNotice();
       await authClient.signOut({
          fetchOptions: {
            onSuccess: () => {

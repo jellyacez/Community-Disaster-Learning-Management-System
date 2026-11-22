@@ -2,6 +2,7 @@ import { useState, useMemo } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import { authClient } from "../../lib/auth-client";
+import { clearAuthNotice } from "../../lib/authNotices";
 import LogoutModal from "../ui/modals/LogoutModal";
 import AdminNotificationBell from "./AdminNotificationBell";
 import ThemeToggle from "../ui/globalTheme";
@@ -64,6 +65,7 @@ export default function AdminSidebar({ sidebarOpen, setSidebarOpen }) {
       queryClient.cancelQueries();
       queryClient.clear();
       resetTheme();
+      clearAuthNotice();
       await authClient.signOut({
         fetchOptions: {
           onSuccess: () => {

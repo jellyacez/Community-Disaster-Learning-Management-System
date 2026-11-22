@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { authClient } from "../../lib/auth-client";
+import { clearAuthNotice } from "../../lib/authNotices";
 import { clearLocalUserData } from "../../lib/offlineContent";
 import toast from "react-hot-toast";
 import { useQueryClient } from "@tanstack/react-query";
@@ -37,6 +38,7 @@ export default function ActiveDevices() {
       clearLocalUserData();
       queryClient.cancelQueries();
       queryClient.clear();
+      clearAuthNotice();
       await authClient.signOut();
       return;
     }
@@ -49,6 +51,7 @@ export default function ActiveDevices() {
       sessionStorage.setItem("showLogoutModal", "true");
       clearLocalUserData();
       queryClient.clear();
+      clearAuthNotice();
       await authClient.signOut();
       return;
     }

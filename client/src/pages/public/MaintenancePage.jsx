@@ -3,6 +3,7 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import { Settings02Icon, ArrowRight01Icon, Logout01Icon } from "@hugeicons/core-free-icons";
 import apiClient from "../../lib/apiClient";
 import { authClient } from "../../lib/auth-client";
+import { clearAuthNotice } from "../../lib/authNotices";
 import { clearLocalUserData } from "../../lib/offlineContent";
 import { useNavigate, Link } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
@@ -24,6 +25,7 @@ export default function MaintenancePage() {
       clearLocalUserData();
       queryClient.cancelQueries();
       queryClient.clear();
+      clearAuthNotice();
       await authClient.signOut({
         fetchOptions: {
           onSuccess: () => {

@@ -16,6 +16,7 @@ import {
 } from "@hugeicons/core-free-icons";
 import { useLocation, useNavigate } from "react-router-dom";
 import { authClient } from "../../lib/auth-client";
+import { clearAuthNotice } from "../../lib/authNotices";
 import toast from "react-hot-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { useTheme } from "../../hooks/context/themeContext";
@@ -116,6 +117,7 @@ export default function UserSidebar({
         resetTheme();
 
         if (navigator.onLine) {
+          clearAuthNotice();
           await authClient.signOut();
         }
         toast.success("Successfully logged out!");
