@@ -115,9 +115,11 @@ const handleNewDeviceLoginCheck = async (email) => {
   }
 };
 
-// Seeds user_known_devices from the sessions that exist (idempotent), so users who are signed in
-// when this ships are not emailed about devices they already use. Run at server start: the
-// migration cannot do it because User-Agents are normalised in JS (utils/userAgent.js).
+// Seeds user_known_devices from the sessions that exist, so users who are signed in when this ships
+// are not emailed about devices they already use. Runs at every server start: it is one scan of the
+// session table (a row per user and User-Agent) and an INSERT ... DO NOTHING, so a repeat adds
+// nothing. The migration cannot do it because User-Agents are normalised in JS (utils/userAgent.js).
+// Returns how many rows it added.
 const backfillKnownDevices = async () => {
   const { rows } = await pool.query(
     `SELECT "userId", "userAgent", MIN("createdAt") AS first_seen, MAX("updatedAt") AS last_seen
@@ -137,7 +139,9 @@ const backfillKnownDevices = async () => {
     }
   }
   if (devices.size === 0) return 0;
-  const list = [...devices.values()];
+  // Fixed insert order: two processes starting together (pm2) lock rows in the same order, so they cannot deadlock.
+  const list = [...devices.values()].sort((a, b) =>
+    a.userId < b.userId ? -1 : a.userId > b.userId ? 1 : a.browserFamily < b.browserFamily ? -1 : a.browserFamily > b.browserFamily ? 1 : a.osFamily < b.osFamily ? -1 : a.osFamily > b.osFamily ? 1 : 0);
   const { rowCount } = await pool.query(
     `INSERT INTO user_known_devices (user_id, browser_family, os_family, first_seen_at, last_seen_at)
      SELECT * FROM unnest($1::text[], $2::text[], $3::text[], $4::timestamptz[], $5::timestamptz[])
