@@ -82,6 +82,27 @@ exports.provisionAdmin = async (req, res) => {
       });
     }
 
+    // The client sends a barangay name; user.barangay_id stores the id. Resolve it before the
+    // account exists so an unknown barangay can't leave an unscoped admin behind.
+    let barangayId = null;
+    if (role === "barangay_admin") {
+      const raw = String(barangay).trim();
+      const lookup = /^\d+$/.test(raw)
+        ? await pool.query("SELECT id FROM barangays WHERE id = $1", [Number(raw)])
+        : await pool.query(
+            "SELECT id FROM barangays WHERE LOWER(TRIM(name)) = LOWER($1)",
+            [raw]
+          );
+      if (lookup.rows.length === 0) {
+        return res.status(400).json({
+          success: false,
+          error: "Unknown barangay.",
+          message: "Unknown barangay.",
+        });
+      }
+      barangayId = lookup.rows[0].id;
+    }
+
     const resAuth = await auth.api.createUser({
       body: {
         email,
@@ -94,9 +115,10 @@ exports.provisionAdmin = async (req, res) => {
       },
     });
 
-    await pool.query('UPDATE "user" SET "emailVerified" = true WHERE id = $1', [
-      resAuth.user.id,
-    ]);
+    await pool.query(
+      'UPDATE "user" SET "emailVerified" = true, barangay_id = $2 WHERE id = $1',
+      [resAuth.user.id, barangayId]
+    );
 
     const userId = resAuth.user.id;
     let emailSent = false;
