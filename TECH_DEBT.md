@@ -11,7 +11,7 @@ This document tracks identified technical debt, architectural decisions, missing
 - **Issue:** any difference between the stored and the request `User-Agent` revoked the session. A browser auto-update (Chrome 156 to 157) or a device-mode / "Request desktop site" switch signed users out; production logged 22 `session_hijack_attempt_detected` events.
 - **Resolution:** sessions are bound to the browser family only ([ADR 0007](docs/adr/0007-session-binding-limited-to-browser-family.md)). OS and version changes are logged as `session_client_change_noted` and let through; a family change returns 401 `SESSION_BROWSER_CHANGED`, revokes the session, and the sign-in page explains why. Legacy stored values are normalized at compare time. Details in [docs/auth.md](docs/auth.md).
 - **Verification:** `server/tests/session-ua-binding.regression.cjs` (15 cases, red before the fix) and a Playwright run on a scratch database: version change and Android UA stay signed in, Firefox UA signs out with the message.
-- **Not changed:** `handleNewDeviceLoginCheck` (`server/services/securityService.js`) still compares the exact UA, so a sign-in after a browser update sends a "new device" email. It only sends mail and never revokes.
+- **Related:** the "new login" email (`handleNewDeviceLoginCheck`) used the same exact-UA comparison, so every browser update sent one. It now compares browser family and OS (`server/tests/new-device-email.regression.cjs`).
 
 ---
 

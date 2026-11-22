@@ -7,6 +7,7 @@ const {
 } = require("../utils/emailTemplates");
 const { getOrgSettings } = require("../utils/settings");
 const alertMonitorService = require("./alertMonitorService");
+const { isNewDevice } = require("../utils/userAgent");
 
 const redactEmail = (email) => {
   if (!email || typeof email !== "string") return "[REDACTED]";
@@ -82,12 +83,13 @@ const handleNewDeviceLoginCheck = async (email) => {
 
       if (sessionRes.rows.length > 0) {
         const session = sessionRes.rows[0];
-        const countRes = await pool.query(
-          `SELECT COUNT(*) FROM session WHERE "userId" = $1 AND "userAgent" = $2`,
-          [user.id, session.userAgent],
+        // Browser family and OS, not the full string: a browser update is not a new device.
+        const othersRes = await pool.query(
+          `SELECT "userAgent" FROM session WHERE "userId" = $1 AND id <> $2`,
+          [user.id, session.id],
         );
 
-        if (parseInt(countRes.rows[0].count) === 1) {
+        if (isNewDevice(session.userAgent, othersRes.rows.map((r) => r.userAgent))) {
           await transporter.sendMail(getNewDeviceLoginEmail(user, session));
         }
       }

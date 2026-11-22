@@ -23,6 +23,8 @@ Each session stores the raw `User-Agent` from sign-in (`session.userAgent`). `au
 
 Log lines carry `expected` and `received` normalized objects; the revoke event also keeps the raw strings. `session_client_change_noted` is logged once per session and distinct change. Sessions created before this change are normalized when compared, so no migration was needed. Only the User-Agent is compared; the IP address is stored but never compared. Rationale: [ADR 0007](adr/0007-session-binding-limited-to-browser-family.md).
 
+**New-login email:** after a sign-in, `handleNewDeviceLoginCheck` (`server/services/securityService.js`) emails the user unless another live session has the same browser family and OS (`isNewDevice` in `server/utils/userAgent.js`). A browser update is therefore not a new device; a different browser or OS is. The first session of an account still sends the email. A sign-in without a User-Agent sends nothing.
+
 On `SESSION_BROWSER_CHANGED` the client (`apiClient.js`) stores a one-shot notice and the sign-in page shows "You were signed out because your browser changed. Please sign in again." Queued offline writes are not discarded: they stay in the sync queue (after the retry budget they show as failed and can be retried once signed in).
 
 ## Email verification
