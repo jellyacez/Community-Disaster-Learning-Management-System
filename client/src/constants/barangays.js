@@ -24,4 +24,3 @@ export const BARANGAY_LIST = [
 
 // Array of official names for strict string validation in forms
 export const VALID_BARANGAY_NAMES = BARANGAY_LIST.map((b) => b.name);
-export const VALID_BARANGAY_IDS = BARANGAY_LIST.map((b) => b.id);
