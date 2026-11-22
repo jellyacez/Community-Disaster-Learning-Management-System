@@ -23,6 +23,8 @@ Restoring replaces **all** data with the backup's, including passwords, bans and
 3. Set `ENABLE_DATABASE_RESTORE=true` in `server/.env` and restart the API. Without it the server answers 503.
 4. Make sure only one API process is running.
 
+> **Warning: backups older than the last deploy.** A backup made before a table was added does not contain that table. If the new table has a foreign key to `"user"` (today: `emergency_contacts` and `user_known_devices`), the restore fails with `cannot drop constraint user_pkey on table public."user" because other objects depend on it` and rolls back, so nothing changes but the backup is not restored. Workaround: `DROP TABLE` those tables on the live database first (`pg_restore --list` on the dump shows which tables it has), restore, then run `server/migrations/migration.sql` to recreate them. Dropping deletes their rows (emergency contacts you edited must be re-entered; known devices are re-learned, so users get one "new login" email per device). The same applies to the manual `pg_restore` fallback below. Tracked in [TECH_DEBT.md](../TECH_DEBT.md) item 10.
+
 ### Run it
 
 System Health → **Restore from ZIP**. The dialog shows the maintenance and restore-enabled status and needs:

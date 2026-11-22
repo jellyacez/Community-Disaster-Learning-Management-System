@@ -811,3 +811,11 @@ This document tracks identified technical debt, architectural decisions, missing
 - **Location:** `client/public/termly-privacy.html` ("by phone at +63 123 456 7890").
 - **Issue:** The privacy policy lists a placeholder phone number as the data-controller contact. It was left out of `feat/emergency-contacts` because it is a legal document, not a hotline.
 - **Action:** Replace it with the real contact before handover.
+
+---
+
+### 10. Restoring an older backup fails when newer tables reference `"user"` (2026-11-22)
+- **Location:** `server/controllers/admin/infrastructureController.js` (restore flags), `docs/backup-restore.md`
+- **Issue:** the restore runs `pg_restore --clean --if-exists --single-transaction --exit-on-error`. A backup taken before a table was added does not contain it, so `--clean` never drops it, and dropping `user_pkey` then fails because that table's foreign key to `"user"` still depends on it: `cannot drop constraint user_pkey on table public."user" because other objects depend on it`. The restore rolls back completely (single transaction, and the safety dump is written first), so nothing is lost, but the backup cannot be restored as is. Reproduced on a scratch database, once with `emergency_contacts` and once with `user_known_devices` left out of the dump. Today's tables with a foreign key to `"user"` that older backups may lack: `emergency_contacts`, `user_known_devices`. The manual `pg_restore` fallback in the docs uses the same flags and has the same problem.
+- **Workaround:** before restoring a backup older than a deploy that added such a table, `DROP TABLE` the newer tables that are not in the backup (`pg_restore --list <dump>` shows what it contains), restore, then run `server/migrations/migration.sql` to recreate them (it is idempotent). Dropping loses their current rows: custom emergency contacts must be re-entered, known devices are re-learned (one "new login" email per device).
+- **Status:** not fixed in `fix/new-device-memory`; to be fixed on a separate branch.
