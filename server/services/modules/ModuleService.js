@@ -3,6 +3,7 @@ const { cleanRichText } = require("../../utils/sanitizeHtml");
 const { generateEnrollmentCode, codesMatch } = require("../../utils/enrollmentCode");
 const { UNSCOPED_ACCESS_ROLES } = require("../../config/permissions");
 const sseService = require("../notif/sseService");
+const { AppError } = require("../../utils/httpErrors");
 
 const MODULE_STATUSES = new Set(["draft", "pending_review", "published", "rejected", "archived"]);
 
@@ -329,7 +330,7 @@ class ModuleService {
       for (const lvl of levels) {
         const finalAssessmentsCount = (lvl.steps || []).filter(s => s.is_final_assessment).length;
         if (finalAssessmentsCount > 1) {
-          throw new Error(`Validation Error: Level "${lvl.levelTitle || lvl.levelOrder}" contains multiple Final Assessments. Only one final assessment is permitted per level.`);
+          throw new AppError(`Validation Error: Level "${lvl.levelTitle || lvl.levelOrder}" contains multiple Final Assessments. Only one final assessment is permitted per level.`, 400);
         }
 
         const coverImage = lvl.cover_image || lvl.coverImage || null;
@@ -394,7 +395,7 @@ class ModuleService {
       );
 
       if (updateModuleRes.rowCount === 0) {
-        throw new Error(`Target module with ID ${mod_id} not found.`);
+        throw new AppError(`Target module with ID ${mod_id} not found.`, 404);
       }
 
       await client.query(
@@ -434,7 +435,7 @@ class ModuleService {
       for (const lvl of levels) {
         const finalAssessmentsCount = (lvl.steps || []).filter(s => s.is_final_assessment).length;
         if (finalAssessmentsCount > 1) {
-          throw new Error(`Validation Error: Level "${lvl.levelTitle || lvl.levelOrder}" contains multiple Final Assessments. Only one final assessment is permitted per level.`);
+          throw new AppError(`Validation Error: Level "${lvl.levelTitle || lvl.levelOrder}" contains multiple Final Assessments. Only one final assessment is permitted per level.`, 400);
         }
 
         const coverImage = lvl.cover_image || lvl.coverImage || null;
@@ -896,8 +897,9 @@ class ModuleService {
   const eligible = await this.checkPrerequisitesMet(userId, moduleId);
 
   if (!eligible) {
-    throw new Error(
-      "Prerequisites not met. Complete foundational and lower-tier modules first."
+    throw new AppError(
+      "Prerequisites not met. Complete foundational and lower-tier modules first.",
+      400
     );
   }
 
@@ -908,13 +910,13 @@ class ModuleService {
   );
 
   if (checkEnrollment.rows.length > 0) {
-    throw new Error("You are already enrolled in this module.");
+    throw new AppError("You are already enrolled in this module.", 400);
   }
 
   // Only a module learners can enroll in can be requested
   const mod = await this.getModuleById(moduleId);
   if (!mod || mod.status !== "published" || mod.moddateremove) {
-    throw new Error("This module is not open for enrollment.");
+    throw new AppError("This module is not open for enrollment.", 400);
   }
 
   const existingReq = await pool.query(
@@ -926,7 +928,7 @@ class ModuleService {
   );
 
   if (existingReq.rows.length > 0) {
-    throw new Error("You already have a pending request for this module.");
+    throw new AppError("You already have a pending request for this module.", 400);
   }
 
   try {
@@ -939,7 +941,7 @@ class ModuleService {
   } catch (error) {
     // uq_enrollment_requests_one_pending: a simultaneous request got there first
     if (error.code === "23505") {
-      throw new Error("You already have a pending request for this module.", { cause: error });
+      throw new AppError("You already have a pending request for this module.", 400, { cause: error });
     }
     throw error;
   }

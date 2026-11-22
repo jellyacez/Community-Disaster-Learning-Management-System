@@ -2,6 +2,7 @@ const { validateModuleCreation } = require("../../utils/validators");
 const ModuleService = require("../../services/modules/ModuleService");
 const { ADMIN_ROLES } = require("../../config/permissions");
 const { logActivity, logError } = require("../../utils/logger");
+const { respondWithError } = require("../../utils/httpErrors");
 const { isAttemptStep } = require("../../services/modules/QuizAttemptService");
 const sseService = require("../../services/notif/sseService");
 
@@ -56,11 +57,11 @@ exports.createModule = async (req, res) => {
       data: { mod_id },
     });
   } catch (error) {
-    console.error("Transaction Error creating module structure:", error);
-    return res.status(500).json({
-      success: false,
-      message:
-        "Transaction failed. Database changes rolled back. " + error.message,
+    return respondWithError(res, error, {
+      event: "create_module_transaction_error",
+      fallback: "Transaction failed. Database changes rolled back.",
+      prefix: "Transaction failed. Database changes rolled back. ",
+      context: { userId: req.user?.id },
     });
   }
 };
@@ -165,17 +166,11 @@ exports.updateModule = async (req, res) => {
       data: { mod_id: parsedModId },
     });
   } catch (error) {
-    console.error("Transaction Error updating module structure:", error);
-    logError("update_module_transaction_error", {
-      code: error?.code,
-      name: error?.name,
-      stack: error.stack,
-      moduleId: parsedModId,
-    });
-    return res.status(500).json({
-      success: false,
-      message:
-        "Transaction failed. Database changes rolled back. " + error.message,
+    return respondWithError(res, error, {
+      event: "update_module_transaction_error",
+      fallback: "Transaction failed. Database changes rolled back.",
+      prefix: "Transaction failed. Database changes rolled back. ",
+      context: { userId: req.user?.id, moduleId: parsedModId },
     });
   }
 };
@@ -776,11 +771,10 @@ exports.requestCode = async (req, res) => {
       message: "Code request sent to admin successfully.",
     });
   } catch (error) {
-    console.error("Error requesting module code:", error);
-
-    return res.status(400).json({
-      success: false,
-      message: error.message || "Failed to request code.",
+    return respondWithError(res, error, {
+      event: "request_module_code_failure",
+      fallback: "Failed to request code.",
+      context: { userId: user_id, moduleId: mod_id },
     });
   }
 };
@@ -824,10 +818,10 @@ exports.approveModuleRequest = async (req, res) => {
       code,
     });
   } catch (error) {
-    console.error("Error approving module request:", error);
-    return res.status(error.statusCode || 400).json({
-      success: false,
-      message: error.message || "Failed to approve request.",
+    return respondWithError(res, error, {
+      event: "approve_module_request_failure",
+      fallback: "Failed to approve request.",
+      context: { userId: req.user?.id, requestId },
     });
   }
 };
@@ -874,10 +868,10 @@ exports.rejectModuleRequest = async (req, res) => {
       message: "Request declined.",
     });
   } catch (error) {
-    console.error("Error declining module request:", error);
-    return res.status(error.statusCode || 400).json({
-      success: false,
-      message: error.message || "Failed to decline request.",
+    return respondWithError(res, error, {
+      event: "decline_module_request_failure",
+      fallback: "Failed to decline request.",
+      context: { userId: req.user?.id, requestId },
     });
   }
 };

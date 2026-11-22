@@ -6,6 +6,7 @@ const pool = require("../../config/db");
 const mdrrmoOverviewService = require("../../services/admin/MdrrmoOverviewService");
 const activityLogService = require("../../services/admin/ActivityLogService");
 const { logActivity } = require("../../utils/logger");
+const { respondWithError } = require("../../utils/httpErrors");
 
 // @route   GET /api/admin/super/ping
 router.get("/super/ping", requireRole(["super_admin"]), (req, res) => {
@@ -33,8 +34,12 @@ router.get(
 
       return res.json({ success: true, data: barangays });
     } catch (error) {
-      console.error("SUPER_ADMIN_BARANGAY_ANALYTICS_ERROR:", error);
-      return res.status(500).json({ success: false, error: error.message });
+      return respondWithError(res, error, {
+        event: "super_admin_barangay_analytics_failure",
+        fallback: "Failed to load barangay analytics.",
+        field: "error",
+        context: { userId: req.user?.id },
+      });
     }
   }
 );
@@ -145,10 +150,11 @@ router.post(
         targetUser,
       });
     } catch (error) {
-      console.error("IMPERSONATION_ERROR_DETAILS:", error);
-      return res.status(500).json({
-        success: false,
-        error: error.message || "Failed to initiate user impersonation.",
+      return respondWithError(res, error, {
+        event: "impersonation_failure",
+        fallback: "Failed to initiate user impersonation.",
+        field: "error",
+        context: { userId: req.user?.id, targetUserId: req.params.userId },
       });
     }
   }
@@ -193,10 +199,11 @@ router.post("/super/stop-impersonating", async (req, res) => {
       message: "Exited impersonation mode. Restored Super Admin session.",
     });
   } catch (error) {
-    console.error("STOP_IMPERSONATION_ERROR:", error);
-    return res.status(500).json({
-      success: false,
-      error: error.message || "Failed to exit impersonation mode.",
+    return respondWithError(res, error, {
+      event: "stop_impersonation_failure",
+      fallback: "Failed to exit impersonation mode.",
+      field: "error",
+      context: { userId: req.user?.id },
     });
   }
 });

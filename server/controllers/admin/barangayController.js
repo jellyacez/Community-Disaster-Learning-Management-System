@@ -3,6 +3,7 @@ const { cleanRichText } = require("../../utils/sanitizeHtml");
 const { UNSCOPED_ACCESS_ROLES } = require("../../config/permissions");
 const sseService = require("../../services/notif/sseService");
 const { logActivity } = require("../../utils/logger");
+const { respondWithError } = require("../../utils/httpErrors");
 const { URGENT_DURATION_HOURS, DEFAULT_URGENT_HOURS } = require("../../utils/validators");
 
 function resolveBarangayId(req) {
@@ -32,10 +33,11 @@ exports.getBarangayAnalytics = async (req, res) => {
     const data = await barangayAdminService.getBarangayAnalytics(barangayId);
     return res.json({ success: true, data });
   } catch (error) {
-    console.error("DETAILED_BARANGAY_ANALYTICS_ERROR:", error);
-    return res.status(500).json({
-      error: "Failed to load barangay analytics.",
-      detail: error.message,
+    return respondWithError(res, error, {
+      event: "barangay_analytics_failure",
+      fallback: "Failed to load barangay analytics.",
+      field: "error",
+      context: { userId: req.user?.id },
     });
   }
 };
