@@ -7,6 +7,7 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import { ArrowRight01Icon } from "@hugeicons/core-free-icons";
 
 import useDocumentTitle from "../../hooks/useDocumentTitle";
+import { HOTLINES } from "../../constants/hotlines";
 import { useMfaEnabled } from "../../hooks/useMfaEnabled";
 import LandingNavbar from "../../components/ui/landing/LandingNavbar";
 import LandingHero from "../../components/ui/landing/LandingHero";
@@ -108,16 +109,16 @@ export default function LandingPage() {
                   MDRRMO 24/7 hotline
                 </span>
                 <a
-                  href="tel:09661365586"
+                  href={`tel:${HOTLINES.mdrrmoGlobe.tel}`}
                   className="inline-flex min-h-11 items-center text-gray-700 underline underline-offset-4 hover:text-gray-950"
                 >
-                  Globe 0987 654 3210
+                  Globe {HOTLINES.mdrrmoGlobe.number}
                 </a>
                 <a
-                  href="tel:09294461940"
+                  href={`tel:${HOTLINES.mdrrmoSmart.tel}`}
                   className="inline-flex min-h-11 items-center text-gray-700 underline underline-offset-4 hover:text-gray-950"
                 >
-                  Smart 0987 654 3210
+                  Smart {HOTLINES.mdrrmoSmart.number}
                 </a>
                 <a
                   href="mailto:supportbacolor@gmail.com"

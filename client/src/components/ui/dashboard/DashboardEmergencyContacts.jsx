@@ -5,6 +5,7 @@ import {
   Facebook01Icon,
 } from "@hugeicons/core-free-icons";
 import toast from "react-hot-toast";
+import { HOTLINES } from "../../../constants/hotlines";
 
 export default function DashboardEmergencyContacts() {
   const isTouchDevice =
@@ -13,10 +14,10 @@ export default function DashboardEmergencyContacts() {
 
   // From the official MDRRMO Bacolor and BFP Bacolor Fire Station Facebook pages
   const contacts = [
-    { label: "MDRRMO (Globe)", number: "0987 654 3210", tel: "09876543210" },
-    { label: "MDRRMO (Smart)", number: "0987 654 3210", tel: "09876543210" },
-    { label: "BFP Bacolor", number: "0987 654 3210", tel: "09876543210" },
-    { label: "National Emergency", number: "911", tel: "911" },
+    { label: "MDRRMO (Globe)", ...HOTLINES.mdrrmoGlobe },
+    { label: "MDRRMO (Smart)", ...HOTLINES.mdrrmoSmart },
+    { label: "BFP Bacolor", ...HOTLINES.bfp },
+    { label: "National Emergency", ...HOTLINES.nationalEmergency },
   ];
 
   const handleContactClick = (e, contact) => {

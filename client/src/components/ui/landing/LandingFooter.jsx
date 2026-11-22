@@ -1,19 +1,20 @@
 import { Link } from "react-router-dom";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Shield01Icon, Facebook01Icon } from "@hugeicons/core-free-icons";
+import { HOTLINES } from "../../../constants/hotlines";
 
 const CONTACTS = [
   {
     name: "MDRRMO Bacolor",
     phones: [
-      { label: "Globe 0987 654 3210", tel: "09876543210" },
-      { label: "Smart 0987 654 3210", tel: "09876543210" },
+      { id: HOTLINES.mdrrmoGlobe.id, label: `Globe ${HOTLINES.mdrrmoGlobe.number}`, tel: HOTLINES.mdrrmoGlobe.tel },
+      { id: HOTLINES.mdrrmoSmart.id, label: `Smart ${HOTLINES.mdrrmoSmart.number}`, tel: HOTLINES.mdrrmoSmart.tel },
     ],
     facebook: "https://www.facebook.com/BacolorRescue.DIMANteam",
   },
   {
     name: "BFP Bacolor Fire Station",
-    phones: [{ label: "0987 654 3210", tel: "09876543210" }],
+    phones: [{ id: HOTLINES.bfp.id, label: HOTLINES.bfp.number, tel: HOTLINES.bfp.tel }],
     facebook: "https://www.facebook.com/profile.php?id=61569884632047",
   },
 ];
@@ -104,7 +105,7 @@ export default function LandingFooter() {
                   <p className="font-semibold text-gray-200">{office.name}</p>
                   <ul>
                     {office.phones.map((p) => (
-                      <li key={p.tel}>
+                      <li key={p.id}>
                         <a
                           href={`tel:${p.tel}`}
                           className="inline-flex min-h-11 items-center hover:text-white transition-colors"
