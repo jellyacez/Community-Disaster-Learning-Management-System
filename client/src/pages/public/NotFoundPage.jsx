@@ -15,7 +15,7 @@ export default function NotFoundPage() {
   else if (role === "mdrrmo_admin") homePath = "/admin/mdrrmo/dashboard";
   else if (role === "head_mdrrmo_admin") homePath = "/admin/mdrrmo/dashboard";
   else if (role === "barangay_admin") homePath = "/admin/barangay/dashboard";
-  else if (role === "resident" || role === "user") homePath = "/userDashboard";
+  else if (role === "resident") homePath = "/userDashboard";
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-100 to-red-50 flex items-center justify-center px-4 py-10">

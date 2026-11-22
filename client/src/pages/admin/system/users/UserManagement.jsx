@@ -30,7 +30,7 @@ export default function UserManagement() {
         sessionStorage.setItem("impersonated_target_user", userPayload);
         localStorage.setItem("impersonated_target_user", userPayload);
 
-        if (targetUser.role === "resident" || targetUser.role === "user") {
+        if (targetUser.role === "resident") {
           window.location.href = "/userDashboard";
         } else if (targetUser.role === "barangay_admin") {
           window.location.href = "/admin/barangay/dashboard";

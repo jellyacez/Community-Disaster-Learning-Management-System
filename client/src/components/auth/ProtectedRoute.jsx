@@ -163,14 +163,10 @@ export default function ProtectedRoute({ allowedRoles = [] }) {
       return <Outlet />;
     }
 
-    const normalizedAllowed = allowedRoles.flatMap((r) =>
-      r === "resident" ? ["resident", "user"] : [r]
-    );
-
     const effectiveRole = impersonatedUser?.role || session.user.role;
     const hasPermission =
-      normalizedAllowed.includes(effectiveRole) ||
-      normalizedAllowed.includes(session.user.role);
+      allowedRoles.includes(effectiveRole) ||
+      allowedRoles.includes(session.user.role);
 
     if (!hasPermission) {
       let homePath = "/";
@@ -179,7 +175,7 @@ export default function ProtectedRoute({ allowedRoles = [] }) {
         homePath = "/admin/mdrrmo/dashboard";
       else if (session.user.role === "barangay_admin")
         homePath = "/admin/barangay/dashboard";
-      else if (session.user.role === "resident" || session.user.role === "user")
+      else if (session.user.role === "resident")
         homePath = "/userDashboard";
 
       return (

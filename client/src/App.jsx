@@ -254,7 +254,7 @@ export default function App() {
           <Route path="/verify-email" element={<VerifyEmail />} />
           <Route path="/maintenance" element={<MaintenancePage />} />
 
-          <Route element={<ProtectedRoute allowedRoles={["resident", "user", "super_admin"]} />}>
+          <Route element={<ProtectedRoute allowedRoles={["resident", "super_admin"]} />}>
             <Route path="/user/modules/:moduleId" element={<ModuleViewer />} />
             <Route element={<UserLayout />}>
               <Route path="/userDashboard" element={<UserDashboard />} />
