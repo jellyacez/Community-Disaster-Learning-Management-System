@@ -15,9 +15,9 @@
  *   7. a backup taken before emergency_contacts and user_known_devices existed restores
  *      onto the current schema: migration.sql recreates them, the backup's data comes back,
  *      sessions are cleared, maintenance is on, and the safety dump holds the newer tables
- *   8. a dump pg_restore cannot list fails before anything changes; a truncated dump and a
- *      backup migration.sql cannot upgrade both fail after the schema reset and are put
- *      back from the safety dump
+ *   8. a dump pg_restore cannot list fails before anything changes; a dump that fails inside
+ *      pg_restore and a backup migration.sql cannot upgrade both fail after the schema
+ *      reset and are put back from the safety dump
  *
  * Everything runs against a scratch database created by this script the way db:setup
  * does (schema.sql, migration.sql, seed.sql), and dropped at the end. The main
@@ -149,6 +149,22 @@ async function main() {
   const app = express();
   app.use(express.json());
   app.use("/api/admin", require("../routes/admin/adminRoutes"));
+  // Each PostgresStore runs its migrations in the background (pg_try_advisory_lock in a
+  // loop, then disconnects). One still running when a restore resets the schemas breaks
+  // the restore, so wait until all its migrations are recorded and none of those
+  // connections is left.
+  const storeMigrations = fs.readdirSync(
+    path.join(path.dirname(require.resolve("@acpr/rate-limit-postgresql")), "migrations"),
+  ).length;
+  for (let waited = 0; ; waited += 200) {
+    const { rows } = await pool.query(`SELECT
+      (SELECT COUNT(*)::int FROM pg_stat_activity WHERE datname = current_database()
+        AND pid <> pg_backend_pid() AND query ILIKE '%advisory_lock%') AS running,
+      (SELECT COUNT(*)::int FROM public.migrations) AS recorded`);
+    if (rows[0].running === 0 && rows[0].recorded >= storeMigrations) break;
+    if (waited > 60000) throw new Error("rate-limit store migrations did not finish");
+    await new Promise((resolve) => setTimeout(resolve, 200));
+  }
   const server = await new Promise((resolve) => {
     const s = app.listen(0, "127.0.0.1", () => resolve(s));
   });
@@ -429,6 +445,10 @@ async function main() {
     }
     return out;
   }
+  function assertSameData(actual, expected, label) {
+    const differing = Object.keys({ ...actual, ...expected }).filter((t) => actual[t] !== expected[t]);
+    assert.deepEqual(differing, [], `${label}: ${differing.join(", ")}`);
+  }
   const maxActId = async () =>
     (await pool.query("SELECT COALESCE(MAX(act_id), 0)::int AS n FROM activity_log")).rows[0].n;
   const packDump = (dump) => secureBackup.pack(dump, ZIP_PASSWORD);
@@ -459,8 +479,10 @@ async function main() {
     [oldMarker],
   );
   const oldActId = await maxActId();
-  const oldFingerprint = await fingerprint({ maxActId: oldActId });
   const oldZip = await downloadBackup(olderAdmin);
+  // After the download: its password check stamps "user" before pg_dump runs. Its log
+  // entry is written after pg_dump, so activity_log stops at oldActId.
+  const oldFingerprint = await fingerprint({ maxActId: oldActId });
   const oldDump = await secureBackup.unpack(oldZip, ZIP_PASSWORD);
 
   // Back to the current schema, with rows in the newer tables that reference "user".
@@ -474,7 +496,7 @@ async function main() {
   assert.deepEqual(await publicColumns(), currentColumns, "test setup: live schema is not current");
 
   async function expectLiveUnchanged(before, actId) {
-    assert.deepEqual(await fingerprint({ maxActId: actId }), before, "live data changed");
+    assertSameData(await fingerprint({ maxActId: actId }), before, "live data changed");
     assert.deepEqual(await publicColumns(), currentColumns, "live schema changed");
     const { rows } = await pool.query(`SELECT value FROM system_settings WHERE key = 'maintenance_mode'`);
     assert.equal(rows[0].value, "true", "maintenance is off after a failed restore");
@@ -488,24 +510,11 @@ async function main() {
     await expectLiveUnchanged(before, actId);
   });
 
-  await check("8b. truncated dump fails in pg_restore and the live data is put back", async () => {
-    const actId = await maxActId();
-    const before = await fingerprint({ maxActId: actId });
-    const truncated = oldDump.subarray(0, Math.floor(oldDump.length * 0.6));
-    const res = await restore(olderAdmin, restoreForm(await packDump(truncated)));
-    const body = await res.json().catch(() => ({}));
-    console.log(`      truncated restore: ${res.status} ${JSON.stringify(body)}`);
-    assert.equal(res.status, 500);
-    assert.match(body.error ?? "", /put back from the safety dump/);
-    await expectLiveUnchanged(before, actId);
-  });
-
-  await check("8c. backup migration.sql cannot upgrade is put back from the safety dump", async () => {
-    // emergency_contacts without its columns: pg_restore succeeds, migration.sql's INSERT fails.
+  // The older backup restored into a side database, changed by `sql`, and dumped again.
+  async function brokenBackup(sql) {
     const copyDb = `${SCRATCH_DB}_m`;
     const bootstrap = makePool("postgres");
     await bootstrap.query(`CREATE DATABASE "${copyDb}"`);
-    await bootstrap.end();
     const pgArgs = ["-U", process.env.DB_USER, "-h", process.env.DB_HOST, "-p", String(process.env.DB_PORT), "--no-password"];
     const env = { ...process.env, PGPASSWORD: process.env.DB_PASSWORD || "" };
     const work = fs.mkdtempSync(path.join(SAFETY_DIR, "m-"));
@@ -517,28 +526,55 @@ async function main() {
         { env },
       );
       const copy = makePool(copyDb);
-      await copy.query("CREATE TABLE public.emergency_contacts (id integer)");
-      await copy.end();
+      try {
+        await copy.query(sql);
+      } finally {
+        await copy.end();
+      }
       execFileSync(
         process.env.PG_DUMP_PATH || "pg_dump",
         [...pgArgs, "-d", copyDb, "-F", "c", "-f", path.join(work, "bad.dump")],
         { env },
       );
-      const badZip = await packDump(fs.readFileSync(path.join(work, "bad.dump")));
-
-      const actId = await maxActId();
-      const before = await fingerprint({ maxActId: actId });
-      const res = await restore(olderAdmin, restoreForm(badZip));
-      const body = await res.json().catch(() => ({}));
-      console.log(`      unmigratable restore: ${res.status} ${JSON.stringify(body)}`);
-      assert.equal(res.status, 500);
-      assert.match(body.error ?? "", /put back from the safety dump/);
-      await expectLiveUnchanged(before, actId);
+      return packDump(fs.readFileSync(path.join(work, "bad.dump")));
     } finally {
-      const drop = makePool("postgres");
-      await drop.query(`DROP DATABASE IF EXISTS "${copyDb}" WITH (FORCE)`);
-      await drop.end();
+      await bootstrap.query(`DROP DATABASE IF EXISTS "${copyDb}" WITH (FORCE)`);
+      await bootstrap.end();
     }
+  }
+
+  async function expectPutBack(zip, label) {
+    const actId = await maxActId();
+    const before = await fingerprint({ maxActId: actId });
+    const res = await restore(olderAdmin, restoreForm(zip));
+    const body = await res.json().catch(() => ({}));
+    console.log(`      ${label} restore: ${res.status} ${JSON.stringify(body)}`);
+    assert.equal(res.status, 500);
+    assert.match(body.error ?? "", /put back from the safety dump/);
+    await expectLiveUnchanged(before, actId);
+  }
+
+  await check("8b. dump that fails inside pg_restore is put back from the safety dump", async () => {
+    // The index builds only where zz.allow is set, so pg_restore fails after the data is in.
+    const zip = await brokenBackup(`
+      CREATE FUNCTION public.zz_guarded(integer) RETURNS integer IMMUTABLE LANGUAGE plpgsql AS $$
+        BEGIN
+          IF current_setting('zz.allow', true) IS DISTINCT FROM 'yes' THEN
+            RAISE EXCEPTION 'zz test: restore breaker';
+          END IF;
+          RETURN $1;
+        END $$;
+      CREATE TABLE public.zz_restore_breaker (x integer);
+      INSERT INTO public.zz_restore_breaker VALUES (1);
+      SET zz.allow = 'yes';
+      CREATE INDEX zz_restore_breaker_idx ON public.zz_restore_breaker (public.zz_guarded(x));`);
+    await expectPutBack(zip, "pg_restore-failure");
+  });
+
+  await check("8c. backup migration.sql cannot upgrade is put back from the safety dump", async () => {
+    // emergency_contacts without its columns: pg_restore succeeds, migration.sql's INSERT fails.
+    const zip = await brokenBackup("CREATE TABLE public.emergency_contacts (id integer)");
+    await expectPutBack(zip, "unmigratable");
   });
 
   fs.rmSync(SAFETY_PATH, { force: true });
@@ -565,7 +601,7 @@ async function main() {
 
   await check("7c. data equals the backup", async () => {
     assert.equal(oldRes.status, 200, "restore did not succeed");
-    assert.deepEqual(await fingerprint({ skip: NEWER_TABLES, maxActId: oldActId }), oldFingerprint);
+    assertSameData(await fingerprint({ skip: NEWER_TABLES, maxActId: oldActId }), oldFingerprint, "differs from the backup");
     const { rows } = await pool.query("SELECT key FROM system_settings WHERE key IN ($1, $2)", [oldMarker, lateMarker]);
     assert.deepEqual(rows.map((r) => r.key), [oldMarker]);
   });

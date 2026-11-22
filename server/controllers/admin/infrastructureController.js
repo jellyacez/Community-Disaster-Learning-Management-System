@@ -105,6 +105,79 @@ async function forceMaintenanceOn() {
   return false;
 }
 
+async function runInTransaction(statements) {
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    for (const statement of statements) await client.query(statement);
+    await client.query("COMMIT");
+  } catch (error) {
+    await client.query("ROLLBACK").catch(() => {});
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
+// Empties the database the way db:setup does, so tables newer than the backup cannot
+// block the restore. rate_limit is not recreated: the dump creates it, together with
+// the library's migration history in public.migrations. One transaction, so a failure
+// here leaves the database as it was.
+function resetSchemas() {
+  return runInTransaction([
+    "DROP SCHEMA IF EXISTS public CASCADE",
+    "DROP SCHEMA IF EXISTS rate_limit CASCADE",
+    "CREATE SCHEMA public",
+    "GRANT USAGE ON SCHEMA public TO PUBLIC",
+  ]);
+}
+
+// No --clean: the schemas are empty, and --clean cannot drop tables the dump lacks.
+function pgRestore(dumpPath) {
+  return runPostgresCommand(
+    process.env.PG_RESTORE_PATH || "pg_restore",
+    [
+      ...getDatabaseArguments(),
+      "--no-password",
+      "--no-owner",
+      "--no-privileges",
+      "--single-transaction",
+      "--exit-on-error",
+      dumpPath,
+    ],
+    getCommandOptions(),
+  );
+}
+
+// Brings a backup older than the code up to the current schema. migration.sql is
+// idempotent, so it changes nothing on a current backup. Maintenance goes on in the
+// same transaction: the backup carries its own value.
+async function upgradeRestoredSchema() {
+  const migration = await fsp.readFile(
+    path.join(__dirname, "..", "..", "migrations", "migration.sql"),
+    "utf8",
+  );
+  await runInTransaction([
+    migration,
+    "CREATE SCHEMA IF NOT EXISTS rate_limit",
+    MAINTENANCE_ON_SQL,
+  ]);
+  clearMaintenanceCache();
+}
+
+// Puts the live database back after the schemas were reset and a later step failed.
+async function putBackSafetyDump(safetyDumpPath, workDirectory) {
+  const dump = await secureBackup.unpack(
+    await fsp.readFile(safetyDumpPath),
+    process.env.BACKUP_ZIP_PASSWORD,
+  );
+  const dumpPath = path.join(workDirectory, "safety.dump");
+  await fsp.writeFile(dumpPath, dump, { mode: 0o600 });
+  await resetSchemas();
+  await pgRestore(dumpPath);
+  clearMaintenanceCache();
+}
+
 async function removeTemporaryDirectory(directory) {
   if (!directory) return;
   try {
@@ -281,24 +354,42 @@ exports.restoreDatabaseBackup = async (req, res) => {
     );
     // Abort the restore if the live data cannot be saved first.
     const safetyDumpPath = await takeSafetyDump();
-    await runPostgresCommand(
-      restoreBinary,
-      [
-        ...getDatabaseArguments(),
-        "--no-password",
-        "--clean",
-        "--if-exists",
-        "--no-owner",
-        "--no-privileges",
-        "--single-transaction",
-        "--exit-on-error",
-        dumpPath,
-      ],
-      getCommandOptions(),
-    );
+    await resetSchemas();
+    // Reset, restore and upgrade cannot share one transaction (pg_restore uses its own
+    // connection), so a failure after the reset is undone from the safety dump.
+    try {
+      await pgRestore(dumpPath);
+      await upgradeRestoredSchema();
+    } catch {
+      console.error("Database restore failed after the schema reset; putting back the safety dump.");
+      try {
+        await putBackSafetyDump(safetyDumpPath, temporaryDirectory);
+      } catch {
+        console.error(
+          `Could not put back the safety dump. Restore ${safetyDumpPath} manually (docs/backup-restore.md).`,
+        );
+        await forceMaintenanceOn();
+        await logDatabaseActivity(
+          req,
+          `Database restore failed and the safety dump could not be put back (${safetyDumpPath})`,
+        );
+        return res.status(500).json({
+          error:
+            "Restore failed and the safety dump could not be put back. The database may be empty: restore the safety dump by hand (see the backup and restore runbook).",
+        });
+      }
+      await logDatabaseActivity(
+        req,
+        "Database restore failed; the database was put back from the safety dump",
+      );
+      return res.status(500).json({
+        error:
+          "Restore failed; the database was put back from the safety dump. Review PostgreSQL server logs before retrying.",
+      });
+    }
 
-    // The data is replaced from here on. The backup carries its own maintenance_mode
-    // and sessions; keep the system closed and make everyone sign in again.
+    // The data is replaced from here on. The backup carries its own sessions; keep the
+    // system closed and make everyone sign in again.
     try {
       const client = await pool.connect();
       try {
