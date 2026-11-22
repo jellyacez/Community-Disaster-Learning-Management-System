@@ -98,7 +98,7 @@ export default function IPBlocklistPanel() {
           </div>
           <button
             type="submit"
-            disabled={addIpMutation.isLoading || !ipAddress}
+            disabled={addIpMutation.isPending || !ipAddress}
             className="flex items-center justify-center gap-2 px-4 py-2 bg-gray-900 text-white text-sm font-bold rounded-xl hover:bg-black transition-colors disabled:opacity-50 shrink-0"
           >
             <HugeiconsIcon icon={PlusSignIcon} className="w-4 h-4" />
@@ -143,7 +143,7 @@ export default function IPBlocklistPanel() {
                     <button
                       title="Unblock IP"
                       onClick={() => removeIpMutation.mutate(ip.id)}
-                      disabled={removeIpMutation.isLoading}
+                      disabled={removeIpMutation.isPending}
                       className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
                       aria-label="Remove block"
                     >

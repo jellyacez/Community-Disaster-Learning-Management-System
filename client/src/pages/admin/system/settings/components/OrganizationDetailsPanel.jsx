@@ -100,11 +100,11 @@ export default function OrganizationDetailsPanel({ settingsData }) {
         <div className="pt-2 border-t border-gray-100/50 dark:border-slate-800 mt-2">
           <button
             type="submit"
-            disabled={!hasChanges || updateDetails.isLoading}
+            disabled={!hasChanges || updateDetails.isPending}
             className="flex items-center justify-center px-4 py-2 bg-gray-900 dark:bg-brand-600 text-white text-sm font-semibold rounded-xl hover:bg-gray-800 dark:hover:bg-brand-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {updateDetails.isLoading && <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2" />}
-            {updateDetails.isLoading ? "Saving..." : "Save Details"}
+            {updateDetails.isPending && <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2" />}
+            {updateDetails.isPending ? "Saving..." : "Save Details"}
           </button>
         </div>
       </form>

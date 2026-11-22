@@ -116,11 +116,11 @@ export default function BroadcastOverridePanel({ settingsData }) {
         <div className="pt-2 border-t border-gray-100/50 dark:border-slate-800 mt-2">
           <button
             type="submit"
-            disabled={updateBroadcastMutation.isLoading}
+            disabled={updateBroadcastMutation.isPending}
             className="flex items-center justify-center px-4 py-2 bg-red-600 text-white text-sm font-bold rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50"
           >
-            {updateBroadcastMutation.isLoading && <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2" />}
-            {updateBroadcastMutation.isLoading ? "Saving..." : "Update Broadcast"}
+            {updateBroadcastMutation.isPending && <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2" />}
+            {updateBroadcastMutation.isPending ? "Saving..." : "Update Broadcast"}
           </button>
         </div>
       </form>

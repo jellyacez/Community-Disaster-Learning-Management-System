@@ -110,7 +110,7 @@ export default function QuickActionsPanel({
 
         <button
           onClick={() => setShowConfirmModal(true)}
-          disabled={toggleMaintenanceMutation.isLoading}
+          disabled={toggleMaintenanceMutation.isPending}
           className={`w-full flex items-center justify-between p-3 rounded-xl border transition-colors ${
             isMaintenanceMode
               ? "bg-red-50 border-red-200 text-red-800 hover:bg-red-100"
@@ -125,7 +125,7 @@ export default function QuickActionsPanel({
                 : "Enable Maintenance Mode"}
             </span>
           </div>
-          {toggleMaintenanceMutation.isLoading && (
+          {toggleMaintenanceMutation.isPending && (
             <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
           )}
         </button>
@@ -181,7 +181,7 @@ export default function QuickActionsPanel({
         isOpen={showConfirmModal}
         onClose={() => setShowConfirmModal(false)}
         onConfirm={confirmToggle}
-        isLoading={toggleMaintenanceMutation.isLoading}
+        isLoading={toggleMaintenanceMutation.isPending}
         title={
           isMaintenanceMode
             ? "Disable Maintenance Mode?"
