@@ -1,25 +1,27 @@
 import { Link } from "react-router-dom";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Shield01Icon, Facebook01Icon } from "@hugeicons/core-free-icons";
-import { HOTLINES } from "../../../constants/hotlines";
+import { useEmergencyContacts } from "../../../hooks/useEmergencyContacts";
+import HotlineEntry from "../HotlineEntry";
 
-const CONTACTS = [
-  {
-    name: "MDRRMO Bacolor",
-    phones: [
-      { id: HOTLINES.mdrrmoGlobe.id, label: `Globe ${HOTLINES.mdrrmoGlobe.number}`, tel: HOTLINES.mdrrmoGlobe.tel },
-      { id: HOTLINES.mdrrmoSmart.id, label: `Smart ${HOTLINES.mdrrmoSmart.number}`, tel: HOTLINES.mdrrmoSmart.tel },
-    ],
-    facebook: "https://www.facebook.com/BacolorRescue.DIMANteam",
-  },
-  {
-    name: "BFP Bacolor Fire Station",
-    phones: [{ id: HOTLINES.bfp.id, label: HOTLINES.bfp.number, tel: HOTLINES.bfp.tel }],
-    facebook: "https://www.facebook.com/profile.php?id=61569884632047",
-  },
-];
+// Official Facebook pages, matched by the agency name an admin gives a hotline
+const FACEBOOK_PAGES = {
+  "MDRRMO Bacolor": "https://www.facebook.com/BacolorRescue.DIMANteam",
+  "BFP Bacolor": "https://www.facebook.com/profile.php?id=61569884632047",
+};
+
+// Hotlines grouped by agency, in the order an admin set
+function groupByAgency(contacts) {
+  const groups = new Map();
+  for (const c of contacts) {
+    if (!groups.has(c.agency)) groups.set(c.agency, []);
+    groups.get(c.agency).push(c);
+  }
+  return [...groups].map(([name, phones]) => ({ name, phones, facebook: FACEBOOK_PAGES[name] }));
+}
 
 export default function LandingFooter() {
+  const offices = groupByAgency(useEmergencyContacts().contacts);
   return (
     <footer className="bg-gray-950 text-gray-400 py-12">
       <div className="max-w-6xl mx-auto px-4">
@@ -98,22 +100,23 @@ export default function LandingFooter() {
             <p className="text-white text-xs font-bold mb-3 uppercase tracking-widest">
               Contact
             </p>
-            {/* Numbers and pages from each office's official Facebook page */}
             <div className="grid gap-6 text-xs sm:grid-cols-2 md:grid-cols-1 lg:grid-cols-2 lg:gap-10">
-              {CONTACTS.map((office) => (
+              {offices.map((office) => (
                 <div key={office.name}>
                   <p className="font-semibold text-gray-200">{office.name}</p>
                   <ul>
                     {office.phones.map((p) => (
                       <li key={p.id}>
-                        <a
-                          href={`tel:${p.tel}`}
-                          className="inline-flex min-h-11 items-center hover:text-white transition-colors"
+                        <HotlineEntry
+                          contact={p}
+                          className="inline-flex min-h-11 items-center"
+                          linkClassName="hover:text-white transition-colors"
                         >
-                          {p.label}
-                        </a>
+                          {p.label} {p.phone}
+                        </HotlineEntry>
                       </li>
                     ))}
+                    {office.facebook && (
                     <li>
                       <a
                         href={office.facebook}
@@ -130,6 +133,7 @@ export default function LandingFooter() {
                         Facebook page
                       </a>
                     </li>
+                    )}
                   </ul>
                 </div>
               ))}

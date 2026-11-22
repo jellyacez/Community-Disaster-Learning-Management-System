@@ -1,14 +1,15 @@
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Alert01Icon, Call02Icon, Clock01Icon } from "@hugeicons/core-free-icons";
 import { getAdvisoryStatus, formatAdvisoryLabel, formatAdvisoryTime, formatIssuedAt } from "../../../lib/advisoryStatus";
-
-// Confirmed numbers only: an urgent advisory's call button must never dial a wrong number.
-// Add the MDRRMO hotline here once its real number is confirmed.
-const EMERGENCY_CALLS = [{ label: "Call 911", tel: "911" }];
+import { useEmergencyContacts } from "../../../hooks/useEmergencyContacts";
+import HotlineEntry from "../../../components/ui/HotlineEntry";
+import { isDialable } from "../../../utils/hotline";
 
 // Urgent advisories currently in effect, set apart from routine posts and loud on purpose:
 // a resident must get what to do, until when, and whom to call within a few seconds.
 export default function InEffectNow({ advisories }) {
+  // Real numbers only: an urgent advisory's call button must never show a sample number.
+  const calls = useEmergencyContacts().contacts.filter(isDialable).slice(0, 3);
   if (advisories.length === 0) return null;
 
   return (
@@ -45,15 +46,16 @@ export default function InEffectNow({ advisories }) {
             </p>
 
             <div className="mt-5 flex flex-wrap gap-3">
-              {EMERGENCY_CALLS.map((call) => (
-                <a
-                  key={call.tel}
-                  href={`tel:${call.tel}`}
+              {calls.map((call) => (
+                <HotlineEntry
+                  key={call.id}
+                  contact={call}
+                  aria-label={`Call ${call.agency} (${call.label}) at ${call.phone}`}
                   className="inline-flex h-12 items-center gap-2 rounded-xl bg-white dark:bg-white px-5 text-base font-bold text-red-700 dark:text-red-700 hover:bg-red-50 dark:hover:bg-red-50 transition focus:outline-none focus-visible:ring-4 focus-visible:ring-white/60"
                 >
                   <HugeiconsIcon icon={Call02Icon} className="h-5 w-5 shrink-0" aria-hidden="true" />
-                  {call.label}
-                </a>
+                  Call {call.phone}
+                </HotlineEntry>
               ))}
             </div>
           </article>

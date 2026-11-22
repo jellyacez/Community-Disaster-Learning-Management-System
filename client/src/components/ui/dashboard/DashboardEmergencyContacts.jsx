@@ -5,27 +5,25 @@ import {
   Facebook01Icon,
 } from "@hugeicons/core-free-icons";
 import toast from "react-hot-toast";
-import { HOTLINES } from "../../../constants/hotlines";
+import { useEmergencyContacts } from "../../../hooks/useEmergencyContacts";
+import HotlineEntry from "../HotlineEntry";
 
 export default function DashboardEmergencyContacts() {
   const isTouchDevice =
     typeof window !== "undefined" &&
     window.matchMedia("(pointer: coarse)").matches;
 
-  // From the official MDRRMO Bacolor and BFP Bacolor Fire Station Facebook pages
-  const contacts = [
-    { label: "MDRRMO (Globe)", ...HOTLINES.mdrrmoGlobe },
-    { label: "MDRRMO (Smart)", ...HOTLINES.mdrrmoSmart },
-    { label: "BFP Bacolor", ...HOTLINES.bfp },
-    { label: "National Emergency", ...HOTLINES.nationalEmergency },
-  ];
+  const contacts = useEmergencyContacts().contacts.map((c) => ({
+    ...c,
+    name: `${c.agency} (${c.label})`,
+  }));
 
   const handleContactClick = (e, contact) => {
     if (!isTouchDevice) {
       e.preventDefault();
       if (navigator.clipboard) {
-        navigator.clipboard.writeText(contact.number);
-        toast.success(`Copied ${contact.label}: ${contact.number}`);
+        navigator.clipboard.writeText(contact.phone);
+        toast.success(`Copied ${contact.name}: ${contact.phone}`);
       }
     }
   };
@@ -49,39 +47,46 @@ export default function DashboardEmergencyContacts() {
       </div>
       <div className="space-y-2.5">
         {contacts.map((c) => (
-          <a
-            key={c.label}
-            href={`tel:${c.tel}`}
+          <HotlineEntry
+            key={c.id}
+            contact={c}
             onClick={(e) => handleContactClick(e, c)}
             title={
               isTouchDevice
-                ? `Call ${c.label} at ${c.number}`
-                : `Click to copy ${c.label}: ${c.number}`
+                ? `Call ${c.name} at ${c.phone}`
+                : `Click to copy ${c.name}: ${c.phone}`
             }
-            aria-label={`${c.label} at ${c.number}. ${isTouchDevice ? "Tap to call" : "Click to copy"}`}
-            className="flex justify-between items-center p-3 bg-gray-50 rounded-xl hover:bg-red-50 hover:border-red-200 border border-transparent transition-all cursor-pointer group shadow-2xs focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 outline-hidden"
+            aria-label={`${c.name} at ${c.phone}. ${isTouchDevice ? "Tap to call" : "Click to copy"}`}
+            className="flex justify-between items-center gap-2 p-3 bg-gray-50 rounded-xl border border-transparent shadow-2xs group"
+            linkClassName="hover:bg-red-50 hover:border-red-200 transition-all cursor-pointer focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 outline-hidden"
+            tagClassName="text-amber-700"
           >
-            <div className="flex items-center gap-2">
-              <HugeiconsIcon
-                icon={Call02Icon}
-                className="w-4 h-4 text-gray-400 group-hover:text-red-600 transition-colors"
-              />
-              <span className="font-semibold text-xs sm:text-sm text-gray-700 group-hover:text-red-700">
-                {c.label}
-              </span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <span className="text-xs sm:text-sm font-bold text-red-600 font-mono tracking-tight">
-                {c.number}
-              </span>
-              {!isTouchDevice && (
-                <HugeiconsIcon
-                  icon={Copy01Icon}
-                  className="w-3.5 h-3.5 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity"
-                />
-              )}
-            </div>
-          </a>
+            {(sampleTag) => (
+              <>
+                <div className="flex items-center gap-2 min-w-0">
+                  <HugeiconsIcon
+                    icon={Call02Icon}
+                    className={`w-4 h-4 shrink-0 text-gray-400 ${sampleTag ? "" : "group-hover:text-red-600 transition-colors"}`}
+                  />
+                  <span className={`font-semibold text-xs sm:text-sm text-gray-700 ${sampleTag ? "" : "group-hover:text-red-700"}`}>
+                    {c.name}
+                  </span>
+                </div>
+                <div className="flex flex-wrap items-center justify-end gap-1.5">
+                  <span className={`text-xs sm:text-sm font-bold font-mono tracking-tight ${sampleTag ? "text-gray-500" : "text-red-600"}`}>
+                    {c.phone}
+                  </span>
+                  {sampleTag}
+                  {!sampleTag && !isTouchDevice && (
+                    <HugeiconsIcon
+                      icon={Copy01Icon}
+                      className="w-3.5 h-3.5 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity"
+                    />
+                  )}
+                </div>
+              </>
+            )}
+          </HotlineEntry>
         ))}
       </div>
       <a

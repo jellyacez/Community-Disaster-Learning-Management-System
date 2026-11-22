@@ -1,4 +1,8 @@
+import { useEmergencyContacts } from "../../hooks/useEmergencyContacts";
+import HotlineEntry from "./HotlineEntry";
+
 export default function PortalFooter() {
+  const contacts = useEmergencyContacts().contacts.slice(0, 2);
   return (
     <footer className="shrink-0 w-full max-w-full bg-white dark:bg-slate-900 border-t border-gray-200/80 dark:border-slate-800 px-4 sm:px-6 lg:px-8 py-3 sm:py-3.5 z-20">
       <div className="flex flex-col lg:flex-row items-center justify-between gap-2 lg:gap-4 text-[11px] sm:text-xs text-gray-500 dark:text-slate-400 font-medium">
@@ -26,9 +30,19 @@ export default function PortalFooter() {
           <span className="hidden xl:inline text-gray-300 dark:text-slate-700 select-none">
             &bull;
           </span>
-          <span className="font-semibold text-gray-700 dark:text-slate-300 whitespace-nowrap tabular-nums">
-            Emergency:{" "}
-            <span className="text-red-600 dark:text-red-400 font-bold">911</span> / (045) 900-0199
+          <span className="inline-flex flex-wrap items-center justify-center gap-x-1.5 gap-y-1 font-semibold text-gray-700 dark:text-slate-300 tabular-nums">
+            Emergency:
+            {contacts.map((c, i) => (
+              <span key={c.id} className="inline-flex items-center gap-x-1.5">
+                {i > 0 && <span aria-hidden="true">/</span>}
+                <HotlineEntry
+                  contact={c}
+                  aria-label={`${c.agency} (${c.label}) ${c.phone}`}
+                  className="inline-flex items-center whitespace-nowrap"
+                  linkClassName="text-red-600 dark:text-red-400 font-bold hover:underline"
+                />
+              </span>
+            ))}
           </span>
         </div>
       </div>

@@ -35,3 +35,9 @@ localDb.version(3).stores({}).upgrade(async tx => {
   await table.clear();
   await table.bulkPut([...unique.values()]);
 });
+
+// Adds one store and touches no data. Dexie keeps every store from versions 1-3, including
+// sync_queue and its indexes, so writes queued before the upgrade still sync.
+localDb.version(4).stores({
+  app_cache: "key"
+});

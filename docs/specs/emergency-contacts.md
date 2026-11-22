@@ -145,7 +145,8 @@ so the UI can show each error next to its field.
     (Open question 1)
   - landing footer: grouped by `agency`
   - dashboard contacts card: all active rows
-  - `InEffectNow` call buttons: first 3
+  - `InEffectNow` call buttons: the first 3 dialable rows (sample rows are left out: an urgent
+    advisory's call button never shows a placeholder)
   - `PortalFooter`: first 2
   Every list keys on `id`. A non-sample row is an `<a href={`tel:${c.tel}`}>` showing `c.phone`; both
   come from the same server row.

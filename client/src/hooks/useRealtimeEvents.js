@@ -3,6 +3,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { authClient } from "../lib/auth-client"; 
 import { API_BASE_URL } from "../lib/apiClient";
 import { invalidateAnnouncementQueries } from "./useLiftAnnouncement";
+import { EMERGENCY_CONTACTS_KEY, noteEmergencyContactsVersion } from "./useEmergencyContacts";
 
 export function useRealtimeEvents() {
   const queryClient = useQueryClient();
@@ -29,6 +30,15 @@ export function useRealtimeEvents() {
     eventSource.addEventListener("SYSTEM_BROADCAST_UPDATE", (e) => {
       const data = JSON.parse(e.data);
       queryClient.setQueryData(["globalBroadcast"], data);
+    });
+
+    // An admin saved the hotlines: refetch the resident list (past the browser cache) and the editor
+    eventSource.addEventListener("EMERGENCY_CONTACTS_UPDATED", (e) => {
+      try {
+        noteEmergencyContactsVersion(JSON.parse(e.data).version);
+      } catch { /* refetch without the version */ }
+      queryClient.invalidateQueries({ queryKey: EMERGENCY_CONTACTS_KEY });
+      queryClient.invalidateQueries({ queryKey: ["adminEmergencyContacts"] });
     });
 
     eventSource.addEventListener("NEW_FEEDBACK_TICKET", () => {

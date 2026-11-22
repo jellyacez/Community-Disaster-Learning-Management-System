@@ -7,7 +7,8 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import { ArrowRight01Icon } from "@hugeicons/core-free-icons";
 
 import useDocumentTitle from "../../hooks/useDocumentTitle";
-import { HOTLINES } from "../../constants/hotlines";
+import { useEmergencyContacts } from "../../hooks/useEmergencyContacts";
+import HotlineEntry from "../../components/ui/HotlineEntry";
 import { useMfaEnabled } from "../../hooks/useMfaEnabled";
 import LandingNavbar from "../../components/ui/landing/LandingNavbar";
 import LandingHero from "../../components/ui/landing/LandingHero";
@@ -23,6 +24,7 @@ export default function LandingPage() {
   const reduceMotion = useReducedMotion();
   const { data: session, isPending } = authClient.useSession();
   const mfaEnabled = useMfaEnabled();
+  const heroContacts = useEmergencyContacts().contacts.slice(0, 3);
 
   useEffect(() => {
     if (sessionStorage.getItem("isLoggingOut") === "true") {
@@ -103,23 +105,21 @@ export default function LandingPage() {
                 the Philippine Disaster Risk Reduction and Management Act of
                 2010.
               </p>
-              {/* Contact details from the office's official Facebook page */}
+              {/* First three active hotlines; admins choose them by order */}
               <div className="mt-4 flex flex-wrap items-center justify-center gap-x-6 text-sm">
                 <span className="font-semibold text-gray-950">
-                  MDRRMO 24/7 hotline
+                  Emergency hotlines
                 </span>
-                <a
-                  href={`tel:${HOTLINES.mdrrmoGlobe.tel}`}
-                  className="inline-flex min-h-11 items-center text-gray-700 underline underline-offset-4 hover:text-gray-950"
-                >
-                  Globe {HOTLINES.mdrrmoGlobe.number}
-                </a>
-                <a
-                  href={`tel:${HOTLINES.mdrrmoSmart.tel}`}
-                  className="inline-flex min-h-11 items-center text-gray-700 underline underline-offset-4 hover:text-gray-950"
-                >
-                  Smart {HOTLINES.mdrrmoSmart.number}
-                </a>
+                {heroContacts.map((c) => (
+                  <HotlineEntry
+                    key={c.id}
+                    contact={c}
+                    className="inline-flex min-h-11 items-center text-gray-700"
+                    linkClassName="underline underline-offset-4 hover:text-gray-950"
+                  >
+                    {c.agency} ({c.label}) {c.phone}
+                  </HotlineEntry>
+                ))}
                 <a
                   href="mailto:supportbacolor@gmail.com"
                   className="inline-flex min-h-11 items-center text-gray-700 underline underline-offset-4 hover:text-gray-950"
