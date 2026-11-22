@@ -79,11 +79,20 @@ export default function ResidentRegistry() {
           expiresAt: null,
         });
       }
+      if (action === "unban") {
+        return apiClient.patch(`/admin/users/${userId}/unban`);
+      }
       throw new Error("Unsupported resident action.");
     },
     onSuccess: (_, variables) => {
+      const pastTense = {
+        ban: "banned",
+        unban: "unbanned",
+        restore: "restored",
+        archive: "archived",
+      };
       toast.success(
-        `Resident ${variables.action === "ban" ? "banned" : "archived"} successfully.`,
+        `Resident ${pastTense[variables.action] ?? "updated"} successfully.`,
       );
       queryClient.invalidateQueries({ queryKey: ["adminResidents"] });
     },
@@ -200,7 +209,9 @@ export default function ResidentRegistry() {
             ? "Restore resident?"
             : modalConfig.action === "ban"
               ? "Ban resident?"
-              : "Archive resident?"
+              : modalConfig.action === "unban"
+                ? "Unban resident?"
+                : "Archive resident?"
         }
         description={
           modalConfig.action === "restore"
