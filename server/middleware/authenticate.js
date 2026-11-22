@@ -24,11 +24,13 @@ const parseCookies = (req) => {
 // The client matches on this code, not on the message text.
 const SESSION_BROWSER_CHANGED = "SESSION_BROWSER_CHANGED";
 
-// A changed client repeats on every request until the user signs in again; log each distinct
-// change once per session. In memory and bounded, so a restart only means one repeated line.
+// A changed client repeats on every request until the user signs in again; log each reason once
+// per session. The key must not include the version or OS: a client can rotate those on every
+// request, which would turn this into one log line per request. In memory and bounded by count,
+// so a restart only means one repeated line.
 const loggedClientChanges = new Set();
-const shouldLogClientChange = (sessionId, { reason, received }) => {
-  const key = `${sessionId}|${reason}|${received?.os}|${received?.version}`;
+const shouldLogClientChange = (sessionId, { reason }) => {
+  const key = `${sessionId}|${reason}`;
   if (loggedClientChanges.has(key)) return false;
   if (loggedClientChanges.size >= 5000) loggedClientChanges.clear();
   loggedClientChanges.add(key);

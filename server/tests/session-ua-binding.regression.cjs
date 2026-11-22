@@ -230,6 +230,15 @@ async function main() {
     assert.equal(ev.received.version, "157");
   });
 
+  await test("c) rotating the version on every request logs once per session", async () => {
+    const s = await createSession(CHROME_WIN(156));
+    for (let v = 200; v < 210; v++) assert.equal((await call(s, CHROME_WIN(v))).status, 200);
+    // a different reason is still worth its own line
+    assert.equal((await call(s, CHROME_ANDROID(210))).status, 200);
+    const reasons = loggedEvents(s.id).filter((e) => e.event === "session_client_change_noted").map((e) => e.reason);
+    assert.deepEqual(reasons.sort(), ["os_changed", "version_changed"]);
+  });
+
   // ---- d ----
   await test("d) Chrome -> Firefox: 401 SESSION_BROWSER_CHANGED, revoked, logged", async () => {
     const s = await createSession(CHROME_WIN(157));
