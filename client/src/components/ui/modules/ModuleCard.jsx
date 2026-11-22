@@ -1,4 +1,4 @@
-import { memo, useState } from "react";
+import { memo } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { authClient } from "../../../lib/auth-client";
@@ -12,7 +12,6 @@ import {
 import { useModuleEnrollment } from "../../../hooks/useModuleEnrollment";
 import DOMPurify from "dompurify";
 import { decodeHtml } from "../../../utils/textUtils";
-import EnrollCodeModal from "../modals/EnrollCodeModal.jsx";
 
 const getCategoryIcon = (category) => {
   const cat = (category || "").toLowerCase();
@@ -42,22 +41,12 @@ const ModuleCard = memo(function ModuleCard({
   const isCompleted =
     enrolled && (module.progress === 100 || module.status === "Completed");
 
-  const { localEnrolled, isEnrolling, handleEnroll } = useModuleEnrollment({
+  const { localEnrolled, isEnrolling } = useModuleEnrollment({
     moduleId: module.id,
     moduleTitle: module.title,
     initialEnrolled: enrolled,
     onEnrollSuccess,
   });
-
-  // Used only when the parent doesn't supply its own onEnrollClick
-  const [showCodeModal, setShowCodeModal] = useState(false);
-  const [codeError, setCodeError] = useState("");
-  const handleCodeSubmit = async (code) => {
-    setCodeError("");
-    const result = await handleEnroll(code);
-    if (result?.success) setShowCodeModal(false);
-    else if (result?.message) setCodeError(result.message);
-  };
 
   const resolveImageUrl = (url) => {
     if (!url) return null;
@@ -97,8 +86,6 @@ const ModuleCard = memo(function ModuleCard({
     if (onEnrollClick) {
       return onEnrollClick(module);
     }
-    setCodeError("");
-    setShowCodeModal(true);
   };
 
   const isRejected = isAdminView && module.status === "draft" && module.rejection_reason;
@@ -383,16 +370,6 @@ const ModuleCard = memo(function ModuleCard({
           )}
         </div>
       </div>
-
-      <EnrollCodeModal
-        isOpen={showCodeModal}
-        moduleTitle={decodeHtml(module.title)}
-        onClose={() => !isEnrolling && setShowCodeModal(false)}
-        onSubmit={handleCodeSubmit}
-        isLoading={isEnrolling}
-        error={codeError}
-        onInputChange={() => codeError && setCodeError("")}
-      />
     </div>
   );
 });
