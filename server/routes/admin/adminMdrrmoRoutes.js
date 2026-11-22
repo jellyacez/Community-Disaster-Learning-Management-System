@@ -169,7 +169,7 @@ router.put(
 router.get(
   "/mdrrmo/approvals",
   requireRole(["super_admin","head_mdrrmo_admin"]),
-  adminWriteLimiter,
+  adminDataLimiter,
   requirePermission("approve_modules"),
   moduleController.getPendingModulesReview
 );
