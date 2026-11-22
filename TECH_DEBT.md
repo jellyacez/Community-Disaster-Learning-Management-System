@@ -13,6 +13,13 @@ This document tracks identified technical debt, architectural decisions, missing
 - **Verification:** `server/tests/session-ua-binding.regression.cjs` (15 cases, red before the fix) and a Playwright run on a scratch database: version change and Android UA stay signed in, Firefox UA signs out with the message.
 - **Related:** the "new login" email (`handleNewDeviceLoginCheck`) used the same exact-UA comparison, so every browser update sent one. It now compares browser family and OS (`server/tests/new-device-email.regression.cjs`).
 
+### Resolved: "New login" email on every sign-in from a known device
+- **Location:** `server/services/securityService.js` (`handleNewDeviceLoginCheck`, `backfillKnownDevices`), `server/utils/userAgent.js` (`deviceKey`), table `user_known_devices`
+- **Issue:** a device counted as known only while another live session of the user had the same browser family and OS. Sign-out, session expiry, force-logout-all, password reset, ban and restore delete session rows, so signing in again from the same phone sent the email every time. Reproduced on a scratch database over HTTP: sign in, sign out, sign in from one User-Agent gave two emails.
+- **Resolution:** devices are upserted into `user_known_devices` on each sign-in, independent of sessions; the insert that creates the row is what sends the email, so concurrent sign-ins send one. Existing sessions are backfilled at server start. Details in [docs/auth.md](docs/auth.md) and [docs/database.md](docs/database.md).
+- **Verification:** `server/tests/new-device-email.regression.cjs` (26 cases; 12 red before the fix), `migration.sql` run twice on a scratch database, the HTTP repro re-run (one email in total), all `server/tests/*.regression.cjs` against a scratch server.
+- **Left open:** the number of devices per user is not capped (a User-Agent outside the known browsers is keyed by its first product token, truncated to 40 characters); it needs the user's password to grow. No pruning of old rows. A failed email send is not retried and the device stays remembered.
+
 ---
 
 ### Resolved: Resident Portal TanStack Query v5 Modernization (PR #5)

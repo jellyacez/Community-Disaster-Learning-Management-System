@@ -86,3 +86,7 @@ Roles are the `user_role` enum in `schema.sql`. Permissions are code (`server/co
 The API, not the database, enforces the list rules: 1-15 rows, at least one active, 3-15 digits in `tel`. `system_settings.emergency_contacts_version` is an integer counter used for optimistic locking: a save with an older version gets 409, and every save that changes something increments it.
 
 Defaults (`migration.sql` and `seed.sql`, inserted only while the table is empty): `911` (National Emergency, the only non-sample row), then sample rows MDRRMO Bacolor Globe, Smart and Landline (`045 900-0199`), BFP Bacolor and PNP Bacolor.
+
+## Known devices
+
+`user_known_devices` remembers which browser family and OS each user has signed in from, so the "new login" email is sent once per device and not once per session (spec in [auth.md](auth.md#session-binding)). Primary key `(user_id, browser_family, os_family)`; `user_id` references `"user"(id)` with `ON DELETE CASCADE`, so account deletion removes the rows. `first_seen_at` is set on insert, `last_seen_at` on every later sign-in. The migration block only creates the table: rows for existing sessions are added by `backfillKnownDevices()` when the server starts, because User-Agents are normalized in JS (`server/utils/userAgent.js`), not SQL. The set of devices per user is not capped.
