@@ -74,31 +74,6 @@ exports.completeModuleStep = async (req, res) => {
   }
 };
 
-exports.getModuleProgress = async (req, res) => {
-    const { id: moduleId } = req.params;
-    const userId = req.user?.id;
-
-    try {
-        const progressData = await ModuleProgressService.getModuleProgress(userId, moduleId);
-        return res.status(200).json({
-            success: true,
-            data: progressData
-        });
-    } catch (error) {
-        if (error.message === "NOT_FOUND") {
-            return res.status(404).json({
-                success: false,
-                message: "Module not found."
-            });
-        }
-        console.error("Error Fetching module progress:", error);
-        return res.status(500).json({
-            success: false,
-            message: "Internal Server Error Occurred" 
-        });
-    }
-};
-
 exports.syncModuleProgress = async (req, res) => {
   const userId = req.user?.id;
   const modId = req.body?.mod_id || req.body?.moduleId;

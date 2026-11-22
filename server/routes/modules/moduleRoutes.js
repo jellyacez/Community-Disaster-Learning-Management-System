@@ -87,9 +87,6 @@ router.get("/:id/viewer", requireRole(MODULE_VIEWER_ROLES), moduleController.get
 // @route   GET /api/modules/steps/:stepId/assessment
 router.get("/steps/:stepId/assessment", moduleController.getStepAssessment);
 
-// @route   GET /api/modules/:id/progress
-router.get("/:id/progress", moduleProgressController.getModuleProgress);
-
 // @route   POST /api/modules/progress
 router.post("/progress", moduleProgressController.syncModuleProgress);
 
