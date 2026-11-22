@@ -165,6 +165,21 @@ async function main() {
     for (const empty of [undefined, null, "", "   "]) assert.equal(normalizeUserAgent(empty), null);
   });
 
+  await test("normalizer: hostile input stays bounded and fast", () => {
+    const { normalizeUserAgent } = require("../utils/userAgent");
+    assert.ok(normalizeUserAgent("Chrome/" + "9".repeat(16000)).version.length <= 4, "version digits are capped");
+    assert.ok(normalizeUserAgent("curl/" + "9".repeat(16000)).version.length <= 4);
+    // 16 KB is Node's default header limit; a leading-wildcard Safari regex took ~17 ms here, 68 s at 1 MB
+    const start = process.hrtime.bigint();
+    normalizeUserAgent("Version/1 ".repeat(100000));
+    assert.ok(Number(process.hrtime.bigint() - start) / 1e6 < 100, "quadratic scan");
+    assert.equal(normalizeUserAgent("Mozilla/5.0 (Macintosh) Version/17.2 Safari/605.1.15").family, "safari");
+    assert.equal(normalizeUserAgent("Version/17.2 without the s-word").family, "version");
+    // in-app browsers and WebViews
+    assert.equal(normalizeUserAgent("Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 Version/4.0 Chrome/120.0.0.0 Mobile Safari/537.36 [FB_IAB/FB4A;FBAV/440.0]").family, "chrome");
+    assert.equal(normalizeUserAgent("Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 (KHTML, like Gecko) SamsungBrowser/23.0 Chrome/115.0.0.0 Mobile Safari/537.36").family, "samsung");
+  });
+
   // ---- a ----
   await test("a) identical UA -> 200", async () => {
     const s = await createSession(CHROME_WIN(156));

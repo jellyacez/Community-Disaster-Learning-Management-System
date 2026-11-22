@@ -2,15 +2,17 @@
 // OS and major version are returned too, but only for logging: they change legitimately
 // (browser auto-update, DevTools device mode, "Request desktop site").
 // Handwritten, no dependency; the order of the checks matters because Edge, Opera and Samsung
-// Internet all also say "Chrome/", and Chrome also says "Safari/".
+// Internet all also say "Chrome/", and Chrome also says "Safari/". Versions are capped at 4 digits and
+// every pattern is linear (no nested or leading-wildcard scans): this runs on every authenticated
+// request with an attacker-controlled header, and the result goes into log lines.
 
 const FAMILIES = [
-  { family: "edge", re: /\bEdg(?:e|A|iOS)?\/(\d+)/, engine: "blink" },
-  { family: "opera", re: /\b(?:OPR|Opera)\/(\d+)/, engine: "blink" },
-  { family: "samsung", re: /\bSamsungBrowser\/(\d+)/, engine: "blink" },
-  { family: "firefox", re: /\b(?:Firefox|FxiOS)\/(\d+)/, engine: "gecko" },
-  { family: "chrome", re: /\b(?:Headless)?(?:Chrome|Chromium|CriOS)\/(\d+)/, engine: "blink" },
-  { family: "safari", re: /\bVersion\/(\d+)[\s\S]*\bSafari\//, engine: "webkit" },
+  { family: "edge", re: /\bEdg(?:e|A|iOS)?\/(\d{1,4})/, engine: "blink" },
+  { family: "opera", re: /\b(?:OPR|Opera)\/(\d{1,4})/, engine: "blink" },
+  { family: "samsung", re: /\bSamsungBrowser\/(\d{1,4})/, engine: "blink" },
+  { family: "firefox", re: /\b(?:Firefox|FxiOS)\/(\d{1,4})/, engine: "gecko" },
+  { family: "chrome", re: /\b(?:Headless)?(?:Chrome|Chromium|CriOS)\/(\d{1,4})/, engine: "blink" },
+  { family: "safari", re: /\bVersion\/(\d{1,4})/, needs: /\bSafari\//, engine: "webkit" },
 ];
 
 const detectOs = (ua) => {
@@ -33,16 +35,16 @@ const normalizeUserAgent = (userAgent) => {
   const ua = userAgent.trim();
   const os = detectOs(ua);
 
-  for (const { family, re, engine } of FAMILIES) {
+  for (const { family, re, needs, engine } of FAMILIES) {
     const match = ua.match(re);
-    if (match) {
+    if (match && (!needs || needs.test(ua))) {
       // every browser on iOS renders with WebKit
       return { family, engine: os === "ios" ? "webkit" : engine, os, version: match[1] };
     }
   }
 
   // not a recognised browser (curl, python-requests, a bot): bind to the first product token
-  const product = ua.match(/^([A-Za-z][\w.-]*)(?:\/(\d+))?/);
+  const product = ua.match(/^([A-Za-z][\w.-]*)(?:\/(\d{1,4}))?/);
   return {
     family: product ? product[1].toLowerCase().slice(0, 40) : "unknown",
     engine: "other",
