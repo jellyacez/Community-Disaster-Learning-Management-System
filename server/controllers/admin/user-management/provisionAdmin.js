@@ -87,7 +87,7 @@ exports.provisionAdmin = async (req, res) => {
     let barangayId = null;
     if (role === "barangay_admin") {
       const raw = String(barangay).trim();
-      const lookup = /^\d+$/.test(raw)
+      const lookup = /^\d{1,9}$/.test(raw)
         ? await pool.query("SELECT id FROM barangays WHERE id = $1", [Number(raw)])
         : await pool.query(
             "SELECT id FROM barangays WHERE LOWER(TRIM(name)) = LOWER($1)",
@@ -157,12 +157,22 @@ exports.provisionAdmin = async (req, res) => {
     });
   } catch (err) {
     console.error("Provisioning error:", err);
+    require("../../../utils/logger").logError("provision_admin_failure", {
+      actorId: req.user?.id,
+      requestedRole: role,
+      message: err?.message,
+      stack: err?.stack,
+    });
 
-    const authMessage = err?.message || err?.body?.message || "";
+    // Database errors (pg sets severity and code) are never shown to the client
+    const isDbError =
+      typeof err?.severity === "string" && typeof err?.code === "string";
+    const authMessage = isDbError ? "" : err?.message || err?.body?.message || "";
     const authStatus = err?.status || err?.statusCode;
 
     if (
       authStatus === 422 ||
+      err?.code === "23505" ||
       authMessage.toLowerCase().includes("already exist") ||
       authMessage.toLowerCase().includes("duplicate")
     ) {
@@ -183,8 +193,8 @@ exports.provisionAdmin = async (req, res) => {
 
     return res.status(500).json({
       success: false,
-      error: authMessage || "Failed to provision admin account. Check server logs.",
-      message: authMessage || "Failed to provision admin account. Check server logs.",
+      error: "Failed to provision admin account. Check server logs.",
+      message: "Failed to provision admin account. Check server logs.",
     });
   }
 };

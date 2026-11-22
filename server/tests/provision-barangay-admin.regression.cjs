@@ -10,6 +10,7 @@
  *   - provisioning with a numeric barangay id stores that id
  *   - the new admin can load the resident registry (it was a 500)
  *   - an unknown barangay is refused with 400 and creates no account
+ *   - a 20-digit barangay id is refused with 400, creates no account and leaks no database text
  *   - a non-barangay role is still stored with no barangay
  *
  * Fixtures (a provisioning admin and its session) are seeded directly into the database from
@@ -145,6 +146,16 @@ async function main() {
       name: "Regression Bad", email, role: "barangay_admin", barangay: "Not A Barangay",
     });
     assert.equal(res.status, 400, JSON.stringify(res.body));
+    assert.equal(await userByEmail(email), undefined);
+  });
+
+  await check("an out-of-range numeric barangay id is a 400 with no database text and no account", async () => {
+    const email = `huge@${EMAIL_DOMAIN}`;
+    const res = await call(provisioner, "POST", "/api/admin/users/provision", {
+      name: "Regression Huge", email, role: "barangay_admin", barangay: "99999999999999999999",
+    });
+    assert.equal(res.status, 400, JSON.stringify(res.body));
+    assert.doesNotMatch(JSON.stringify(res.body), /out of range|integer|postgres/i);
     assert.equal(await userByEmail(email), undefined);
   });
 

@@ -8,6 +8,7 @@
  * Sends real HTTP requests to a RUNNING LOCAL server and asserts that:
  *   - 25 reads of the approvals list (more than the write budget of 20) all return 200
  *   - a review (PUT) afterwards is not rate limited
+ *   - the review PUT is still throttled: 20 reviews pass the limiter, the 21st gets 429
  *
  * Fixtures (an admin, a module, a session, rate-limit rows keyed by the admin) are seeded directly
  * into the database from server/.env and removed by exact ID/key in `finally`. Refuses to run
@@ -36,8 +37,8 @@ async function assertLocalDatabase() {
   if (!isLoopback) throw new Error(`Refusing to seed a non-local database (${addr}).`);
 }
 
-async function createAdmin() {
-  const id = `${RUN}_head`;
+async function createAdmin(suffix = "head") {
+  const id = `${RUN}_${suffix}`;
   // Admin roles require MFA; the flag stands in for an enrolled second factor
   await pool.query(
     `INSERT INTO "user" (id, name, email, "emailVerified", role, "twoFactorEnabled", archived, banned, "createdAt", "updatedAt")
@@ -128,6 +129,19 @@ async function main() {
   assert.notEqual(res.status, 429, "review was rate limited after reads");
   assert.equal(res.status, 200, await res.text());
   console.log("ok - the review PUT after the reads is not rate limited");
+
+  // A separate admin keeps this count independent of the reads above. Reviewing a draft is a 409
+  // (NOT_PENDING_REVIEW) that changes nothing, but it still spends one write-limiter slot.
+  const writer = await createAdmin("writer");
+  const stale = await createModule("stale draft", "draft");
+  const reviewStatuses = [];
+  for (let i = 0; i < 21; i++) {
+    const r = await request(writer, "PUT", `/api/admin/mdrrmo/module/${stale}/review`, { status: "published" });
+    reviewStatuses.push(r.status);
+  }
+  assert.deepEqual(reviewStatuses.slice(0, 20), Array(20).fill(409), reviewStatuses.join(","));
+  assert.equal(reviewStatuses[20], 429, `21st review must be throttled, got ${reviewStatuses.join(",")}`);
+  console.log("ok - the review PUT is throttled on the 21st request");
 
   console.log("All approvals rate-limit regression checks passed.");
 }
