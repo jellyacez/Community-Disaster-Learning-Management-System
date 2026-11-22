@@ -35,6 +35,13 @@ export default function VerificationResultCard({
           icon: CancelCircleIcon,
           title: "Expired Certificate",
         };
+      case "revoked":
+        return {
+          wrapper: "bg-red-50/80 dark:bg-red-950/40 border-red-200 dark:border-red-800 text-red-900 dark:text-red-200",
+          iconBg: "bg-red-500 text-white",
+          icon: CancelCircleIcon,
+          title: "Revoked Certificate",
+        };
       default:
         return {
           wrapper: "bg-gray-100 dark:bg-slate-800 border-gray-200 dark:border-slate-700 text-gray-800 dark:text-slate-200",

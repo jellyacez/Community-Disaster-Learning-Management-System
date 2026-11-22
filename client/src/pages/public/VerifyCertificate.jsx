@@ -12,6 +12,62 @@ import {
 } from "@hugeicons/core-free-icons";
 import Spinner from "../../components/ui/Spinner";
 
+const VALID_STATE = {
+  color: "bg-emerald-50 text-emerald-900 border-emerald-200",
+  icon: (
+    <HugeiconsIcon
+      icon={CheckmarkBadge01Icon}
+      className="w-7 h-7 text-emerald-600 shrink-0"
+    />
+  ),
+  badge: "bg-emerald-100 text-emerald-800 border-emerald-200",
+  text: "Official & Active",
+  desc: "This credential is valid, accredited, and currently in good standing.",
+};
+
+// Every status the API can return is listed; anything else falls back to "Cannot verify".
+const CERTIFICATE_STATES = {
+  active: VALID_STATE,
+  expiring_soon: VALID_STATE,
+  expired: {
+    color: "bg-amber-50 text-amber-900 border-amber-200",
+    icon: (
+      <HugeiconsIcon
+        icon={Alert02Icon}
+        className="w-7 h-7 text-amber-600 shrink-0"
+      />
+    ),
+    badge: "bg-amber-100 text-amber-800 border-amber-200",
+    text: "Expired Credential",
+    desc: "This certificate was legitimately earned but has passed its validity period. Recertification is required.",
+  },
+  revoked: {
+    color: "bg-red-50 text-red-900 border-red-200",
+    icon: (
+      <HugeiconsIcon
+        icon={Cancel01Icon}
+        className="w-7 h-7 text-red-600 shrink-0"
+      />
+    ),
+    badge: "bg-red-100 text-red-800 border-red-200",
+    text: "Revoked Credential",
+    desc: "This certificate has been revoked and is no longer valid.",
+  },
+};
+
+const UNKNOWN_STATE = {
+  color: "bg-gray-50 text-gray-900 border-gray-200",
+  icon: (
+    <HugeiconsIcon
+      icon={Alert02Icon}
+      className="w-7 h-7 text-gray-500 shrink-0"
+    />
+  ),
+  badge: "bg-gray-100 text-gray-800 border-gray-200",
+  text: "Cannot verify",
+  desc: "This credential's status could not be confirmed. Contact the Bacolor MDRRMO to check it.",
+};
+
 export default function VerifyCertificate() {
   useDocumentTitle("Verify Certificate | Bacolor Disaster LMS");
   const [searchParams, setSearchParams] = useSearchParams();
@@ -144,31 +200,15 @@ export default function VerifyCertificate() {
         expires_at,
       } = certData;
 
-      let statusColor = "bg-emerald-50 text-emerald-900 border-emerald-200";
-      let statusIcon = (
-        <HugeiconsIcon
-          icon={CheckmarkBadge01Icon}
-          className="w-7 h-7 text-emerald-600 shrink-0"
-        />
-      );
-      let statusBadge = "bg-emerald-100 text-emerald-800 border-emerald-200";
-      let statusText = "Official & Active";
-      let statusDesc =
-        "This credential is valid, accredited, and currently in good standing.";
-
-      if (status === "expired") {
-        statusColor = "bg-amber-50 text-amber-900 border-amber-200";
-        statusIcon = (
-          <HugeiconsIcon
-            icon={Alert02Icon}
-            className="w-7 h-7 text-amber-600 shrink-0"
-          />
-        );
-        statusBadge = "bg-amber-100 text-amber-800 border-amber-200";
-        statusText = "Expired Credential";
-        statusDesc =
-          "This certificate was legitimately earned but has passed its validity period. Recertification is required.";
-      }
+      const {
+        color: statusColor,
+        icon: statusIcon,
+        badge: statusBadge,
+        text: statusText,
+        desc: statusDesc,
+      } = Object.hasOwn(CERTIFICATE_STATES, status)
+        ? CERTIFICATE_STATES[status]
+        : UNKNOWN_STATE;
 
       return (
         <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden mt-8 animate-in fade-in duration-200">
