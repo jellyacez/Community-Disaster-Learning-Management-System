@@ -91,3 +91,18 @@ WHERE NOT EXISTS (SELECT 1 FROM public.emergency_contacts);
 -- Integer list version for optimistic locking; every saved PUT increments it.
 INSERT INTO public.system_settings (key, value) VALUES ('emergency_contacts_version', '1')
 ON CONFLICT (key) DO NOTHING;
+
+-- Devices a user has signed in from, remembered independently of sessions. The "new login" email
+-- used to look at live sessions only, and sign-out, expiry, force-logout-all and restores delete
+-- them, so the same phone was reported as new on every sign-in. One row per browser family and OS
+-- (utils/userAgent.js deviceKey). The primary key's leading user_id also serves the FK cascade.
+-- Rows for existing sessions are added at server start (securityService.backfillKnownDevices),
+-- because normalising a User-Agent is done in JS, not SQL.
+CREATE TABLE IF NOT EXISTS public.user_known_devices (
+  user_id        text        NOT NULL REFERENCES public."user"(id) ON DELETE CASCADE,
+  browser_family text        NOT NULL,
+  os_family      text        NOT NULL,
+  first_seen_at  timestamptz NOT NULL DEFAULT now(),
+  last_seen_at   timestamptz NOT NULL DEFAULT now(),
+  PRIMARY KEY (user_id, browser_family, os_family)
+);

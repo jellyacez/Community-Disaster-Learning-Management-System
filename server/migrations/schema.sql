@@ -677,6 +677,18 @@ COMMENT ON COLUMN public."user".consent_given_at IS 'Timestamp when the user exp
 COMMENT ON COLUMN public."user".consent_version IS 'Version identifier of the consent text the user agreed to (e.g. 1-2026). NULL for pre-migration accounts.';
 
 --
+-- Name: user_known_devices; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.user_known_devices (
+    user_id text NOT NULL,
+    browser_family text NOT NULL,
+    os_family text NOT NULL,
+    first_seen_at timestamp with time zone DEFAULT now() NOT NULL,
+    last_seen_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+--
 -- Name: user_notification; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -1017,6 +1029,13 @@ ALTER TABLE ONLY public.module_activity
 
 ALTER TABLE ONLY public."user"
     ADD CONSTRAINT user_email_key UNIQUE (email);
+
+--
+-- Name: user_known_devices user_known_devices_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.user_known_devices
+    ADD CONSTRAINT user_known_devices_pkey PRIMARY KEY (user_id, browser_family, os_family);
 
 --
 -- Name: user_notification user_notification_pkey; Type: CONSTRAINT; Schema: public; Owner: -
@@ -1462,6 +1481,13 @@ ALTER TABLE ONLY public.results
 
 ALTER TABLE ONLY public.activity_log
     ADD CONSTRAINT fk_user FOREIGN KEY (user_id) REFERENCES public."user"(id) ON DELETE CASCADE;
+
+--
+-- Name: user_known_devices user_known_devices_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.user_known_devices
+    ADD CONSTRAINT user_known_devices_user_id_fkey FOREIGN KEY (user_id) REFERENCES public."user"(id) ON DELETE CASCADE;
 
 --
 -- Name: user_notification fk_user_notification_id; Type: FK CONSTRAINT; Schema: public; Owner: -
