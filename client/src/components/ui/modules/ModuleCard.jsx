@@ -85,13 +85,7 @@ const ModuleCard = memo(function ModuleCard({
     }
 
     if (isAdmin || isAdminView) {
-      if (location.pathname.startsWith("/admin/super")) {
-        navigate(`/admin/super/modules/${module.id}/details`);
-      } else if (location.pathname.startsWith("/admin/system")) {
-        navigate(`/admin/system/modules/${module.id}/details`);
-      } else {
-        navigate(`/admin/mdrrmo/modules/${module.id}/details`);
-      }
+      navigate(`/admin/mdrrmo/modules/${module.id}/details`);
     } else {
       navigate(`/user/modules/${module.id}/details`);
     }
@@ -110,12 +104,6 @@ const ModuleCard = memo(function ModuleCard({
     if (onManageClick) {
       return onManageClick(module.id || module.mod_id);
     }
-
-    let builderPath = "/admin/mdrrmo/modules/builder";
-    if (userRole === "system_admin" || location.pathname.startsWith("/admin/system")) {
-      builderPath = "/admin/system/modules/builder";
-    }
-    navigate(`${builderPath}?id=${module.id || module.mod_id}`);
   };
 
   const handleEnrollClick = (e) => {
