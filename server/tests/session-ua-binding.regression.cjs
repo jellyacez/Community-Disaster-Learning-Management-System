@@ -157,6 +157,8 @@ async function main() {
         { family: "chrome", engine: "webkit", os: "ios", version: "120" }],
       ["Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 OPR/106.0.0.0",
         { family: "opera", engine: "blink", os: "windows", version: "106" }],
+      ["Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36",
+        { family: "chrome", engine: "blink", os: "windows", version: "157" }],
       ["curl/8.4.0", { family: "curl", engine: "other", os: "other", version: "8" }],
     ];
     for (const [ua, want] of cases) assert.deepEqual(normalizeUserAgent(ua), want, ua);

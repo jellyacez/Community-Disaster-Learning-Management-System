@@ -9,7 +9,7 @@ const FAMILIES = [
   { family: "opera", re: /\b(?:OPR|Opera)\/(\d+)/, engine: "blink" },
   { family: "samsung", re: /\bSamsungBrowser\/(\d+)/, engine: "blink" },
   { family: "firefox", re: /\b(?:Firefox|FxiOS)\/(\d+)/, engine: "gecko" },
-  { family: "chrome", re: /\b(?:Chrome|Chromium|CriOS)\/(\d+)/, engine: "blink" },
+  { family: "chrome", re: /\b(?:Headless)?(?:Chrome|Chromium|CriOS)\/(\d+)/, engine: "blink" },
   { family: "safari", re: /\bVersion\/(\d+)[\s\S]*\bSafari\//, engine: "webkit" },
 ];
 
