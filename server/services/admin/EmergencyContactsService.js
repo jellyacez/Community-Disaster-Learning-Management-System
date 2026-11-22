@@ -6,8 +6,8 @@ const MAX_TEXT = 80;
 const MAX_PHONE = 32; // emergency_contacts.phone is varchar(32)
 const MAX_LOG = 500; // activity_log.act_log is varchar(500)
 const PHONE_RE = /^\+?[0-9][0-9 -]*[0-9]$/; // same as emergency_contacts_phone_check
-// Control, format (bidi overrides, zero-width) and line/paragraph separator characters
-const HIDDEN_CHARS_RE = /[\p{Cc}\p{Cf}\p{Zl}\p{Zp}]/u;
+// Control, format (bidi overrides, zero-width), lone surrogate and line/paragraph separator characters
+const HIDDEN_CHARS_RE = /[\p{Cc}\p{Cf}\p{Cs}\p{Zl}\p{Zp}]/u;
 const ROW_KEYS = new Set(["id", "agency", "label", "phone", "is_sample", "active"]);
 const BODY_KEYS = new Set(["version", "contacts"]);
 const VERSION_KEY = "emergency_contacts_version";
@@ -83,6 +83,8 @@ function validate(body) {
   }
   if (contacts.length < 1 || contacts.length > MAX_CONTACTS) {
     errors.push({ field: "contacts", message: `Must have 1 to ${MAX_CONTACTS} entries.` });
+    // Don't check (and answer for) every row of an oversized list
+    return { errors };
   }
 
   const seenIds = new Set();

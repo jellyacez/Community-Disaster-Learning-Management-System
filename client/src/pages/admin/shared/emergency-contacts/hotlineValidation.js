@@ -3,7 +3,7 @@
 export const MAX_HOTLINES = 15;
 const MAX_TEXT = 80;
 const PHONE_RE = /^\+?[0-9][0-9 -]*[0-9]$/;
-const HIDDEN_CHARS_RE = /[\p{Cc}\p{Cf}\p{Zl}\p{Zp}]/u;
+const HIDDEN_CHARS_RE = /[\p{Cc}\p{Cf}\p{Cs}\p{Zl}\p{Zp}]/u;
 
 function textError(value, what) {
   const text = value.trim();

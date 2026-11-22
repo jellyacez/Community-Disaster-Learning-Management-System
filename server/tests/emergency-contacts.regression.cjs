@@ -379,6 +379,8 @@ async function main() {
       ["empty label", { contacts: withRow({ label: "" }) }, "label"],
       ["newline in label", { contacts: withRow({ label: "Line\nTwo" }) }, "label"],
       ["NUL in agency", { contacts: withRow({ agency: "Agency\u0000" }) }, "agency"],
+      ["lone surrogate in label", { contacts: withRow({ label: "Line \ud800" }) }, "label"],
+      ["bidi override in agency", { contacts: withRow({ agency: "Agency ‮" }) }, "agency"],
       ["letters in phone", { contacts: withRow({ phone: "0917abc1234" }) }, "phone"],
       ["comma (pause) in phone", { contacts: withRow({ phone: "0917,1234567" }) }, "phone"],
       ["semicolon (wait) in phone", { contacts: withRow({ phone: "0917;1234567" }) }, "phone"],
@@ -423,6 +425,14 @@ async function main() {
         assert.equal(after.body.version, base.version, "a refused PUT changed the version");
       });
     }
+
+    await check("an oversized list is refused with one error, not one per row", async () => {
+      const contacts = Array.from({ length: 2000 }, () => row({ agency: "" }));
+      const res = await call(admin, "PUT", ADMIN_PATH, { version: base.version, contacts });
+      assert.equal(res.status, 400, `${res.status}`);
+      assert.ok(res.body.errors.length <= 2, `${res.body.errors.length} errors returned`);
+      assert.ok(res.body.errors.some((e) => e.field === "contacts"));
+    });
 
     await check("80 astral characters in agency is accepted (matches Postgres char_length)", async () => {
       const now = await call(admin, "GET", ADMIN_PATH);

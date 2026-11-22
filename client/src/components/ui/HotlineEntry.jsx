@@ -1,4 +1,4 @@
-import { isDialable } from "../../utils/hotline";
+import { dialString } from "../../utils/hotline";
 
 // The only way a hotline is rendered. A dialable row (non-sample with a tel) is a tel: link whose
 // target is the shown number without spaces and dashes; a sample row is plain text with a tag,
@@ -17,13 +17,14 @@ export function SampleTag({ className = "" }) {
 // className applies to both forms; linkClassName (underline, hover) only to the tel: link.
 // children may be a function that receives the sample tag (null when dialable) to place it.
 export default function HotlineEntry({ contact, className = "", linkClassName = "", tagClassName = "", children, ...linkProps }) {
-  const dialable = isDialable(contact);
+  const dial = dialString(contact);
+  const dialable = dial !== null;
   const tag = dialable ? null : <SampleTag className={tagClassName} />;
   const placed = typeof children === "function";
   const content = placed ? children(tag) : (children ?? contact.phone);
   if (dialable) {
     return (
-      <a href={`tel:${contact.tel}`} className={`${className} ${linkClassName}`} {...linkProps}>
+      <a href={`tel:${dial}`} className={`${className} ${linkClassName}`} {...linkProps}>
         {content}
       </a>
     );
