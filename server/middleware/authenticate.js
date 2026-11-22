@@ -1,6 +1,7 @@
 const { auth } = require("../utils/auth");
 const pool = require("../config/db");
 const { logError } = require("../utils/logger");
+const { compareClients } = require("../utils/userAgent");
 const { MFA_REQUIRED_ROLES, isMfaEnforced } = require("../config/permissions");
 
 // cookie-parser isn't mounted globally
@@ -20,6 +21,20 @@ const parseCookies = (req) => {
   return list;
 };
 
+// The client matches on this code, not on the message text.
+const SESSION_BROWSER_CHANGED = "SESSION_BROWSER_CHANGED";
+
+// A changed client repeats on every request until the user signs in again; log each distinct
+// change once per session. In memory and bounded, so a restart only means one repeated line.
+const loggedClientChanges = new Set();
+const shouldLogClientChange = (sessionId, { reason, received }) => {
+  const key = `${sessionId}|${reason}|${received?.os}|${received?.version}`;
+  if (loggedClientChanges.has(key)) return false;
+  if (loggedClientChanges.size >= 5000) loggedClientChanges.clear();
+  loggedClientChanges.add(key);
+  return true;
+};
+
 // Session check, archive check, MFA enforcement, activity tracking and impersonation.
 const authenticate = async (req, res, next) => {
   try {
@@ -29,13 +44,18 @@ const authenticate = async (req, res, next) => {
       return res.status(401).json({ error: "Unauthorized. Please Log In" });
     }
 
-    // a user-agent mismatch on an existing session is treated as a stolen token
+    // Only a browser-family change on an existing session is treated as a stolen token. Version
+    // and OS changes (auto-update, device mode) are logged and let through; see docs/adr/0007.
     const incomingUserAgent = req.headers["user-agent"] || "";
     const sessionRecord = session.session;
+    const verdict = compareClients(sessionRecord?.userAgent, incomingUserAgent);
 
-    if (sessionRecord?.userAgent && incomingUserAgent !== sessionRecord.userAgent) {
+    if (verdict.action === "revoke") {
       logError("session_hijack_attempt_detected", {
         userId: session.user.id,
+        reason: verdict.reason,
+        expected: verdict.expected,
+        received: verdict.received,
         expectedUserAgent: sessionRecord.userAgent,
         receivedUserAgent: incomingUserAgent,
         ip: req.ip,
@@ -51,8 +71,18 @@ const authenticate = async (req, res, next) => {
       }
 
       return res.status(401).json({
-        error: "UNAUTHORIZED",
-        message: "Session terminated due to client fingerprint anomaly.",
+        error: SESSION_BROWSER_CHANGED,
+        message: "You were signed out because your browser changed. Please sign in again.",
+      });
+    }
+
+    if (verdict.reason && shouldLogClientChange(sessionRecord.id, verdict)) {
+      logError("session_client_change_noted", {
+        userId: session.user.id,
+        reason: verdict.reason,
+        expected: verdict.expected,
+        received: verdict.received,
+        ip: req.ip,
       });
     }
 
