@@ -1,15 +1,22 @@
 /**
- * Regression test: the "new login" security email (securityService.handleNewDeviceLoginCheck)
- * compared the exact User-Agent, so every browser update looked like a new device and sent an email.
- * A device is now new when no OTHER live session of the user has the same browser family and OS.
+ * Regression test: the "new login" security email (securityService.handleNewDeviceLoginCheck).
+ * 1) It compared the exact User-Agent, so every browser update looked like a new device.
+ * 2) It only knew devices from LIVE sessions, and sign-out, expiry, force-logout-all and restores
+ *    delete them, so signing in again from the same phone after a sign-out sent the email every time.
+ * A device is now new when the user's user_known_devices has no row for its browser family and OS
+ * (rows are upserted on every sign-in and outlive sessions).
  *
  * Runs in-process (no API needed) with the mailer stubbed, and asserts:
- *   a) the same UA as an earlier session -> no email
+ *   a) the same UA as an earlier sign-in -> no email
  *   b) only the browser version changed (Chrome 156 -> 157; Firefox, Edge) -> no email
  *   c) same browser on another OS (Windows -> Android) -> email
  *   d) different browser family (Chrome -> Firefox) -> email
- *   e) the new session has no UA -> no email; no earlier session at all -> email (unchanged behaviour)
- *   f) earlier sessions stored as full raw UAs (older builds) are compared normalized
+ *   e) the new session has no UA -> no email; no earlier sign-in at all -> email (unchanged behaviour)
+ *   f) sessions stored as full raw UAs (older builds) are backfilled normalized
+ *   g) sign out / session expiry / force-logout-all, then the same browser and OS again (also after a
+ *      version bump) -> no email; a new browser or OS -> exactly one, then remembered
+ *   h) concurrent first logins from one new device -> exactly one email; deleting the user deletes
+ *      the remembered devices
  * plus unit checks of isNewDevice().
  *
  * Fixtures are seeded from server/.env and deleted by exact id. Refuses to run unless the database
@@ -52,8 +59,7 @@ async function assertScratchDatabase() {
 }
 
 let counter = 0;
-// `earlier` are the UAs of sessions created before the one being checked; `latest` is the new login.
-async function scenario(earlier, latest) {
+async function createUser() {
   const id = `${RUN}_${++counter}`;
   const email = `${id}@${EMAIL_DOMAIN}`;
   await pool.query(
@@ -62,20 +68,47 @@ async function scenario(earlier, latest) {
     [id, `Regression ${id}`, email]
   );
   created.userIds.push(id);
-  const insert = async (n, ua, ageMinutes) => {
-    const sessionId = `${id}_s${n}`;
-    await pool.query(
-      `INSERT INTO session (id, "expiresAt", token, "createdAt", "updatedAt", "ipAddress", "userAgent", "userId")
-       VALUES ($1, NOW() + INTERVAL '1 hour', $2, NOW() - ($3 || ' minutes')::interval, NOW(), '127.0.0.1', $4, $5)`,
-      [sessionId, crypto.randomBytes(12).toString("hex"), String(ageMinutes), ua, id]
-    );
-    created.sessionIds.push(sessionId);
-  };
-  for (const [i, ua] of earlier.entries()) await insert(i, ua, 100 - i);
-  await insert("latest", latest, 0);
+  return { id, email, n: 0 };
+}
+
+// The session row better-auth writes on sign-in. `age` makes it older (legacy history).
+async function insertSession(user, ua, age = "0 seconds") {
+  const sessionId = `${user.id}_s${++user.n}`;
+  await pool.query(
+    `INSERT INTO session (id, "expiresAt", token, "createdAt", "updatedAt", "ipAddress", "userAgent", "userId")
+     VALUES ($1, NOW() + INTERVAL '1 hour', $2, NOW() - $3::interval, NOW(), '127.0.0.1', $4, $5)`,
+    [sessionId, crypto.randomBytes(12).toString("hex"), age, ua, user.id]
+  );
+  created.sessionIds.push(sessionId);
+  return sessionId;
+}
+
+// One sign-in: the session row, then the check the after-hook runs. Returns the mails it sent.
+async function signIn(user, ua) {
+  await insertSession(user, ua);
   sent.length = 0;
-  await securityService.handleNewDeviceLoginCheck(email);
-  return { mails: sent.slice(), email };
+  await securityService.handleNewDeviceLoginCheck(user.email);
+  return sent.slice();
+}
+const signOut = (user) => pool.query(`DELETE FROM session WHERE "userId" = $1`, [user.id]);
+const expireSessions = (user) => pool.query(`UPDATE session SET "expiresAt" = NOW() - INTERVAL '1 day' WHERE "userId" = $1`, [user.id]);
+const knownDevices = async (user) =>
+  (await pool.query(`SELECT browser_family, os_family FROM user_known_devices WHERE user_id = $1 ORDER BY browser_family, os_family`, [user.id])).rows;
+
+// `earlier` are the UAs of sign-ins before the one being checked (their sessions stay live);
+// `latest` is the new login.
+async function scenario(earlier, latest) {
+  const user = await createUser();
+  for (const ua of earlier) await signIn(user, ua);
+  return { mails: await signIn(user, latest), user };
+}
+
+// History written by older builds: raw UAs in live sessions and no user_known_devices rows yet.
+async function legacyScenario(rawUas, latest) {
+  const user = await createUser();
+  for (const ua of rawUas) await insertSession(user, ua, "1 day");
+  await securityService.backfillKnownDevices();
+  return { mails: await signIn(user, latest), user };
 }
 
 async function test(name, fn) {
@@ -97,7 +130,8 @@ async function cleanup() {
     }
     const { rows } = await pool.query(`SELECT COUNT(*)::int AS n FROM "user" WHERE id = ANY($1::text[])`, [created.userIds]);
     const { rows: s } = await pool.query(`SELECT COUNT(*)::int AS n FROM session WHERE id = ANY($1::text[])`, [created.sessionIds]);
-    console.log(`remaining fixtures: users=${rows[0].n} sessions=${s[0].n}`);
+    const { rows: k } = await pool.query(`SELECT COUNT(*)::int AS n FROM user_known_devices WHERE user_id = ANY($1::text[])`, [created.userIds]);
+    console.log(`remaining fixtures: users=${rows[0].n} sessions=${s[0].n} known_devices=${k[0].n}`);
   } catch (err) {
     console.log(`cleanup error: ${err.message}`);
   }
@@ -118,7 +152,7 @@ async function main() {
     assert.equal(isNewDevice("", []), false);
   });
 
-  await test("a) same UA as an earlier session -> no email", async () => {
+  await test("a) same UA as an earlier sign-in -> no email", async () => {
     const r = await scenario([CHROME_WIN(157)], CHROME_WIN(157));
     assert.equal(r.mails.length, 0);
   });
@@ -133,7 +167,7 @@ async function main() {
   await test("c) Chrome Windows, then Chrome Android -> email", async () => {
     const r = await scenario([CHROME_WIN(157)], CHROME_ANDROID(157));
     assert.equal(r.mails.length, 1);
-    assert.equal(r.mails[0].to, r.email);
+    assert.equal(r.mails[0].to, r.user.email);
   });
 
   await test("d) Chrome, then Firefox on the same OS -> email", async () => {
@@ -145,7 +179,7 @@ async function main() {
     assert.equal(r.mails.length, 1);
   });
 
-  await test("d) a known device among several sessions -> no email", async () => {
+  await test("d) a known device among several -> no email", async () => {
     const r = await scenario([FIREFOX_WIN(120), CHROME_ANDROID(157), CHROME_WIN(150)], CHROME_WIN(157));
     assert.equal(r.mails.length, 0);
   });
@@ -154,22 +188,115 @@ async function main() {
     const r = await scenario([CHROME_WIN(157)], null);
     assert.equal(r.mails.length, 0);
   });
-  await test("e) first session ever (nothing to compare with) -> email, as before", async () => {
+  await test("e) first sign-in ever (nothing to compare with) -> email, as before", async () => {
     const r = await scenario([], CHROME_WIN(157));
     assert.equal(r.mails.length, 1);
   });
-  await test("e) earlier sessions without a UA do not make a device known", async () => {
+  await test("e) earlier sign-ins without a UA do not make a device known", async () => {
     const r = await scenario([null], CHROME_WIN(157));
     assert.equal(r.mails.length, 1);
   });
 
-  await test("f) legacy raw history (Chrome/140 stored, Chrome/141 now) -> no email", async () => {
-    const r = await scenario([CHROME_WIN(140)], CHROME_WIN(141));
-    assert.equal(r.mails.length, 0);
+  await test("f) backfill: raw Chrome/140 session, Chrome/141 now -> no email", async () => {
+    assert.equal((await legacyScenario([CHROME_WIN(140)], CHROME_WIN(141))).mails.length, 0);
   });
-  await test("f) legacy non-browser history: same product new version -> no email, other product -> email", async () => {
-    assert.equal((await scenario(["curl/8.0.1"], "curl/8.4.0")).mails.length, 0);
-    assert.equal((await scenario(["curl/8.0.1"], "python-requests/2.31")).mails.length, 1);
+  await test("f) backfill: raw Chrome Windows session, Chrome Android now -> email", async () => {
+    assert.equal((await legacyScenario([CHROME_WIN(140)], CHROME_ANDROID(141))).mails.length, 1);
+  });
+  await test("f) backfill: non-browser history: same product new version -> no email, other product -> email", async () => {
+    assert.equal((await legacyScenario(["curl/8.0.1"], "curl/8.4.0")).mails.length, 0);
+    assert.equal((await legacyScenario(["curl/8.0.1"], "python-requests/2.31")).mails.length, 1);
+  });
+  await test("f) backfill: blank UAs are skipped and a second run changes nothing", async () => {
+    const user = await createUser();
+    for (const ua of [null, "  ", CHROME_WIN(140), CHROME_WIN(141)]) await insertSession(user, ua, "1 day");
+    await securityService.backfillKnownDevices();
+    await securityService.backfillKnownDevices();
+    assert.deepEqual(await knownDevices(user), [{ browser_family: "chrome", os_family: "windows" }]);
+  });
+
+  await test("g) sign in, sign out, sign in again (same UA) -> one email in total", async () => {
+    const user = await createUser();
+    assert.equal((await signIn(user, CHROME_ANDROID(157))).length, 1, "first-ever login still emails");
+    await signOut(user);
+    assert.equal((await signIn(user, CHROME_ANDROID(157))).length, 0, "no second email");
+    await signOut(user);
+    assert.equal((await signIn(user, CHROME_ANDROID(157))).length, 0);
+  });
+  await test("g) same device after sign-out and a browser version bump -> no email", async () => {
+    const user = await createUser();
+    await signIn(user, CHROME_ANDROID(157));
+    await signOut(user);
+    assert.equal((await signIn(user, CHROME_ANDROID(158))).length, 0);
+  });
+  await test("g) same device after the session expired -> no email", async () => {
+    const user = await createUser();
+    await signIn(user, FIREFOX_WIN(120));
+    await expireSessions(user);
+    assert.equal((await signIn(user, FIREFOX_WIN(120))).length, 0);
+  });
+  await test("g) same device after force-logout-all (every session deleted) -> no email", async () => {
+    const user = await createUser();
+    await signIn(user, CHROME_WIN(157));
+    await pool.query(`DELETE FROM session WHERE "userId" = $1`, [user.id]); // the real one deletes every user's rows
+    assert.equal((await signIn(user, CHROME_WIN(157))).length, 0);
+  });
+  await test("g) a new browser or OS after sign-out -> exactly one email each, then remembered", async () => {
+    const user = await createUser();
+    await signIn(user, CHROME_WIN(157));
+    await signOut(user);
+    assert.equal((await signIn(user, FIREFOX_WIN(121))).length, 1, "new browser");
+    await signOut(user);
+    assert.equal((await signIn(user, CHROME_ANDROID(157))).length, 1, "new OS");
+    await signOut(user);
+    assert.equal((await signIn(user, FIREFOX_WIN(122))).length, 0, "Firefox on Windows is known now");
+    assert.equal((await signIn(user, CHROME_ANDROID(157))).length, 0, "Chrome on Android is known now");
+  });
+  await test("g) one user's devices do not make another user's device known", async () => {
+    const a = await createUser();
+    const b = await createUser();
+    await signIn(a, CHROME_WIN(157));
+    assert.equal((await signIn(b, CHROME_WIN(157))).length, 1);
+  });
+  await test("g) a sign-in without a UA remembers nothing and emails nothing", async () => {
+    const user = await createUser();
+    assert.equal((await signIn(user, null)).length, 0);
+    assert.deepEqual(await knownDevices(user), []);
+    assert.equal((await signIn(user, CHROME_WIN(157))).length, 1);
+  });
+  await test("g) a later sign-in keeps first_seen_at and refreshes last_seen_at", async () => {
+    const user = await createUser();
+    await signIn(user, CHROME_WIN(157));
+    await pool.query(
+      `UPDATE user_known_devices SET first_seen_at = NOW() - INTERVAL '2 days', last_seen_at = NOW() - INTERVAL '2 days' WHERE user_id = $1`,
+      [user.id]
+    );
+    await signOut(user);
+    await signIn(user, CHROME_WIN(158));
+    const { rows } = await pool.query(
+      `SELECT first_seen_at < NOW() - INTERVAL '1 day' AS first_kept, last_seen_at > NOW() - INTERVAL '1 minute' AS last_bumped
+       FROM user_known_devices WHERE user_id = $1`,
+      [user.id]
+    );
+    assert.deepEqual(rows, [{ first_kept: true, last_bumped: true }]);
+  });
+
+  await test("h) two concurrent checks for one new device -> exactly one email", async () => {
+    const user = await createUser();
+    await insertSession(user, CHROME_WIN(157));
+    sent.length = 0;
+    await Promise.all([securityService.handleNewDeviceLoginCheck(user.email), securityService.handleNewDeviceLoginCheck(user.email)]);
+    assert.equal(sent.length, 1);
+    assert.equal((await knownDevices(user)).length, 1);
+  });
+  await test("h) deleting the user deletes the remembered devices (cascade)", async () => {
+    const user = await createUser();
+    await signIn(user, CHROME_WIN(157));
+    await signIn(user, FIREFOX_WIN(121));
+    await signOut(user);
+    assert.equal((await knownDevices(user)).length, 2);
+    await pool.query(`DELETE FROM "user" WHERE id = $1`, [user.id]);
+    assert.equal((await knownDevices(user)).length, 0);
   });
 }
 
