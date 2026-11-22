@@ -140,32 +140,6 @@ const announcementSchema = Joi.object({
   target_barangay_id: Joi.number().integer().positive().allow(null, ""),
 });
 
-const issueCertificateSchema = Joi.object({
-  moduleId: Joi.number().integer().positive().required().messages({
-    "any.required": "Module ID is required.",
-    "number.base": "Module ID must be a valid number.",
-  }),
-  trainingHours: Joi.number().min(0.5).max(100.0).precision(1).optional().messages({
-    "number.base": "Training hours must be a number.",
-    "number.min": "Training hours must be at least 0.5.",
-  }),
-});
-
-const idParamSchema = Joi.object({
-  id: Joi.number().integer().positive().required().messages({
-    "number.base": "ID must be a valid number.",
-  }),
-});
-
-const paginationQuerySchema = Joi.object({
-  limit: Joi.number().integer().min(1).max(100).default(50),
-  page: Joi.number().integer().min(1).default(1),
-  search: Joi.string().trim().allow("").optional(),
-});
-
 exports.announcementSchema = announcementSchema;
 exports.URGENT_DURATION_HOURS = URGENT_DURATION_HOURS;
 exports.DEFAULT_URGENT_HOURS = DEFAULT_URGENT_HOURS;
-exports.issueCertificateSchema = issueCertificateSchema;
-exports.idParamSchema = idParamSchema;
-exports.paginationQuerySchema = paginationQuerySchema;
