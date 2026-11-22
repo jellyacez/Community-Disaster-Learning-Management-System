@@ -29,6 +29,7 @@ const { authRateLimiter, globalLimiter } = require("./middleware/rateLimiters");
 const { startLogRetentionCron } = require("./utils/logRetention");
 const { startCertificateExpiryCron } = require("./utils/certificateExpiryCron");
 const { startAlertMonitor } = require("./services/alertMonitorService");
+const { backfillKnownDevices } = require("./services/securityService");
 
 const verifyTurnstile = require("./middleware/verifyTurnstile");
 
@@ -37,6 +38,7 @@ const app = express();
 startLogRetentionCron();
 startCertificateExpiryCron();
 startAlertMonitor();
+backfillKnownDevices().catch((err) => console.error("Known-devices backfill failed:", err));
 
 // Behind nginx, req.ip is nginx's own address (127.0.0.1) unless Express trusts the
 // one proxy hop. Everything keyed on req.ip depends on this: session and activity-log

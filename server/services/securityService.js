@@ -7,7 +7,7 @@ const {
 } = require("../utils/emailTemplates");
 const { getOrgSettings } = require("../utils/settings");
 const alertMonitorService = require("./alertMonitorService");
-const { isNewDevice } = require("../utils/userAgent");
+const { deviceKey } = require("../utils/userAgent");
 
 const redactEmail = (email) => {
   if (!email || typeof email !== "string") return "[REDACTED]";
@@ -67,6 +67,28 @@ const handlePasswordResetRecovery = async (userEmail) => {
   }
 };
 
+// Records the device in user_known_devices and says whether it was new. The insert is the test:
+// only the call that inserts the row gets it back, so two simultaneous sign-ins send one email.
+const rememberDevice = async (userId, userAgent) => {
+  const device = deviceKey(userAgent);
+  if (!device) return false;
+  const { rowCount } = await pool.query(
+    `INSERT INTO user_known_devices (user_id, browser_family, os_family)
+     VALUES ($1, $2, $3)
+     ON CONFLICT (user_id, browser_family, os_family) DO NOTHING`,
+    [userId, device.browserFamily, device.osFamily],
+  );
+  if (rowCount === 1) return true;
+  await pool.query(
+    `UPDATE user_known_devices SET last_seen_at = NOW()
+     WHERE user_id = $1 AND browser_family = $2 AND os_family = $3`,
+    [userId, device.browserFamily, device.osFamily],
+  );
+  return false;
+};
+
+// A device is new when the user has never signed in from this browser family and OS. Known devices
+// outlive sessions: sign-out, expiry, force-logout-all and restores all delete session rows.
 const handleNewDeviceLoginCheck = async (email) => {
   try {
     const userRes = await pool.query(
@@ -83,13 +105,7 @@ const handleNewDeviceLoginCheck = async (email) => {
 
       if (sessionRes.rows.length > 0) {
         const session = sessionRes.rows[0];
-        // Browser family and OS, not the full string: a browser update is not a new device.
-        const othersRes = await pool.query(
-          `SELECT "userAgent" FROM session WHERE "userId" = $1 AND id <> $2`,
-          [user.id, session.id],
-        );
-
-        if (isNewDevice(session.userAgent, othersRes.rows.map((r) => r.userAgent))) {
+        if (await rememberDevice(user.id, session.userAgent)) {
           await transporter.sendMail(getNewDeviceLoginEmail(user, session));
         }
       }
@@ -99,8 +115,41 @@ const handleNewDeviceLoginCheck = async (email) => {
   }
 };
 
+// Seeds user_known_devices from the sessions that exist (idempotent), so users who are signed in
+// when this ships are not emailed about devices they already use. Run at server start: the
+// migration cannot do it because User-Agents are normalised in JS (utils/userAgent.js).
+const backfillKnownDevices = async () => {
+  const { rows } = await pool.query(
+    `SELECT "userId", "userAgent", MIN("createdAt") AS first_seen, MAX("updatedAt") AS last_seen
+     FROM session WHERE "userAgent" IS NOT NULL GROUP BY "userId", "userAgent"`,
+  );
+  const devices = new Map();
+  for (const row of rows) {
+    const device = deviceKey(row.userAgent);
+    if (!device) continue;
+    const key = JSON.stringify([row.userId, device.browserFamily, device.osFamily]);
+    const known = devices.get(key);
+    if (!known) {
+      devices.set(key, { userId: row.userId, ...device, first: row.first_seen, last: row.last_seen });
+    } else {
+      if (row.first_seen < known.first) known.first = row.first_seen;
+      if (row.last_seen > known.last) known.last = row.last_seen;
+    }
+  }
+  if (devices.size === 0) return 0;
+  const list = [...devices.values()];
+  const { rowCount } = await pool.query(
+    `INSERT INTO user_known_devices (user_id, browser_family, os_family, first_seen_at, last_seen_at)
+     SELECT * FROM unnest($1::text[], $2::text[], $3::text[], $4::timestamptz[], $5::timestamptz[])
+     ON CONFLICT (user_id, browser_family, os_family) DO NOTHING`,
+    [list.map((d) => d.userId), list.map((d) => d.browserFamily), list.map((d) => d.osFamily), list.map((d) => d.first), list.map((d) => d.last)],
+  );
+  return rowCount;
+};
+
 module.exports = {
   handlePasswordChangeAlert,
   handlePasswordResetRecovery,
   handleNewDeviceLoginCheck,
+  backfillKnownDevices,
 };

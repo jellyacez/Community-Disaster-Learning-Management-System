@@ -17,7 +17,7 @@
  *      version bump) -> no email; a new browser or OS -> exactly one, then remembered
  *   h) concurrent first logins from one new device -> exactly one email; deleting the user deletes
  *      the remembered devices
- * plus unit checks of isNewDevice().
+ * plus unit checks of deviceKey().
  *
  * Fixtures are seeded from server/.env and deleted by exact id. Refuses to run unless the database
  * is on loopback, and refuses LMS_db: point DB_DATABASE at a scratch database.
@@ -140,16 +140,16 @@ async function cleanup() {
 async function main() {
   await assertScratchDatabase();
 
-  await test("isNewDevice: unit", () => {
-    const { isNewDevice } = require("../utils/userAgent");
-    assert.equal(isNewDevice(CHROME_WIN(157), [CHROME_WIN(156)]), false);
-    assert.equal(isNewDevice(CHROME_WIN(157), [CHROME_ANDROID(157)]), true);
-    assert.equal(isNewDevice(CHROME_WIN(157), [FIREFOX_WIN(121), CHROME_ANDROID(157)]), true);
-    assert.equal(isNewDevice(CHROME_WIN(157), [FIREFOX_WIN(121), CHROME_WIN(150)]), false);
-    assert.equal(isNewDevice(CHROME_WIN(157), []), true);
-    assert.equal(isNewDevice(CHROME_WIN(157), [null, "", "  "]), true, "blank history rows do not count as a known device");
-    assert.equal(isNewDevice(null, [CHROME_WIN(157)]), false);
-    assert.equal(isNewDevice("", []), false);
+  await test("deviceKey: unit", () => {
+    const { deviceKey } = require("../utils/userAgent");
+    assert.deepEqual(deviceKey(CHROME_WIN(157)), { browserFamily: "chrome", osFamily: "windows" });
+    assert.deepEqual(deviceKey(CHROME_WIN(150)), deviceKey(CHROME_WIN(157)), "version is not part of the device");
+    assert.deepEqual(deviceKey(CHROME_ANDROID(157)), { browserFamily: "chrome", osFamily: "android" });
+    assert.deepEqual(deviceKey(EDGE_WIN(120)), { browserFamily: "edge", osFamily: "windows" });
+    assert.deepEqual(deviceKey(FIREFOX_WIN(121)), { browserFamily: "firefox", osFamily: "windows" });
+    assert.equal(deviceKey(null), null);
+    assert.equal(deviceKey(""), null);
+    assert.equal(deviceKey("   "), null);
   });
 
   await test("a) same UA as an earlier sign-in -> no email", async () => {

@@ -78,22 +78,16 @@ const compareClients = (storedUserAgent, incomingUserAgent) => {
 };
 
 /**
- * Is a login from `latestUserAgent` a device the user has not used? Known means another live
- * session with the same browser family and OS: a browser update must not look like a new device,
- * a different browser or OS must. History rows may hold raw UAs from older builds, so both sides
- * are normalized here. A login without a UA is never reported (nothing to describe in the email),
- * and history rows without a UA are not a known device.
+ * What identifies a "device" for the new-login email and user_known_devices: browser family and OS.
+ * Not the version: a browser update is not a new device. A different browser or OS is. Works on raw
+ * UAs stored by older builds too. Null for a blank UA (nothing to remember or describe).
  *
- * @param {string|null|undefined} latestUserAgent
- * @param {Array<string|null|undefined>} otherUserAgents UAs of the user's other live sessions
+ * @param {string|null|undefined} userAgent
+ * @returns {{browserFamily: string, osFamily: string}|null}
  */
-const isNewDevice = (latestUserAgent, otherUserAgents) => {
-  const latest = normalizeUserAgent(latestUserAgent);
-  if (!latest) return false;
-  return !otherUserAgents.some((ua) => {
-    const other = normalizeUserAgent(ua);
-    return other && other.family === latest.family && other.os === latest.os;
-  });
+const deviceKey = (userAgent) => {
+  const ua = normalizeUserAgent(userAgent);
+  return ua ? { browserFamily: ua.family, osFamily: ua.os } : null;
 };
 
-module.exports = { normalizeUserAgent, compareClients, isNewDevice };
+module.exports = { normalizeUserAgent, compareClients, deviceKey };
