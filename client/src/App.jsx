@@ -326,10 +326,6 @@ export default function App() {
                   <Route path="emergency-contacts" element={<EmergencyContactsManager />} />
                   <Route path="health" element={<SystemHealth />} />
                   <Route path="security" element={<SystemSecurity />} />
-                  <Route
-                    path="modules/:id/details"
-                    element={<ModuleDetailsPage />}
-                  />
                 </Route>
               </Route>
 
