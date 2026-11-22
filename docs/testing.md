@@ -20,6 +20,7 @@ Each prints `ok` / `not ok` (or `PASS` / `FAIL`) lines and exits non-zero on fai
 |---|---|---|
 | `archived-version-access`, `barangay-readiness`, `enrollment-requests`, `h1-quiz-scoring`, `question-explanations`, `quiz-attempts`, `review-status-guard`, `schema-integrity`, `state-transitions`, `step-assessment-access` | **Yes**, at `TEST_BASE_URL` (default `http://localhost:5000`) | `DB_DATABASE` from `server/.env`, which must be the same database the API uses |
 | `health-status`, `register-existing-email`, `user-field-lock` | No | `DB_DATABASE` |
+| `session-ua-binding` | **Yes**, at `TEST_BASE_URL`; the API must log to this checkout's `server/logs` | `DB_DATABASE`, same as the API. Refuses `LMS_db`. Seeds one user and session per case, deletes them by id |
 | `emergency-contacts` | **Yes**, at `TEST_BASE_URL` | `DB_DATABASE`, same as the API. Refuses `LMS_db`: run it against a scratch database. Restores the contact list's content at the end (ids change) |
 | `restore-safeguards`, `create-first-admin`, `emergency-contacts-migration` | No (they start what they need in-process) | Their own scratch database, created and dropped by the script |
 | `situational-edit` | No | None |

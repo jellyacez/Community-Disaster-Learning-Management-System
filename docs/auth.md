@@ -9,6 +9,22 @@ Better Auth (`server/utils/auth.js`) with HTTP-only session cookies. Sessions la
 - **Google sign-in:** available only when `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` are set.
 - **Password changes:** a manual password change is refused within 24 hours of the previous one. Forgot Password still works.
 
+## Session binding
+
+Each session stores the raw `User-Agent` from sign-in (`session.userAgent`). `authenticate()` (`server/middleware/authenticate.js`) compares it on every authenticated request after normalizing both sides to browser family, engine, OS and major version (`server/utils/userAgent.js`):
+
+| Change since sign-in | Result |
+|---|---|
+| none, or a minor/build difference | 200, nothing logged |
+| browser version (auto-update) | 200, `session_client_change_noted` with `reason: "version_changed"` |
+| OS (device mode, "Request desktop site") | 200, `session_client_change_noted` with `reason: "os_changed"` |
+| request has no or an empty `User-Agent` | 200, `session_client_change_noted` with `reason: "ua_missing"` |
+| browser family (Chrome to Firefox, browser to script) | **401 `SESSION_BROWSER_CHANGED`**, that one session is revoked, `session_hijack_attempt_detected` logged with `reason: "browser_family_changed"` |
+
+Log lines carry `expected` and `received` normalized objects; the revoke event also keeps the raw strings. `session_client_change_noted` is logged once per session and distinct change. Sessions created before this change are normalized when compared, so no migration was needed. Only the User-Agent is compared; the IP address is stored but never compared. Rationale: [ADR 0007](adr/0007-session-binding-limited-to-browser-family.md).
+
+On `SESSION_BROWSER_CHANGED` the client (`apiClient.js`) stores a one-shot notice and the sign-in page shows "You were signed out because your browser changed. Please sign in again." Queued offline writes are not discarded: they stay in the sync queue (after the retry budget they show as failed and can be retried once signed in).
+
 ## Email verification
 
 `requireEmailVerification` is on: an account can't sign in until its email is verified.
