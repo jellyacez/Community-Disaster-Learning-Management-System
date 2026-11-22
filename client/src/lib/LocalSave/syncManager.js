@@ -83,10 +83,6 @@ export const getActionDescription = (task) => {
 
 export let memorySyncQueue = [];
 
-export const clearMemoryQueue = () => {
-  memorySyncQueue = [];
-};
-
 export const enqueueMemoryTask = (action_type, payload) => {
   const memoryId = `mem_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
   const task = {
@@ -164,17 +160,6 @@ export const getAllPendingWrites = async () => {
   );
 
   return [...dbTasks, ...memTasks];
-};
-
-export const getFailedTasks = async () => {
-  let dbFailed = [];
-  try {
-    dbFailed = await localDb.sync_queue.where('status').equals('failed').toArray();
-  } catch (err) {
-    console.warn('[SyncManager] Failed to read failed tasks from Dexie:', err);
-  }
-  const memFailed = memorySyncQueue.filter((t) => t.status === 'failed');
-  return [...dbFailed, ...memFailed];
 };
 
 export const getAllSyncQueueItems = async () => {

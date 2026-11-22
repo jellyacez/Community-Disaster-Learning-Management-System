@@ -1,5 +1,4 @@
 import { localDb } from "../localDb";
-import apiClient from "../apiClient";
 import { enqueueMemoryTask } from "./syncManager";
 
 const SESSION_STORAGE_KEY = "lms_offline_session";
@@ -493,56 +492,5 @@ export const saveOfflineNotification = async (userId, newPreference) => {
         error: error.message || "Storage unavailable",
       };
     }
-  }
-};
-
-export const saveUserProgress = async (progressData) => {
-  if (!navigator.onLine) {
-    const res = await saveOfflineModuleProgress(
-      progressData.userId,
-      progressData.moduleId,
-      progressData.progress,
-    );
-    if (res?.status === "failed") {
-      return {
-        status: "failed",
-        storageType: "none",
-        error: res.error,
-        message: "Storage unavailable. Progress could not be saved offline.",
-      };
-    }
-    return {
-      status: res?.status || "queued",
-      storageType: res?.storageType || "idb",
-      message: "Saved offline",
-    };
-  }
-
-  try {
-    const response = await apiClient.post("/modules/progress", progressData);
-    return response.data;
-  } catch (error) {
-    if (error.code === "ERR_NETWORK" || !error.response) {
-      const res = await saveOfflineModuleProgress(
-        progressData.userId,
-        progressData.moduleId,
-        progressData.progress,
-      );
-      if (res?.status === "failed") {
-        return {
-          status: "failed",
-          storageType: "none",
-          error: res.error,
-          message: "Storage unavailable. Progress could not be saved offline.",
-        };
-      }
-      return {
-        status: res?.status || "queued",
-        storageType: res?.storageType || "idb",
-        message: "Saved offline",
-      };
-    }
-
-    throw error;
   }
 };
