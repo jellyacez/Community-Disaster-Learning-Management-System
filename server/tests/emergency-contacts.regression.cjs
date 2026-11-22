@@ -119,8 +119,11 @@ async function cleanup(admin, original) {
   if (original) {
     const now = await call(admin, "GET", ADMIN_PATH);
     if (now.status === 200) {
-      const res = await call(admin, "PUT", ADMIN_PATH, { version: now.body.version, contacts: original });
+      // The tests replaced the original rows, so restore their content as new rows.
+      const contacts = original.map((c) => ({ ...c, id: undefined }));
+      const res = await call(admin, "PUT", ADMIN_PATH, { version: now.body.version, contacts });
       console.log(`restored original contacts: ${res.status}`);
+      assert.equal(res.status, 200, "could not restore the original contacts");
     }
   }
   const client = await pool.connect();

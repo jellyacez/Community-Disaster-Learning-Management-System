@@ -41,6 +41,7 @@ const requirePermission = require("../../middleware/requirePermission");
 
 const systemStatsController = require("../../controllers/admin/systemStatsController");
 const systemSettingsController = require("../../controllers/admin/systemSettingsController");
+const emergencyContactsController = require("../../controllers/admin/emergencyContactsController");
 const activityLogController = require("../../controllers/admin/activityLogController");
 const ipBlocklistController = require("../../controllers/admin/ipBlocklistController");
 const infrastructureController = require("../../controllers/admin/infrastructureController");
@@ -131,6 +132,23 @@ router.patch(
   requireRole(ADMIN_ROLES),
   requirePermission("manage_system_settings"),
   systemSettingsController.updateOrganizationDetails,
+);
+
+// Admins who may edit the public emergency hotlines (barangay admins may not)
+const EMERGENCY_CONTACT_EDITORS = ["super_admin", "system_admin", "mdrrmo_admin", "head_mdrrmo_admin"];
+
+// @route   GET /api/admin/emergency-contacts
+router.get(
+  "/emergency-contacts",
+  requireRole(EMERGENCY_CONTACT_EDITORS),
+  emergencyContactsController.getAdminContacts,
+);
+
+// @route   PUT /api/admin/emergency-contacts
+router.put(
+  "/emergency-contacts",
+  requireRole(EMERGENCY_CONTACT_EDITORS),
+  emergencyContactsController.replaceContacts,
 );
 
 // @route   GET /api/admin/security/blocked-ips

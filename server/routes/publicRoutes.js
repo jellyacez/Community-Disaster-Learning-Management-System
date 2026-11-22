@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const pool = require('../config/db');
 const { isMfaEnforced } = require('../config/permissions');
+const { getPublicContacts } = require('../controllers/admin/emergencyContactsController');
 
 // in-memory cache so this public endpoint can't be used to hammer the DB
 let cachedBroadcast = null;
@@ -68,6 +69,10 @@ router.get('/status', async (req, res) => {
 router.get('/auth-policy', (req, res) => {
   res.json({ success: true, mfaEnabled: isMfaEnforced() });
 });
+
+// @route   GET /api/public/emergency-contacts
+// @desc    Active hotlines for the landing page, footers and dashboard; sample rows have tel null
+router.get('/emergency-contacts', getPublicContacts);
 
 // @route   GET /api/public/barangays
 router.get('/barangays', async (req, res) => {
