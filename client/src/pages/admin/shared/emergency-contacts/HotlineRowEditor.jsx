@@ -112,7 +112,8 @@ export default function HotlineRowEditor({ row, index, count, errors, onLanding,
               />
               Active
             </label>
-            <label className="inline-flex min-h-9 cursor-pointer items-center gap-2 text-sm text-gray-700 dark:text-slate-200">
+            {/* relative: contains the sr-only hint, which would otherwise grow the outer document */}
+            <label className="relative inline-flex min-h-9 cursor-pointer items-center gap-2 text-sm text-gray-700 dark:text-slate-200">
               <input
                 type="checkbox"
                 checked={row.is_sample}
