@@ -8,11 +8,6 @@ const activityLogService = require("../../services/admin/ActivityLogService");
 const { logActivity } = require("../../utils/logger");
 const { respondWithError } = require("../../utils/httpErrors");
 
-// @route   GET /api/admin/super/ping
-router.get("/super/ping", requireRole(["super_admin"]), (req, res) => {
-  res.json({ message: "Super admin route connected" });
-});
-
 // @route   GET /api/admin/super/analytics/barangays
 router.get(
   "/super/analytics/barangays",
