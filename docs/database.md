@@ -64,6 +64,25 @@ node server/scripts/clean-schema-dump.js prod-schema.sql > server/migrations/sch
 `seed.sql` inserts:
 
 - the 21 barangays of Bacolor, in production's order (ids 1 to 21 on an empty table);
-- `system_settings` rows: `maintenance_mode=false`, `system_name`, `broadcast_active=false`, `broadcast_message=''`, `broadcast_severity=info`, `support_email=''` (the app then uses `EMAIL_USER`), `org_footer_text`.
+- `system_settings` rows: `maintenance_mode=false`, `system_name`, `broadcast_active=false`, `broadcast_message=''`, `broadcast_severity=info`, `support_email=''` (the app then uses `EMAIL_USER`), `org_footer_text`, `emergency_contacts_version=1`;
+- the default emergency hotlines (below), only while `emergency_contacts` is empty. `migration.sql` inserts the same rows first, so on a fresh database this step does nothing.
 
 Roles are the `user_role` enum in `schema.sql`. Permissions are code (`server/config/permissions.js`), not rows.
+
+## Emergency contacts
+
+`emergency_contacts` holds the hotlines shown on the landing page, the footers and the resident dashboard. Admins edit it through `PUT /api/admin/emergency-contacts` (spec: `docs/specs/emergency-contacts.md`).
+
+| Column | Meaning |
+|---|---|
+| `agency` | Group name, e.g. `MDRRMO Bacolor`. 1-80 characters after trimming (CHECK). |
+| `label` | The line within the agency, e.g. `Globe`. 1-80 characters after trimming (CHECK). |
+| `phone` | Shown as stored. Digits, spaces and dashes, optional leading `+`; starts and ends with a digit (CHECK). The API derives the dialled `tel` by removing spaces and dashes. |
+| `is_sample` | A placeholder number. Shown to everyone tagged "Sample, not yet configured" and never dialable (the API returns `tel: null`). |
+| `sort_order` | Display order, 1..n, rewritten on every save. |
+| `active` | Inactive rows are kept for admins but not returned by the public endpoint. |
+| `updated_by`, `updated_at` | Last editor (`ON DELETE SET NULL`) and time. `updated_by` has no index: the table holds at most 15 rows. |
+
+The API, not the database, enforces the list rules: 1-15 rows, at least one active, 3-15 digits in `tel`. `system_settings.emergency_contacts_version` is an integer counter used for optimistic locking: a save with an older version gets 409, and every save that changes something increments it.
+
+Defaults (`migration.sql` and `seed.sql`, inserted only while the table is empty): `911` (National Emergency, the only non-sample row), then sample rows MDRRMO Bacolor Globe, Smart and Landline (`045 900-0199`), BFP Bacolor and PNP Bacolor.

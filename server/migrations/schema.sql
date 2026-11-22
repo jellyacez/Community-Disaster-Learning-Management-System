@@ -229,6 +229,38 @@ ALTER TABLE public.choices ALTER COLUMN choice_id ADD GENERATED ALWAYS AS IDENTI
 );
 
 --
+-- Name: emergency_contacts; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.emergency_contacts (
+    id integer NOT NULL,
+    agency character varying(80) NOT NULL,
+    label character varying(80) NOT NULL,
+    phone character varying(32) NOT NULL,
+    is_sample boolean DEFAULT false NOT NULL,
+    sort_order integer NOT NULL,
+    active boolean DEFAULT true NOT NULL,
+    updated_by text,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT emergency_contacts_agency_check CHECK (((char_length(btrim((agency)::text)) >= 1) AND (char_length(btrim((agency)::text)) <= 80))),
+    CONSTRAINT emergency_contacts_label_check CHECK (((char_length(btrim((label)::text)) >= 1) AND (char_length(btrim((label)::text)) <= 80))),
+    CONSTRAINT emergency_contacts_phone_check CHECK (((phone)::text ~ '^\+?[0-9][0-9 -]*[0-9]$'::text))
+);
+
+--
+-- Name: emergency_contacts_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+ALTER TABLE public.emergency_contacts ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
+    SEQUENCE NAME public.emergency_contacts_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+--
 -- Name: enrollment_requests; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -812,6 +844,13 @@ ALTER TABLE ONLY public.choices
     ADD CONSTRAINT choices_pkey PRIMARY KEY (choice_id);
 
 --
+-- Name: emergency_contacts emergency_contacts_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.emergency_contacts
+    ADD CONSTRAINT emergency_contacts_pkey PRIMARY KEY (id);
+
+--
 -- Name: enrollment_requests enrollment_requests_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1290,6 +1329,13 @@ ALTER TABLE ONLY public.account
 
 ALTER TABLE ONLY public.announcements
     ADD CONSTRAINT announcements_barangay_id_fkey FOREIGN KEY (barangay_id) REFERENCES public.barangays(id) ON DELETE CASCADE;
+
+--
+-- Name: emergency_contacts emergency_contacts_updated_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.emergency_contacts
+    ADD CONSTRAINT emergency_contacts_updated_by_fkey FOREIGN KEY (updated_by) REFERENCES public."user"(id) ON DELETE SET NULL;
 
 --
 -- Name: feedback_messages feedback_messages_feedback_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -

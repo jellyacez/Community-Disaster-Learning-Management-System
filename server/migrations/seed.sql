@@ -38,3 +38,20 @@ INSERT INTO public.system_settings (key, value) VALUES
   ('support_email', ''),
   ('org_footer_text', 'Community DRRM System - Bacolor, Pampanga.')
 ON CONFLICT (key) DO NOTHING;
+
+-- Emergency hotline defaults; migration.sql inserts the same rows, so on a fresh database this
+-- does nothing. Only 911 is real; the rest are samples (shown, never dialable) until set.
+INSERT INTO public.emergency_contacts (agency, label, phone, is_sample, sort_order)
+SELECT v.agency, v.label, v.phone, v.is_sample, v.sort_order
+FROM (VALUES
+  ('National Emergency', 'Emergency hotline', '911', false, 1),
+  ('MDRRMO Bacolor', 'Globe', '0987 654 3210', true, 2),
+  ('MDRRMO Bacolor', 'Smart', '0987 654 3210', true, 3),
+  ('MDRRMO Bacolor', 'Landline', '045 900-0199', true, 4),
+  ('BFP Bacolor', 'Fire station', '0987 654 3210', true, 5),
+  ('PNP Bacolor', 'Police station', '0987 654 3210', true, 6)
+) AS v(agency, label, phone, is_sample, sort_order)
+WHERE NOT EXISTS (SELECT 1 FROM public.emergency_contacts);
+
+INSERT INTO public.system_settings (key, value) VALUES ('emergency_contacts_version', '1')
+ON CONFLICT (key) DO NOTHING;
