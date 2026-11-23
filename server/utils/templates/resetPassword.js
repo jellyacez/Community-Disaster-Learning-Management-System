@@ -1,5 +1,5 @@
 const emailWrapper = require("./emailWrapper");
-const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5173";
+const { escapeHtml, frontendUrl } = require("./escape");
 
 const getResetPasswordEmail = (user, token, orgFooterText, supportEmail) => ({
   from: `"DRRM Bacolor Security" <${supportEmail || process.env.EMAIL_USER}>`,
@@ -8,11 +8,11 @@ const getResetPasswordEmail = (user, token, orgFooterText, supportEmail) => ({
   html: emailWrapper(
     "Reset Your Password",
     `
-    <h2 style="margin-top: 0; color: #18181b; font-size: 20px;">Hello, ${user.name}!</h2>
+    <h2 style="margin-top: 0; color: #18181b; font-size: 20px;">Hello, ${escapeHtml(user.name)}!</h2>
     <p style="line-height: 1.6; font-size: 15px; color: #52525b;">You recently requested to reset the password for your DRRM Bacolor account. Click the button below to securely reset it.</p>
     
     <div style="text-align: center; margin: 35px 0;">
-      <a href="${FRONTEND_URL}/reset-password?token=${token}" style="background-color: #ef4444; color: #ffffff; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 15px; display: inline-block;">Reset Password</a>
+      <a href="${frontendUrl("/reset-password", { token })}" style="background-color: #ef4444; color: #ffffff; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 15px; display: inline-block;">Reset Password</a>
     </div>
 
     <div style="background-color: #fef2f2; border-left: 4px solid #ef4444; padding: 15px; margin-top: 30px; border-radius: 0 6px 6px 0;">

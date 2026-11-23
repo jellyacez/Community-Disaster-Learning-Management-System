@@ -24,6 +24,24 @@ const PASSTHROUGH_FIELDS = new Set([
   "imageURL",
 ]);
 
+const stripTags = (value) => sanitizeHtml(value, { allowedTags: [], allowedAttributes: {} });
+
+/**
+ * Tags removed, entities decoded (so "Fire & Rescue" isn't stored as "Fire &amp; Rescue").
+ * Decoding can itself produce a tag ("&lt;img&gt;", or "<<img>img ...>" once the inner tag is gone),
+ * so strip and decode again until nothing changes. The pass cap is a backstop; past it the stripped,
+ * still-encoded form is returned, which holds no tags.
+ */
+const toPlainText = (value) => {
+  let current = value;
+  for (let pass = 0; pass < 10; pass++) {
+    const next = decodeHTML(stripTags(current));
+    if (next === current) return next;
+    current = next;
+  }
+  return stripTags(current);
+};
+
 /**
  * Strips all HTML from every string, walking objects and arrays. Rich-text fields are
  * cleaned separately (utils/sanitizeHtml.js#cleanRichText), and passwords/URLs pass through.
@@ -35,7 +53,7 @@ const stripAllHtml = (value, key = null) => {
   }
 
   if (typeof value === "string") {
-    return decodeHTML(sanitizeHtml(value, { allowedTags: [], allowedAttributes: {} }));
+    return toPlainText(value);
   }
   if (Array.isArray(value)) {
     return value.map((item) => stripAllHtml(item, key));

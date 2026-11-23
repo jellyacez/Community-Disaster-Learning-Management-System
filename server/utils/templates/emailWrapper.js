@@ -1,10 +1,13 @@
+const { escapeHtml } = require("./escape");
+
+// `content` is HTML assembled by the templates; title and footer are text
 const emailWrapper = (title, content, orgFooterText = "Community DRRM System - Bacolor, Pampanga.") => `
 <!DOCTYPE html>
 <html>
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${title}</title>
+  <title>${escapeHtml(title)}</title>
 </head>
 <body style="font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f4f4f5; margin: 0; padding: 40px 20px; color: #3f3f46;">
   <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);">
@@ -21,7 +24,7 @@ const emailWrapper = (title, content, orgFooterText = "Community DRRM System - B
     <!-- Footer -->
     <div style="background-color: #fafafa; padding: 20px 30px; text-align: center; border-top: 1px solid #e4e4e7;">
       <p style="margin: 0; font-size: 13px; color: #71717a;">
-        &copy; ${new Date().getFullYear()} ${orgFooterText}
+        &copy; ${new Date().getFullYear()} ${escapeHtml(orgFooterText)}
       </p>
       <p style="margin: 5px 0 0; font-size: 12px; color: #a1a1aa;">
         This is an automated security message. Please do not reply directly to this email.

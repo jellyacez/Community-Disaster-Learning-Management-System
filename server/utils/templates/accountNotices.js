@@ -1,8 +1,5 @@
 const emailWrapper = require("./emailWrapper");
-
-// Reasons, names and module titles are typed by people, so escape before putting them in HTML
-const escapeHtml = (value) =>
-  String(value ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+const { escapeHtml } = require("./escape");
 
 const formatRole = (role) =>
   String(role || "")
