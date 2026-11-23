@@ -38,7 +38,9 @@ export default function DashboardHeader({
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
         <div>
           <h1 className="text-3xl font-black text-gray-900 dark:text-slate-100 tracking-tight">Training Modules</h1>
-          <p className="text-sm font-medium text-gray-500 dark:text-slate-400 mt-1">Create, edit, and manage training curriculum</p>
+          <p className="text-sm font-medium text-gray-500 dark:text-slate-400 mt-1">
+            {handleOpenWizard ? "Create, edit, and manage training curriculum" : "Browse the training curriculum and its review status"}
+          </p>
         </div>
           {handleOpenWizard && (
         <button

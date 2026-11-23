@@ -2,7 +2,7 @@ import { memo } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { authClient } from "../../../lib/auth-client";
-import { ADMIN_ROLES } from "../../../constants/roles";
+import { ADMIN_ROLES, MODULE_AUTHOR_ROLES } from "../../../constants/roles";
 import {
   Activity01Icon,
   Alert01Icon,
@@ -36,7 +36,7 @@ const ModuleCard = memo(function ModuleCard({
   // On learner pages an admin role can only be a super_admin impersonating a resident
   const isAdmin = userRole && ADMIN_ROLES.includes(userRole) && !location.pathname.startsWith("/user");
   // Enrollment codes are for the roles that create modules; the parent page only passes onShowCodeClick to them
-  const canShowCode = Boolean(onShowCodeClick) && ["mdrrmo_admin", "super_admin"].includes(userRole);
+  const canShowCode = Boolean(onShowCodeClick) && MODULE_AUTHOR_ROLES.includes(userRole);
 
   const isCompleted =
     enrolled && (module.progress === 100 || module.status === "Completed");
@@ -307,26 +307,29 @@ const ModuleCard = memo(function ModuleCard({
               </button>
             ) : (
               <>
-                <button
-                  onClick={handleManageModule}
-                  disabled={module.has_active_draft}
-                  title={
-                    module.has_active_draft
-                      ? "A draft revision is in progress. Please manage the draft."
-                      : isRejected
-                      ? "Edit and resolve revision feedback"
-                      : "Manage & Edit Module"
-                  }
-                  className={`flex-[1.5] rounded-xl px-2 sm:px-4 py-2.5 text-xs sm:text-sm font-bold text-white transition flex items-center justify-center gap-1 sm:gap-2 truncate ${
-                    module.has_active_draft
-                      ? "bg-gray-400 cursor-not-allowed opacity-70"
-                      : isRejected
-                      ? "bg-red-600 hover:bg-red-700 cursor-pointer"
-                      : "bg-gray-900 hover:bg-black dark:bg-slate-600 dark:hover:bg-slate-500 cursor-pointer"
-                  }`}
-                >
-                  {module.has_active_draft ? "Revision in Progress" : isRejected ? "Revise & Edit" : "Manage"}
-                </button>
+                {/* Only author roles get onManageClick (ModuleManagement) */}
+                {onManageClick && (
+                  <button
+                    onClick={handleManageModule}
+                    disabled={module.has_active_draft}
+                    title={
+                      module.has_active_draft
+                        ? "A draft revision is in progress. Please manage the draft."
+                        : isRejected
+                        ? "Edit and resolve revision feedback"
+                        : "Manage & Edit Module"
+                    }
+                    className={`flex-[1.5] rounded-xl px-2 sm:px-4 py-2.5 text-xs sm:text-sm font-bold text-white transition flex items-center justify-center gap-1 sm:gap-2 truncate ${
+                      module.has_active_draft
+                        ? "bg-gray-400 cursor-not-allowed opacity-70"
+                        : isRejected
+                        ? "bg-red-600 hover:bg-red-700 cursor-pointer"
+                        : "bg-gray-900 hover:bg-black dark:bg-slate-600 dark:hover:bg-slate-500 cursor-pointer"
+                    }`}
+                  >
+                    {module.has_active_draft ? "Revision in Progress" : isRejected ? "Revise & Edit" : "Manage"}
+                  </button>
+                )}
                 <button
                   onClick={handleViewDetails}
                   className="flex-1 rounded-xl border border-gray-200 px-2 sm:px-4 py-2.5 text-xs sm:text-sm font-bold text-gray-700 hover:bg-gray-50 transition cursor-pointer truncate"

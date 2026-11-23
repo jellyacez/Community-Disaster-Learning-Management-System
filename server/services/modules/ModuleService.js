@@ -492,8 +492,9 @@ class ModuleService {
         m.moddateadd AS submitted_at, 
         m.status,
         m.rejection_reason,
-        u.name AS author_name 
-      FROM module_data m 
+        m.author_id,
+        u.name AS author_name
+      FROM module_data m
       LEFT JOIN "user" u ON m.author_id::text = u.id::text 
       WHERE m.status != 'draft' OR (m.status = 'draft' AND m.rejection_reason IS NOT NULL)
       ORDER BY m.moddateadd DESC

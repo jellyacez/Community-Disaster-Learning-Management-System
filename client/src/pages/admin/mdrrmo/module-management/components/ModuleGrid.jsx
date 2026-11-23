@@ -54,16 +54,20 @@ export default function ModuleGrid({
         </h3>
 
         <p className="text-xs sm:text-sm text-gray-500 dark:text-slate-400 mb-5 max-w-md mx-auto leading-relaxed">
-          You haven&apos;t created any training modules yet. Click the button above to start building your first learning path.
+          {handleOpenWizard
+            ? "You haven't created any training modules yet. Click the button above to start building your first learning path."
+            : "No training modules have been created yet. MDRRMO admins build them; submitted modules appear here and in Approve Modules."}
         </p>
 
-        <button
-          type="button"
-          onClick={handleOpenWizard}
-          className="w-full sm:w-auto inline-flex items-center justify-center px-5 py-2.5 min-h-[42px] bg-gray-900 dark:bg-red-600 text-white text-xs sm:text-sm rounded-xl font-bold hover:bg-black dark:hover:bg-red-700 active:scale-[0.98] transition-all cursor-pointer shadow-xs select-none"
-        >
-          Start Building
-        </button>
+        {handleOpenWizard && (
+          <button
+            type="button"
+            onClick={handleOpenWizard}
+            className="w-full sm:w-auto inline-flex items-center justify-center px-5 py-2.5 min-h-[42px] bg-gray-900 dark:bg-red-600 text-white text-xs sm:text-sm rounded-xl font-bold hover:bg-black dark:hover:bg-red-700 active:scale-[0.98] transition-all cursor-pointer shadow-xs select-none"
+          >
+            Start Building
+          </button>
+        )}
       </div>
     );
   }
@@ -95,7 +99,7 @@ export default function ModuleGrid({
             module={mod}
             enrolled={false}
             isAdminView={true}
-            onManageClick={() => handleEditModule(mod.id)}
+            onManageClick={handleEditModule ? () => handleEditModule(mod.id) : undefined}
             onShowCodeClick={onShowCodeClick}
           />
         ))}

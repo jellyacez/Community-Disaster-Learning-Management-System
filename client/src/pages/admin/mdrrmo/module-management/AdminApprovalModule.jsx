@@ -14,6 +14,7 @@ import {
 } from "@hugeicons/core-free-icons";
 import toast from "react-hot-toast";
 import apiClient from "../../../../lib/apiClient";
+import { authClient } from "../../../../lib/auth-client";
 import { decodeHtml } from "../../../../utils/textUtils";
 import ConfirmationModal from "../../../../components/ui/modals/ConfirmationModal";
 import { SkeletonModuleCard } from "../../../../components/ui/Skeleton";
@@ -22,6 +23,9 @@ export default function AdminModuleApprovals() {
   useDocumentTitle("Module Approvals | Bacolor Disaster LMS Admin");
   const queryClient = useQueryClient();
   const navigate = useNavigate();
+  const { data: session } = authClient.useSession();
+  // The server refuses a review of your own module (SELF_REVIEW_FORBIDDEN); don't offer one
+  const isOwnModule = (mod) => Boolean(mod.author_id) && mod.author_id === session?.user?.id;
 
   const [activeTab, setActiveTab] = useState("pending_review");
   const [searchQuery, setSearchQuery] = useState("");
@@ -340,7 +344,13 @@ export default function AdminModuleApprovals() {
                       Preview Content
                     </button>
 
-                    {activeTab === "pending_review" && (
+                    {activeTab === "pending_review" && isOwnModule(moduleItem) && (
+                      <p className="mt-2 text-xs font-semibold text-gray-500 dark:text-slate-400 text-center">
+                        You authored this module, so another reviewer has to approve or reject it.
+                      </p>
+                    )}
+
+                    {activeTab === "pending_review" && !isOwnModule(moduleItem) && (
                       <div className="grid grid-cols-2 gap-2 mt-2">
                         <button
                           type="button"

@@ -6,6 +6,7 @@ import DashboardHeader from "./components/DashboardHeader";
 import ModuleGrid from "./components/ModuleGrid";
 import apiClient from "../../../../lib/apiClient";
 import { authClient } from "../../../../lib/auth-client";
+import { MODULE_AUTHOR_ROLES } from "../../../../constants/roles";
 import { useModuleBuilder } from "../../../../hooks/useModuleBuilder";
 import useDebounce from "../../../../hooks/useDebounce";
 import { decodeHtml } from "../../../../utils/textUtils";
@@ -61,7 +62,8 @@ export default function ModuleManagement() {
   const { data: session } = authClient.useSession();
   const userRole = session?.user?.role;
 
-  const canCreateModule = userRole === "mdrrmo_admin" || userRole === "super_admin";
+  // The head reviews but never authors, so it gets the library without Create or Manage
+  const canCreateModule = MODULE_AUTHOR_ROLES.includes(userRole);
 
   const { state, setters, actions } = useModuleBuilder();
   const { loadModuleForEdit, resetForm } = actions;
@@ -152,7 +154,7 @@ export default function ModuleManagement() {
           setFilterStatus={setFilterStatus}
           sortOption={sortOption}
           setSortOption={setSortOption}
-          handleOpenWizard={handleOpenWizard}
+          handleOpenWizard={canCreateModule ? handleOpenWizard : undefined}
         />
 
         <ModuleGrid
@@ -164,8 +166,8 @@ export default function ModuleManagement() {
           totalPages={totalPages}
           currentPage={currentPage}
           setCurrentPage={setCurrentPage}
-          handleOpenWizard={handleOpenWizard}
-          handleEditModule={handleEditModule}
+          handleOpenWizard={canCreateModule ? handleOpenWizard : undefined}
+          handleEditModule={canCreateModule ? handleEditModule : undefined}
           onShowCodeClick={canCreateModule ? handleShowCode : undefined}
           setSearchQuery={setSearchQuery}
           setFilterCategory={setFilterCategory}
