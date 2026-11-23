@@ -435,6 +435,22 @@ export const processOfflineQueue = async () => {
 const STEP_ACTIONS = ['MARK_STEP_COMPLETE', 'SUBMIT_QUIZ'];
 
 /**
+ * Step ids this user completed offline that are still waiting to sync (pending or retrying;
+ * passed quizzes only). Failed and conflicting items aren't counted: they won't reach the server.
+ */
+export const getQueuedStepCompletions = async (userId, modId) =>
+  (await getAllSyncQueueItems())
+    .filter(
+      (t) =>
+        STEP_ACTIONS.includes(t.action_type) &&
+        ['pending', 'retrying'].includes(t.status) &&
+        String(t.payload?.mod_id) === String(modId) &&
+        String(t.payload?.user_id) === String(userId) &&
+        (t.action_type !== 'SUBMIT_QUIZ' || t.payload?.passed === true)
+    )
+    .map((t) => t.payload.step_id);
+
+/**
  * Sends this module's queued step completions now (skipping their backoff) and waits for them.
  * Items are only removed by a successful sync, as usual. Resolves to how many of them synced and
  * the ones still queued (failed, conflict, or retrying after a transient error).

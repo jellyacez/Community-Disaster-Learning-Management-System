@@ -27,7 +27,9 @@ import {
   clearQuizSession,
 } from "../lib/quizSessions";
 import { decodeHtml } from "../utils/textUtils";
+import { earlierIncompleteSteps } from "../utils/stepLocks";
 import { localDb } from "../lib/localDb";
+import { getQueuedStepCompletions } from "../lib/LocalSave/syncManager";
 export function useModuleViewer(moduleId) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -87,6 +89,14 @@ export function useModuleViewer(moduleId) {
           );
         }
 
+        // Steps completed offline that haven't synced yet still count as done here
+        const queued = await getQueuedStepCompletions(userId, moduleId).catch(() => []);
+        if (payload && queued.length) {
+          return {
+            ...payload,
+            completedStepIds: [...new Set([...(payload.completedStepIds || []), ...queued])],
+          };
+        }
         return payload;
       } catch (err) {
         if (!navigator.onLine || err.code === "ERR_NETWORK") {
@@ -186,21 +196,33 @@ export function useModuleViewer(moduleId) {
         steps: (lvl.steps || []).map((s, idx, arr) => {
           const isCompleted = completedStepIds.includes(s.id);
           const previousStep = idx > 0 ? arr[idx - 1] : null;
+          // Finals use the server's rule (every earlier step in the version), judged on the
+          // completions themselves, not the recertification retake view
+          const remainingSteps =
+            s.is_final_assessment && !isCompleted
+              ? earlierIncompleteSteps(levels, data?.completedStepIds, s.id).map((r) => ({
+                  id: r.id,
+                  title: decodeHtml(r.title),
+                }))
+              : [];
           const isStepLocked = isCompleted
             ? false
-            : !isUnlocked ||
-              (previousStep && !completedStepIds.includes(previousStep.id));
+            : s.is_final_assessment
+              ? remainingSteps.length > 0
+              : !isUnlocked ||
+                (previousStep && !completedStepIds.includes(previousStep.id));
 
           return {
             ...s,
             title: decodeHtml(s.title),
             isCompleted,
             isLocked: isStepLocked,
+            remainingSteps,
           };
         }),
       };
     });
-  }, [data?.levels, data?.unlockedLevelIds, completedStepIds]);
+  }, [data?.levels, data?.unlockedLevelIds, data?.completedStepIds, completedStepIds]);
 
   const allSteps = useMemo(() => {
     return enhancedLevels.reduce(
@@ -570,6 +592,7 @@ export function useModuleViewer(moduleId) {
     const isOpenFinal =
       activeStep?.is_final_assessment &&
       isAssessmentStepType(activeStep.type) &&
+      !activeStep.isLocked &&
       !completedStepIds.includes(activeStep.id);
     if (
       activeStep &&
@@ -600,7 +623,8 @@ export function useModuleViewer(moduleId) {
     const targetStep =
       parentLevel?.steps?.find((s) => s.id === step.id) || step;
 
-    if (!targetStep.isLocked) {
+    // A locked final opens to show which steps remain (it never starts an attempt)
+    if (!targetStep.isLocked || targetStep.is_final_assessment) {
       guardLeave(() => {
         setActiveStepId(step.id);
         setIsSidebarOpen(false);

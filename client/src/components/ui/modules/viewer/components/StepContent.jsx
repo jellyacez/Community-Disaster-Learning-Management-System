@@ -4,6 +4,7 @@ import { useRef, useEffect, useState } from "react";
 import DOMPurify from "dompurify";
 import InteractiveQuiz from "../quiz/InteractiveQuiz";
 import AttemptQuiz from "../quiz/AttemptQuiz";
+import LessonsRemaining from "../quiz/LessonsRemaining";
 import { decodeHtml } from "../../../../../utils/textUtils";
 
 export default function StepContent({
@@ -244,6 +245,9 @@ export default function StepContent({
                 </div>
               )}
             </div>
+          ) : !isPreviewMode && activeStep.is_final_assessment && activeStep.isLocked ? (
+            // Same rule as the server; no attempt is requested until the earlier steps are done
+            <LessonsRemaining titles={(activeStep.remainingSteps || []).map((s) => s.title)} />
           ) : !isPreviewMode && activeStep.is_final_assessment ? (
             // Final assessments run as server-owned attempts (no answer key on the client)
             <AttemptQuiz

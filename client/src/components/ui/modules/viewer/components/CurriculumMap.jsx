@@ -227,15 +227,17 @@ function LevelContentCard({
         {(lvl.steps || []).map((step) => {
           const isCompleted = step.isCompleted ?? completedStepIds.includes(step.id);
           const isStepLocked = isPreviewMode ? false : Boolean(step.isLocked);
+          // A locked final still opens, to list the steps that remain
+          const canOpen = !isStepLocked || step.is_final_assessment;
 
           return (
             <button
               key={step.id}
               onClick={() => handleStepClick(step)}
-              disabled={isStepLocked}
+              disabled={!canOpen}
               className={`w-full text-left px-4 py-3.5 rounded-2xl flex items-center gap-3.5 text-sm transition-all duration-200 ${
                 isStepLocked
-                  ? "opacity-60 cursor-not-allowed bg-gray-100 dark:bg-slate-800 text-gray-500 dark:text-slate-400"
+                  ? `opacity-60 ${canOpen ? "cursor-pointer" : "cursor-not-allowed"} bg-gray-100 dark:bg-slate-800 text-gray-500 dark:text-slate-400`
                   : isCompleted
                   ? "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-900 dark:text-emerald-200 hover:bg-emerald-100 dark:hover:bg-emerald-950/50 border border-emerald-100 dark:border-emerald-800/50 shadow-xs cursor-pointer"
                   : "bg-red-50/60 dark:bg-red-950/30 text-red-950 dark:text-red-200 hover:bg-red-100 dark:hover:bg-red-950/50 font-bold border border-red-100 dark:border-red-900/50 shadow-xs hover:shadow-md cursor-pointer"

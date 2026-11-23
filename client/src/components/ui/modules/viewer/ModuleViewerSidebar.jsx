@@ -62,16 +62,18 @@ export default function ModuleViewerSidebar({
                 const isCompleted = step.isCompleted ?? completedStepIds.includes(step.id);
                 const isActive = step.id === activeStepId;
                 const isStepLocked = isPreviewMode ? false : Boolean(step.isLocked);
+                // A locked final still opens, to list the steps that remain
+                const canOpen = !isStepLocked || isActive || step.is_final_assessment;
 
                 return (
                   <button
                     key={step.id}
                     onClick={() => handleStepClick(step)}
-                    disabled={isStepLocked && !isActive}
+                    disabled={!canOpen}
                     className={`
                       w-full text-left px-4 py-3 rounded-xl flex items-start gap-3 transition-all duration-200
                       ${isActive ? "bg-red-50 border border-red-200 shadow-sm dark:bg-red-950/40 dark:border-red-900/50" : "border border-transparent hover:bg-gray-50 dark:hover:bg-slate-800/60"}
-                      ${isStepLocked && !isActive ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}
+                      ${isStepLocked && !isActive ? `opacity-50 ${canOpen ? "cursor-pointer" : "cursor-not-allowed"}` : "cursor-pointer"}
                     `}
                   >
                     <div className="shrink-0 mt-0.5">
