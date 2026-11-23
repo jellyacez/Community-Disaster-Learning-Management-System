@@ -53,6 +53,22 @@ psql "$DATABASE_URL" -v cutoff='2026-11-14 18:00:00+08' -v apply=true -v expecte
 
 On production, the manual GitHub workflow **Backfill emailVerified (manual)** runs the same script over SSH (UNVERIFIED: described from the workflow file; the script itself was run on a scratch database). Its inputs are `cutoff`, `mode` (`dry-run` or `apply`), `expected_count`, `confirm` (type `BACKFILL`), and an optional SMTP check that sends one email to the `SMTP_TEST_TO` secret. See [ADR 0002](adr/0002-email-verification-with-backfill.md).
 
+## Roles and module authoring
+
+Permissions per role live in `server/config/permissions.js` (`ROLE_PERMISSIONS`), checked by `requirePermission`. For training modules, writing and approving are separate duties:
+
+| Role | Create, edit, revise, submit, upload media (`author_modules`) | Approve or reject (`approve_modules`) | Module library, enrollment requests (`manage_modules`) |
+|---|---|---|---|
+| `mdrrmo_admin` | Yes | No | Yes |
+| `head_mdrrmo_admin` | No | Yes | Yes |
+| `super_admin` (support) | Yes | Yes | Yes |
+| `system_admin` | No | No | Library list only (no client page) |
+| `barangay_admin`, `resident` | No | No | No |
+
+- Nobody reviews a module they authored: `PUT /api/admin/mdrrmo/module/:id/review` answers **403 `SELF_REVIEW_FORBIDDEN`** when the module's `author_id` is the reviewer, super_admin included. The author is whoever created the module, or the revision for a published module. Editing doesn't change it (see the P1-02 known limitation in `TECH_DEBT.md`).
+- Reviewers preview content through `GET /api/modules/:id/details` and the viewer, not the builder's `edit-details`.
+- The client mirrors the author roles in `MODULE_AUTHOR_ROLES` (`client/src/constants/roles.js`); keep the two in sync.
+
 ## Two-factor authentication (off by default)
 
 2FA is controlled by one server flag, `MFA_ENABLED` ([ADR 0001](adr/0001-2fa-behind-mfa-enabled.md)).

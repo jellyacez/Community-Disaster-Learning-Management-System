@@ -18,7 +18,7 @@ Each prints `ok` / `not ok` (or `PASS` / `FAIL`) lines and exits non-zero on fai
 
 | Script | Needs the API running | Database it uses |
 |---|---|---|
-| `archived-version-access`, `barangay-readiness`, `enrollment-requests`, `final-assessment-gating`, `h1-quiz-scoring`, `question-explanations`, `quiz-attempts`, `review-status-guard`, `schema-integrity`, `state-transitions`, `step-assessment-access` | **Yes**, at `TEST_BASE_URL` (default `http://localhost:5000`) | `DB_DATABASE` from `server/.env`, which must be the same database the API uses |
+| `archived-version-access`, `barangay-readiness`, `enrollment-requests`, `final-assessment-gating`, `h1-quiz-scoring`, `module-role-separation`, `question-explanations`, `quiz-attempts`, `review-status-guard`, `schema-integrity`, `state-transitions`, `step-assessment-access` | **Yes**, at `TEST_BASE_URL` (default `http://localhost:5000`) | `DB_DATABASE` from `server/.env`, which must be the same database the API uses |
 | `health-status`, `register-existing-email`, `user-field-lock` | No | `DB_DATABASE` |
 | `new-device-email` | No (in-process, mailer stubbed) | `DB_DATABASE`. Refuses `LMS_db`. Seeds users and sessions, deletes them by id |
 | `session-ua-binding` | **Yes**, at `TEST_BASE_URL`; the API must log to this checkout's `server/logs` | `DB_DATABASE`, same as the API. Refuses `LMS_db`. Seeds one user and session per case, deletes them by id |

@@ -6,6 +6,13 @@ This document tracks identified technical debt, architectural decisions, missing
 
 ## 🟢 Resolved Items
 
+### Resolved: Module authoring and approval were not separated (audit P1-02)
+- **Location:** `server/config/permissions.js`, `server/routes/modules/moduleRoutes.js`, `server/controllers/modules/moduleController.js` (`updateModuleStatus`), `server/services/modules/ModuleService.js` (`getPendingModulesReview`), `client/src/constants/roles.js`, `client/src/pages/admin/mdrrmo/module-management/` (`ModuleManagement.jsx`, `AdminApprovalModule.jsx`, `components/DashboardHeader.jsx`, `components/ModuleGrid.jsx`), `client/src/components/ui/modules/ModuleCard.jsx`
+- **Issue:** one permission, `manage_modules`, covered create, edit, revise, submit, upload-media and the builder's `edit-details` read. `head_mdrrmo_admin` and `system_admin` both held it, so the approver could write a module and approve it, and the system administrator could author training content through the API (the client only hid the builder from the head, and still showed it Create and Manage buttons that ended in an "Access Denied" toast). The review endpoint never compared the reviewer with the author.
+- **Resolution:** a new `author_modules` permission, held only by `mdrrmo_admin` and `super_admin`, gates `POST /api/modules`, `PUT /api/modules/:id` (edit, submit, and revise, which is a PUT on a published module), `GET /api/modules/:id/edit-details` and `POST /api/modules/upload-media`. `manage_modules` now means the module library and enrollment requests only. `PUT /api/admin/mdrrmo/module/:id/review` answers **403 `SELF_REVIEW_FORBIDDEN`** when the module's `author_id` is the reviewer, for approve and reject, super_admin included. The client shows the head (and any non-author) the library without Create, Start Building or Manage/Revise, and the approvals desk replaces Approve/Reject with a note on your own module (`author_id` is now in the approvals list).
+- **Verification:** `server/tests/module-role-separation.regression.cjs` (25 checks; 16 red before the fix). All `server/tests/*.regression.cjs` pass against a scratch server, including `review-status-guard`, `state-transitions` (status allowlist) and `approvals-rate-limit`. Browser check on a scratch DB as head: no Create or Manage on Training Modules; on the approvals desk the head's own pending module showed the note and an mdrrmo_admin's module was approved from the UI.
+- **Left open:** see "Known limitation: module review checks the author, not every editor" under Open items. Existing modules written by a head or system_admin keep their `author_id` (no data was changed).
+
 ### Resolved: Final assessment could be taken before the lessons (audit P4-02)
 - **Location:** `server/services/modules/QuizAttemptService.js` (`startOrResume`, `submit`), `server/controllers/modules/quizAttemptController.js`, `client/src/components/ui/modules/viewer/quiz/AttemptQuiz.jsx`, `client/src/lib/LocalSave/syncManager.js` (`syncModuleQueue`, `getQueuedStepCompletions`), `client/src/utils/stepLocks.js`, `client/src/hooks/useModuleViewer.js`
 - **Issue:** the server never checked earlier steps before starting or grading a final assessment, so a learner could open the final straight from the API, or from the viewer when the final sat in a level that isn't locked by default, pass it and get the certificate. Separately, on reconnect the viewer started the attempt in parallel with the offline queue, so lessons completed offline had often not reached the server yet.
@@ -720,6 +727,12 @@ This document tracks identified technical debt, architectural decisions, missing
 ---
 
 ## 🟡 Open / Active Technical Debt & Optimization Items
+
+### Known limitation: module review checks the author, not every editor (audit P1-02)
+- **Location:** `moduleController.updateModule` / `ModuleService.updateModuleTransaction`, `moduleController.updateModuleStatus`
+- **Description:** the self-review check compares the reviewer with `module_data.author_id`, the user who created the module or the revision. Editing a draft doesn't change `author_id` or record the editor (`editor_id` is accepted and ignored), and any author role can edit any other author's draft or pending module. So a `super_admin` can edit an mdrrmo_admin's pending module and then approve it. A head can't, because heads can no longer edit.
+- **Legacy data:** a draft a head wrote before P1-02 keeps that head as author. An mdrrmo_admin can take it over and submit it, but that head still can't review it; another head or a super_admin has to.
+- **Possible fix:** record every editor (a `module_editors` table or an `last_editor_id` column written by `updateModuleTransaction`) and refuse a review by any of them; optionally limit edits of a pending module to its author.
 
 ### Known limitation: lesson completion is self-reported (audit P4-02 review F4)
 - **Location:** `POST /api/modules/:id/steps/:stepId/complete` (`server/controllers/modules/moduleProgressController.js`, `ModuleProgressService.completeModuleStep`)
