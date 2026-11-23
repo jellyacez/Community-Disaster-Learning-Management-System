@@ -28,6 +28,8 @@ const decodeQuestion = (q) => ({
   })),
 });
 
+const QUEUE_WAIT_MS = 15000;
+
 const describeError = (error, fallback) =>
   error?.response?.data?.message || (!error?.response ? 'Connection problem. Check your internet and try again.' : fallback);
 
@@ -87,8 +89,15 @@ export default function AttemptQuiz({ stepId, steps = [], onSubmitAttempt, retry
     setIsOffline(false);
     setLoadError(null);
     setIncomplete(null);
-    // Lessons completed offline must reach the server before it checks them
-    const { synced, remaining } = await syncModuleQueue(moduleId).catch(() => ({ synced: 0, remaining: [] }));
+    // Lessons completed offline must reach the server before it checks them. Requests have no
+    // timeout, so stop waiting after a while; the queue keeps syncing in the background.
+    let timer;
+    const timedOut = new Promise((resolve) => {
+      timer = setTimeout(() => resolve({ synced: 0, remaining: null }), QUEUE_WAIT_MS);
+    });
+    const { synced, remaining } = await Promise.race([syncModuleQueue(moduleId), timedOut])
+      .catch(() => ({ synced: 0, remaining: [] }))
+      .finally(() => clearTimeout(timer));
     if (synced) queryClient.invalidateQueries({ queryKey: ['moduleViewer', moduleId] });
     try {
       const res = await apiClient.post(`/modules/${moduleId}/steps/${stepId}/attempts`);
@@ -96,7 +105,8 @@ export default function AttemptQuiz({ stepId, steps = [], onSubmitAttempt, retry
     } catch (error) {
       if (!error.response) setIsOffline(true);
       else if (error.response.data?.error === 'LESSONS_INCOMPLETE') {
-        setIncomplete({ stepIds: error.response.data.remainingStepIds || [], unsynced: remaining.length });
+        // null: the wait timed out, so assume something is still unsynced
+        setIncomplete({ stepIds: error.response.data.remainingStepIds || [], unsynced: remaining ? remaining.length : 1 });
         queryClient.invalidateQueries({ queryKey: ['moduleViewer', moduleId] });
       } else setLoadError(describeError(error, 'Could not load the assessment.'));
     }
