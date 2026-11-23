@@ -15,6 +15,8 @@
  *   - nobody can review a module they authored, super_admin included: 403 SELF_REVIEW_FORBIDDEN
  *   - an mdrrmo_admin can edit a draft left by a head (legacy data); it keeps its author, so
  *     that head can't approve it but another head can
+ *   - a super_admin who is impersonating someone can't author or review (403
+ *     IMPERSONATION_FORBIDDEN), since the self-review check would see the target's id
  *
  * Fixtures (users, modules, sessions) are seeded directly into the database from server/.env
  * and removed by exact ID in `finally`. Refuses to run unless the database is on loopback.
@@ -307,6 +309,35 @@ async function main() {
     const otherReview = await call(head2, "PUT", `/api/admin/mdrrmo/module/${legacy}/review`, { status: "published" });
     assert.equal(otherReview.status, 200, JSON.stringify(otherReview.body));
     assert.equal((await moduleRow(legacy)).status, "published");
+  });
+
+  // Impersonation swaps req.user for the target, so a super_admin could approve its own
+  // module as a head, or author as an mdrrmo_admin and approve as itself
+  const impersonating = (target) => ({
+    cookie: `${superAdmin.cookie}; impersonator_id=${superAdmin.id}; impersonated_target_id=${target.id}`,
+  });
+
+  await check("super_admin impersonating a head can't review a module", async () => {
+    const own = await seedModule("super pending for impersonated review", "pending_review", superAdmin.id);
+    const review = await call(impersonating(head), "PUT", `/api/admin/mdrrmo/module/${own}/review`, { status: "published" });
+    assert.equal(review.status, 403, JSON.stringify(review.body));
+    assert.equal(review.body?.code, "IMPERSONATION_FORBIDDEN");
+    assert.equal((await moduleRow(own)).status, "pending_review");
+  });
+
+  await check("super_admin impersonating an mdrrmo_admin can't author a module", async () => {
+    const create = await call(impersonating(author), "POST", "/api/modules", modulePayload("impersonated create"));
+    assert.equal(create.status, 403, JSON.stringify(create.body));
+    assert.equal(create.body?.code, "IMPERSONATION_FORBIDDEN");
+    assert.equal((await modulesNamed("impersonated create")).length, 0, "a module was created");
+
+    const draft = await seedModule("impersonated edit target", "draft", author.id);
+    const edit = await call(impersonating(author), "PUT", `/api/modules/${draft}`, modulePayload("impersonated edited"));
+    assert.equal(edit.status, 403, JSON.stringify(edit.body));
+    assert.equal((await moduleRow(draft)).modname, `${RUN} impersonated edit target`);
+
+    const upload = await call(impersonating(author), "POST", "/api/modules/upload-media", {});
+    assert.equal(upload.status, 403, JSON.stringify(upload.body));
   });
 
   if (failures.length) throw new Error(`${failures.length} check(s) failed`);
