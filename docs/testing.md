@@ -24,7 +24,7 @@ Each prints `ok` / `not ok` (or `PASS` / `FAIL`) lines and exits non-zero on fai
 | `session-ua-binding` | **Yes**, at `TEST_BASE_URL`; the API must log to this checkout's `server/logs` | `DB_DATABASE`, same as the API. Refuses `LMS_db`. Seeds one user and session per case, deletes them by id |
 | `emergency-contacts` | **Yes**, at `TEST_BASE_URL` | `DB_DATABASE`, same as the API. Refuses `LMS_db`: run it against a scratch database. Restores the contact list's content at the end (ids change) |
 | `restore-safeguards`, `create-first-admin`, `emergency-contacts-migration` | No (they start what they need in-process) | Their own scratch database, created and dropped by the script |
-| `situational-edit` | No | None |
+| `final-assessment-lock`, `situational-edit` | No | None (pure functions; `final-assessment-lock` imports `client/src/utils/stepLocks.js`) |
 
 Typical run against a local database:
 
