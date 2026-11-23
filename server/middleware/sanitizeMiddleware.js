@@ -28,18 +28,16 @@ const stripTags = (value) => sanitizeHtml(value, { allowedTags: [], allowedAttri
 
 /**
  * Tags removed, entities decoded (so "Fire & Rescue" isn't stored as "Fire &amp; Rescue").
- * Decoding can itself produce a tag ("&lt;img&gt;", or "<<img>img ...>" once the inner tag is gone),
- * so strip and decode again until nothing changes. The pass cap is a backstop; past it the stripped,
- * still-encoded form is returned, which holds no tags.
+ * Decoding can itself produce a tag ("&lt;img&gt;", or "<<img>img ...>" once the inner tag is gone).
+ * When the decoded text has a "<", one more strip-and-decode must leave it unchanged ("5 < 6");
+ * otherwise the stripped, still-encoded form is kept, which holds no tags. At most three
+ * sanitize-html passes, since each one parses a body of up to 800 KB.
  */
 const toPlainText = (value) => {
-  let current = value;
-  for (let pass = 0; pass < 10; pass++) {
-    const next = decodeHTML(stripTags(current));
-    if (next === current) return next;
-    current = next;
-  }
-  return stripTags(current);
+  const decoded = decodeHTML(stripTags(value));
+  if (!decoded.includes("<")) return decoded;
+  const stripped = stripTags(decoded);
+  return decodeHTML(stripped) === decoded ? decoded : stripped;
 };
 
 /**

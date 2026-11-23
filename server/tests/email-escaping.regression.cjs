@@ -28,7 +28,13 @@ transporter.sendMail = async (mail) => {
 };
 
 const pool = require("../config/db");
+// Count sanitize-html calls made by the middleware (it reads the export once, at load).
+const sanitizeHtmlPath = require.resolve("sanitize-html");
+const realSanitizeHtml = require(sanitizeHtmlPath);
+let sanitizeCalls = 0;
+require.cache[sanitizeHtmlPath].exports = Object.assign((...args) => { sanitizeCalls++; return realSanitizeHtml(...args); }, realSanitizeHtml);
 const sanitizeMiddleware = require("../middleware/sanitizeMiddleware");
+require.cache[sanitizeHtmlPath].exports = realSanitizeHtml;
 const { auth } = require("../utils/auth");
 const { provisionAdmin } = require("../controllers/admin/user-management/provisionAdmin");
 const { resetUserPassword } = require("../controllers/admin/user-management/resetUserPassword");
@@ -157,6 +163,18 @@ async function main() {
     check("plain '&' survives unescaped", () => { if (out.amp !== "Fire & Rescue") throw new Error(JSON.stringify(out.amp)); });
     check("plain '<' '>' survive unescaped", () => { if (out.lt !== "5 < 6 and 7 > 3") throw new Error(JSON.stringify(out.lt)); });
     check("quotes survive unescaped", () => { if (out.quote !== `O'Brien "Jr"`) throw new Error(JSON.stringify(out.quote)); });
+
+    // Every pass is a full sanitize-html parse of a body up to 800 KB, so the pass count must stay bounded.
+    let deep = IMG;
+    for (let i = 0; i < 12; i++) deep = deep.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    const countCalls = (value) => { sanitizeCalls = 0; const r = sanitize({ value }).value; return [sanitizeCalls, r]; };
+    const [plainCalls] = countCalls("Fire & Rescue");
+    const [deepCalls, deepOut] = countCalls(deep);
+    check("plain text costs one sanitize pass", () => { if (plainCalls !== 1) throw new Error(`${plainCalls} passes`); });
+    check("12x-encoded markup costs at most three passes and stores no tag", () => {
+      if (deepCalls > 3) throw new Error(`${deepCalls} passes`);
+      if (/<\s*[a-z!/]/i.test(deepOut)) throw new Error(JSON.stringify(deepOut));
+    });
   }
 
   console.log("\nprovisioning credentials email (V-02)");
