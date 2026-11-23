@@ -35,7 +35,9 @@ async function runCertificateMaintenanceJob() {
     });
   }
 
-  // active certificates inside the 30-day window that haven't been reminded yet
+  // active certificates inside the 30-day window that haven't been reminded yet, for learners
+  // who haven't turned off Module Reminders (missing/NULL settings mean on). Opted-out rows stay
+  // unstamped, so turning reminders back on inside the window still sends one.
   let notifiedCount = 0;
   let failedCount = 0;
   try {
@@ -56,6 +58,7 @@ async function runCertificateMaintenanceJob() {
         AND c.expires_at > NOW()
         AND c.expires_at <= NOW() + INTERVAL '30 days'
         AND c.recert_notified_at IS NULL
+        AND u.settings->'reminders' IS DISTINCT FROM 'false'::jsonb
     `);
 
     for (const row of candidates.rows) {
