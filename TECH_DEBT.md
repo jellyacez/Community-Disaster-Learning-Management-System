@@ -6,6 +6,13 @@ This document tracks identified technical debt, architectural decisions, missing
 
 ## 🟢 Resolved Items
 
+### Resolved: HTML injection in emails (audit P5-15, V-02; review N4; input-validation H7)
+- **Location:** `server/middleware/sanitizeMiddleware.js`, `server/utils/templates/*` (new `escape.js`)
+- **Issue:** the plain-text sanitizer stripped tags and then decoded entities, so `&lt;img src=x onerror=...&gt;` (or `<<img>img ...>`) was stored as a live tag in names, module titles, feedback and announcement titles. Every template except the account notices interpolated those values raw, so the markup reached the provisioning credentials email (V-02), the recertification reminder (P5-15) and every greeting; the org footer and the new-login User-Agent token were raw too. The new-login email also labelled every iPhone/iPad "Mac/Apple Device" and printed "Mozilla/5.0" as the browser (N4).
+- **Resolution:** one `escapeHtml` for every interpolated value; `frontendUrl` URL-encodes tokens and refuses a non-http(s) `FRONTEND_URL` before it goes into an `href`. The sanitizer strips and decodes until the value is stable, so `&` and a lone `<` still read as plain text but decoding can no longer produce a tag. The new-login email describes the device with `utils/userAgent.js` ("Safari on iPhone/iPad"). Values already stored with tags are not rewritten; they now show as literal text in emails and, as before, in the UI.
+- **Verification:** `server/tests/email-escaping.regression.cjs` (32 cases; 25 red before the fix) drives every send path with mail captured.
+- **Note:** H7 has no description in the repo (audit P0-13); it is closed here on the project owner's word that it is this issue.
+
 ### Resolved: Random sign-outs from the session user-agent check (P0-28 / KNOWN item 9)
 - **Location:** `server/middleware/authenticate.js`, `server/utils/userAgent.js`
 - **Issue:** any difference between the stored and the request `User-Agent` revoked the session. A browser auto-update (Chrome 156 to 157) or a device-mode / "Request desktop site" switch signed users out; production logged 22 `session_hijack_attempt_detected` events.
@@ -716,12 +723,8 @@ This document tracks identified technical debt, architectural decisions, missing
 
 ---
 
-### 3. Certificate Revocation Authority — MDRRMO Municipal Override
-- **Current State:** Only `barangay_admin` can revoke certificates, correctly scoped to their own barangay jurisdiction.
-- **Gap:** The original disaster readiness specification designates MDRRMO as having ultimate verification authority to revoke any certificate municipality-wide if fraudulent completion or procedural non-compliance is detected. No revoke action currently exists on the MDRRMO Municipal Certification Analytics portal.
-- **Recommended Action:**
-  - Add MDRRMO revocation capability with mandatory reason logging.
-  - Dispatch automated notifications (in-app alert bell and Nodemailer email) to all assigned barangay administrators for the affected sector when an MDRRMO override revocation occurs.
+### 3. Certificate Revocation Authority (closed: revocation is deprecated)
+- Nobody can revoke certificates any more: `PATCH /api/admin/certificates/:certId/revoke` and `/reinstate` answer 410 since `0bfc37c`, and competency currency is tracked by annual recertification instead. The MDRRMO override this item proposed is moot. Kept so later item numbers stay stable.
 
 ---
 
@@ -765,7 +768,8 @@ This document tracks identified technical debt, architectural decisions, missing
   - **H3 — Better Auth `update-user` accepts `twoFactorEnabled` / `barangay_id`:** field write reproduced; MFA bypass not reproducible locally (MFA disabled), needs a test with MFA enforced.
   - **Open (reproduced locally):** M10 (maintenance `"false"` enables; unvalidated broadcast severity / support email).
   - **Resolved:** H6. New enrollment and code requests require `status = 'published'` and no `moddateremove` (`ec54ad7`, `b84a32b`); enrolled learners keep their archived version (branch `fix/archived-version-access`: `3a0e1fd` server, `93674cd` client). `server/tests/archived-version-access.regression.cjs` covers enroll on an archived module (404); enroll on draft/pending uses the same check (`moduleController.js:221`) but isn't called by that test.
-  - **Open (not yet reproduced):** H2, H7, M11 (stop-impersonating role gate), remaining M/L items.
+  - **Resolved:** H7 (email HTML injection, see Resolved Items).
+  - **Open (not yet reproduced):** H2, M11 (stop-impersonating role gate), remaining M/L items.
   - **Narrowed:** H5. `GET /api/modules/steps/:stepId/assessment` now answers only admins and learners enrolled in a module version they may access (404 otherwise, drafts included; branch `fix/archived-followups`, `f34b74b`, test `server/tests/step-assessment-access.regression.cjs`). Enrolled learners still receive the answer keys of non-final graded steps, by design: the offline grader (`client/src/lib/LocalSave/gradeOffline.js`) needs them. Final assessments stay stripped and are graded on the server (H1).
   - **Also pending:** dead `POST /api/modules/:moduleId/results` route + controller and duplicate `/:id/enroll` registration (L8).
 - **Constraints for remaining fixes:**
