@@ -49,8 +49,8 @@ export default function ForgotPasswordPage() {
         backText="Back to Sign In"
         icon={CheckmarkBadge01Icon}
       >
-        <div className="text-center py-6 -mt-16">
-          <p className="mt-3 text-sm text-gray-500">
+        <div className="-mt-4">
+          <p className="text-sm text-gray-500">
             We've sent a password reset link to{" "}
             <span className="font-semibold text-gray-900">{email}</span>.
           </p>
