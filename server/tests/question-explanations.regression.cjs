@@ -246,6 +246,8 @@ async function main() {
 
   // final attempt: kind, hidden explanation, reveal, grading
   const f = mod.final;
+  // `a` failed the practice step above; the final needs it complete (P4-02)
+  await pool.query("INSERT INTO user_step_progress (user_id, step_id) VALUES ($1, $2)", [a.id, mod.practiceStepId]);
   let state = (await api(a, "POST", `/modules/${mod.modId}/steps/${mod.finalStepId}/attempts`)).body.data;
   check("attempt marks the hazard question multi-select and hides explanations", () => {
     assert.equal(byId(state.questions, f.hazardId).kind, "multi");

@@ -24,6 +24,32 @@ const isAttemptStep = (step) =>
 
 const fail = (code) => new Error(code);
 
+// Steps before the final (by level order, then step order) in the same module version that
+// the learner hasn't completed on the server. Steps after the final aren't required.
+async function incompleteEarlierSteps(db, userId, stepId) {
+  const { rows } = await db.query(
+    `SELECT ms.step_id
+     FROM module_steps target
+     JOIN levels tl ON tl.level_id = target.level_id
+     JOIN levels l ON l.mod_id = tl.mod_id
+     JOIN module_steps ms ON ms.level_id = l.level_id
+     WHERE target.step_id = $2
+       AND (l.level_order, ms.step_order) < (tl.level_order, target.step_order)
+       AND NOT EXISTS (
+         SELECT 1 FROM user_step_progress usp WHERE usp.user_id = $1 AND usp.step_id = ms.step_id
+       )
+     ORDER BY l.level_order, ms.step_order`,
+    [userId, stepId]
+  );
+  return rows.map((r) => r.step_id);
+}
+
+// Learners only; the ids are steps the learner already sees in the viewer
+async function assertEarlierStepsComplete(db, userId, stepId) {
+  const remaining = await incompleteEarlierSteps(db, userId, stepId);
+  if (remaining.length) throw Object.assign(fail("LESSONS_INCOMPLETE"), { remainingStepIds: remaining });
+}
+
 function shuffle(list) {
   const result = [...list];
   for (let i = result.length - 1; i > 0; i--) {
@@ -217,6 +243,9 @@ class QuizAttemptService {
     );
     if (enrolled.rowCount === 0) throw fail("NOT_ENROLLED");
 
+    // Checked before any open attempt is resumed, so a started attempt can't outlive the rule
+    if (!isAdmin) await assertEarlierStepsComplete(pool, userId, stepId);
+
     const questions = (await ModuleService.getStepAssessment(stepId)) || [];
     const client = await pool.connect();
     let attempt;
@@ -348,8 +377,11 @@ class QuizAttemptService {
   }
 
   // Grades the recorded answers through the normal completion pipeline (results, certificates)
-  async submit(userId, attemptId) {
+  async submit(userId, attemptId, { isAdmin = false } = {}) {
     const { result: claim } = await withOpenAttempt(userId, attemptId, async (client, attempt) => {
+      // Re-checked here in case a step's progress went away after the attempt started;
+      // throwing rolls back, so the attempt stays open
+      if (!isAdmin) await assertEarlierStepsComplete(client, userId, attempt.step_id);
       await timeOutCurrentIfExpired(client, attempt);
       const { rows } = await client.query(
         `SELECT question_id, selected_choice_ids FROM quiz_attempt_answers WHERE attempt_id = $1`,

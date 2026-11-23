@@ -12,6 +12,7 @@ const KNOWN_ERRORS = {
   NOT_ANSWERED: [409, "Answer the current question first."],
   NO_NEXT_QUESTION: [409, "This is the last question. Submit the assessment instead."],
   NOT_FINISHED: [409, "Finish every question before submitting."],
+  LESSONS_INCOMPLETE: [409, "Complete the earlier lessons before taking the final assessment."],
   MODULE_HAS_NO_STEPS: [400, "This module has no steps and cannot be completed. Please contact your administrator."],
 };
 
@@ -26,7 +27,12 @@ const handle = (fn) => async (req, res) => {
   } catch (error) {
     const known = KNOWN_ERRORS[error.message];
     if (known) {
-      return res.status(known[0]).json({ success: false, error: error.message, message: known[1] });
+      return res.status(known[0]).json({
+        success: false,
+        error: error.message,
+        message: known[1],
+        ...(Array.isArray(error.remainingStepIds) && { remainingStepIds: error.remainingStepIds }),
+      });
     }
     console.error("Quiz attempt error:", error);
     return res.status(500).json({ success: false, message: "Internal server error" });
@@ -80,6 +86,8 @@ exports.submitAttempt = handle(async (req, res) => {
   const attemptId = parseId(req.params.attemptId);
   if (!attemptId) return invalidId(res);
 
-  const result = await QuizAttemptService.submit(req.user.id, attemptId);
+  const result = await QuizAttemptService.submit(req.user.id, attemptId, {
+    isAdmin: ADMIN_ROLES.includes(req.user.role),
+  });
   return res.json(formatCompletionResult(result));
 });

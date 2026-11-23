@@ -237,6 +237,8 @@ async function main() {
   await check("e) published: enrolled learner gets details, viewer and an attempt", async () => {
     assert.equal((await api(inProgress, "GET", `/modules/${modE.modId}/details`)).status, 200);
     assert.equal((await api(inProgress, "GET", `/modules/${modE.modId}/viewer`)).status, 200);
+    // The final needs the lesson before it (P4-02)
+    assert.equal((await api(inProgress, "POST", `/modules/${modE.modId}/steps/${modE.lessonId}/complete`)).status, 200);
     assert.equal((await api(inProgress, "POST", `/modules/${modE.modId}/steps/${modE.finalId}/attempts`)).status, 200);
   });
   await check("e) published: not enrolled gets details 200, viewer 403, enroll without code 400", async () => {
