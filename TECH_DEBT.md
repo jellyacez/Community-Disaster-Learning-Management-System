@@ -6,6 +6,20 @@ This document tracks identified technical debt, architectural decisions, missing
 
 ## 🟢 Resolved Items
 
+### Resolved: Prerequisite credit lost when a new module version is published (audit P5-02)
+- **Location:** `server/services/modules/ModuleService.js` (`computeProgressionStatus`, `checkPrerequisitesMet`, `getModuleSyllabusDetails`)
+- **Issue:** the progression rule counted only the learner's own `mod_id`s. Publishing Fundamentals v2 archives v1, so learners who had completed v1 were locked out of every General/specialized module again ("Complete all Fundamentals first (1 remaining)"): enroll and request-code returned 403, and so did the viewer for modules they were already enrolled in. The same applied to a new Beginner or Intermediate version gating the next tier.
+- **Resolution:** a completed earlier version in the `parent_mod_id` lineage (`previous_version_status = 'Completed'`, already computed by `getAvailableModules`) counts as completing the published version, at every tier. `checkPrerequisitesMet` (enroll, viewer, request-code) and the details page now reuse `getAvailableModules`, so the lock label and the checks come from one evaluation. In-progress or never-started learners stay locked.
+- **Verification:** `server/tests/prerequisite-version-credit.regression.cjs` (8 cases; 5 red before the fix; a mutation removing the Beginner-tier change turns case e red). All `server/tests/*.regression.cjs` pass against a scratch server.
+- **Left open:** the catalog card (`ModuleCard.jsx`) does not show `is_locked`/`lock_reason`; only the details page does, and the dashboard shows no locks. A locked learner sees the enroll/request-code buttons on the card and gets a 403 message.
+
+### Resolved: Recertification reminders ignored the Module Reminders opt-out (audit P5-16, P3-05)
+- **Location:** `server/utils/certificateExpiryCron.js`
+- **Issue:** the daily certificate job emailed and notified every learner with a certificate within 30 days of expiry. Learners who had turned off "Module Reminders" in Settings still got both. No server code read `settings.reminders`.
+- **Resolution:** the candidate query skips learners whose `settings.reminders` is JSON `false`. The Settings label ("Get reminders for incomplete learning modules.") names no channel, so the opt-out stops both the email and the in-app `recert_reminder` notification. Opted-out certificates stay unstamped, so turning reminders back on inside the window still sends one reminder. The default is unchanged: the column default is `{"reminders": true, "announcements": true}` and NULL settings count as on.
+- **Verification:** `server/tests/recert-reminder-optout.regression.cjs` (9 cases, mail stubbed; 4 red before the fix): opted out gets nothing, opted in gets one email and one notification with no duplicate on a second run, default and NULL settings are reminded, re-enabling reminds once.
+- **Left open:** "System Announcements" is still saved-only (P3-05). `updateUserSettings` stores any keys and values from the request body (no allowlist), so a hand-made `{"reminders": "false"}` string does not opt out. The reminder email still ignores the org footer and support email settings (second half of P5-16).
+
 ### Resolved: HTML injection in emails (audit P5-15, V-02; review N4; input-validation H7)
 - **Location:** `server/middleware/sanitizeMiddleware.js`, `server/utils/templates/*` (new `escape.js`)
 - **Issue:** the plain-text sanitizer stripped tags and then decoded entities, so `&lt;img src=x onerror=...&gt;` (or `<<img>img ...>`) was stored as a live tag in names, module titles, feedback and announcement titles. Every template except the account notices interpolated those values raw, so the markup reached the provisioning credentials email (V-02), the recertification reminder (P5-15) and every greeting; the org footer and the new-login User-Agent token were raw too. The new-login email also labelled every iPhone/iPad "Mac/Apple Device" and printed "Mozilla/5.0" as the browser (N4).
