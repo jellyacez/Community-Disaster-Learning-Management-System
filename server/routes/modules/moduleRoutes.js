@@ -35,10 +35,10 @@ const enrollAttemptLimiter = rateLimit({
 });
 
 // @route   POST /api/modules
-router.post("/", requireRole(ADMIN_ROLES), requirePermission('manage_modules'), moduleController.createModule);
+router.post("/", requireRole(ADMIN_ROLES), requirePermission("author_modules"), moduleController.createModule);
 
 // @route   POST /api/modules/upload-media
-router.post("/upload-media", requireRole(ADMIN_ROLES), requirePermission('manage_modules'), uploadMiddleware, (req, res) => {
+router.post("/upload-media", requireRole(ADMIN_ROLES), requirePermission("author_modules"), uploadMiddleware, (req, res) => {
     if (!req.file) {
         return res.status(400).json({ success: false, message: "No file uploaded." });
     }
@@ -59,12 +59,12 @@ router.post("/upload-media", requireRole(ADMIN_ROLES), requirePermission('manage
 router.put(
   "/:id",
   requireRole(ADMIN_ROLES),
-  requirePermission("manage_modules"),
+  requirePermission("author_modules"),
   moduleController.updateModule
 );
 
 // @route   GET /api/modules/:id/edit-details
-router.get("/:id/edit-details", requireRole(ADMIN_ROLES), requirePermission('manage_modules'), moduleController.getModuleForEditing);
+router.get("/:id/edit-details", requireRole(ADMIN_ROLES), requirePermission("author_modules"), moduleController.getModuleForEditing);
 
 
 router.get("/:id/details", requireRole(MODULE_VIEWER_ROLES), moduleController.getModuleSyllabusDetails);

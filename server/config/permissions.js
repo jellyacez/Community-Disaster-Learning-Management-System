@@ -1,3 +1,6 @@
+// Modules: author_modules (create, edit, revise, submit, upload media, open the builder) is kept
+// apart from approve_modules, and nobody reviews a module they authored (updateModuleStatus).
+// manage_modules is the module library and enrollment requests, not authoring.
 const ROLE_PERMISSIONS = {
   super_admin: [
     "provision_admins",
@@ -11,6 +14,7 @@ const ROLE_PERMISSIONS = {
     "manage_system_settings",
     "manage_security",
     "manage_modules",
+    "author_modules",
     "approve_modules",
     "view_users",
   ],
@@ -37,6 +41,7 @@ const ROLE_PERMISSIONS = {
     "view_system_stats",
     "view_activity_logs",
     "manage_modules",
+    "author_modules",
     "view_users",
   ],
   head_mdrrmo_admin: [

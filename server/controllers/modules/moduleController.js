@@ -597,6 +597,15 @@ exports.updateModuleStatus = async (req, res) => {
         .json({ success: false, message: "Module not found." });
     }
 
+    // Separation of duties: nobody reviews a module they authored, super_admin included
+    if (current.author_id && String(current.author_id) === String(req.user.id)) {
+      return res.status(403).json({
+        success: false,
+        code: "SELF_REVIEW_FORBIDDEN",
+        message: "You can't review a module you authored. Another reviewer has to approve or reject it.",
+      });
+    }
+
     // Only a pending submission can be reviewed, so a stale page can't reject a published module.
     // The check lives in the UPDATE itself, so two simultaneous reviews can't both apply.
     const updated = await ModuleService.reviewModule(
