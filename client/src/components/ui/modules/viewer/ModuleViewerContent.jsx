@@ -291,6 +291,7 @@ export default function ModuleViewerContent({
               activeStep={activeStep}
               assessmentData={assessmentData}
               completedStepIds={completedStepIds}
+              levels={levels}
               handleCompleteAndContinue={handleCompleteAndContinue}
               handleNextStep={handleNextStep}
               isAssessment={isAssessment}

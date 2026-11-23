@@ -1,9 +1,11 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import { HugeiconsIcon } from '@hugeicons/react';
-import { Clock01Icon, WifiDisconnected01Icon } from '@hugeicons/core-free-icons';
+import { BookOpen01Icon, Clock01Icon, WifiDisconnected01Icon } from '@hugeicons/core-free-icons';
 import apiClient from '../../../../../lib/apiClient';
+import { syncModuleQueue } from '../../../../../lib/LocalSave/syncManager';
 import { saveQuizSession, clearQuizSession } from '../../../../../lib/quizSessions';
 import { decodeHtml } from '../../../../../utils/textUtils';
 import QuizHeader from './QuizHeader';
@@ -29,10 +31,13 @@ const decodeQuestion = (q) => ({
 const describeError = (error, fallback) =>
   error?.response?.data?.message || (!error?.response ? 'Connection problem. Check your internet and try again.' : fallback);
 
-export default function AttemptQuiz({ stepId, onSubmitAttempt, retryCount = 0 }) {
+export default function AttemptQuiz({ stepId, steps = [], onSubmitAttempt, retryCount = 0 }) {
   const { moduleId } = useParams();
+  const queryClient = useQueryClient();
   const [attempt, setAttempt] = useState(null);
   const [loadError, setLoadError] = useState(null);
+  // Server said earlier steps aren't complete: { stepIds, unsynced }
+  const [incomplete, setIncomplete] = useState(null);
   const [isOffline, setIsOffline] = useState(() => !navigator.onLine);
   const [selected, setSelected] = useState([]);
   const [isBusy, setIsBusy] = useState(false);
@@ -81,14 +86,21 @@ export default function AttemptQuiz({ stepId, onSubmitAttempt, retryCount = 0 })
     }
     setIsOffline(false);
     setLoadError(null);
+    setIncomplete(null);
+    // Lessons completed offline must reach the server before it checks them
+    const { synced, remaining } = await syncModuleQueue(moduleId).catch(() => ({ synced: 0, remaining: [] }));
+    if (synced) queryClient.invalidateQueries({ queryKey: ['moduleViewer', moduleId] });
     try {
       const res = await apiClient.post(`/modules/${moduleId}/steps/${stepId}/attempts`);
       applyState(res.data.data);
     } catch (error) {
       if (!error.response) setIsOffline(true);
-      else setLoadError(describeError(error, 'Could not load the assessment.'));
+      else if (error.response.data?.error === 'LESSONS_INCOMPLETE') {
+        setIncomplete({ stepIds: error.response.data.remainingStepIds || [], unsynced: remaining.length });
+        queryClient.invalidateQueries({ queryKey: ['moduleViewer', moduleId] });
+      } else setLoadError(describeError(error, 'Could not load the assessment.'));
     }
-  }, [moduleId, stepId, applyState]);
+  }, [moduleId, stepId, applyState, queryClient]);
 
   // Start or resume when the step opens (and for a fresh attempt after "Try Again")
   useEffect(() => {
@@ -204,6 +216,38 @@ export default function AttemptQuiz({ stepId, onSubmitAttempt, retryCount = 0 })
         >
           Try again
         </button>
+      </div>
+    );
+  }
+
+  if (incomplete) {
+    const titles = incomplete.stepIds.map((id) => steps.find((s) => s.id === id)?.title).filter(Boolean);
+    return (
+      <div className="p-8 text-center bg-amber-50 border border-amber-200 rounded-3xl dark:bg-amber-950/30 dark:border-amber-900">
+        <div className="w-12 h-12 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center mx-auto mb-4 dark:bg-amber-950/50 dark:text-amber-400">
+          <HugeiconsIcon icon={BookOpen01Icon} className="w-6 h-6" aria-hidden="true" />
+        </div>
+        <h3 className="text-lg font-bold text-gray-900 mb-2 dark:text-white">Complete the lessons first</h3>
+        <p className="text-sm text-gray-600 dark:text-slate-300">
+          {titles.length ? 'Finish these steps before starting the final assessment:' : 'Finish the earlier steps of this module before starting the final assessment.'}
+        </p>
+        {titles.length > 0 && (
+          <ul className="mt-3 inline-block text-left text-sm font-semibold text-gray-800 list-disc pl-5 dark:text-slate-200">
+            {titles.map((title, i) => (
+              <li key={i}>{title}</li>
+            ))}
+          </ul>
+        )}
+        {incomplete.unsynced > 0 && (
+          <p className="mt-3 text-sm text-amber-700 dark:text-amber-300">
+            Some progress you saved offline hasn&apos;t synced yet. Stay connected and try again in a moment.
+          </p>
+        )}
+        <div>
+          <button type="button" onClick={startAttempt} className="mt-6 px-6 py-2.5 bg-gray-900 text-white rounded-xl font-bold hover:bg-black transition">
+            Try again
+          </button>
+        </div>
       </div>
     );
   }

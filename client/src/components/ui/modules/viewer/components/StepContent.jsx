@@ -12,6 +12,7 @@ export default function StepContent({
   isAssessment,
   assessmentData,
   completedStepIds = [],
+  levels = [],
   handleCompleteAndContinue,
   handleNextStep,
   isLastStep = false,
@@ -248,6 +249,7 @@ export default function StepContent({
             <AttemptQuiz
               key={`${activeStep.id}-${retryCount}`}
               stepId={activeStep.id}
+              steps={levels.flatMap((l) => l.steps || [])}
               retryCount={retryCount}
               onSubmitAttempt={(attemptId) => handleCompleteAndContinue(null, { attemptId })}
             />

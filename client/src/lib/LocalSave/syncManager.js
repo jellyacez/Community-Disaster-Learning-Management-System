@@ -11,6 +11,8 @@ export const MAX_DELAY_MS = 1800000;
 let retryTimeoutId = null;
 let isSyncing = false;
 let pendingRerun = false;
+// Settles when the active processOfflineQueue run ends, so callers can wait for it
+let activeRun = null;
 
 /**
  * Full-jitter exponential backoff calculation:
@@ -295,6 +297,10 @@ export const processOfflineQueue = async () => {
 
   isSyncing = true;
   pendingRerun = false;
+  let endRun;
+  activeRun = new Promise((resolve) => {
+    endRun = resolve;
+  });
 
   try {
     if (retryTimeoutId) {
@@ -418,11 +424,42 @@ export const processOfflineQueue = async () => {
     scheduleNextRetryIfNeeded();
   } finally {
     isSyncing = false;
+    endRun();
     if (pendingRerun && navigator.onLine) {
       pendingRerun = false;
       processOfflineQueue();
     }
   }
+};
+
+const STEP_ACTIONS = ['MARK_STEP_COMPLETE', 'SUBMIT_QUIZ'];
+
+/**
+ * Sends this module's queued step completions now (skipping their backoff) and waits for them.
+ * Items are only removed by a successful sync, as usual. Resolves to how many of them synced and
+ * the ones still queued (failed, conflict, or retrying after a transient error).
+ */
+export const syncModuleQueue = async (modId) => {
+  const userId = await getCurrentUserId();
+  const belongs = (t) =>
+    STEP_ACTIONS.includes(t.action_type) &&
+    String(t.payload?.mod_id) === String(modId) &&
+    String(t.payload?.user_id) === String(userId);
+
+  const before = (await getAllSyncQueueItems()).filter(belongs);
+  if (userId && navigator.onLine) {
+    for (const t of before.filter((t) => t.status === 'retrying')) {
+      await updateTaskRecord(t.sync_id, { next_retry_at: null });
+    }
+    // A few passes: one may start while another run is mid-batch
+    for (let pass = 0; pass < 3; pass++) {
+      while (isSyncing) await activeRun;
+      if (!(await getAllPendingWrites()).some(belongs)) break;
+      await processOfflineQueue();
+    }
+  }
+  const remaining = (await getAllSyncQueueItems()).filter(belongs);
+  return { synced: before.length - remaining.length, remaining };
 };
 
 /** Schedules a timer for the earliest next_retry_at among retrying tasks. */
