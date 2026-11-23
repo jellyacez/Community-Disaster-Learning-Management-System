@@ -1,5 +1,6 @@
 const emailWrapper = require("./emailWrapper");
 const { escapeHtml } = require("./escape");
+const { normalizeUserAgent } = require("../userAgent");
 
 const getPasswordChangedEmail = (user, orgFooterText, supportEmail) => ({
   from: `"DRRM Bacolor Security" <${supportEmail || process.env.EMAIL_USER}>`,
@@ -22,16 +23,33 @@ const getPasswordChangedEmail = (user, orgFooterText, supportEmail) => ({
   ),
 });
 
+const OS_LABELS = {
+  ios: "iPhone/iPad",
+  android: "Android device",
+  windows: "Windows PC",
+  chromeos: "Chromebook",
+  macos: "Mac",
+  linux: "Linux PC",
+  other: "unknown device",
+};
+const BROWSER_LABELS = {
+  edge: "Edge",
+  opera: "Opera",
+  samsung: "Samsung Internet",
+  firefox: "Firefox",
+  chrome: "Chrome",
+  safari: "Safari",
+};
+
+// Same parsing as session binding and user_known_devices. iPads in desktop mode send a Mac UA and read as "Mac".
+const describeDevice = (userAgent) => {
+  const ua = normalizeUserAgent(userAgent);
+  if (!ua) return "Unknown device";
+  return `${BROWSER_LABELS[ua.family] || "Unknown browser"} on ${OS_LABELS[ua.os]}`;
+};
+
 const getNewDeviceLoginEmail = (user, session, orgFooterText, supportEmail) => {
-  const deviceName = session.userAgent.includes("Windows")
-    ? "Windows PC"
-    : session.userAgent.includes("Mac")
-      ? "Mac/Apple Device"
-      : session.userAgent.includes("iPhone")
-        ? "iPhone"
-        : session.userAgent.includes("Android")
-          ? "Android Device"
-          : "Unknown Device";
+  const deviceName = describeDevice(session.userAgent);
 
   return {
     from: `"DRRM Bacolor Security" <${supportEmail || process.env.EMAIL_USER}>`,
@@ -45,7 +63,7 @@ const getNewDeviceLoginEmail = (user, session, orgFooterText, supportEmail) => {
       <p style="line-height: 1.6; font-size: 15px; color: #52525b;">We noticed a new login to your account from a device we haven't seen you use recently.</p>
       
       <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; padding: 20px; border-radius: 8px; margin: 25px 0;">
-        <p style="margin: 0 0 10px 0; font-size: 14px; color: #334155;"><strong>Device/Browser:</strong> ${escapeHtml(deviceName)} (${escapeHtml(session.userAgent.split(" ")[0])})</p>
+        <p style="margin: 0 0 10px 0; font-size: 14px; color: #334155;"><strong>Device/Browser:</strong> ${escapeHtml(deviceName)}</p>
         <p style="margin: 0 0 10px 0; font-size: 14px; color: #334155;"><strong>IP Address:</strong> ${escapeHtml(session.ipAddress || "Hidden")}</p>
         <p style="margin: 0; font-size: 14px; color: #334155;"><strong>Time:</strong> ${escapeHtml(new Date(session.createdAt).toLocaleString())}</p>
       </div>

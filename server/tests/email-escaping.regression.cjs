@@ -222,6 +222,25 @@ async function main() {
     check("new-login email escapes name, UA token and IP", () => assertEscaped(mailTo(rawUser.email, /New Login/).html, [`${IMG_ESCAPED} Raw`]));
   }
 
+  console.log("\nnew-login device label (N4)");
+  {
+    const UAS = {
+      iPhone: ["Mozilla/5.0 (iPhone; CPU iPhone OS 18_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.1 Mobile/15E148 Safari/604.1", "Safari on iPhone/iPad"],
+      iPad: ["Mozilla/5.0 (iPad; CPU OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/131.0.6778.73 Mobile/15E148 Safari/604.1", "Chrome on iPhone/iPad"],
+      Mac: ["Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.1 Safari/605.1.15", "Safari on Mac"],
+      Android: ["Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Mobile Safari/537.36", "Chrome on Android device"],
+      Windows: ["Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0", "Edge on Windows PC"],
+    };
+    const { getNewDeviceLoginEmail } = require("../utils/emailTemplates");
+    for (const [label, [ua, expected]] of Object.entries(UAS)) {
+      const { html } = getNewDeviceLoginEmail({ name: "N", email: "n@example.invalid" }, { userAgent: ua, ipAddress: "127.0.0.1", createdAt: new Date() });
+      check(`${label} UA is labelled "${expected}"`, () => {
+        const shown = html.match(/Device\/Browser:<\/strong> ([^<]*)</)?.[1];
+        if (shown !== expected) throw new Error(`shown ${JSON.stringify(shown)}`);
+      });
+    }
+  }
+
   console.log("\naccount notices");
   {
     sent.length = 0;
