@@ -6,6 +6,7 @@ const { ADMIN_ROLES } = require("../../config/permissions");
 const requirePermission = require("../../middleware/requirePermission");
 const { adminDataLimiter, adminWriteLimiter } = require("../../middleware/rateLimiters");
 const validate = require("../../middleware/validate");
+const refuseWhileImpersonating = require("../../middleware/refuseWhileImpersonating");
 const { announcementSchema } = require("../../utils/validators");
 
 // MDRRMO dashboards expose municipality-wide data; barangay_admin is excluded
@@ -169,6 +170,8 @@ router.put(
   requireRole(["super_admin","head_mdrrmo_admin"]),
   adminWriteLimiter,
   requirePermission("approve_modules"),
+  // The self-review check would compare the author with the impersonated user
+  refuseWhileImpersonating("reviewing modules"),
   moduleController.updateModuleStatus
 );
 

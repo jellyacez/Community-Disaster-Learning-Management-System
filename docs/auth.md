@@ -66,6 +66,7 @@ Permissions per role live in `server/config/permissions.js` (`ROLE_PERMISSIONS`)
 | `barangay_admin`, `resident` | No | No | No |
 
 - Nobody reviews a module they authored: `PUT /api/admin/mdrrmo/module/:id/review` answers **403 `SELF_REVIEW_FORBIDDEN`** when the module's `author_id` is the reviewer, super_admin included. The author is whoever created the module, or the revision for a published module. Editing doesn't change it (see the P1-02 known limitation in `TECH_DEBT.md`).
+- A super_admin who is impersonating someone can't author or review modules (**403 `IMPERSONATION_FORBIDDEN`**, `server/middleware/refuseWhileImpersonating.js`): impersonation swaps in the target's id, which would defeat the self-review check.
 - Reviewers preview content through `GET /api/modules/:id/details` and the viewer, not the builder's `edit-details`.
 - The client mirrors the author roles in `MODULE_AUTHOR_ROLES` (`client/src/constants/roles.js`); keep the two in sync.
 

@@ -18,6 +18,10 @@ const ENROLLMENT_CODE_ROLES = ["mdrrmo_admin", "super_admin"];
 
 const requirePermission = require("../../middleware/requirePermission");
 const uploadMiddleware = require("../../middleware/uploadMiddleware");
+const refuseWhileImpersonating = require("../../middleware/refuseWhileImpersonating");
+
+// Writes attributed to an author: only author roles, and never as an impersonated user
+const authorOnly = [requireRole(ADMIN_ROLES), requirePermission("author_modules"), refuseWhileImpersonating("editing modules")];
 
 // Limits wrong enrollment-code guesses per user (successful enrollments don't count)
 const enrollAttemptLimiter = rateLimit({
@@ -35,10 +39,10 @@ const enrollAttemptLimiter = rateLimit({
 });
 
 // @route   POST /api/modules
-router.post("/", requireRole(ADMIN_ROLES), requirePermission("author_modules"), moduleController.createModule);
+router.post("/", authorOnly, moduleController.createModule);
 
 // @route   POST /api/modules/upload-media
-router.post("/upload-media", requireRole(ADMIN_ROLES), requirePermission("author_modules"), uploadMiddleware, (req, res) => {
+router.post("/upload-media", authorOnly, uploadMiddleware, (req, res) => {
     if (!req.file) {
         return res.status(400).json({ success: false, message: "No file uploaded." });
     }
@@ -58,8 +62,7 @@ router.post("/upload-media", requireRole(ADMIN_ROLES), requirePermission("author
 // @route   PUT /api/modules/:id
 router.put(
   "/:id",
-  requireRole(ADMIN_ROLES),
-  requirePermission("author_modules"),
+  authorOnly,
   moduleController.updateModule
 );
 
