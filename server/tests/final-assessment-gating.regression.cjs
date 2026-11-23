@@ -11,7 +11,7 @@
  *      lessons, works with them
  *   e) submit re-checks: an attempt started with the lessons done can't be submitted once a
  *      lesson's progress row is gone; the attempt stays open and nothing is graded
- *   f) admins are unaffected (start works without the lessons)
+ *   f) enrolled admins follow the same rule (previews never use attempts)
  *   g) not enrolled still gets 403 NOT_ENROLLED, not the lesson list
  *
  * Sends real HTTP requests to a RUNNING LOCAL server. Fixtures are seeded directly into the
@@ -308,18 +308,26 @@ async function main() {
     assert.equal(eRetry.body.passed, true);
   });
 
-  // f) admins unaffected
+  // f) enrolled admins follow the same rule
   const admin = await createUser("admin", "mdrrmo_admin");
   await enroll(admin, modA);
+  const fBlocked = await start(admin, modA);
+  await check("f) admin without the lessons: 409 LESSONS_INCOMPLETE", async () => {
+    assert.equal(fBlocked.status, 409, JSON.stringify(fBlocked.body));
+    assert.equal(fBlocked.body.error, "LESSONS_INCOMPLETE");
+  });
+  for (const id of modA.lessonIds) await completeLesson(admin, modA, id);
   const fStart = await start(admin, modA);
-  await check("f) admin starts without the lessons", async () => {
+  await check("f) admin with the lessons done: start works", async () => {
     assert.equal(fStart.status, 200, JSON.stringify(fStart.body));
   });
   if (fStart.status === 200) {
     const state = await answerAll(admin, modA, fStart.body.data);
+    await pool.query("DELETE FROM user_step_progress WHERE user_id = $1 AND step_id = $2", [admin.id, modA.lessonIds[0]]);
     const fSubmit = await api(admin, "POST", `/modules/attempts/${state.attemptId}/submit`);
-    await check("f) admin submits without the lessons", async () => {
-      assert.equal(fSubmit.status, 200, JSON.stringify(fSubmit.body));
+    await check("f) admin submit re-checks the lessons", async () => {
+      assert.equal(fSubmit.status, 409, JSON.stringify(fSubmit.body));
+      assert.equal(fSubmit.body.error, "LESSONS_INCOMPLETE");
     });
   }
 

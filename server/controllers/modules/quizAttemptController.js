@@ -86,8 +86,6 @@ exports.submitAttempt = handle(async (req, res) => {
   const attemptId = parseId(req.params.attemptId);
   if (!attemptId) return invalidId(res);
 
-  const result = await QuizAttemptService.submit(req.user.id, attemptId, {
-    isAdmin: ADMIN_ROLES.includes(req.user.role),
-  });
+  const result = await QuizAttemptService.submit(req.user.id, attemptId);
   return res.json(formatCompletionResult(result));
 });
