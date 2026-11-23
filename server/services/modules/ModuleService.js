@@ -16,19 +16,21 @@ const MODULE_SORTS = {
 };
 
 class ModuleService {
+  // allPublishedModules rows carry previous_version_status (see getAvailableModules): a
+  // completed earlier version of a module counts as completing its published version.
   computeProgressionStatus(allPublishedModules, userCompletions) {
     const completedModIds = new Set(
       userCompletions
         .filter(c => c.modstatus === 'Completed' || c.progress === 100)
         .map(c => c.mod_id)
     );
+    const isDone = m =>
+      completedModIds.has(m.id || m.mod_id) || m.previous_version_status === 'Completed';
 
     const fundamentalModules = allPublishedModules.filter(
       m => (m.category || m.modcat || '').trim().toLowerCase() === 'fundamentals'
     );
-    const hasCompletedAllFundamentals = fundamentalModules.every(m =>
-      completedModIds.has(m.id || m.mod_id)
-    );
+    const hasCompletedAllFundamentals = fundamentalModules.every(isDone);
 
     return allPublishedModules.map(mod => {
       const modId = mod.id || mod.mod_id;
@@ -47,7 +49,7 @@ class ModuleService {
 
       // Tier 1+: Specialized categories locked if Fundamentals incomplete
       if (!hasCompletedAllFundamentals) {
-        const remainingFundCount = fundamentalModules.filter(f => !completedModIds.has(f.id || f.mod_id)).length;
+        const remainingFundCount = fundamentalModules.filter(f => !isDone(f)).length;
         return {
           ...mod,
           is_locked: true,
@@ -70,7 +72,7 @@ class ModuleService {
           m => (m.category || m.modcat || '').trim().toLowerCase() === category.toLowerCase() &&
                ((m.level || '').trim().toLowerCase() === 'beginner' || (m.level || '').trim().toLowerCase() === 'level 1')
         );
-        const hasFinishedBeginners = catBeginners.every(b => completedModIds.has(b.id || b.mod_id));
+        const hasFinishedBeginners = catBeginners.every(isDone);
 
         return {
           ...mod,
@@ -85,7 +87,7 @@ class ModuleService {
           m => (m.category || m.modcat || '').trim().toLowerCase() === category.toLowerCase() &&
                ((m.level || '').trim().toLowerCase() === 'intermediate' || (m.level || '').trim().toLowerCase() === 'level 2')
         );
-        const hasFinishedIntermediates = catIntermediates.every(i => completedModIds.has(i.id || i.mod_id));
+        const hasFinishedIntermediates = catIntermediates.every(isDone);
 
         return {
           ...mod,
@@ -102,19 +104,9 @@ class ModuleService {
     });
   }
 
+  // Same evaluation as the catalog, so its lock labels and the enroll/viewer checks agree
   async checkPrerequisitesMet(user_id, target_mod_id) {
-    const publishedRes = await pool.query(
-      `SELECT mod_id, modname, modcat, level FROM public.module_data WHERE status = 'published' AND moddateremove IS NULL`
-    );
-    const userProgressRes = await pool.query(
-      `SELECT DISTINCT ON (mod_id) mod_id, progress, modstatus
-       FROM public.module_activity
-       WHERE user_id = $1
-       ORDER BY mod_id, modact_id DESC`,
-      [user_id]
-    );
-
-    const evaluated = this.computeProgressionStatus(publishedRes.rows, userProgressRes.rows);
+    const evaluated = await this.getAvailableModules(user_id);
     const target = evaluated.find(m => (m.mod_id || m.id) === target_mod_id);
     return target ? !target.is_locked : true;
   }
@@ -215,17 +207,7 @@ class ModuleService {
     let targetModule = moduleRes.rows[0];
 
     if (user_id) {
-      const publishedRes = await pool.query(
-        `SELECT mod_id, modname, modcat, level FROM public.module_data WHERE status = 'published' AND moddateremove IS NULL`
-      );
-      const userProgressRes = await pool.query(
-        `SELECT DISTINCT ON (mod_id) mod_id, progress, modstatus
-         FROM public.module_activity
-         WHERE user_id = $1
-         ORDER BY mod_id, modact_id DESC`,
-        [user_id]
-      );
-      const evaluated = this.computeProgressionStatus(publishedRes.rows, userProgressRes.rows);
+      const evaluated = await this.getAvailableModules(user_id);
       const match = evaluated.find(m => (m.mod_id || m.id) === parseInt(mod_id, 10));
       if (match) {
         targetModule.is_locked = match.is_locked;
