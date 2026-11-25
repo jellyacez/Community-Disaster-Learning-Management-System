@@ -39,17 +39,28 @@ function validateSystemName(input) {
   return { value };
 }
 
-// Returns { type, contentType, bytes } or { error }
-function parseLogo(input) {
-  if (typeof input !== "string") return { error: MESSAGES.logoFormat };
-  if (/^data:image\/svg/i.test(input)) return { error: MESSAGES.svg };
+// A PNG/JPEG/WEBP data URL whose bytes match its type, up to maxBytes (also used for avatars).
+// messages: { svg, format, bytes, size }. Returns { type, contentType, bytes } or { error }
+function parseRasterDataUrl(input, maxBytes, messages) {
+  if (typeof input !== "string") return { error: messages.format };
+  if (/^data:image\/svg/i.test(input)) return { error: messages.svg };
   const match = LOGO_DATA_URL.exec(input);
-  if (!match || match[2].length % 4 !== 0) return { error: MESSAGES.logoFormat };
+  if (!match || match[2].length % 4 !== 0) return { error: messages.format };
   const type = match[1];
   const bytes = Buffer.from(match[2], "base64");
-  if (bytes.length > MAX_LOGO_BYTES) return { error: MESSAGES.logoSize };
-  if (!LOGO_TYPES[type](bytes)) return { error: MESSAGES.logoBytes };
+  if (bytes.length > maxBytes) return { error: messages.size };
+  if (!LOGO_TYPES[type](bytes)) return { error: messages.bytes };
   return { type, contentType: `image/${type}`, bytes };
+}
+
+// Returns { type, contentType, bytes } or { error }
+function parseLogo(input) {
+  return parseRasterDataUrl(input, MAX_LOGO_BYTES, {
+    svg: MESSAGES.svg,
+    format: MESSAGES.logoFormat,
+    bytes: MESSAGES.logoBytes,
+    size: MESSAGES.logoSize,
+  });
 }
 
 // Empty clears the setting; anything else must be one plain address (it goes into the Reply-To header)
@@ -78,6 +89,7 @@ module.exports = {
   MAX_LOGO_BYTES,
   validateSystemName,
   parseLogo,
+  parseRasterDataUrl,
   validateSupportEmail,
   validateOrgFooter,
 };

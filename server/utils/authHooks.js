@@ -6,6 +6,16 @@ const { CONSENT_VERSION } = require("../config/constants");
 const { logActivity, logError } = require("./logger");
 const alertMonitorService = require("../services/alertMonitorService");
 const { sendAccountNotice } = require("../services/accountNoticeService");
+const { parseRasterDataUrl } = require("./branding");
+
+// ProfileAvatar sends a canvas-encoded JPEG of at most 150 px (a few KB); 100 KB leaves headroom
+const MAX_AVATAR_BYTES = 100 * 1024;
+const AVATAR_MESSAGES = {
+  svg: "SVG profile pictures aren't accepted. Use PNG, JPG or WEBP.",
+  format: "Profile picture must be a PNG, JPG or WEBP image.",
+  bytes: "The file isn't a valid PNG, JPG or WEBP image.",
+  size: "Profile picture is too large. Maximum size is 100 KB.",
+};
 
 const SESSION_LIMITS = {
   resident: 5,
@@ -41,6 +51,17 @@ const securityHooksPlugin = () => {
             }
             // Ignore a caller-supplied display name; derive it on the server.
             return { context: { body: { ...body, ...data } } };
+          }),
+        },
+        {
+          // Google's https picture is stored by the OAuth callback, not through these paths
+          matcher(context) {
+            return context.path === "/sign-up/email" || context.path === "/update-user";
+          },
+          handler: createAuthMiddleware(async (ctx) => {
+            if (!Object.hasOwn(ctx.body || {}, "image")) return;
+            const { error } = parseRasterDataUrl(ctx.body.image, MAX_AVATAR_BYTES, AVATAR_MESSAGES);
+            if (error) throw new APIError("BAD_REQUEST", { code: "INVALID_AVATAR", message: error });
           }),
         },
         {
