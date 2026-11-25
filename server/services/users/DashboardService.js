@@ -78,6 +78,7 @@ class DashboardService {
       };
     });
 
+    // CYCLE on each recursive CTE stops at a repeated module, so a parent_mod_id loop can't recurse forever
     const enrolledModulesQuery = await pool.query(
       `
       WITH RECURSIVE 
@@ -100,7 +101,7 @@ class DashboardService {
           p.mod_id AS root_mod_id
         FROM module_roots mr
         JOIN module_data p ON mr.parent_mod_id = p.mod_id
-      ),
+      ) CYCLE current_mod_id SET is_cycle USING path,
       resolved_roots AS (
         SELECT DISTINCT ON (enrolled_mod_id)
           enrolled_mod_id,
@@ -125,7 +126,7 @@ class DashboardService {
           c.status AS descendant_status
         FROM module_descendants md_sub
         JOIN module_data c ON c.parent_mod_id = md_sub.descendant_mod_id
-      )
+      ) CYCLE descendant_mod_id SET is_cycle USING path
       SELECT 
         md.mod_id as id, 
         md.modname as title, 

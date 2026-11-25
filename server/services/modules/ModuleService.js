@@ -113,6 +113,7 @@ class ModuleService {
   }
 
   async getAvailableModules(user_id) {
+    // CYCLE stops the walk at a repeated ancestor, so a parent_mod_id loop can't recurse forever
     const result = await pool.query(
      `WITH RECURSIVE ancestor_tree AS (
         SELECT mod_id AS descendant_id, parent_mod_id AS ancestor_id
@@ -123,7 +124,7 @@ class ModuleService {
         FROM ancestor_tree at
         JOIN public.module_data md ON at.ancestor_id = md.mod_id
         WHERE md.parent_mod_id IS NOT NULL
-      ),
+      ) CYCLE ancestor_id SET is_cycle USING path,
       ancestor_activity AS (
         SELECT 
           at.descendant_id,
