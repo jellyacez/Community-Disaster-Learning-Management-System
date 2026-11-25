@@ -124,7 +124,7 @@ async function main() {
     ["theme not in enum", { theme: "purple" }],
     ["theme as boolean", { theme: true }],
     ["lastSeenAnnouncementId as number", { lastSeenAnnouncementId: 42 }],
-    ["lastSeenAnnouncementId not digits", { lastSeenAnnouncementId: "<b>1</b>" }],
+    ["lastSeenAnnouncementId not digits", { lastSeenAnnouncementId: "12a" }],
     ["lastSeenAnnouncementId too long", { lastSeenAnnouncementId: "1".repeat(500) }],
     ["array body", [true]],
   ];
