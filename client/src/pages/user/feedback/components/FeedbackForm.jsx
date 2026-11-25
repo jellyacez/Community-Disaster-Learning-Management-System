@@ -133,6 +133,7 @@ export default function FeedbackForm({ userId, setActiveTab, onDone }) {
             type="text"
             value={formData.subject}
             onChange={handleChange}
+            maxLength={255}
             placeholder="Enter subject"
             className="w-full px-4 py-3 border border-gray-200 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
           />
@@ -151,6 +152,7 @@ export default function FeedbackForm({ userId, setActiveTab, onDone }) {
             rows={7}
             value={formData.message}
             onChange={handleChange}
+            maxLength={5000}
             placeholder="Write your feedback, concern, inquiry, or report here..."
             className="w-full px-4 py-3 border border-gray-200 rounded-2xl text-sm resize-none focus:outline-none focus:ring-2 focus:ring-red-500"
           />

@@ -180,6 +180,7 @@ export default function FeedbackTicketCard({
                   <div>
                     <textarea
                       rows={3}
+                      maxLength={5000}
                       placeholder="Write your official reply, instructions, or resolution details..."
                       value={replyText}
                       onChange={(e) => {

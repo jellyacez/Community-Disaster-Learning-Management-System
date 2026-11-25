@@ -214,6 +214,7 @@ export default function FeedbackHistoryCard({
             <div className="px-5 mt-4 pt-4 border-t border-gray-100">
               <textarea
                 rows={3}
+                maxLength={5000}
                 placeholder="Write your follow-up reply..."
                 value={replyInputs[item.id] || ""}
                 onChange={(e) => handleReplyChange(item.id, e.target.value)}
