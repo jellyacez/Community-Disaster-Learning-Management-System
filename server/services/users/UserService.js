@@ -1,5 +1,6 @@
 const pool = require("../../config/db");
 const { UNSCOPED_ACCESS_ROLES } = require("../../config/permissions");
+const { parsePaging } = require("../../utils/pagination");
 
 class UserService {
   async getProviders(userId) {
@@ -52,8 +53,8 @@ class UserService {
       throw new Error("SECURITY_FAULT: Missing or invalid adminContext. Cannot safely return users.");
     }
 
-    limit = Math.min(Math.max(parseInt(limit) || 10, 1), 100);
-    const offset = (page - 1) * limit;
+    let offset;
+    ({ page, limit, offset } = parsePaging({ page, limit }));
     const conditions = [];
     const values = [];
     let idx = 1;

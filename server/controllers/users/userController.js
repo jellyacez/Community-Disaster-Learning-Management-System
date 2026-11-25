@@ -41,8 +41,7 @@ exports.onboarding = async (req, res) => {
 
 exports.getAllUsers = async (req, res) => {
   try {
-    const page = parseInt(req.query.page) || 1;
-    const limit = Math.min(parseInt(req.query.limit) || 10, 100);
+    const { page, limit } = req.query; // parsed by UserService.getAllUsers
     const search = req.query.search || "";
     const role = req.query.role || "";
     const status = req.query.status || "";

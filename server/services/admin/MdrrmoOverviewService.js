@@ -1,4 +1,5 @@
 const pool = require("../../config/db");
+const { parsePaging } = require("../../utils/pagination");
 
 class MdrrmoOverviewService {
   async getMetrics() {
@@ -357,10 +358,8 @@ class MdrrmoOverviewService {
   }
 
   async getMunicipalCertFeed(queryParams) {
-    const { page = 1, limit = 10, search = "", barangayId = "", moduleId = "", status = "" } = queryParams;
-    const pageNum = Math.max(parseInt(page, 10) || 1, 1);
-    const limitNum = Math.min(Math.max(parseInt(limit, 10) || 10, 1), 100);
-    const offset = (pageNum - 1) * limitNum;
+    const { search = "", barangayId = "", moduleId = "", status = "" } = queryParams;
+    const { page: pageNum, limit: limitNum, offset } = parsePaging(queryParams);
 
     const conditions = ["u.archived = false", "(u.banned IS NULL OR u.banned = false)"];
     const params = [];

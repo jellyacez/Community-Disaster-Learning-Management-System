@@ -1,5 +1,6 @@
 const pool = require("../../config/db");
 const { UNSCOPED_ACCESS_ROLES } = require("../../config/permissions");
+const { parsePaging } = require("../../utils/pagination");
 
 // An urgent advisory stays pinned only while it is in effect (not expired, not lifted)
 const inEffectSql = (t) =>
@@ -8,9 +9,7 @@ const inEffectSql = (t) =>
 // @desc    Get paginated announcements: in-effect urgent advisories first, then newest first
 exports.getPaginatedAnnouncements = async (req, res) => {
   try {
-    const page = parseInt(req.query.page, 10) || 1;
-    const limit = parseInt(req.query.limit, 10) || 5;
-    const offset = (page - 1) * limit;
+    const { page, limit, offset } = parsePaging(req.query, { defaultLimit: 5, maxLimit: 100 });
 
     const isUnscoped =
       req.user && UNSCOPED_ACCESS_ROLES.includes(req.user.role);

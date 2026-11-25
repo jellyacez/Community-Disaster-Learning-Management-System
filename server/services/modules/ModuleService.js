@@ -4,6 +4,7 @@ const { generateEnrollmentCode, codesMatch } = require("../../utils/enrollmentCo
 const { UNSCOPED_ACCESS_ROLES } = require("../../config/permissions");
 const sseService = require("../notif/sseService");
 const { AppError } = require("../../utils/httpErrors");
+const { parsePaging } = require("../../utils/pagination");
 
 const MODULE_STATUSES = new Set(["draft", "pending_review", "published", "rejected", "archived"]);
 
@@ -778,9 +779,8 @@ class ModuleService {
       throw new Error("SECURITY_FAULT: Missing or invalid adminContext. Cannot safely return modules.");
     }
 
-    limit = Math.min(Math.max(parseInt(limit) || 10, 1), 100);
-    page = Math.max(parseInt(page) || 1, 1);
-    const offset = (page - 1) * limit;
+    let offset;
+    ({ page, limit, offset } = parsePaging({ page, limit }));
     const conditions = [];
     const values = [];
     let idx = 1;

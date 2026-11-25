@@ -1,12 +1,11 @@
 const pool = require("../../config/db");
 const logger = require("../../utils/logger");
+const { parsePaging } = require("../../utils/pagination");
 
 class ActivityLogService {
   /** Leaves out super_admin events so lower-tier admins never see them. */
   async getActivityLog(queryParams) {
-    const page = parseInt(queryParams.page, 10) || 1;
-    const limit = Math.min(parseInt(queryParams.limit, 10) || 20, 100);
-    const offset = (page - 1) * limit;
+    const { page, limit, offset } = parsePaging(queryParams, { defaultLimit: 20 });
 
     const search = queryParams.search || "";
     const role = queryParams.role || "";
@@ -145,9 +144,7 @@ class ActivityLogService {
 
   /** Leaves out system_admin and super_admin events. */
   async getMdrrmoActivityLog(queryParams) {
-    const page = parseInt(queryParams.page, 10) || 1;
-    const limit = Math.min(parseInt(queryParams.limit, 10) || 20, 100);
-    const offset = (page - 1) * limit;
+    const { page, limit, offset } = parsePaging(queryParams, { defaultLimit: 20 });
 
     const search = queryParams.search || "";
     const role = queryParams.role || "";
@@ -272,9 +269,7 @@ class ActivityLogService {
 
   /** Unfiltered audit trail across every role, with search and role filters. */
   async getSuperAdminActivityLog(queryParams) {
-    const page = parseInt(queryParams.page, 10) || 1;
-    const limit = Math.min(parseInt(queryParams.limit, 10) || 20, 100);
-    const offset = (page - 1) * limit;
+    const { page, limit, offset } = parsePaging(queryParams, { defaultLimit: 20 });
 
     const search = queryParams.search || "";
     const role = queryParams.role || "";

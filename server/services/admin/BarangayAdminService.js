@@ -1,5 +1,6 @@
 const pool = require("../../config/db");
 const { cleanRichText } = require("../../utils/sanitizeHtml");
+const { parsePaging } = require("../../utils/pagination");
 
 class BarangayAdminService {
   async getBarangayAnalytics(barangayId) {
@@ -159,12 +160,7 @@ class BarangayAdminService {
   }
 
   async getBarangayActivityLog(barangayId, queryParams) {
-    const page = parseInt(queryParams.page, 10) || 1;
-    const limit = Math.min(
-      Math.max(parseInt(queryParams.limit, 10) || 50, 1),
-      100
-    );
-    const offset = (page - 1) * limit;
+    const { page, limit, offset } = parsePaging(queryParams, { defaultLimit: 50 });
 
     const search = queryParams.search || "";
     const action = queryParams.action || "";
@@ -243,11 +239,8 @@ class BarangayAdminService {
   }
 
   async getBarangayCertifications(barangayId, queryParams) {
-    const { page = 1, limit = 10, search = "", moduleId = "", status = "" } =
-      queryParams;
-    const pageNum = Math.max(parseInt(page, 10) || 1, 1);
-    const limitNum = Math.min(Math.max(parseInt(limit, 10) || 10, 1), 100);
-    const offset = (pageNum - 1) * limitNum;
+    const { search = "", moduleId = "", status = "" } = queryParams;
+    const { page: pageNum, limit: limitNum, offset } = parsePaging(queryParams);
 
     const summaryQuery = `
       WITH scoped_certs AS (

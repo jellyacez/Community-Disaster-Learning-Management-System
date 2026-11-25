@@ -1,5 +1,6 @@
 const pool = require("../../config/db");
 const { notifyUser } = require("../notif/userNotificationService");
+const { parsePaging } = require("../../utils/pagination");
 
 class FeedbackService {
   async getUserFeedbacks(userId) {
@@ -221,8 +222,7 @@ class FeedbackService {
     };
     const orderBy = Object.hasOwn(ORDER_BY, queryParams.sort) ? ORDER_BY[queryParams.sort] : ORDER_BY.newest;
 
-    const limit = Math.min(Math.max(parseInt(queryParams.limit, 10) || 10, 1), 50);
-    const page = Math.max(parseInt(queryParams.page, 10) || 1, 1);
+    const { page, limit, offset } = parsePaging(queryParams, { maxLimit: 50 });
 
     const totalResult = await pool.query(
       `SELECT COUNT(*) FROM public.feedbacks f INNER JOIN public."user" u ON f.user_id = u.id${listWhere}`,
@@ -232,7 +232,7 @@ class FeedbackService {
 
     const { rows } = await pool.query(
       `${query}${listWhere} ORDER BY ${orderBy} LIMIT $${listParams.length + 1} OFFSET $${listParams.length + 2}`,
-      [...listParams, limit, (page - 1) * limit]
+      [...listParams, limit, offset]
     );
 
     return {
