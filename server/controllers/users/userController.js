@@ -2,6 +2,7 @@ const pool = require("../../config/db");
 const UserService = require("../../services/users/UserService");
 const { logActivity } = require("../../utils/logger");
 const { sendAccountNotice } = require("../../services/accountNoticeService");
+const { respondWithError } = require("../../utils/httpErrors");
 
 exports.getProviders = async (req, res) => {
   try {
@@ -148,8 +149,7 @@ exports.updateUserSettings = async (req, res) => {
     );
     res.json({ success: true, settings });
   } catch (err) {
-    console.error("Error updating settings:", err.message);
-    res.status(500).json({ success: false, message: "Failed to update settings." });
+    respondWithError(res, err, { event: "USER_SETTINGS_UPDATE_FAILED", fallback: "Failed to update settings." });
   }
 };
 

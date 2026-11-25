@@ -1,6 +1,23 @@
 const pool = require("../../config/db");
 const { UNSCOPED_ACCESS_ROLES } = require("../../config/permissions");
 const { parsePaging } = require("../../utils/pagination");
+const { AppError } = require("../../utils/httpErrors");
+
+// The settings keys the client writes, with their exact types (P5-12, M5)
+const DEFAULT_SETTINGS = { announcements: true, reminders: true };
+const SETTINGS_RULES = {
+  announcements: { valid: (v) => typeof v === "boolean", message: "must be true or false" },
+  reminders: { valid: (v) => typeof v === "boolean", message: "must be true or false" },
+  theme: { valid: (v) => ["light", "dark", "system"].includes(v), message: "must be light, dark or system" },
+  // NotificationDropdown stores String(announcement id); ids are int4
+  lastSeenAnnouncementId: { valid: (v) => typeof v === "string" && /^\d{1,10}$/.test(v), message: "must be an announcement id" },
+};
+
+// Known keys with valid values only, so legacy junk in a stored row is neither served nor kept
+const knownSettings = (settings) =>
+  Object.fromEntries(
+    Object.entries(settings || {}).filter(([key, value]) => Object.hasOwn(SETTINGS_RULES, key) && SETTINGS_RULES[key].valid(value))
+  );
 
 class UserService {
   async getProviders(userId) {
@@ -278,13 +295,21 @@ class UserService {
   async getUserSettings(userId) {
     const { rows } = await pool.query('SELECT settings FROM "user" WHERE id = $1', [userId]);
     if (rows.length === 0) throw new Error("NOT_FOUND");
-    return rows[0].settings || { announcements: true, reminders: true };
+    return { ...DEFAULT_SETTINGS, ...knownSettings(rows[0].settings) };
   }
 
   async updateUserSettings(userId, newSettings) {
+    if (!newSettings || typeof newSettings !== "object" || Array.isArray(newSettings)) {
+      throw new AppError("Settings must be an object.", 400);
+    }
+    for (const [key, value] of Object.entries(newSettings)) {
+      if (!Object.hasOwn(SETTINGS_RULES, key)) throw new AppError(`Unknown setting "${key.slice(0, 50)}".`, 400);
+      if (!SETTINGS_RULES[key].valid(value)) throw new AppError(`Setting "${key}" ${SETTINGS_RULES[key].message}.`, 400);
+    }
+
     const { rows } = await pool.query('SELECT settings FROM "user" WHERE id = $1', [userId]);
-    const currentSettings = (rows.length > 0 && rows[0].settings) ? rows[0].settings : { announcements: true, reminders: true };
-    
+    const currentSettings = (rows.length > 0 && rows[0].settings) ? knownSettings(rows[0].settings) : DEFAULT_SETTINGS;
+
     const safeSettings = {
       ...currentSettings,
       ...newSettings
