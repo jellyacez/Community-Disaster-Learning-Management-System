@@ -4,6 +4,7 @@ import { authClient } from "../lib/auth-client";
 import { API_BASE_URL } from "../lib/apiClient";
 import { invalidateAnnouncementQueries } from "./useLiftAnnouncement";
 import { EMERGENCY_CONTACTS_KEY, noteEmergencyContactsVersion } from "./useEmergencyContacts";
+import { BRANDING_KEY, noteBrandingVersion } from "./useBranding";
 
 export function useRealtimeEvents() {
   const queryClient = useQueryClient();
@@ -39,6 +40,16 @@ export function useRealtimeEvents() {
       } catch { /* refetch without the version */ }
       queryClient.invalidateQueries({ queryKey: EMERGENCY_CONTACTS_KEY });
       queryClient.invalidateQueries({ queryKey: ["adminEmergencyContacts"] });
+    });
+
+    // An admin saved the system name or logo: refetch past the browser's 60 s copy
+    eventSource.addEventListener("BRANDING_UPDATED", (e) => {
+      try {
+        noteBrandingVersion(JSON.parse(e.data).version);
+      } catch { /* refetch without the version */ }
+      queryClient.invalidateQueries({ queryKey: BRANDING_KEY, exact: true });
+      queryClient.invalidateQueries({ queryKey: ["systemLogo"] });
+      queryClient.invalidateQueries({ queryKey: ["systemSettings"] });
     });
 
     eventSource.addEventListener("NEW_FEEDBACK_TICKET", () => {

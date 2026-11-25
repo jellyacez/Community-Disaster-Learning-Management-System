@@ -42,7 +42,7 @@ const MdrrmoEnrollmentTrendChart = lazy(() =>
 );
 
 export default function Overview() {
-  useDocumentTitle("MDRRMO Overview | Admin Console");
+  useDocumentTitle("MDRRMO Overview");
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [statusFilter, setStatusFilter] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);

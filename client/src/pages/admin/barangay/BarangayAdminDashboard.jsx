@@ -2,7 +2,7 @@ import { Outlet } from "react-router-dom";
 import useDocumentTitle from "../../../hooks/useDocumentTitle";
 
 export default function BarangayAdminDashboard() {
-  useDocumentTitle("Barangay Admin | DRRM Portal");
+  useDocumentTitle("Barangay Admin");
 
   return (
     <div className="w-full h-full font-sans">

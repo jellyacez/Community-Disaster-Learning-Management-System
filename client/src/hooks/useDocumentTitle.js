@@ -1,7 +1,11 @@
 import { useEffect } from "react";
+import { useBranding } from "./useBranding";
 
-export default function useDocumentTitle(title) {
+// "<page> | <system name>". Before branding is known on a first visit, the page part alone.
+export default function useDocumentTitle(page) {
+  const { name } = useBranding();
+  const title = name ? (page ? `${page} | ${name}` : name) : page;
   useEffect(() => {
-    document.title = title;
+    if (title) document.title = title;
   }, [title]);
 }

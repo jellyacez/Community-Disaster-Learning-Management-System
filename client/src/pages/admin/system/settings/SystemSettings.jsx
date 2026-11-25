@@ -20,7 +20,7 @@ import ConfirmationModal from "../../../../components/ui/modals/ConfirmationModa
 import { useTheme } from "../../../../hooks/context/themeContext";
 
 export default function SystemSettings() {
-  useDocumentTitle("System Settings | Admin Console");
+  useDocumentTitle("System Settings");
   const queryClient = useQueryClient();
   const { themeMode, setTheme } = useTheme();
 

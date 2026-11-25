@@ -13,7 +13,7 @@ import { SkeletonChart } from "../../../../components/ui/Skeleton";
 const SectorCategoryChart = lazy(() => import("./components/SectorCategoryChart"));
 
 export default function SectorOverview() {
-  useDocumentTitle("Sector Overview | Admin Console");
+  useDocumentTitle("Sector Overview");
 
   const [selectedBarangayId, setSelectedBarangayId] = useState(null);
 

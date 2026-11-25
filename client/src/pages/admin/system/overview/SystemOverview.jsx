@@ -26,7 +26,7 @@ function formatUptime(seconds) {
 }
 
 export default function SystemOverview() {
-  useDocumentTitle("System Overview | Admin Console");
+  useDocumentTitle("System Overview");
   const [isAnnouncementModalOpen, setIsAnnouncementModalOpen] = useState(false);
 
   const { data: statsData, isLoading: statsLoading } = useQuery({

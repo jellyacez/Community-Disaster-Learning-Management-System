@@ -7,7 +7,7 @@ import { useActiveAdvisories } from "../hooks/useActiveAdvisories";
 import InEffectNow from "./InEffectNow";
 
 export default function UserAnnouncements() {
-  useDocumentTitle("Announcements | Bacolor Disaster LMS");
+  useDocumentTitle("Announcements");
 
   const {
     announcements,

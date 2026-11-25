@@ -1,6 +1,8 @@
 import { useState, useRef, useEffect } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import LogoutModal from "../ui/modals/LogoutModal";
+import { useBranding } from "../../hooks/useBranding";
+import BrandMark, { BrandName } from "../ui/BrandMark";
 import {
   Home01Icon,
   Megaphone01Icon,
@@ -9,7 +11,6 @@ import {
   Settings01Icon,
   Logout01Icon,
   ArrowRight01Icon,
-  Shield01Icon,
   Cancel01Icon,
   Certificate02Icon,
   Message01Icon,
@@ -68,6 +69,7 @@ export default function UserSidebar({
   sidebarOpen,
   setSidebarOpen,
 }) {
+  const brand = useBranding();
   const location = useLocation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -166,17 +168,11 @@ export default function UserSidebar({
         }`}
       >
         <div className="flex items-center justify-between border-b border-gray-200 dark:border-slate-800 px-6 py-5">
-          <div className="flex items-center gap-3">
-            <div className="rounded-xl bg-red-600 p-2.5 text-white">
-              <HugeiconsIcon
-                aria-hidden="true"
-                icon={Shield01Icon}
-                className="w-5 h-5"
-              />
-            </div>
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-slate-400">
-                Bacolor Disaster LMS
+          <div className="flex items-center gap-3 min-w-0">
+            <BrandMark logoSrc={brand.logoSrc} pending={brand.logoPending} />
+            <div className="min-w-0">
+              <p className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-slate-400 line-clamp-2 break-words">
+                <BrandName name={brand.name} />
               </p>
               <h2 className="text-lg font-extrabold text-gray-900 dark:text-white">
                 User Portal

@@ -283,7 +283,7 @@ function AdminTwoFactorStatus({ session }) {
 }
 
 export default function AdminSettings() {
-  useDocumentTitle("Settings | DRRM Portal");
+  useDocumentTitle("Settings");
   const { data: session } = authClient.useSession();
   const mfaEnabled = useMfaEnabled();
 

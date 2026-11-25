@@ -19,7 +19,7 @@ import LandingFooter from "../../components/ui/landing/LandingFooter";
 import LandingFAQ from "../../components/ui/landing/LandingFAQ";
 
 export default function LandingPage() {
-  useDocumentTitle("Home | Bacolor Disaster LMS");
+  useDocumentTitle("Home");
   const navigate = useNavigate();
   const reduceMotion = useReducedMotion();
   const { data: session, isPending } = authClient.useSession();

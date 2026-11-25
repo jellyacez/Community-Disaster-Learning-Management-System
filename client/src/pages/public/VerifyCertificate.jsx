@@ -69,7 +69,7 @@ const UNKNOWN_STATE = {
 };
 
 export default function VerifyCertificate() {
-  useDocumentTitle("Verify Certificate | Bacolor Disaster LMS");
+  useDocumentTitle("Verify Certificate");
   const [searchParams, setSearchParams] = useSearchParams();
   const [tokenInput, setTokenInput] = useState(searchParams.get("token") || "");
   const [submittedToken, setSubmittedToken] = useState(

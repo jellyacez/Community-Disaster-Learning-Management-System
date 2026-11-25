@@ -8,10 +8,12 @@ import { clearLocalUserData } from "../../lib/offlineContent";
 import { useNavigate, Link } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import useDocumentTitle from "../../hooks/useDocumentTitle";
+import { useBranding } from "../../hooks/useBranding";
 import toast from "react-hot-toast";
 
 export default function MaintenancePage() {
-  useDocumentTitle("System Maintenance | DRRM Portal");
+  useDocumentTitle("System Maintenance");
+  const brand = useBranding();
   const navigate = useNavigate();
   const [isChecking, setIsChecking] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
@@ -86,7 +88,7 @@ export default function MaintenancePage() {
         </h1>
         
         <p className="text-base text-gray-600 mb-8 leading-relaxed">
-          Bacolor Disaster LMS is currently undergoing scheduled maintenance to improve performance and security. We'll be back online shortly.
+          {brand.name ?? "The system"} is currently undergoing scheduled maintenance to improve performance and security. We'll be back online shortly.
         </p>
 
         <div className="space-y-4">

@@ -9,7 +9,7 @@ import ActivityLogFilters from "../../../../components/ui/logs/ActivityLogFilter
 import ActivityLogTable from "../../../../components/ui/logs/ActivityLogTable";
 
 export default function SystemLogs() {
-  useDocumentTitle("System Web Logs Audit Trail | Barangay Admin");
+  useDocumentTitle("System Web Logs Audit Trail");
 
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounce(search, 350);

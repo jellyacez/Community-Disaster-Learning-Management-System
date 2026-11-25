@@ -5,12 +5,15 @@ import { Menu01Icon, Sun01Icon, Moon02Icon } from "@hugeicons/core-free-icons";
 import AdminSidebar from "./AdminSidebar";
 import CriticalAlertBanner from "./CriticalAlertBanner";
 import AdminNotificationBell from "./AdminNotificationBell";
+import { useBranding } from "../../hooks/useBranding";
+import BrandMark from "../ui/BrandMark";
 
 import { authClient } from "../../lib/auth-client";
 import { useTheme } from "../../hooks/context/themeContext";
 import SuperBarangayScopeModal from "../admin/SuperBarangayScopeModal";
 
 export default function AdminLayout() {
+  const brand = useBranding();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { data: session } = authClient.useSession();
   const { pathname } = useLocation();
@@ -56,7 +59,10 @@ export default function AdminLayout() {
             >
               <HugeiconsIcon icon={Menu01Icon} className="w-6 h-6" />
             </button>
-            <span className="font-bold text-gray-900 dark:text-white">Admin Portal</span>
+            <span className="flex items-center gap-2 font-bold text-gray-900 dark:text-white">
+              <BrandMark logoSrc={brand.logoSrc} pending={brand.logoPending} size="sm" />
+              Admin Portal
+            </span>
             <div className="flex items-center gap-1">
             <AdminNotificationBell buttonClassName="text-gray-500 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-800 focus:ring-red-500" />
             <button

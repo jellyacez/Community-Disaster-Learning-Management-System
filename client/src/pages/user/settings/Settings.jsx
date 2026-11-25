@@ -12,7 +12,7 @@ import HelpSupport from "../../../components/settings/HelpSupport";
 import LoginHistory from "../../../components/settings/LoginHistory";
 
 export default function UserSettings() {
-  useDocumentTitle("Settings | Bacolor Disaster LMS");
+  useDocumentTitle("Settings");
   const { currentUser } = useOutletContext();
   const mfaEnabled = useMfaEnabled();
 

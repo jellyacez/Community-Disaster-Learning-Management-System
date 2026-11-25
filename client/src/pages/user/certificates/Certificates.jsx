@@ -16,7 +16,7 @@ import CertificateCard from "../../../components/ui/certificates/CertificateCard
 import { SkeletonBlock } from "../../../components/ui/Skeleton";
 
 export default function UserCertificates() {
-  useDocumentTitle("My Certificates | Bacolor Disaster LMS");
+  useDocumentTitle("My Certificates");
   const [infoDismissed, setInfoDismissed] = useState(false);
 
   const {data: session} = useOfflineSession();

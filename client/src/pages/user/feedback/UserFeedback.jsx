@@ -7,7 +7,7 @@ import FeedbackForm from "./components/FeedbackForm";
 import FeedbackHistory from "./components/FeedbackHistory";
 
 export default function UserFeedback() {
-  useDocumentTitle("Feedback | Bacolor Disaster LMS");
+  useDocumentTitle("Feedback");
 
   const { data: session } = authClient.useSession();
   const userId = session?.user?.id;

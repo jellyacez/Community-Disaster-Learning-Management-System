@@ -20,7 +20,7 @@ import ConfirmationModal from "../../../../components/ui/modals/ConfirmationModa
 import { SkeletonModuleCard } from "../../../../components/ui/Skeleton";
 
 export default function AdminModuleApprovals() {
-  useDocumentTitle("Module Approvals | Bacolor Disaster LMS Admin");
+  useDocumentTitle("Module Approvals");
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const { data: session } = authClient.useSession();

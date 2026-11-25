@@ -9,7 +9,7 @@ import ActivityLogFilters from "../../../../components/ui/logs/ActivityLogFilter
 import ActivityLogTable from "../../../../components/ui/logs/ActivityLogTable";
 
 export default function ActivityLog() {
-  useDocumentTitle("Activity & Monitoring Logs | Admin Console");
+  useDocumentTitle("Activity & Monitoring Logs");
 
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounce(search, 350);

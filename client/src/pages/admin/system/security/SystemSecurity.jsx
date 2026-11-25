@@ -3,7 +3,7 @@ import IPBlocklistPanel from "../settings/components/IPBlocklistPanel";
 import GlobalSessionControlPanel from "./components/GlobalSessionControlPanel";
 
 export default function SystemSecurity() {
-  useDocumentTitle("Security | Admin Console");
+  useDocumentTitle("Security");
 
   return (
     <div className="max-w-7xl mx-auto animate-in fade-in duration-150 px-6 md:px-12 pt-2 md:pt-2 pb-12 space-y-6">

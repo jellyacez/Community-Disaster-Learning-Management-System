@@ -8,7 +8,7 @@ import { clearAuthNotice } from "../../lib/authNotices";
 import { useQueryClient } from "@tanstack/react-query";
 
 export default function AdminMfaSetupPage() {
-  useDocumentTitle("Admin MFA Setup | Bacolor Disaster LMS");
+  useDocumentTitle("Admin MFA Setup");
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { data: session } = authClient.useSession();

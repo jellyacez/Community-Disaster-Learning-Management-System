@@ -6,6 +6,7 @@ import toast from "react-hot-toast";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
 import apiClient from "../../../lib/apiClient";
 import { authClient } from "../../../lib/auth-client";
+import { useBranding } from "../../../hooks/useBranding";
 
 const DEFAULT_BACOLOR_BARANGAYS = [
   { id: 1, name: "Balas" },
@@ -32,6 +33,7 @@ const DEFAULT_BACOLOR_BARANGAYS = [
 ];
 
 export default function OnboardingModal({ currentUser, onSuccess }) {
+  const brand = useBranding();
   const queryClient = useQueryClient();
   const [onboardingName, setOnboardingName] = useState(currentUser?.name || "");
   const [selectedBarangay, setSelectedBarangay] = useState(null);
@@ -191,7 +193,7 @@ export default function OnboardingModal({ currentUser, onSuccess }) {
           <HugeiconsIcon aria-hidden="true" icon={CheckmarkBadge01Icon} className="w-8 h-8 text-red-600 dark:text-red-400" />
         </div>
 
-        <h2 className="text-2xl font-black text-gray-900 dark:text-white mb-2">Welcome to Bacolor Disaster LMS!</h2>
+        <h2 className="text-2xl font-black text-gray-900 dark:text-white mb-2">{brand.name ? `Welcome to ${brand.name}!` : "Welcome!"}</h2>
         <p className="text-gray-500 dark:text-slate-400 mb-6">
           Please confirm your profile details and barangay assignment before accessing your dashboard.
         </p>

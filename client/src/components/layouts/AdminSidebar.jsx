@@ -11,6 +11,8 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import { Cancel01Icon, Logout01Icon, ArrowRight01Icon, ArrowDown01Icon } from "@hugeicons/core-free-icons";
 import { ROLE_BASED_LINKS } from "../../constants/adminNavLinks";
 import useDocumentTitle from "../../hooks/useDocumentTitle";
+import { useBranding } from "../../hooks/useBranding";
+import BrandMark, { BrandName } from "../ui/BrandMark";
 import { useTheme } from "../../hooks/context/themeContext";
 
 const ROLE_DISPLAY_NAMES = {
@@ -23,6 +25,7 @@ const ROLE_DISPLAY_NAMES = {
 };
 
 export default function AdminSidebar({ sidebarOpen, setSidebarOpen }) {
+  const brand = useBranding();
   const { data: session } = authClient.useSession();
   const location = useLocation();
   const navigate = useNavigate();
@@ -52,7 +55,7 @@ export default function AdminSidebar({ sidebarOpen, setSidebarOpen }) {
     (link) => location.pathname === link.path || location.pathname.startsWith(`${link.path}/`)
   );
 
-  useDocumentTitle(activeLink ? `${activeLink.name} | DRRM Bacolor` : "Admin Portal | DRRM Bacolor");
+  useDocumentTitle(activeLink ? activeLink.name : "Admin Portal");
 
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
   const { resetTheme } = useTheme();
@@ -98,8 +101,16 @@ export default function AdminSidebar({ sidebarOpen, setSidebarOpen }) {
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         } flex flex-col`}
       >
-        <div className="h-16 flex items-center justify-between px-6 border-b border-red-800 bg-red-700">
-          <span className="text-white font-bold text-xl tracking-tight">Admin Portal</span>
+        <div className="h-16 flex items-center justify-between gap-2 px-4 border-b border-red-800 bg-red-700">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <BrandMark logoSrc={brand.logoSrc} pending={brand.logoPending} size="sm" />
+            <div className="min-w-0 leading-tight">
+              <p className="text-[11px] font-semibold text-red-100 truncate" title={brand.name ?? undefined}>
+                <BrandName name={brand.name} />
+              </p>
+              <p className="text-white font-bold text-lg tracking-tight">Admin Portal</p>
+            </div>
+          </div>
           <div className="hidden lg:block">
             <AdminNotificationBell buttonClassName="text-white/80 hover:text-white hover:bg-red-800" />
           </div>

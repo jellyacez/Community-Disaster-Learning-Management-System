@@ -16,7 +16,7 @@ import UserTable from "./components/UserTable";
 import { useUserManagement } from "./hooks/useUserManagement";
 
 export default function UserManagement() {
-  useDocumentTitle("User Management | Admin Console");
+  useDocumentTitle("User Management");
   const { state, actions } = useUserManagement();
   const { data: session } = authClient.useSession();
 

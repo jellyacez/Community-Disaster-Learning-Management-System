@@ -50,7 +50,7 @@ function lastSaved(contacts) {
 }
 
 export default function EmergencyContactsManager() {
-  useDocumentTitle("Emergency Hotlines | Admin Console");
+  useDocumentTitle("Emergency Hotlines");
   const [editorKey, setEditorKey] = useState(0);
   const { data, isPending, isError, refetch } = useQuery({
     queryKey: ADMIN_KEY,

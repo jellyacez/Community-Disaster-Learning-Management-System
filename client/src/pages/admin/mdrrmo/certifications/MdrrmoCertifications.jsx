@@ -15,7 +15,7 @@ import { SkeletonChart } from "../../../../components/ui/Skeleton";
 const ModulePopularityChart = lazy(() => import("./components/ModulePopularityChart"));
 
 export default function MdrrmoCertifications() {
-  useDocumentTitle("Municipal Certification Analytics | MDRRMO Admin");
+  useDocumentTitle("Municipal Certification Analytics");
 
   const {
     data: analyticsData,

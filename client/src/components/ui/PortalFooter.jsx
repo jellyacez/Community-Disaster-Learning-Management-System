@@ -1,17 +1,20 @@
 import { useEmergencyContacts } from "../../hooks/useEmergencyContacts";
 import HotlineEntry from "./HotlineEntry";
+import { useBranding } from "../../hooks/useBranding";
+import { BrandName } from "./BrandMark";
 
 export default function PortalFooter() {
+  const brand = useBranding();
   const contacts = useEmergencyContacts().contacts.slice(0, 2);
   return (
     <footer className="shrink-0 w-full max-w-full bg-white dark:bg-slate-900 border-t border-gray-200/80 dark:border-slate-800 px-4 sm:px-6 lg:px-8 py-3 sm:py-3.5 z-20">
       <div className="flex flex-col lg:flex-row items-center justify-between gap-2 lg:gap-4 text-[11px] sm:text-xs text-gray-500 dark:text-slate-400 font-medium">
 
         <div className="flex flex-col sm:flex-row flex-wrap items-center justify-center lg:justify-start gap-x-2.5 gap-y-1 text-center sm:text-left min-w-0">
-          <div className="flex items-center gap-1.5 whitespace-nowrap shrink-0">
+          <div className="flex items-center gap-1.5 min-w-0 max-w-full">
             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
-            <span className="font-bold text-gray-800 dark:text-slate-200">
-              Bacolor Disaster LMS
+            <span className="font-bold text-gray-800 dark:text-slate-200 truncate">
+              <BrandName name={brand.name} />
             </span>
           </div>
           <span className="hidden sm:inline text-gray-300 dark:text-slate-700 select-none">

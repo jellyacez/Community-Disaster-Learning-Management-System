@@ -22,7 +22,7 @@ const isCompleted = (m) => m.status === "Completed" || m.progress === 100;
 const isInProgress = (m) => !isCompleted(m) && canResumeEnrollment(m);
 
 export default function UserEnrolledModules() {
-  useDocumentTitle("Enrolled Modules | Bacolor Disaster LMS");
+  useDocumentTitle("Enrolled Modules");
 
   const [searchInput, setSearchInput] = useState("");
   const [activeTab, setActiveTab] = useState("in_progress");

@@ -1,6 +1,8 @@
 import { Link } from "react-router-dom";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { ArrowLeft01Icon, Shield01Icon } from "@hugeicons/core-free-icons";
+import { ArrowLeft01Icon } from "@hugeicons/core-free-icons";
+import { useBranding } from "../../hooks/useBranding";
+import BrandMark, { BrandName } from "../ui/BrandMark";
 
 // Back sits top-left where people look for it, in gray so red stays reserved for the main action
 const backLinkClass =
@@ -15,6 +17,7 @@ export default function AuthLayout({
   backText = "Back to home",
   onBackClick,
 }) {
+  const brand = useBranding();
   return (
     <main className="min-h-screen bg-gray-50 dark:bg-slate-950 flex items-center justify-center px-4 py-10 transition-colors">
       <div className="auth-isolated w-full max-w-md bg-white rounded-2xl shadow-xl border border-gray-100 dark:border-slate-800 px-5 py-7 sm:p-8">
@@ -32,15 +35,13 @@ export default function AuthLayout({
 
         <Link
           to="/"
-          aria-label="Bacolor Disaster LMS — home"
+          aria-label={`${brand.name ?? "Home"} — home`}
           className="mt-4 mb-8 flex w-fit min-h-11 items-center gap-3 rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-gray-900"
         >
-          <div className="w-10 h-10 rounded-xl bg-red-600 flex items-center justify-center shrink-0">
-            <HugeiconsIcon aria-hidden="true" icon={Shield01Icon} className="w-5 h-5 text-white" />
-          </div>
-          <div className="leading-tight whitespace-nowrap">
+          <BrandMark logoSrc={brand.logoSrc} pending={brand.logoPending} />
+          <div className="leading-tight min-w-0">
             <p className="text-xs text-gray-600 font-medium">Pampanga, Philippines</p>
-            <p className="text-sm font-bold text-gray-800">Bacolor Disaster LMS</p>
+            <p className="text-sm font-bold text-gray-800 line-clamp-2 break-words"><BrandName name={brand.name} /></p>
           </div>
         </Link>
 

@@ -10,7 +10,7 @@ import FeedbackFilters from "./components/FeedbackFilters";
 import FeedbackList from "./components/FeedbackList";
 
 export default function AdminFeedbackManager() {
-  useDocumentTitle("Feedback Management | Bacolor Disaster LMS Admin");
+  useDocumentTitle("Feedback Management");
 
   const { data: session } = authClient.useSession();
   const adminId = session?.user?.id;

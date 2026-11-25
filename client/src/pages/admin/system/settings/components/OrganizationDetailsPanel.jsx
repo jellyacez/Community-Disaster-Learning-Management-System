@@ -30,8 +30,8 @@ export default function OrganizationDetailsPanel({ settingsData }) {
       toast.success("Organization details updated successfully!");
       queryClient.invalidateQueries({ queryKey: ["systemSettings"] });
     },
-    onError: () => {
-      toast.error("Failed to update organization details.");
+    onError: (err) => {
+      toast.error(err.response?.data?.message || "Failed to update organization details.");
     },
   });
 
@@ -60,16 +60,19 @@ export default function OrganizationDetailsPanel({ settingsData }) {
 
       <form onSubmit={handleSubmit} className="p-6 space-y-5">
         <div>
-          <label className="block text-sm font-semibold text-gray-900 dark:text-white mb-1">
-            Public Support Email
+          <label htmlFor="support_email" className="block text-sm font-semibold text-gray-900 dark:text-white mb-1">
+            Support Email
           </label>
-          <p className="text-xs text-gray-500 dark:text-slate-400 mb-2">
-            The email address displayed to users for inquiries and support.
+          <p id="support_email_help" className="text-xs text-gray-500 dark:text-slate-400 mb-2">
+            Replies to system emails go to this address and account notices list it. Emails are still sent from the system mailbox.
           </p>
           <div className="relative">
             <HugeiconsIcon icon={Mail01Icon} className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-slate-500" />
             <input
+              id="support_email"
+              aria-describedby="support_email_help"
               type="email"
+              maxLength={254}
               value={supportEmail}
               onChange={(e) => setSupportEmail(e.target.value)}
               placeholder="e.g. support@drrmbacolor.gov.ph"
@@ -79,16 +82,19 @@ export default function OrganizationDetailsPanel({ settingsData }) {
         </div>
 
         <div>
-          <label className="block text-sm font-semibold text-gray-900 dark:text-white mb-1">
+          <label htmlFor="org_footer_text" className="block text-sm font-semibold text-gray-900 dark:text-white mb-1">
             Email Footer Text
           </label>
-          <p className="text-xs text-gray-500 dark:text-slate-400 mb-2">
+          <p id="org_footer_text_help" className="text-xs text-gray-500 dark:text-slate-400 mb-2">
             The copyright/organization name displayed at the bottom of all automated system emails.
           </p>
           <div className="relative">
             <HugeiconsIcon icon={TextFontIcon} className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-slate-500" />
             <input
+              id="org_footer_text"
+              aria-describedby="org_footer_text_help"
               type="text"
+              maxLength={200}
               value={orgFooterText}
               onChange={(e) => setOrgFooterText(e.target.value)}
               placeholder="e.g. Community DRRM System - Bacolor, Pampanga."

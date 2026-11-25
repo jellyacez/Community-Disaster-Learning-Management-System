@@ -5,7 +5,7 @@ import { authClient } from "../../lib/auth-client";
 import useDocumentTitle from "../../hooks/useDocumentTitle";
 
 export default function NotFoundPage() {
-  useDocumentTitle("404 Not Found | Bacolor Disaster LMS");
+  useDocumentTitle("404 Not Found");
 
   const { data: session } = authClient.useSession();
   const role = session?.user?.role;

@@ -2,7 +2,7 @@ import { Outlet } from "react-router-dom";
 import useDocumentTitle from "../../../hooks/useDocumentTitle";
 
 export default function SuperAdminRoot() {
-    useDocumentTitle("Super Admin Workspace | DRRM Portal");
+    useDocumentTitle("Super Admin Workspace");
 
 
 return (

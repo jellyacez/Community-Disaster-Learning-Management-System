@@ -1,6 +1,8 @@
 import { Link } from "react-router-dom";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { Shield01Icon, Facebook01Icon } from "@hugeicons/core-free-icons";
+import { Facebook01Icon } from "@hugeicons/core-free-icons";
+import { useBranding } from "../../../hooks/useBranding";
+import BrandMark, { BrandName } from "../BrandMark";
 import { useEmergencyContacts } from "../../../hooks/useEmergencyContacts";
 import HotlineEntry from "../HotlineEntry";
 
@@ -21,22 +23,17 @@ function groupByAgency(contacts) {
 }
 
 export default function LandingFooter() {
+  const brand = useBranding();
   const offices = groupByAgency(useEmergencyContacts().contacts);
   return (
     <footer className="bg-gray-950 text-gray-400 py-12">
       <div className="max-w-6xl mx-auto px-4">
         <div className="flex flex-col md:flex-row justify-between gap-8 mb-8">
           <div className="flex items-start gap-3">
-            <div className="w-10 h-10 rounded-xl bg-red-600 flex items-center justify-center shrink-0">
-              <HugeiconsIcon
-                aria-hidden="true"
-                icon={Shield01Icon}
-                className="w-5 h-5 text-white"
-              />
-            </div>
-            <div>
-              <p className="text-white font-bold text-sm">
-                Bacolor Disaster LMS
+            <BrandMark logoSrc={brand.logoSrc} pending={brand.logoPending} />
+            <div className="min-w-0">
+              <p className="text-white font-bold text-sm break-words">
+                <BrandName name={brand.name} />
               </p>
               <p className="text-xs mt-0.5">
                 Municipality of Bacolor, Pampanga

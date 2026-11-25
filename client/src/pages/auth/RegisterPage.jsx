@@ -4,11 +4,13 @@ import { useNavigate } from "react-router-dom";
 import { authClient } from "../../lib/auth-client";
 import apiClient from "../../lib/apiClient";
 import useDocumentTitle from "../../hooks/useDocumentTitle";
+import { useBranding } from "../../hooks/useBranding";
 import AuthLayout from "../../components/layouts/AuthLayout";
 import RegisterForm from "../../components/auth/RegisterForm";
 
 export default function RegisterPage() {
-  useDocumentTitle("Register | Bacolor Disaster LMS");
+  useDocumentTitle("Register");
+  const { name: systemName } = useBranding();
 
   const navigate = useNavigate();
   const { data: session, isPending } = authClient.useSession();
@@ -43,7 +45,7 @@ export default function RegisterPage() {
   return (
     <AuthLayout
       title="Create Account"
-      subtitle="Register to access Bacolor Disaster LMS"
+      subtitle={systemName ? `Register to access ${systemName}` : "Create your account"}
     >
       <RegisterForm />
     </AuthLayout>

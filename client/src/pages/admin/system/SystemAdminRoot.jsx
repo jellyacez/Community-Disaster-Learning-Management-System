@@ -2,7 +2,7 @@ import { Outlet, useLocation } from "react-router-dom";
 import useDocumentTitle from "../../../hooks/useDocumentTitle";
 
 export default function SystemAdminRoot() {
-  useDocumentTitle("System Administration | DRRM Portal");
+  useDocumentTitle("System Administration");
   const location = useLocation();
   const isDashboard = location.pathname === "/admin/system" || location.pathname === "/admin/system/";
 

@@ -87,7 +87,7 @@ function organizeAnnouncements(rawList = []) {
 }
 
 export default function UserDashboard() {
-  useDocumentTitle("Dashboard | Bacolor Disaster LMS");
+  useDocumentTitle("Dashboard");
   const { currentUser } = useOutletContext();
   const { data: dashboardData, isLoading: loading } = useUserDashboard(currentUser?.id);
   const location = useLocation();

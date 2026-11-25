@@ -126,7 +126,7 @@ function SelectBox({ checked, onChange, label, indeterminate = false }) {
 }
 
 export default function MdrrmoModuleRequests() {
-  useDocumentTitle("Module Requests | MDRRMO Admin");
+  useDocumentTitle("Module Requests");
 
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState("pending");

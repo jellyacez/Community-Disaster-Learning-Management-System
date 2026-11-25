@@ -10,7 +10,7 @@ import BadgesSection from "../../../components/ui/profile/BadgesSection";
 import ActivityTimeline from "../../../components/ui/profile/ActivityTimeline";
 
 export default function UserProfile() {
-  useDocumentTitle("User Profile | Bacolor Disaster LMS");
+  useDocumentTitle("User Profile");
 
   const { currentUser, userInitials } = useOutletContext();
 

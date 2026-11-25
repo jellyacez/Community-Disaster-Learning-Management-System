@@ -12,7 +12,7 @@ import InfrastructureOperationsPanel from "./components/InfrastructureOperations
 
 
 export default function SystemHealth() {
-  useDocumentTitle("System Health | Admin Console");
+  useDocumentTitle("System Health");
 
   const { data: healthData, isLoading: isHealthLoading } = useQuery({
     queryKey: ["systemHealth"],

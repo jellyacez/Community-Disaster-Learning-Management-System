@@ -14,6 +14,7 @@ import { authClient } from "../../lib/auth-client";
 import apiClient from "../../lib/apiClient";
 import { readAuthNotice, clearAuthNotice } from "../../lib/authNotices";
 import useDocumentTitle from "../../hooks/useDocumentTitle";
+import { useBranding } from "../../hooks/useBranding";
 import { useMfaEnabled } from "../../hooks/useMfaEnabled";
 import AuthLayout from "../../components/layouts/AuthLayout";
 import EmailSignInForm from "../../components/auth/EmailSignInForm";
@@ -27,7 +28,8 @@ const maskEmail = (email) => {
 };
 
 export default function SignInPage() {
-  useDocumentTitle("Sign In | Bacolor Disaster LMS");
+  useDocumentTitle("Sign In");
+  const { name: systemName } = useBranding();
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -203,7 +205,7 @@ export default function SignInPage() {
   return (
     <AuthLayout
       title="Sign In"
-      subtitle="Access your Bacolor Disaster LMS account. Barangay and MDRRMO staff will also enter a verification code."
+      subtitle={`Access your ${systemName ? `${systemName} ` : ""}account. Barangay and MDRRMO staff will also enter a verification code.`}
     >
       {signedOutAll && (
         <div
