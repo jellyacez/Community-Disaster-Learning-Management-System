@@ -5,10 +5,11 @@ const { getAdminPasswordResetEmail } = require("../../../utils/emailTemplates");
 const { getOrgSettings } = require("../../../utils/settings");
 const { generateSecurePassword } = require("../../../utils/passwordGenerator");
 const { assertCanProvision } = require("../../../config/roleHierarchy");
+const { normalizeNamePart, validateNamePart } = require("../../../utils/personName");
 
 exports.provisionAdmin = async (req, res) => {
-  const { name, email, role, barangay } = req.body;
-  let { password } = req.body;
+  const { email, role, barangay } = req.body;
+  let { name, password } = req.body;
 
   if (!name || !email || !role) {
     return res.status(400).json({
@@ -17,6 +18,13 @@ exports.provisionAdmin = async (req, res) => {
       message: "Name, email, and role are required.",
     });
   }
+
+  // The forms send one full-name field; check it with sign-up's character rule
+  const nameError = validateNamePart(name, "name");
+  if (nameError) {
+    return res.status(400).json({ success: false, error: nameError, message: nameError });
+  }
+  name = normalizeNamePart(name);
 
   const isSuperAdmin = req.user?.role === "super_admin";
 

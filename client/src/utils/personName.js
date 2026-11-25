@@ -4,7 +4,11 @@ const LABELS = {
   first_name: "First name",
   middle_name: "Middle name",
   last_name: "Last name",
+  name: "Full name",
 };
+// A single full-name field (admin provisioning) allows the longest name sign-up can derive:
+// three 100-character parts and two spaces.
+const MAX_LENGTH = { name: 302 };
 
 function normalizeNamePart(value) {
   return typeof value === "string"
@@ -24,8 +28,9 @@ function validateNamePart(value, field) {
     return field === "middle_name"
       ? null
       : `Enter your ${LABELS[field].toLowerCase()}.`;
-  if (clean.length > 100)
-    return `${LABELS[field]} must be 100 characters or fewer.`;
+  const max = MAX_LENGTH[field] ?? 100;
+  if (clean.length > max)
+    return `${LABELS[field]} must be ${max} characters or fewer.`;
   if (/\p{N}/u.test(clean)) return `${LABELS[field]} cannot contain numbers.`;
   if (!/^[\p{L}\p{M} .'’-]+$/u.test(clean) || !/\p{L}/u.test(clean)) {
     return `${LABELS[field]} can contain letters, spaces, apostrophes, hyphens and periods.`;
