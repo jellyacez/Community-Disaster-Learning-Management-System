@@ -143,3 +143,14 @@ const announcementSchema = Joi.object({
 exports.announcementSchema = announcementSchema;
 exports.URGENT_DURATION_HOURS = URGENT_DURATION_HOURS;
 exports.DEFAULT_URGENT_HOURS = DEFAULT_URGENT_HOURS;
+
+// Feedback text limits. Counted as stored: JS string length after sanitizeMiddleware stripped any
+// HTML, which is never longer than what was typed unless the text decodes into markup.
+const FEEDBACK_MAX_LENGTH = { subject: 255, message: 5000, reply: 5000 };
+const FEEDBACK_LABELS = { subject: "Subject", message: "Message", reply: "Reply" };
+
+/** The 400 message for the first of `fields` in `body` over its limit, or null. Other checks stay with the caller. */
+exports.feedbackLengthError = (body, fields) => {
+  const field = fields.find((f) => typeof body[f] === "string" && body[f].length > FEEDBACK_MAX_LENGTH[f]);
+  return field ? `${FEEDBACK_LABELS[field]} must be ${FEEDBACK_MAX_LENGTH[field]} characters or fewer.` : null;
+};

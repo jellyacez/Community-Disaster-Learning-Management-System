@@ -1,5 +1,6 @@
 const feedbackService = require("../../services/feedback/FeedbackService");
 const { logActivity } = require("../../utils/logger");
+const { feedbackLengthError } = require("../../utils/validators");
 
 // @desc    Get scoped feedback submissions for admins
 // @route   GET /api/admin/mdrrmo/feedback
@@ -49,6 +50,11 @@ exports.replyToFeedback = async (req, res) => {
     // An admin reply hands the ticket back to the resident; it can't put it back in the Pending queue
     if (!["Replied", "Closed"].includes(status)) {
       return res.status(400).json({ success: false, error: "Status must be 'Replied' or 'Closed'." });
+    }
+
+    const tooLong = feedbackLengthError(req.body, ["reply"]);
+    if (tooLong) {
+      return res.status(400).json({ success: false, error: tooLong, message: tooLong });
     }
 
     const adminContext = {

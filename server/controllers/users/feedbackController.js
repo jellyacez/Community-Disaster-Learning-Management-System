@@ -1,5 +1,6 @@
 const feedbackService = require("../../services/feedback/FeedbackService");
 const sseService = require("../../services/notif/sseService");
+const { feedbackLengthError } = require("../../utils/validators");
 
 // @route   GET /api/feedbacks/my-submissions
 exports.getFeedbacks = async (req, res) => {
@@ -22,6 +23,11 @@ exports.submitFeedback = async (req, res) => {
     const userId = req.user?.id || req.session?.user?.id;
     if (!userId) {
       return res.status(401).json({ success: false, error: "Unauthorized." });
+    }
+
+    const tooLong = feedbackLengthError(req.body, ["subject", "message"]);
+    if (tooLong) {
+      return res.status(400).json({ success: false, error: tooLong, message: tooLong });
     }
 
     const row = await feedbackService.submitFeedback(userId, req.body);
@@ -56,6 +62,11 @@ exports.userReplyToFeedback = async (req, res) => {
 
     if (!reply) {
       return res.status(400).json({ success: false, error: "Reply text is required." });
+    }
+
+    const tooLong = feedbackLengthError(req.body, ["reply"]);
+    if (tooLong) {
+      return res.status(400).json({ success: false, error: tooLong, message: tooLong });
     }
 
     const row = await feedbackService.userReplyToFeedback(userId, id, reply);
