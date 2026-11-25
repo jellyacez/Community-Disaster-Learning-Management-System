@@ -150,7 +150,7 @@ async function main() {
   const brgyAdmin = await createUser("brgy", "barangay_admin", BARANGAY_ID);
   const mdrrmoTicket = await createTicket(resident, "mdrrmo");
   const brgyTicket = await createTicket(resident, "barangay");
-  const base = { recipient: "mdrrmo", type: "Inquiry", subject: "Flood", message: "Water rising" };
+  const base = { recipient: "mdrrmo", type: "inquiry", subject: "Flood", message: "Water rising" };
 
   // POST /api/feedbacks
   await check("submit: 256-character subject is a 400 and stores nothing", async () => {
