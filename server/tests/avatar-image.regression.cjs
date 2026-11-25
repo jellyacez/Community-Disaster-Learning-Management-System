@@ -76,12 +76,23 @@ async function createUser(label, image = null) {
 }
 
 async function updateUser(user, body) {
+  await resetAuthLimiter();
   const res = await fetch(`${BASE_URL}/api/auth/update-user`, {
     method: "POST",
     headers: { "Content-Type": "application/json", Accept: "application/json", "User-Agent": UA, Origin: ORIGIN, Cookie: user.cookie },
     body: JSON.stringify(body),
   });
   return { status: res.status, body: await res.json().catch(() => null) };
+}
+
+// Each rejected call counts toward the 10-failure /api/auth limiter; clear the loopback auth_ counter
+async function resetAuthLimiter() {
+  for (const table of ["records_aggregated", "individual_records"]) {
+    await pool.query(
+      `DELETE FROM rate_limit.${table} WHERE key IN ('::/56', '::1', '127.0.0.1', '::ffff:127.0.0.1')
+         AND session_id IN (SELECT id FROM rate_limit.sessions WHERE name_ = 'auth_')`
+    );
+  }
 }
 
 async function storedImage(id) {
