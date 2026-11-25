@@ -106,13 +106,7 @@ exports.resetUserPassword = async (req, res) => {
     let emailSent = false;
     if (isGenerated) {
       try {
-        const { orgFooterText, supportEmail } = await getOrgSettings();
-        const mailOptions = getAdminPasswordResetEmail(
-          user,
-          password,
-          orgFooterText,
-          supportEmail
-        );
+        const mailOptions = getAdminPasswordResetEmail(user, password, await getOrgSettings());
         await transporter.sendMail(mailOptions);
         emailSent = true;
       } catch (mailErr) {

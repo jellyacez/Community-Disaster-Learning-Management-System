@@ -1,8 +1,11 @@
 const emailWrapper = require("./emailWrapper");
+const { withDefaults, envelope } = require("./sender");
 const { escapeHtml, frontendUrl } = require("./escape");
 
-const getRecertificationReminderEmail = (user, cert, moduleTitle, daysRemaining, orgFooterText, supportEmail) => ({
-  from: `"DRRM Bacolor Certifications" <${supportEmail || process.env.EMAIL_USER}>`,
+const getRecertificationReminderEmail = (user, cert, moduleTitle, daysRemaining, orgSettings) => {
+  const org = withDefaults(orgSettings);
+  return {
+  ...envelope(org, "Certifications"),
   to: user.email,
   subject: `Action Required: Disaster Preparedness Certification Expiring in ${daysRemaining} Days`,
   html: emailWrapper(
@@ -20,8 +23,9 @@ const getRecertificationReminderEmail = (user, cert, moduleTitle, daysRemaining,
       <p style="margin: 0; color: #991b1b; font-size: 14px; font-weight: 600;">Certificate Control No: ${escapeHtml(cert.cert_rec || "CERT-" + cert.cert_id)}</p>
     </div>
     `,
-    orgFooterText
+    org
   ),
-});
+  };
+};
 
 module.exports = getRecertificationReminderEmail;

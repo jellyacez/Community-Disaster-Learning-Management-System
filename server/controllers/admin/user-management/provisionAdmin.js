@@ -125,13 +125,7 @@ exports.provisionAdmin = async (req, res) => {
 
     if (isGenerated) {
       try {
-        const { orgFooterText, supportEmail } = await getOrgSettings();
-        const mailOptions = getAdminPasswordResetEmail(
-          { name, email },
-          password,
-          orgFooterText,
-          supportEmail
-        );
+        const mailOptions = getAdminPasswordResetEmail({ name, email }, password, await getOrgSettings());
         await transporter.sendMail(mailOptions);
         emailSent = true;
       } catch (emailError) {

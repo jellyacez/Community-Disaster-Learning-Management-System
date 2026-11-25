@@ -1,14 +1,17 @@
 const emailWrapper = require("./emailWrapper");
+const { withDefaults, envelope } = require("./sender");
 const { escapeHtml, frontendUrl } = require("./escape");
 
-const getVerificationEmail = (user, token, orgFooterText, supportEmail) => ({
-  from: `"DRRM Bacolor" <${supportEmail || process.env.EMAIL_USER}>`,
+const getVerificationEmail = (user, token, orgSettings) => {
+  const org = withDefaults(orgSettings);
+  return {
+  ...envelope(org),
   to: user.email,
-  subject: "Verify Your Email Address - DRRM Bacolor",
+  subject: `Verify Your Email Address - ${org.systemName}`,
   html: emailWrapper(
     "Verify Your Email Address",
     `
-    <h2 style="margin-top: 0; color: #18181b; font-size: 20px;">Welcome to DRRM Bacolor, ${escapeHtml(user.name)}!</h2>
+    <h2 style="margin-top: 0; color: #18181b; font-size: 20px;">Welcome to ${escapeHtml(org.systemName)}, ${escapeHtml(user.name)}!</h2>
     <p style="line-height: 1.6; font-size: 15px; color: #52525b;">We're excited to have you on board. Please verify your email address to activate your account and gain full access to the system.</p>
     
     <div style="text-align: center; margin: 35px 0;">
@@ -17,8 +20,9 @@ const getVerificationEmail = (user, token, orgFooterText, supportEmail) => ({
 
     <p style="margin-top: 25px; line-height: 1.6; font-size: 13px; color: #a1a1aa;">If you did not create this account, please ignore this email.</p>
     `,
-    orgFooterText
+    org
   ),
-});
+  };
+};
 
 module.exports = getVerificationEmail;

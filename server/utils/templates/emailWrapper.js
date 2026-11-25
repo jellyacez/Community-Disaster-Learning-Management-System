@@ -1,7 +1,10 @@
 const { escapeHtml } = require("./escape");
+const { withDefaults } = require("./sender");
 
-// `content` is HTML assembled by the templates; title and footer are text
-const emailWrapper = (title, content, orgFooterText = "Community DRRM System - Bacolor, Pampanga.") => `
+// `content` is HTML assembled by the templates; the title, system name and footer are text
+const emailWrapper = (title, content, orgSettings) => {
+  const org = withDefaults(orgSettings);
+  return `
 <!DOCTYPE html>
 <html>
 <head>
@@ -13,9 +16,9 @@ const emailWrapper = (title, content, orgFooterText = "Community DRRM System - B
   <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);">
     <!-- Header -->
     <div style="background-color: #18181b; padding: 30px; text-align: center; border-bottom: 4px solid #ef4444;">
-      <h1 style="color: #ffffff; margin: 0; font-size: 24px; font-weight: 700; letter-spacing: -0.5px;">DRRM <span style="color: #ef4444;">Bacolor</span></h1>
+      <h1 style="color: #ffffff; margin: 0; font-size: 24px; font-weight: 700; letter-spacing: -0.5px;">${escapeHtml(org.systemName)}</h1>
     </div>
-    
+
     <!-- Content -->
     <div style="padding: 40px 30px;">
       ${content}
@@ -24,15 +27,16 @@ const emailWrapper = (title, content, orgFooterText = "Community DRRM System - B
     <!-- Footer -->
     <div style="background-color: #fafafa; padding: 20px 30px; text-align: center; border-top: 1px solid #e4e4e7;">
       <p style="margin: 0; font-size: 13px; color: #71717a;">
-        &copy; ${new Date().getFullYear()} ${escapeHtml(orgFooterText)}
+        &copy; ${new Date().getFullYear()} ${escapeHtml(org.orgFooterText)}
       </p>
       <p style="margin: 5px 0 0; font-size: 12px; color: #a1a1aa;">
-        This is an automated security message. Please do not reply directly to this email.
+        This is an automated message.
       </p>
     </div>
   </div>
 </body>
 </html>
 `;
+};
 
 module.exports = emailWrapper;

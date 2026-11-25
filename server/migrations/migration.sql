@@ -106,3 +106,14 @@ CREATE TABLE IF NOT EXISTS public.user_known_devices (
   last_seen_at   timestamptz NOT NULL DEFAULT now(),
   PRIMARY KEY (user_id, browser_family, os_family)
 );
+
+-- System branding (docs/specs/branding.md). The old seed name was never shown anywhere; once the
+-- name is wired into the UI it would replace "Bacolor Disaster LMS" on every install, so it is
+-- rewritten only while it is still the untouched seed text. A name an admin saved is kept.
+UPDATE public.system_settings
+SET value = 'Bacolor Disaster LMS', updated_at = NOW()
+WHERE key = 'system_name' AND value = 'Community Disaster Learning Management System';
+
+-- Integer branding version; every saved name or logo change increments it (client cache key).
+INSERT INTO public.system_settings (key, value) VALUES ('branding_version', '1')
+ON CONFLICT (key) DO NOTHING;

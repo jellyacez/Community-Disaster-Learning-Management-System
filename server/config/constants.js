@@ -1,5 +1,9 @@
 
 module.exports = {
+  // Shown when system_name is unset or invalid; keep in step with client/src/constants/branding.js
+  DEFAULT_SYSTEM_NAME: "Bacolor Disaster LMS",
+  DEFAULT_ORG_FOOTER: "Community DRRM System - Bacolor, Pampanga.",
+
   RECERTIFICATION_INTERVAL_YEARS: 1,
 
   CONSENT_VERSION: "v1-2026",

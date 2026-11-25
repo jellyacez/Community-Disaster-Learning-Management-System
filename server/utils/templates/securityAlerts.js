@@ -1,9 +1,12 @@
 const emailWrapper = require("./emailWrapper");
+const { withDefaults, envelope } = require("./sender");
 const { escapeHtml } = require("./escape");
 const { normalizeUserAgent } = require("../userAgent");
 
-const getPasswordChangedEmail = (user, orgFooterText, supportEmail) => ({
-  from: `"DRRM Bacolor Security" <${supportEmail || process.env.EMAIL_USER}>`,
+const getPasswordChangedEmail = (user, orgSettings) => {
+  const org = withDefaults(orgSettings);
+  return {
+  ...envelope(org, "Security"),
   to: user.email,
   subject: "Security Alert: Password Changed",
   html: emailWrapper(
@@ -11,7 +14,7 @@ const getPasswordChangedEmail = (user, orgFooterText, supportEmail) => ({
     `
     <h2 style="margin-top: 0; color: #18181b; font-size: 20px;">Security Alert</h2>
     <p style="line-height: 1.6; font-size: 15px; color: #52525b;">Hello ${escapeHtml(user.name || "User")},</p>
-    <p style="line-height: 1.6; font-size: 15px; color: #52525b;">Your password for your DRRM Bacolor account was recently changed successfully.</p>
+    <p style="line-height: 1.6; font-size: 15px; color: #52525b;">Your password for your ${escapeHtml(org.systemName)} account was recently changed successfully.</p>
     
     <div style="background-color: #f3f4f6; border-left: 4px solid #3b82f6; padding: 15px; margin-top: 25px; border-radius: 0 6px 6px 0;">
       <p style="margin: 0; color: #1e3a8a; font-size: 14px;">If you made this change, you can safely ignore this email.</p>
@@ -19,9 +22,10 @@ const getPasswordChangedEmail = (user, orgFooterText, supportEmail) => ({
 
     <p style="margin-top: 25px; line-height: 1.6; font-size: 14px; color: #ef4444; font-weight: 600;">If you did not request this change, please contact an administrator immediately.</p>
     `,
-    orgFooterText
+    org
   ),
-});
+  };
+};
 
 const OS_LABELS = {
   ios: "iPhone/iPad",
@@ -48,11 +52,12 @@ const describeDevice = (userAgent) => {
   return `${BROWSER_LABELS[ua.family] || "Unknown browser"} on ${OS_LABELS[ua.os]}`;
 };
 
-const getNewDeviceLoginEmail = (user, session, orgFooterText, supportEmail) => {
+const getNewDeviceLoginEmail = (user, session, orgSettings) => {
+  const org = withDefaults(orgSettings);
   const deviceName = describeDevice(session.userAgent);
 
   return {
-    from: `"DRRM Bacolor Security" <${supportEmail || process.env.EMAIL_USER}>`,
+    ...envelope(org, "Security"),
     to: user.email,
     subject: "Security Alert: New Login Detected",
     html: emailWrapper(
@@ -71,13 +76,15 @@ const getNewDeviceLoginEmail = (user, session, orgFooterText, supportEmail) => {
       <p style="line-height: 1.6; font-size: 14px; color: #52525b;">If this was you, you can safely ignore this email.</p>
       <p style="margin-top: 15px; line-height: 1.6; font-size: 14px; color: #ef4444; font-weight: 600;">If this wasn't you, please log in immediately, go to your Settings > Active Devices to sign out the unrecognized device, and then change your password.</p>
       `,
-      orgFooterText
+      org
     ),
   };
 };
 
-const getPasswordRecoveredEmail = (user, orgFooterText, supportEmail) => ({
-  from: `"DRRM Bacolor Security" <${supportEmail || process.env.EMAIL_USER}>`,
+const getPasswordRecoveredEmail = (user, orgSettings) => {
+  const org = withDefaults(orgSettings);
+  return {
+  ...envelope(org, "Security"),
   to: user.email,
   subject: "Security Alert: Account Recovered",
   html: emailWrapper(
@@ -93,9 +100,10 @@ const getPasswordRecoveredEmail = (user, orgFooterText, supportEmail) => ({
 
     <p style="margin-top: 25px; line-height: 1.6; font-size: 14px; color: #ef4444; font-weight: 600;">If you did not request this recovery, please contact a DRRM Administrator immediately as your email inbox may be compromised.</p>
     `,
-    orgFooterText
+    org
   ),
-});
+  };
+};
 
 module.exports = {
   getPasswordChangedEmail,

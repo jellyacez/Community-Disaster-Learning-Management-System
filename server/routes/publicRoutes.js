@@ -3,6 +3,15 @@ const router = express.Router();
 const pool = require('../config/db');
 const { isMfaEnforced } = require('../config/permissions');
 const { getPublicContacts } = require('../controllers/admin/emergencyContactsController');
+const SystemSettingsService = require('../services/admin/SystemSettingsService');
+
+// Overrides the /api no-store default for responses that may be cached
+function allowCaching(res, cacheControl) {
+  res.removeHeader('Pragma');
+  res.removeHeader('Expires');
+  res.removeHeader('Surrogate-Control');
+  res.set('Cache-Control', cacheControl);
+}
 
 // in-memory cache so this public endpoint can't be used to hammer the DB
 let cachedBroadcast = null;
@@ -73,6 +82,39 @@ router.get('/auth-policy', (req, res) => {
 // @route   GET /api/public/emergency-contacts
 // @desc    Active hotlines for the landing page, footers and dashboard; sample rows have tel null
 router.get('/emergency-contacts', getPublicContacts);
+
+// @route   GET /api/public/branding
+// @desc    System name and logo URL for every page, signed in or out (docs/specs/branding.md)
+router.get('/branding', async (req, res) => {
+  try {
+    const { name, version, logo } = await SystemSettingsService.getBranding();
+    allowCaching(res, 'public, max-age=60');
+    res.json({ success: true, name, version, logo: logo ? { url: `/api/public/branding/logo?v=${version}` } : null });
+  } catch (err) {
+    console.error('Error fetching branding:', err);
+    res.status(500).json({ success: false, error: 'Server Error' });
+  }
+});
+
+// @route   GET /api/public/branding/logo
+// @desc    The validated logo bytes; immutable when ?v= names the current version
+router.get('/branding/logo', async (req, res) => {
+  try {
+    const { version, logo } = await SystemSettingsService.getBranding();
+    if (!logo) return res.status(404).json({ success: false, error: 'No logo' });
+    allowCaching(res, req.query.v === String(version) ? 'public, max-age=31536000, immutable' : 'public, max-age=60');
+    res.set({
+      'Content-Type': logo.contentType,
+      'X-Content-Type-Options': 'nosniff',
+      'Content-Security-Policy': "default-src 'none'",
+      'Content-Disposition': `inline; filename="logo.${logo.contentType.split('/')[1]}"`,
+    });
+    res.end(logo.bytes);
+  } catch (err) {
+    console.error('Error fetching branding logo:', err);
+    res.status(500).json({ success: false, error: 'Server Error' });
+  }
+});
 
 // @route   GET /api/public/barangays
 router.get('/barangays', async (req, res) => {

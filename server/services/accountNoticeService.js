@@ -18,8 +18,7 @@ const sendAccountNotice = async (userOrId, kind, details = {}) => {
     }
     if (!user?.email) return;
 
-    const { orgFooterText, supportEmail } = await getOrgSettings();
-    await transporter.sendMail(getAccountNoticeEmail(kind, user, details, orgFooterText, supportEmail));
+    await transporter.sendMail(getAccountNoticeEmail(kind, user, details, await getOrgSettings()));
   } catch (err) {
     console.error(`Account notice email (${kind}) failed:`, err.message);
   }

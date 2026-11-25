@@ -103,13 +103,7 @@ const auth = betterAuth({
     requireEmailVerification: true, // no session at sign-up or sign-in until the email is verified
     passwordResetTokenExpiresIn: 15 * 60,
     sendResetPassword: async ({ user, token }) => {
-      const { orgFooterText, supportEmail } = await getOrgSettings();
-      const mailOptions = getResetPasswordEmail(
-        user,
-        token,
-        orgFooterText,
-        supportEmail,
-      );
+      const mailOptions = getResetPasswordEmail(user, token, await getOrgSettings());
       await transporter.sendMail(mailOptions);
     },
   },
@@ -118,13 +112,7 @@ const auth = betterAuth({
     sendOnSignIn: true, // unverified sign-ins get a fresh link
     autoSignInAfterVerification: true,
     sendVerificationEmail: async ({ user, token }) => {
-      const { orgFooterText, supportEmail } = await getOrgSettings();
-      const mailOptions = getVerificationEmail(
-        user,
-        token,
-        orgFooterText,
-        supportEmail,
-      );
+      const mailOptions = getVerificationEmail(user, token, await getOrgSettings());
       await transporter.sendMail(mailOptions);
     },
   },
@@ -185,13 +173,7 @@ const auth = betterAuth({
           twoFactor({
             otpOptions: {
               sendOTP: async ({ user, otp }) => {
-                const { orgFooterText, supportEmail } = await getOrgSettings();
-                const mailOptions = getOTPEmail(
-                  user,
-                  otp,
-                  orgFooterText,
-                  supportEmail,
-                );
+                const mailOptions = getOTPEmail(user, otp, await getOrgSettings());
                 await transporter.sendMail(mailOptions);
               },
             },

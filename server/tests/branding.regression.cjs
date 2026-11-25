@@ -143,9 +143,10 @@ async function main() {
   const mdrrmo = await createSession("mdrrmo_admin");
   const resident = await createSession("resident");
 
-  // Start from a known state: default name, no logo
+  // Start from a known state (default name, no logo) through the API, which also clears the 60 s public cache
   await pool.query("DELETE FROM system_settings WHERE key = 'system_logo'");
-  await putSetting("system_name", "Bacolor Disaster LMS");
+  const reset = await call(admin, "PATCH", BRANDING, { system_name: "Bacolor Disaster LMS" });
+  if (reset.status !== 200) throw new Error(`could not reset branding: ${reset.status} ${JSON.stringify(reset.body)}`);
 
   await check("public branding answers signed out with name, integer version, no logo, 60 s cache", async () => {
     const r = await call(null, "GET", PUBLIC);

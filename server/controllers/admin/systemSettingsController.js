@@ -1,4 +1,5 @@
 const SystemSettingsService = require("../../services/admin/SystemSettingsService");
+const { validateSystemName, parseLogo, validateSupportEmail, validateOrgFooter } = require("../../utils/branding");
 
 exports.getSystemSettings = async (req, res) => {
   try {
@@ -13,49 +14,48 @@ exports.getSystemSettings = async (req, res) => {
 // @desc    Get the system logo (kept out of getSystemSettings to keep polling light)
 exports.getSystemLogo = async (req, res) => {
   try {
-    const system_logo = await SystemSettingsService.getSystemLogo();
-    res.status(200).json({ success: true, data: { system_logo } });
+    const data = await SystemSettingsService.getSystemLogo();
+    res.status(200).json({ success: true, data });
   } catch (err) {
     console.error(err);
     res.status(500).json({ success: false, message: "Failed to retrieve system logo." });
   }
 };
 
+// Spec: docs/specs/branding.md. Everything is validated before anything is written.
 exports.updateSystemBranding = async (req, res) => {
-  const { system_name, system_logo } = req.body;
+  const { system_name, system_logo, remove_logo } = req.body || {};
+  const update = {};
+  const parts = [];
+  const refuse = (message) => res.status(400).json({ success: false, message });
+
+  if (system_name !== undefined) {
+    const name = validateSystemName(system_name);
+    if (name.error) return refuse(name.error);
+    update.name = name.value;
+    parts.push("name");
+  }
+  if (system_logo !== undefined && system_logo !== null && system_logo !== "") {
+    if (remove_logo === true) return refuse("Upload a new logo or remove the current one, not both.");
+    const logo = parseLogo(system_logo);
+    if (logo.error) return refuse(logo.error);
+    update.logo = system_logo;
+    parts.push("logo");
+  }
+  if (remove_logo === true) {
+    update.removeLogo = true;
+    parts.push("removed logo");
+  }
+  if (!parts.length) return refuse("Nothing to update.");
+
   try {
-    // system_logo is either an S3 URL or a base64 image
-    if (system_logo) {
-      const isUrl = /^(https?:\/\/)/.test(system_logo);
-      let isValidLogo = isUrl;
-
-      if (!isUrl) {
-        const base64Match = system_logo.match(/^data:image\/(png|jpeg|webp|svg\+xml);base64,(.+)$/);
-        if (!base64Match) {
-          return res.status(400).json({ success: false, message: 'Invalid logo format. Must be a valid HTTPS URL or a Base64 image (PNG, JPG, WEBP, SVG).' });
-        }
-        
-        // Max 500 KB: base64 adds ~33%, which keeps the request under the 800kb express.json limit in server.js.
-        const base64Data = base64Match[2];
-        const sizeInBytes = (base64Data.length * 3) / 4 - (base64Data.endsWith("==") ? 2 : (base64Data.endsWith("=") ? 1 : 0));
-        if (sizeInBytes > 500 * 1024) {
-          return res.status(400).json({ success: false, message: 'Logo image is too large. Maximum size is 500 KB.' });
-        }
-        isValidLogo = true;
-      }
-
-      if (!isValidLogo) {
-         return res.status(400).json({ success: false, message: 'Invalid logo format.' });
-      }
-    }
-    
-    await SystemSettingsService.updateSystemBranding(system_name, system_logo);
-
-    require('../../utils/logger').logActivity(req.user.id, 'Updated system branding');
-    res.status(200).json({ success: true, data: { message: 'System branding updated successfully' } });
+    const version = await SystemSettingsService.updateSystemBranding(update);
+    require("../../services/notif/sseService").broadcast("BRANDING_UPDATED", { version });
+    require("../../utils/logger").logActivity(req.user.id, `Updated system branding (${parts.join(", ")})`);
+    res.status(200).json({ success: true, data: { message: "System branding updated successfully", version } });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ success: false, message: 'Failed to update system branding.' });
+    res.status(500).json({ success: false, message: "Failed to update system branding." });
   }
 };
 
@@ -96,9 +96,20 @@ exports.updateBroadcast = async (req, res) => {
 };
 
 exports.updateOrganizationDetails = async (req, res) => {
-  const { support_email, org_footer_text } = req.body;
+  const { support_email, org_footer_text } = req.body || {};
+  let email, footer;
+  if (support_email !== undefined) {
+    const checked = validateSupportEmail(support_email);
+    if (checked.error) return res.status(400).json({ success: false, message: checked.error });
+    email = checked.value;
+  }
+  if (org_footer_text !== undefined) {
+    const checked = validateOrgFooter(org_footer_text);
+    if (checked.error) return res.status(400).json({ success: false, message: checked.error });
+    footer = checked.value;
+  }
   try {
-    await SystemSettingsService.updateOrganizationDetails(support_email, org_footer_text);
+    await SystemSettingsService.updateOrganizationDetails(email, footer);
     
     require('../../utils/logger').logActivity(req.user.id, 'Updated organization details');
     res.status(200).json({ success: true, data: { message: 'Organization details updated successfully' } });

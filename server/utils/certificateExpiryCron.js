@@ -3,6 +3,7 @@ const pool = require("../config/db");
 const logger = require("./logger");
 const { transporter } = require("./mailer");
 const { getRecertificationReminderEmail } = require("./emailTemplates");
+const { getOrgSettings } = require("./settings");
 const { notifyUser } = require("../services/notif/userNotificationService");
 
 /**
@@ -61,13 +62,16 @@ async function runCertificateMaintenanceJob() {
         AND u.settings->'reminders' IS DISTINCT FROM 'false'::jsonb
     `);
 
+    // read once per run, not per email
+    const org = candidates.rows.length ? await getOrgSettings() : null;
     for (const row of candidates.rows) {
       try {
         const emailOptions = getRecertificationReminderEmail(
           { name: row.user_name, email: row.user_email },
           row,
           row.module_title,
-          Math.max(1, row.days_remaining)
+          Math.max(1, row.days_remaining),
+          org
         );
 
         await transporter.sendMail(emailOptions);

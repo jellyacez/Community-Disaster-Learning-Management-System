@@ -217,7 +217,7 @@ async function main() {
     check("verification link URL-encodes the token", () => {
       if (!mailTo(rawUser.email, /Verify/).html.includes(`token=${encodeURIComponent(token)}"`)) throw new Error("token not URL-encoded in href");
     });
-    const otp = getOTPEmail(rawUser, "123456", FOOTER, "help@example.invalid");
+    const otp = getOTPEmail(rawUser, "123456", { orgFooterText: FOOTER, supportEmail: "help@example.invalid" });
     check("OTP email escapes name and footer", () => assertEscaped(otp.html, [`${IMG_ESCAPED} Raw`, `Footer ${IMG_ESCAPED}`]));
   }
 

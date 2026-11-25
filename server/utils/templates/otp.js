@@ -1,8 +1,11 @@
 const emailWrapper = require("./emailWrapper");
+const { withDefaults, envelope } = require("./sender");
 const { escapeHtml } = require("./escape");
 
-const getOTPEmail = (user, otp, orgFooterText, supportEmail) => ({
-  from: `"DRRM Bacolor Security" <${supportEmail || process.env.EMAIL_USER}>`,
+const getOTPEmail = (user, otp, orgSettings) => {
+  const org = withDefaults(orgSettings);
+  return {
+  ...envelope(org, "Security"),
   to: user.email,
   subject: "Your Two-Factor Authentication Code",
   html: emailWrapper(
@@ -19,8 +22,9 @@ const getOTPEmail = (user, otp, orgFooterText, supportEmail) => ({
 
     <p style="line-height: 1.6; font-size: 14px; color: #52525b;">This code will expire shortly. Do not share this code with anyone, including DRRM administrators.</p>
     `,
-    orgFooterText
+    org
   ),
-});
+  };
+};
 
 module.exports = getOTPEmail;

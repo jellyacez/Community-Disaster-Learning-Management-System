@@ -1,4 +1,13 @@
 const pool = require("../../config/db");
+const { DEFAULT_SYSTEM_NAME } = require("../../config/constants");
+const { validateSystemName, parseLogo } = require("../../utils/branding");
+
+// The public branding read is hit by every page load; a save clears this
+const BRANDING_TTL_MS = 60 * 1000;
+let brandingCache = null;
+
+const UPSERT = `INSERT INTO public.system_settings (key, value, updated_at) VALUES ($1, $2, NOW())
+               ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = NOW()`;
 
 // Allowlist of safe keys that are permitted to be returned to the frontend.
 // system_logo is left out on purpose: admin pages poll these settings every minute,
@@ -25,28 +34,62 @@ class SystemSettingsService {
     return settings;
   }
 
+  // Admin preview: the stored logo only if it would be served; logo_supported flags a legacy SVG/URL value
   async getSystemLogo() {
     const result = await pool.query(
       `SELECT value FROM public.system_settings WHERE key = 'system_logo'`
     );
-    return result.rows[0]?.value || null;
+    const stored = result.rows[0]?.value || null;
+    const supported = !stored || !parseLogo(stored).error;
+    return { system_logo: supported ? stored : null, logo_supported: supported };
   }
 
-  async updateSystemBranding(system_name, system_logo) {
-    if (system_name) {
-      await pool.query(
-        `INSERT INTO public.system_settings (key, value, updated_at) VALUES ('system_name', $1, NOW())
-         ON CONFLICT (key) DO UPDATE SET value = $1, updated_at = NOW()`,
-        [system_name]
+  // { name, version, logo: { contentType, bytes } | null }, validated on read
+  async getBranding() {
+    if (brandingCache && Date.now() - brandingCache.at < BRANDING_TTL_MS) return brandingCache.value;
+    const { rows } = await pool.query(
+      `SELECT key, value FROM public.system_settings WHERE key IN ('system_name', 'system_logo', 'branding_version')`
+    );
+    const raw = Object.fromEntries(rows.map((r) => [r.key, r.value]));
+    const name = validateSystemName(raw.system_name ?? "");
+    const logo = raw.system_logo ? parseLogo(raw.system_logo) : null;
+    const version = Number.parseInt(raw.branding_version, 10);
+    const value = {
+      name: name.error ? DEFAULT_SYSTEM_NAME : name.value,
+      version: Number.isInteger(version) && version > 0 ? version : 1,
+      logo: logo && !logo.error ? { contentType: logo.contentType, bytes: logo.bytes } : null,
+    };
+    brandingCache = { at: Date.now(), value };
+    return value;
+  }
+
+  clearBrandingCache() {
+    brandingCache = null;
+  }
+
+  // Values are already validated. Returns the new branding_version.
+  async updateSystemBranding({ name, logo, removeLogo }) {
+    const client = await pool.connect();
+    try {
+      await client.query("BEGIN");
+      if (name !== undefined) await client.query(UPSERT, ["system_name", name]);
+      if (logo !== undefined) await client.query(UPSERT, ["system_logo", logo]);
+      if (removeLogo) await client.query(`DELETE FROM public.system_settings WHERE key = 'system_logo'`);
+      const { rows } = await client.query(
+        `INSERT INTO public.system_settings (key, value, updated_at) VALUES ('branding_version', '2', NOW())
+         ON CONFLICT (key) DO UPDATE
+           SET value = (CASE WHEN system_settings.value ~ '^[0-9]{1,9}$' THEN system_settings.value::int ELSE 1 END + 1)::text,
+               updated_at = NOW()
+         RETURNING value`
       );
-    }
-    
-    if (system_logo) {
-      await pool.query(
-        `INSERT INTO public.system_settings (key, value, updated_at) VALUES ('system_logo', $1, NOW())
-         ON CONFLICT (key) DO UPDATE SET value = $1, updated_at = NOW()`,
-        [system_logo]
-      );
+      await client.query("COMMIT");
+      this.clearBrandingCache();
+      return Number(rows[0].value);
+    } catch (err) {
+      await client.query("ROLLBACK");
+      throw err;
+    } finally {
+      client.release();
     }
   }
 

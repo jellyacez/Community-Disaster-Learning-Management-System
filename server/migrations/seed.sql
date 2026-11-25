@@ -31,7 +31,8 @@ ON CONFLICT (name) DO NOTHING;
 -- back to EMAIL_USER; set the real address in System Settings after setup.
 INSERT INTO public.system_settings (key, value) VALUES
   ('maintenance_mode', 'false'),
-  ('system_name', 'Community Disaster Learning Management System'),
+  ('system_name', 'Bacolor Disaster LMS'),
+  ('branding_version', '1'),
   ('broadcast_active', 'false'),
   ('broadcast_message', ''),
   ('broadcast_severity', 'info'),

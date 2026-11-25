@@ -26,8 +26,7 @@ const handlePasswordChangeAlert = async (user) => {
       [user.id],
     );
 
-    const { orgFooterText, supportEmail } = await getOrgSettings();
-    await transporter.sendMail(getPasswordChangedEmail(user, orgFooterText, supportEmail));
+    await transporter.sendMail(getPasswordChangedEmail(user, await getOrgSettings()));
     console.log("Password change email sent to user ID:", user.id);
   } catch (err) {
     console.error("Password change service error:", err);
@@ -53,7 +52,7 @@ const handlePasswordResetRecovery = async (userEmail) => {
       );
       console.log("Updated lastPasswordChange");
 
-      await transporter.sendMail(getPasswordRecoveredEmail(user));
+      await transporter.sendMail(getPasswordRecoveredEmail(user, await getOrgSettings()));
     } else {
       console.log("User not found in user table for email:", redactEmail(userEmail));
     }
@@ -106,7 +105,7 @@ const handleNewDeviceLoginCheck = async (email) => {
       if (sessionRes.rows.length > 0) {
         const session = sessionRes.rows[0];
         if (await rememberDevice(user.id, session.userAgent)) {
-          await transporter.sendMail(getNewDeviceLoginEmail(user, session));
+          await transporter.sendMail(getNewDeviceLoginEmail(user, session, await getOrgSettings()));
         }
       }
     }
