@@ -69,8 +69,12 @@ export function useNotificationPreferences() {
       queryClient.setQueryData(["userSettings"], context.previousSettings);
       toast.error(err.message || "Failed to save preference.");
     },
-    onSettled: () => {
+    onSettled: (data, err, newSettings, context) => {
       queryClient.invalidateQueries({ queryKey: ["userSettings"] });
+      // The bell's feed depends on this toggle
+      if (newSettings?.announcements !== context?.previousSettings?.announcements) {
+        queryClient.invalidateQueries({ queryKey: ["userDashboard"] });
+      }
     },
   });
 

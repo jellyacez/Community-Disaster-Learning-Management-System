@@ -1,5 +1,6 @@
 const pool = require("../../config/db");
 const { UNSCOPED_ACCESS_ROLES } = require("../../config/permissions");
+const { inEffectSql } = require("../../utils/advisorySql");
 
 class DashboardService {
   async getDashboardData(userId) {
@@ -63,7 +64,7 @@ class DashboardService {
       `);
     }
 
-    const announcements = announcementsQuery.rows.map((a) => {
+    const toFeedItem = (a) => {
       const date = new Date(a.date);
       return {
         id: a.id,
@@ -76,7 +77,31 @@ class DashboardService {
         }),
         author: a.author_name,
       };
-    });
+    };
+    const announcements = announcementsQuery.rows.map(toFeedItem);
+
+    // The bell's feed (P3-05): with System Announcements off, only urgent advisories in effect.
+    // `announcements` above stays complete because the dashboard page shows it too.
+    const optOutQuery = await pool.query(
+      `SELECT settings->'announcements' = 'false'::jsonb AS off FROM "user" WHERE id = $1`,
+      [userId]
+    );
+    let bellAnnouncements = announcements;
+    if (optOutQuery.rows[0]?.off) {
+      const scopeSql = isUnscoped ? "TRUE" : barangayId ? "(a.barangay_id = $1 OR a.barangay_id IS NULL)" : "a.barangay_id IS NULL";
+      const bellQuery = await pool.query(
+        `
+        SELECT a.id, a.title, a.content, a.date, u.name as author_name
+        FROM announcements a
+        JOIN "user" u ON a.author_id = u.id
+        WHERE ${scopeSql} AND ${inEffectSql("a")}
+        ORDER BY a.date DESC
+        LIMIT 3
+        `,
+        !isUnscoped && barangayId ? [barangayId] : []
+      );
+      bellAnnouncements = bellQuery.rows.map(toFeedItem);
+    }
 
     // CYCLE on each recursive CTE stops at a repeated module, so a parent_mod_id loop can't recurse forever
     const enrolledModulesQuery = await pool.query(
@@ -231,6 +256,7 @@ class DashboardService {
       totalModules,
       categoryTotals,
       announcements,
+      bellAnnouncements,
       enrolledModules,
       completionRate,
       certificates,

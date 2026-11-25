@@ -27,7 +27,7 @@ export default function NotificationPreferences() {
             <HugeiconsIcon icon={Megaphone01Icon} className="w-5 h-5 text-red-500" />
             System Announcements
           </h4>
-          <p className="text-sm text-gray-500 dark:text-slate-400 mt-1">Notify me about new Bacolor municipality announcements.</p>
+          <p className="text-sm text-gray-500 dark:text-slate-400 mt-1">Show standard announcements in your notification bell. Urgent advisories always appear.</p>
         </div>
         <div className="md:w-2/3 max-w-md flex items-center justify-end">
           <ToggleSwitch 

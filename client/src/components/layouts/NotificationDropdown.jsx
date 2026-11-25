@@ -27,11 +27,12 @@ export default function NotificationDropdown() {
     refetchInterval: 60000,
   });
 
-  // Defensively handle React Query HMR cache poisoning
-  const announcements = dashboardData?.announcements
-    ? dashboardData.announcements
-    : dashboardData?.data?.announcements
-      ? dashboardData.data.announcements
+  // Defensively handle React Query HMR cache poisoning.
+  // bellAnnouncements honours the System Announcements setting; urgent advisories in effect always show.
+  const announcements = dashboardData?.bellAnnouncements
+    ? dashboardData.bellAnnouncements
+    : dashboardData?.data?.bellAnnouncements
+      ? dashboardData.data.bellAnnouncements
       : [];
   const recentAnnouncements = announcements.slice(0, 3);
 

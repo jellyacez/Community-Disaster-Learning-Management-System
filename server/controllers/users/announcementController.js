@@ -1,10 +1,7 @@
 const pool = require("../../config/db");
 const { UNSCOPED_ACCESS_ROLES } = require("../../config/permissions");
 const { parsePaging } = require("../../utils/pagination");
-
-// An urgent advisory stays pinned only while it is in effect (not expired, not lifted)
-const inEffectSql = (t) =>
-  `(${t}.priority = 'urgent' AND ${t}.lifted_at IS NULL AND (${t}.expires_at IS NULL OR ${t}.expires_at > NOW()))`;
+const { inEffectSql } = require("../../utils/advisorySql");
 
 // @desc    Get paginated announcements: in-effect urgent advisories first, then newest first
 exports.getPaginatedAnnouncements = async (req, res) => {
