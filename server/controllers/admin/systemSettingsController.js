@@ -59,9 +59,12 @@ exports.updateSystemBranding = async (req, res) => {
   }
 };
 
+// Mapped, never truth-tested: the string "false" used to turn maintenance on
+const MAINTENANCE_VALUES = new Map([[true, true], ["true", true], [false, false], ["false", false]]);
+
 exports.setMaintenanceMode = async (req, res) => {
-  const { enabled } = req.body;
-  if (typeof enabled !== "boolean") {
+  const enabled = MAINTENANCE_VALUES.get(req.body.enabled);
+  if (enabled === undefined) {
     return res.status(400).json({ success: false, message: "Send enabled: true or false." });
   }
   try {
@@ -81,10 +84,23 @@ exports.setMaintenanceMode = async (req, res) => {
   }
 };
 
+// The broadcast panel's radios and GlobalBroadcastBanner's styles; the panel's textarea maxLength
+const BROADCAST_SEVERITIES = ["info", "warning", "critical"];
+const BROADCAST_MESSAGE_MAX = 500;
+
 exports.updateBroadcast = async (req, res) => {
   const { broadcast_message, broadcast_active, broadcast_severity } = req.body;
   if (broadcast_message === undefined && broadcast_active === undefined && broadcast_severity === undefined) {
     return res.status(400).json({ success: false, message: "Nothing to update." });
+  }
+  if (broadcast_message !== undefined && (typeof broadcast_message !== "string" || broadcast_message.length > BROADCAST_MESSAGE_MAX)) {
+    return res.status(400).json({ success: false, message: `Broadcast message must be text of at most ${BROADCAST_MESSAGE_MAX} characters.` });
+  }
+  if (broadcast_active !== undefined && typeof broadcast_active !== "boolean") {
+    return res.status(400).json({ success: false, message: "Broadcast status must be true or false." });
+  }
+  if (broadcast_severity !== undefined && !BROADCAST_SEVERITIES.includes(broadcast_severity)) {
+    return res.status(400).json({ success: false, message: "Severity must be info, warning or critical." });
   }
   try {
     const state = await SystemSettingsService.updateBroadcast(broadcast_message, broadcast_active, broadcast_severity);
