@@ -97,9 +97,11 @@ export default function LandingFooter() {
             <p className="text-white text-xs font-bold mb-3 uppercase tracking-widest">
               Contact
             </p>
-            <div className="grid gap-6 text-xs sm:grid-cols-2 md:grid-cols-1 lg:grid-cols-2 lg:gap-10">
+            {/* Columns, not a grid: each office stacks under the previous one in its column, so a tall office
+                (several numbers) leaves no empty row beside a short one. Order runs down, then across. */}
+            <div className="text-xs columns-1 sm:columns-2 md:columns-1 lg:columns-2 gap-x-10">
               {offices.map((office) => (
-                <div key={office.name}>
+                <div key={office.name} className="break-inside-avoid mb-6 last:mb-0">
                   <p className="font-semibold text-gray-200">{office.name}</p>
                   <ul>
                     {office.phones.map((p) => (
