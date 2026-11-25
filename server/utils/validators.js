@@ -268,3 +268,16 @@ exports.feedbackLengthError = (body, fields) => {
   const field = fields.find((f) => typeof body[f] === "string" && body[f].length > FEEDBACK_MAX_LENGTH[f]);
   return field ? `${FEEDBACK_LABELS[field]} must be ${FEEDBACK_MAX_LENGTH[field]} characters or fewer.` : null;
 };
+
+// The values FeedbackForm.jsx offers; getAdminFeedbacks only lists these two recipients
+const FEEDBACK_RECIPIENTS = ["barangay", "mdrrmo"];
+const FEEDBACK_TYPES = ["feedback", "inquiry", "concern", "report"];
+
+/** The 400 message for a new ticket's first missing or invalid field, or null. */
+exports.feedbackFieldsError = ({ recipient, type, subject, message }) => {
+  if (!FEEDBACK_RECIPIENTS.includes(recipient)) return "Recipient must be barangay or mdrrmo.";
+  if (!FEEDBACK_TYPES.includes(type)) return "Type must be feedback, inquiry, concern or report.";
+  if (typeof subject !== "string" || !subject.trim()) return "Subject is required.";
+  if (typeof message !== "string" || !message.trim()) return "Message is required.";
+  return null;
+};
