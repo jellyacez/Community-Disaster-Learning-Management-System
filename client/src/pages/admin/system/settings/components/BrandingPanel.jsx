@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import apiClient from "../../../../../lib/apiClient";
 import toast from "react-hot-toast";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { Settings01Icon, Image01Icon, Delete02Icon, AlertCircleIcon } from "@hugeicons/core-free-icons";
+import { Image01Icon, Delete02Icon, AlertCircleIcon } from "@hugeicons/core-free-icons";
 import { BRANDING_KEY } from "../../../../../hooks/useBranding";
 import BrandMark from "../../../../../components/ui/BrandMark";
 import { DEFAULT_SYSTEM_NAME, MAX_LOGO_BYTES, SYSTEM_NAME_MAX, LOGO_ACCEPT } from "../../../../../constants/branding";
@@ -113,14 +113,18 @@ export default function BrandingPanel({ settingsData }) {
 
   return (
     <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm p-6">
-      <div className="flex items-center gap-2 mb-2">
-        <HugeiconsIcon icon={Settings01Icon} className="w-5 h-5 text-gray-500 dark:text-slate-400" />
-        <h2 className="text-base font-bold text-gray-900 dark:text-white">System Branding</h2>
+      <div className="flex items-start gap-3 mb-6">
+        <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 bg-gray-100 dark:bg-slate-800">
+          <HugeiconsIcon icon={Image01Icon} className="w-5 h-5 text-gray-600 dark:text-slate-300" aria-hidden="true" />
+        </div>
+        <div>
+          <h2 className="text-base font-bold text-gray-900 dark:text-slate-100">System Branding</h2>
+          <p className="text-sm mt-1 max-w-md text-gray-500 dark:text-slate-400 text-pretty">
+            Changes the name and logo shown in the app and in emails. The installed app&apos;s name and home-screen
+            icon are set when the app is built and don&apos;t change here.
+          </p>
+        </div>
       </div>
-      <p className="text-xs text-gray-500 dark:text-slate-400 mb-6 max-w-prose text-pretty">
-        Changes the name and logo shown in the app and in emails. The installed app&apos;s name and home-screen icon
-        are set when the app is built and don&apos;t change here.
-      </p>
 
       <form onSubmit={onSubmit} className="space-y-5">
         <div>

@@ -171,7 +171,7 @@ export default function UserSidebar({
           <div className="flex items-center gap-3 min-w-0">
             <BrandMark logoSrc={brand.logoSrc} pending={brand.logoPending} />
             <div className="min-w-0">
-              <p className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-slate-400 line-clamp-2 break-words">
+              <p className="text-xs font-semibold leading-snug text-gray-500 dark:text-slate-400 line-clamp-2 break-words" title={brand.name ?? undefined}>
                 <BrandName name={brand.name} />
               </p>
               <h2 className="text-lg font-extrabold text-gray-900 dark:text-white">

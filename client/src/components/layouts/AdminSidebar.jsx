@@ -103,12 +103,12 @@ export default function AdminSidebar({ sidebarOpen, setSidebarOpen }) {
       >
         <div className="h-16 flex items-center justify-between gap-2 px-4 border-b border-red-800 bg-red-700">
           <div className="flex items-center gap-2.5 min-w-0">
-            <BrandMark logoSrc={brand.logoSrc} pending={brand.logoPending} size="sm" />
+            <BrandMark logoSrc={brand.logoSrc} pending={brand.logoPending} size="sm" onBrand />
             <div className="min-w-0 leading-tight">
-              <p className="text-[11px] font-semibold text-red-100 truncate" title={brand.name ?? undefined}>
+              <p className="text-[11px] leading-tight font-semibold text-red-100 line-clamp-2 break-words" title={brand.name ?? undefined}>
                 <BrandName name={brand.name} />
               </p>
-              <p className="text-white font-bold text-lg tracking-tight">Admin Portal</p>
+              <p className="text-white font-bold text-lg leading-6 tracking-tight">Admin Portal</p>
             </div>
           </div>
           <div className="hidden lg:block">
