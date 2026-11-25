@@ -40,7 +40,7 @@ The server refuses to start unless `DB_USER`, `DB_PASSWORD`, `DB_DATABASE` and o
 | `BETTER_AUTH_SECRETS` | **One of these two** | | Versioned secrets, newest first, e.g. `"2:<new>, 1:<old>"`. Generate or rotate with `npm run rotate-better-auth`. It keeps only the previous secret: sessions signed with it still work, older ones must sign in again (`server/rotate-better-auth.js:100-101`). |
 | `BETTER_AUTH_SECRET` | | | Single-secret form; used only if `BETTER_AUTH_SECRETS` is unset. |
 | `BETTER_AUTH_URL` | Set it | | The API's public origin, passed to Better Auth as `baseURL` (`server/utils/auth.js:33`), e.g. `http://localhost:5000`. |
-| `EMAIL_USER` | **Yes, for any email** | | Gmail account Nodemailer sends from (`service: "gmail"`, `server/utils/mailer.js`). Also the fallback support address. There are no `SMTP_*` variables. |
+| `EMAIL_USER` | **Yes, for any email** | | Gmail account Nodemailer sends from (`service: "gmail"`, `server/utils/mailer.js`). Every email's From is this address, with the System Name as display name. The Support Email setting is only the Reply-To (and the contact line in account notices, which falls back to this address). There are no `SMTP_*` variables. |
 | `EMAIL_APP_PASSWORD` | **Yes, for any email** | | Gmail App Password for `EMAIL_USER`. Without working email, sign-up verification and password resets fail. |
 | `TURNSTILE_SECRET_KEY` | **Yes** | | Cloudflare Turnstile secret. Email sign-in and sign-up are always checked (`server/server.js:140-141`). For local development use Cloudflare's test secret `1x0000000000000000000000000000000AA` with the test site key below; test secrets accept only the dummy token, so never use them in production. |
 | `GOOGLE_CLIENT_ID` | No | | Google sign-in is enabled only when both Google values are set and not placeholders (`server/utils/auth.js:25-29`). |
@@ -65,6 +65,19 @@ The server refuses to start unless `DB_USER`, `DB_PASSWORD`, `DB_DATABASE` and o
 | `AWS_SECRET_ACCESS_KEY` | No | | |
 | `AWS_S3_BUCKET_NAME` | No | `bacolor-lms-media` | Bucket name. System Health reports S3 as configured only when this and both keys are set. |
 | `AWS_REGION` | No | `ap-southeast-1` | Bucket region. |
+
+### Settings kept in the database (System Settings page)
+
+Not environment variables, listed here because they change what users and emails show. Spec: [specs/branding.md](specs/branding.md).
+
+| Setting | Rules | Where it shows |
+|---|---|---|
+| System Name (`system_name`) | 2 to 60 characters, no line breaks or tabs | Landing, sign-in and register, both sidebars, portal footer, tab titles, email header, From display name, reset/verify subjects. Falls back to "Bacolor Disaster LMS" |
+| Platform Logo (`system_logo`) | PNG, JPG or WEBP, at most 500 KB; SVG and links refused; stored as uploaded (EXIF kept) | Next to the name in the app; not in emails. Served by `GET /api/public/branding/logo` |
+| Support Email (`support_email`) | Empty, or one address up to 254 characters | Reply-To of every email and the account-notice contact line |
+| Email Footer Text (`org_footer_text`) | Up to 200 characters, one line | Footer of every email |
+
+The installed PWA's name and icon come from `client/vite.config.js` and `client/public/` at build time and don't follow these settings.
 
 ### Scripts and tests only
 

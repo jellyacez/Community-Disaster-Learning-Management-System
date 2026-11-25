@@ -274,7 +274,8 @@ Cleanup:         DROP DATABASE every lms_c_* created here
 server/routes/publicRoutes.js                     + GET /branding, /branding/logo
 server/services/admin/SystemSettingsService.js    branding read/validate/update, branding_version
 server/controllers/admin/systemSettingsController.js  validation, remove_logo, SSE, cache clear
-server/utils/brandingImage.js (new)               parse data URL + magic-byte check (shared by save and read)
+server/utils/branding.js (new)                    name/logo/support-email/footer rules (shared by save, read and email)
+server/utils/templates/sender.js (new)            From/Reply-To envelope and org defaults
 server/utils/settings.js                          getOrgSettings -> { systemName, orgFooterText, supportEmail }
 server/utils/templates/*.js                       org object, From/Reply-To, name in header/subjects/body
 server/services/securityService.js, utils/certificateExpiryCron.js   pass org settings
@@ -286,7 +287,7 @@ client/src/components/ui/BrandMark.jsx (new)
 client/src/components/layouts/*, components/ui/landing/*, PortalFooter, OnboardingModal, auth pages, MaintenancePage
 client/src/pages/**  useDocumentTitle call sites (suffix removed)
 client/src/pages/admin/system/settings/components/BrandingPanel.jsx   types text, helper text, remove, notice
-server/tests/branding.regression.cjs (new), server/tests/branding-email.regression.cjs (new)
+server/tests/branding.regression.cjs, branding-email.regression.cjs, branding-migration.regression.cjs (new)
 docs/specs/branding.md, docs/testing.md (table rows), docs/configuration.md (branding + support email), TECH_DEBT.md
 ```
 

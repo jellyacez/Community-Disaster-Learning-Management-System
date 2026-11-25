@@ -23,7 +23,9 @@ Each prints `ok` / `not ok` (or `PASS` / `FAIL`) lines and exits non-zero on fai
 | `new-device-email` | No (in-process, mailer stubbed) | `DB_DATABASE`. Refuses `LMS_db`. Seeds users and sessions, deletes them by id |
 | `session-ua-binding` | **Yes**, at `TEST_BASE_URL`; the API must log to this checkout's `server/logs` | `DB_DATABASE`, same as the API. Refuses `LMS_db`. Seeds one user and session per case, deletes them by id |
 | `emergency-contacts` | **Yes**, at `TEST_BASE_URL` | `DB_DATABASE`, same as the API. Refuses `LMS_db`: run it against a scratch database. Restores the contact list's content at the end (ids change) |
-| `restore-safeguards`, `create-first-admin`, `emergency-contacts-migration` | No (they start what they need in-process) | Their own scratch database, created and dropped by the script |
+| `branding` | **Yes**, at `TEST_BASE_URL` | `DB_DATABASE`, same as the API. Refuses `LMS_db`. Restores the branding and organization settings at the end (`branding_version` only goes up) |
+| `branding-email` | No (in-process, mailer stubbed) | `DB_DATABASE`. Refuses `LMS_db`. Needs `EMAIL_USER` set (the From check). Restores the settings it changes |
+| `restore-safeguards`, `create-first-admin`, `emergency-contacts-migration`, `branding-migration` | No (they start what they need in-process) | Their own scratch database, created and dropped by the script |
 | `final-assessment-lock`, `situational-edit` | No | None (pure functions; `final-assessment-lock` imports `client/src/utils/stepLocks.js`) |
 
 Typical run against a local database:
@@ -39,5 +41,7 @@ for f in server/tests/*.regression.cjs; do node "$f" || echo "FAILED: $f"; done
 To run the HTTP tests against another local API or database, set both variables for the test process: `DB_DATABASE=other_db TEST_BASE_URL=http://localhost:5055 node server/tests/…`. The API on that port must use the same database.
 
 ## Known limitation
+
+The global per-IP rate limiter keeps its state in the `rate_limit` schema of the API's database. Running the whole suite right after other traffic from the same machine (browser checks, a previous run) can trip it, and the HTTP tests then fail with `429 Too many requests`. On a scratch database, empty the `rate_limit` tables (`TRUNCATE ... CASCADE`) and run the failed scripts again.
 
 The enrollment tests create residents who must meet module prerequisites. On a database that already has a published Fundamentals module those residents haven't completed, `enrollment-requests` and `schema-integrity` fail with "Prerequisites not met". Run them on a database without such a module, for example a fresh `npm run db:setup`.
