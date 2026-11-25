@@ -1,6 +1,9 @@
 const Joi = require("joi");
 const { GRADED_STEP_TYPES, INTERACTION_TYPES } = require("../config/constants");
 
+// What the builder saves: its learning types, quiz, situational, and older steps that kept an interaction type as their step type
+const STEP_TYPES = ["text", "video", "pdf", ...GRADED_STEP_TYPES];
+
 /** Returns { isValid, error }. */
 exports.validateModuleCreation = (payload) => {
   if (!payload) return { isValid: false, error: "Payload is empty." };
@@ -39,7 +42,9 @@ exports.validateModuleCreation = (payload) => {
   }
 
   const validateUrl = (urlString, fieldName, requireImageExtension = false) => {
-    if (!urlString || typeof urlString !== "string" || urlString.trim() === "") return null;
+    if (urlString === undefined || urlString === null || urlString === "") return null;
+    if (typeof urlString !== "string") return `${fieldName} must be a text link.`;
+    if (urlString.trim() === "") return null;
     try {
       const url = new URL(urlString);
       if (url.protocol !== "http:" && url.protocol !== "https:") {
@@ -91,6 +96,15 @@ exports.validateModuleCreation = (payload) => {
       validateCover(level.coverImage, `Level ${i + 1} cover image`);
     if (coverError) return { isValid: false, error: coverError };
 
+    // Blank means the default 80; the builder sends a number or a numeric string
+    const threshold = level.passing_threshold;
+    if (threshold != null && threshold !== "") {
+      const value = typeof threshold === "number" || typeof threshold === "string" ? Number(threshold) : NaN;
+      if (!Number.isInteger(value) || value < 0 || value > 100) {
+        return { isValid: false, error: `Level ${i + 1} passing threshold must be a whole number from 0 to 100.` };
+      }
+    }
+
     if (!Array.isArray(level.steps) || level.steps.length === 0) {
       return { isValid: false, error: `Level ${i + 1} must contain at least one step.` };
     }
@@ -105,6 +119,9 @@ exports.validateModuleCreation = (payload) => {
       if (typeof step.stepType !== "string" || step.stepType.trim() === "") {
         return { isValid: false, error: `Step ${j + 1} in Level ${i + 1} is missing a step type.` };
       }
+      if (!STEP_TYPES.includes(step.stepType)) {
+        return { isValid: false, error: `Step ${j + 1} in Level ${i + 1} has an unknown step type.` };
+      }
 
       const mediaError = validateUrl(step.mediaUrl, `Step ${j + 1} in Level ${i + 1} media URL`);
       if (mediaError) return { isValid: false, error: mediaError };
@@ -114,6 +131,13 @@ exports.validateModuleCreation = (payload) => {
         for (const q of step.quizQuestions) {
           const questionImageError = validateUrl(q?.imageURL, `A question image in '${step.stepTitle}'`);
           if (questionImageError) return { isValid: false, error: questionImageError };
+          // choices.choice_text and is_correct are NOT NULL; is_correct is cast from a boolean[]
+          if (
+            q?.options != null &&
+            (!Array.isArray(q.options) || q.options.some((o) => typeof o?.text !== "string" || typeof o.isCorrect !== "boolean"))
+          ) {
+            return { isValid: false, error: `Each option in '${step.stepTitle}' needs text and a true/false isCorrect.` };
+          }
         }
       }
 
@@ -132,6 +156,11 @@ exports.validateModuleCreation = (payload) => {
           }
           if (q.interactionType != null && !INTERACTION_TYPES.includes(q.interactionType)) {
             return { isValid: false, error: `A question in '${step.stepTitle}' has an invalid interaction type.` };
+          }
+          // Graded like QuizAttemptService.questionKind: only a hazard question can be right with nothing selected
+          const kind = step.stepType === "situational" ? q.interactionType : step.stepType;
+          if (kind !== "hazard_identification" && !q.options.some((o) => o.isCorrect)) {
+            return { isValid: false, error: `A question in '${step.stepTitle}' must mark a correct option.` };
           }
           if (q.rationale != null && typeof q.rationale !== "string") {
             return { isValid: false, error: `A question in '${step.stepTitle}' has an invalid explanation.` };
