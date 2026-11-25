@@ -67,6 +67,14 @@ exports.validateModuleCreation = (payload) => {
   const videoError = validateUrl(payload.video_url, "Video URL", false);
   if (videoError) return { isValid: false, error: videoError };
 
+  // Level covers come from FileReader.readAsDataURL on an image/* picker (SequenceCanvas.jsx)
+  const validateCover = (value, fieldName) =>
+    typeof value === "string" && value.startsWith("data:")
+      ? /^data:image\/[a-z0-9.+-]+;base64,[a-z0-9+/]*={0,2}$/i.test(value)
+        ? null
+        : `${fieldName} must be an image data URL or an HTTP or HTTPS link.`
+      : validateUrl(value, fieldName);
+
   if (!Array.isArray(payload.levels) || payload.levels.length === 0) {
     return { isValid: false, error: "At least one level is required." };
   }
@@ -77,6 +85,11 @@ exports.validateModuleCreation = (payload) => {
     if (typeof level.levelTitle !== "string" || level.levelTitle.trim() === "") {
       return { isValid: false, error: `Level ${i + 1} is missing a valid title.` };
     }
+
+    const coverError =
+      validateCover(level.cover_image, `Level ${i + 1} cover image`) ||
+      validateCover(level.coverImage, `Level ${i + 1} cover image`);
+    if (coverError) return { isValid: false, error: coverError };
 
     if (!Array.isArray(level.steps) || level.steps.length === 0) {
       return { isValid: false, error: `Level ${i + 1} must contain at least one step.` };
@@ -91,6 +104,17 @@ exports.validateModuleCreation = (payload) => {
 
       if (typeof step.stepType !== "string" || step.stepType.trim() === "") {
         return { isValid: false, error: `Step ${j + 1} in Level ${i + 1} is missing a step type.` };
+      }
+
+      const mediaError = validateUrl(step.mediaUrl, `Step ${j + 1} in Level ${i + 1} media URL`);
+      if (mediaError) return { isValid: false, error: mediaError };
+
+      // ModuleService inserts quizQuestions for any step type, not only graded ones
+      if (Array.isArray(step.quizQuestions)) {
+        for (const q of step.quizQuestions) {
+          const questionImageError = validateUrl(q?.imageURL, `A question image in '${step.stepTitle}'`);
+          if (questionImageError) return { isValid: false, error: questionImageError };
+        }
       }
 
       // Every graded type, situational included: an update replaces all questions, so an empty step would wipe them
