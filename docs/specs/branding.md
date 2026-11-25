@@ -134,7 +134,8 @@ never the wrong name.
 Body: `{ system_name?, system_logo?, remove_logo? }`. At least one field must be present.
 
 - **Name:** trimmed. 2–60 characters (60 fits the 288 px sidebar on two lines). No control
-  characters (`\p{Cc}`, so no CR/LF/TAB). The sanitizer middleware already strips tags and
+  characters (`\p{Cc}`, so no CR/LF/TAB) and no bidi embedding/override/isolate controls
+  (U+202A–U+202E, U+2066–U+2069; ZWJ/ZWNJ stay allowed; added after the review, L2). The sanitizer middleware already strips tags and
   decodes entities, so "Fire & Rescue LMS" is stored as typed. Out of range → `400` with the
   exact rule ("System name must be 2 to 60 characters").
 - **Logo, accepted types:** PNG, JPEG, WEBP only. Input must match

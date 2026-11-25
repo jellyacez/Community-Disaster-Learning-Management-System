@@ -72,7 +72,7 @@ Not environment variables, listed here because they change what users and emails
 
 | Setting | Rules | Where it shows |
 |---|---|---|
-| System Name (`system_name`) | 2 to 60 characters, no line breaks or tabs | Landing, sign-in and register, both sidebars, portal footer, tab titles, email header, From display name, reset/verify subjects. Falls back to "Bacolor Disaster LMS" |
+| System Name (`system_name`) | 2 to 60 characters, no line breaks, tabs or text-direction (bidi) control characters | Landing, sign-in and register, both sidebars, portal footer, tab titles, email header, From display name, reset/verify subjects. Falls back to "Bacolor Disaster LMS" |
 | Platform Logo (`system_logo`) | PNG, JPG or WEBP, at most 500 KB; SVG and links refused; stored as uploaded (EXIF kept) | Next to the name in the app; not in emails. Served by `GET /api/public/branding/logo` |
 | Support Email (`support_email`) | Empty, or one address up to 254 characters | Reply-To of every email and the account-notice contact line |
 | Email Footer Text (`org_footer_text`) | Up to 200 characters, one line | Footer of every email |
