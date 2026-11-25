@@ -18,6 +18,13 @@ function isUnscopedRole(role) {
 // @desc    Resets a user's password using better-auth admin API (auto-generates if none provided)
 exports.resetUserPassword = async (req, res) => {
   const { id } = req.params;
+  // Without this, a request with no body would reset the password to a generated one
+  if (!req.is("application/json")) {
+    return res.status(400).json({
+      success: false,
+      message: "Send a JSON body with the new password, or an empty password to generate one.",
+    });
+  }
   let { password } = req.body;
 
   let isGenerated = false;

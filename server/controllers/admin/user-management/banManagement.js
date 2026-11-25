@@ -30,7 +30,7 @@ exports.banUser = async (req, res) => {
       });
     }
 
-    if (!req.body || typeof req.body !== "object" || Array.isArray(req.body)) {
+    if (!req.is("application/json") || typeof req.body !== "object" || Array.isArray(req.body)) {
       return res.status(400).json({
         success: false,
         message: "Send a JSON body containing the ban details.",

@@ -106,7 +106,8 @@ async function createUser(name) {
 
 function callHandler(handler, { body = {}, params = {}, user }) {
   return new Promise((resolve, reject) => {
-    const req = { body, params, query: {}, headers: {}, user, ip: "127.0.0.1" };
+    // stands in for a JSON request (resetUserPassword refuses one with no JSON body)
+    const req = { body, params, query: {}, headers: {}, user, ip: "127.0.0.1", is: (type) => type === "application/json" && type };
     sanitizeMiddleware(req, {}, () => {});
     const res = {
       statusCode: 200,

@@ -175,6 +175,13 @@ const certificatesRoutes = require("./routes/certificatesRoutes");
 
 const apiSecurityMiddleware = require("./middleware/apiSecurityMiddleware");
 
+// Express 5 leaves req.body undefined without a JSON body; default it so `const { x } = req.body`
+// reaches each handler's own 400. Mounted after Better Auth, which reads the raw stream.
+app.use((req, res, next) => {
+  req.body ??= {};
+  next();
+});
+
 app.use("/api/notif", require("./routes/notif/sseRoutes"));
 
 app.use("/api/public", publicRoutes);

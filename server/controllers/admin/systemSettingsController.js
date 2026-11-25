@@ -61,6 +61,9 @@ exports.updateSystemBranding = async (req, res) => {
 
 exports.setMaintenanceMode = async (req, res) => {
   const { enabled } = req.body;
+  if (typeof enabled !== "boolean") {
+    return res.status(400).json({ success: false, message: "Send enabled: true or false." });
+  }
   try {
     await SystemSettingsService.setMaintenanceMode(enabled);
     const { clearMaintenanceCache } = require("../../middleware/maintenanceMiddleware");
@@ -80,6 +83,9 @@ exports.setMaintenanceMode = async (req, res) => {
 
 exports.updateBroadcast = async (req, res) => {
   const { broadcast_message, broadcast_active, broadcast_severity } = req.body;
+  if (broadcast_message === undefined && broadcast_active === undefined && broadcast_severity === undefined) {
+    return res.status(400).json({ success: false, message: "Nothing to update." });
+  }
   try {
     const state = await SystemSettingsService.updateBroadcast(broadcast_message, broadcast_active, broadcast_severity);
 
