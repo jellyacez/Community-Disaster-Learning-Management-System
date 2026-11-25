@@ -48,6 +48,7 @@ export default function BroadcastOverridePanel({ settingsData }) {
             id="broadcast_message"
             name="broadcast_message"
             rows={3}
+            maxLength={500}
             defaultValue={settingsData?.broadcast_message || ""}
             placeholder="e.g. Critical Server Maintenance tonight at 11 PM"
             className="w-full px-3 py-2 border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800/80 text-gray-900 dark:text-white rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-red-500 transition-all resize-none"
