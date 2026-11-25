@@ -78,7 +78,7 @@ function modulePayload(label, status) {
     level: "Beginner",
     duration: "5 mins",
     status,
-    levels: [{ levelOrder: 1, levelTitle: "Level 1", steps: [{ stepOrder: 1, stepTitle: "Read", stepType: "learning" }] }],
+    levels: [{ levelOrder: 1, levelTitle: "Level 1", steps: [{ stepOrder: 1, stepTitle: "Read", stepType: "text" }] }],
   };
 }
 
