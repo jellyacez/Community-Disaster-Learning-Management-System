@@ -24,6 +24,7 @@ Each prints `ok` / `not ok` (or `PASS` / `FAIL`) lines and exits non-zero on fai
 | `session-ua-binding` | **Yes**, at `TEST_BASE_URL`; the API must log to this checkout's `server/logs` | `DB_DATABASE`, same as the API. Refuses `LMS_db`. Seeds one user and session per case, deletes them by id |
 | `emergency-contacts` | **Yes**, at `TEST_BASE_URL` | `DB_DATABASE`, same as the API. Refuses `LMS_db`: run it against a scratch database. Restores the contact list's content at the end (ids change) |
 | `branding` | **Yes**, at `TEST_BASE_URL` | `DB_DATABASE`, same as the API. Refuses `LMS_db`. Restores the branding and organization settings at the end (`branding_version` only goes up) |
+| `branding-cache` | No (in-process) | `DB_DATABASE`. Refuses `LMS_db`. Changes `system_name` briefly and restores it |
 | `branding-email` | No (in-process, mailer stubbed) | `DB_DATABASE`. Refuses `LMS_db`. Needs `EMAIL_USER` set (the From check). Restores the settings it changes |
 | `restore-safeguards`, `create-first-admin`, `emergency-contacts-migration`, `branding-migration` | No (they start what they need in-process) | Their own scratch database, created and dropped by the script |
 | `final-assessment-lock`, `situational-edit` | No | None (pure functions; `final-assessment-lock` imports `client/src/utils/stepLocks.js`) |

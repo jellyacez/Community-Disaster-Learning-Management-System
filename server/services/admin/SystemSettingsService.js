@@ -5,6 +5,8 @@ const { validateSystemName, parseLogo } = require("../../utils/branding");
 // The public branding read is hit by every page load; a save clears this
 const BRANDING_TTL_MS = 60 * 1000;
 let brandingCache = null;
+// Bumped on every clear: a read that started before a save must not re-cache the old value
+let brandingGeneration = 0;
 
 const UPSERT = `INSERT INTO public.system_settings (key, value, updated_at) VALUES ($1, $2, NOW())
                ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = NOW()`;
@@ -47,6 +49,7 @@ class SystemSettingsService {
   // { name, version, logo: { contentType, bytes } | null }, validated on read
   async getBranding() {
     if (brandingCache && Date.now() - brandingCache.at < BRANDING_TTL_MS) return brandingCache.value;
+    const generation = brandingGeneration;
     const { rows } = await pool.query(
       `SELECT key, value FROM public.system_settings WHERE key IN ('system_name', 'system_logo', 'branding_version')`
     );
@@ -59,11 +62,12 @@ class SystemSettingsService {
       version: Number.isInteger(version) && version > 0 ? version : 1,
       logo: logo && !logo.error ? { contentType: logo.contentType, bytes: logo.bytes } : null,
     };
-    brandingCache = { at: Date.now(), value };
+    if (generation === brandingGeneration) brandingCache = { at: Date.now(), value };
     return value;
   }
 
   clearBrandingCache() {
+    brandingGeneration += 1;
     brandingCache = null;
   }
 
