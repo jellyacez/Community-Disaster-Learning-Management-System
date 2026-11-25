@@ -248,8 +248,12 @@ async function main() {
     ["coverImage", BAD_COVERS, (v) => ({ cover: v, coverKey: "coverImage" })],
   ];
 
+  // POST gets every bad value; both PUT paths run the same validator, so two per field show
+  // each field reaches it there (keeps the suite under the shared 1000/15 min loopback limiter)
+  const PUT_SAMPLE = ["javascript:alert(document.cookie)", "//evil.example/x.png"];
   for (const route of routes) {
-    for (const [field, values, opts] of fields) {
+    for (const [field, allValues, opts] of fields) {
+      const values = route === routes[0] ? allValues : PUT_SAMPLE;
       await check(`${route.label} refuses a bad ${field} with a 400 and writes nothing`, async () => {
         const accepted = [];
         for (const [i, value] of values.entries()) {
