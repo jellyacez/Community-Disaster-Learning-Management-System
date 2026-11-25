@@ -156,6 +156,7 @@ export default function LevelSelector({
               <input
                 id="level-title-error-anchor"
                 type="text"
+                maxLength={255}
                 value={activeLevelData.levelTitle}
                 onChange={(e) =>
                   handleUpdateLevel(

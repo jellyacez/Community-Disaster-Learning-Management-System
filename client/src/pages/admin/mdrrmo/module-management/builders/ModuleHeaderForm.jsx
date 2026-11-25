@@ -105,6 +105,7 @@ export default function ModuleHeaderForm({ moduleForm, setModuleForm, formErrors
           <input 
             type="text" 
             placeholder="Paste URL..." 
+            maxLength={500}
             value={moduleForm.image_url || ""} 
             onChange={(e) => handleFieldChange('image_url', e.target.value)} 
             className="flex-1 bg-transparent text-xs font-medium outline-none text-gray-800 dark:text-slate-100 placeholder-gray-500 dark:placeholder-slate-400 py-1"
@@ -128,6 +129,7 @@ export default function ModuleHeaderForm({ moduleForm, setModuleForm, formErrors
           <input 
             type="text" 
             placeholder="Untitled Learning Path..." 
+            maxLength={500}
             value={moduleForm.title} 
             onChange={(e) => handleFieldChange('title', e.target.value)} 
             className={`w-full text-2xl md:text-3xl font-black text-gray-900 dark:text-white bg-transparent placeholder-gray-300 dark:placeholder-slate-600 outline-none transition-all ${formErrors.title ? 'border-b-2 border-red-500' : 'border-b-2 border-transparent focus:border-gray-200 dark:focus:border-slate-700'} pb-2`} 

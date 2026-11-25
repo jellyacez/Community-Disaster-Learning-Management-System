@@ -72,6 +72,7 @@ export default function StepBuilder({
           <input 
             type="text" 
             placeholder="Enter a descriptive step title..." 
+            maxLength={255}
             value={currentFlowStep.title} 
             onChange={(e) => handleFieldChange('title', e.target.value)} 
             className={`w-full p-3.5 bg-gray-50 hover:bg-gray-100 dark:bg-slate-800 dark:hover:bg-slate-800/80 border ${formErrors.stepTitle ? 'border-red-500 ring-2 ring-red-500/10' : 'border-transparent focus:border-red-200 dark:focus:border-red-500/30 focus:bg-white dark:focus:bg-slate-800 focus:ring-4 focus:ring-red-500/10'} rounded-xl text-sm font-bold text-gray-900 dark:text-slate-100 outline-none transition-all placeholder-gray-400 dark:placeholder-slate-500`} 
