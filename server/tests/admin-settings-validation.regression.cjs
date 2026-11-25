@@ -144,10 +144,11 @@ async function main() {
       });
     }
 
-    for (const enabled of [undefined, null, 1, 0, "yes", "TRUE", "", "1", {}, [], [true]]) {
-      for (const before of ["false", "true"]) {
+    // Grouped by starting state: the whole suite shares the 1000-per-15-minutes loopback limiter
+    for (const before of ["false", "true"]) {
+      await maintenance({ enabled: before === "true" });
+      for (const enabled of [undefined, null, 1, 0, "yes", "TRUE", "", "1", {}, [], [true]]) {
         await check(`maintenance ${JSON.stringify(enabled) ?? "missing"} is a 400 and leaves "${before}"`, async () => {
-          await maintenance({ enabled: before === "true" });
           const r = await maintenance(enabled === undefined ? {} : { enabled });
           assert.equal(r.status, 400, r.text);
           assert.equal(r.body?.message, "Send enabled: true or false.", r.text);
