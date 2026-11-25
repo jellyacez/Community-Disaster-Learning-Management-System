@@ -1,8 +1,23 @@
 const Joi = require("joi");
 const { GRADED_STEP_TYPES, INTERACTION_TYPES } = require("../config/constants");
+const { cleanRichText } = require("./sanitizeHtml");
 
 // What the builder saves: its learning types, quiz, situational, and older steps that kept an interaction type as their step type
 const STEP_TYPES = ["text", "video", "pdf", ...GRADED_STEP_TYPES];
+
+// module_data.valid_modcat; the builder's category select offers exactly these
+const MODULE_CATEGORIES = ["Fundamentals", "Flood", "Earthquake", "Fire", "General"];
+
+// varchar sizes in schema.sql. Postgres counts characters, so an emoji is one, not two UTF-16 units
+const MAX_URL_LENGTH = 500;
+const MAX_TITLE_LENGTH = 255;
+const tooLong = (value, max) => typeof value === "string" && [...value].length > max;
+
+// Well above what an author builds by hand; the 800 KB body limit was the only bound before
+const MAX_LEVELS = 50;
+const MAX_STEPS_PER_LEVEL = 100;
+const MAX_QUESTIONS_PER_STEP = 100;
+const MAX_OPTIONS_PER_QUESTION = 30;
 
 /** Returns { isValid, error }. */
 exports.validateModuleCreation = (payload) => {
@@ -11,17 +26,29 @@ exports.validateModuleCreation = (payload) => {
   if (typeof payload.moduleName !== "string" || payload.moduleName.trim() === "") {
     return { isValid: false, error: "Module name is required and must be a string." };
   }
+  if (tooLong(payload.moduleName, 500)) {
+    return { isValid: false, error: "Module name must be 500 characters or fewer." };
+  }
 
   if (typeof payload.moduleCategory !== "string" || payload.moduleCategory.trim() === "") {
     return { isValid: false, error: "Module category is required." };
+  }
+  if (!MODULE_CATEGORIES.includes(payload.moduleCategory)) {
+    return { isValid: false, error: `Module category must be one of: ${MODULE_CATEGORIES.join(", ")}.` };
   }
 
   if (typeof payload.level !== "string" || payload.level.trim() === "") {
     return { isValid: false, error: "Module level is required." };
   }
+  if (tooLong(payload.level, 50)) {
+    return { isValid: false, error: "Module level must be 50 characters or fewer." };
+  }
 
   if (typeof payload.duration !== "string" || payload.duration.trim() === "") {
     return { isValid: false, error: "Module duration is required." };
+  }
+  if (tooLong(payload.duration, 50)) {
+    return { isValid: false, error: "Module duration must be 50 characters or fewer." };
   }
 
   if (payload.training_hours !== undefined && (isNaN(Number(payload.training_hours)) || Number(payload.training_hours) <= 0)) {
@@ -34,6 +61,10 @@ exports.validateModuleCreation = (payload) => {
     payload.description === "<p></p>"
   ) {
     return { isValid: false, error: "Module description is required." };
+  }
+  // Measured as stored: ModuleService saves cleanRichText(description), which can lengthen it ("&" -> "&amp;")
+  if (tooLong(cleanRichText(payload.description), 500)) {
+    return { isValid: false, error: "Module description must be 500 characters or fewer, formatting included." };
   }
 
   // Authors can only save a draft or submit for review; publishing goes through the review endpoint
@@ -68,9 +99,15 @@ exports.validateModuleCreation = (payload) => {
 
   const imageError = validateUrl(payload.image_url, "Thumbnail URL", true);
   if (imageError) return { isValid: false, error: imageError };
+  if (tooLong(payload.image_url, MAX_URL_LENGTH)) {
+    return { isValid: false, error: `Thumbnail URL must be ${MAX_URL_LENGTH} characters or fewer.` };
+  }
 
   const videoError = validateUrl(payload.video_url, "Video URL", false);
   if (videoError) return { isValid: false, error: videoError };
+  if (tooLong(payload.video_url, MAX_URL_LENGTH)) {
+    return { isValid: false, error: `Video URL must be ${MAX_URL_LENGTH} characters or fewer.` };
+  }
 
   // Level covers come from FileReader.readAsDataURL on an image/* picker (SequenceCanvas.jsx)
   const validateCover = (value, fieldName) =>
@@ -83,12 +120,18 @@ exports.validateModuleCreation = (payload) => {
   if (!Array.isArray(payload.levels) || payload.levels.length === 0) {
     return { isValid: false, error: "At least one level is required." };
   }
+  if (payload.levels.length > MAX_LEVELS) {
+    return { isValid: false, error: `A module can have at most ${MAX_LEVELS} levels.` };
+  }
 
   for (let i = 0; i < payload.levels.length; i++) {
     const level = payload.levels[i];
 
     if (typeof level.levelTitle !== "string" || level.levelTitle.trim() === "") {
       return { isValid: false, error: `Level ${i + 1} is missing a valid title.` };
+    }
+    if (tooLong(level.levelTitle, MAX_TITLE_LENGTH)) {
+      return { isValid: false, error: `Level ${i + 1} title must be ${MAX_TITLE_LENGTH} characters or fewer.` };
     }
 
     const coverError =
@@ -108,12 +151,18 @@ exports.validateModuleCreation = (payload) => {
     if (!Array.isArray(level.steps) || level.steps.length === 0) {
       return { isValid: false, error: `Level ${i + 1} must contain at least one step.` };
     }
+    if (level.steps.length > MAX_STEPS_PER_LEVEL) {
+      return { isValid: false, error: `Level ${i + 1} can have at most ${MAX_STEPS_PER_LEVEL} steps.` };
+    }
 
     for (let j = 0; j < level.steps.length; j++) {
       const step = level.steps[j];
 
       if (typeof step.stepTitle !== "string" || step.stepTitle.trim() === "") {
         return { isValid: false, error: `Step ${j + 1} in Level ${i + 1} is missing a title.` };
+      }
+      if (tooLong(step.stepTitle, MAX_TITLE_LENGTH)) {
+        return { isValid: false, error: `Step ${j + 1} in Level ${i + 1} title must be ${MAX_TITLE_LENGTH} characters or fewer.` };
       }
 
       if (typeof step.stepType !== "string" || step.stepType.trim() === "") {
@@ -125,12 +174,24 @@ exports.validateModuleCreation = (payload) => {
 
       const mediaError = validateUrl(step.mediaUrl, `Step ${j + 1} in Level ${i + 1} media URL`);
       if (mediaError) return { isValid: false, error: mediaError };
+      if (tooLong(step.mediaUrl, MAX_URL_LENGTH)) {
+        return { isValid: false, error: `Step ${j + 1} in Level ${i + 1} media URL must be ${MAX_URL_LENGTH} characters or fewer.` };
+      }
 
       // ModuleService inserts quizQuestions for any step type, not only graded ones
       if (Array.isArray(step.quizQuestions)) {
+        if (step.quizQuestions.length > MAX_QUESTIONS_PER_STEP) {
+          return { isValid: false, error: `'${step.stepTitle}' can have at most ${MAX_QUESTIONS_PER_STEP} questions.` };
+        }
         for (const q of step.quizQuestions) {
           const questionImageError = validateUrl(q?.imageURL, `A question image in '${step.stepTitle}'`);
           if (questionImageError) return { isValid: false, error: questionImageError };
+          if (tooLong(q?.imageURL, MAX_URL_LENGTH)) {
+            return { isValid: false, error: `A question image in '${step.stepTitle}' must be ${MAX_URL_LENGTH} characters or fewer.` };
+          }
+          if (Array.isArray(q?.options) && q.options.length > MAX_OPTIONS_PER_QUESTION) {
+            return { isValid: false, error: `A question in '${step.stepTitle}' can have at most ${MAX_OPTIONS_PER_QUESTION} options.` };
+          }
           // choices.choice_text and is_correct are NOT NULL; is_correct is cast from a boolean[]
           if (
             q?.options != null &&
