@@ -9,7 +9,8 @@
  *   - reset/verification subjects carry the name; no mail still says "DRRM Bacolor"
  *   - From is always EMAIL_USER (display name = system name), Reply-To is the support email when set
  *   - the org footer is on every mail, including new login, recovered and the recert reminder
- *   - with no support email there is no Reply-To; a stored name with CR/LF falls back to the default
+ *   - with no support email there is no Reply-To; a stored name with CR/LF or a bidi override falls back
+ *     to the default
  *
  * Fixtures are deleted by exact id; the branding and organization rows are restored. Refuses non-loopback
  * databases and LMS_db.
@@ -239,6 +240,15 @@ async function main() {
   check("a stored name with CR/LF falls back to the default", () => {
     if (plain.subject !== "Reset Your Password - Bacolor Disaster LMS") throw new Error(plain.subject);
     if (plain.from.name !== "Bacolor Disaster LMS Security") throw new Error(JSON.stringify(plain.from));
+  });
+  // A bidi override stored by SQL or an older version must not reach a subject or sender name
+  await putSetting("system_name", "Evil \u202Egnp.LMS");
+  sent.length = 0;
+  await auth.options.emailAndPassword.sendResetPassword({ user, token: "tok" });
+  check("a stored name with a bidi override falls back to the default", () => {
+    const m = mailTo(user.email, /Reset/);
+    if (m.subject !== "Reset Your Password - Bacolor Disaster LMS") throw new Error(m.subject);
+    if (/\u202E/.test(m.html + JSON.stringify(m.from))) throw new Error("U+202E reached the mail");
   });
   sent.length = 0;
   await sendAccountNotice(user.id, "banned", { reason: "x" });

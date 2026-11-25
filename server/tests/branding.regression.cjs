@@ -3,7 +3,8 @@
  *
  * Sends real HTTP requests to a RUNNING LOCAL server and asserts that:
  *   - GET /api/public/branding answers signed out, briefly cacheable, with the name, version and logo URL
- *   - PATCH /api/admin/settings/branding validates the name (2-60 chars, no control characters)
+ *   - PATCH /api/admin/settings/branding validates the name (2-60 chars, no control characters, no bidi
+ *     embedding/override/isolate controls U+202A-U+202E, U+2066-U+2069; ZWJ/ZWNJ allowed)
  *   - logos are PNG/JPEG/WEBP data URLs whose bytes match the type, at most 500 KB decoded;
  *     SVG, mislabelled bytes, URLs and malformed base64 are refused with 400 and change nothing
  *   - GET /api/public/branding/logo serves the exact bytes, the right type, nosniff, immutable per version
@@ -189,6 +190,26 @@ async function main() {
     const pub = (await call(null, "GET", PUBLIC)).body;
     assert.equal(pub.name, "Fire & Rescue LMS");
     assert.equal(pub.version, before + 1);
+  });
+
+  // Bidi controls can reverse how the name reads in subjects and sender names (differential review L2)
+  const BIDI = [0x202a, 0x202b, 0x202c, 0x202d, 0x202e, 0x2066, 0x2067, 0x2068, 0x2069];
+  for (const cp of BIDI) {
+    const hex = cp.toString(16).toUpperCase();
+    await check(`name with bidi control U+${hex} is refused and nothing changes`, async () => {
+      const before = await setting("system_name");
+      const r = await call(admin, "PATCH", BRANDING, { system_name: `Safe${String.fromCodePoint(cp)}Name LMS` });
+      assert.equal(r.status, 400, JSON.stringify(r.body));
+      assert.match(r.body.message, /System name/);
+      assert.equal(await setting("system_name"), before);
+    });
+  }
+
+  await check("ZWJ and ZWNJ (needed by some scripts) are accepted", async () => {
+    const name = "Kar\u200Dyalay \u200Cschool LMS";
+    const r = await call(admin, "PATCH", BRANDING, { system_name: name });
+    assert.equal(r.status, 200, JSON.stringify(r.body));
+    assert.equal(await setting("system_name"), name);
   });
 
   await check("exactly 60 characters is accepted", async () => {
