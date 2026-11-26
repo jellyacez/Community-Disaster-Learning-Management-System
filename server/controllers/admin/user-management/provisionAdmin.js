@@ -132,15 +132,26 @@ exports.provisionAdmin = async (req, res) => {
     let emailSent = false;
 
     if (isGenerated) {
+      // Built apart from the send, so a template or settings failure isn't logged as SMTP
+      let mailOptions = null;
       try {
-        const mailOptions = getAdminPasswordResetEmail({ name, email }, password, await getOrgSettings());
-        await transporter.sendMail(mailOptions);
-        emailSent = true;
-      } catch (emailError) {
-        console.warn(
-          "SMTP gateway unavailable. Could not send provisioning email:",
-          emailError.message
-        );
+        mailOptions = getAdminPasswordResetEmail({ name, email }, password, await getOrgSettings());
+      } catch (buildError) {
+        require("../../../utils/logger").logError("provisioning_email_build_failure", {
+          userId: resAuth.user.id,
+          message: buildError.message,
+        });
+      }
+      if (mailOptions) {
+        try {
+          await transporter.sendMail(mailOptions);
+          emailSent = true;
+        } catch (emailError) {
+          console.warn(
+            "SMTP gateway unavailable. Could not send provisioning email:",
+            emailError.message
+          );
+        }
       }
     }
 

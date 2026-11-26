@@ -113,12 +113,20 @@ exports.resetUserPassword = async (req, res) => {
 
     let emailSent = false;
     if (isGenerated) {
+      // Built apart from the send, so a template or settings failure isn't logged as SMTP
+      let mailOptions = null;
       try {
-        const mailOptions = getAdminPasswordResetEmail(user, password, await getOrgSettings());
-        await transporter.sendMail(mailOptions);
-        emailSent = true;
-      } catch (mailErr) {
-        console.warn("SMTP offline during forced reset:", mailErr.message);
+        mailOptions = getAdminPasswordResetEmail(user, password, await getOrgSettings());
+      } catch (buildErr) {
+        logError("admin_reset_email_build_failure", { targetId: id, message: buildErr.message });
+      }
+      if (mailOptions) {
+        try {
+          await transporter.sendMail(mailOptions);
+          emailSent = true;
+        } catch (mailErr) {
+          console.warn("SMTP offline during forced reset:", mailErr.message);
+        }
       }
     }
 
