@@ -75,7 +75,7 @@ exports.createBarangayAnnouncement = async (req, res) => {
       });
     }
 
-    // Checked here too because the MDRRMO route posts here without the Joi schema
+    // Both create routes validate with announcementSchema first; this re-check is a second line of defence
     const isUrgent = String(priority).toLowerCase() === "urgent";
     let durationHours = null;
     if (isUrgent) {
