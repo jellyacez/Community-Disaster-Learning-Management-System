@@ -269,6 +269,12 @@ exports.feedbackLengthError = (body, fields) => {
   return field ? `${FEEDBACK_LABELS[field]} must be ${FEEDBACK_MAX_LENGTH[field]} characters or fewer.` : null;
 };
 
+/** True when a feedback :id route param can be a feedbacks.id (a positive int4); text, decimals and overflow made the query throw. */
+exports.isFeedbackId = (id) => /^[1-9]\d{0,9}$/.test(id) && Number(id) <= 2147483647;
+
+/** A reply must be a non-blank string; a number, object or array was stored as its text form. */
+exports.isReplyText = (reply) => typeof reply === "string" && reply.trim() !== "";
+
 // The values FeedbackForm.jsx offers; getAdminFeedbacks only lists these two recipients
 const FEEDBACK_RECIPIENTS = ["barangay", "mdrrmo"];
 const FEEDBACK_TYPES = ["feedback", "inquiry", "concern", "report"];

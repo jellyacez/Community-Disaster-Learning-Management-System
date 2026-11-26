@@ -1,6 +1,6 @@
 const feedbackService = require("../../services/feedback/FeedbackService");
 const sseService = require("../../services/notif/sseService");
-const { feedbackFieldsError, feedbackLengthError } = require("../../utils/validators");
+const { feedbackFieldsError, feedbackLengthError, isFeedbackId, isReplyText } = require("../../utils/validators");
 
 // @route   GET /api/feedbacks/my-submissions
 exports.getFeedbacks = async (req, res) => {
@@ -60,8 +60,12 @@ exports.userReplyToFeedback = async (req, res) => {
     const { id } = req.params;
     const { reply } = req.body;
 
-    if (!reply) {
-      return res.status(400).json({ success: false, error: "Reply text is required." });
+    if (!isFeedbackId(id)) {
+      return res.status(400).json({ success: false, error: "Invalid feedback id.", message: "Invalid feedback id." });
+    }
+
+    if (!isReplyText(reply)) {
+      return res.status(400).json({ success: false, error: "Reply text is required.", message: "Reply text is required." });
     }
 
     const tooLong = feedbackLengthError(req.body, ["reply"]);

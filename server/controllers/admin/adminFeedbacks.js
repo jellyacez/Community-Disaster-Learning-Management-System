@@ -1,6 +1,9 @@
 const feedbackService = require("../../services/feedback/FeedbackService");
 const { logActivity } = require("../../utils/logger");
-const { feedbackLengthError } = require("../../utils/validators");
+const { feedbackLengthError, isFeedbackId, isReplyText } = require("../../utils/validators");
+
+const invalidId = (res) =>
+  res.status(400).json({ success: false, error: "Invalid feedback id.", message: "Invalid feedback id." });
 
 // @desc    Get scoped feedback submissions for admins
 // @route   GET /api/admin/mdrrmo/feedback
@@ -43,8 +46,11 @@ exports.replyToFeedback = async (req, res) => {
       return res.status(401).json({ success: false, error: "Unauthorized. Missing user context." });
     }
 
-    if (!reply || !status) {
-      return res.status(400).json({ success: false, error: "Reply text and status are required." });
+    if (!isFeedbackId(id)) return invalidId(res);
+
+    if (!isReplyText(reply) || !status) {
+      const error = "Reply text and status are required.";
+      return res.status(400).json({ success: false, error, message: error });
     }
 
     // An admin reply hands the ticket back to the resident; it can't put it back in the Pending queue
@@ -90,6 +96,8 @@ exports.closeFeedbackThread = async (req, res) => {
     if (!adminRole) {
       return res.status(401).json({ success: false, error: "Unauthorized. Missing user context." });
     }
+
+    if (!isFeedbackId(id)) return invalidId(res);
 
     const adminContext = {
       role: adminRole,
