@@ -87,6 +87,7 @@ function validateOrgFooter(input) {
 
 module.exports = {
   MAX_LOGO_BYTES,
+  LOGO_TYPES,
   validateSystemName,
   parseLogo,
   parseRasterDataUrl,
