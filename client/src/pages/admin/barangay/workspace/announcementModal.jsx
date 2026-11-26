@@ -387,6 +387,7 @@ export default function AnnouncementModal({
                   id={`${id}-announcement-title`}
                   type="text"
                   value={title}
+                  maxLength={255}
                   disabled={mutation.isPending}
                   onChange={(event) => {
                     setTitle(event.target.value);
@@ -427,6 +428,7 @@ export default function AnnouncementModal({
                   id={`${id}-content`}
                   rows={6}
                   value={content}
+                  maxLength={5000}
                   disabled={mutation.isPending}
                   onChange={(event) => {
                     setContent(event.target.value);
