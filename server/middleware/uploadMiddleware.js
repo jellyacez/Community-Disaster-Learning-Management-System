@@ -15,20 +15,21 @@ const bucketName = process.env.AWS_S3_BUCKET_NAME || 'bacolor-lms-media';
 // file renamed .png, or a PNG sent as application/pdf, is refused before it reaches storage.
 const ascii = (b, offset, text) => b.length >= offset + text.length && b.toString('latin1', offset, offset + text.length) === text;
 const KINDS = {
-  png: { exts: ['.png'], mimes: ['image/png'], sniff: LOGO_TYPES.png },
-  jpeg: { exts: ['.jpg', '.jpeg'], mimes: ['image/jpeg', 'image/jpg'], sniff: LOGO_TYPES.jpeg },
-  webp: { exts: ['.webp'], mimes: ['image/webp'], sniff: LOGO_TYPES.webp },
-  gif: { exts: ['.gif'], mimes: ['image/gif'], sniff: (b) => ascii(b, 0, 'GIF87a') || ascii(b, 0, 'GIF89a') },
-  pdf: { exts: ['.pdf'], mimes: ['application/pdf'], sniff: (b) => ascii(b, 0, '%PDF-') },
+  png: { label: 'PNG image', exts: ['.png'], mimes: ['image/png'], sniff: LOGO_TYPES.png },
+  jpeg: { label: 'JPG image', exts: ['.jpg', '.jpeg'], mimes: ['image/jpeg', 'image/jpg'], sniff: LOGO_TYPES.jpeg },
+  webp: { label: 'WEBP image', exts: ['.webp'], mimes: ['image/webp'], sniff: LOGO_TYPES.webp },
+  gif: { label: 'GIF image', exts: ['.gif'], mimes: ['image/gif'], sniff: (b) => ascii(b, 0, 'GIF87a') || ascii(b, 0, 'GIF89a') },
+  pdf: { label: 'PDF document', exts: ['.pdf'], mimes: ['application/pdf'], sniff: (b) => ascii(b, 0, '%PDF-') },
   // a DOCX is a ZIP container; its local file header is all a cheap sniff can check
   docx: {
+    label: 'Word (DOCX) document',
     exts: ['.docx'],
     mimes: ['application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
     sniff: (b) => b.length >= 4 && b.readUInt32BE(0) === 0x504b0304,
   },
-  mp4: { exts: ['.mp4'], mimes: ['video/mp4'], sniff: (b) => ascii(b, 4, 'ftyp') },
-  webm: { exts: ['.webm'], mimes: ['video/webm'], sniff: (b) => b.length >= 4 && b.readUInt32BE(0) === 0x1a45dfa3 },
-  ogg: { exts: ['.ogg'], mimes: ['video/ogg'], sniff: (b) => ascii(b, 0, 'OggS') },
+  mp4: { label: 'MP4 video', exts: ['.mp4'], mimes: ['video/mp4'], sniff: (b) => ascii(b, 4, 'ftyp') },
+  webm: { label: 'WebM video', exts: ['.webm'], mimes: ['video/webm'], sniff: (b) => b.length >= 4 && b.readUInt32BE(0) === 0x1a45dfa3 },
+  ogg: { label: 'OGG video', exts: ['.ogg'], mimes: ['video/ogg'], sniff: (b) => ascii(b, 0, 'OggS') },
 };
 const SNIFF_BYTES = 12;
 
@@ -70,9 +71,14 @@ const sniffingStorage = (inner) => ({
       cleanup();
       src.pause();
       const head = Buffer.concat(chunks);
-      if (!KINDS[kindOf(file)].sniff(head)) {
+      const kind = KINDS[kindOf(file)];
+      if (!kind.sniff(head)) {
         src.resume(); // drain the rest so the request can finish
-        return cb(invalidType("The file's contents don't match its type. Only real videos (MP4, WebM, OGG), documents (PDF, DOCX), and images (PNG, JPG, WEBP, GIF) are accepted."));
+        // The builder shows this message as is, so say which file, what it should be, and the fix
+        return cb(invalidType(
+          `"${file.originalname}" isn't a real ${kind.label}: its contents don't match its file extension. ` +
+          `If it's another format, rename it with the right extension, or re-export it as a ${kind.label}.`
+        ));
       }
       const body = new PassThrough();
       body.write(head);
