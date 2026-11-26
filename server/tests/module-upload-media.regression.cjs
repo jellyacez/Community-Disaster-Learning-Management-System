@@ -188,6 +188,24 @@ async function main() {
     await refused(label, [{ field: "mediaFile", name, type, bytes }]);
   }
 
+  // Refusals of real files the old check let through (review S5): the toast the builder shows is
+  // this message, so it must name the file, what it was expected to be, and what to do
+  const explained = [
+    ["a JPEG renamed .png", "photo.png", "image/png", BYTES.jpeg, /PNG image/],
+    ["an MP4 without the ftyp box at the start", "drill.mp4", "video/mp4", pad([0, 0, 0, 0x18, ...ascii("mdat")]), /MP4 video/],
+  ];
+  for (const [label, name, type, bytes, kind] of explained) {
+    await check(`${label} -> 400 whose message names the file, the expected type and the fix`, async () => {
+      const r = await upload(author, [{ field: "mediaFile", name, type, bytes }]);
+      assert.equal(r.status, 400, `status ${r.status} ${JSON.stringify(r.body)}`);
+      assert.deepEqual(r.added, [], `files left in uploads: ${r.added.join(", ")}`);
+      const message = r.body?.message || "";
+      assert.ok(message.includes(name), `message doesn't name ${name}: ${message}`);
+      assert.match(message, kind, `message doesn't say what the file should be: ${message}`);
+      assert.match(message, /re-?export|rename/i, `message doesn't say how to fix it: ${message}`);
+    });
+  }
+
   await refused("text field before the file", [
     { field: "note", value: "x" },
     { field: "mediaFile", name: "thumb.png", type: "image/png", bytes: BYTES.png },
