@@ -2,6 +2,7 @@ const pool = require("../../../config/db");
 const { UNSCOPED_ACCESS_ROLES } = require("../../../config/permissions");
 const { logActivity, logError } = require("../../../utils/logger");
 const { assertActorOutranksTarget } = require("../../../config/roleHierarchy");
+const { AppError, securityFault } = require("../../../utils/httpErrors");
 
 function isUnscopedRole(role) {
   return role === "super_admin" || (Array.isArray(UNSCOPED_ACCESS_ROLES) && UNSCOPED_ACCESS_ROLES.includes(role));
@@ -36,12 +37,12 @@ exports.updateUser = async (req, res) => {
 
     if (adminContext.role === 'barangay_admin') {
       if (!adminContext.barangay_id) {
-        throw new Error("SECURITY_FAULT: barangay_admin context missing barangay identifier for scoping.");
+        throw securityFault("Your account isn't assigned to a barangay yet. Ask an administrator to assign one.", "barangay_admin has no barangay_id", { actorId: adminContext.id, route: req.originalUrl });
       }
       fetchQuery += ' AND barangay_id = $2';
       fetchValues.push(adminContext.barangay_id);
     } else if (!isUnscopedRole(adminContext.role)) {
-      throw new Error(`SECURITY_FAULT: Unauthorized role '${adminContext.role}' attempted to update user details.`);
+      throw securityFault("You don't have permission to do this.", `role ${adminContext.role} attempted to update user details`, { actorId: adminContext.id, route: req.originalUrl });
     }
 
     const fetchResult = await pool.query(fetchQuery, fetchValues);
@@ -55,7 +56,7 @@ exports.updateUser = async (req, res) => {
     if (targetUser.role === 'super_admin' && adminContext.role !== 'super_admin') {
       return res.status(403).json({
         success: false,
-        message: "SECURITY_FAULT: Only a Super Admin can modify another Super Admin account.",
+        message: "Only a Super Admin can modify another Super Admin account.",
       });
     }
 
@@ -90,8 +91,8 @@ exports.updateUser = async (req, res) => {
 
     res.json(result.rows[0]);
   } catch (err) {
-    if (err.message && err.message.startsWith('SECURITY_FAULT')) {
-      return res.status(403).json({ success: false, message: err.message });
+    if (err instanceof AppError) {
+      return res.status(err.statusCode).json({ success: false, message: err.message });
     }
     logError('update_user_failure', {
       adminId: adminContext?.id,

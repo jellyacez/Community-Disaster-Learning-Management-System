@@ -3,7 +3,7 @@ const { cleanRichText } = require("../../utils/sanitizeHtml");
 const { generateEnrollmentCode, codesMatch } = require("../../utils/enrollmentCode");
 const { UNSCOPED_ACCESS_ROLES } = require("../../config/permissions");
 const sseService = require("../notif/sseService");
-const { AppError } = require("../../utils/httpErrors");
+const { AppError, securityFault } = require("../../utils/httpErrors");
 const { parsePaging } = require("../../utils/pagination");
 
 const MODULE_STATUSES = new Set(["draft", "pending_review", "published", "rejected", "archived"]);
@@ -777,7 +777,7 @@ class ModuleService {
 
   async getAllModules(page = 1, limit = 10, search = "", category = "", level = "", adminContext = null, status = "", sort = "") {
     if (!adminContext || !adminContext.role) {
-      throw new Error("SECURITY_FAULT: Missing or invalid adminContext. Cannot safely return modules.");
+      throw securityFault("You don't have permission to do this.", "getAllModules called without adminContext");
     }
 
     let offset;
@@ -788,13 +788,13 @@ class ModuleService {
 
     if (adminContext.role === 'barangay_admin') {
       if (!adminContext.barangay_id) {
-        throw new Error("SECURITY_FAULT: barangay_admin context missing barangay identifier for scoping.");
+        throw securityFault("Your account isn't assigned to a barangay yet. Ask an administrator to assign one.", "barangay_admin has no barangay_id", { actorId: adminContext.id });
       }
       conditions.push(`barangay_id = $${idx}`);
       values.push(adminContext.barangay_id);
       idx++;
     } else if (!UNSCOPED_ACCESS_ROLES.includes(adminContext.role)) {
-      throw new Error(`SECURITY_FAULT: Unauthorized role '${adminContext.role}' attempted to access module records.`);
+      throw securityFault("You don't have permission to do this.", `role ${adminContext.role} attempted to access module records`, { actorId: adminContext.id });
     }
 
     if (search) {

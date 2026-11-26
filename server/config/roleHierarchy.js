@@ -1,3 +1,5 @@
+const { securityFault } = require("../utils/httpErrors");
+
 // Role ranks live only here. Admin controllers acting on another user must call assertActorOutranksTarget() first.
 
 const ROLE_RANKS = {
@@ -15,7 +17,7 @@ function getRank(role) {
 }
 
 /**
- * Throws SECURITY_FAULT unless actorRole strictly outranks targetRole.
+ * Throws a security fault (plain 403 AppError, detail logged) unless actorRole strictly outranks targetRole.
  * Applies to system_admin too: any system_admin exception has to be handled at the call site.
  */
 function assertActorOutranksTarget(actorRole, targetRole) {
@@ -23,8 +25,8 @@ function assertActorOutranksTarget(actorRole, targetRole) {
   const targetRank = getRank(targetRole);
 
   if (actorRank <= targetRank) {
-    throw new Error(
-      `SECURITY_FAULT: Cannot perform this action on a user with equal or higher role rank. ` +
+    throw securityFault(
+      "You cannot manage an account with equal or higher privilege.",
       `Actor: ${actorRole} (rank ${actorRank}), Target: ${targetRole} (rank ${targetRank}).`
     );
   }
@@ -38,7 +40,7 @@ function assertActorOutranksTarget(actorRole, targetRole) {
  *
  * @param {string} actorRole     - Role of the provisioning admin
  * @param {string} newUserRole   - Role requested for the new account
- * @throws {Error} SECURITY_FAULT if the actor is not exactly one tier above
+ * @throws {AppError} 403 security fault if the actor is not exactly one tier above
  */
 function assertCanProvision(actorRole, newUserRole) {
   const actorRank = getRank(actorRole);
@@ -46,16 +48,15 @@ function assertCanProvision(actorRole, newUserRole) {
 
   if (actorRole === "system_admin") {
     if (newUserRank >= actorRank) {
-      throw new Error("SECURITY_FAULT: Cannot provision equal or higher rank.");
+      throw securityFault("You can only create accounts for roles below your own.", `system_admin provisioning ${newUserRole}`);
     }
     return;
   }
 
   if (actorRank <= newUserRank) {
-    throw new Error(
-      `SECURITY_FAULT: Provisioning role '${newUserRole}' (rank ${newUserRank}) is not allowed ` +
-      `for an actor with role '${actorRole}' (rank ${actorRank}). ` +
-      `You may only provision accounts below your own rank.`
+    throw securityFault(
+      "You can only create accounts for roles below your own.",
+      `Provisioning role '${newUserRole}' (rank ${newUserRank}) by actor role '${actorRole}' (rank ${actorRank}).`
     );
   }
 }

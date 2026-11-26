@@ -3,6 +3,7 @@ const { logActivity, logError } = require("../../../utils/logger");
 const { UNSCOPED_ACCESS_ROLES } = require("../../../config/permissions");
 const { assertActorOutranksTarget } = require("../../../config/roleHierarchy");
 const { sendAccountNotice } = require("../../../services/accountNoticeService");
+const { AppError, securityFault } = require("../../../utils/httpErrors");
 
 function isUnscopedRole(role) {
   return (
@@ -61,16 +62,12 @@ exports.banUser = async (req, res) => {
 
     if (adminContext.role === "barangay_admin") {
       if (!adminContext.barangay_id) {
-        throw new Error(
-          "SECURITY_FAULT: barangay_admin context missing barangay identifier for scoping.",
-        );
+        throw securityFault("Your account isn't assigned to a barangay yet. Ask an administrator to assign one.", "barangay_admin has no barangay_id", { actorId: adminContext.id, route: req.originalUrl });
       }
       targetQuery += " AND barangay_id = $2";
       targetValues.push(adminContext.barangay_id);
     } else if (!isUnscopedRole(adminContext.role)) {
-      throw new Error(
-        `SECURITY_FAULT: Unauthorized role '${adminContext.role}' attempted to ban users.`,
-      );
+      throw securityFault("You don't have permission to do this.", `role ${adminContext.role} attempted to ban users`, { actorId: adminContext.id, route: req.originalUrl });
     }
 
     const targetResult = await pool.query(targetQuery, targetValues);
@@ -141,8 +138,8 @@ exports.banUser = async (req, res) => {
     });
     res.json({ success: true, message: "User banned" });
   } catch (err) {
-    if (err.message && err.message.startsWith("SECURITY_FAULT")) {
-      return res.status(403).json({ success: false, message: err.message });
+    if (err instanceof AppError) {
+      return res.status(err.statusCode).json({ success: false, message: err.message });
     }
     logError("ban_user_failure", {
       userId: req.user?.id,
@@ -181,16 +178,12 @@ exports.unbanUser = async (req, res) => {
 
     if (adminContext.role === "barangay_admin") {
       if (!adminContext.barangay_id) {
-        throw new Error(
-          "SECURITY_FAULT: barangay_admin context missing barangay identifier for scoping.",
-        );
+        throw securityFault("Your account isn't assigned to a barangay yet. Ask an administrator to assign one.", "barangay_admin has no barangay_id", { actorId: adminContext.id, route: req.originalUrl });
       }
       targetQuery += " AND barangay_id = $2";
       targetValues.push(adminContext.barangay_id);
     } else if (!isUnscopedRole(adminContext.role)) {
-      throw new Error(
-        `SECURITY_FAULT: Unauthorized role '${adminContext.role}' attempted to unban users.`,
-      );
+      throw securityFault("You don't have permission to do this.", `role ${adminContext.role} attempted to unban users`, { actorId: adminContext.id, route: req.originalUrl });
     }
 
     const targetResult = await pool.query(targetQuery, targetValues);
@@ -247,8 +240,8 @@ exports.unbanUser = async (req, res) => {
     sendAccountNotice(id, "unbanned");
     res.json({ success: true, message: "User unbanned" });
   } catch (err) {
-    if (err.message && err.message.startsWith("SECURITY_FAULT")) {
-      return res.status(403).json({ success: false, message: err.message });
+    if (err instanceof AppError) {
+      return res.status(err.statusCode).json({ success: false, message: err.message });
     }
     logError("unban_user_failure", {
       userId: req.user?.id,

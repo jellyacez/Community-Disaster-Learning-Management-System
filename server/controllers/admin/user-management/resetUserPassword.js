@@ -7,6 +7,7 @@ const { generateSecurePassword } = require("../../../utils/passwordGenerator");
 const { UNSCOPED_ACCESS_ROLES } = require("../../../config/permissions");
 const { logActivity, logError } = require("../../../utils/logger");
 const { assertActorOutranksTarget } = require("../../../config/roleHierarchy");
+const { AppError, securityFault } = require("../../../utils/httpErrors");
 
 function isUnscopedRole(role) {
   return (
@@ -50,12 +51,12 @@ exports.resetUserPassword = async (req, res) => {
 
     if (adminContext.role === "barangay_admin") {
       if (!adminContext.barangay_id) {
-        throw new Error("SECURITY_FAULT: barangay_admin context missing barangay identifier for scoping.");
+        throw securityFault("Your account isn't assigned to a barangay yet. Ask an administrator to assign one.", "barangay_admin has no barangay_id", { actorId: adminContext.id, route: req.originalUrl });
       }
       userQuery += " AND barangay_id = $2";
       userValues.push(adminContext.barangay_id);
     } else if (!isUnscopedRole(adminContext.role)) {
-      throw new Error(`SECURITY_FAULT: Unauthorized role '${adminContext.role}' attempted to reset user passwords.`);
+      throw securityFault("You don't have permission to do this.", `role ${adminContext.role} attempted to reset user passwords`, { actorId: adminContext.id, route: req.originalUrl });
     }
 
     const userResult = await pool.query(userQuery, userValues);
@@ -68,7 +69,7 @@ exports.resetUserPassword = async (req, res) => {
     if (user.role === "super_admin" && adminContext.role !== "super_admin") {
       return res.status(403).json({
         success: false,
-        message: "SECURITY_FAULT: Only a Super Administrator can reset the password of a Super Administrator account.",
+        message: "Only a Super Administrator can reset the password of a Super Administrator account.",
       });
     }
 
@@ -135,8 +136,8 @@ exports.resetUserPassword = async (req, res) => {
       temporaryPassword: !emailSent && isGenerated ? password : undefined,
     });
   } catch (err) {
-    if (err.message && err.message.startsWith("SECURITY_FAULT")) {
-      return res.status(403).json({ success: false, message: err.message });
+    if (err instanceof AppError) {
+      return res.status(err.statusCode).json({ success: false, message: err.message });
     }
     logError("reset_password_failure", {
       adminId: adminContext?.id,

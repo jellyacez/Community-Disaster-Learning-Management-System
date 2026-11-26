@@ -38,4 +38,10 @@ function respondWithError(res, err, { event, fallback, field = "message", prefix
   return res.status(500).json({ success: false, [field]: fallback });
 }
 
-module.exports = { AppError, isExpectedError, isDatabaseError, respondWithError };
+// A refusal whose reason is for the log, not the client: logs the detail, returns a plain 403
+function securityFault(message, detail, context = {}) {
+  logError("security_fault", { ...context, detail });
+  return new AppError(message, 403);
+}
+
+module.exports = { AppError, isExpectedError, isDatabaseError, respondWithError, securityFault };

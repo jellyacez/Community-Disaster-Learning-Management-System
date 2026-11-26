@@ -3,6 +3,7 @@ const { logActivity, logError } = require('../../../utils/logger');
 const { UNSCOPED_ACCESS_ROLES } = require("../../../config/permissions");
 const { assertActorOutranksTarget } = require("../../../config/roleHierarchy");
 const { sendAccountNotice } = require("../../../services/accountNoticeService");
+const { AppError, securityFault } = require("../../../utils/httpErrors");
 
 function isUnscopedRole(role) {
   return role === "super_admin" || (Array.isArray(UNSCOPED_ACCESS_ROLES) && UNSCOPED_ACCESS_ROLES.includes(role));
@@ -32,12 +33,12 @@ exports.archiveUser = async (req, res) => {
 
     if (adminContext.role === 'barangay_admin') {
       if (!adminContext.barangay_id) {
-        throw new Error("SECURITY_FAULT: barangay_admin context missing barangay identifier for scoping.");
+        throw securityFault("Your account isn't assigned to a barangay yet. Ask an administrator to assign one.", "barangay_admin has no barangay_id", { actorId: adminContext.id, route: req.originalUrl });
       }
       targetQuery += ' AND barangay_id = $2';
       targetValues.push(adminContext.barangay_id);
     } else if (!isUnscopedRole(adminContext.role)) {
-      throw new Error(`SECURITY_FAULT: Unauthorized role '${adminContext.role}' attempted to archive users.`);
+      throw securityFault("You don't have permission to do this.", `role ${adminContext.role} attempted to archive users`, { actorId: adminContext.id, route: req.originalUrl });
     }
 
     const targetResult = await pool.query(targetQuery, targetValues);
@@ -67,8 +68,8 @@ exports.archiveUser = async (req, res) => {
 
     res.json({ success: true, message: archived ? 'User archived' : 'User restored' });
   } catch (err) {
-    if (err.message && err.message.startsWith('SECURITY_FAULT')) {
-      return res.status(403).json({ success: false, message: err.message });
+    if (err instanceof AppError) {
+      return res.status(err.statusCode).json({ success: false, message: err.message });
     }
     logError('archive_user_failure', {
       userId: req.user?.id,
@@ -98,12 +99,12 @@ exports.bulkArchiveUsers = async (req, res) => {
 
     if (adminContext.role === 'barangay_admin') {
       if (!adminContext.barangay_id) {
-        throw new Error("SECURITY_FAULT: barangay_admin context missing barangay identifier for scoping.");
+        throw securityFault("Your account isn't assigned to a barangay yet. Ask an administrator to assign one.", "barangay_admin has no barangay_id", { actorId: adminContext.id, route: req.originalUrl });
       }
       targetQuery += ' AND barangay_id = $2';
       targetValues.push(adminContext.barangay_id);
     } else if (!isUnscopedRole(adminContext.role)) {
-      throw new Error(`SECURITY_FAULT: Unauthorized role '${adminContext.role}' attempted to bulk archive users.`);
+      throw securityFault("You don't have permission to do this.", `role ${adminContext.role} attempted to bulk archive users`, { actorId: adminContext.id, route: req.originalUrl });
     }
 
     const targetResult = await pool.query(targetQuery, targetValues);
@@ -140,8 +141,8 @@ exports.bulkArchiveUsers = async (req, res) => {
 
     res.json({ success: true, message: `${validatedIds.length} users ${isArchived ? 'archived' : 'restored'}` });
   } catch (err) {
-    if (err.message && err.message.startsWith('SECURITY_FAULT')) {
-      return res.status(403).json({ success: false, message: err.message });
+    if (err instanceof AppError) {
+      return res.status(err.statusCode).json({ success: false, message: err.message });
     }
     logError('bulk_archive_failure', {
       userId: req.user?.id,

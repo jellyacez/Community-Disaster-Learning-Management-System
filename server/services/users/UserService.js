@@ -1,7 +1,7 @@
 const pool = require("../../config/db");
 const { UNSCOPED_ACCESS_ROLES } = require("../../config/permissions");
 const { parsePaging } = require("../../utils/pagination");
-const { AppError } = require("../../utils/httpErrors");
+const { AppError, securityFault } = require("../../utils/httpErrors");
 
 // The settings keys the client writes, with their exact types (P5-12, M5)
 const DEFAULT_SETTINGS = { announcements: true, reminders: true };
@@ -67,7 +67,7 @@ class UserService {
 
   async getAllUsers(page = 1, limit = 10, search = "", roleFilter = "", status = "", barangayFilter = "", adminContext = null) {
     if (!adminContext || !adminContext.role) {
-      throw new Error("SECURITY_FAULT: Missing or invalid adminContext. Cannot safely return users.");
+      throw securityFault("You don't have permission to do this.", "getAllUsers called without adminContext");
     }
 
     let offset;
@@ -82,7 +82,7 @@ class UserService {
     // barangay admins only see their own barangay
     if (adminContext.role === 'barangay_admin') {
       if (!adminContext.barangay_id) {
-        throw new Error("SECURITY_FAULT: barangay_admin context missing barangay identifier for scoping.");
+        throw securityFault("Your account isn't assigned to a barangay yet. Ask an administrator to assign one.", "barangay_admin has no barangay_id", { actorId: adminContext.id });
       }
       conditions.push(`u.barangay_id = $${idx}`);
       values.push(adminContext.barangay_id);
@@ -98,7 +98,7 @@ class UserService {
         idx++;
       }
     } else {
-      throw new Error(`SECURITY_FAULT: Unauthorized role '${adminContext.role}' attempted to access user records.`);
+      throw securityFault("You don't have permission to do this.", `role ${adminContext.role} attempted to access user records`, { actorId: adminContext.id });
     }
 
     // super_admin accounts are hidden from every lower tier

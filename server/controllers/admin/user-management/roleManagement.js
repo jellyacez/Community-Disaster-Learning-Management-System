@@ -3,6 +3,7 @@ const { UNSCOPED_ACCESS_ROLES } = require("../../../config/permissions");
 const { logActivity, logError } = require("../../../utils/logger");
 const { ROLE_RANKS } = require("../../../config/roleHierarchy");
 const { sendAccountNotice } = require("../../../services/accountNoticeService");
+const { AppError, securityFault } = require("../../../utils/httpErrors");
 
 exports.updateUserRole = async (req, res) => {
   const { id } = req.params;
@@ -30,7 +31,7 @@ exports.updateUserRole = async (req, res) => {
   if (role === 'super_admin' && !isSuperAdmin) {
     return res.status(403).json({
       success: false,
-      message: 'SECURITY_FAULT: Only a Super Admin can promote accounts to Super Admin.',
+      message: 'Only a Super Admin can promote accounts to Super Admin.',
     });
   }
 
@@ -48,12 +49,12 @@ exports.updateUserRole = async (req, res) => {
 
     if (adminContext.role === 'barangay_admin') {
       if (!adminContext.barangay_id) {
-        throw new Error("SECURITY_FAULT: barangay_admin context missing barangay identifier for scoping.");
+        throw securityFault("Your account isn't assigned to a barangay yet. Ask an administrator to assign one.", "barangay_admin has no barangay_id", { actorId: adminContext.id, route: req.originalUrl });
       }
       fetchQuery += ' AND barangay_id = $2';
       fetchParams.push(adminContext.barangay_id);
     } else if (!UNSCOPED_ACCESS_ROLES.includes(adminContext.role)) {
-      throw new Error(`SECURITY_FAULT: Unauthorized role '${adminContext.role}' attempted to update user roles.`);
+      throw securityFault("You don't have permission to do this.", `role ${adminContext.role} attempted to update user roles`, { actorId: adminContext.id, route: req.originalUrl });
     }
 
     const targetRes = await pool.query(fetchQuery, fetchParams);
@@ -67,7 +68,7 @@ exports.updateUserRole = async (req, res) => {
     if (targetUser.role === 'super_admin' && !isSuperAdmin) {
       return res.status(403).json({
         success: false,
-        message: 'SECURITY_FAULT: Only a Super Admin can modify an existing Super Admin account.',
+        message: 'Only a Super Admin can modify an existing Super Admin account.',
       });
     }
 
@@ -77,10 +78,10 @@ exports.updateUserRole = async (req, res) => {
 
     if (!isSuperAdmin) {
       if (targetCurrentRank >= adminRank) {
-        throw new Error(`SECURITY_FAULT: Cannot modify role of a user with equal or higher role rank (${targetUser.role}).`);
+        throw securityFault("You cannot change the role of an account with equal or higher privilege.", `Actor ${adminContext.role} on target role ${targetUser.role}`, { actorId: adminContext.id, route: req.originalUrl });
       }
       if (newRoleRank >= adminRank) {
-        throw new Error(`SECURITY_FAULT: Cannot assign a role (${role}) equal to or higher than your own rank.`);
+        throw securityFault("You can only give roles below your own.", `Actor ${adminContext.role} assigning ${role}`, { actorId: adminContext.id, route: req.originalUrl });
       }
     }
 
@@ -112,8 +113,8 @@ exports.updateUserRole = async (req, res) => {
 
     res.json({ success: true, message: 'Role updated successfully' });
   } catch (err) {
-    if (err.message && err.message.startsWith('SECURITY_FAULT')) {
-      return res.status(403).json({ success: false, message: err.message });
+    if (err instanceof AppError) {
+      return res.status(err.statusCode).json({ success: false, message: err.message });
     }
     logError('update_user_role_failure', {
       adminId: adminContext?.id,
