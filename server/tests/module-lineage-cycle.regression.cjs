@@ -109,7 +109,7 @@ async function api(user, method, path, body) {
       signal: AbortSignal.timeout(TIMEOUT_MS),
     });
   } catch (err) {
-    if (err.name === "TimeoutError") throw new Error(`${method} ${path}: no response within ${TIMEOUT_MS} ms`);
+    if (err.name === "TimeoutError") throw new Error(`${method} ${path}: no response within ${TIMEOUT_MS} ms`, { cause: err });
     throw err;
   }
   const json = await res.json().catch(() => ({}));

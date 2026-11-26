@@ -140,7 +140,6 @@ async function main() {
   const superAdmin = await createUser("super", "super_admin");
   const sysAdmin = await createUser("sys", "system_admin");
   const head = await createUser("head", "head_mdrrmo_admin");
-  const author = await createUser("author", "mdrrmo_admin");
   const resident = await createUser("resident", "resident");
   const target = await createUser("target", "resident");
   const banTarget = await createUser("bantarget", "resident");
