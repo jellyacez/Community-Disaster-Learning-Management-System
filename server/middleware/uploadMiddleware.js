@@ -3,7 +3,7 @@ const multerS3 = require('multer-s3');
 const { s3Client } = require('../services/s3Service');
 const fs = require('fs');
 const path = require('path');
-const { PassThrough } = require('stream');
+const { PassThrough, pipeline } = require('stream');
 const { LOGO_TYPES } = require('../utils/branding');
 require('dotenv').config();
 
@@ -77,8 +77,12 @@ const sniffingStorage = (inner) => ({
       const body = new PassThrough();
       body.write(head);
       if (ended) body.end();
-      else src.pipe(body);
-      inner._handleFile(req, { ...file, stream: body }, cb);
+      // pipeline, not pipe: an aborted request destroys src, and that must reach body and the
+      // inner engine, which closes its file (disk) or aborts the upload (S3). The engine reports it.
+      else pipeline(src, body, () => {});
+      // multer's own file object, so the path disk storage sets on it is seen by multer's abort cleanup
+      Object.defineProperty(file, 'stream', { configurable: true, enumerable: false, value: body });
+      inner._handleFile(req, file, cb);
     };
     function onData(chunk) {
       chunks.push(chunk);
