@@ -423,9 +423,7 @@ const securityHooksPlugin = () => {
         {
           matcher(context) {
             return (
-              context.path?.includes("change-password") ||
-              context.path?.includes("reset-password") ||
-              false
+              context.path?.includes("change-password") || false
             );
           },
           handler: async (ctx) => {
@@ -472,14 +470,10 @@ const securityHooksPlugin = () => {
               }
             }
 
+            // A reset is handled by emailAndPassword.onPasswordReset (utils/auth.js)
             if (userId && user.email) {
-              if (ctx.path?.includes("reset-password")) {
-                securityService.handlePasswordResetRecovery(user.email);
-                logActivity(userId, "Reset password", ctx);
-              } else {
-                securityService.handlePasswordChangeAlert(user);
-                logActivity(userId, "Changed password", ctx);
-              }
+              securityService.handlePasswordChangeAlert(user);
+              logActivity(userId, "Changed password", ctx);
             }
             return {};
           },

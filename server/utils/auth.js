@@ -11,6 +11,8 @@ const {
 const { securityHooksPlugin } = require("./authHooks");
 const { getOrgSettings } = require("./settings");
 const { isMfaEnforced } = require("../config/permissions");
+const securityService = require("../services/securityService");
+const { logActivity } = require("./logger");
 
 const parseSecrets = () => {
   if (process.env.BETTER_AUTH_SECRETS) {
@@ -105,6 +107,12 @@ const auth = betterAuth({
     sendResetPassword: async ({ user, token }) => {
       const mailOptions = getResetPasswordEmail(user, token, await getOrgSettings());
       await transporter.sendMail(mailOptions);
+    },
+    // The reset request carries only the token, so the after-hook can't tell whose password changed;
+    // Better Auth passes the token's owner here, after the password is set and sessions are revoked
+    onPasswordReset: async ({ user }, request) => {
+      securityService.handlePasswordResetRecovery(user.email);
+      logActivity(user.id, "Reset password", request);
     },
   },
   emailVerification: {
