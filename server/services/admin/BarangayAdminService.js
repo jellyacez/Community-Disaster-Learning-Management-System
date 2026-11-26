@@ -108,6 +108,13 @@ class BarangayAdminService {
     return result.rows;
   }
 
+  async barangayExists(barangayId) {
+    // barangays.id is int4; anything outside it can't exist and would make the query throw
+    if (!Number.isInteger(barangayId) || barangayId < 1 || barangayId > 2147483647) return false;
+    const result = await pool.query(`SELECT 1 FROM barangays WHERE id = $1`, [barangayId]);
+    return result.rowCount > 0;
+  }
+
   async createBarangayAnnouncement(title, content, priority, authorId, barangayId = null, durationHours = null) {
     const sanitizedContent = cleanRichText(content);
 

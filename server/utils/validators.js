@@ -244,8 +244,10 @@ const announcementSchema = Joi.object({
     "string.empty": "Title cannot be empty.",
     "string.max": "Title must be 255 characters or fewer.",
   }),
-  content: Joi.string().trim().min(1).required().messages({
+  // The composer's textarea stops at 5000 too (announcementModal.jsx)
+  content: Joi.string().trim().min(1).max(5000).required().messages({
     "string.empty": "Content cannot be empty.",
+    "string.max": "Content must be 5000 characters or fewer.",
   }),
   priority: Joi.string().valid("standard", "urgent").default("standard"),
   duration_hours: Joi.number().valid(...URGENT_DURATION_HOURS).allow(null),

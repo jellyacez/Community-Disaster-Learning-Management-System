@@ -107,6 +107,10 @@ exports.createBarangayAnnouncement = async (req, res) => {
       targetBarangay = target_barangay_id 
         ? parseInt(target_barangay_id, 10) 
         : resolveBarangayId(req);
+      // A missing barangay hit the foreign key and a NaN scope header the integer cast, both as a 500
+      if (targetBarangay !== null && !(await barangayAdminService.barangayExists(targetBarangay))) {
+        return res.status(400).json({ error: "Choose a barangay from the list." });
+      }
     }
 
     const data = await barangayAdminService.createBarangayAnnouncement(
