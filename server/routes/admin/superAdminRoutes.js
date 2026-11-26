@@ -155,8 +155,17 @@ router.post(
   }
 );
 
+// The only callers: the banner while impersonating, and a super_admin clearing leftover cookies.
+// While impersonating, req.user is the target, so requireRole would refuse the real caller.
+const allowStopImpersonating = (req, res, next) => {
+  if (req.isImpersonating || req.user?.role === "super_admin") return next();
+  return res.status(403).json({
+    error: "Forbidden. You don't have permission to access this resource.",
+  });
+};
+
 // @route   POST /api/admin/super/stop-impersonating
-router.post("/super/stop-impersonating", async (req, res) => {
+router.post("/super/stop-impersonating", allowStopImpersonating, async (req, res) => {
   try {
     // Only trust the impersonation pair that `authenticate` validated against the
     // real super_admin session; the raw cookies are client-controlled.
