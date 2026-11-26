@@ -1,6 +1,7 @@
 const pool = require("../../config/db");
 const logger = require("../../utils/logger");
 const { parsePaging } = require("../../utils/pagination");
+const { escapeCsv } = require("../../utils/csv");
 
 class ActivityLogService {
   /** Leaves out super_admin events so lower-tier admins never see them. */
@@ -114,14 +115,6 @@ class ActivityLogService {
 
     const headers = ["ID", "User ID", "User Name", "Role", "IP Address", "Date", "Action"];
     const rows = result.rows.map((r) => {
-      const escapeCsv = (str) => {
-        if (str === null || str === undefined) return '""';
-        const s = String(str);
-        if (s.includes(",") || s.includes('"') || s.includes("\n") || s.includes("\r")) {
-          return `"${s.replace(/"/g, '""')}"`;
-        }
-        return s;
-      };
       return [
         r.act_id,
         r.user_id,
@@ -239,14 +232,6 @@ class ActivityLogService {
 
     const headers = ["ID", "User ID", "User Name", "Role", "IP Address", "Date", "Action"];
     const rows = result.rows.map((r) => {
-      const escapeCsv = (str) => {
-        if (str === null || str === undefined) return '""';
-        const s = String(str);
-        if (s.includes(",") || s.includes('"') || s.includes("\n") || s.includes("\r")) {
-          return `"${s.replace(/"/g, '""')}"`;
-        }
-        return s;
-      };
       return [
         r.act_id,
         r.user_id,
@@ -363,14 +348,6 @@ class ActivityLogService {
 
     const headers = ["ID", "User ID", "User Name", "Email", "Role", "IP Address", "Date", "Action"];
     const rows = result.rows.map((r) => {
-      const escapeCsv = (str) => {
-        if (str === null || str === undefined) return '""';
-        const s = String(str);
-        if (s.includes(",") || s.includes('"') || s.includes("\n") || s.includes("\r")) {
-          return `"${s.replace(/"/g, '""')}"`;
-        }
-        return s;
-      };
       return [
         r.act_id,
         r.user_id,
