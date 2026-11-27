@@ -128,6 +128,7 @@ exports.validateModuleCreation = (payload) => {
   const isPlainObject = (v) => v !== null && typeof v === "object" && !Array.isArray(v);
   const isOrder = (v) => Number.isInteger(v) && v >= 1;
   const isOptionalBoolean = (v) => v === undefined || v === null || typeof v === "boolean";
+  const isOptionalText = (v) => v === undefined || v === null || typeof v === "string";
   const levelOrders = new Set();
 
   for (let i = 0; i < payload.levels.length; i++) {
@@ -142,6 +143,10 @@ exports.validateModuleCreation = (payload) => {
     levelOrders.add(level.levelOrder);
     if (!isOptionalBoolean(level.is_locked_by_default)) {
       return { isValid: false, error: `Level ${i + 1} locked setting must be true or false.` };
+    }
+    // cleanRichText passes non-strings through unsanitized, so rich text must arrive as text
+    if (!isOptionalText(level.levelDescription)) {
+      return { isValid: false, error: `Level ${i + 1} description must be text.` };
     }
 
     if (typeof level.levelTitle !== "string" || level.levelTitle.trim() === "") {
@@ -186,6 +191,9 @@ exports.validateModuleCreation = (payload) => {
       if (!isOptionalBoolean(step.is_final_assessment)) {
         return { isValid: false, error: `Step ${j + 1} in Level ${i + 1} final assessment setting must be true or false.` };
       }
+      if (!isOptionalText(step.stepContent)) {
+        return { isValid: false, error: `Step ${j + 1} in Level ${i + 1} content must be text.` };
+      }
 
       if (typeof step.stepTitle !== "string" || step.stepTitle.trim() === "") {
         return { isValid: false, error: `Step ${j + 1} in Level ${i + 1} is missing a title.` };
@@ -216,6 +224,9 @@ exports.validateModuleCreation = (payload) => {
           // questions.question_text is NOT NULL for every step type, graded or not
           if (!isPlainObject(q) || typeof q.questionText !== "string" || q.questionText.trim() === "") {
             return { isValid: false, error: `A question in '${step.stepTitle}' is missing text.` };
+          }
+          if (!isOptionalText(q.rationale) || (Array.isArray(q.options) && q.options.some((o) => !isOptionalText(o?.rationale)))) {
+            return { isValid: false, error: `An explanation in '${step.stepTitle}' must be text.` };
           }
           const questionImageError = validateUrl(q?.imageURL, `A question image in '${step.stepTitle}'`);
           if (questionImageError) return { isValid: false, error: questionImageError };
