@@ -100,7 +100,7 @@ function modulePayload(overrides = {}) {
     level: "Beginner",
     duration: "5 mins",
     status: "draft",
-    levels: [{ levelOrder: 1, levelTitle: "L1", steps: [{ stepTitle: "S1", stepType: "text" }] }],
+    levels: [{ levelOrder: 1, levelTitle: "L1", steps: [{ stepOrder: 1, stepTitle: "S1", stepType: "text" }] }],
     ...overrides,
   };
 }
@@ -239,8 +239,8 @@ async function main() {
   });
   await check("create module: two final assessments keep their message", async () => {
     const level = { levelOrder: 1, levelTitle: "L1", steps: [
-        { stepTitle: "S1", stepType: "text", is_final_assessment: true },
-        { stepTitle: "S2", stepType: "text", is_final_assessment: true },
+        { stepOrder: 1, stepTitle: "S1", stepType: "text", is_final_assessment: true },
+        { stepOrder: 2, stepTitle: "S2", stepType: "text", is_final_assessment: true },
       ],
     };
     const res = await call(author, "POST", "/api/modules", modulePayload({ levels: [level] }));
