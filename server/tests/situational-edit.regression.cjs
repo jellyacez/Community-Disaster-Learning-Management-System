@@ -78,12 +78,13 @@ async function main() {
   assert.equal(quiz.situationalScenarios.length, 0);
   console.log("ok: quiz steps still hydrate into quizQuestions");
 
-  const empty = validateModuleCreation(payload({ stepTitle: "S", stepType: "situational", quizQuestions: [] }));
+  const empty = validateModuleCreation(payload({ stepOrder: 1, stepTitle: "S", stepType: "situational", quizQuestions: [] }));
   assert.equal(empty.isValid, false);
   assert.match(empty.error, /at least one question/);
   console.log("ok: validator rejects a situational step with no questions");
 
   const filled = validateModuleCreation(payload({
+    stepOrder: 1,
     stepTitle: "S",
     stepType: "situational",
     quizQuestions: [{ questionText: "Q", options: [{ text: "A", isCorrect: true }] }],
