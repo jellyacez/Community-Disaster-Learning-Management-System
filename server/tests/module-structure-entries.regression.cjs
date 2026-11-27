@@ -2,8 +2,9 @@
  * Regression test (M2 leftovers): module create/update fields that reached the database unchecked
  * and came back as a 500:
  *   - a level or step entry that isn't an object (null threw in the validator)
- *   - levelOrder / stepOrder missing, non-integer or repeated (NOT NULL integer columns, UNIQUE per parent)
- *   - an option's sequence_order that isn't a whole number (int[] cast)
+ *   - levelOrder / stepOrder missing, non-integer, repeated or past int4 (NOT NULL integer columns, UNIQUE per parent)
+ *   - an option's sequence_order that isn't a whole number or is past int4 (int[] cast)
+ *   - a question interactionType outside the allowed set on a non-graded step (only graded steps checked it)
  *   - is_locked_by_default / is_final_assessment that aren't booleans
  *   - a question entry that isn't an object, or a question with no questionText in a non-graded step
  *     (questions.question_text NOT NULL; only graded steps checked it)
@@ -129,6 +130,15 @@ const CASES = [
   ["a question entry that is null (text step)", (p) => { level0(p).steps[0].quizQuestions = [null]; }],
   ["a question with no questionText in a text step", (p) => {
     level0(p).steps[0].quizQuestions = [{ options: [{ text: "A", isCorrect: true }] }];
+  }],
+  ["levelOrder 2147483648 (past int4)", (p) => { level0(p).levelOrder = 2147483648; }],
+  ["stepOrder 1e12", (p) => { level0(p).steps[0].stepOrder = 1e12; }],
+  ["option sequence_order 2147483648", (p) => { level0(p).steps[1].quizQuestions[0].options[0].sequence_order = 2147483648; }],
+  ["a question interactionType 'bogus' in a text step", (p) => {
+    level0(p).steps[0].quizQuestions = [{ questionText: "Q", interactionType: "bogus", options: [{ text: "A", isCorrect: true }] }];
+  }],
+  ["a question interactionType object in a text step", (p) => {
+    level0(p).steps[0].quizQuestions = [{ questionText: "Q", interactionType: { a: 1 }, options: [{ text: "A", isCorrect: true }] }];
   }],
   ["levelDescription as an array", (p) => { level0(p).levelDescription = [MARKUP]; }],
   ["levelDescription as an object", (p) => { level0(p).levelDescription = { a: MARKUP }; }],
