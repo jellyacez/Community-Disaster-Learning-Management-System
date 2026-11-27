@@ -124,8 +124,25 @@ exports.validateModuleCreation = (payload) => {
     return { isValid: false, error: `A module can have at most ${MAX_LEVELS} levels.` };
   }
 
+  // The columns below are NOT NULL integers / booleans, unique per module or level, so a bad value was a 500
+  const isPlainObject = (v) => v !== null && typeof v === "object" && !Array.isArray(v);
+  const isOrder = (v) => Number.isInteger(v) && v >= 1;
+  const isOptionalBoolean = (v) => v === undefined || v === null || typeof v === "boolean";
+  const levelOrders = new Set();
+
   for (let i = 0; i < payload.levels.length; i++) {
     const level = payload.levels[i];
+
+    if (!isPlainObject(level)) {
+      return { isValid: false, error: `Level ${i + 1} is not a valid level.` };
+    }
+    if (!isOrder(level.levelOrder) || levelOrders.has(level.levelOrder)) {
+      return { isValid: false, error: `Level ${i + 1} needs its own position number (a whole number from 1).` };
+    }
+    levelOrders.add(level.levelOrder);
+    if (!isOptionalBoolean(level.is_locked_by_default)) {
+      return { isValid: false, error: `Level ${i + 1} locked setting must be true or false.` };
+    }
 
     if (typeof level.levelTitle !== "string" || level.levelTitle.trim() === "") {
       return { isValid: false, error: `Level ${i + 1} is missing a valid title.` };
@@ -155,8 +172,20 @@ exports.validateModuleCreation = (payload) => {
       return { isValid: false, error: `Level ${i + 1} can have at most ${MAX_STEPS_PER_LEVEL} steps.` };
     }
 
+    const stepOrders = new Set();
     for (let j = 0; j < level.steps.length; j++) {
       const step = level.steps[j];
+
+      if (!isPlainObject(step)) {
+        return { isValid: false, error: `Step ${j + 1} in Level ${i + 1} is not a valid step.` };
+      }
+      if (!isOrder(step.stepOrder) || stepOrders.has(step.stepOrder)) {
+        return { isValid: false, error: `Step ${j + 1} in Level ${i + 1} needs its own position number (a whole number from 1).` };
+      }
+      stepOrders.add(step.stepOrder);
+      if (!isOptionalBoolean(step.is_final_assessment)) {
+        return { isValid: false, error: `Step ${j + 1} in Level ${i + 1} final assessment setting must be true or false.` };
+      }
 
       if (typeof step.stepTitle !== "string" || step.stepTitle.trim() === "") {
         return { isValid: false, error: `Step ${j + 1} in Level ${i + 1} is missing a title.` };
@@ -184,6 +213,10 @@ exports.validateModuleCreation = (payload) => {
           return { isValid: false, error: `'${step.stepTitle}' can have at most ${MAX_QUESTIONS_PER_STEP} questions.` };
         }
         for (const q of step.quizQuestions) {
+          // questions.question_text is NOT NULL for every step type, graded or not
+          if (!isPlainObject(q) || typeof q.questionText !== "string" || q.questionText.trim() === "") {
+            return { isValid: false, error: `A question in '${step.stepTitle}' is missing text.` };
+          }
           const questionImageError = validateUrl(q?.imageURL, `A question image in '${step.stepTitle}'`);
           if (questionImageError) return { isValid: false, error: questionImageError };
           if (tooLong(q?.imageURL, MAX_URL_LENGTH)) {
@@ -198,6 +231,10 @@ exports.validateModuleCreation = (payload) => {
             (!Array.isArray(q.options) || q.options.some((o) => typeof o?.text !== "string" || typeof o.isCorrect !== "boolean"))
           ) {
             return { isValid: false, error: `Each option in '${step.stepTitle}' needs text and a true/false isCorrect.` };
+          }
+          // choices.sequence_order is an int[] cast; the builder sends 1, 2, 3... for ordering steps
+          if (Array.isArray(q.options) && q.options.some((o) => o.sequence_order != null && !(Number.isInteger(o.sequence_order) && o.sequence_order >= 0))) {
+            return { isValid: false, error: `An option's order in '${step.stepTitle}' must be a whole number.` };
           }
         }
       }
