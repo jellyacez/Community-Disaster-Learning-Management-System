@@ -126,7 +126,8 @@ exports.validateModuleCreation = (payload) => {
 
   // The columns below are NOT NULL integers / booleans, unique per module or level, so a bad value was a 500
   const isPlainObject = (v) => v !== null && typeof v === "object" && !Array.isArray(v);
-  const isOrder = (v) => Number.isInteger(v) && v >= 1;
+  const INT4_MAX = 2147483647;
+  const isOrder = (v) => Number.isInteger(v) && v >= 1 && v <= INT4_MAX;
   const isOptionalBoolean = (v) => v === undefined || v === null || typeof v === "boolean";
   const isOptionalText = (v) => v === undefined || v === null || typeof v === "string";
   const levelOrders = new Set();
@@ -225,6 +226,10 @@ exports.validateModuleCreation = (payload) => {
           if (!isPlainObject(q) || typeof q.questionText !== "string" || q.questionText.trim() === "") {
             return { isValid: false, error: `A question in '${step.stepTitle}' is missing text.` };
           }
+          // questions.interaction_type is stored for every step type, not only graded ones
+          if (q.interactionType != null && !INTERACTION_TYPES.includes(q.interactionType)) {
+            return { isValid: false, error: `A question in '${step.stepTitle}' has an invalid interaction type.` };
+          }
           if (!isOptionalText(q.rationale) || (Array.isArray(q.options) && q.options.some((o) => !isOptionalText(o?.rationale)))) {
             return { isValid: false, error: `An explanation in '${step.stepTitle}' must be text.` };
           }
@@ -244,7 +249,7 @@ exports.validateModuleCreation = (payload) => {
             return { isValid: false, error: `Each option in '${step.stepTitle}' needs text and a true/false isCorrect.` };
           }
           // choices.sequence_order is an int[] cast; the builder sends 1, 2, 3... for ordering steps
-          if (Array.isArray(q.options) && q.options.some((o) => o.sequence_order != null && !(Number.isInteger(o.sequence_order) && o.sequence_order >= 0))) {
+          if (Array.isArray(q.options) && q.options.some((o) => o.sequence_order != null && !(Number.isInteger(o.sequence_order) && o.sequence_order >= 0 && o.sequence_order <= INT4_MAX))) {
             return { isValid: false, error: `An option's order in '${step.stepTitle}' must be a whole number.` };
           }
         }
