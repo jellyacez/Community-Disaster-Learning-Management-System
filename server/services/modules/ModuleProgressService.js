@@ -101,7 +101,9 @@ class ModuleProgressService {
             const isActionSequence = sequenceMap[qid] !== undefined;
             // A stored hazard type stays multi-select even with a single required hazard
             // (also with no required hazard, where nothing selected is the right answer)
+            // A legacy hazard_identification step has no stored type; QuizAttemptService.questionKind uses the step's
             const isMultiSelect = interactionTypeMap[qid] === 'hazard_identification' ||
+                step.step_type === 'hazard_identification' ||
                 (correctChoicesMap[qid] !== undefined && correctChoicesMap[qid].length > 1);
 
             if (isActionSequence) {
