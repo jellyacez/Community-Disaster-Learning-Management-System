@@ -7,6 +7,8 @@
  *   - is_locked_by_default / is_final_assessment that aren't booleans
  *   - a question entry that isn't an object, or a question with no questionText in a non-graded step
  *     (questions.question_text NOT NULL; only graded steps checked it)
+ *   - levelDescription, stepContent or a question/option rationale that isn't text: cleanRichText()
+ *     returns non-strings untouched, so an array or object was stored with live markup, unsanitized
  * Each must be a 400 with no module row, on create and on update (where the module stays as it was).
  * A well-formed module with all of those fields set still saves (201).
  *
@@ -76,9 +78,10 @@ function payload(label) {
       {
         levelOrder: 1,
         levelTitle: "Level 1",
+        levelDescription: "<p>About this level</p>",
         is_locked_by_default: false,
         steps: [
-          { stepOrder: 1, stepTitle: "Read", stepType: "text", is_final_assessment: false },
+          { stepOrder: 1, stepTitle: "Read", stepType: "text", stepContent: "<p>Read this</p>", is_final_assessment: false },
           {
             stepOrder: 2,
             stepTitle: "Order the steps",
@@ -87,8 +90,9 @@ function payload(label) {
             quizQuestions: [
               {
                 questionText: "Put these in order",
+                rationale: "<p>Why this order</p>",
                 options: [
-                  { text: "First", isCorrect: true, sequence_order: 1 },
+                  { text: "First", isCorrect: true, sequence_order: 1, rationale: "<p>First</p>" },
                   { text: "Second", isCorrect: true, sequence_order: 2 },
                 ],
               },
@@ -101,6 +105,7 @@ function payload(label) {
 }
 
 const level0 = (p) => p.levels[0];
+const MARKUP = "<img src=x onerror=alert(1)>";
 const CASES = [
   ["a level entry that is null", (p) => { p.levels = [null]; }],
   ["a level entry that is a string", (p) => { p.levels = ["Level 1"]; }],
@@ -125,6 +130,14 @@ const CASES = [
   ["a question with no questionText in a text step", (p) => {
     level0(p).steps[0].quizQuestions = [{ options: [{ text: "A", isCorrect: true }] }];
   }],
+  ["levelDescription as an array", (p) => { level0(p).levelDescription = [MARKUP]; }],
+  ["levelDescription as an object", (p) => { level0(p).levelDescription = { a: MARKUP }; }],
+  ["stepContent as an array", (p) => { level0(p).steps[0].stepContent = [MARKUP]; }],
+  ["stepContent as an object", (p) => { level0(p).steps[0].stepContent = { a: MARKUP }; }],
+  ["a question rationale as an array (text step)", (p) => {
+    level0(p).steps[0].quizQuestions = [{ questionText: "Q", rationale: [MARKUP], options: [{ text: "A", isCorrect: true }] }];
+  }],
+  ["an option rationale as an object", (p) => { level0(p).steps[1].quizQuestions[0].options[0].rationale = { a: MARKUP }; }],
 ];
 
 const rowsNamed = async (label) =>
