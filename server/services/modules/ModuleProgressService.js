@@ -100,8 +100,9 @@ class ModuleProgressService {
         answersByQuestion.forEach((selected, qid) => {
             const isActionSequence = sequenceMap[qid] !== undefined;
             // A stored hazard type stays multi-select even with a single required hazard
-            const isMultiSelect = correctChoicesMap[qid] &&
-                (correctChoicesMap[qid].length > 1 || interactionTypeMap[qid] === 'hazard_identification');
+            // (also with no required hazard, where nothing selected is the right answer)
+            const isMultiSelect = interactionTypeMap[qid] === 'hazard_identification' ||
+                (correctChoicesMap[qid] !== undefined && correctChoicesMap[qid].length > 1);
 
             if (isActionSequence) {
                 const correctSequence = sequenceMap[qid]
@@ -112,7 +113,7 @@ class ModuleProgressService {
                     score += pointsMap[qid] || 1;
                 }
             } else if (isMultiSelect) {
-                const correctArray = correctChoicesMap[qid].sort((a, b) => a - b);
+                const correctArray = (correctChoicesMap[qid] || []).sort((a, b) => a - b);
                 const submittedArray = [...selected].sort((a, b) => a - b);
 
                 if (JSON.stringify(correctArray) === JSON.stringify(submittedArray)) {
@@ -122,7 +123,8 @@ class ModuleProgressService {
                 const correctChoiceId = correctChoicesMap[qid] ? correctChoicesMap[qid][0] : null;
                 const submittedChoiceId = selected.length > 0 ? selected[0] : null;
 
-                if (correctChoiceId === submittedChoiceId) {
+                // A question with no correct option can't be answered correctly (as in QuizAttemptService)
+                if (correctChoiceId !== null && correctChoiceId === submittedChoiceId) {
                     score += pointsMap[qid] || 1;
                 }
             }
